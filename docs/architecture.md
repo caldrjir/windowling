@@ -14,7 +14,7 @@
                                                                   ┌──────────▼──────────┐
                                                                   │ PostgreSQL          │
                                                                   │ Docker / Neon       │
-                                                                  │ (opt. Hyperdrive)   │
+                                                                  │ (via Hyperdrive)    │
                                                                   └─────────────────────┘
 ```
 
@@ -129,7 +129,8 @@ loop and persist resulting events.
 
 - `@sveltejs/adapter-cloudflare` → Worker + static assets. `nodejs_compat` for postgres.js.
 - Workers forbid sharing I/O objects across requests → per-request DB client (`max: 1`) closed
-  via `waitUntil`. Optional **Hyperdrive** binding provides pooling; if bound, its connection
+  via `waitUntil`. **Hyperdrive** (binding `HYPERDRIVE`, query caching off) provides pooling and fast connects -
+  direct TCP from Workers to Neon timed out in production. When bound, its connection
   string wins over `DATABASE_URL`. Neon is reached over plain Postgres TCP - no Neon-specific
   driver, so any Postgres works.
 - three.js/Rapier are excluded from the server bundle (`import.meta.env.SSR` guard). Worker
@@ -148,14 +149,15 @@ loop and persist resulting events.
 
 ## Decisions log
 
-| Date       | Decision                                                    | Why                                                                                                |
-| ---------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                 | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.   |
-| 2026-10-04 | TypeScript 5.9 (not 7)                                      | typescript-eslint and svelte-check don't support TS 7 yet.                                         |
-| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                  | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                  |
-| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only | One ownership path; linking = ownership transfer.                                                  |
-| 2026-10-04 | Account world wins on link conflict                         | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain. |
-| 2026-10-04 | Anonymous user created client-side after hydration          | Crawlers/bots never mint users or worlds.                                                          |
-| 2026-10-04 | Internal packages consumed as TS source (no build step)     | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                            |
-| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)       | Tests the real production runtime, not the Node dev server.                                        |
-| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                  | No bundler WASM plugin needed; lazy-loaded on the client only.                                     |
+| Date       | Decision                                                    | Why                                                                                                    |
+| ---------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                 | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.       |
+| 2026-10-04 | TypeScript 5.9 (not 7)                                      | typescript-eslint and svelte-check don't support TS 7 yet.                                             |
+| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                  | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                      |
+| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only | One ownership path; linking = ownership transfer.                                                      |
+| 2026-10-04 | Account world wins on link conflict                         | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.     |
+| 2026-10-04 | Anonymous user created client-side after hydration          | Crawlers/bots never mint users or worlds.                                                              |
+| 2026-10-04 | Internal packages consumed as TS source (no build step)     | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                |
+| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)       | Tests the real production runtime, not the Node dev server.                                            |
+| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                  | No bundler WASM plugin needed; lazy-loaded on the client only.                                         |
+| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**           | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created). |

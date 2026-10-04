@@ -78,7 +78,7 @@ Convention: each completed iteration is at least one minor release.
 | ---------- | ----------------------------------- | ----------------------------------- | ----------------------- |
 | local      | `http://localhost:5173`             | Docker Postgres                     | `pnpm dev`              |
 | preview    | (planned) per-PR Worker version URL | Neon branch `preview/pr-<n>` (auto) | GitHub Actions          |
-| production | `https://windowling.com`            | Neon (optionally via Hyperdrive)    | on green CI on `master` |
+| production | `https://windowling.com`            | Neon via Hyperdrive                 | on green CI on `master` |
 
 ## Preview databases (Neon branches)
 
@@ -118,8 +118,10 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
 4. **Google Cloud Console** → OAuth client (Web): authorized origins `https://windowling.com`,
    `http://localhost:5173`; redirect URIs `https://windowling.com/api/auth/callback/google`,
    `http://localhost:5173/api/auth/callback/google`.
-5. Optional **Hyperdrive** (instead of the Neon pooler): create a config with the direct
-   connection string, then uncomment the `hyperdrive` block in `apps/web/wrangler.jsonc`.
+5. **Hyperdrive** (done: config `windowling`, id in `apps/web/wrangler.jsonc`): Workers & Pages →
+   Hyperdrive → Connect to public database, with the **direct** Neon connection details and
+   **caching disabled**. In production the Worker connects through it; `WORKER_DATABASE_URL`
+   is only a fallback when the binding is absent.
 
 After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.

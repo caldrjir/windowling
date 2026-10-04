@@ -54,6 +54,12 @@ export default defineConfig({
 		command: `pnpm build && pnpm exec wrangler dev --port ${PORT} --ip 127.0.0.1 ${varFlags}`,
 		url: `${BASE_URL}/api/health`,
 		reuseExistingServer: !process.env.CI,
+		// The Worker reaches Postgres through the Hyperdrive binding; point its local stand-in
+		// at the same database the tests use.
+		env: {
+			...(process.env as Record<string, string>),
+			CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: databaseUrl,
+		},
 		timeout: 180_000,
 		stdout: 'ignore',
 		stderr: 'pipe',

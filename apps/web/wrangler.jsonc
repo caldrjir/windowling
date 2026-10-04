@@ -24,7 +24,15 @@
 		{ "pattern": "windowling.com", "custom_domain": true },
 		{ "pattern": "www.windowling.com", "custom_domain": true },
 	],
-	// Optional connection pooling in front of Neon. When the binding exists,
-	// it takes precedence over DATABASE_URL.
-	// "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<hyperdrive-config-id>" }],
+	// Cloudflare Hyperdrive in front of Neon (pooling, fast connects). Query caching is
+	// disabled on purpose: game state must never be served stale. When bound, it takes
+	// precedence over DATABASE_URL in production. `localConnectionString` is only used by
+	// `wrangler dev` (E2E) and points at the Docker Compose database - not a secret.
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE",
+			"id": "97c48d6c97ca431b88735921eaeb5fa5",
+			"localConnectionString": "postgres://windowling:windowling@localhost:5432/windowling",
+		},
+	],
 }
