@@ -12,7 +12,7 @@ pnpm db:migrate
 pnpm dev
 ```
 
-No Docker? Any PostgreSQL 16+ works - create databases `windowling` and `windowling_test`
+No Docker? Any PostgreSQL 16+ works (production and CI run 18) - create databases `windowling` and `windowling_test`
 and point `DATABASE_URL` / `TEST_DATABASE_URL` at them.
 
 ## Daily workflow
@@ -84,8 +84,11 @@ Convention: each completed iteration is at least one minor release.
 
 One-time setup (requires accounts; free tiers are enough):
 
-1. **Neon**: create project `windowling` (Postgres 17, EU region close to users). Copy the
-   pooled or direct connection string.
+1. **Neon**: create project `windowling` (Postgres 18, AWS Europe Central 1 - Frankfurt). Copy the
+   connection strings from _Connect_ (both with `?sslmode=require`):
+   - **pooled** (host contains `-pooler`) → Worker secret `DATABASE_URL`
+   - **direct** (no `-pooler`) → GitHub secret `PRODUCTION_DATABASE_URL`, used for migrations
+     (and as the Hyperdrive origin, if you use Hyperdrive instead of the pooler)
 2. **Cloudflare**: add zone `windowling.com` (DNS on Cloudflare). Create an API token with
    _Workers Scripts: Edit_, _Workers Routes: Edit_, _Account Settings: Read_ (and _Hyperdrive:
    Edit_ if used).

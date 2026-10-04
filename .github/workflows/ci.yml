@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: windowling
           POSTGRES_PASSWORD: windowling
@@ -74,7 +74,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: windowling
           POSTGRES_PASSWORD: windowling
