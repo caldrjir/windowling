@@ -42,6 +42,9 @@ export function createDatabase(
 		max,
 		// Fail fast: a request should not hang for postgres.js's default 30 s.
 		connect_timeout: 10,
+		// No array/enum types in our schema; skipping the type lookup saves a round-trip
+		// per connection (recommended by Cloudflare for Hyperdrive).
+		fetch_types: false,
 		onnotice: () => {},
 	});
 	const db = drizzle(sql, { schema, casing: 'snake_case' });
