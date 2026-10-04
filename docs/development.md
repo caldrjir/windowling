@@ -99,8 +99,8 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    _Connect_, copy both connection strings (keep only `?sslmode=require` as query):
    - **direct** (connection pooling off) → `PRODUCTION_DATABASE_URL` (migrations)
    - **pooled** (connection pooling on, host contains `-pooler`) → `WORKER_DATABASE_URL`
-2. **Cloudflare**: add the domain `windowling.com` (Free plan) and switch the registrar's
-   nameservers to Cloudflare's. Create an API token from the _Edit Cloudflare Workers_
+2. **Cloudflare**: the domain `windowling.com` is registered at Cloudflare (account id is in
+   `apps/web/wrangler.jsonc`, it is not a secret). Create an API token from the _Edit Cloudflare Workers_
    template, scoped to your account and the `windowling.com` zone.
 3. **GitHub** → Settings → Environments → `production` → environment secrets:
 
@@ -110,7 +110,6 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    | `WORKER_DATABASE_URL`     | Neon pooled connection string                         |
    | `BETTER_AUTH_SECRET`      | `openssl rand -base64 32` (never reuse the local one) |
    | `CLOUDFLARE_API_TOKEN`    | token from step 2                                     |
-   | `CLOUDFLARE_ACCOUNT_ID`   | Cloudflare dashboard → Workers & Pages → Account ID   |
    | `GOOGLE_CLIENT_ID`        | optional, step 4                                      |
    | `GOOGLE_CLIENT_SECRET`    | optional, step 4                                      |
 

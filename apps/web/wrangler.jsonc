@@ -1,6 +1,8 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "windowling",
+	// Not a secret: identifies the Cloudflare account that owns windowling.com.
+	"account_id": "e4d21a54530afdeb8db4fc66a1338b18",
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-09-01",
 	// postgres.js needs Node's net/tls APIs (served by Workers TCP sockets).
