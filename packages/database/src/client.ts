@@ -38,7 +38,12 @@ export function createDatabase(
 	url: string,
 	{ max = 10 }: CreateDatabaseOptions = {},
 ): DatabaseConnection {
-	const sql = postgres(normalizeConnectionString(url), { max, onnotice: () => {} });
+	const sql = postgres(normalizeConnectionString(url), {
+		max,
+		// Fail fast: a request should not hang for postgres.js's default 30 s.
+		connect_timeout: 10,
+		onnotice: () => {},
+	});
 	const db = drizzle(sql, { schema, casing: 'snake_case' });
 	return { db, close: () => sql.end({ timeout: 5 }) };
 }

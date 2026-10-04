@@ -9,6 +9,8 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [master]
+  # Manual re-deploy of the current master (e.g. after rotating a secret).
+  workflow_dispatch:
 
 concurrency:
   group: deploy-production
@@ -20,7 +22,9 @@ permissions:
 jobs:
   production:
     name: Migrate & deploy to windowling.com
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -35,7 +39,7 @@ jobs:
       - uses: actions/checkout@v5
         if: env.HAS_CLOUDFLARE == 'true'
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: pnpm/action-setup@v4
         if: env.HAS_CLOUDFLARE == 'true'
       - uses: actions/setup-node@v5
@@ -89,11 +93,33 @@ jobs:
       - name: Remove secrets file
         if: always()
         run: rm -f "$RUNNER_TEMP/worker-secrets.json"
-      - name: Smoke test
+      - name: Smoke test (with live Worker logs on failure)
         if: env.HAS_CLOUDFLARE == 'true'
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          # Stream the Worker's logs while probing, so a failure shows the real error.
+          timeout 300 pnpm exec wrangler tail windowling --format json > "$RUNNER_TEMP/tail.jsonl" 2> "$RUNNER_TEMP/tail.err" &
+          sleep 10
           for i in 1 2 3 4 5; do
-            curl -fsS https://windowling.com/api/health && exit 0
+            code=$(curl -sS -o "$RUNNER_TEMP/health.json" -w '%{http_code}' --max-time 40 https://windowling.com/api/health || echo 000)
+            echo "attempt $i: HTTP $code $(head -c 300 "$RUNNER_TEMP/health.json" 2>/dev/null)"
+            if [ "$code" = "200" ]; then exit 0; fi
             sleep 10
           done
+          sleep 5
+          echo "::group::Worker logs and exceptions"
+          node -e '
+            const lines = require("node:fs").readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean);
+            for (const line of lines) {
+              try {
+                const e = JSON.parse(line);
+                for (const l of e.logs ?? []) console.log(`[${l.level}]`, JSON.stringify(l.message));
+                for (const x of e.exceptions ?? []) console.log("[exception]", x.name, x.message);
+              } catch {}
+            }
+          ' "$RUNNER_TEMP/tail.jsonl" || true
+          cat "$RUNNER_TEMP/tail.err" || true
+          echo "::endgroup::"
           exit 1
