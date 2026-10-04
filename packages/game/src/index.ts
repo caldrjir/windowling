@@ -1,3 +1,5 @@
+export type { AnimationState } from './character/animation.ts';
+export type { CharacterSnapshot, ControllerEvent, Posture } from './character/controller.ts';
 export { GameWorld, type GameWorldOptions, type GameWorldStatus } from './game-world.ts';
 export { FixedStepAccumulator, type FixedStepOptions } from './fixed-step.ts';
 export { initPhysics, PhysicsWorld, type BodyTransform, type Quat, type Vec3 } from './physics.ts';

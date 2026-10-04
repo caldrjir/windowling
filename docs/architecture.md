@@ -70,6 +70,20 @@ hidden. Since Iteration 1 it renders the starter flat (`src/room/`): procedural 
 real-time sky in the back window, lighting, static colliders, and `frameRoom(aspect)` which keeps
 the whole room in view from ultrawide desktops to portrait phones (higher angle on phones).
 
+**Character (Iteration 1, `src/character/`):**
+
+- `CharacterController` - pure logic (no three.js): turns a `CharacterAction` into steps
+  (stand up → walk the path → turn → sit / lie down), validates it against the shared target
+  affordances, never cuts a sit-down/stand-up in half, and emits `completed` / `rejected` events.
+  Headless-tested, including "never walks through furniture between any two targets".
+- `planPath` - straight line, or a detour through the room-centre hub when furniture is in the way.
+- `Animator` - crossfading state machine (`idle`, `walk`, `sit`, `lie`) producing a `Pose`.
+- `CharacterRig` - placeholder figure from primitives; only applies a transform + pose.
+
+`GameWorld.perform(action)` / `onCharacterEvent()` are the only ways in. Until the scheduler
+arrives (Iteration 2), `nextAmbientAction` in `packages/simulation` picks what to do next and
+the web layer passes it on - the renderer never decides.
+
 ### `packages/ai` - reasoning interfaces
 
 `CharacterAI.decide(context) → CharacterDecision`. `characterDecisionSchema` is the only output

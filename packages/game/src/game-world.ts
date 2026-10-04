@@ -12,6 +12,13 @@ import {
 	Vector3,
 	WebGLRenderer,
 } from 'three';
+import type { CharacterAction } from '@windowling/shared';
+import {
+	CharacterController,
+	type CharacterSnapshot,
+	type ControllerEvent,
+} from './character/controller.ts';
+import { CharacterRig } from './character/rig.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import { initPhysics, PhysicsWorld, type BodyHandle, type BodyTransform } from './physics.ts';
 import { buildRoom, type Room } from './room/build-room.ts';
@@ -52,6 +59,9 @@ export class GameWorld {
 		maxFrameTime: 0.25,
 	});
 	private readonly bodies: PhysicsMesh[] = [];
+	private readonly character = new CharacterController();
+	private readonly rig = new CharacterRig();
+	private readonly listeners = new Set<(event: ControllerEvent) => void>();
 	private readonly resizeObserver: ResizeObserver;
 	private frame = 0;
 	private lastTime = 0;
@@ -83,6 +93,8 @@ export class GameWorld {
 		this.room = buildRoom(this.physics);
 		this.scene.add(this.room.group);
 		this.addBall();
+		this.scene.add(this.rig.root);
+		this.rig.apply(this.character.snapshot(), this.character.animator.pose());
 
 		this.resizeObserver = new ResizeObserver(() => this.resize());
 		this.resizeObserver.observe(canvas);
@@ -101,6 +113,24 @@ export class GameWorld {
 
 	get status(): GameWorldStatus {
 		return this._status;
+	}
+
+	/**
+	 * Asks the character to carry out a high-level action. The decision is made
+	 * elsewhere (simulation); this only animates it. Returns false if impossible.
+	 */
+	perform(action: CharacterAction): boolean {
+		return this.character.perform(action);
+	}
+
+	/** Subscribes to action completion / rejection. Returns an unsubscribe function. */
+	onCharacterEvent(listener: (event: ControllerEvent) => void): () => void {
+		this.listeners.add(listener);
+		return () => this.listeners.delete(listener);
+	}
+
+	get characterState(): CharacterSnapshot {
+		return this.character.snapshot();
 	}
 
 	start(): void {
@@ -129,14 +159,22 @@ export class GameWorld {
 				for (const material of materials) material.dispose();
 			}
 		});
+		this.listeners.clear();
+		this.rig.dispose();
 		this.physics.dispose();
 		this.renderer.dispose();
 	}
 
 	private readonly tick = (now: number): void => {
 		if (this._status !== 'running') return;
-		const { steps, alpha } = this.accumulator.advance((now - this.lastTime) / 1000);
+		const frameSeconds = (now - this.lastTime) / 1000;
+		const { steps, alpha } = this.accumulator.advance(frameSeconds);
 		this.lastTime = now;
+
+		// Character runs on frame time (clamped so a background tab doesn't teleport it).
+		const events = this.character.update(Math.min(Math.max(frameSeconds, 0), 0.1));
+		this.rig.apply(this.character.snapshot(), this.character.animator.pose());
+		for (const event of events) for (const listener of this.listeners) listener(event);
 
 		for (let i = 0; i < steps; i++) {
 			this.physics.step();

@@ -11,6 +11,13 @@ test('app loads and the game canvas starts rendering', async ({ page }) => {
 	await expect(canvas).toBeVisible();
 	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
 
+	// The character starts doing something on its own - nobody asked it to.
+	await expect(canvas).toHaveAttribute(
+		'data-character-action',
+		/^(idle|(walkTo|sit|sleep):[a-z][a-z0-9_.-]*)$/,
+		{ timeout: 10_000 },
+	);
+
 	const box = await canvas.boundingBox();
 	const viewport = page.viewportSize();
 	expect(box?.width).toBe(viewport?.width);
