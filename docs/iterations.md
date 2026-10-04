@@ -5,8 +5,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 
 | #   | Name                              | Milestone outcome                                        | Status          |
 | --- | --------------------------------- | -------------------------------------------------------- | --------------- |
-| 0   | Foundation                        | Production-ready technical base                          | **in progress** |
-| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | planned         |
+| 0   | Foundation                        | Production-ready technical base                          | done            |
+| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | **in progress** |
 | 2   | Autonomous Activities             | The character does things without player input           | planned         |
 | 3   | Player Awareness                  | The player can watch unnoticed for a while               | planned         |
 | 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | planned         |
@@ -49,10 +49,10 @@ Definition of Done:
 - [x] CI: lint, format, typecheck, unit + DB integration tests, build, E2E (desktop + mobile)
 - [x] Deploy workflow (inert until secrets exist), release-please, Dependabot
 - [x] `.env.example`, env validation, README, CLAUDE.md, docs
-- [ ] First production deploy to windowling.com (needs Cloudflare + Neon accounts - see development.md)
-- [ ] Google OAuth credentials created and verified end-to-end
+- [x] First production deploy to windowling.com (Cloudflare Workers + Neon via Hyperdrive)
+- [x] Google OAuth credentials created and verified end-to-end
 
-## Iteration 1 – Room + Character (next)
+## Iteration 1 – Room + Character (in progress)
 
 One simple room, camera and lighting, placeholder character with idle / walk / sit, a basic
 animation system, resize and mobile/desktop rendering. Replaces the Iteration 0 crates scene.

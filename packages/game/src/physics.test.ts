@@ -37,3 +37,18 @@ describe('PhysicsWorld (headless Rapier)', () => {
 		physics.dispose();
 	});
 });
+
+describe('PhysicsWorld balls', () => {
+	beforeAll(async () => {
+		await initPhysics();
+	});
+
+	it('lets a ball settle on the floor', () => {
+		const physics = PhysicsWorld.create();
+		physics.addStaticBox({ x: 5, y: 0.1, z: 5 }, { x: 0, y: -0.1, z: 0 });
+		const ball = physics.addDynamicBall(0.1, { x: 0, y: 1, z: 0 });
+		for (let i = 0; i < 600; i++) physics.step();
+		expect(physics.getTransform(ball)!.position.y).toBeCloseTo(0.1, 1);
+		physics.dispose();
+	});
+});
