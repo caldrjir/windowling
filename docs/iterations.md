@@ -54,5 +54,12 @@ Definition of Done:
 
 ## Iteration 1 – Room + Character (in progress)
 
-One simple room, camera and lighting, placeholder character with idle / walk / sit, a basic
-animation system, resize and mobile/desktop rendering. Replaces the Iteration 0 crates scene.
+Definition of Done:
+
+- [x] One simple room (bed, sofa, desk + chair, lamp, rug, back window) - #8
+- [x] Camera framing for desktop landscape and mobile portrait, resize-safe - #8
+- [x] Lighting, real-time sky in the window - #8
+- [x] Furniture exposed as shared target ids with affordances - #8
+- [x] Placeholder character with idle / walk / sit / lie and crossfading animation system - #9
+- [x] Character driven only through `CharacterAction` (walk paths avoid furniture) - #9
+- [x] Placeholder ambient behaviour from the simulation package (replaced in Iteration 2)

@@ -17,6 +17,7 @@
 		"@windowling/database": "workspace:*",
 		"@windowling/game": "workspace:*",
 		"@windowling/shared": "workspace:*",
+		"@windowling/simulation": "workspace:*",
 		"better-auth": "^1.7.7",
 		"zod": "^4.6.5"
 	},
