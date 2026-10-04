@@ -11,8 +11,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 		// Visible in Workers Logs (observability). Driver errors carry no credentials.
 		const { name, message, code } = error as Error & { code?: string };
 		console.error('health: database unreachable', { name, code, message });
+		// Only the driver/Postgres error code is exposed (e.g. CONNECT_TIMEOUT, 28P01) - no
+		// messages, hosts or credentials - so deploy smoke tests can tell failures apart.
 		return json(
-			{ status: 'degraded', database: 'unreachable' },
+			{ status: 'degraded', database: 'unreachable', code: code ?? name },
 			{ status: 503, headers: { 'cache-control': 'no-store' } },
 		);
 	}
