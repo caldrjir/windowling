@@ -74,11 +74,20 @@ Convention: each completed iteration is at least one minor release.
 
 ## Environments
 
-| Env        | URL                                 | Database                         | Deploy                  |
-| ---------- | ----------------------------------- | -------------------------------- | ----------------------- |
-| local      | `http://localhost:5173`             | Docker Postgres                  | `pnpm dev`              |
-| preview    | (planned) per-PR Worker version URL | (planned) Neon branch per PR     | GitHub Actions          |
-| production | `https://windowling.com`            | Neon (optionally via Hyperdrive) | on green CI on `master` |
+| Env        | URL                                 | Database                            | Deploy                  |
+| ---------- | ----------------------------------- | ----------------------------------- | ----------------------- |
+| local      | `http://localhost:5173`             | Docker Postgres                     | `pnpm dev`              |
+| preview    | (planned) per-PR Worker version URL | Neon branch `preview/pr-<n>` (auto) | GitHub Actions          |
+| production | `https://windowling.com`            | Neon (optionally via Hyperdrive)    | on green CI on `master` |
+
+## Preview databases (Neon branches)
+
+`.github/workflows/neon-preview.yml` creates a Neon branch `preview/pr-<n>` for every PR
+(a copy-on-write fork of production data), applies the PR's migrations to it and posts a
+schema diff comment. The branch is deleted when the PR closes and expires after 14 days.
+Requires the secret `NEON_API_KEY` and variable `NEON_PROJECT_ID` (added by the Neon GitHub
+integration). Fork and Dependabot PRs are skipped (no secret access). A per-PR Worker preview
+using this database is tracked in the "Per-PR preview deployments" issue.
 
 ## Deployment
 

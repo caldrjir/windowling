@@ -1,0 +1,86 @@
+name: Neon preview database
+
+# Every PR gets its own Neon branch (copy-on-write fork of production), migrated
+# with this PR's migrations. Closing the PR deletes it. Branches also expire after
+# 14 days so the free-tier branch limit (10) is never exhausted by stale PRs.
+#
+# Requires: secret NEON_API_KEY and variable NEON_PROJECT_ID (set by the Neon GitHub integration).
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+concurrency:
+  group: neon-preview-${{ github.event.number }}
+  # Never cancel a delete; a newer push simply re-runs create (idempotent).
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NEON_BRANCH: preview/pr-${{ github.event.number }}
+
+jobs:
+  create:
+    name: Create & migrate Neon branch
+    # Fork and Dependabot PRs have no access to secrets.
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Compute expiration (14 days)
+        run: echo "EXPIRES_AT=$(date -u --date '+14 days' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+
+      - name: Create Neon branch
+        id: neon
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: ${{ env.NEON_BRANCH }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          expires_at: ${{ env.EXPIRES_AT }}
+
+      # Migrations use the direct (unpooled) connection, same as production deploys.
+      # Never echo the URL - it contains credentials.
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: pnpm db:migrate
+
+      - name: Post schema diff vs. production
+        uses: neondatabase/schema-diff-action@v1
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          compare_branch: ${{ env.NEON_BRANCH }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+  delete:
+    name: Delete Neon branch
+    if: >-
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: neondatabase/delete-branch-action@v3
+        # The branch may already be gone (expired after 14 days) - that's fine.
+        continue-on-error: true
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: ${{ env.NEON_BRANCH }}
+          api_key: ${{ secrets.NEON_API_KEY }}
