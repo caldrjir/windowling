@@ -14,7 +14,9 @@ export function acquireDatabase(
 	env: ServerEnv,
 	platform: App.Platform | undefined,
 ): { connection: DatabaseConnection; release: () => void } {
-	const url = platform?.env.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
+	// Dev server: always the local DATABASE_URL from .env. Workers: Hyperdrive when bound.
+	const hyperdrive = platform?.env.HYPERDRIVE?.connectionString;
+	const url = dev ? (env.DATABASE_URL ?? hyperdrive) : (hyperdrive ?? env.DATABASE_URL);
 	if (!url) {
 		throw new Error('No database configured: set DATABASE_URL or bind HYPERDRIVE.');
 	}
