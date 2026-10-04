@@ -108,7 +108,7 @@ First E2E run: `pnpm --filter @windowling/web exec playwright install chromium`.
 
 ## Deployment overview
 
-- `main` is production. Every push runs CI; when CI passes on `main`, the **Deploy** workflow
+- `master` is production. Every push runs CI; when CI passes on `master`, the **Deploy** workflow
   applies migrations to the production database and deploys the Worker to `windowling.com`.
 - Deploy stays inert until Cloudflare/Neon secrets are configured - see
   [`docs/development.md#deployment`](docs/development.md#deployment).

@@ -1,10 +1,10 @@
 name: Release
 
-# release-please reads Conventional Commits on main, keeps a release PR with
+# release-please reads Conventional Commits on master, keeps a release PR with
 # the next SemVer version + CHANGELOG, and tags the release when it is merged.
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: write
@@ -18,3 +18,4 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          target-branch: master

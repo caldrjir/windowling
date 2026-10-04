@@ -18,12 +18,12 @@ and point `DATABASE_URL` / `TEST_DATABASE_URL` at them.
 ## Daily workflow
 
 1. Pick (or create) an issue in the current milestone. Label it (`type:`, `area:`).
-2. Branch from `main`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`.
+2. Branch from `master`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`.
 3. Commit with [Conventional Commits](https://www.conventionalcommits.org/):
    `feat(game): add idle animation`, `fix(auth): keep world on link`.
 4. `pnpm check` before pushing (same as CI's quality job). Run `pnpm test:e2e` for UI/auth/server changes.
-5. Open a PR to `main`, title in Conventional Commit form, body `Closes #<issue>`.
-6. CI green → **squash merge**. `main` deploys to production automatically.
+5. Open a PR to `master`, title in Conventional Commit form, body `Closes #<issue>`.
+6. CI green → **squash merge**. `master` deploys to production automatically.
 
 ```
 Issue ─► feature branch ─► PR ─► CI ─► (preview) ─► squash merge ─► production
@@ -31,15 +31,15 @@ Issue ─► feature branch ─► PR ─► CI ─► (preview) ─► squash m
 
 ### Recommended GitHub settings (one-time, repo admin)
 
-- Default branch `main`; allow **squash merging** only; auto-delete head branches.
-- Branch protection / ruleset on `main`: require PR, require status checks
+- Default branch `master`; allow **squash merging** only; auto-delete head branches.
+- Branch protection / ruleset on `master`: require PR, require status checks
   `Lint · Typecheck · Test · Build`, `E2E (Playwright on workerd)`, `conventional-title`;
   block force pushes.
 - Environment `production` with the deploy secrets (optionally required reviewers).
 
 ## Versioning & releases
 
-SemVer, pre-1.0 while the foundation evolves. release-please watches `main`, keeps a
+SemVer, pre-1.0 while the foundation evolves. release-please watches `master`, keeps a
 "release PR" with the next version and `CHANGELOG.md`; merging it tags `vX.Y.Z` and creates a
 GitHub Release. `feat:` → minor, `fix:` → patch (pre-1.0, breaking changes bump minor).
 Convention: each completed iteration is at least one minor release.
@@ -74,11 +74,11 @@ Convention: each completed iteration is at least one minor release.
 
 ## Environments
 
-| Env        | URL                                 | Database                         | Deploy                |
-| ---------- | ----------------------------------- | -------------------------------- | --------------------- |
-| local      | `http://localhost:5173`             | Docker Postgres                  | `pnpm dev`            |
-| preview    | (planned) per-PR Worker version URL | (planned) Neon branch per PR     | GitHub Actions        |
-| production | `https://windowling.com`            | Neon (optionally via Hyperdrive) | on green CI on `main` |
+| Env        | URL                                 | Database                         | Deploy                  |
+| ---------- | ----------------------------------- | -------------------------------- | ----------------------- |
+| local      | `http://localhost:5173`             | Docker Postgres                  | `pnpm dev`              |
+| preview    | (planned) per-PR Worker version URL | (planned) Neon branch per PR     | GitHub Actions          |
+| production | `https://windowling.com`            | Neon (optionally via Hyperdrive) | on green CI on `master` |
 
 ## Deployment
 
@@ -105,7 +105,7 @@ One-time setup (requires accounts; free tiers are enough):
 6. Optional **Hyperdrive**: `wrangler hyperdrive create windowling --connection-string=...`,
    then uncomment the `hyperdrive` block in `apps/web/wrangler.jsonc`.
 
-After that, every green CI run on `main` migrates and deploys, then smoke-tests `/api/health`.
+After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.
 
 ## Troubleshooting

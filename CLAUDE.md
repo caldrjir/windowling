@@ -80,10 +80,10 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 ## Workflow
 
 - Work from a GitHub issue in the current iteration's milestone.
-- Branch from `main`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`.
+- Branch from `master`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`.
 - Conventional Commits (`feat(simulation): add hunger decay`). PRs are squash-merged; the
   PR title must be a Conventional Commit (CI checks it). release-please derives versions.
-- Run `pnpm check` before pushing. CI must be green before merge; `main` deploys to production.
+- Run `pnpm check` before pushing. CI must be green before merge; `master` deploys to production.
 - Update the relevant docs in the same PR when architecture, workflow or env vars change.
 
 ## Gotchas

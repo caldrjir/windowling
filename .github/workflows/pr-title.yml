@@ -1,6 +1,6 @@
 name: PR title
 
-# PRs are squash-merged, so the PR title becomes the commit on main.
+# PRs are squash-merged, so the PR title becomes the commit on master.
 # Enforcing Conventional Commits here keeps the changelog and versioning automatic.
 on:
   pull_request:
