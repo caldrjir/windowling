@@ -91,31 +91,36 @@ using this database is tracked in the "Per-PR preview deployments" issue.
 
 ## Deployment
 
-One-time setup (requires accounts; free tiers are enough):
+One-time setup (requires accounts; free tiers are enough). **All production secrets live in
+the GitHub environment `production`** - the Deploy workflow uploads the Worker's secrets with
+every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangler secret put`.
 
-1. **Neon**: create project `windowling` (Postgres 18, AWS Europe Central 1 - Frankfurt). Copy the
-   connection strings from _Connect_ (both with `?sslmode=require`):
-   - **pooled** (host contains `-pooler`) → Worker secret `DATABASE_URL`
-   - **direct** (no `-pooler`) → GitHub secret `PRODUCTION_DATABASE_URL`, used for migrations
-     (and as the Hyperdrive origin, if you use Hyperdrive instead of the pooler)
-2. **Cloudflare**: add zone `windowling.com` (DNS on Cloudflare). Create an API token with
-   _Workers Scripts: Edit_, _Workers Routes: Edit_, _Account Settings: Read_ (and _Hyperdrive:
-   Edit_ if used).
-3. **Worker secrets** (from `apps/web`):
-   ```bash
-   pnpm exec wrangler secret put DATABASE_URL
-   pnpm exec wrangler secret put BETTER_AUTH_SECRET
-   pnpm exec wrangler secret put GOOGLE_CLIENT_ID
-   pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET
-   ```
-   `BETTER_AUTH_URL` and `PUBLIC_APP_URL` are plain vars in `wrangler.jsonc`.
-4. **GitHub** → Settings → Environments → `production` secrets:
-   `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `PRODUCTION_DATABASE_URL`.
-5. **Google Cloud Console** → OAuth client (Web): authorized origins `https://windowling.com`,
+1. **Neon**: project `windowling` (Postgres 18, AWS Europe Central 1 - Frankfurt). From
+   _Connect_, copy both connection strings (keep only `?sslmode=require` as query):
+   - **direct** (connection pooling off) → `PRODUCTION_DATABASE_URL` (migrations)
+   - **pooled** (connection pooling on, host contains `-pooler`) → `WORKER_DATABASE_URL`
+2. **Cloudflare**: add the domain `windowling.com` (Free plan) and switch the registrar's
+   nameservers to Cloudflare's. Create an API token from the _Edit Cloudflare Workers_
+   template, scoped to your account and the `windowling.com` zone.
+3. **GitHub** → Settings → Environments → `production` → environment secrets:
+
+   | Secret                    | Value                                                 |
+   | ------------------------- | ----------------------------------------------------- |
+   | `PRODUCTION_DATABASE_URL` | Neon direct connection string                         |
+   | `WORKER_DATABASE_URL`     | Neon pooled connection string                         |
+   | `BETTER_AUTH_SECRET`      | `openssl rand -base64 32` (never reuse the local one) |
+   | `CLOUDFLARE_API_TOKEN`    | token from step 2                                     |
+   | `CLOUDFLARE_ACCOUNT_ID`   | Cloudflare dashboard → Workers & Pages → Account ID   |
+   | `GOOGLE_CLIENT_ID`        | optional, step 4                                      |
+   | `GOOGLE_CLIENT_SECRET`    | optional, step 4                                      |
+
+   `BETTER_AUTH_URL` and `PUBLIC_APP_URL` are plain vars in `apps/web/wrangler.jsonc`.
+
+4. **Google Cloud Console** → OAuth client (Web): authorized origins `https://windowling.com`,
    `http://localhost:5173`; redirect URIs `https://windowling.com/api/auth/callback/google`,
    `http://localhost:5173/api/auth/callback/google`.
-6. Optional **Hyperdrive**: `wrangler hyperdrive create windowling --connection-string=...`,
-   then uncomment the `hyperdrive` block in `apps/web/wrangler.jsonc`.
+5. Optional **Hyperdrive** (instead of the Neon pooler): create a config with the direct
+   connection string, then uncomment the `hyperdrive` block in `apps/web/wrangler.jsonc`.
 
 After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.

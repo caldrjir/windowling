@@ -15,7 +15,8 @@
 		"BETTER_AUTH_URL": "https://windowling.com",
 	},
 	// Secrets (never in this file): DATABASE_URL, BETTER_AUTH_SECRET,
-	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET -> `wrangler secret put <NAME>`.
+	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET - uploaded by the Deploy workflow from the
+	// GitHub `production` environment (see docs/development.md#deployment).
 	"routes": [{ "pattern": "windowling.com", "custom_domain": true }],
 	// Optional connection pooling in front of Neon. When the binding exists,
 	// it takes precedence over DATABASE_URL.

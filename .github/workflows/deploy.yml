@@ -2,6 +2,8 @@ name: Deploy
 
 # Production deploy after CI has passed on master.
 # Inert until the repository has the CLOUDFLARE_API_TOKEN secret (see docs/development.md).
+# All production secrets live in the GitHub `production` environment; this workflow
+# uploads them to the Worker together with each new version (single source of truth).
 on:
   workflow_run:
     workflows: [CI]
@@ -54,13 +56,40 @@ jobs:
           BETTER_AUTH_URL: https://windowling.com
           PUBLIC_APP_URL: https://windowling.com
         run: pnpm build
+      - name: Prepare worker secrets
+        if: env.HAS_CLOUDFLARE == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        # Written as JSON (no shell/dotenv quoting pitfalls) to a private temp file; never printed.
+        run: |
+          umask 077
+          node -e '
+            const required = ["DATABASE_URL", "BETTER_AUTH_SECRET"];
+            const missing = required.filter((k) => !process.env[k]);
+            if (missing.length) {
+              console.error("::error::Missing production secrets: " + missing.map((k) => k === "DATABASE_URL" ? "WORKER_DATABASE_URL" : k).join(", "));
+              process.exit(1);
+            }
+            const secrets = Object.fromEntries(
+              [...required, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]
+                .filter((k) => process.env[k])
+                .map((k) => [k, process.env[k]]),
+            );
+            require("node:fs").writeFileSync(process.argv[1], JSON.stringify(secrets));
+          ' "$RUNNER_TEMP/worker-secrets.json"
       - name: Deploy worker
         if: env.HAS_CLOUDFLARE == 'true'
         working-directory: apps/web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: pnpm exec wrangler deploy
+        run: pnpm exec wrangler deploy --secrets-file "$RUNNER_TEMP/worker-secrets.json"
+      - name: Remove secrets file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/worker-secrets.json"
       - name: Smoke test
         if: env.HAS_CLOUDFLARE == 'true'
         run: |
