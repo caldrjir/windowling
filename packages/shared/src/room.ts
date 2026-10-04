@@ -1,0 +1,44 @@
+import type { CharacterActionType } from './character-action.ts';
+
+/**
+ * What the character can do at a place in the room. The simulation decides
+ * *whether* to use a target; the renderer only knows *where* it is.
+ */
+export type TargetAffordance = 'stand' | 'sit' | 'sleep';
+
+export interface RoomTarget {
+	id: string;
+	affordances: readonly TargetAffordance[];
+}
+
+/**
+ * The starter flat (Iteration 1). Ids are stable contracts: renaming one is a
+ * breaking change for saved state and AI prompts.
+ */
+export const STARTER_ROOM_TARGETS = [
+	{ id: 'room.center', affordances: ['stand'] },
+	// The window the player looks through (the screen / the phone glass).
+	{ id: 'window', affordances: ['stand'] },
+	{ id: 'sofa', affordances: ['sit'] },
+	{ id: 'desk.chair', affordances: ['sit'] },
+	{ id: 'bed', affordances: ['sit', 'sleep'] },
+] as const satisfies readonly RoomTarget[];
+
+export type StarterRoomTargetId = (typeof STARTER_ROOM_TARGETS)[number]['id'];
+
+const AFFORDANCE_FOR_ACTION: Partial<Record<CharacterActionType, TargetAffordance>> = {
+	walkTo: 'stand',
+	sit: 'sit',
+	sleep: 'sleep',
+};
+
+/** True when `actionType` can be performed at `targetId` in the starter room. */
+export function targetSupports(targetId: string, actionType: CharacterActionType): boolean {
+	const required = AFFORDANCE_FOR_ACTION[actionType];
+	if (!required) return false;
+	const target = STARTER_ROOM_TARGETS.find((t) => t.id === targetId);
+	if (!target) return false;
+	// Walking up to something is always possible, even if you can't stand *on* it.
+	if (actionType === 'walkTo') return true;
+	return (target.affordances as readonly TargetAffordance[]).includes(required);
+}

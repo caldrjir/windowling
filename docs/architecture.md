@@ -48,7 +48,8 @@ Server request lifecycle (`src/hooks.server.ts`):
 ### `packages/shared` - contracts
 
 zod schemas and types used across packages: `AwarenessState`, `CharacterAction` (closed
-union), `WorldSummary` (API shape). Only things that are genuinely shared. Not a utils bin.
+union), `WorldSummary` (API shape), `STARTER_ROOM_TARGETS` (target ids + affordances: what can be
+done where - the simulation decides with these, the renderer owns their positions). Only things that are genuinely shared. Not a utils bin.
 
 ### `packages/simulation` - the life engine (headless)
 
@@ -65,7 +66,9 @@ Iteration 0 provides:
 `requestAnimationFrame` loop with a fixed-timestep accumulator (physics at 60 Hz, render
 interpolated). Exposes imperative primitives (later `walkTo`, `lookAt`, `playAnimation`,
 `applyImpulse`). Gravity is mutable so phone tilt can drive it later. Pauses when the tab is
-hidden. Iteration 0 renders a placeholder floor with falling crates.
+hidden. Since Iteration 1 it renders the starter flat (`src/room/`): procedural furniture,
+real-time sky in the back window, lighting, static colliders, and `frameRoom(aspect)` which keeps
+the whole room in view from ultrawide desktops to portrait phones (higher angle on phones).
 
 ### `packages/ai` - reasoning interfaces
 

@@ -74,6 +74,20 @@ export class PhysicsWorld {
 		return body.handle;
 	}
 
+	addDynamicBall(radius: number, position: Vec3): BodyHandle {
+		const body = this.world.createRigidBody(
+			RAPIER.RigidBodyDesc.dynamic()
+				.setTranslation(position.x, position.y, position.z)
+				.setLinearDamping(0.4)
+				.setAngularDamping(0.4),
+		);
+		this.world.createCollider(
+			RAPIER.ColliderDesc.ball(radius).setRestitution(0.5).setFriction(0.6).setDensity(0.3),
+			body,
+		);
+		return body.handle;
+	}
+
 	applyImpulse(handle: BodyHandle, impulse: Vec3): void {
 		this.world.getRigidBody(handle)?.applyImpulse(impulse, true);
 	}
