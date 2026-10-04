@@ -1,6 +1,7 @@
 import { building } from '$app/environment';
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { createAuth } from '$lib/server/auth';
+import { canonicalRedirectUrl } from '$lib/server/canonical-host';
 import { getServerEnv } from '$lib/server/config';
 import { acquireDatabase } from '$lib/server/db';
 
@@ -15,6 +16,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (building) return resolve(event);
 
 	const env = getServerEnv();
+
+	const canonical = canonicalRedirectUrl(event.url, env.PUBLIC_APP_URL);
+	if (canonical) return new Response(null, { status: 301, headers: { location: canonical } });
+
 	const { connection, release } = acquireDatabase(env, event.platform);
 	try {
 		const auth = createAuth(connection.db, env);
