@@ -1,0 +1,99 @@
+name: Deploy
+
+# Production deploy after CI has passed on master.
+# Inert until the repository has the CLOUDFLARE_API_TOKEN secret (see docs/development.md).
+# All production secrets live in the GitHub `production` environment; this workflow
+# uploads them to the Worker together with each new version (single source of truth).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    name: Migrate & deploy to windowling.com
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://windowling.com
+    env:
+      HAS_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    steps:
+      - name: Skip when Cloudflare is not configured
+        if: env.HAS_CLOUDFLARE != 'true'
+        run: echo "::notice::CLOUDFLARE_API_TOKEN is not set - skipping deploy."
+      - uses: actions/checkout@v5
+        if: env.HAS_CLOUDFLARE == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: pnpm/action-setup@v4
+        if: env.HAS_CLOUDFLARE == 'true'
+      - uses: actions/setup-node@v5
+        if: env.HAS_CLOUDFLARE == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: env.HAS_CLOUDFLARE == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Apply database migrations
+        if: env.HAS_CLOUDFLARE == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: pnpm db:migrate
+      - name: Build
+        if: env.HAS_CLOUDFLARE == 'true'
+        env:
+          BETTER_AUTH_URL: https://windowling.com
+          PUBLIC_APP_URL: https://windowling.com
+        run: pnpm build
+      - name: Prepare worker secrets
+        if: env.HAS_CLOUDFLARE == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        # Written as JSON (no shell/dotenv quoting pitfalls) to a private temp file; never printed.
+        run: |
+          umask 077
+          node -e '
+            const required = ["DATABASE_URL", "BETTER_AUTH_SECRET"];
+            const missing = required.filter((k) => !process.env[k]);
+            if (missing.length) {
+              console.error("::error::Missing production secrets: " + missing.map((k) => k === "DATABASE_URL" ? "WORKER_DATABASE_URL" : k).join(", "));
+              process.exit(1);
+            }
+            const secrets = Object.fromEntries(
+              [...required, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]
+                .filter((k) => process.env[k])
+                .map((k) => [k, process.env[k]]),
+            );
+            require("node:fs").writeFileSync(process.argv[1], JSON.stringify(secrets));
+          ' "$RUNNER_TEMP/worker-secrets.json"
+      - name: Deploy worker
+        if: env.HAS_CLOUDFLARE == 'true'
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: pnpm exec wrangler deploy --secrets-file "$RUNNER_TEMP/worker-secrets.json"
+      - name: Remove secrets file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/worker-secrets.json"
+      - name: Smoke test
+        if: env.HAS_CLOUDFLARE == 'true'
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -fsS https://windowling.com/api/health && exit 0
+            sleep 10
+          done
+          exit 1

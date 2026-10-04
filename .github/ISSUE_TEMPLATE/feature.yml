@@ -1,0 +1,30 @@
+name: Feature
+description: A capability for a specific iteration
+labels: ['type: feature']
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should the player experience? How does it serve "what is it doing right now?"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is in, and explicitly out
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: '- [ ] ...'
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Technical notes
+      description: Affected packages, risks, open questions

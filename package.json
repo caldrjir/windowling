@@ -1,0 +1,41 @@
+{
+	"name": "windowling",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"packageManager": "pnpm@10.28.0",
+	"engines": {
+		"node": ">=22.12"
+	},
+	"scripts": {
+		"dev": "pnpm --filter @windowling/web dev",
+		"build": "pnpm --filter @windowling/web build",
+		"preview": "pnpm --filter @windowling/web preview",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"typecheck": "pnpm -r --parallel run typecheck",
+		"test": "pnpm -r run test",
+		"test:e2e": "pnpm --filter @windowling/web test:e2e",
+		"check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
+		"db:generate": "pnpm --filter @windowling/database db:generate",
+		"db:migrate": "pnpm --filter @windowling/database db:migrate",
+		"db:studio": "pnpm --filter @windowling/database db:studio"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/node": "^22.20.5",
+		"eslint": "^10.12.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.23.0",
+		"globals": "^17.13.0",
+		"prettier": "^3.9.9",
+		"prettier-plugin-svelte": "^4.1.1",
+		"prettier-plugin-tailwindcss": "^0.8.1",
+		"svelte": "^5.57.1",
+		"typescript": "~5.9.3",
+		"typescript-eslint": "^8.71.0",
+		"vitest": "^5.0.3"
+	}
+}

@@ -1,0 +1,11 @@
+node_modules
+.svelte-kit
+build
+dist
+.wrangler
+coverage
+test-results
+playwright-report
+pnpm-lock.yaml
+packages/database/drizzle/meta
+apps/web/src/worker-configuration.d.ts

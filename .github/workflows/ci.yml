@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  DATABASE_URL: postgres://windowling:windowling@localhost:5432/windowling
+  TEST_DATABASE_URL: postgres://windowling:windowling@localhost:5432/windowling_test
+  # Placeholders so the build can validate config; never real secrets.
+  BETTER_AUTH_SECRET: ci-only-secret-0123456789-abcdefghijklmnopqrstuvwxyz
+  BETTER_AUTH_URL: http://localhost:5173
+  PUBLIC_APP_URL: http://localhost:5173
+
+jobs:
+  quality:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: windowling
+          POSTGRES_PASSWORD: windowling
+          POSTGRES_DB: windowling_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U windowling"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Format
+        run: pnpm format:check
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Migrations are up to date with the schema
+        run: |
+          pnpm db:generate --name ci-drift-check
+          if [ -n "$(git status --porcelain packages/database/drizzle)" ]; then
+            echo "::error::Drizzle schema changed without a migration. Run 'pnpm db:generate' and commit the result."
+            git status --porcelain packages/database/drizzle
+            exit 1
+          fi
+      - name: Unit & integration tests
+        run: pnpm test
+      - name: Build (Cloudflare)
+        run: pnpm build
+      - name: Worker bundle dry run
+        run: pnpm --filter @windowling/web exec wrangler deploy --dry-run --outdir dist-worker
+
+  e2e:
+    name: E2E (Playwright on workerd)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: windowling
+          POSTGRES_PASSWORD: windowling
+          POSTGRES_DB: windowling
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U windowling"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        run: pnpm db:migrate
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install Playwright Chromium
+        run: pnpm --filter @windowling/web exec playwright install --with-deps chromium
+      - name: Run E2E
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

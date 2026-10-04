@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: windowling
+      POSTGRES_PASSWORD: windowling
+      POSTGRES_DB: windowling
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18+ images keep data in a versioned subdirectory; mount the parent.
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U windowling -d windowling']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

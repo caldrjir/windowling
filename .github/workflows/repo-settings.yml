@@ -1,0 +1,53 @@
+name: Sync labels & milestones
+
+# Labels and milestones are managed as code in .github/labels.json and
+# .github/milestones.json. Existing items are updated, new ones created;
+# nothing is ever deleted automatically.
+on:
+  push:
+    paths:
+      - .github/labels.json
+      - .github/milestones.json
+      - .github/workflows/repo-settings.yml
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const { owner, repo } = context.repo;
+
+            const labels = JSON.parse(fs.readFileSync('.github/labels.json', 'utf8'));
+            const existingLabels = await github.paginate(github.rest.issues.listLabelsForRepo, { owner, repo, per_page: 100 });
+            for (const label of labels) {
+              const found = existingLabels.find((l) => l.name.toLowerCase() === label.name.toLowerCase());
+              if (found) {
+                await github.rest.issues.updateLabel({ owner, repo, name: found.name, new_name: label.name, color: label.color, description: label.description });
+                core.info(`updated label ${label.name}`);
+              } else {
+                await github.rest.issues.createLabel({ owner, repo, ...label });
+                core.info(`created label ${label.name}`);
+              }
+            }
+
+            const milestones = JSON.parse(fs.readFileSync('.github/milestones.json', 'utf8'));
+            const existingMilestones = await github.paginate(github.rest.issues.listMilestones, { owner, repo, state: 'all', per_page: 100 });
+            for (const milestone of milestones) {
+              const found = existingMilestones.find((m) => m.title === milestone.title);
+              if (found) {
+                await github.rest.issues.updateMilestone({ owner, repo, milestone_number: found.number, description: milestone.description });
+                core.info(`updated milestone ${milestone.title}`);
+              } else {
+                await github.rest.issues.createMilestone({ owner, repo, title: milestone.title, description: milestone.description });
+                core.info(`created milestone ${milestone.title}`);
+              }
+            }
