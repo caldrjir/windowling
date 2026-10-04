@@ -1,0 +1,53 @@
+[
+	{ "name": "type: feature", "color": "1d76db", "description": "New user-facing capability" },
+	{ "name": "type: bug", "color": "d73a4a", "description": "Something is broken" },
+	{ "name": "type: chore", "color": "c5def5", "description": "Maintenance, tooling, dependencies" },
+	{ "name": "type: docs", "color": "0075ca", "description": "Documentation only" },
+	{
+		"name": "type: research",
+		"color": "d4c5f9",
+		"description": "Spike or investigation, output is a decision"
+	},
+	{
+		"name": "area: web",
+		"color": "fbca04",
+		"description": "apps/web - SvelteKit shell, routes, UI"
+	},
+	{
+		"name": "area: game",
+		"color": "f9d0c4",
+		"description": "packages/game - renderer, physics, animation"
+	},
+	{
+		"name": "area: simulation",
+		"color": "0e8a16",
+		"description": "packages/simulation - autonomous life"
+	},
+	{ "name": "area: ai", "color": "5319e7", "description": "packages/ai - LLM, STT, TTS, vision" },
+	{
+		"name": "area: database",
+		"color": "006b75",
+		"description": "packages/database - schema, migrations"
+	},
+	{
+		"name": "area: auth",
+		"color": "b60205",
+		"description": "Better Auth, sessions, account linking"
+	},
+	{ "name": "area: infra", "color": "bfd4f2", "description": "CI/CD, Cloudflare, environments" },
+	{ "name": "area: pwa", "color": "c2e0c6", "description": "Installability, mobile shell" },
+	{ "name": "priority: high", "color": "b60205", "description": "Blocks the current iteration" },
+	{ "name": "priority: low", "color": "e4e669", "description": "Nice to have" },
+	{
+		"name": "needs decision",
+		"color": "ff7619",
+		"description": "Waiting for a product/tech decision"
+	},
+	{ "name": "blocked", "color": "000000", "description": "Cannot progress, see comments" },
+	{
+		"name": "north star",
+		"color": "fef2c0",
+		"description": "Directly serves 'what is it doing right now?'"
+	},
+	{ "name": "dependencies", "color": "0366d6", "description": "Dependency updates" }
+]

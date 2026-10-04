@@ -1,0 +1,86 @@
+[
+	{
+		"title": "Iteration 0 – Foundation",
+		"description": "Production-ready technical base: monorepo, SvelteKit, DB, auth, PWA, CI, docs."
+	},
+	{
+		"title": "Iteration 1 – Room + Character",
+		"description": "A simple living space with a placeholder character: idle, walk, sit, animation system."
+	},
+	{
+		"title": "Iteration 2 – Autonomous Activities",
+		"description": "Sleep, eat, work, gaming; time, hunger, energy, mood; basic scheduler. The character acts without input."
+	},
+	{
+		"title": "Iteration 3 – Player Awareness",
+		"description": "UNKNOWN/SUSPECTED/DETECTED/INTERACTING/IGNORING; the player can watch unnoticed."
+	},
+	{
+		"title": "Iteration 4 – Voice + Local LLM",
+		"description": "Ollama, controlled decision schema, STT, TTS, subtitles, basic lip sync."
+	},
+	{
+		"title": "Iteration 5 – Memory + Relationship",
+		"description": "Short-term, episodic, semantic and relationship memory with relevant retrieval."
+	},
+	{
+		"title": "Iteration 6 – Mobile Sensors",
+		"description": "Orientation, motion, shake, mobile gravity, physical room reactions."
+	},
+	{
+		"title": "Iteration 7 – Rich Autonomous Life",
+		"description": "Music, TV, cooking, cleaning, exercise, calls, shower, parties and more."
+	},
+	{
+		"title": "Iteration 8 – Emergent Moments",
+		"description": "Behaviour combinations, embarrassment, contextual reactions, remembered awkward moments."
+	},
+	{
+		"title": "Iteration 9 – Economy",
+		"description": "Job, income, expenses, budget, money entrusted to the player."
+	},
+	{
+		"title": "Iteration 10 – Shopping + Physical Progression",
+		"description": "Shop; items arrive physically, get unpacked and used."
+	},
+	{
+		"title": "Iteration 11 – Career",
+		"description": "Skills, opportunities, equipment requirements, autonomous career decisions."
+	},
+	{
+		"title": "Iteration 12 – Social World",
+		"description": "Abstract NPCs: friends, coworkers, online friends, neighbours."
+	},
+	{
+		"title": "Iteration 13 – Dating",
+		"description": "Attraction, dating, relationship development, breakups."
+	},
+	{
+		"title": "Iteration 14 – Physical NPC Visits",
+		"description": "Selected NPCs visit physically; shared activities and conflicts."
+	},
+	{
+		"title": "Iteration 15 – Multiplayer Bridge",
+		"description": "Paired players get a bridge; characters decide whether to cross."
+	},
+	{
+		"title": "Iteration 16 – Multi-device Physical Interaction",
+		"description": "Characters walk between physically adjacent phones."
+	},
+	{
+		"title": "Iteration 17 – Parties and Group Interaction",
+		"description": "Multiple NPCs in one household, each with own memory."
+	},
+	{
+		"title": "Iteration 18 – Partner",
+		"description": "Partner as a persistent household member with own needs and goals."
+	},
+	{
+		"title": "Iteration 19 – Family",
+		"description": "Shared household, children, changed priorities and finances."
+	},
+	{
+		"title": "Iteration 20 – Long-term Life Progression",
+		"description": "Aging, moving, changing careers, relationships, goals and preferences."
+	}
+]
