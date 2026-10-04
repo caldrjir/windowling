@@ -1,0 +1,23 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "windowling",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2026-09-01",
+	// postgres.js needs Node's net/tls APIs (served by Workers TCP sockets).
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare",
+	},
+	"observability": { "enabled": true },
+	"vars": {
+		"PUBLIC_APP_URL": "https://windowling.com",
+		"BETTER_AUTH_URL": "https://windowling.com",
+	},
+	// Secrets (never in this file): DATABASE_URL, BETTER_AUTH_SECRET,
+	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET -> `wrangler secret put <NAME>`.
+	"routes": [{ "pattern": "windowling.com", "custom_domain": true }],
+	// Optional connection pooling in front of Neon. When the binding exists,
+	// it takes precedence over DATABASE_URL.
+	// "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<hyperdrive-config-id>" }],
+}
