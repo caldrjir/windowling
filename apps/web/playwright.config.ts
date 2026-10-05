@@ -10,6 +10,8 @@ try {
 
 const PORT = 8787;
 // 127.0.0.1 rather than localhost: wrangler dev rewrites the request host to it.
+// Without --local-upstream it would rewrite Host/Origin to the production route
+// (windowling.com) and Better Auth would reject cookie-carrying requests as cross-origin.
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 const databaseUrl = process.env.E2E_DATABASE_URL ?? process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('E2E needs DATABASE_URL (or E2E_DATABASE_URL).');
@@ -51,7 +53,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm build && pnpm exec wrangler dev --port ${PORT} --ip 127.0.0.1 ${varFlags}`,
+		command: `pnpm build && pnpm exec wrangler dev --port ${PORT} --ip 127.0.0.1 --local-upstream 127.0.0.1:${PORT} ${varFlags}`,
 		url: `${BASE_URL}/api/health`,
 		reuseExistingServer: !process.env.CI,
 		// The Worker reaches Postgres through the Hyperdrive binding; point its local stand-in

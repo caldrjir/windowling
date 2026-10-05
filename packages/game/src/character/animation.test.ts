@@ -45,4 +45,44 @@ describe('Animator', () => {
 		settle(a, 1);
 		expect(a.pose().lie).toBe(1);
 	});
+
+	it('layers activities on top of the body and fades them in', () => {
+		const a = new Animator();
+		a.setState('sit');
+		a.setActivity('play');
+		a.update(1 / 60);
+		expect(a.activityWeight('play')).toBeLessThan(0.2);
+		settle(a, 1);
+		const pose = a.pose();
+		expect(a.activityWeight('play')).toBe(1);
+		expect(pose.handheld).toBe(1);
+		expect(pose.bowl).toBe(0);
+		expect(pose.armForward).toBeGreaterThan(0.5);
+		expect(pose.hipFlex).toBeCloseTo(Math.PI / 2, 2);
+	});
+
+	it('brings food to the mouth now and then while eating', () => {
+		const a = new Animator();
+		a.setActivity('eat');
+		let maxLift = 0;
+		let minLift = 1;
+		for (let i = 0; i < 60 * 8; i++) {
+			a.update(1 / 60);
+			if (i > 60) {
+				maxLift = Math.max(maxLift, a.pose().handToMouth);
+				minLift = Math.min(minLift, a.pose().handToMouth);
+			}
+		}
+		expect(maxLift).toBeGreaterThan(0.9);
+		expect(minLift).toBeLessThan(0.05);
+	});
+
+	it('slumps and looks down when sad', () => {
+		const happy = new Animator();
+		const sad = new Animator();
+		happy.setMood(0.9);
+		sad.setMood(0.1);
+		expect(sad.pose().slump).toBeGreaterThan(happy.pose().slump);
+		expect(sad.pose().headPitch).toBeGreaterThan(happy.pose().headPitch);
+	});
 });

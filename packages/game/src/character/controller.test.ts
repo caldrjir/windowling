@@ -100,6 +100,70 @@ describe('CharacterController', () => {
 		]);
 	});
 
+	it('eats standing at the kitchen counter, with a bowl in hand', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'eat', target: 'kitchen.counter' });
+		expect(c.snapshot().activity).toBe('none');
+		const events = run(c, 12);
+		const s = c.snapshot();
+		expect(events).toContainEqual({
+			type: 'completed',
+			action: { type: 'eat', target: 'kitchen.counter' },
+		});
+		expect(s).toMatchObject({ posture: 'standing', activity: 'eat' });
+		expect(s.x).toBeCloseTo(TARGETS['kitchen.counter'].approach.x, 3);
+		expect(wrapAngle(s.yaw - TARGETS['kitchen.counter'].approachYaw)).toBeCloseTo(0, 2);
+		run(c, 1);
+		expect(c.animator.pose().bowl).toBe(1);
+	});
+
+	it('works sitting at the desk and plays sitting on the sofa', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'work', target: 'desk.chair' });
+		run(c, 12);
+		expect(c.snapshot()).toMatchObject({
+			posture: 'sitting',
+			occupying: 'desk.chair',
+			activity: 'work',
+		});
+		c.perform({ type: 'play', target: 'sofa' });
+		run(c, 0.1);
+		expect(c.snapshot().activity).toBe('none'); // stops typing before getting up
+		run(c, 15);
+		expect(c.snapshot()).toMatchObject({ posture: 'sitting', occupying: 'sofa', activity: 'play' });
+	});
+
+	it('switches activity in place without standing up', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'sit', target: 'desk.chair' });
+		run(c, 12);
+		c.perform({ type: 'work', target: 'desk.chair' });
+		const events = run(c, 1 / 60);
+		expect(events).toEqual([{ type: 'completed', action: { type: 'work', target: 'desk.chair' } }]);
+		expect(c.snapshot()).toMatchObject({ posture: 'sitting', activity: 'work' });
+	});
+
+	it('rejects activities at places that do not support them', () => {
+		const c = new CharacterController();
+		expect(c.perform({ type: 'work', target: 'sofa' })).toBe(false);
+		expect(c.perform({ type: 'eat', target: 'bed' })).toBe(false);
+	});
+
+	it('walks slower when sad', () => {
+		const timeTo = (mood: number) => {
+			const c = new CharacterController();
+			c.setMood(mood);
+			c.perform({ type: 'walkTo', target: 'window' });
+			let t = 0;
+			while (c.snapshot().busy && t < 20) {
+				c.update(1 / 60);
+				t += 1 / 60;
+			}
+			return t;
+		};
+		expect(timeTo(0.1)).toBeGreaterThan(timeTo(0.9) * 1.2);
+	});
+
 	it('turns to face the player on lookAtPlayer', () => {
 		const c = new CharacterController(TARGETS['room.center'].approach, Math.PI);
 		c.perform({ type: 'lookAtPlayer' });

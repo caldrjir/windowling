@@ -6,8 +6,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | #   | Name                              | Milestone outcome                                        | Status          |
 | --- | --------------------------------- | -------------------------------------------------------- | --------------- |
 | 0   | Foundation                        | Production-ready technical base                          | done            |
-| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | **in progress** |
-| 2   | Autonomous Activities             | The character does things without player input           | planned         |
+| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done            |
+| 2   | Autonomous Activities             | The character does things without player input           | **in progress** |
 | 3   | Player Awareness                  | The player can watch unnoticed for a while               | planned         |
 | 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | planned         |
 | 5   | Memory + Relationship             | Past events influence present behaviour                  | planned         |
@@ -52,7 +52,7 @@ Definition of Done:
 - [x] First production deploy to windowling.com (Cloudflare Workers + Neon via Hyperdrive)
 - [x] Google OAuth credentials created and verified end-to-end
 
-## Iteration 1 – Room + Character (in progress)
+## Iteration 1 – Room + Character
 
 Definition of Done:
 
@@ -63,3 +63,17 @@ Definition of Done:
 - [x] Placeholder character with idle / walk / sit / lie and crossfading animation system - #9
 - [x] Character driven only through `CharacterAction` (walk paths avoid furniture) - #9
 - [x] Placeholder ambient behaviour from the simulation package (replaced in Iteration 2)
+
+## Iteration 2 – Autonomous Activities (in progress)
+
+**Goal:** the character does things even when the player does nothing.
+
+Definition of Done:
+
+- [x] Real local time in the device time zone (`world.timezone`, decision #10) - #21
+- [x] Needs: hunger, energy, mood (0..1, never shown as numbers) - #20
+- [x] Activities: sleep, eat, work, gaming, idle with need effects and duration rules - #20
+- [x] Basic scheduler: utility scores from needs x time of day x weekday, deterministic per world - #20
+- [x] Offline catch-up lives the missed hours (max 14 days) and persists needs + activity - #21
+- [x] Kitchenette; eating, working, gaming, sleeping shown through behaviour; mood in pace/posture - #22
+- [x] The page follows the simulation: asks the server for the next activity when one ends - #22

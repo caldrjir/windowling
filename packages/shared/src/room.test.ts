@@ -19,6 +19,14 @@ describe('starter room targets', () => {
 		expect(targetSupports('sofa', 'sleep')).toBe(false);
 	});
 
+	it('knows where to eat, work and play', () => {
+		expect(targetSupports('kitchen.counter', 'eat')).toBe(true);
+		expect(targetSupports('desk.chair', 'work')).toBe(true);
+		expect(targetSupports('sofa', 'play')).toBe(true);
+		expect(targetSupports('sofa', 'work')).toBe(false);
+		expect(targetSupports('bed', 'eat')).toBe(false);
+	});
+
 	it('allows walking to any known target but not unknown ones', () => {
 		expect(targetSupports('bed', 'walkTo')).toBe(true);
 		expect(targetSupports('fridge', 'walkTo')).toBe(false);

@@ -1,4 +1,13 @@
-import { createInitialCharacter, planCatchUp } from '@windowling/simulation';
+import { activitySchema } from '@windowling/shared';
+import {
+	advanceLife,
+	createInitialCharacter,
+	DEFAULT_TIME_ZONE,
+	isValidTimeZone,
+	planCatchUp,
+	startLife,
+	type LifeState,
+} from '@windowling/simulation';
 import { and, eq, lt } from 'drizzle-orm';
 import type { Database } from './client.ts';
 import { character, world } from './schema/index.ts';
@@ -8,33 +17,82 @@ export interface WorldRecord {
 	userId: string;
 	createdAt: Date;
 	lastSimulatedAt: Date;
-	character: { id: string; name: string };
+	/** IANA zone of the player's device. */
+	timeZone: string;
+	character: { id: string; name: string; life: LifeState };
+}
+
+const worldColumns = {
+	id: world.id,
+	userId: world.userId,
+	createdAt: world.createdAt,
+	lastSimulatedAt: world.lastSimulatedAt,
+	timeZone: world.timezone,
+	characterId: character.id,
+	characterName: character.name,
+	hunger: character.hunger,
+	energy: character.energy,
+	mood: character.mood,
+	activity: character.activity,
+	activityStartedAt: character.activityStartedAt,
+	activityEndsAt: character.activityEndsAt,
+};
+
+type WorldRow = {
+	[K in keyof typeof worldColumns]: (typeof worldColumns)[K]['_']['data'];
+};
+
+function toRecord(row: WorldRow): WorldRecord {
+	// Rows written by an older/newer release may carry an activity we don't know:
+	// treat it as finished so the next catch-up decides again.
+	const activity = activitySchema.safeParse(row.activity);
+	const timeZone = isValidTimeZone(row.timeZone) ? row.timeZone : DEFAULT_TIME_ZONE;
+	return {
+		id: row.id,
+		userId: row.userId,
+		createdAt: row.createdAt,
+		lastSimulatedAt: row.lastSimulatedAt,
+		timeZone,
+		character: {
+			id: row.characterId,
+			name: row.characterName,
+			life: {
+				needs: { hunger: row.hunger, energy: row.energy, mood: row.mood },
+				activity: activity.success ? activity.data : 'idle',
+				activityStartedAt: row.activityStartedAt,
+				activityEndsAt: activity.success ? row.activityEndsAt : row.activityStartedAt,
+			},
+		},
+	};
+}
+
+function lifeColumns(life: LifeState) {
+	return {
+		hunger: life.needs.hunger,
+		energy: life.needs.energy,
+		mood: life.needs.mood,
+		activity: life.activity,
+		activityStartedAt: life.activityStartedAt,
+		activityEndsAt: life.activityEndsAt,
+	};
 }
 
 export async function findWorldByUserId(db: Database, userId: string): Promise<WorldRecord | null> {
 	const rows = await db
-		.select({
-			id: world.id,
-			userId: world.userId,
-			createdAt: world.createdAt,
-			lastSimulatedAt: world.lastSimulatedAt,
-			characterId: character.id,
-			characterName: character.name,
-		})
+		.select(worldColumns)
 		.from(world)
 		.innerJoin(character, eq(character.worldId, world.id))
 		.where(eq(world.userId, userId))
 		.limit(1);
 
 	const row = rows[0];
-	if (!row) return null;
-	return {
-		id: row.id,
-		userId: row.userId,
-		createdAt: row.createdAt,
-		lastSimulatedAt: row.lastSimulatedAt,
-		character: { id: row.characterId, name: row.characterName },
-	};
+	return row ? toRecord(row) : null;
+}
+
+export interface CreateWorldOptions {
+	now?: Date;
+	/** Device time zone; invalid values fall back to UTC. */
+	timeZone?: string;
 }
 
 /**
@@ -44,23 +102,29 @@ export async function findWorldByUserId(db: Database, userId: string): Promise<W
 export async function getOrCreateWorldForUser(
 	db: Database,
 	userId: string,
-	now: Date = new Date(),
+	{ now = new Date(), timeZone }: CreateWorldOptions = {},
 ): Promise<WorldRecord> {
 	const existing = await findWorldByUserId(db, userId);
 	if (existing) return existing;
 
+	const zone = timeZone && isValidTimeZone(timeZone) ? timeZone : DEFAULT_TIME_ZONE;
 	await db.transaction(async (tx) => {
 		await tx
 			.insert(world)
-			.values({ userId, lastSimulatedAt: now })
+			.values({ userId, lastSimulatedAt: now, timezone: zone })
 			.onConflictDoNothing({ target: world.userId });
 
 		const [owned] = await tx.select({ id: world.id }).from(world).where(eq(world.userId, userId));
 		if (!owned) throw new Error(`world for user ${userId} vanished during creation`);
 
+		const life = startLife(now, { seed: owned.id, timeZone: zone });
 		await tx
 			.insert(character)
-			.values({ worldId: owned.id, name: createInitialCharacter(owned.id).name })
+			.values({
+				worldId: owned.id,
+				name: createInitialCharacter(owned.id).name,
+				...lifeColumns(life),
+			})
 			.onConflictDoNothing({ target: character.worldId });
 	});
 
@@ -104,9 +168,24 @@ export async function transferWorldOwnership(
 }
 
 /**
- * Advances the world's simulation clock to `now`. Iteration 0 only moves
- * the clock; later iterations apply per-step simulation results here.
- * Time only moves forward, even with concurrent requests.
+ * The player's device moved to another time zone: the character's day
+ * follows it from now on (#10). Invalid zones are ignored.
+ */
+export async function updateWorldTimeZone(
+	db: Database,
+	record: WorldRecord,
+	timeZone: string,
+): Promise<WorldRecord> {
+	if (timeZone === record.timeZone || !isValidTimeZone(timeZone)) return record;
+	await db.update(world).set({ timezone: timeZone }).where(eq(world.id, record.id));
+	return { ...record, timeZone };
+}
+
+/**
+ * Lives the character's life from `lastSimulatedAt` to `now` (needs,
+ * activities) and persists the result. Gaps longer than the catch-up window
+ * are skipped. Time only moves forward, even with concurrent requests: the
+ * clock update is guarded in SQL and only the winner writes the character.
  */
 export async function catchUpWorld(
 	db: Database,
@@ -116,10 +195,29 @@ export async function catchUpWorld(
 	const plan = planCatchUp(record.lastSimulatedAt, now);
 	if (plan.stepEnds.length === 0) return record;
 
-	await db
-		.update(world)
-		.set({ lastSimulatedAt: plan.to })
-		.where(and(eq(world.id, record.id), lt(world.lastSimulatedAt, plan.to)));
+	const life = advanceLife(record.character.life, plan.from, plan.to, {
+		seed: record.id,
+		timeZone: record.timeZone,
+	});
 
-	return { ...record, lastSimulatedAt: plan.to };
+	const won = await db.transaction(async (tx) => {
+		const advanced = await tx
+			.update(world)
+			.set({ lastSimulatedAt: plan.to })
+			.where(and(eq(world.id, record.id), lt(world.lastSimulatedAt, plan.to)))
+			.returning({ id: world.id });
+		if (advanced.length === 0) return false;
+		await tx.update(character).set(lifeColumns(life)).where(eq(character.id, record.character.id));
+		return true;
+	});
+
+	if (!won) {
+		// Someone else already simulated further; their state is the truth.
+		return (await findWorldByUserId(db, record.userId)) ?? record;
+	}
+	return {
+		...record,
+		lastSimulatedAt: plan.to,
+		character: { ...record.character, life },
+	};
 }

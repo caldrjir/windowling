@@ -54,11 +54,21 @@ done where - the simulation decides with these, the renderer owns their position
 ### `packages/simulation` - the life engine (headless)
 
 Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
-Iteration 0 provides:
 
-- `planCatchUp(lastSimulatedAt, now)` - splits the offline gap into fixed steps, never rewinds
-  time, and skips beyond a maximum window (default 14 days) so huge absences stay cheap.
+- `planCatchUp(lastSimulatedAt, now)` - bounds the offline gap, never rewinds time, and skips
+  beyond a maximum window (default 14 days) so huge absences stay cheap.
 - `createInitialCharacter(seed)` - deterministic starter identity.
+- `localTime(now, timeZone)` - local hour + weekday via `Intl` (same in Workers and browsers).
+- `Needs` (`hunger`, `energy`, `mood`, all 0..1) + `applyNeeds(needs, activity, hours)`: per-hour
+  rates per activity, mood drifts to a baseline and suffers from hunger/exhaustion.
+- `chooseActivity` - the basic scheduler: utility scores from needs x local time x weekday
+  (sleep at night, work on weekdays 9-17, meals, evening gaming) times a little randomness, plus
+  duration rules (sleep until the morning, work never past 17:00, ...).
+- `startLife` / `advanceLife(state, from, to, ctx)` - event-driven: applies needs over the current
+  activity and decides again whenever one ends. The RNG is seeded with `world id + decision time`,
+  so the same inputs always give the same life.
+- `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then
+  wanders using `nextAmbientAction`).
 
 ### `packages/game` - rendering & physics
 
@@ -80,9 +90,14 @@ the whole room in view from ultrawide desktops to portrait phones (higher angle 
 - `Animator` - crossfading state machine (`idle`, `walk`, `sit`, `lie`) producing a `Pose`.
 - `CharacterRig` - placeholder figure from primitives; only applies a transform + pose.
 
-`GameWorld.perform(action)` / `onCharacterEvent()` are the only ways in. Until the scheduler
-arrives (Iteration 2), `nextAmbientAction` in `packages/simulation` picks what to do next and
-the web layer passes it on - the renderer never decides.
+`GameWorld.perform(action)`, `setMood(mood)` and `onCharacterEvent()` are the only ways in.
+Activities (`eat`, `work`, `play`) are animation layers on top of the posture (bowl, typing,
+handheld); mood shows in walking pace and slumped shoulders. The renderer never decides.
+
+**Who drives the character (Iteration 2):** the server owns the life. The page load catches the
+world up and returns the current activity with its end time; `GameCanvas` performs the matching
+action, and when the activity ends the page re-runs the load (`invalidateAll`) to get the next one.
+No game loop runs on the server and the client never simulates authoritative state.
 
 ### `packages/ai` - reasoning interfaces
 
@@ -97,15 +112,17 @@ when they get a consumer.
 Drizzle schema (`src/schema`), SQL migrations (`drizzle/`), `createDatabase()` (postgres.js),
 and repositories (`worlds.ts`). The only package that talks SQL.
 
-## Data model (Iteration 0)
+## Data model
 
 ```
 user (Better Auth, isAnonymous) 1 ── 1 world 1 ── 1 character
   └─ session, account, verification (Better Auth)
 ```
 
-- `world`: `id uuid`, `user_id` (unique, FK → user, cascade), `last_simulated_at`, timestamps.
-- `character`: `id uuid`, `world_id` (unique, FK → world, cascade), `name`, timestamps.
+- `world`: `id uuid`, `user_id` (unique, FK → user, cascade), `last_simulated_at`, `timezone`
+  (IANA, device zone), timestamps.
+- `character`: `id uuid`, `world_id` (unique, FK → world, cascade), `name`, life state
+  (`hunger`, `energy`, `mood`, `activity`, `activity_started_at`, `activity_ends_at`), timestamps.
 
 Uniqueness constraints make `getOrCreateWorldForUser` race-safe and guarantee one world per
 user. Columns are added only when an iteration needs them.
@@ -137,10 +154,14 @@ A second world is never created for an account.
 
 ## Time & offline simulation
 
-The world is not simulated per frame while closed. On load, the server computes a catch-up
-plan from `world.last_simulated_at` to now and advances the clock (only forward, guarded in
-SQL). Later iterations apply per-step simulation (needs, activities, events) inside the same
-loop and persist resulting events.
+The world is not simulated per frame while closed. On load, the server runs `advanceLife` from
+`world.last_simulated_at` to now (at most 14 days; older time is skipped) and persists the
+character's needs and activity. The clock update is guarded in SQL (`last_simulated_at < new`)
+and only the request that wins it writes the character, so concurrent loads never rewind.
+
+The character lives on the **player's device clock** (#10): the browser stores its IANA zone in
+the `wl_tz` cookie, the first load creates the world in that zone, and a later change of zone
+updates `world.timezone` after the catch-up (missed time is lived on the old clock).
 
 ## Cloudflare specifics
 
@@ -166,15 +187,17 @@ loop and persist resulting events.
 
 ## Decisions log
 
-| Date       | Decision                                                    | Why                                                                                                    |
-| ---------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                 | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.       |
-| 2026-10-04 | TypeScript 5.9 (not 7)                                      | typescript-eslint and svelte-check don't support TS 7 yet.                                             |
-| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                  | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                      |
-| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only | One ownership path; linking = ownership transfer.                                                      |
-| 2026-10-04 | Account world wins on link conflict                         | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.     |
-| 2026-10-04 | Anonymous user created client-side after hydration          | Crawlers/bots never mint users or worlds.                                                              |
-| 2026-10-04 | Internal packages consumed as TS source (no build step)     | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                |
-| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)       | Tests the real production runtime, not the Node dev server.                                            |
-| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                  | No bundler WASM plugin needed; lazy-loaded on the client only.                                         |
-| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**           | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created). |
+| Date       | Decision                                                         | Why                                                                                                    |
+| ---------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                      | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.       |
+| 2026-10-04 | TypeScript 5.9 (not 7)                                           | typescript-eslint and svelte-check don't support TS 7 yet.                                             |
+| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                       | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                      |
+| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only      | One ownership path; linking = ownership transfer.                                                      |
+| 2026-10-04 | Account world wins on link conflict                              | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.     |
+| 2026-10-04 | Anonymous user created client-side after hydration               | Crawlers/bots never mint users or worlds.                                                              |
+| 2026-10-04 | Internal packages consumed as TS source (no build step)          | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                |
+| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)            | Tests the real production runtime, not the Node dev server.                                            |
+| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                       | No bundler WASM plugin needed; lazy-loaded on the client only.                                         |
+| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**                | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created). |
+| 2026-10-05 | Character lives in the device time zone (`wl_tz` cookie)         | Player's choice (#10): "3 AM for me is 3 AM for it", follows the player when travelling.               |
+| 2026-10-05 | Server-authoritative life; client re-loads when an activity ends | One source of truth, no client/server divergence; activities last minutes, so few requests.            |

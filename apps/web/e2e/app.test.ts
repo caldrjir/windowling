@@ -14,9 +14,13 @@ test('app loads and the game canvas starts rendering', async ({ page }) => {
 	// The character starts doing something on its own - nobody asked it to.
 	await expect(canvas).toHaveAttribute(
 		'data-character-action',
-		/^(idle|(walkTo|sit|sleep):[a-z][a-z0-9_.-]*)$/,
+		/^(idle|(walkTo|sit|sleep|eat|work|play):[a-z][a-z0-9_.-]*)$/,
 		{ timeout: 10_000 },
 	);
+	// ...and what it does comes from the simulation's schedule.
+	await expect(canvas).toHaveAttribute('data-activity', /^(sleep|eat|work|gaming|idle)$/, {
+		timeout: 15_000,
+	});
 
 	const box = await canvas.boundingBox();
 	const viewport = page.viewportSize();
@@ -36,6 +40,15 @@ test('a first visit creates an anonymous world that survives a reload', async ({
 	await page.reload();
 	await expect(status).toContainText("'s place");
 	await expect(status).toHaveAttribute('data-world-id', worldId!);
+});
+
+test('the character lives in the time zone of the device', async ({ browser }) => {
+	const context = await browser.newContext({ timezoneId: 'Pacific/Auckland' });
+	const page = await context.newPage();
+	await page.goto('/');
+	const status = page.getByTestId('world-status');
+	await expect(status).toHaveAttribute('data-time-zone', 'Pacific/Auckland', { timeout: 15_000 });
+	await context.close();
 });
 
 test('different visitors get different worlds', async ({ browser }) => {

@@ -1,6 +1,6 @@
 import { targetSupports, type CharacterAction } from '@windowling/shared';
 import { TARGETS, type TargetPlacement, type Vec2 } from '../room/layout.ts';
-import { Animator, type AnimationState } from './animation.ts';
+import { Animator, type ActivityAnimation, type AnimationState } from './animation.ts';
 import { ease, turnTowards, wrapAngle, yawTowards } from './math.ts';
 import { planPath } from './path.ts';
 
@@ -32,10 +32,33 @@ export interface CharacterSnapshot {
 	/** Target the character is currently sitting or lying on. */
 	occupying: string | null;
 	animation: AnimationState;
+	/** What the hands are doing once the character got where it was going. */
+	activity: ActivityAnimation;
 	busy: boolean;
 }
 
-const TARGET_POSTURE = { sit: 'sitting', sleep: 'lying' } as const;
+type TargetAction = Extract<CharacterAction, { target: string }>;
+
+/** Posture each targeted action ends in. */
+const TARGET_POSTURE: Record<TargetAction['type'], Posture> = {
+	walkTo: 'standing',
+	eat: 'standing',
+	sit: 'sitting',
+	work: 'sitting',
+	play: 'sitting',
+	sleep: 'lying',
+};
+
+const ACTIVITY_OF: Partial<Record<CharacterAction['type'], ActivityAnimation>> = {
+	eat: 'eat',
+	work: 'work',
+	play: 'play',
+};
+
+/** Slower and heavier when sad, a little brisker when happy. */
+export function walkSpeedFor(mood: number): number {
+	return WALK_SPEED * (0.75 + 0.4 * Math.min(1, Math.max(0, mood)));
+}
 
 /**
  * Turns high-level CharacterActions into movement. Pure logic (no three.js):
@@ -70,6 +93,7 @@ export class CharacterController {
 			posture: this.posture,
 			occupying: this.occupying?.id ?? null,
 			animation: this.animator.state,
+			activity: this.animator.activity,
 			busy: this.action !== null || this.pending !== null,
 		};
 	}
@@ -109,6 +133,7 @@ export class CharacterController {
 		this.animator.update(dt, this.speed);
 
 		if (this.steps.length === 0 && this.action) {
+			this.animator.setActivity(ACTIVITY_OF[this.action.type] ?? 'none');
 			this.events.push({ type: 'completed', action: this.action });
 			this.action = null;
 		}
@@ -126,23 +151,28 @@ export class CharacterController {
 		return null;
 	}
 
+	/** Mood (0..1) shows in pace and posture. */
+	setMood(mood: number): void {
+		this.animator.setMood(mood);
+	}
+
 	private begin(action: CharacterAction): void {
 		this.action = action;
 		this.pending = null;
 		this.steps = [];
-		const placement =
-			action.type === 'walkTo' || action.type === 'sit' || action.type === 'sleep'
-				? TARGETS[action.target as keyof typeof TARGETS]
-				: null;
+		const placement = 'target' in action ? TARGETS[action.target as keyof typeof TARGETS] : null;
 
-		// Already where we need to be?
+		// Already where we need to be? (e.g. stop gaming and keep sitting on the sofa)
 		if (
-			(action.type === 'sit' || action.type === 'sleep') &&
+			'target' in action &&
+			action.type !== 'walkTo' &&
+			TARGET_POSTURE[action.type] !== 'standing' &&
 			this.occupying?.id === action.target &&
 			this.posture === TARGET_POSTURE[action.type]
 		) {
 			return;
 		}
+		this.animator.setActivity('none');
 		if (action.type === 'lookAtPlayer' && this.posture !== 'standing') {
 			// Seated: stays put. Head-turning towards the player arrives with awareness (Iteration 3).
 			return;
@@ -155,19 +185,18 @@ export class CharacterController {
 			case 'lookAtPlayer':
 				this.steps.push({ kind: 'turn', yaw: 0 });
 				break;
-			case 'walkTo':
-			case 'sit':
-			case 'sleep': {
+			default: {
 				if (!placement) break;
 				for (const point of planPath(start, placement.approach)) {
 					this.steps.push({ kind: 'walk', to: point });
 				}
 				this.steps.push({ kind: 'turn', yaw: placement.approachYaw });
-				if (action.type !== 'walkTo' && placement.use) {
+				const posture = TARGET_POSTURE[action.type];
+				if (posture !== 'standing' && placement.use) {
 					this.steps.push({
 						kind: 'settle',
 						use: placement.use,
-						posture: TARGET_POSTURE[action.type],
+						posture,
 						from: placement.approach,
 						elapsed: 0,
 					});
@@ -198,7 +227,8 @@ export class CharacterController {
 				const desiredYaw = yawTowards(this.x, this.z, step.to.x, step.to.z);
 				this.yaw = turnTowards(this.yaw, desiredYaw, TURN_SPEED * dt);
 				const misalignment = Math.abs(wrapAngle(desiredYaw - this.yaw));
-				this.speed = WALK_SPEED * Math.max(0, 1 - misalignment / (Math.PI / 2));
+				this.speed =
+					walkSpeedFor(this.animator.mood) * Math.max(0, 1 - misalignment / (Math.PI / 2));
 				const travel = this.speed * dt;
 				if (travel >= distance) {
 					this.x = step.to.x;
