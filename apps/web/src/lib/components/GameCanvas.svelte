@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { GameWorld } from '@windowling/game';
-	import type { Activity, CharacterAction } from '@windowling/shared';
+	import type { Activity, AwarenessState, CharacterAction } from '@windowling/shared';
+	import type { AwarenessEvent } from '@windowling/simulation';
+	import { playKnock } from '$lib/knock';
+	import { Watcher } from '$lib/watcher';
 	import { onMount } from 'svelte';
 
 	type Status = 'loading' | 'running' | 'unsupported';
@@ -10,17 +13,25 @@
 		activity: Activity | null;
 		/** 0..1 from the simulation; only shows in body language. */
 		mood: number;
+		/** The player knocked the character awake; the server applies the consequences. */
+		onWoken?: () => void;
 	}
 
-	let { activity, mood }: Props = $props();
+	let { activity, mood, onWoken }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let status = $state<Status>('loading');
 	let currentAction = $state('');
 	let posture = $state('standing');
-	// Not reactive: the world is an imperative object Svelte must not track.
+	let awareness = $state<AwarenessState>('UNKNOWN');
+	let ripples = $state<Array<{ id: number; x: number; y: number }>>([]);
+	// Not reactive: imperative objects Svelte must not track.
 	let world: GameWorld | undefined;
 	let follow: ((activity: Activity | null) => void) | undefined;
+	let watcher: Watcher | undefined;
+	let rippleId = 0;
+	/** Knocked awake locally; the server's answer arrives a moment later. */
+	let wokenLocally = false;
 
 	function describe(action: CharacterAction): string {
 		return 'target' in action ? `${action.type}:${action.target}` : action.type;
@@ -31,12 +42,18 @@
 	onMount(() => {
 		let destroyed = false;
 		let dwellTimer: ReturnType<typeof setTimeout> | undefined;
+		let glanceTimer: ReturnType<typeof setTimeout> | undefined;
 		let unsubscribe: (() => void) | undefined;
 
 		const onVisibilityChange = () => {
 			if (!world) return;
-			if (document.hidden) world.pause();
-			else world.start();
+			if (document.hidden) {
+				world.pause();
+				watcher?.stop();
+			} else {
+				world.start();
+				watcher?.start();
+			}
 		};
 
 		(async () => {
@@ -52,46 +69,121 @@
 					created.dispose();
 					return;
 				}
-				world = created;
+				const game = created;
+				world = game;
 
 				// The simulation decides what to do; the game world only carries it out.
 				// While idle there is no fixed place, so the character wanders a little.
 				const rng = createRng(Math.floor(Math.random() * 2 ** 32));
 				let wandering = false;
 				let dwellSeconds = 0;
+				/** Busy with the player (coming over, waving): the daily life waits. */
+				let engaged = false;
+				let latest: Activity | null = null;
+
 				const perform = (action: CharacterAction) => {
 					currentAction = describe(action);
-					world?.perform(action);
+					game.perform(action);
 				};
 				const wander = (previous: CharacterAction | null) => {
-					if (!world || destroyed || !wandering) return;
+					if (destroyed || !wandering || engaged) return;
 					const choice = nextAmbientAction(rng, previous);
 					dwellSeconds = choice.dwellSeconds;
 					perform(choice.action);
 				};
-				follow = (next) => {
+				const resume = () => {
 					clearTimeout(dwellTimer);
-					const action = next ? actionForActivity(next) : null;
+					const action = latest ? actionForActivity(latest) : null;
 					wandering = action === null;
 					if (action) perform(action);
 					else wander(null);
 				};
-				unsubscribe = world.onCharacterEvent((event) => {
-					posture = world?.characterState.posture ?? posture;
+				follow = (next) => {
+					latest = next;
+					if (next !== 'sleep') wokenLocally = false;
+					if (!engaged) resume();
+				};
+				const glance = (seconds: number) => {
+					clearTimeout(glanceTimer);
+					game.setAttention(true);
+					glanceTimer = setTimeout(() => {
+						if (!engaged) game.setAttention(false);
+					}, seconds * 1000);
+				};
+
+				const react = (event: AwarenessEvent) => {
+					switch (event.type) {
+						case 'suspected':
+							glance(2.5);
+							break;
+						case 'stirred':
+							glance(1.2);
+							break;
+						case 'woken':
+							wokenLocally = true;
+							onWoken?.();
+							break;
+						case 'detected':
+							if (event.response === 'ignore') {
+								glance(1.5);
+								break;
+							}
+							engaged = true;
+							clearTimeout(dwellTimer);
+							clearTimeout(glanceTimer);
+							game.setAttention(true);
+							perform({ type: 'walkTo', target: 'window' });
+							break;
+						case 'interacting':
+							perform({ type: 'wave' });
+							break;
+						case 'ignoring':
+						case 'dismissed':
+							clearTimeout(glanceTimer);
+							game.setAttention(false);
+							if (engaged) {
+								engaged = false;
+								resume();
+							}
+							break;
+					}
+				};
+
+				watcher = new Watcher({
+					context: () => ({
+						activity: wokenLocally ? 'idle' : (latest ?? 'idle'),
+						mood,
+					}),
+					onEvent: react,
+					onState: (state) => (awareness = state),
+				});
+
+				unsubscribe = game.onCharacterEvent((event) => {
+					posture = game.characterState.posture;
 					if (event.type === 'rejected') {
 						console.warn('Character rejected an action', event.reason);
-						if (wandering) wander(null);
-					} else if (wandering) {
+						if (wandering && !engaged) wander(null);
+						return;
+					}
+					if (engaged) {
+						if (event.action.type === 'walkTo' && event.action.target === 'window') {
+							perform({ type: 'lookAtPlayer' });
+							watcher?.arrived();
+						}
+						return;
+					}
+					if (wandering) {
 						dwellTimer = setTimeout(() => wander(event.action), dwellSeconds * 1000);
 					}
 				});
 
 				// Dev-only handle for poking the world from the console / screenshot scripts.
 				if (import.meta.env.DEV) {
-					(window as unknown as { __windowling?: GameWorld }).__windowling = world;
+					(window as unknown as { __windowling?: GameWorld }).__windowling = game;
 				}
 
-				world.start();
+				game.start();
+				watcher.start();
 				status = 'running';
 			} catch (error) {
 				console.error('Failed to start the game world', error);
@@ -104,7 +196,10 @@
 			destroyed = true;
 			follow = undefined;
 			clearTimeout(dwellTimer);
+			clearTimeout(glanceTimer);
 			unsubscribe?.();
+			watcher?.stop();
+			watcher = undefined;
 			document.removeEventListener('visibilitychange', onVisibilityChange);
 			world?.dispose();
 			world = undefined;
@@ -121,6 +216,28 @@
 		if (status !== 'running') return;
 		world?.setMood(mood);
 	});
+
+	let lastPointer: { x: number; y: number } | null = null;
+
+	function onPointerMove(event: PointerEvent) {
+		const diagonal = Math.hypot(window.innerWidth, window.innerHeight) || 1;
+		if (lastPointer) {
+			watcher?.moved(
+				Math.hypot(event.clientX - lastPointer.x, event.clientY - lastPointer.y) / diagonal,
+			);
+		}
+		lastPointer = { x: event.clientX, y: event.clientY };
+	}
+
+	/** Knocking on the glass: an opportunity, not a command - the character decides. */
+	function onKnock(event: PointerEvent) {
+		if (status !== 'running') return;
+		playKnock();
+		const id = ++rippleId;
+		ripples = [...ripples, { id, x: event.clientX, y: event.clientY }];
+		setTimeout(() => (ripples = ripples.filter((r) => r.id !== id)), 700);
+		watcher?.knock();
+	}
 </script>
 
 <canvas
@@ -128,14 +245,52 @@
 	data-testid="game-canvas"
 	data-status={status}
 	data-activity={activity ?? ''}
+	data-awareness={awareness}
 	data-character-action={currentAction}
 	data-character-posture={posture}
 	class="block h-full w-full touch-none select-none"
-	aria-label="A window into someone's room"
+	aria-label="A window into someone's room. Tap to knock on the glass."
+	onpointermove={onPointerMove}
+	onpointerleave={() => (lastPointer = null)}
+	onpointerdown={onKnock}
 ></canvas>
+
+{#each ripples as ripple (ripple.id)}
+	<span class="knock" style:left="{ripple.x}px" style:top="{ripple.y}px" aria-hidden="true"></span>
+{/each}
 
 {#if status === 'unsupported'}
 	<p class="absolute inset-0 grid place-items-center p-6 text-center text-sm text-white/70">
 		This window needs WebGL. Try a different browser or device.
 	</p>
 {/if}
+
+<style>
+	.knock {
+		position: fixed;
+		width: 56px;
+		height: 56px;
+		margin: -28px 0 0 -28px;
+		border-radius: 9999px;
+		border: 2px solid rgb(255 255 255 / 0.55);
+		pointer-events: none;
+		animation: knock 0.6s ease-out forwards;
+	}
+
+	@keyframes knock {
+		from {
+			transform: scale(0.3);
+			opacity: 1;
+		}
+		to {
+			transform: scale(1.4);
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.knock {
+			animation-duration: 0.01s;
+		}
+	}
+</style>

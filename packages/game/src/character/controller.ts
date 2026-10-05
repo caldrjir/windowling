@@ -17,7 +17,10 @@ type Step =
 	| { kind: 'walk'; to: Vec2 }
 	| { kind: 'turn'; yaw: number }
 	| { kind: 'settle'; use: Use; posture: 'sitting' | 'lying'; from: Vec2; elapsed: number }
-	| { kind: 'standUp'; to: Vec2; from: Use; elapsed: number };
+	| { kind: 'standUp'; to: Vec2; from: Use; elapsed: number }
+	| { kind: 'gesture'; activity: ActivityAnimation; duration: number; elapsed: number };
+
+export const WAVE_SECONDS = 2.4;
 
 export type ControllerEvent =
 	| { type: 'completed'; action: CharacterAction }
@@ -77,6 +80,7 @@ export class CharacterController {
 	private action: CharacterAction | null = null;
 	private pending: CharacterAction | null = null;
 	private events: ControllerEvent[] = [];
+	private attentive = false;
 
 	constructor(start: Vec2 = TARGETS['room.center'].approach, yaw = 0) {
 		this.x = start.x;
@@ -130,6 +134,8 @@ export class CharacterController {
 			else remaining = 0;
 		}
 		if (this.steps.length === 0) this.speed = 0;
+		// The player is "out there" in +z: yaw 0 in world space.
+		this.animator.setLook(this.attentive ? wrapAngle(-this.yaw) : null);
 		this.animator.update(dt, this.speed);
 
 		if (this.steps.length === 0 && this.action) {
@@ -143,12 +149,19 @@ export class CharacterController {
 	}
 
 	private validate(action: CharacterAction): string | null {
-		if (action.type === 'idle' || action.type === 'lookAtPlayer') return null;
+		if (action.type === 'idle' || action.type === 'lookAtPlayer' || action.type === 'wave') {
+			return null;
+		}
 		if (!(action.target in TARGETS)) return `unknown target "${action.target}"`;
 		if (!targetSupports(action.target, action.type)) {
 			return `"${action.target}" does not support ${action.type}`;
 		}
 		return null;
+	}
+
+	/** Turns the head towards the player (the camera, at +z) while true. */
+	setAttention(on: boolean): void {
+		this.attentive = on;
 	}
 
 	/** Mood (0..1) shows in pace and posture. */
@@ -175,6 +188,13 @@ export class CharacterController {
 		this.animator.setActivity('none');
 		if (action.type === 'lookAtPlayer' && this.posture !== 'standing') {
 			// Seated: stays put. Head-turning towards the player arrives with awareness (Iteration 3).
+			return;
+		}
+
+		if (action.type === 'wave') {
+			// Waves from wherever it is - no need to stand up from the sofa for that.
+			if (this.posture === 'standing') this.steps.push({ kind: 'turn', yaw: 0 });
+			this.steps.push({ kind: 'gesture', activity: 'wave', duration: WAVE_SECONDS, elapsed: 0 });
 			return;
 		}
 
@@ -257,6 +277,12 @@ export class CharacterController {
 				if (step.elapsed < SETTLE_SECONDS) return -1;
 				this.yaw = step.use.yaw;
 				return step.elapsed - SETTLE_SECONDS;
+			}
+			case 'gesture': {
+				this.speed = 0;
+				this.animator.setActivity(step.activity);
+				step.elapsed += dt;
+				return step.elapsed < step.duration ? -1 : step.elapsed - step.duration;
 			}
 			case 'standUp': {
 				this.speed = 0;

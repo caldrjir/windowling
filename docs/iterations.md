@@ -7,8 +7,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | --- | --------------------------------- | -------------------------------------------------------- | --------------- |
 | 0   | Foundation                        | Production-ready technical base                          | done            |
 | 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done            |
-| 2   | Autonomous Activities             | The character does things without player input           | **in progress** |
-| 3   | Player Awareness                  | The player can watch unnoticed for a while               | planned         |
+| 2   | Autonomous Activities             | The character does things without player input           | done            |
+| 3   | Player Awareness                  | The player can watch unnoticed for a while               | **in progress** |
 | 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | planned         |
 | 5   | Memory + Relationship             | Past events influence present behaviour                  | planned         |
 | 6   | Mobile Sensors                    | The world feels physically held inside the phone         | planned         |
@@ -64,7 +64,7 @@ Definition of Done:
 - [x] Character driven only through `CharacterAction` (walk paths avoid furniture) - #9
 - [x] Placeholder ambient behaviour from the simulation package (replaced in Iteration 2)
 
-## Iteration 2 – Autonomous Activities (in progress)
+## Iteration 2 – Autonomous Activities
 
 **Goal:** the character does things even when the player does nothing.
 
@@ -77,3 +77,15 @@ Definition of Done:
 - [x] Offline catch-up lives the missed hours (max 14 days) and persists needs + activity - #21
 - [x] Kitchenette; eating, working, gaming, sleeping shown through behaviour; mood in pace/posture - #22
 - [x] The page follows the simulation: asks the server for the next activity when one ends - #22
+
+## Iteration 3 – Player Awareness (in progress)
+
+**Goal:** the player can watch the character for a while without it knowing.
+
+Definition of Done:
+
+- [x] Awareness model `UNKNOWN → SUSPECTED → DETECTED → INTERACTING / IGNORING` (simulation) - #24
+- [x] Detection from presence, movement and knocks, filtered by what the character is busy with - #24
+- [x] Reactions: glance, approach the window, wave, ignore and carry on - #25
+- [x] Knocking on the glass (ripple + synthesised sound); a sleeper stirs, repeated knocks wake it - #26
+- [x] Waking is persisted server-side (`POST /api/world/wake`): broken night, worse mood - #26

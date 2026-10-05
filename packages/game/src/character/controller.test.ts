@@ -164,6 +164,43 @@ describe('CharacterController', () => {
 		expect(timeTo(0.1)).toBeGreaterThan(timeTo(0.9) * 1.2);
 	});
 
+	it('waves at the player, turning to face them first', () => {
+		const c = new CharacterController(TARGETS['room.center'].approach, Math.PI);
+		c.perform({ type: 'wave' });
+		let maxWave = 0;
+		const events: ControllerEvent[] = [];
+		for (let t = 0; t < 5; t += 1 / 60) {
+			events.push(...c.update(1 / 60));
+			maxWave = Math.max(maxWave, c.animator.pose().wave);
+		}
+		expect(wrapAngle(c.snapshot().yaw)).toBeCloseTo(0, 2);
+		expect(maxWave).toBeGreaterThan(0.9);
+		expect(events).toEqual([{ type: 'completed', action: { type: 'wave' } }]);
+		run(c, 1);
+		expect(c.animator.pose().wave).toBe(0);
+	});
+
+	it('waves from the sofa without getting up', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'sit', target: 'sofa' });
+		run(c, 10);
+		c.perform({ type: 'wave' });
+		run(c, 1);
+		expect(c.snapshot()).toMatchObject({ posture: 'sitting', occupying: 'sofa', activity: 'wave' });
+	});
+
+	it('turns its head towards the player while attentive', () => {
+		// Facing the desk (away from the player) the head can only turn so far.
+		const c = new CharacterController(TARGETS['room.center'].approach, Math.PI / 2);
+		c.setAttention(true);
+		run(c, 2);
+		expect(c.animator.looking).toBe(1);
+		expect(c.animator.pose().headYaw).toBeCloseTo(-1.3, 2);
+		c.setAttention(false);
+		run(c, 2);
+		expect(c.animator.looking).toBe(0);
+	});
+
 	it('turns to face the player on lookAtPlayer', () => {
 		const c = new CharacterController(TARGETS['room.center'].approach, Math.PI);
 		c.perform({ type: 'lookAtPlayer' });
