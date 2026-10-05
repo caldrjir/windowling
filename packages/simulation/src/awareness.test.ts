@@ -106,6 +106,13 @@ describe('stepAwareness', () => {
 		expect(events).toEqual([{ type: 'interacting' }]);
 	});
 
+	it('talking to the character at the window starts an interaction', () => {
+		const detected: Awareness = { ...initialAwareness(), state: 'DETECTED', suspicion: 1 };
+		const { awareness } = run([{ type: 'arrived' }, { type: 'spoke' }], 'idle', 0.6, detected);
+		expect(awareness.state).toBe('INTERACTING');
+		expect(run([{ type: 'spoke' }], 'sleep').events).toEqual([]);
+	});
+
 	it('gives up at the window when nothing happens', () => {
 		const detected: Awareness = { ...initialAwareness(), state: 'DETECTED', suspicion: 1 };
 		const { awareness, events } = run([{ type: 'arrived' }, ...seconds(15)], 'idle', 0.6, detected);

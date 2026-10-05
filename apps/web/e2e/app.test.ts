@@ -92,6 +92,14 @@ test('the character comes to the window and says something', async ({ page }) =>
 		await page.waitForTimeout(400);
 	}
 	await expect(subtitles).toHaveAttribute('data-line', /\w+/, { timeout: 20_000 });
+
+	// At the window you can answer - after agreeing to the one-time download.
+	const talk = page.getByTestId('talk-button');
+	await expect(talk).toBeVisible();
+	await talk.dispatchEvent('pointerdown');
+	await expect(page.getByRole('dialog', { name: 'Let them hear you' })).toBeVisible();
+	await page.getByRole('button', { name: 'Not now' }).click();
+	await expect(talk).toHaveAttribute('data-phase', 'off');
 });
 
 test('the brain needs a session', async ({ request }) => {

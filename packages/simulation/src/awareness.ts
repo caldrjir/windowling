@@ -34,6 +34,8 @@ export type AwarenessInput =
 	/** The player moves behind the glass; `amount` ~ fraction of the screen crossed. */
 	| { type: 'movement'; amount: number }
 	| { type: 'knock' }
+	/** The player spoke to the character (push-to-talk). */
+	| { type: 'spoke' }
 	/** The character reached the window after deciding to approach. */
 	| { type: 'arrived' }
 	/** The player left (tab hidden, app closed). */
@@ -160,8 +162,10 @@ export function stepAwareness(
 			break;
 		}
 
+		case 'spoke':
 		case 'knock': {
 			a = { ...a, sinceInput: 0 };
+			if (input.type === 'spoke' && asleep) break; // talking doesn't reach a sleeper
 			if (asleep && (a.state === 'UNKNOWN' || a.state === 'SUSPECTED')) {
 				const knocks = [...a.sleepKnocks, 0];
 				a = { ...a, sleepKnocks: knocks };

@@ -133,6 +133,15 @@ the database, checks the per-player daily quota in `ai_usage`, asks the model, a
 action and speaks through `TextToSpeech` (browser `speechSynthesis` for now, #32 tracks the
 neural voice) with subtitles (`OFF | AUTO | ALWAYS`) and a mouth driven by word boundaries.
 
+**Ears:** `TalkButton` (hold, or Space) appears while the character is at the window. After a
+one-time consent it loads Whisper (`Xenova/whisper-tiny.en`, ~40 MB from the Hugging Face Hub,
+cached by the browser) in a Web Worker via transformers.js. The ONNX runtime is the plain CPU
+WASM build served from our own assets (Vite aliases `onnxruntime-web/webgpu` → `/wasm`: the
+WebGPU build is 27 MB, over Cloudflare's 25 MiB asset limit) and is excluded from the service
+worker precache. Audio is recorded with `MediaRecorder`, resampled to 16 kHz mono on the device
+and never uploaded; only the recognised text goes to the brain. `onnxruntime-node` is removed
+via a pnpm override (the Node backend is never used).
+
 ### `packages/database` - persistence
 
 Drizzle schema (`src/schema`), SQL migrations (`drizzle/`), `createDatabase()` (postgres.js),
@@ -230,3 +239,4 @@ updates `world.timezone` after the catch-up (missed time is lived on the old clo
 | 2026-10-05 | Awareness is browser session state; only waking is persisted     | Being watched exists only while someone looks; consequences (broken sleep) must survive.                                  |
 | 2026-10-05 | Brain = on-device / cloud (OpenAI-compatible) / Ollama / canned  | Player's choice (#28). REST instead of the Workers AI binding: portable, and `wrangler dev`/E2E need no Cloudflare login. |
 | 2026-10-05 | Browser `speechSynthesis` first, neural TTS later (#32)          | Local neural TTS needs GPL-3 espeak-ng and CDN-loaded runtimes; tracked to reach the best quality later.                  |
+| 2026-10-05 | Whisper in the browser, CPU WASM, self-hosted runtime            | Voice stays on the device; no third-party CDN scripts; fits Cloudflare asset limits.                                      |
