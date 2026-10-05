@@ -117,8 +117,21 @@ that the character is really asleep and persists the consequences.
 `CharacterAI.decide(context) → CharacterDecision`. `characterDecisionSchema` is the only output
 an LLM may produce (speech, emotion, intensity, one `CharacterAction`, optional goal slug).
 `parseCharacterDecision` validates untrusted output and returns `null` on garbage.
-`MockCharacterAI` until Ollama arrives (Iteration 4). STT/TTS/vision interfaces will be added
-when they get a consumer.
+
+- `buildMessages(context)` - only what matters now: who, local time, activity, needs as feelings
+  (never numbers), awareness, the event, the last few lines, what the player said.
+- `LlmCharacterAI(chatModel)` - asks for JSON (constrained decoding via `DECISION_JSON_SCHEMA`
+  where supported), extracts and validates it, trims rambling; anything else → `MockCharacterAI`
+  (canned reactions).
+- `ChatModel` backends: `OpenAICompatibleChatModel` (Workers AI over REST in production, Ollama
+  locally - any compatible API, no SDK, no lock-in); WebLLM in the browser (#31).
+
+**Conversation flow (Iteration 4):** awareness → the character arrives at the window →
+`Conversation.handle(event)` → `POST /api/ai/decide` (the server reads the character's state from
+the database, checks the per-player daily quota in `ai_usage`, asks the model, and runs
+`reviewAction` from the simulation) → `GameCanvas` shows the emotion, performs the reviewed
+action and speaks through `TextToSpeech` (browser `speechSynthesis` for now, #32 tracks the
+neural voice) with subtitles (`OFF | AUTO | ALWAYS`) and a mouth driven by word boundaries.
 
 ### `packages/database` - persistence
 
@@ -200,18 +213,20 @@ updates `world.timezone` after the catch-up (missed time is lived on the old clo
 
 ## Decisions log
 
-| Date       | Decision                                                         | Why                                                                                                    |
-| ---------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                      | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.       |
-| 2026-10-04 | TypeScript 5.9 (not 7)                                           | typescript-eslint and svelte-check don't support TS 7 yet.                                             |
-| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                       | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                      |
-| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only      | One ownership path; linking = ownership transfer.                                                      |
-| 2026-10-04 | Account world wins on link conflict                              | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.     |
-| 2026-10-04 | Anonymous user created client-side after hydration               | Crawlers/bots never mint users or worlds.                                                              |
-| 2026-10-04 | Internal packages consumed as TS source (no build step)          | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                |
-| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)            | Tests the real production runtime, not the Node dev server.                                            |
-| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                       | No bundler WASM plugin needed; lazy-loaded on the client only.                                         |
-| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**                | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created). |
-| 2026-10-05 | Character lives in the device time zone (`wl_tz` cookie)         | Player's choice (#10): "3 AM for me is 3 AM for it", follows the player when travelling.               |
-| 2026-10-05 | Server-authoritative life; client re-loads when an activity ends | One source of truth, no client/server divergence; activities last minutes, so few requests.            |
-| 2026-10-05 | Awareness is browser session state; only waking is persisted     | Being watched exists only while someone looks; consequences (broken sleep) must survive.               |
+| Date       | Decision                                                         | Why                                                                                                                       |
+| ---------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                      | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.                          |
+| 2026-10-04 | TypeScript 5.9 (not 7)                                           | typescript-eslint and svelte-check don't support TS 7 yet.                                                                |
+| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                       | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                                         |
+| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only      | One ownership path; linking = ownership transfer.                                                                         |
+| 2026-10-04 | Account world wins on link conflict                              | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.                        |
+| 2026-10-04 | Anonymous user created client-side after hydration               | Crawlers/bots never mint users or worlds.                                                                                 |
+| 2026-10-04 | Internal packages consumed as TS source (no build step)          | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                                   |
+| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)            | Tests the real production runtime, not the Node dev server.                                                               |
+| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                       | No bundler WASM plugin needed; lazy-loaded on the client only.                                                            |
+| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**                | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created).                    |
+| 2026-10-05 | Character lives in the device time zone (`wl_tz` cookie)         | Player's choice (#10): "3 AM for me is 3 AM for it", follows the player when travelling.                                  |
+| 2026-10-05 | Server-authoritative life; client re-loads when an activity ends | One source of truth, no client/server divergence; activities last minutes, so few requests.                               |
+| 2026-10-05 | Awareness is browser session state; only waking is persisted     | Being watched exists only while someone looks; consequences (broken sleep) must survive.                                  |
+| 2026-10-05 | Brain = on-device / cloud (OpenAI-compatible) / Ollama / canned  | Player's choice (#28). REST instead of the Workers AI binding: portable, and `wrangler dev`/E2E need no Cloudflare login. |
+| 2026-10-05 | Browser `speechSynthesis` first, neural TTS later (#32)          | Local neural TTS needs GPL-3 espeak-ng and CDN-loaded runtimes; tracked to reach the best quality later.                  |

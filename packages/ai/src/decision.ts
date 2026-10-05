@@ -1,4 +1,4 @@
-import { characterActionSchema, type AwarenessState } from '@windowling/shared';
+import { characterActionSchema, type Activity, type AwarenessState } from '@windowling/shared';
 import { z } from 'zod';
 
 export const EMOTIONS = [
@@ -32,15 +32,40 @@ export const characterDecisionSchema = z.object({
 
 export type CharacterDecision = z.infer<typeof characterDecisionSchema>;
 
-/** What the reasoning layer gets to see. Only relevant context - never full history. */
+export const CONVERSATION_EVENTS = [
+	/** The character just came to the window because it noticed the player. */
+	'player_at_window',
+	/** The player knocked the character awake. */
+	'woken_up',
+	/** The player said something (see `playerUtterance`). */
+	'player_said',
+] as const;
+
+export type ConversationEvent = (typeof CONVERSATION_EVENTS)[number];
+
+export interface DialogueLine {
+	speaker: 'character' | 'player';
+	text: string;
+}
+
+/**
+ * What the reasoning layer gets to see. Only what is relevant right now -
+ * never the full history (memories arrive in Iteration 5).
+ */
 export interface CharacterAIContext {
 	characterName: string;
-	now: Date;
+	/** Local wall-clock time of the character, e.g. 03:12. */
+	localTime: string;
+	weekday: string;
+	activity: Activity;
+	/** 0..1 inner state; the prompt turns these into words, never shown to the player. */
+	needs: { hunger: number; energy: number; mood: number };
 	awareness: AwarenessState;
-	/** Short natural-language description of what is happening right now. */
-	situation: string;
+	event: ConversationEvent;
 	/** What the player just said, if anything. */
 	playerUtterance?: string;
+	/** The last few lines of this conversation, oldest first. */
+	recent: DialogueLine[];
 }
 
 export interface CharacterAI {

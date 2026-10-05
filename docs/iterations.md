@@ -8,8 +8,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | 0   | Foundation                        | Production-ready technical base                          | done            |
 | 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done            |
 | 2   | Autonomous Activities             | The character does things without player input           | done            |
-| 3   | Player Awareness                  | The player can watch unnoticed for a while               | **in progress** |
-| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | planned         |
+| 3   | Player Awareness                  | The player can watch unnoticed for a while               | done            |
+| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | **in progress** |
 | 5   | Memory + Relationship             | Past events influence present behaviour                  | planned         |
 | 6   | Mobile Sensors                    | The world feels physically held inside the phone         | planned         |
 | 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | planned         |
@@ -78,7 +78,7 @@ Definition of Done:
 - [x] Kitchenette; eating, working, gaming, sleeping shown through behaviour; mood in pace/posture - #22
 - [x] The page follows the simulation: asks the server for the next activity when one ends - #22
 
-## Iteration 3 – Player Awareness (in progress)
+## Iteration 3 – Player Awareness
 
 **Goal:** the player can watch the character for a while without it knowing.
 
@@ -89,3 +89,19 @@ Definition of Done:
 - [x] Reactions: glance, approach the window, wave, ignore and carry on - #25
 - [x] Knocking on the glass (ripple + synthesised sound); a sleeper stirs, repeated knocks wake it - #26
 - [x] Waking is persisted server-side (`POST /api/world/wake`): broken night, worse mood - #26
+
+## Iteration 4 – Voice + Local LLM (in progress)
+
+**Goal:** natural voice interaction without a text chat. Brain = combination of backends behind
+`CharacterAI` (decision in #28): on-device (WebLLM), cloud (Workers AI, any OpenAI-compatible
+API), Ollama for development, canned reactions as the last fallback.
+
+Definition of Done:
+
+- [x] Controlled decision schema, prompt with only relevant context, JSON extraction - #28
+- [x] Cloud brain behind `POST /api/ai/decide` with server-side state and a daily quota - #28
+- [x] Simulation reviews every proposed action - #28
+- [x] The character starts the conversation (comes to the window, woken up) - #29
+- [x] Voice via browser speech (neural voice: #32), subtitles OFF/AUTO/ALWAYS, basic lip sync - #29
+- [ ] Speech recognition in the browser (Whisper), push-to-talk - #30
+- [ ] On-device brain (WebLLM) with download consent - #31

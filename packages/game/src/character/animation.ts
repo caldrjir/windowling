@@ -47,7 +47,23 @@ export interface Pose {
 	/** Right arm raised and waving (0..1) and its side-to-side swing. */
 	wave: number;
 	waveSwing: number;
+	/** 0 closed .. 1 wide open (basic lip sync). */
+	mouth: number;
 }
+
+/** Feelings the body can show for a moment (mirrors the AI's emotion set). */
+export type Emotion =
+	| 'neutral'
+	| 'happy'
+	| 'sad'
+	| 'angry'
+	| 'annoyed'
+	| 'surprised'
+	| 'embarrassed'
+	| 'tired'
+	| 'nervous';
+
+const EMOTION_SECONDS = 6;
 
 const CROSSFADE_PER_SECOND = 3.5;
 
@@ -66,6 +82,12 @@ export class Animator {
 	private activityTarget: ActivityAnimation = 'none';
 	/** 0..1, how the character feels; shows in posture and pace. */
 	private _mood = 0.6;
+	private speaking = false;
+	private mouthOpen = 0;
+	private syllable = 0;
+	private emotion: Emotion = 'neutral';
+	private emotionWeight = 0;
+	private emotionLeft = 0;
 	private time = 0;
 	private walkPhase = 0;
 	/** Seconds since the head last started a glance; drives occasional looking around. */
@@ -104,6 +126,22 @@ export class Animator {
 		return this.lookWeight;
 	}
 
+	/** Talking: the mouth moves in syllable-like beats; `pulse` marks a new word. */
+	setSpeaking(speaking: boolean): void {
+		this.speaking = speaking;
+	}
+
+	pulseMouth(): void {
+		this.syllable = 0;
+		this.mouthOpen = Math.max(this.mouthOpen, 0.9);
+	}
+
+	/** Shows a feeling for a few seconds, then fades back to the mood's baseline. */
+	showEmotion(emotion: Emotion, intensity: number): void {
+		this.emotion = emotion;
+		this.emotionLeft = EMOTION_SECONDS * (0.5 + Math.min(1, Math.max(0, intensity)) * 0.5);
+	}
+
 	get mood(): number {
 		return this._mood;
 	}
@@ -121,6 +159,12 @@ export class Animator {
 		for (const state of ANIMATION_STATES) {
 			this.weights[state] = approach(this.weights[state], state === this.target ? 1 : 0, step);
 		}
+		this.emotionLeft = Math.max(0, this.emotionLeft - dt);
+		this.emotionWeight = approach(this.emotionWeight, this.emotionLeft > 0 ? 1 : 0, dt * 2);
+		this.syllable += dt;
+		// Roughly 5 syllables a second, with open/close variation.
+		const target = this.speaking ? (Math.sin(this.syllable * 31) * 0.5 + 0.5) * 0.8 : 0;
+		this.mouthOpen = approach(this.mouthOpen, target, dt * 12);
 		this.lookWeight = approach(this.lookWeight, this.lookTarget === null ? 0 : 1, dt * 2.5);
 		if (this.lookTarget !== null) this.lookYaw = this.lookTarget;
 		for (const layer of ACTIVITY_LAYERS) {
@@ -149,9 +193,17 @@ export class Animator {
 		const typing = Math.sin(t * 18) * 0.06;
 		const gamingLean = Math.sin(t * 0.9) * 0.5 + 0.5;
 		const sad = Math.max(0, 0.5 - this._mood) * 2; // 0 when fine, 1 when miserable
+		const feel = this.emotionWeight;
+		const e = this.emotion;
+		const down = feel * (e === 'sad' || e === 'tired' || e === 'embarrassed' ? 1 : 0);
+		const up = feel * (e === 'happy' || e === 'surprised' ? 1 : 0);
+		const tense = feel * (e === 'angry' || e === 'annoyed' || e === 'nervous' ? 1 : 0);
 
 		return {
-			bob: w.idle * Math.sin(t * 1.6) * 0.004 + w.walk * Math.abs(Math.cos(this.walkPhase)) * 0.035,
+			bob:
+				w.idle * Math.sin(t * 1.6) * 0.004 +
+				w.walk * Math.abs(Math.cos(this.walkPhase)) * 0.035 +
+				up * w.idle * Math.max(0, Math.sin(t * 7)) * 0.015,
 			legSwing: w.walk * swing * 0.42,
 			armSwing:
 				w.walk * -swing * 0.45 * (1 - sad * 0.5) +
@@ -164,15 +216,26 @@ export class Animator {
 				(w.idle + w.sit) * glanceYaw * (1 - eat - work - play) * (1 - look) + this.lookYaw * look,
 			headPitch:
 				(eat * 0.3 + work * 0.12 + play * 0.4 + sad * 0.25 * (1 - w.lie)) * (1 - look) -
-				look * 0.05,
+				look * 0.05 +
+				down * 0.35 -
+				up * 0.15 +
+				tense * Math.sin(t * 5) * 0.05,
 			armForward: eat * 0.7 + work * 0.75 + play * 0.65,
 			elbow: eat * 0.8 + work * (0.55 + typing) + play * (1.1 + typing * 0.5),
 			handToMouth: eat * bite,
-			slump: (work * 0.15 + play * gamingLean * 0.2 + sad * 0.3) * (1 - w.lie),
+			slump:
+				(work * 0.15 +
+					play * gamingLean * 0.2 +
+					sad * 0.3 +
+					down * 0.25 -
+					up * 0.1 -
+					tense * 0.05) *
+				(1 - w.lie),
 			bowl: eat,
 			handheld: play,
 			wave,
 			waveSwing: Math.sin(t * 9) * wave,
+			mouth: this.mouthOpen,
 		};
 	}
 }

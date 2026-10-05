@@ -1,10 +1,15 @@
 <script lang="ts">
 	import type { GameWorld } from '@windowling/game';
 	import type { Activity, AwarenessState, CharacterAction } from '@windowling/shared';
+	import type { CharacterDecision, ConversationEvent } from '@windowling/ai';
 	import type { AwarenessEvent } from '@windowling/simulation';
+	import { Conversation, ServerBrain } from '$lib/conversation';
 	import { playKnock } from '$lib/knock';
+	import { settings, showSubtitles } from '$lib/settings.svelte';
+	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
 	import { Watcher } from '$lib/watcher';
 	import { onMount } from 'svelte';
+	import Subtitles from './Subtitles.svelte';
 
 	type Status = 'loading' | 'running' | 'unsupported';
 
@@ -15,9 +20,10 @@
 		mood: number;
 		/** The player knocked the character awake; the server applies the consequences. */
 		onWoken?: () => void;
+		characterName: string;
 	}
 
-	let { activity, mood, onWoken }: Props = $props();
+	let { activity, mood, onWoken, characterName }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let status = $state<Status>('loading');
@@ -25,6 +31,9 @@
 	let posture = $state('standing');
 	let awareness = $state<AwarenessState>('UNKNOWN');
 	let ripples = $state<Array<{ id: number; x: number; y: number }>>([]);
+	let line = $state<string | null>(null);
+	let voice: TextToSpeech | undefined;
+	let voiceAvailable = $state(false);
 	// Not reactive: imperative objects Svelte must not track.
 	let world: GameWorld | undefined;
 	let follow: ((activity: Activity | null) => void) | undefined;
@@ -44,6 +53,7 @@
 		let dwellTimer: ReturnType<typeof setTimeout> | undefined;
 		let glanceTimer: ReturnType<typeof setTimeout> | undefined;
 		let unsubscribe: (() => void) | undefined;
+		let conversation: Conversation | undefined;
 
 		const onVisibilityChange = () => {
 			if (!world) return;
@@ -103,6 +113,52 @@
 					if (next !== 'sleep') wokenLocally = false;
 					if (!engaged) resume();
 				};
+				/** Knocked awake: the first words will be a complaint. */
+				let justWoken = false;
+				const tts = new BrowserSpeech(characterName.length);
+				voice = tts;
+				voiceAvailable = tts.available;
+
+				const say = async (decision: CharacterDecision) => {
+					game.showEmotion(decision.emotion, decision.intensity);
+					const { action } = decision;
+					// Anything but looking/waving walks away from the window: the conversation ends.
+					const leaving =
+						action.type !== 'lookAtPlayer' && action.type !== 'idle' && action.type !== 'wave';
+					if (action.type === 'wave' || leaving) perform(action);
+					const speech = decision.speech;
+					if (speech) {
+						line = speech;
+						game.setSpeaking(true);
+						// Subtitles stay up at least as long as it takes to read them.
+						const readingTime = new Promise((r) => setTimeout(r, 1_200 + speech.length * 55));
+						const spoken =
+							settings.voice && tts.available
+								? tts.speak(speech, {
+										emotion: decision.emotion,
+										intensity: decision.intensity,
+										onWord: () => game.pulseMouth(),
+									})
+								: Promise.resolve();
+						await Promise.all([readingTime, spoken]);
+						game.setSpeaking(false);
+						line = null;
+					}
+					if (leaving) {
+						engaged = false;
+						game.setAttention(false);
+						conversation?.reset();
+					}
+				};
+				conversation = new Conversation({
+					brain: new ServerBrain(),
+					awareness: () => watcher?.state ?? 'UNKNOWN',
+					onDecision: say,
+				});
+				const talk = (event: ConversationEvent) => {
+					void conversation?.handle(event);
+				};
+
 				const glance = (seconds: number) => {
 					clearTimeout(glanceTimer);
 					game.setAttention(true);
@@ -121,6 +177,7 @@
 							break;
 						case 'woken':
 							wokenLocally = true;
+							justWoken = true;
 							onWoken?.();
 							break;
 						case 'detected':
@@ -141,6 +198,7 @@
 						case 'dismissed':
 							clearTimeout(glanceTimer);
 							game.setAttention(false);
+							conversation?.reset();
 							if (engaged) {
 								engaged = false;
 								resume();
@@ -169,6 +227,9 @@
 						if (event.action.type === 'walkTo' && event.action.target === 'window') {
 							perform({ type: 'lookAtPlayer' });
 							watcher?.arrived();
+							// The character speaks first - it came over for a reason.
+							talk(justWoken ? 'woken_up' : 'player_at_window');
+							justWoken = false;
 						}
 						return;
 					}
@@ -198,6 +259,7 @@
 			clearTimeout(dwellTimer);
 			clearTimeout(glanceTimer);
 			unsubscribe?.();
+			voice?.cancel();
 			watcher?.stop();
 			watcher = undefined;
 			document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -254,6 +316,12 @@
 	onpointerleave={() => (lastPointer = null)}
 	onpointerdown={onKnock}
 ></canvas>
+
+<Subtitles
+	{line}
+	speaker={characterName}
+	visible={showSubtitles(settings.subtitles, settings.voice && voiceAvailable)}
+/>
 
 {#each ripples as ripple (ripple.id)}
 	<span class="knock" style:left="{ripple.x}px" style:top="{ripple.y}px" aria-hidden="true"></span>

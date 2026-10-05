@@ -15,9 +15,12 @@
 	"vars": {
 		"PUBLIC_APP_URL": "https://windowling.com",
 		"BETTER_AUTH_URL": "https://windowling.com",
+		// Workers AI over its OpenAI-compatible REST API (portable: any such API works).
+		"AI_API_URL": "https://api.cloudflare.com/client/v4/accounts/e4d21a54530afdeb8db4fc66a1338b18/ai/v1",
+		"AI_MODEL": "@cf/meta/llama-3.1-8b-instruct-fp8",
 	},
 	// Secrets (never in this file): DATABASE_URL, BETTER_AUTH_SECRET,
-	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET - uploaded by the Deploy workflow from the
+	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, AI_API_KEY - uploaded by the Deploy workflow from the
 	// GitHub `production` environment (see docs/development.md#deployment).
 	// www is served by the same Worker and 301-redirected to the apex (hooks.server.ts).
 	"routes": [

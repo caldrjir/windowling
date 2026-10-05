@@ -29,6 +29,33 @@ describe('parseServerEnv', () => {
 		expect(env.google).toEqual({ clientId: 'id', clientSecret: 'secret' });
 	});
 
+	it('has no cloud brain unless configured', () => {
+		expect(parseServerEnv(valid).ai).toBeNull();
+		expect(parseServerEnv({ ...valid, AI_API_URL: '' }).ai).toBeNull();
+	});
+
+	it('requires a key for hosted AI but not for a local Ollama', () => {
+		const hosted = 'https://api.cloudflare.com/client/v4/accounts/abc/ai/v1';
+		expect(parseServerEnv({ ...valid, AI_API_URL: hosted }).ai).toBeNull();
+		expect(parseServerEnv({ ...valid, AI_API_URL: hosted, AI_API_KEY: 'k' }).ai).toEqual({
+			baseUrl: hosted,
+			apiKey: 'k',
+			model: '@cf/meta/llama-3.1-8b-instruct-fp8',
+			dailyLimit: 60,
+		});
+		const ollama = parseServerEnv({
+			...valid,
+			AI_API_URL: 'http://localhost:11434/v1/',
+			AI_MODEL: 'llama3.2',
+			AI_DAILY_LIMIT: '500',
+		}).ai;
+		expect(ollama).toMatchObject({
+			baseUrl: 'http://localhost:11434/v1',
+			model: 'llama3.2',
+			dailyLimit: 500,
+		});
+	});
+
 	it('rejects half-configured Google credentials', () => {
 		expect(() => parseServerEnv({ ...valid, GOOGLE_CLIENT_ID: 'id' })).toThrow(EnvValidationError);
 	});

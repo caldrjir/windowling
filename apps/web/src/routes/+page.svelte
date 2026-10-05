@@ -2,6 +2,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import AccountMenu from '$lib/components/AccountMenu.svelte';
 	import GameCanvas from '$lib/components/GameCanvas.svelte';
+	import SettingsMenu from '$lib/components/SettingsMenu.svelte';
+	import { settings } from '$lib/settings.svelte';
 	import { authClient } from '$lib/auth-client';
 	import { deviceTimeZone, rememberTimeZone } from '$lib/time-zone';
 	import { onMount } from 'svelte';
@@ -14,6 +16,7 @@
 	const RETRY_AFTER_MS = 30_000;
 
 	onMount(async () => {
+		settings.restore();
 		const timeZone = deviceTimeZone();
 		rememberTimeZone(timeZone);
 		if (data.user) {
@@ -70,14 +73,16 @@
 		activity={data.world?.character.activity.type ?? null}
 		mood={data.world?.character.mood ?? 0.6}
 		onWoken={wake}
+		characterName={data.world?.character.name ?? 'Someone'}
 	/>
 
 	<header
 		class="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-4 px-[max(1rem,env(safe-area-inset-left))] pt-[max(1rem,env(safe-area-inset-top))]"
 	>
 		<h1 class="text-sm font-medium tracking-[0.2em] text-white/60 uppercase">Windowling</h1>
-		<div class="pointer-events-auto">
+		<div class="pointer-events-auto flex items-start gap-2">
 			<AccountMenu user={data.user} googleEnabled={data.googleEnabled} />
+			<SettingsMenu />
 		</div>
 	</header>
 

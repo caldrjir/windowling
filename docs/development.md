@@ -112,8 +112,10 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    | `CLOUDFLARE_API_TOKEN`    | token from step 2                                     |
    | `GOOGLE_CLIENT_ID`        | optional, step 4                                      |
    | `GOOGLE_CLIENT_SECRET`    | optional, step 4                                      |
+   | `WORKERS_AI_API_TOKEN`    | optional, step 6 (the character's cloud brain)        |
 
-   `BETTER_AUTH_URL` and `PUBLIC_APP_URL` are plain vars in `apps/web/wrangler.jsonc`.
+   `BETTER_AUTH_URL`, `PUBLIC_APP_URL`, `AI_API_URL` and `AI_MODEL` are plain vars in
+   `apps/web/wrangler.jsonc`.
 
 4. **Google Cloud Console** → OAuth client (Web): authorized origins `https://windowling.com`,
    `http://localhost:5173`; redirect URIs `https://windowling.com/api/auth/callback/google`,
@@ -123,8 +125,25 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    **caching disabled**. In production the Worker connects through it; `WORKER_DATABASE_URL`
    is only a fallback when the binding is absent.
 
+6. **Workers AI** (cloud brain, free tier ~10k neurons/day ≈ 750 short replies): My Profile →
+   API Tokens → Create custom token with only **Account → Workers AI → Read** for your account.
+   Store it as `WORKERS_AI_API_TOKEN`. Without it the character falls back to canned reactions.
+   `AI_DAILY_LIMIT` (default 60 per player per UTC day) protects the shared allowance.
+
 After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.
+
+## The character's brain locally
+
+The cloud brain is any OpenAI-compatible chat API. With [Ollama](https://ollama.com) running
+(`ollama pull llama3.2`), set in `.env`:
+
+```bash
+AI_API_URL=http://localhost:11434/v1
+AI_MODEL=llama3.2
+```
+
+Leave `AI_API_URL` empty to use the canned reactions (E2E always does).
 
 ## Troubleshooting
 

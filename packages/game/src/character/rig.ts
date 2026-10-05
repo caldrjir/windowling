@@ -48,6 +48,7 @@ export class CharacterRig {
 	/** Props live in front of the chest; they are shown only while the activity needs them. */
 	private readonly bowl = new Group();
 	private readonly handheld = new Group();
+	private readonly mouth: Mesh;
 
 	constructor() {
 		this.root.name = 'character';
@@ -87,6 +88,11 @@ export class CharacterRig {
 		const nose = part(new BoxGeometry(0.03, 0.04, 0.04), COLORS.skin, 0.09);
 		nose.position.z = 0.11;
 		this.head.add(nose);
+		// Mouth: a dark slit that opens while talking (basic lip sync).
+		this.mouth = part(new BoxGeometry(0.045, 0.012, 0.01), '#4a2420', 0.045);
+		this.mouth.position.z = 0.103;
+		this.mouth.castShadow = false;
+		this.head.add(this.mouth);
 
 		// Legs: thigh pivot at the hip, shin pivot at the knee
 		for (const [i, side] of [-1, 1].entries()) {
@@ -185,6 +191,7 @@ export class CharacterRig {
 		this.chest.scale.set(1 + pose.breath * 0.015, 1, 1 + pose.breath * 0.025);
 		this.head.rotation.y = pose.headYaw;
 		this.head.rotation.x = pose.headPitch;
+		this.mouth.scale.set(1 - pose.mouth * 0.2, 1 + pose.mouth * 2.2, 1);
 		this.bowl.visible = pose.bowl > 0.5;
 		this.handheld.visible = pose.handheld > 0.5;
 	}

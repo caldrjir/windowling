@@ -15,6 +15,13 @@
       "when": 1791185537462,
       "tag": "0001_character_life",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791194453357,
+      "tag": "0002_ai_usage",
+      "breakpoints": true
     }
   ]
 }

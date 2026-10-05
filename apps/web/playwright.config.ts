@@ -21,6 +21,8 @@ const vars: Record<string, string> = {
 	BETTER_AUTH_SECRET: 'e2e-only-secret-not-used-anywhere-else-0123456789',
 	BETTER_AUTH_URL: BASE_URL,
 	PUBLIC_APP_URL: BASE_URL,
+	// No cloud brain in E2E: the character uses its canned reactions.
+	AI_API_URL: '',
 };
 const varFlags = Object.entries(vars)
 	.map(([key, value]) => `--var ${key}:${JSON.stringify(value)}`)
