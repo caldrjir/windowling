@@ -15,9 +15,9 @@ function run(
 	activity: Activity = 'idle',
 	mood = 0.6,
 	start: Awareness = initialAwareness(),
-	seed = 1,
+	seed: number | (() => number) = 1,
 ) {
-	const rng = createRng(seed);
+	const rng = typeof seed === 'number' ? createRng(seed) : seed;
 	let awareness = start;
 	const events: AwarenessEvent[] = [];
 	for (const input of inputs) {
@@ -31,19 +31,40 @@ function run(
 const seconds = (n: number): AwarenessInput[] =>
 	Array.from({ length: n * 4 }, () => ({ type: 'tick', dt: 0.25 }) as const);
 
+/** Share of 200 seeds in which the character noticed the player within `secs`. */
+const noticedShare = (activity: Activity, secs: number) => {
+	let noticed = 0;
+	for (let seed = 1; seed <= 200; seed++) {
+		const { events } = run(seconds(secs), activity, 0.6, initialAwareness(), seed);
+		if (events.some((e) => e.type === 'detected')) noticed++;
+	}
+	return noticed / 200;
+};
+
 describe('stepAwareness', () => {
 	it('starts unaware - opening the app is not being noticed', () => {
 		expect(initialAwareness().state).toBe('UNKNOWN');
-		expect(run(seconds(10)).awareness.state).toBe('UNKNOWN');
+		expect(run(seconds(10), 'work').awareness.state).toBe('UNKNOWN');
+		expect(noticedShare('idle', 5)).toBeLessThan(0.1);
 	});
 
-	it('lets you watch a working character unnoticed if you keep still', () => {
-		expect(run(seconds(600), 'work').awareness.state).toBe('UNKNOWN');
+	it('lets you watch a busy character unnoticed for a while, even keeping still', () => {
+		expect(noticedShare('work', 30)).toBeLessThan(0.1);
+		expect(noticedShare('gaming', 30)).toBeLessThan(0.1);
 	});
 
-	it('an idle character eventually suspects someone is there', () => {
-		const { awareness, events } = run(seconds(240), 'idle');
-		expect(awareness.state).not.toBe('UNKNOWN');
+	it('notices you by itself sooner or later - you do not have to do anything', () => {
+		expect(noticedShare('idle', 3 * 60)).toBeGreaterThan(0.9);
+		expect(noticedShare('work', 15 * 60)).toBeGreaterThan(0.9);
+		expect(noticedShare('gaming', 15 * 60)).toBeGreaterThan(0.85);
+	});
+
+	it('never notices anyone while asleep', () => {
+		expect(noticedShare('sleep', 30 * 60)).toBe(0);
+	});
+
+	it('suspects before it detects', () => {
+		const { events } = run(seconds(240), 'idle');
 		expect(events[0]).toEqual({ type: 'suspected' });
 	});
 
@@ -56,7 +77,8 @@ describe('stepAwareness', () => {
 
 	it('suspicion fades when the player keeps still', () => {
 		const inputs: AwarenessInput[] = [{ type: 'movement', amount: 2.5 }, ...seconds(300)];
-		const { awareness, events } = run(inputs, 'work');
+		// An rng that never makes it look up on its own: only the movement counts here.
+		const { awareness, events } = run(inputs, 'work', 0.6, initialAwareness(), () => 0.999);
 		expect(events.map((e) => e.type)).toEqual(['suspected', 'dismissed']);
 		expect(awareness.state).toBe('UNKNOWN');
 	});
@@ -83,7 +105,12 @@ describe('stepAwareness', () => {
 			[{ type: 'knock' }, ...seconds(1), { type: 'knock' }, { type: 'knock' }],
 			'sleep',
 		);
-		expect(thrice.events.map((e) => e.type)).toEqual(['stirred', 'stirred', 'woken', 'detected']);
+		expect(thrice.events.map((e) => e.type).slice(0, 4)).toEqual([
+			'stirred',
+			'stirred',
+			'woken',
+			'detected',
+		]);
 	});
 
 	it('knocks spread out over time do not wake a sleeper', () => {
@@ -117,12 +144,14 @@ describe('stepAwareness', () => {
 		const detected: Awareness = { ...initialAwareness(), state: 'DETECTED', suspicion: 1 };
 		const { awareness, events } = run([{ type: 'arrived' }, ...seconds(15)], 'idle', 0.6, detected);
 		expect(awareness.state).toBe('IGNORING');
-		expect(events).toEqual([{ type: 'ignoring' }]);
+		expect(events).toEqual([{ type: 'ignoring', reason: 'no_response' }]);
 	});
 
 	it('the interaction ends after a long silence', () => {
 		const interacting: Awareness = { ...initialAwareness(), state: 'INTERACTING', suspicion: 1 };
-		expect(run(seconds(25), 'idle', 0.6, interacting).awareness.state).toBe('IGNORING');
+		const { awareness, events } = run(seconds(25), 'idle', 0.6, interacting);
+		expect(awareness.state).toBe('IGNORING');
+		expect(events).toEqual([{ type: 'ignoring', reason: 'no_response' }]);
 	});
 
 	it('enough knocking while ignored makes it come over after all', () => {

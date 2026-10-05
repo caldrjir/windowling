@@ -41,6 +41,8 @@ export const CONVERSATION_EVENTS = [
 	'player_said',
 	/** The character noticed the player but decided not to come over. */
 	'ignoring_player',
+	/** It came over or talked, and the player said nothing back. */
+	'player_silent',
 ] as const;
 
 export type ConversationEvent = (typeof CONVERSATION_EVENTS)[number];

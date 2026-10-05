@@ -57,7 +57,8 @@ test('the character does not notice you just because you opened the app', async 
 	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
 	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
 	await page.waitForTimeout(2_000);
-	await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
+	// At most a suspicious glance - it doesn't *know* you are there yet.
+	await expect(canvas).toHaveAttribute('data-awareness', /^(UNKNOWN|SUSPECTED)$/);
 });
 
 test('knocking on the glass gets noticed - asleep or awake', async ({ page }) => {
