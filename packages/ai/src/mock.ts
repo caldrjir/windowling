@@ -19,6 +19,15 @@ export class MockCharacterAI implements CharacterAI {
 				action: { type: 'lookAtPlayer' },
 			};
 		}
+		if (context.event === 'ignoring_player') {
+			const busy = context.activity === 'work' ? "Not now, I'm working." : 'Not now.';
+			return {
+				speech: context.needs.mood < 0.35 ? 'Go away.' : busy,
+				emotion: 'annoyed',
+				intensity: 0.3,
+				action: { type: 'idle' },
+			};
+		}
 		if (context.event === 'player_at_window') {
 			return {
 				speech: context.needs.mood < 0.35 ? 'What do you want?' : 'Oh. Hi there.',

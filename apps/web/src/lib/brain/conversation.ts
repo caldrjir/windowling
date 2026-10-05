@@ -11,10 +11,19 @@ export interface Brain {
 	}): Promise<CharacterDecision | null>;
 	/** A conversation is likely soon (the character is walking to the window). */
 	warmUp?(): void;
+	/** Diagnostics for the debug panel. */
+	readonly lastSource?: BrainSource | null;
+	readonly lastError?: string | null;
 }
+
+/** Where the last decision came from - shown in the debug panel (`?debug`). */
+export type BrainSource = 'device' | 'cloud-llm' | 'cloud-canned' | 'local-canned';
 
 /** The cloud brain: the server knows the character's state and reviews the result. */
 export class ServerBrain implements Brain {
+	lastSource: BrainSource | null = null;
+	lastError: string | null = null;
+
 	async decide(request: Parameters<Brain['decide']>[0]): Promise<CharacterDecision | null> {
 		try {
 			const response = await fetch('/api/ai/decide', {
@@ -22,10 +31,18 @@ export class ServerBrain implements Brain {
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify(request),
 			});
-			if (!response.ok) return null;
-			const body = (await response.json()) as { decision?: CharacterDecision };
+			if (!response.ok) {
+				this.lastError = `HTTP ${response.status}`;
+				console.warn('The cloud brain did not answer', response.status);
+				return null;
+			}
+			const body = (await response.json()) as { decision?: CharacterDecision; source?: string };
+			this.lastError = null;
+			this.lastSource = body.source === 'llm' ? 'cloud-llm' : 'cloud-canned';
 			return body.decision ?? null;
-		} catch {
+		} catch (error) {
+			this.lastError = String(error);
+			console.warn('The cloud brain is unreachable', error);
 			return null;
 		}
 	}

@@ -70,4 +70,15 @@ describe('MockCharacterAI', () => {
 		expect(decision.speech).toContain('03:12');
 		expect(decision.emotion).toBe('annoyed');
 	});
+
+	it('brushes the player off when it does not want to come over', async () => {
+		const decision = await new MockCharacterAI().decide({
+			...base,
+			activity: 'work',
+			awareness: 'IGNORING',
+			event: 'ignoring_player',
+		});
+		expect(decision.speech).toBe("Not now, I'm working.");
+		expect(decision.action).toEqual({ type: 'idle' });
+	});
 });
