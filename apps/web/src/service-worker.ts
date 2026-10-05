@@ -9,7 +9,9 @@ import { build, files, version } from '$service-worker';
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `windowling-${version}`;
 // Large on-demand runtimes (speech recognition) are fetched only by players who use them.
-const ASSETS = [...build, ...files].filter((path) => !/\/ort-wasm[^/]*$/.test(path));
+const ASSETS = [...build, ...files].filter(
+	(path) => !/\/ort-wasm[^/]*$/.test(path) && !path.startsWith('/webllm/'),
+);
 
 sw.addEventListener('install', (event) => {
 	event.waitUntil(

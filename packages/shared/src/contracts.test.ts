@@ -61,6 +61,7 @@ describe('worldSummarySchema', () => {
 					endsAt: '2026-01-01T07:00:00.000Z',
 				},
 				mood: 0.6,
+				needs: { hunger: 0.3, energy: 0.7 },
 			},
 		};
 		expect(worldSummarySchema.parse(summary)).toEqual(summary);
@@ -77,13 +78,25 @@ describe('worldSummarySchema', () => {
 		expect(
 			worldSummarySchema.safeParse({
 				...base,
-				character: { id: 'c', name: 'A', activity: { ...activity, type: 'hacking' }, mood: 0.5 },
+				character: {
+					id: 'c',
+					name: 'A',
+					activity: { ...activity, type: 'hacking' },
+					mood: 0.5,
+					needs: { hunger: 0, energy: 1 },
+				},
 			}).success,
 		).toBe(false);
 		expect(
 			worldSummarySchema.safeParse({
 				...base,
-				character: { id: 'c', name: 'A', activity: { ...activity, type: 'idle' }, mood: 3 },
+				character: {
+					id: 'c',
+					name: 'A',
+					activity: { ...activity, type: 'idle' },
+					mood: 3,
+					needs: { hunger: 0, energy: 1 },
+				},
 			}).success,
 		).toBe(false);
 	});

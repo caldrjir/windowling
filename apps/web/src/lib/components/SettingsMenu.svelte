@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { BrainPreference } from '$lib/brain/choose';
+	import { DEVICE_MODEL_DOWNLOAD_GB, deviceBrain } from '$lib/brain/device-brain.svelte';
 	import { settings, type SubtitleMode } from '$lib/settings.svelte';
 
 	let open = $state(false);
@@ -12,6 +14,25 @@
 	function setSubtitles(mode: SubtitleMode) {
 		settings.subtitles = mode;
 		settings.save();
+	}
+
+	const BRAINS: Array<{ value: BrainPreference; label: string }> = [
+		{ value: 'auto', label: 'Auto' },
+		{ value: 'device', label: 'Device' },
+		{ value: 'cloud', label: 'Cloud' },
+	];
+
+	function setBrain(brain: BrainPreference) {
+		settings.brain = brain;
+		settings.save();
+	}
+
+	async function downloadBrain() {
+		try {
+			await deviceBrain.download();
+		} catch (error) {
+			console.error('Could not set up the on-device brain', error);
+		}
 	}
 
 	function toggleVoice() {
@@ -58,6 +79,44 @@
 						>
 					{/each}
 				</div>
+			</div>
+			<div class="pt-3">
+				<span class="text-white/70">Brain</span>
+				<div class="mt-1 flex gap-1" role="radiogroup" aria-label="Brain">
+					{#each BRAINS as brain (brain.value)}
+						<button
+							role="radio"
+							aria-checked={settings.brain === brain.value}
+							class="flex-1 rounded-md px-2 py-1 transition {settings.brain === brain.value
+								? 'bg-white/25'
+								: 'bg-white/5 hover:bg-white/15'}"
+							onclick={() => setBrain(brain.value)}>{brain.label}</button
+						>
+					{/each}
+				</div>
+				<p
+					class="mt-2 text-xs text-white/60"
+					data-testid="device-brain"
+					data-status={deviceBrain.status}
+				>
+					{#if deviceBrain.status === 'unsupported'}
+						This device can't run the brain locally (needs WebGPU) - the cloud is used.
+					{:else if deviceBrain.status === 'absent'}
+						Thinks on this device, privately and offline-ready.
+						<button
+							class="mt-1 block rounded-md bg-white/15 px-2 py-1 text-white hover:bg-white/25"
+							onclick={downloadBrain}>Download (~{DEVICE_MODEL_DOWNLOAD_GB} GB, once)</button
+						>
+					{:else if deviceBrain.status === 'downloading' || deviceBrain.status === 'loading'}
+						Getting the brain ready… {deviceBrain.progress}%
+					{:else if deviceBrain.status === 'ready' || deviceBrain.status === 'downloaded'}
+						On-device brain ready.
+					{:else if deviceBrain.status === 'error'}
+						Couldn't start the on-device brain - the cloud is used.
+					{:else}
+						Checking this device…
+					{/if}
+				</p>
 			</div>
 		</div>
 	{/if}

@@ -3,7 +3,7 @@
 	import type { Activity, AwarenessState, CharacterAction } from '@windowling/shared';
 	import type { CharacterDecision, ConversationEvent } from '@windowling/ai';
 	import type { AwarenessEvent } from '@windowling/simulation';
-	import { Conversation, ServerBrain } from '$lib/conversation';
+	import { Conversation, type Brain } from '$lib/brain/conversation';
 	import { playKnock } from '$lib/knock';
 	import { settings, showSubtitles } from '$lib/settings.svelte';
 	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
@@ -22,9 +22,11 @@
 		/** The player knocked the character awake; the server applies the consequences. */
 		onWoken?: () => void;
 		characterName: string;
+		/** Turns events into what the character says and does. */
+		brain: Brain;
 	}
 
-	let { activity, mood, onWoken, characterName }: Props = $props();
+	let { activity, mood, onWoken, characterName, brain }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let status = $state<Status>('loading');
@@ -156,7 +158,7 @@
 					}
 				};
 				conversation = new Conversation({
-					brain: new ServerBrain(),
+					brain,
 					awareness: () => watcher?.state ?? 'UNKNOWN',
 					onDecision: say,
 				});
@@ -195,6 +197,7 @@
 								break;
 							}
 							engaged = true;
+							brain.warmUp?.();
 							clearTimeout(dwellTimer);
 							clearTimeout(glanceTimer);
 							game.setAttention(true);

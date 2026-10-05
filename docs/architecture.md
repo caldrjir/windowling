@@ -142,6 +142,15 @@ worker precache. Audio is recorded with `MediaRecorder`, resampled to 16 kHz mon
 and never uploaded; only the recognised text goes to the brain. `onnxruntime-node` is removed
 via a pnpm override (the Node backend is never used).
 
+**On-device brain (#31):** `deviceBrain` runs Llama 3.2 1B (q4f16, or q4f32 without
+`shader-f16`) with WebLLM in a Web Worker over WebGPU. It never downloads by itself: the player
+starts the ~0.7 GB download in Settings; afterwards the weights stay in the browser cache and
+the model is loaded into the GPU only when the character starts walking to the window
+(`Brain.warmUp`). The compiled kernels (`static/webllm/*.wasm`, checksums in its README) are
+served by us; only weights (data) come from the Hugging Face Hub. `CombinedBrain` picks the
+device model (`auto` once downloaded, or `device`) and falls back to the cloud; device decisions
+go through the same `reviewAction`.
+
 ### `packages/database` - persistence
 
 Drizzle schema (`src/schema`), SQL migrations (`drizzle/`), `createDatabase()` (postgres.js),
@@ -240,3 +249,4 @@ updates `world.timezone` after the catch-up (missed time is lived on the old clo
 | 2026-10-05 | Brain = on-device / cloud (OpenAI-compatible) / Ollama / canned  | Player's choice (#28). REST instead of the Workers AI binding: portable, and `wrangler dev`/E2E need no Cloudflare login. |
 | 2026-10-05 | Browser `speechSynthesis` first, neural TTS later (#32)          | Local neural TTS needs GPL-3 espeak-ng and CDN-loaded runtimes; tracked to reach the best quality later.                  |
 | 2026-10-05 | Whisper in the browser, CPU WASM, self-hosted runtime            | Voice stays on the device; no third-party CDN scripts; fits Cloudflare asset limits.                                      |
+| 2026-10-05 | WebLLM kernels vendored in `static/webllm/`                      | No executable code from third-party hosts at runtime; pinned by checksum.                                                 |

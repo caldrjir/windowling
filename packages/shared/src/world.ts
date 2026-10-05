@@ -19,6 +19,11 @@ export const worldSummarySchema = z.object({
 		}),
 		/** 0..1, only for body language - never rendered as a number. */
 		mood: z.number().min(0).max(1),
+		/** 0..1, inner state for an on-device brain's context - never rendered as numbers. */
+		needs: z.object({
+			hunger: z.number().min(0).max(1),
+			energy: z.number().min(0).max(1),
+		}),
 	}),
 });
 
