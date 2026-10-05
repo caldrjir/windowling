@@ -117,6 +117,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@windowling/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@windowling/simulation':
         specifier: workspace:*
         version: link:../simulation

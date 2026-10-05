@@ -13,6 +13,7 @@ import {
 	PointLight,
 	Shape,
 	ExtrudeGeometry,
+	SphereGeometry,
 	type Material,
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
@@ -36,6 +37,11 @@ const PALETTE = {
 	lampPole: '#2f2f33',
 	lampShade: '#ffe2b8',
 	windowFrame: '#f1ece4',
+	fridge: '#e8ecef',
+	handle: '#9aa3ab',
+	counter: '#6b8f71',
+	worktop: '#d9d2c5',
+	bowl: '#f4a261',
 } as const;
 
 export interface Room {
@@ -278,6 +284,51 @@ export function buildRoom(physics: PhysicsWorld): Room {
 		),
 	);
 	addStatic(physics, chair);
+
+	// Kitchenette: fridge + counter with a fruit bowl
+	const fridge = FURNITURE.fridge;
+	group.add(box(fridge, mat(PALETTE.fridge, { roughness: 0.4 })));
+	for (const [y, h] of [
+		[1.15, 0.35],
+		[0.55, 0.45],
+	] as const) {
+		group.add(
+			box(
+				{
+					x: fridge.x - fridge.width / 2 - 0.015,
+					z: fridge.z + 0.18,
+					y,
+					width: 0.03,
+					height: h,
+					depth: 0.03,
+				},
+				mat(PALETTE.handle, { roughness: 0.3, metalness: 0.6 }),
+			),
+		);
+	}
+	addStatic(physics, fridge);
+	const counter = FURNITURE.counter;
+	group.add(box({ ...counter, height: counter.height - 0.04 }, mat(PALETTE.counter)));
+	group.add(
+		box(
+			{
+				...counter,
+				x: counter.x - 0.02,
+				y: counter.height - 0.04,
+				height: 0.04,
+				width: counter.width + 0.04,
+			},
+			mat(PALETTE.worktop, { roughness: 0.5 }),
+		),
+	);
+	const fruitBowl = new Mesh(
+		new SphereGeometry(0.12, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
+		mat(PALETTE.bowl, { roughness: 0.5 }),
+	);
+	fruitBowl.position.set(counter.x + 0.05, counter.height + 0.12, counter.z + 0.3);
+	fruitBowl.castShadow = true;
+	group.add(fruitBowl);
+	addStatic(physics, counter);
 
 	// Floor lamp
 	const lamp = FURNITURE.lamp;

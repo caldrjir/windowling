@@ -9,6 +9,7 @@ import {
 	findWorldByUserId,
 	getOrCreateWorldForUser,
 	transferWorldOwnership,
+	updateWorldTimeZone,
 } from './worlds.ts';
 
 const url = getTestDatabaseUrl();
@@ -88,7 +89,7 @@ describe.skipIf(!url)('worlds repository (postgres)', () => {
 	it('only ever moves the simulation clock forward', async () => {
 		const userId = await createUser(true);
 		const start = new Date('2026-01-01T10:00:00.000Z');
-		const world = await getOrCreateWorldForUser(conn.db, userId, start);
+		const world = await getOrCreateWorldForUser(conn.db, userId, { now: start });
 
 		const later = new Date('2026-01-01T12:00:00.000Z');
 		const advanced = await catchUpWorld(conn.db, world, later);
@@ -97,5 +98,55 @@ describe.skipIf(!url)('worlds repository (postgres)', () => {
 		const stale = await catchUpWorld(conn.db, world, new Date('2026-01-01T11:00:00.000Z'));
 		expect(stale.lastSimulatedAt.getTime()).toBeLessThanOrEqual(later.getTime());
 		expect((await findWorldByUserId(conn.db, userId))?.lastSimulatedAt).toEqual(later);
+	});
+
+	it('starts a life in the device time zone', async () => {
+		const userId = await createUser(true);
+		// 02:00 in Prague: a new character starts the night asleep.
+		const now = new Date('2026-10-05T00:00:00.000Z');
+		const world = await getOrCreateWorldForUser(conn.db, userId, {
+			now,
+			timeZone: 'Europe/Prague',
+		});
+		expect(world.timeZone).toBe('Europe/Prague');
+		expect(world.character.life.activity).toBe('sleep');
+		expect(world.character.life.activityEndsAt.getTime()).toBeGreaterThan(now.getTime());
+	});
+
+	it('falls back to UTC for an unknown time zone', async () => {
+		const userId = await createUser(true);
+		const world = await getOrCreateWorldForUser(conn.db, userId, { timeZone: 'Nowhere/Land' });
+		expect(world.timeZone).toBe('UTC');
+	});
+
+	it('persists needs and activities while the app is closed', async () => {
+		const userId = await createUser(true);
+		const start = new Date('2026-10-05T06:00:00.000Z'); // Monday 08:00 in Prague
+		const world = await getOrCreateWorldForUser(conn.db, userId, {
+			now: start,
+			timeZone: 'Europe/Prague',
+		});
+
+		// Back on Monday at 13:00 local: hours of life have happened in between.
+		const later = new Date('2026-10-05T11:00:00.000Z');
+		const advanced = await catchUpWorld(conn.db, world, later);
+		expect(advanced.character.life.activityEndsAt.getTime()).toBeGreaterThan(later.getTime());
+		expect(advanced.character.life.activityStartedAt.getTime()).toBeLessThanOrEqual(
+			later.getTime(),
+		);
+
+		const reloaded = await findWorldByUserId(conn.db, userId);
+		expect(reloaded?.character.life).toEqual(advanced.character.life);
+		expect(reloaded?.lastSimulatedAt).toEqual(later);
+	});
+
+	it('follows the device into another time zone', async () => {
+		const userId = await createUser(true);
+		const world = await getOrCreateWorldForUser(conn.db, userId, { timeZone: 'Europe/Prague' });
+		const moved = await updateWorldTimeZone(conn.db, world, 'America/New_York');
+		expect(moved.timeZone).toBe('America/New_York');
+		expect((await findWorldByUserId(conn.db, userId))?.timeZone).toBe('America/New_York');
+		const ignored = await updateWorldTimeZone(conn.db, moved, 'Not/AZone');
+		expect(ignored.timeZone).toBe('America/New_York');
 	});
 });

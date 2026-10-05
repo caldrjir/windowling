@@ -3,14 +3,25 @@
 	import AccountMenu from '$lib/components/AccountMenu.svelte';
 	import GameCanvas from '$lib/components/GameCanvas.svelte';
 	import { authClient } from '$lib/auth-client';
+	import { deviceTimeZone, rememberTimeZone } from '$lib/time-zone';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
 	let failed = $state(false);
 
-	// First visit: become an anonymous player, which creates the world on the server.
+	const RECHECK_AFTER_MS = 2_000;
+	/** When the server still reports an ended activity (clock skew), don't hammer it. */
+	const RETRY_AFTER_MS = 30_000;
+
 	onMount(async () => {
-		if (data.user) return;
+		const timeZone = deviceTimeZone();
+		rememberTimeZone(timeZone);
+		if (data.user) {
+			// The device moved to another zone since the last visit: let the server know.
+			if (data.world && data.world.timeZone !== timeZone) await invalidateAll();
+			return;
+		}
+		// First visit: become an anonymous player, which creates the world on the server.
 		const { error } = await authClient.signIn.anonymous();
 		if (error) {
 			console.error('Anonymous sign-in failed', error);
@@ -19,10 +30,36 @@
 		}
 		await invalidateAll();
 	});
+
+	// The server owns the life. When the current activity is over, ask it what comes next.
+	let lastCheckedEndsAt = '';
+	$effect(() => {
+		const endsAt = data.world?.character.activity.endsAt;
+		if (!endsAt) return;
+		const dueIn = Date.parse(endsAt) - Date.now() + RECHECK_AFTER_MS;
+		const delay = endsAt === lastCheckedEndsAt ? Math.max(dueIn, RETRY_AFTER_MS) : dueIn;
+		const recheck = () => {
+			lastCheckedEndsAt = endsAt;
+			void invalidateAll();
+		};
+		const timer = setTimeout(recheck, Math.min(Math.max(delay, 0), 2 ** 31 - 1));
+		// Timers stall in background tabs and sleeping phones: check again on return.
+		const onVisible = () => {
+			if (!document.hidden && Date.now() >= Date.parse(endsAt)) recheck();
+		};
+		document.addEventListener('visibilitychange', onVisible);
+		return () => {
+			clearTimeout(timer);
+			document.removeEventListener('visibilitychange', onVisible);
+		};
+	});
 </script>
 
 <main class="relative h-dvh w-full overflow-hidden">
-	<GameCanvas />
+	<GameCanvas
+		activity={data.world?.character.activity.type ?? null}
+		mood={data.world?.character.mood ?? 0.6}
+	/>
 
 	<header
 		class="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-4 px-[max(1rem,env(safe-area-inset-left))] pt-[max(1rem,env(safe-area-inset-top))]"
@@ -37,6 +74,7 @@
 		class="pointer-events-none absolute inset-x-0 bottom-0 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1rem,env(safe-area-inset-bottom))] text-xs text-white/50"
 		data-testid="world-status"
 		data-world-id={data.world?.id ?? ''}
+		data-time-zone={data.world?.timeZone ?? ''}
 	>
 		{#if data.world}
 			{data.world.character.name}'s place

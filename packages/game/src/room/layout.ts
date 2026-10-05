@@ -37,6 +37,9 @@ export const FURNITURE = {
 	deskChair: { x: 2.05, z: -1.15, width: 0.5, height: 0.47, depth: 0.5 },
 	rug: { x: 0, z: 0.1, width: 2.6, height: 0.01, depth: 1.7 },
 	lamp: { x: 1.1, z: -1.95, width: 0.3, height: 1.6, depth: 0.3 },
+	// Kitchenette along the right wall (Iteration 2): somewhere to eat.
+	fridge: { x: 2.66, z: -0.25, width: 0.62, height: 1.7, depth: 0.6 },
+	counter: { x: 2.7, z: 0.68, width: 0.55, height: 0.9, depth: 1.05 },
 } as const satisfies Record<string, Box>;
 
 /** Window in the back wall (to the outside world of the flat). */
@@ -77,6 +80,14 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 			y: FURNITURE.bed.height,
 			yaw: 0,
 		},
+	},
+	'kitchen.counter': {
+		approach: {
+			x: FURNITURE.counter.x - FURNITURE.counter.width / 2 - 0.4,
+			z: FURNITURE.counter.z,
+		},
+		// Half-turned towards the room, so the player sees what is being eaten.
+		approachYaw: Math.PI / 3,
 	},
 };
 

@@ -123,6 +123,11 @@ export class GameWorld {
 		return this.character.perform(action);
 	}
 
+	/** How the character feels (0..1, from the simulation); shows in pace and posture. */
+	setMood(mood: number): void {
+		this.character.setMood(mood);
+	}
+
 	/** Subscribes to action completion / rejection. Returns an unsubscribe function. */
 	onCharacterEvent(listener: (event: ControllerEvent) => void): () => void {
 		this.listeners.add(listener);

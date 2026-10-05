@@ -1,6 +1,7 @@
 import {
 	BoxGeometry,
 	CapsuleGeometry,
+	CylinderGeometry,
 	Group,
 	Mesh,
 	MeshStandardMaterial,
@@ -16,6 +17,10 @@ const COLORS = {
 	pants: '#264653',
 	shoes: '#2b2b2b',
 	hair: '#3b2a20',
+	bowl: '#f4f1ea',
+	food: '#e76f51',
+	handheld: '#2b2d42',
+	handheldScreen: '#8ecae6',
 } as const;
 
 const THIGH = 0.44;
@@ -40,6 +45,9 @@ export class CharacterRig {
 	private readonly arms: [Group, Group] = [new Group(), new Group()];
 	private readonly forearms: [Group, Group] = [new Group(), new Group()];
 	private readonly materials: MeshStandardMaterial[] = [];
+	/** Props live in front of the chest; they are shown only while the activity needs them. */
+	private readonly bowl = new Group();
+	private readonly handheld = new Group();
 
 	constructor() {
 		this.root.name = 'character';
@@ -105,6 +113,36 @@ export class CharacterRig {
 			arm.add(forearm);
 			this.chest.add(arm);
 		}
+
+		// Bowl held at belly height; the right hand brings bites up to the mouth.
+		const bowlMesh = part(
+			new SphereGeometry(0.09, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
+			COLORS.bowl,
+			0,
+		);
+		const food = part(new CylinderGeometry(0.075, 0.075, 0.02, 16), COLORS.food, -0.01);
+		this.bowl.add(bowlMesh, food);
+		this.bowl.position.set(-0.08, 0.2, 0.3);
+		this.bowl.visible = false;
+		this.chest.add(this.bowl);
+
+		// Handheld console held with both hands in front of the chest.
+		this.handheld.add(part(new BoxGeometry(0.22, 0.03, 0.1), COLORS.handheld, 0));
+		const handheldScreen = new Mesh(
+			new BoxGeometry(0.1, 0.005, 0.07),
+			new MeshStandardMaterial({
+				color: COLORS.handheldScreen,
+				emissive: COLORS.handheldScreen,
+				emissiveIntensity: 0.8,
+			}),
+		);
+		this.materials.push(handheldScreen.material);
+		handheldScreen.position.y = 0.018;
+		this.handheld.add(handheldScreen);
+		this.handheld.position.set(0, 0.22, 0.32);
+		this.handheld.rotation.x = -0.9;
+		this.handheld.visible = false;
+		this.chest.add(this.handheld);
 	}
 
 	/** Applies a world transform and a pose. Called once per rendered frame. */
@@ -127,15 +165,24 @@ export class CharacterRig {
 			thigh.rotation.x = -side * pose.legSwing - pose.hipFlex;
 			shin.rotation.x = pose.knee;
 			const arm = this.arms[i as 0 | 1];
-			arm.rotation.x = side * pose.armSwing - sit * 0.5;
-			arm.rotation.z = -side * 0.08;
-			this.forearms[i as 0 | 1].rotation.x = -0.15 - sit * 0.6;
+			// arms[1] is the right hand (the one that eats).
+			const mouth = i === 1 ? pose.handToMouth : 0;
+			const busy = Math.min(1, pose.armForward / 0.6);
+			arm.rotation.x =
+				side * pose.armSwing - sit * 0.5 * (1 - busy) - pose.armForward - mouth * 0.35;
+			// Busy hands come together in front of the body.
+			arm.rotation.z = -side * (0.08 - busy * 0.3);
+			this.forearms[i as 0 | 1].rotation.x =
+				-0.15 - sit * 0.6 * (1 - busy) - pose.elbow - mouth * 1.4;
 		}
 
 		// Relaxed lean back while seated reads as "sitting" even from the front.
-		this.chest.rotation.x = -0.18 * sit;
+		this.chest.rotation.x = -0.18 * sit + pose.slump;
 		this.chest.scale.set(1 + pose.breath * 0.015, 1, 1 + pose.breath * 0.025);
 		this.head.rotation.y = pose.headYaw;
+		this.head.rotation.x = pose.headPitch;
+		this.bowl.visible = pose.bowl > 0.5;
+		this.handheld.visible = pose.handheld > 0.5;
 	}
 
 	dispose(): void {

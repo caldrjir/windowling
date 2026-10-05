@@ -1,10 +1,10 @@
 import { STARTER_ROOM_TARGETS, type CharacterAction } from '@windowling/shared';
 
 /**
- * Placeholder behaviour for Iteration 1: keeps the character visibly living
- * (moving between places) until the real needs-driven scheduler arrives in
- * Iteration 2. It lives in the simulation because choosing *what to do* is a
- * simulation concern - the renderer only carries actions out.
+ * In-between behaviour while the scheduled activity is `idle`: keeps the
+ * character visibly living (moving between places). It lives in the
+ * simulation because choosing *what to do* is a simulation concern - the
+ * renderer only carries actions out.
  */
 export interface AmbientChoice {
 	action: CharacterAction;
@@ -21,7 +21,7 @@ interface Option {
 const OPTIONS: Option[] = [
 	{ action: { type: 'sit', target: 'sofa' }, weight: 3, dwell: [20, 60] },
 	{ action: { type: 'sit', target: 'desk.chair' }, weight: 3, dwell: [30, 90] },
-	{ action: { type: 'sleep', target: 'bed' }, weight: 1, dwell: [30, 60] },
+	{ action: { type: 'sit', target: 'bed' }, weight: 1, dwell: [20, 50] },
 	{ action: { type: 'walkTo', target: 'window' }, weight: 1, dwell: [5, 15] },
 	{ action: { type: 'walkTo', target: 'room.center' }, weight: 2, dwell: [4, 10] },
 	{ action: { type: 'idle' }, weight: 1, dwell: [3, 8] },

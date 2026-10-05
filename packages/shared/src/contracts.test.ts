@@ -51,8 +51,40 @@ describe('worldSummarySchema', () => {
 			id: 'w1',
 			createdAt: '2026-01-01T00:00:00.000Z',
 			lastSimulatedAt: '2026-01-01T00:00:00.000Z',
-			character: { id: 'c1', name: 'Alex' },
+			timeZone: 'Europe/Prague',
+			character: {
+				id: 'c1',
+				name: 'Alex',
+				activity: {
+					type: 'sleep',
+					startedAt: '2026-01-01T00:00:00.000Z',
+					endsAt: '2026-01-01T07:00:00.000Z',
+				},
+				mood: 0.6,
+			},
 		};
 		expect(worldSummarySchema.parse(summary)).toEqual(summary);
+	});
+
+	it('rejects unknown activities and out-of-range mood', () => {
+		const base = {
+			id: 'w1',
+			createdAt: '2026-01-01T00:00:00.000Z',
+			lastSimulatedAt: '2026-01-01T00:00:00.000Z',
+			timeZone: 'UTC',
+		};
+		const activity = { startedAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-01-01T01:00:00.000Z' };
+		expect(
+			worldSummarySchema.safeParse({
+				...base,
+				character: { id: 'c', name: 'A', activity: { ...activity, type: 'hacking' }, mood: 0.5 },
+			}).success,
+		).toBe(false);
+		expect(
+			worldSummarySchema.safeParse({
+				...base,
+				character: { id: 'c', name: 'A', activity: { ...activity, type: 'idle' }, mood: 3 },
+			}).success,
+		).toBe(false);
 	});
 });

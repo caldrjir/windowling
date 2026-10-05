@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { doublePrecision, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from './auth.ts';
 
 const timestamps = {
@@ -22,6 +22,8 @@ export const world = pgTable('world', {
 		.unique()
 		.references(() => user.id, { onDelete: 'cascade' }),
 	lastSimulatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+	/** IANA zone of the player's device - the character lives on that clock (#10). */
+	timezone: text().notNull().default('UTC'),
 	...timestamps,
 });
 
@@ -33,5 +35,14 @@ export const character = pgTable('character', {
 		.unique()
 		.references(() => world.id, { onDelete: 'cascade' }),
 	name: text().notNull(),
+	// Life state (Iteration 2). Needs are 0..1, never shown as numbers.
+	hunger: doublePrecision().notNull().default(0.3),
+	energy: doublePrecision().notNull().default(0.8),
+	mood: doublePrecision().notNull().default(0.7),
+	/** One of the shared `Activity` values; validated when read. */
+	activity: text().notNull().default('idle'),
+	activityStartedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+	/** An activity that already ended is re-decided on the next catch-up. */
+	activityEndsAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 	...timestamps,
 });
