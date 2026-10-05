@@ -50,6 +50,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@windowling/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@windowling/database':
         specifier: workspace:*
         version: link:../../packages/database

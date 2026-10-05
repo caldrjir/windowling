@@ -37,9 +37,13 @@ describe('parseCharacterDecision', () => {
 describe('MockCharacterAI', () => {
 	const base: CharacterAIContext = {
 		characterName: 'Alex',
-		now: new Date('2026-01-01T12:00:00Z'),
+		localTime: '12:00',
+		weekday: 'Monday',
+		activity: 'gaming',
+		needs: { hunger: 0.2, energy: 0.7, mood: 0.6 },
 		awareness: 'UNKNOWN',
-		situation: 'gaming',
+		event: 'player_said',
+		recent: [],
 	};
 
 	it('does not react to a player it has not noticed', async () => {
@@ -54,5 +58,16 @@ describe('MockCharacterAI', () => {
 			const decision = await ai.decide({ ...base, awareness, playerUtterance: 'hi' });
 			expect(parseCharacterDecision(decision)).toEqual(decision);
 		}
+	});
+
+	it('complains when woken up', async () => {
+		const decision = await new MockCharacterAI().decide({
+			...base,
+			awareness: 'DETECTED',
+			event: 'woken_up',
+			localTime: '03:12',
+		});
+		expect(decision.speech).toContain('03:12');
+		expect(decision.emotion).toBe('annoyed');
 	});
 });

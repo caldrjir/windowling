@@ -77,6 +77,30 @@ test('knocking on the glass gets noticed - asleep or awake', async ({ page }) =>
 	});
 });
 
+test('the character comes to the window and says something', async ({ page }) => {
+	await page.goto('/');
+	const canvas = page.getByTestId('game-canvas');
+	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
+	await expect(canvas).toHaveAttribute('data-activity', /.+/, { timeout: 15_000 });
+	const box = await canvas.boundingBox();
+	if (!box) throw new Error('canvas has no box');
+	const subtitles = page.getByTestId('subtitles');
+	// Knock until it decides to come over (it may ignore us for a while - its choice).
+	for (let i = 0; i < 20; i++) {
+		if ((await canvas.getAttribute('data-character-action')) === 'walkTo:window') break;
+		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+		await page.waitForTimeout(400);
+	}
+	await expect(subtitles).toHaveAttribute('data-line', /\w+/, { timeout: 20_000 });
+});
+
+test('the brain needs a session', async ({ request }) => {
+	const response = await request.post('/api/ai/decide', {
+		data: { event: 'player_at_window', awareness: 'DETECTED', recent: [] },
+	});
+	expect(response.status()).toBe(401);
+});
+
 test('waking needs a session and only works on a sleeping character', async ({ request }) => {
 	const response = await request.post('/api/world/wake');
 	expect(response.status()).toBe(401);

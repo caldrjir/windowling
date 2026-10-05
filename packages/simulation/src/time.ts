@@ -66,3 +66,29 @@ export function hoursUntil(hour: number, targetHour: number): number {
 	const diff = (((targetHour - hour) % 24) + 24) % 24;
 	return diff === 0 ? 24 : diff;
 }
+
+const clockFormatters = new Map<string, Intl.DateTimeFormat>();
+
+/** Human wall clock for prompts and speech: `{ time: '03:12', weekday: 'Tuesday' }`. */
+export function localClock(at: Date, timeZone: string): { time: string; weekday: string } {
+	let cached = clockFormatters.get(timeZone);
+	if (!cached) {
+		cached = new Intl.DateTimeFormat('en-GB', {
+			timeZone,
+			hourCycle: 'h23',
+			weekday: 'long',
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+		clockFormatters.set(timeZone, cached);
+	}
+	let hour = '00';
+	let minute = '00';
+	let weekday = '';
+	for (const part of cached.formatToParts(at)) {
+		if (part.type === 'hour') hour = part.value;
+		else if (part.type === 'minute') minute = part.value;
+		else if (part.type === 'weekday') weekday = part.value;
+	}
+	return { time: `${hour}:${minute}`, weekday };
+}

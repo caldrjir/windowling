@@ -85,4 +85,30 @@ describe('Animator', () => {
 		expect(sad.pose().slump).toBeGreaterThan(happy.pose().slump);
 		expect(sad.pose().headPitch).toBeGreaterThan(happy.pose().headPitch);
 	});
+
+	it('moves the mouth only while speaking', () => {
+		const a = new Animator();
+		settle(a, 0.5);
+		expect(a.pose().mouth).toBe(0);
+		a.setSpeaking(true);
+		let max = 0;
+		for (let i = 0; i < 60; i++) {
+			a.update(1 / 60);
+			max = Math.max(max, a.pose().mouth);
+		}
+		expect(max).toBeGreaterThan(0.4);
+		a.setSpeaking(false);
+		settle(a, 1);
+		expect(a.pose().mouth).toBe(0);
+	});
+
+	it('shows an emotion for a while, then lets it fade', () => {
+		const a = new Animator();
+		const calm = a.pose().headPitch;
+		a.showEmotion('sad', 1);
+		settle(a, 1);
+		expect(a.pose().headPitch).toBeGreaterThan(calm + 0.2);
+		settle(a, 8);
+		expect(a.pose().headPitch).toBeCloseTo(calm, 2);
+	});
 });

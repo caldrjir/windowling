@@ -18,6 +18,7 @@ import {
 	type CharacterSnapshot,
 	type ControllerEvent,
 } from './character/controller.ts';
+import type { Emotion } from './character/animation.ts';
 import { CharacterRig } from './character/rig.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import { initPhysics, PhysicsWorld, type BodyHandle, type BodyTransform } from './physics.ts';
@@ -126,6 +127,21 @@ export class GameWorld {
 	/** The character looks at the player (true) or minds its own business (false). */
 	setAttention(on: boolean): void {
 		this.character.setAttention(on);
+	}
+
+	/** Mouth moves while the character's voice is playing (basic lip sync). */
+	setSpeaking(speaking: boolean): void {
+		this.character.animator.setSpeaking(speaking);
+	}
+
+	/** A new word started: snap the mouth open for it. */
+	pulseMouth(): void {
+		this.character.animator.pulseMouth();
+	}
+
+	/** Shows a feeling in posture for a few seconds (from a decision's emotion). */
+	showEmotion(emotion: Emotion, intensity: number): void {
+		this.character.animator.showEmotion(emotion, intensity);
 	}
 
 	/** How the character feels (0..1, from the simulation); shows in pace and posture. */

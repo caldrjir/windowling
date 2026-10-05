@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hoursUntil, isValidTimeZone, isWeekend, localTime } from './time.ts';
+import { hoursUntil, isValidTimeZone, isWeekend, localClock, localTime } from './time.ts';
 
 describe('localTime', () => {
 	it('converts to the local clock of a time zone', () => {
@@ -44,5 +44,14 @@ describe('time helpers', () => {
 		expect(hoursUntil(23, 7)).toBe(8);
 		expect(hoursUntil(6, 7)).toBe(1);
 		expect(hoursUntil(7, 7)).toBe(24);
+	});
+});
+
+describe('localClock', () => {
+	it('formats the local wall clock for speech', () => {
+		expect(localClock(new Date('2026-10-06T01:12:00Z'), 'Europe/Prague')).toEqual({
+			time: '03:12',
+			weekday: 'Tuesday',
+		});
 	});
 });

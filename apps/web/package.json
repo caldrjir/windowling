@@ -14,6 +14,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@windowling/ai": "workspace:*",
 		"@windowling/database": "workspace:*",
 		"@windowling/game": "workspace:*",
 		"@windowling/shared": "workspace:*",
