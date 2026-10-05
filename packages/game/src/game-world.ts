@@ -123,6 +123,11 @@ export class GameWorld {
 		return this.character.perform(action);
 	}
 
+	/** The character looks at the player (true) or minds its own business (false). */
+	setAttention(on: boolean): void {
+		this.character.setAttention(on);
+	}
+
 	/** How the character feels (0..1, from the simulation); shows in pace and posture. */
 	setMood(mood: number): void {
 		this.character.setMood(mood);

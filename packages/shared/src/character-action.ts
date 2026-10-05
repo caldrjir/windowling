@@ -20,6 +20,8 @@ export type KnownTargetId = z.infer<typeof knownTargetIdSchema>;
 export const characterActionSchema = z.discriminatedUnion('type', [
 	z.object({ type: z.literal('idle') }),
 	z.object({ type: z.literal('lookAtPlayer') }),
+	/** Turn to the player and wave (from wherever the character is). */
+	z.object({ type: z.literal('wave') }),
 	z.object({ type: z.literal('walkTo'), target: knownTargetIdSchema }),
 	z.object({ type: z.literal('sit'), target: knownTargetIdSchema }),
 	z.object({ type: z.literal('sleep'), target: knownTargetIdSchema }),

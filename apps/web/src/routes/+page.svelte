@@ -31,6 +31,16 @@
 		await invalidateAll();
 	});
 
+	/** Knocked awake: the server checks it was really asleep and applies the consequences. */
+	async function wake() {
+		try {
+			const response = await fetch('/api/world/wake', { method: 'POST' });
+			if (response.ok) await invalidateAll();
+		} catch (error) {
+			console.warn('Could not report waking the character', error);
+		}
+	}
+
 	// The server owns the life. When the current activity is over, ask it what comes next.
 	let lastCheckedEndsAt = '';
 	$effect(() => {
@@ -59,6 +69,7 @@
 	<GameCanvas
 		activity={data.world?.character.activity.type ?? null}
 		mood={data.world?.character.mood ?? 0.6}
+		onWoken={wake}
 	/>
 
 	<header

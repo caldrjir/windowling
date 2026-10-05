@@ -67,6 +67,12 @@ Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
 - `startLife` / `advanceLife(state, from, to, ctx)` - event-driven: applies needs over the current
   activity and decides again whenever one ends. The RNG is seeded with `world id + decision time`,
   so the same inputs always give the same life.
+- `stepAwareness(awareness, input, ctx, rng)` - does the character know it is watched?
+  Suspicion grows from presence and pointer movement scaled by the activity (idle notices, work
+  and games absorb, sleep notices nothing) and fades when the player keeps still. A knock is
+  unmistakable when awake; a sleeper stirs, and wakes on 3 knocks within 8 s. On detection the
+  character approaches (mood, activity, just woken) or ignores the player. Session state only.
+- `wakeUp(life, at)` - interrupts sleep with a mood penalty; the scheduler decides what next.
 - `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then
   wanders using `nextAmbientAction`).
 
@@ -98,6 +104,13 @@ handheld); mood shows in walking pace and slumped shoulders. The renderer never 
 world up and returns the current activity with its end time; `GameCanvas` performs the matching
 action, and when the activity ends the page re-runs the load (`invalidateAll`) to get the next one.
 No game loop runs on the server and the client never simulates authoritative state.
+
+**Awareness (Iteration 3):** `apps/web/src/lib/watcher.ts` collects the player's signals
+(presence ticks, pointer movement, knocks = clicks/taps on the glass) and feeds the simulation's
+awareness model in the browser; `GameCanvas` turns its events into actions (glance =
+`setAttention`, approach = `walkTo window` + `lookAtPlayer`, `wave`) and resumes the daily
+activity afterwards. Knocking a sleeper awake calls `POST /api/world/wake`; the server checks
+that the character is really asleep and persists the consequences.
 
 ### `packages/ai` - reasoning interfaces
 
@@ -201,3 +214,4 @@ updates `world.timezone` after the catch-up (missed time is lived on the old clo
 | 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**                | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created). |
 | 2026-10-05 | Character lives in the device time zone (`wl_tz` cookie)         | Player's choice (#10): "3 AM for me is 3 AM for it", follows the player when travelling.               |
 | 2026-10-05 | Server-authoritative life; client re-loads when an activity ends | One source of truth, no client/server divergence; activities last minutes, so few requests.            |
+| 2026-10-05 | Awareness is browser session state; only waking is persisted     | Being watched exists only while someone looks; consequences (broken sleep) must survive.               |

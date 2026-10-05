@@ -168,12 +168,16 @@ export class CharacterRig {
 			// arms[1] is the right hand (the one that eats).
 			const mouth = i === 1 ? pose.handToMouth : 0;
 			const busy = Math.min(1, pose.armForward / 0.6);
+			const wave = i === 1 ? pose.wave : 0;
 			arm.rotation.x =
-				side * pose.armSwing - sit * 0.5 * (1 - busy) - pose.armForward - mouth * 0.35;
-			// Busy hands come together in front of the body.
-			arm.rotation.z = -side * (0.08 - busy * 0.3);
+				(side * pose.armSwing - sit * 0.5 * (1 - busy) - pose.armForward - mouth * 0.35) *
+					(1 - wave) -
+				wave * 2.7;
+			// Busy hands come together in front of the body; a waving arm swings out to the side.
+			arm.rotation.z =
+				-side * (0.08 - busy * 0.3) * (1 - wave) - side * wave * (0.25 + pose.waveSwing * 0.35);
 			this.forearms[i as 0 | 1].rotation.x =
-				-0.15 - sit * 0.6 * (1 - busy) - pose.elbow - mouth * 1.4;
+				(-0.15 - sit * 0.6 * (1 - busy) - pose.elbow - mouth * 1.4) * (1 - wave) - wave * 0.5;
 		}
 
 		// Relaxed lean back while seated reads as "sitting" even from the front.

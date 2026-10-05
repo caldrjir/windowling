@@ -10,6 +10,7 @@ import {
 	getOrCreateWorldForUser,
 	transferWorldOwnership,
 	updateWorldTimeZone,
+	wakeCharacter,
 } from './worlds.ts';
 
 const url = getTestDatabaseUrl();
@@ -148,5 +149,30 @@ describe.skipIf(!url)('worlds repository (postgres)', () => {
 		expect((await findWorldByUserId(conn.db, userId))?.timeZone).toBe('America/New_York');
 		const ignored = await updateWorldTimeZone(conn.db, moved, 'Not/AZone');
 		expect(ignored.timeZone).toBe('America/New_York');
+	});
+
+	it('wakes a sleeping character, with consequences, but not an awake one', async () => {
+		const userId = await createUser(true);
+		const night = new Date('2026-10-05T01:00:00.000Z'); // 03:00 in Prague
+		const world = await getOrCreateWorldForUser(conn.db, userId, {
+			now: night,
+			timeZone: 'Europe/Prague',
+		});
+		expect(world.character.life.activity).toBe('sleep');
+
+		const knock = new Date(night.getTime() + 30 * 60_000);
+		const woken = await wakeCharacter(conn.db, userId, knock);
+		expect(woken?.character.life.activity).toBe('idle');
+		expect(woken?.character.life.needs.mood).toBeLessThan(world.character.life.needs.mood);
+		expect((await findWorldByUserId(conn.db, userId))?.character.life).toEqual(
+			woken?.character.life,
+		);
+
+		// Already awake: knocking again changes nothing.
+		expect(await wakeCharacter(conn.db, userId, new Date(knock.getTime() + 60_000))).toBeNull();
+	});
+
+	it('cannot wake a character that has no world', async () => {
+		expect(await wakeCharacter(conn.db, await createUser(true))).toBeNull();
 	});
 });

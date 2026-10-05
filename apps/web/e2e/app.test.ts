@@ -51,6 +51,37 @@ test('the character lives in the time zone of the device', async ({ browser }) =
 	await context.close();
 });
 
+test('the character does not notice you just because you opened the app', async ({ page }) => {
+	await page.goto('/');
+	const canvas = page.getByTestId('game-canvas');
+	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
+	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
+	await page.waitForTimeout(2_000);
+	await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
+});
+
+test('knocking on the glass gets noticed - asleep or awake', async ({ page }) => {
+	await page.goto('/');
+	const canvas = page.getByTestId('game-canvas');
+	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
+	await expect(canvas).toHaveAttribute('data-activity', /.+/, { timeout: 15_000 });
+	const box = await canvas.boundingBox();
+	if (!box) throw new Error('canvas has no box');
+	// A sleeper needs several knocks in quick succession; anyone awake notices sooner.
+	for (let i = 0; i < 4; i++) {
+		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+		await page.waitForTimeout(150);
+	}
+	await expect(canvas).toHaveAttribute('data-awareness', /^(DETECTED|INTERACTING|IGNORING)$/, {
+		timeout: 5_000,
+	});
+});
+
+test('waking needs a session and only works on a sleeping character', async ({ request }) => {
+	const response = await request.post('/api/world/wake');
+	expect(response.status()).toBe(401);
+});
+
 test('different visitors get different worlds', async ({ browser }) => {
 	const ids: string[] = [];
 	for (let i = 0; i < 2; i++) {

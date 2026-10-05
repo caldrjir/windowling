@@ -1,7 +1,7 @@
 import type { Activity } from '@windowling/shared';
 import { describe, expect, it } from 'vitest';
 import { DAY_MS, HOUR_MS } from './catch-up.ts';
-import { advanceLife, startLife, type LifeContext, type LifeState } from './life.ts';
+import { advanceLife, startLife, wakeUp, type LifeContext, type LifeState } from './life.ts';
 import { localTime } from './time.ts';
 
 const CTX: LifeContext = { seed: 'world-1', timeZone: 'Europe/Prague' };
@@ -126,5 +126,33 @@ describe('advanceLife', () => {
 		const started = performance.now();
 		advanceLife(state, MONDAY_MORNING, new Date(MONDAY_MORNING.getTime() + 14 * DAY_MS), CTX);
 		expect(performance.now() - started).toBeLessThan(200);
+	});
+});
+
+describe('wakeUp', () => {
+	const night = new Date('2026-10-05T01:00:00Z'); // 03:00 in Prague
+	const sleeping = startLife(night, CTX);
+
+	it('interrupts sleep, spoils the mood and keeps the character up for a while', () => {
+		expect(sleeping.activity).toBe('sleep');
+		const at = new Date(night.getTime() + HOUR_MS);
+		const woken = wakeUp(sleeping, at);
+		expect(woken?.activity).toBe('idle');
+		expect(woken?.activityStartedAt).toEqual(at);
+		expect(woken?.needs.mood).toBeLessThan(sleeping.needs.mood - 0.1);
+	});
+
+	it('cannot wake someone who is awake', () => {
+		const awake = startLife(MONDAY_MORNING, CTX);
+		expect(awake.activity).not.toBe('sleep');
+		expect(wakeUp(awake, MONDAY_MORNING)).toBeNull();
+		expect(wakeUp(sleeping, sleeping.activityEndsAt)).toBeNull();
+	});
+
+	it('usually goes back to bed after being woken at night', () => {
+		const woken = wakeUp(sleeping, night);
+		if (!woken) throw new Error('expected to wake up');
+		const later = advanceLife(woken, night, new Date(night.getTime() + HOUR_MS), CTX);
+		expect(later.activity).toBe('sleep');
 	});
 });

@@ -6,6 +6,7 @@ import {
 	isValidTimeZone,
 	planCatchUp,
 	startLife,
+	wakeUp,
 	type LifeState,
 } from '@windowling/simulation';
 import { and, eq, lt } from 'drizzle-orm';
@@ -220,4 +221,37 @@ export async function catchUpWorld(
 		lastSimulatedAt: plan.to,
 		character: { ...record.character, life },
 	};
+}
+
+/**
+ * The player knocked the character awake. Server-side because it has
+ * persistent consequences (mood, a broken night). Only a character that is
+ * actually asleep right now can be woken; returns null otherwise.
+ */
+export async function wakeCharacter(
+	db: Database,
+	userId: string,
+	now: Date = new Date(),
+): Promise<WorldRecord | null> {
+	const found = await findWorldByUserId(db, userId);
+	if (!found) return null;
+	const record = await catchUpWorld(db, found, now);
+	const { life } = record.character;
+	const woken = wakeUp(life, now);
+	if (!woken) return null;
+
+	// Optimistic: only if nobody changed the character since we read it.
+	const updated = await db
+		.update(character)
+		.set(lifeColumns(woken))
+		.where(
+			and(
+				eq(character.id, record.character.id),
+				eq(character.activity, 'sleep'),
+				eq(character.activityStartedAt, life.activityStartedAt),
+			),
+		)
+		.returning({ id: character.id });
+	if (updated.length === 0) return null;
+	return { ...record, character: { ...record.character, life: woken } };
 }

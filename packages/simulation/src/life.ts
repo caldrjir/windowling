@@ -75,3 +75,23 @@ export function advanceLife(state: LifeState, from: Date, to: Date, ctx: LifeCon
 	}
 	return current;
 }
+
+/** Mood cost of being knocked awake; worse when it hasn't slept enough. */
+const WOKEN_MOOD_PENALTY = 0.25;
+const GRUMPY_AWAKE_MS = 15 * 60_000;
+
+/**
+ * Someone woke the character up (knocking on the glass). It stays up, grumpy,
+ * for a while, then the scheduler decides again - usually back to bed at night.
+ * Returns null when it wasn't asleep: you can't wake someone who is awake.
+ */
+export function wakeUp(state: LifeState, at: Date): LifeState | null {
+	if (state.activity !== 'sleep' || at.getTime() >= state.activityEndsAt.getTime()) return null;
+	const penalty = WOKEN_MOOD_PENALTY * (1.5 - state.needs.energy);
+	return {
+		needs: { ...state.needs, mood: Math.max(0, state.needs.mood - penalty) },
+		activity: 'idle',
+		activityStartedAt: at,
+		activityEndsAt: new Date(at.getTime() + GRUMPY_AWAKE_MS),
+	};
+}
