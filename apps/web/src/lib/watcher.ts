@@ -59,6 +59,11 @@ export class Watcher {
 		this.apply({ type: 'knock' });
 	}
 
+	/** The player said something (push-to-talk). */
+	spoke(): void {
+		this.apply({ type: 'spoke' });
+	}
+
 	/** The character got to the window after deciding to come over. */
 	arrived(): void {
 		this.apply({ type: 'arrived' });

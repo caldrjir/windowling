@@ -10,6 +10,7 @@
 	import { Watcher } from '$lib/watcher';
 	import { onMount } from 'svelte';
 	import Subtitles from './Subtitles.svelte';
+	import TalkButton from './TalkButton.svelte';
 
 	type Status = 'loading' | 'running' | 'unsupported';
 
@@ -34,6 +35,9 @@
 	let line = $state<string | null>(null);
 	let voice: TextToSpeech | undefined;
 	let voiceAvailable = $state(false);
+	/** At the window and paying attention: the player may talk. */
+	let listening = $state(false);
+	let speakToCharacter: ((text: string) => void) | undefined;
 	// Not reactive: imperative objects Svelte must not track.
 	let world: GameWorld | undefined;
 	let follow: ((activity: Activity | null) => void) | undefined;
@@ -145,6 +149,7 @@
 						line = null;
 					}
 					if (leaving) {
+						listening = false;
 						engaged = false;
 						game.setAttention(false);
 						conversation?.reset();
@@ -157,6 +162,10 @@
 				});
 				const talk = (event: ConversationEvent) => {
 					void conversation?.handle(event);
+				};
+				speakToCharacter = (text) => {
+					watcher?.spoke();
+					void conversation?.handle('player_said', text);
 				};
 
 				const glance = (seconds: number) => {
@@ -199,6 +208,7 @@
 							clearTimeout(glanceTimer);
 							game.setAttention(false);
 							conversation?.reset();
+							listening = false;
 							if (engaged) {
 								engaged = false;
 								resume();
@@ -227,6 +237,7 @@
 						if (event.action.type === 'walkTo' && event.action.target === 'window') {
 							perform({ type: 'lookAtPlayer' });
 							watcher?.arrived();
+							listening = true;
 							// The character speaks first - it came over for a reason.
 							talk(justWoken ? 'woken_up' : 'player_at_window');
 							justWoken = false;
@@ -316,6 +327,13 @@
 	onpointerleave={() => (lastPointer = null)}
 	onpointerdown={onKnock}
 ></canvas>
+
+<TalkButton
+	visible={listening}
+	{characterName}
+	onUtterance={(text) => speakToCharacter?.(text)}
+	onActivity={() => watcher?.spoke()}
+/>
 
 <Subtitles
 	{line}

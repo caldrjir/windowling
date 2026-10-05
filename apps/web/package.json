@@ -14,12 +14,14 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@huggingface/transformers": "^4.3.0",
 		"@windowling/ai": "workspace:*",
 		"@windowling/database": "workspace:*",
 		"@windowling/game": "workspace:*",
 		"@windowling/shared": "workspace:*",
 		"@windowling/simulation": "workspace:*",
 		"better-auth": "^1.7.7",
+		"onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
 		"zod": "^4.6.5"
 	},
 	"devDependencies": {

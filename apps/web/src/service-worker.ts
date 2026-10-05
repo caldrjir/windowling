@@ -8,7 +8,8 @@ import { build, files, version } from '$service-worker';
 // Pages and API calls always go to the network - the world lives on the server.
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const CACHE = `windowling-${version}`;
-const ASSETS = [...build, ...files];
+// Large on-demand runtimes (speech recognition) are fetched only by players who use them.
+const ASSETS = [...build, ...files].filter((path) => !/\/ort-wasm[^/]*$/.test(path));
 
 sw.addEventListener('install', (event) => {
 	event.waitUntil(

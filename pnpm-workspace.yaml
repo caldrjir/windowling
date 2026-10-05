@@ -6,3 +6,8 @@ onlyBuiltDependencies:
   - esbuild
   - workerd
   - sharp
+
+# transformers.js (speech recognition) runs only in the browser via onnxruntime-web.
+# Its Node backend (~300 MB native onnxruntime) is never used: don't install it.
+overrides:
+  onnxruntime-node: '-'

@@ -3,7 +3,7 @@ import {
 	Color,
 	Mesh,
 	MeshStandardMaterial,
-	PCFSoftShadowMap,
+	PCFShadowMap,
 	PerspectiveCamera,
 	Quaternion,
 	Scene,
@@ -84,7 +84,7 @@ export class GameWorld {
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.shadowMap.enabled = true;
-		this.renderer.shadowMap.type = PCFSoftShadowMap;
+		this.renderer.shadowMap.type = PCFShadowMap;
 
 		this.scene.background = new Color('#14151f');
 

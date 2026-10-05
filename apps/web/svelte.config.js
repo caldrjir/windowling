@@ -16,7 +16,8 @@ const config = {
 				'script-src': ['self', 'wasm-unsafe-eval'],
 				'style-src': ['self', 'unsafe-inline'],
 				'img-src': ['self', 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
-				'connect-src': ['self'],
+				// Models for on-device speech recognition come from the Hugging Face Hub (data only).
+				'connect-src': ['self', 'https://huggingface.co', 'https://*.hf.co'],
 				'worker-src': ['self'],
 				'manifest-src': ['self'],
 				'object-src': ['none'],
