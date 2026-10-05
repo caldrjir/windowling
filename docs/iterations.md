@@ -104,4 +104,4 @@ Definition of Done:
 - [x] The character starts the conversation (comes to the window, woken up) - #29
 - [x] Voice via browser speech (neural voice: #32), subtitles OFF/AUTO/ALWAYS, basic lip sync - #29
 - [x] Speech recognition in the browser (Whisper), push-to-talk - #30
-- [ ] On-device brain (WebLLM) with download consent - #31
+- [x] On-device brain (WebLLM) with download consent - #31

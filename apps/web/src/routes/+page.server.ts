@@ -36,6 +36,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 				endsAt: life.activityEndsAt.toISOString(),
 			},
 			mood: life.needs.mood,
+			needs: { hunger: life.needs.hunger, energy: life.needs.energy },
 		},
 	};
 

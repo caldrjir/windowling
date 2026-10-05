@@ -102,6 +102,29 @@ test('the character comes to the window and says something', async ({ page }) =>
 	await expect(talk).toHaveAttribute('data-phase', 'off');
 });
 
+test('settings offer subtitles, voice and where the brain runs', async ({ page }) => {
+	await page.goto('/');
+	await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-status', 'running', {
+		timeout: 15_000,
+	});
+	await page.getByRole('button', { name: 'Settings' }).click();
+	await expect(page.getByRole('radiogroup', { name: 'Subtitles' })).toBeVisible();
+	const brain = page.getByRole('radiogroup', { name: 'Brain' });
+	await brain.getByRole('radio', { name: 'Cloud' }).click();
+	await expect(brain.getByRole('radio', { name: 'Cloud' })).toHaveAttribute('aria-checked', 'true');
+	// Never downloads anything by itself: the device brain only reports what it found.
+	await expect(page.getByTestId('device-brain')).toHaveAttribute(
+		'data-status',
+		/^(unsupported|absent|downloaded)$/,
+		{ timeout: 10_000 },
+	);
+	await page.reload();
+	await page.getByRole('button', { name: 'Settings' }).click();
+	await expect(
+		page.getByRole('radiogroup', { name: 'Brain' }).getByRole('radio', { name: 'Cloud' }),
+	).toHaveAttribute('aria-checked', 'true');
+});
+
 test('the brain needs a session', async ({ request }) => {
 	const response = await request.post('/api/ai/decide', {
 		data: { event: 'player_at_window', awareness: 'DETECTED', recent: [] },

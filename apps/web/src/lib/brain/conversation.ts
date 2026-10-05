@@ -9,6 +9,8 @@ export interface Brain {
 		playerUtterance?: string;
 		recent: DialogueLine[];
 	}): Promise<CharacterDecision | null>;
+	/** A conversation is likely soon (the character is walking to the window). */
+	warmUp?(): void;
 }
 
 /** The cloud brain: the server knows the character's state and reviews the result. */

@@ -2,15 +2,18 @@
  * Per-viewer preferences (this browser only). Stored in localStorage, which
  * may be unavailable (private mode) - the defaults then simply apply.
  */
+import type { BrainPreference } from './brain/choose';
+
 export type SubtitleMode = 'off' | 'auto' | 'always';
 
 interface Stored {
 	subtitles: SubtitleMode;
 	voice: boolean;
+	brain: BrainPreference;
 }
 
 const KEY = 'windowling:settings';
-const DEFAULTS: Stored = { subtitles: 'auto', voice: true };
+const DEFAULTS: Stored = { subtitles: 'auto', voice: true, brain: 'auto' };
 
 function load(): Stored {
 	try {
@@ -22,6 +25,9 @@ function load(): Stored {
 				? (parsed.subtitles as SubtitleMode)
 				: DEFAULTS.subtitles,
 			voice: typeof parsed.voice === 'boolean' ? parsed.voice : DEFAULTS.voice,
+			brain: ['auto', 'device', 'cloud'].includes(parsed.brain ?? '')
+				? (parsed.brain as BrainPreference)
+				: DEFAULTS.brain,
 		};
 	} catch {
 		return DEFAULTS;
@@ -31,17 +37,22 @@ function load(): Stored {
 class Settings {
 	subtitles = $state<SubtitleMode>(DEFAULTS.subtitles);
 	voice = $state(DEFAULTS.voice);
+	brain = $state<BrainPreference>(DEFAULTS.brain);
 
 	/** Call once in the browser (onMount). */
 	restore(): void {
 		const stored = load();
 		this.subtitles = stored.subtitles;
 		this.voice = stored.voice;
+		this.brain = stored.brain;
 	}
 
 	save(): void {
 		try {
-			localStorage.setItem(KEY, JSON.stringify({ subtitles: this.subtitles, voice: this.voice }));
+			localStorage.setItem(
+				KEY,
+				JSON.stringify({ subtitles: this.subtitles, voice: this.voice, brain: this.brain }),
+			);
 		} catch {
 			// Not persisted - fine, it still applies for this visit.
 		}

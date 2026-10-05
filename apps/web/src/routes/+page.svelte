@@ -4,6 +4,8 @@
 	import GameCanvas from '$lib/components/GameCanvas.svelte';
 	import SettingsMenu from '$lib/components/SettingsMenu.svelte';
 	import { settings } from '$lib/settings.svelte';
+	import { CombinedBrain } from '$lib/brain/choose';
+	import { deviceBrain } from '$lib/brain/device-brain.svelte';
 	import { authClient } from '$lib/auth-client';
 	import { deviceTimeZone, rememberTimeZone } from '$lib/time-zone';
 	import { onMount } from 'svelte';
@@ -11,12 +13,20 @@
 	let { data } = $props();
 	let failed = $state(false);
 
+	// On-device model when downloaded and wanted, else the cloud (#28, #31).
+	const brain = new CombinedBrain({
+		world: () => data.world,
+		preference: () => settings.brain,
+		device: deviceBrain,
+	});
+
 	const RECHECK_AFTER_MS = 2_000;
 	/** When the server still reports an ended activity (clock skew), don't hammer it. */
 	const RETRY_AFTER_MS = 30_000;
 
 	onMount(async () => {
 		settings.restore();
+		void deviceBrain.detect();
 		const timeZone = deviceTimeZone();
 		rememberTimeZone(timeZone);
 		if (data.user) {
@@ -74,6 +84,7 @@
 		mood={data.world?.character.mood ?? 0.6}
 		onWoken={wake}
 		characterName={data.world?.character.name ?? 'Someone'}
+		{brain}
 	/>
 
 	<header
