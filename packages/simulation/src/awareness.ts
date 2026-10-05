@@ -49,8 +49,11 @@ export type AwarenessEvent =
 	| { type: 'detected'; response: 'approach' | 'ignore' }
 	/** At the window and the player responded: wave. */
 	| { type: 'interacting' }
-	/** Turns its back and carries on with its life. */
-	| { type: 'ignoring' }
+	/**
+	 * Turns its back and carries on with its life. `no_response`: it came over
+	 * or talked and the player stayed silent - it may say so before leaving.
+	 */
+	| { type: 'ignoring'; reason?: 'no_response' }
 	/** Knocked while asleep: rolls over. */
 	| { type: 'stirred' }
 	/** Knocked awake. Persistent consequences are applied by the server. */
@@ -76,6 +79,20 @@ const PRESENCE_GAIN = 0.006; // per second, just from someone being there
 const MOVEMENT_GAIN = 0.5; // per screen-width of movement
 const STILL_DECAY = 0.004; // per second once the player keeps still
 const STILL_AFTER = 5;
+/**
+ * Now and then the character simply looks up and sees the window - no input
+ * needed, so it can start the contact itself (per second; a look is +0.5
+ * suspicion, two looks = noticed). Idle ~1 min, absorbed in work or a game
+ * ~4-5 min, asleep never: you can still watch unnoticed for a while.
+ */
+export const SPONTANEOUS_LOOK: Record<Activity, number> = {
+	idle: 1 / 30,
+	eat: 1 / 60,
+	work: 1 / 120,
+	gaming: 1 / 150,
+	sleep: 0,
+};
+const LOOK_GAIN = 0.5;
 const WAKE_KNOCKS = 3;
 const SLEEP_KNOCK_WINDOW = 8;
 /** At the window, waiting for the player to react. */
@@ -209,20 +226,23 @@ export function stepAwareness(
 			};
 			if (a.state === 'UNKNOWN' || a.state === 'SUSPECTED') {
 				const decay = a.sinceInput > STILL_AFTER ? STILL_DECAY : 0;
+				// Something felt off: it checks the window again much sooner.
+				const curiosity = a.state === 'SUSPECTED' ? 3 : 1;
+				const looked = rng() < SPONTANEOUS_LOOK[ctx.activity] * curiosity * dt ? LOOK_GAIN : 0;
 				a = {
 					...a,
 					suspicion: Math.min(
 						1,
-						Math.max(0, a.suspicion + dt * (PRESENCE_GAIN * sensitivity - decay)),
+						Math.max(0, a.suspicion + looked + dt * (PRESENCE_GAIN * sensitivity - decay)),
 					),
 				};
 			} else if (a.state === 'DETECTED' && a.atWindow && a.elapsed > WAIT_AT_WINDOW) {
 				// Stared at, no reaction: shrug and go back.
 				a = enter(a, 'IGNORING');
-				events.push({ type: 'ignoring' });
+				events.push({ type: 'ignoring', reason: 'no_response' });
 			} else if (a.state === 'INTERACTING' && a.sinceInput > INTERACTION_TIMEOUT) {
 				a = enter(a, 'IGNORING');
-				events.push({ type: 'ignoring' });
+				events.push({ type: 'ignoring', reason: 'no_response' });
 			} else if (
 				a.state === 'IGNORING' &&
 				a.elapsed > FORGET_AFTER &&

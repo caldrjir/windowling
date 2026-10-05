@@ -81,4 +81,13 @@ describe('MockCharacterAI', () => {
 		expect(decision.speech).toBe("Not now, I'm working.");
 		expect(decision.action).toEqual({ type: 'idle' });
 	});
+
+	it('says something when the player stays silent', async () => {
+		const decision = await new MockCharacterAI().decide({
+			...base,
+			awareness: 'IGNORING',
+			event: 'player_silent',
+		});
+		expect(decision.speech).toBe('Okay... never mind.');
+	});
 });

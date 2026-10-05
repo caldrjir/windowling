@@ -57,7 +57,8 @@ test('the character does not notice you just because you opened the app', async 
 	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
 	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
 	await page.waitForTimeout(2_000);
-	await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
+	// At most a suspicious glance - it doesn't *know* you are there yet.
+	await expect(canvas).toHaveAttribute('data-awareness', /^(UNKNOWN|SUSPECTED)$/);
 });
 
 test('knocking on the glass gets noticed - asleep or awake', async ({ page }) => {
@@ -78,6 +79,8 @@ test('knocking on the glass gets noticed - asleep or awake', async ({ page }) =>
 });
 
 test('the character comes to the window and says something', async ({ page }) => {
+	// It may brush us off first and only come over after more knocking - its choice.
+	test.setTimeout(90_000);
 	await page.goto('/');
 	const canvas = page.getByTestId('game-canvas');
 	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
@@ -86,7 +89,7 @@ test('the character comes to the window and says something', async ({ page }) =>
 	if (!box) throw new Error('canvas has no box');
 	const subtitles = page.getByTestId('subtitles');
 	// Knock until it decides to come over (it may ignore us for a while - its choice).
-	for (let i = 0; i < 20; i++) {
+	for (let i = 0; i < 40; i++) {
 		if ((await canvas.getAttribute('data-character-action')) === 'walkTo:window') break;
 		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 		await page.waitForTimeout(400);

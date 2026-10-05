@@ -70,7 +70,10 @@ Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
 - `stepAwareness(awareness, input, ctx, rng)` - does the character know it is watched?
   Suspicion grows from presence and pointer movement scaled by the activity (idle notices, work
   and games absorb, sleep notices nothing) and fades when the player keeps still. A knock is
-  unmistakable when awake; a sleeper stirs, and wakes on 3 knocks within 8 s. On detection the
+  unmistakable when awake; a sleeper stirs, and wakes on 3 knocks within 8 s. The character
+  also looks up by itself now and then (idle ~1 min, work/games ~4-5 min, never asleep; more
+  often once suspicious), so it can start the contact without any input - the player never has
+  to do anything. If the player stays silent at the window it says so and goes back. On detection the
   character approaches (mood, activity, just woken) or ignores the player. Session state only.
 - `wakeUp(life, at)` - interrupts sleep with a mood penalty; the scheduler decides what next.
 - `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then

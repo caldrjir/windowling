@@ -148,7 +148,7 @@
 						line = speech;
 						game.setSpeaking(true);
 						// Subtitles stay up at least as long as it takes to read them.
-						const readingTime = new Promise((r) => setTimeout(r, 1_200 + speech.length * 55));
+						const readingTime = new Promise((r) => setTimeout(r, 2_500 + speech.length * 65));
 						const spoken =
 							settings.voice && tts.available
 								? tts.speak(speech, {
@@ -224,6 +224,10 @@
 							clearTimeout(glanceTimer);
 							game.setAttention(false);
 							conversation?.reset();
+							// The player didn't answer - fine, they don't have to. It says so and moves on.
+							if (event.type === 'ignoring' && event.reason === 'no_response') {
+								talk('player_silent');
+							}
 							listening = false;
 							if (engaged) {
 								engaged = false;
