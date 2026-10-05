@@ -80,4 +80,20 @@ describe('CombinedBrain', () => {
 		expect((await brain.decide(request))?.speech).toBe('From the cloud.');
 		expect(fetchSpy).toHaveBeenCalledOnce();
 	});
+
+	it('still says something when the server is unreachable', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response('down', { status: 503 })),
+		);
+		const brain = new CombinedBrain({
+			world: () => world,
+			preference: () => 'auto',
+			device: device('', false),
+		});
+		const decision = await brain.decide(request);
+		expect(decision?.speech).toBeTruthy();
+		expect(brain.lastSource).toBe('local-canned');
+		expect(brain.lastError).toBe('HTTP 503');
+	});
 });

@@ -13,7 +13,8 @@ interface Stored {
 }
 
 const KEY = 'windowling:settings';
-const DEFAULTS: Stored = { subtitles: 'auto', voice: true, brain: 'auto' };
+// Subtitles on by default: we can't tell whether the device actually plays the voice.
+const DEFAULTS: Stored = { subtitles: 'always', voice: true, brain: 'auto' };
 
 function load(): Stored {
 	try {

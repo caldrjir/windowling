@@ -8,6 +8,7 @@
 	import { settings, showSubtitles } from '$lib/settings.svelte';
 	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
 	import { Watcher } from '$lib/watcher';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import Subtitles from './Subtitles.svelte';
 	import TalkButton from './TalkButton.svelte';
@@ -40,6 +41,10 @@
 	/** At the window and paying attention: the player may talk. */
 	let listening = $state(false);
 	let speakToCharacter: ((text: string) => void) | undefined;
+	/** `?debug` shows what the character is thinking (for testing on real devices). */
+	const debug = page.url.searchParams.has('debug');
+	let lastSaid = $state('');
+	let brainInfo = $state('');
 	// Not reactive: imperative objects Svelte must not track.
 	let world: GameWorld | undefined;
 	let follow: ((activity: Activity | null) => void) | undefined;
@@ -126,12 +131,18 @@
 				voiceAvailable = tts.available;
 
 				const say = async (decision: CharacterDecision) => {
+					lastSaid = decision.speech ?? '(nothing)';
+					brainInfo = `${brain.lastSource ?? '?'}${brain.lastError ? ` · ${brain.lastError}` : ''}`;
 					game.showEmotion(decision.emotion, decision.intensity);
 					const { action } = decision;
 					// Anything but looking/waving walks away from the window: the conversation ends.
+					// Not at the window (brushing the player off): words only, life goes on.
 					const leaving =
-						action.type !== 'lookAtPlayer' && action.type !== 'idle' && action.type !== 'wave';
-					if (action.type === 'wave' || leaving) perform(action);
+						engaged &&
+						action.type !== 'lookAtPlayer' &&
+						action.type !== 'idle' &&
+						action.type !== 'wave';
+					if ((engaged && action.type === 'wave') || leaving) perform(action);
 					const speech = decision.speech;
 					if (speech) {
 						line = speech;
@@ -194,6 +205,8 @@
 						case 'detected':
 							if (event.response === 'ignore') {
 								glance(1.5);
+								// Doesn't come over, but may say so ("Not now.").
+								talk('ignoring_player');
 								break;
 							}
 							engaged = true;
@@ -347,6 +360,26 @@
 {#each ripples as ripple (ripple.id)}
 	<span class="knock" style:left="{ripple.x}px" style:top="{ripple.y}px" aria-hidden="true"></span>
 {/each}
+
+{#if debug}
+	<dl
+		class="pointer-events-none absolute top-14 left-4 grid grid-cols-[auto_1fr] gap-x-2 rounded-lg bg-black/70 px-3 py-2 font-mono text-[11px] text-white/80"
+		data-testid="debug-panel"
+	>
+		<dt>activity</dt>
+		<dd>{activity ?? '-'}</dd>
+		<dt>awareness</dt>
+		<dd>{awareness}</dd>
+		<dt>action</dt>
+		<dd>{currentAction || '-'}</dd>
+		<dt>voice</dt>
+		<dd>{voiceAvailable ? (settings.voice ? 'on' : 'muted') : 'unavailable'}</dd>
+		<dt>brain</dt>
+		<dd>{brainInfo || '-'}</dd>
+		<dt>said</dt>
+		<dd class="max-w-56 truncate">{lastSaid || '-'}</dd>
+	</dl>
+{/if}
 
 {#if status === 'unsupported'}
 	<p class="absolute inset-0 grid place-items-center p-6 text-center text-sm text-white/70">

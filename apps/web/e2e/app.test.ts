@@ -91,11 +91,11 @@ test('the character comes to the window and says something', async ({ page }) =>
 		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 		await page.waitForTimeout(400);
 	}
-	await expect(subtitles).toHaveAttribute('data-line', /\w+/, { timeout: 20_000 });
-
-	// At the window you can answer - after agreeing to the one-time download.
+	// At the window it speaks first, and you can answer (after a one-time download consent).
 	const talk = page.getByTestId('talk-button');
-	await expect(talk).toBeVisible();
+	await expect(talk).toBeVisible({ timeout: 20_000 });
+	await expect(subtitles).toHaveAttribute('data-line', /\w+/, { timeout: 20_000 });
+	await expect(subtitles.getByRole('paragraph')).toBeVisible();
 	await talk.dispatchEvent('pointerdown');
 	await expect(page.getByRole('dialog', { name: 'Let them hear you' })).toBeVisible();
 	await page.getByRole('button', { name: 'Not now' }).click();
@@ -123,6 +123,11 @@ test('settings offer subtitles, voice and where the brain runs', async ({ page }
 	await expect(
 		page.getByRole('radiogroup', { name: 'Brain' }).getByRole('radio', { name: 'Cloud' }),
 	).toHaveAttribute('aria-checked', 'true');
+});
+
+test('debug panel shows what the character is thinking', async ({ page }) => {
+	await page.goto('/?debug');
+	await expect(page.getByTestId('debug-panel')).toContainText('awareness', { timeout: 15_000 });
 });
 
 test('the brain needs a session', async ({ request }) => {

@@ -32,6 +32,8 @@ function describeEvent(context: CharacterAIContext): string {
 			return 'You noticed someone watching you through the window and walked over to it. You are standing at the window, looking at them.';
 		case 'player_said':
 			return 'You are at the window, talking to the person on the other side.';
+		case 'ignoring_player':
+			return 'You noticed someone watching you through the window. You do not feel like going over - say something short without getting up, or nothing at all, and carry on with what you are doing.';
 	}
 }
 

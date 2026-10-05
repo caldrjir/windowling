@@ -39,6 +39,8 @@ export const CONVERSATION_EVENTS = [
 	'woken_up',
 	/** The player said something (see `playerUtterance`). */
 	'player_said',
+	/** The character noticed the player but decided not to come over. */
+	'ignoring_player',
 ] as const;
 
 export type ConversationEvent = (typeof CONVERSATION_EVENTS)[number];
