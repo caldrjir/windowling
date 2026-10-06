@@ -154,6 +154,18 @@ player meanwhile. TV is "on our side of the glass" - only a flickering light rea
 Music while listening is generated in the browser (`lib/sound/music.ts`, pentatonic pad + melody,
 low-passed), started only after a user gesture and behind the "Sounds" switch.
 
+**Emergent moments (Iteration 8):** `personalityFor(worldId)` gives every world a stable
+character (competitive, exuberant, shy, chatty - never shown as numbers). Every ~20 s
+`GameCanvas` asks `nextMoment(activity, needs, personality)` whether something small arises -
+dancing to good music, singing while cooking, raging at a game, dozing off in front of the TV,
+talking to itself, yawning. Nothing is scripted: each moment is a combination of state, and
+most checks produce nothing. The game only plays them (`dance` action to `room.center`, other
+moments as an animator overlay via `GameWorld.setMoment`); self-talk is subtitled in brackets.
+While absorbed in a private moment the awareness model notices less. Detected meanwhile, the
+character freezes, is embarrassed (more so when shy) and the conversation event is `caught`;
+`recordConversation` remembers "The player caught me dancing." and the canned brain refuses to
+talk about it later. `?debug&moment=dance` plays a moment right away.
+
 **Phone sensors (Iteration 6):** `lib/sensors/motion.ts` (pure, tested) maps device orientation
 relative to the pose at start to a gravity vector (clamped tilt, screen rotation aware) and
 detects shakes (3 jolts > 12 m/s² within 1 s → intensity). `PhoneSensors` feeds

@@ -209,6 +209,28 @@ describe('nobody home', () => {
 	});
 });
 
+describe('absorbed in a moment', () => {
+	it('lets you watch a dancing character much longer', () => {
+		const share = (absorbed: boolean) => {
+			let noticed = 0;
+			for (let seed = 1; seed <= 200; seed++) {
+				const rng = createRng(seed);
+				let a = initialAwareness();
+				for (const input of seconds(120)) {
+					const step = stepAwareness(a, input, { activity: 'music', mood: 0.8, absorbed }, rng);
+					a = step.awareness;
+					if (step.events.some((e) => e.type === 'detected')) {
+						noticed++;
+						break;
+					}
+				}
+			}
+			return noticed / 200;
+		};
+		expect(share(true)).toBeLessThan(share(false) / 2);
+	});
+});
+
 describe('chooseResponse', () => {
 	const share = (activity: Activity, mood: number, woken = false) => {
 		const rng = createRng(9);

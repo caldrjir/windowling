@@ -19,10 +19,11 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 
 	const world = await findWorldByUserId(locals.db, locals.user.id);
 	if (!world) error(404, 'No world');
-	const { event, playerUtterance, decision } = parsed.data;
+	const { event, playerUtterance, caughtDoing, decision } = parsed.data;
 	await recordConversation(locals.db, world.id, {
 		event,
 		playerUtterance,
+		caughtDoing,
 		emotion: decision.emotion,
 		intensity: decision.intensity,
 		remember: decision.remember,

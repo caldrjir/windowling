@@ -9,3 +9,5 @@ export * from './awareness.ts';
 export * from './review.ts';
 export * from './relationship.ts';
 export * from './memory.ts';
+export * from './personality.ts';
+export * from './moments.ts';

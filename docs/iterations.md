@@ -12,8 +12,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done            |
 | 5   | Memory + Relationship             | Past events influence present behaviour                  | done            |
 | 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done            |
-| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | **in progress** |
-| 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | planned         |
+| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | done            |
+| 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | **in progress** |
 | 9   | Economy                           | The character earns; the player gets real decisions      | planned         |
 | 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned         |
 | 11  | Career                            | Skills, opportunities, autonomous career choices         | planned         |
@@ -132,7 +132,7 @@ Definition of Done:
 - [x] Consequences: noticed for sure, a hard shake wakes a sleeper, remembered, hurts the relationship - #43
 - [x] Opt-in toggles "Tilt the room" and "Shake the room", separately (iOS motion permission from a tap) - #42
 
-## Iteration 7 – Rich Autonomous Life (in progress)
+## Iteration 7 – Rich Autonomous Life
 
 **Goal:** opening the app is unpredictable.
 
@@ -145,3 +145,17 @@ Definition of Done:
 - [x] Props and animations: pan, broom, book, phone, workout, head-bobbing to music - #47
 - [x] Generative music while it listens (WebAudio, no recordings), "Sounds" switch - #47
 - [ ] Partying - deferred to Iteration 17 (needs other people)
+
+## Iteration 8 – Emergent Moments (in progress)
+
+**Goal:** situations feel scripted, but emerge from combined systems.
+
+Definition of Done:
+
+- [x] A stable personality per world (competitive, exuberant, shy, chatty), shown only in behaviour - #49
+- [x] Moments from combinations: music + good mood + exuberant = dancing; gaming + competitive = raging;
+      tired + TV = dozing off; chatty = talking to itself; singing, cheering, yawning - #49
+- [x] Animations for each moment (dance at the room centre, overlays for the rest), self-talk subtitles - #49
+- [x] Absorbed in a private moment, it notices the player less - #50
+- [x] Caught mid-moment: it freezes, is embarrassed (shy = mortified), says so, remembers it and
+      doesn't want to talk about it later - #50

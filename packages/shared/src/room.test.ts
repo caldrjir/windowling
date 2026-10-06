@@ -33,6 +33,8 @@ describe('starter room targets', () => {
 		expect(targetSupports('bed', 'read')).toBe(true);
 		expect(targetSupports('window', 'call')).toBe(true);
 		expect(targetSupports('room.center', 'exercise')).toBe(true);
+		expect(targetSupports('room.center', 'dance')).toBe(true);
+		expect(targetSupports('sofa', 'dance')).toBe(false);
 		expect(targetSupports('door', 'leave')).toBe(true);
 		expect(targetSupports('bed', 'leave')).toBe(false);
 		expect(targetSupports('sofa', 'clean')).toBe(false);

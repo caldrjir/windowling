@@ -241,6 +241,7 @@ describe('CharacterController', () => {
 			[{ type: 'listen', target: 'sofa' }, 'sitting', 'music'],
 			[{ type: 'call', target: 'window' }, 'standing', 'phone'],
 			[{ type: 'exercise', target: 'room.center' }, 'standing', 'exercise'],
+			[{ type: 'dance', target: 'room.center' }, 'standing', 'dance'],
 		] as const;
 		for (const [action, posture, activity] of cases) {
 			const c = new CharacterController();

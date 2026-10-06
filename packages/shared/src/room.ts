@@ -17,6 +17,7 @@ export type TargetAffordance =
 	| 'listen'
 	| 'call'
 	| 'exercise'
+	| 'dance'
 	| 'leave';
 
 export interface RoomTarget {
@@ -29,7 +30,7 @@ export interface RoomTarget {
  * breaking change for saved state and AI prompts.
  */
 export const STARTER_ROOM_TARGETS = [
-	{ id: 'room.center', affordances: ['stand', 'exercise'] },
+	{ id: 'room.center', affordances: ['stand', 'exercise', 'dance'] },
 	// The window the player looks through (the screen / the phone glass).
 	{ id: 'window', affordances: ['stand', 'call'] },
 	{ id: 'sofa', affordances: ['sit', 'play', 'watch', 'read', 'listen'] },
@@ -55,6 +56,7 @@ const AFFORDANCE_FOR_ACTION: Partial<Record<CharacterActionType, TargetAffordanc
 	listen: 'listen',
 	call: 'call',
 	exercise: 'exercise',
+	dance: 'dance',
 	leave: 'leave',
 };
 

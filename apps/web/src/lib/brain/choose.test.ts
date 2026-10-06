@@ -104,4 +104,19 @@ describe('CombinedBrain', () => {
 		expect(brain.lastSource).toBe('local-canned');
 		expect(brain.lastError).toBe('HTTP 503');
 	});
+
+	it('is embarrassed when caught mid-moment, even offline', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async () => new Response('down', { status: 503 })),
+		);
+		const brain = new CombinedBrain({
+			world: () => world,
+			preference: () => 'auto',
+			device: device('', false),
+		});
+		const decision = await brain.decide({ ...request, event: 'caught', caughtDoing: 'dance' });
+		expect(decision?.emotion).toBe('embarrassed');
+		expect(decision?.speech).toMatch(/standing there/);
+	});
 });

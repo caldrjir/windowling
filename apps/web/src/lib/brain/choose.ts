@@ -5,7 +5,13 @@ import {
 	type CharacterDecision,
 } from '@windowling/ai';
 import type { WorldSummary } from '@windowling/shared';
-import { localClock, localTime, reviewAction } from '@windowling/simulation';
+import {
+	CAUGHT_DOING,
+	localClock,
+	localTime,
+	personalityFor,
+	reviewAction,
+} from '@windowling/simulation';
 import { ServerBrain, type Brain, type BrainSource } from './conversation';
 
 export type BrainPreference = 'auto' | 'device' | 'cloud';
@@ -143,5 +149,7 @@ function buildContext(
 		event: request.event,
 		playerUtterance: request.playerUtterance,
 		recent: request.recent,
+		caughtDoing: request.caughtDoing ? CAUGHT_DOING[request.caughtDoing] : undefined,
+		shyness: personalityFor(world.id).shy,
 	};
 }

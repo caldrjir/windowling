@@ -23,6 +23,24 @@ export class MockCharacterAI implements CharacterAI {
 				action: { type: 'lookAtPlayer' },
 			};
 		}
+		if (context.event === 'caught') {
+			const doing = context.caughtDoing ?? '';
+			const speech = /dancing|singing/.test(doing)
+				? '...how long have you been standing there?'
+				: /raging/.test(doing)
+					? "The game cheated. Don't look at me like that."
+					: /dozing/.test(doing)
+						? "I wasn't sleeping. I was resting my eyes."
+						: /talking/.test(doing)
+							? 'I was... thinking out loud. Normal people do that.'
+							: 'Oh. Uh. Hi.';
+			return {
+				speech,
+				emotion: 'embarrassed',
+				intensity: 0.5 + 0.5 * (context.shyness ?? 0.5),
+				action: { type: 'lookAtPlayer' },
+			};
+		}
 		if (context.event === 'shaken') {
 			// The shake that just happened is already remembered - "again" needs an earlier one.
 			const again = (context.memories?.filter((m) => /shook my/i.test(m.note)).length ?? 0) >= 2;
@@ -71,6 +89,20 @@ export class MockCharacterAI implements CharacterAI {
 				speech,
 				emotion: grumpy || remembersWaking ? 'annoyed' : known ? 'happy' : 'surprised',
 				intensity: 0.4,
+				action: { type: 'lookAtPlayer' },
+			};
+		}
+		// Some things are not up for discussion.
+		const awkward = context.memories?.find((m) => /caught me/i.test(m.note));
+		if (
+			context.playerUtterance &&
+			awkward &&
+			/danc|sing|rage|angry|game|sleep|doz|talk/i.test(context.playerUtterance)
+		) {
+			return {
+				speech: "We're not talking about that.",
+				emotion: 'embarrassed',
+				intensity: 0.6,
 				action: { type: 'lookAtPlayer' },
 			};
 		}

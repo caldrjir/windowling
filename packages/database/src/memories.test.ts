@@ -110,6 +110,20 @@ describe.skipIf(!url)('memories and relationship (postgres)', () => {
 		expect((await getRelationship(conn.db, world.id)).affinity).toBeLessThan(0);
 	});
 
+	it('remembers being caught in a private moment', async () => {
+		const world = await newWorld();
+		await recordConversation(conn.db, world.id, {
+			event: 'caught',
+			caughtDoing: 'dance',
+			emotion: 'embarrassed',
+			intensity: 0.8,
+		});
+		const caught = (await loadMemories(conn.db, world.id)).filter((m) => m.tags.includes('caught'));
+		expect(caught.map((m) => m.note)).toEqual(['The player caught me dancing.']);
+		expect(caught[0]?.tags).toContain('dance');
+		expect((await getRelationship(conn.db, world.id)).familiarity).toBeGreaterThan(0);
+	});
+
 	it('remembers being shaken, once a minute at most', async () => {
 		const world = await newWorld();
 		const now = new Date('2026-10-06T10:00:00Z');

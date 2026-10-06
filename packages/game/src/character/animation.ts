@@ -17,7 +17,16 @@ export type ActivityAnimation =
 	| 'phone'
 	| 'read'
 	| 'tv'
-	| 'music';
+	| 'music'
+	| 'dance';
+
+/**
+ * A short moment on top of whatever it is doing (Iteration 8). The web layer
+ * decides when one arises (simulation `nextMoment`); this only plays it.
+ */
+export type MomentAnimation = 'rage' | 'cheer' | 'doze' | 'yawn' | 'sing' | 'mutter';
+
+const MOMENT_LAYERS = ['rage', 'cheer', 'doze', 'yawn', 'sing', 'mutter'] as const;
 
 const ACTIVITY_LAYERS = [
 	'eat',
@@ -31,6 +40,7 @@ const ACTIVITY_LAYERS = [
 	'read',
 	'tv',
 	'music',
+	'dance',
 ] as const;
 type ActivityLayer = (typeof ACTIVITY_LAYERS)[number];
 
@@ -117,7 +127,17 @@ export class Animator {
 		read: 0,
 		tv: 0,
 		music: 0,
+		dance: 0,
 	};
+	private readonly moments: Record<MomentAnimation, number> = {
+		rage: 0,
+		cheer: 0,
+		doze: 0,
+		yawn: 0,
+		sing: 0,
+		mutter: 0,
+	};
+	private momentTarget: MomentAnimation | null = null;
 	/** Looking at the player: head yaw relative to the body, and how much. */
 	private lookTarget: number | null = null;
 	private lookYaw = 0;
@@ -161,6 +181,19 @@ export class Animator {
 
 	setActivity(activity: ActivityAnimation): void {
 		this.activityTarget = activity;
+	}
+
+	get moment(): MomentAnimation | null {
+		return this.momentTarget;
+	}
+
+	momentWeight(moment: MomentAnimation): number {
+		return this.moments[moment];
+	}
+
+	/** Plays a moment over the current activity until cleared with null. */
+	setMoment(moment: MomentAnimation | null): void {
+		this.momentTarget = moment;
 	}
 
 	/** Turns the head towards `relativeYaw` (radians from the body's forward), or back with null. */
@@ -219,7 +252,15 @@ export class Animator {
 		// Roughly 5 syllables a second, with open/close variation.
 		// On the phone it talks in bursts, with pauses for the other side.
 		const onPhone = this.layers.phone > 0.5 && Math.sin(this.syllable * 0.9) > -0.2;
-		const target = this.speaking || onPhone ? (Math.sin(this.syllable * 31) * 0.5 + 0.5) * 0.8 : 0;
+		// Singing and talking to itself move the lips too (sung notes are longer).
+		const humming = this.moments.sing > 0.5 && Math.sin(this.syllable * 1.3) > -0.4;
+		const muttering = this.moments.mutter > 0.5 && Math.sin(this.syllable * 1.1) > 0;
+		const shouting = this.moments.rage > 0.5 && Math.sin(this.syllable * 2.2) > 0.3;
+		const target = humming
+			? (Math.sin(this.syllable * 9) * 0.3 + 0.6) * 0.8
+			: this.speaking || onPhone || muttering || shouting
+				? (Math.sin(this.syllable * 31) * 0.5 + 0.5) * (shouting ? 1 : 0.8)
+				: 0;
 		this.mouthOpen = approach(this.mouthOpen, target, dt * 12);
 		this.lookWeight = approach(this.lookWeight, this.lookTarget === null ? 0 : 1, dt * 2.5);
 		if (this.lookTarget !== null) this.lookYaw = this.lookTarget;
@@ -227,6 +268,13 @@ export class Animator {
 			this.layers[layer] = approach(
 				this.layers[layer],
 				layer === this.activityTarget ? 1 : 0,
+				step,
+			);
+		}
+		for (const moment of MOMENT_LAYERS) {
+			this.moments[moment] = approach(
+				this.moments[moment],
+				moment === this.momentTarget ? 1 : 0,
 				step,
 			);
 		}
@@ -242,7 +290,17 @@ export class Animator {
 		const glanceYaw =
 			glancePhase > 0.75 ? Math.sin(((glancePhase - 0.75) / 0.25) * Math.PI) * 0.6 : 0;
 
-		const { eat, work, play, wave, cook, clean, exercise, phone, read, tv, music } = this.layers;
+		const { eat, work, play, wave, cook, clean, exercise, phone, read, tv, music, dance } =
+			this.layers;
+		const { rage, cheer, doze, yawn, sing } = this.moments;
+		// Dancing: bouncing on the beat (~2 per second), swaying, arms pumping.
+		const beat = Math.sin(t * 6.3);
+		const groove = Math.sin(t * 3.15);
+		// Dozing off: the head sinks slowly, then jerks back up (~every 6 s).
+		const nod = doze * (((t % 6) / 6) ** 2 * 0.7);
+		const fury = rage * Math.sin(t * 22) * 0.08;
+		// A yawn: mouth wide, head back, a hand up.
+		const gape = yawn * (Math.sin(Math.min(1, (t % 5) / 3.5) * Math.PI) * 0.9);
 		/** Hands busy with something - no idle fidgeting or glancing around. */
 		const handsBusy = Math.min(1, eat + work + play + cook + clean + phone + read);
 		const stir = Math.sin(t * 4);
@@ -267,23 +325,28 @@ export class Animator {
 				w.idle * Math.sin(t * 1.6) * 0.004 +
 				w.walk * Math.abs(Math.cos(this.walkPhase)) * 0.035 +
 				up * w.idle * Math.max(0, Math.sin(t * 7)) * 0.015 -
-				squat * 0.25,
-			legSwing: w.walk * swing * 0.42,
+				squat * 0.25 +
+				dance * Math.abs(beat) * 0.06 +
+				cheer * w.idle * Math.max(0, Math.sin(t * 8)) * 0.05,
+			legSwing: w.walk * swing * 0.42 + dance * groove * 0.25,
 			armSwing:
 				w.walk * -swing * 0.45 * (1 - sad * 0.5) +
 				w.idle * Math.sin(t * 0.8) * 0.03 * (1 - handsBusy) +
-				clean * sweep * 0.25,
+				clean * sweep * 0.25 +
+				dance * beat * 0.7,
 			knee:
 				w.walk * Math.max(0, -Math.sin(this.walkPhase + 0.6)) * 0.45 +
 				w.sit * (Math.PI / 2) +
-				squat * 1.3,
+				squat * 1.3 +
+				dance * Math.abs(beat) * 0.3,
 			hipFlex: w.sit * (Math.PI / 2) + squat * 0.9,
 			lie: w.lie,
 			breath: breath * (w.idle + w.sit + w.lie * 1.4),
 			headYaw:
 				(w.idle + w.sit) * glanceYaw * (1 - handsBusy) * (1 - look) +
 				this.lookYaw * look +
-				phone * Math.sin(t * 0.4) * 0.3,
+				phone * Math.sin(t * 0.4) * 0.3 +
+				(dance + sing) * groove * 0.25,
 			headPitch:
 				(eat * 0.3 +
 					work * 0.12 +
@@ -298,7 +361,11 @@ export class Animator {
 				look * 0.05 +
 				down * 0.35 -
 				up * 0.15 +
-				tense * Math.sin(t * 5) * 0.05,
+				tense * Math.sin(t * 5) * 0.05 +
+				nod -
+				gape * 0.3 -
+				cheer * 0.2 +
+				dance * beat * 0.1,
 			armForward:
 				eat * 0.7 +
 				work * 0.75 +
@@ -306,16 +373,21 @@ export class Animator {
 				cook * (0.6 + stir * 0.08) +
 				clean * 0.55 +
 				read * 0.6 +
-				squat * 1.2,
+				squat * 1.2 +
+				dance * (0.5 + beat * 0.3) +
+				rage * 0.3 +
+				fury,
 			elbow:
 				eat * 0.8 +
 				work * (0.55 + typing) +
 				play * (1.1 + typing * 0.5) +
 				cook * (0.9 + stir * 0.15) +
 				clean * 0.4 +
-				read * 1.3,
+				read * 1.3 +
+				dance * 1.2 +
+				rage * 0.4,
 			// The phone is held to the ear (close enough to the mouth for this rig).
-			handToMouth: eat * bite + phone,
+			handToMouth: eat * bite + phone + gape * 0.8,
 			slump:
 				(work * 0.15 +
 					play * gamingLean * 0.2 +
@@ -325,18 +397,23 @@ export class Animator {
 					tense * 0.05 +
 					clean * 0.2 -
 					tv * 0.15 +
-					squat * 0.35) *
+					squat * 0.35 +
+					doze * 0.3 +
+					rage * 0.15) *
 				(1 - w.lie),
 			bowl: eat,
 			handheld: play,
 			broom: clean,
 			book: read,
 			phone,
-			wave,
-			waveSwing: Math.sin(t * 9) * wave,
-			mouth: this.mouthOpen,
+			// Cheering: a fist pumped in the air (the waving arm, faster).
+			wave: Math.min(1, wave + cheer),
+			waveSwing: Math.sin(t * 9) * wave + Math.sin(t * 14) * cheer * 0.6,
+			mouth: Math.max(this.mouthOpen, gape, cheer * 0.6),
 			startle: this.startleStrength,
-			sway: Math.sin(t * 17) * 0.12 * this.startleStrength * (1 - w.lie),
+			sway:
+				(Math.sin(t * 17) * 0.12 * this.startleStrength + groove * 0.12 * dance + fury * 0.5) *
+				(1 - w.lie),
 		};
 	}
 }

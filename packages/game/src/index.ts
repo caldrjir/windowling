@@ -1,4 +1,9 @@
-export type { ActivityAnimation, AnimationState, Emotion } from './character/animation.ts';
+export type {
+	ActivityAnimation,
+	AnimationState,
+	Emotion,
+	MomentAnimation,
+} from './character/animation.ts';
 export type { CharacterSnapshot, ControllerEvent, Posture } from './character/controller.ts';
 export { GameWorld, type GameWorldOptions, type GameWorldStatus } from './game-world.ts';
 export { FixedStepAccumulator, type FixedStepOptions } from './fixed-step.ts';

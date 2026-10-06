@@ -1,8 +1,18 @@
 <script lang="ts">
 	import type { GameWorld } from '@windowling/game';
-	import type { Activity, AwarenessState, CharacterAction } from '@windowling/shared';
+	import {
+		isAway,
+		type Activity,
+		type AwarenessState,
+		type CharacterAction,
+	} from '@windowling/shared';
 	import type { CharacterDecision, ConversationEvent } from '@windowling/ai';
-	import type { AwarenessEvent } from '@windowling/simulation';
+	import {
+		MOMENT_KINDS,
+		type AwarenessEvent,
+		type Moment,
+		type MomentKind,
+	} from '@windowling/simulation';
 	import { Conversation, type Brain } from '$lib/brain/conversation';
 	import { playKnock } from '$lib/knock';
 	import { settings, showSubtitles } from '$lib/settings.svelte';
@@ -19,6 +29,11 @@
 
 	type Status = 'loading' | 'running' | 'unsupported';
 
+	/** How often a moment may arise (each check rolls the dice, most do nothing). */
+	const MOMENT_CHECK_MS = 20_000;
+	const isMomentKind = (value: string): value is MomentKind =>
+		(MOMENT_KINDS as readonly string[]).includes(value);
+
 	interface Props {
 		/** What the simulation says the character is doing (null until a world exists). */
 		activity: Activity | null;
@@ -33,9 +48,25 @@
 		brain: Brain;
 		/** -1..1, how it feels about the player: decides whether it comes over. */
 		affinity: number;
+		/** 0 exhausted .. 1 rested, and 0 full .. 1 starving: moments arise from them. */
+		energy: number;
+		hunger: number;
+		/** Who it is (personality) is derived from the world. */
+		worldId: string | null;
 	}
 
-	let { activity, mood, onWoken, onShaken, characterName, brain, affinity }: Props = $props();
+	let {
+		activity,
+		mood,
+		onWoken,
+		onShaken,
+		characterName,
+		brain,
+		affinity,
+		energy,
+		hunger,
+		worldId,
+	}: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let status = $state<Status>('loading');
@@ -54,6 +85,8 @@
 	let sensorsOn = $state('off');
 	/** `?debug` shows what the character is thinking (for testing on real devices). */
 	const debug = page.url.searchParams.has('debug');
+	/** The moment playing right now (dancing, singing...), for debug and E2E. */
+	let momentKind = $state('');
 	let lastSaid = $state('');
 	let brainInfo = $state('');
 	// Not reactive: imperative objects Svelte must not track.
@@ -74,6 +107,8 @@
 		let destroyed = false;
 		let dwellTimer: ReturnType<typeof setTimeout> | undefined;
 		let glanceTimer: ReturnType<typeof setTimeout> | undefined;
+		let momentTimer: ReturnType<typeof setTimeout> | undefined;
+		let momentClock: ReturnType<typeof setInterval> | undefined;
 		let unsubscribe: (() => void) | undefined;
 		let conversation: Conversation | undefined;
 
@@ -94,8 +129,10 @@
 			if (import.meta.env.SSR) return;
 			try {
 				// Loaded lazily so the page shell renders before the 3D engine arrives.
-				const [{ GameWorld }, { actionForActivity, createRng, nextAmbientAction }] =
-					await Promise.all([import('@windowling/game'), import('@windowling/simulation')]);
+				const [
+					{ GameWorld },
+					{ actionForActivity, createRng, nextAmbientAction, nextMoment, personalityFor },
+				] = await Promise.all([import('@windowling/game'), import('@windowling/simulation')]);
 				const created = await GameWorld.create(canvas);
 				if (destroyed) {
 					created.dispose();
@@ -112,6 +149,8 @@
 				/** Busy with the player (coming over, waving): the daily life waits. */
 				let engaged = false;
 				let latest: Activity | null = null;
+				/** `?debug&moment=...`: plays that moment once the character is home and awake. */
+				let playForced = () => {};
 
 				const perform = (action: CharacterAction) => {
 					currentAction = describe(action);
@@ -131,9 +170,11 @@
 					else wander(null);
 				};
 				follow = (next) => {
+					if (next !== latest) endMoment(false);
 					latest = next;
 					if (next !== 'sleep') wokenLocally = false;
 					if (!engaged) resume();
+					if (next) setTimeout(() => playForced(), 1_500);
 				};
 				/** Knocked awake: the first words will be a complaint. */
 				let justWoken = false;
@@ -184,9 +225,77 @@
 					awareness: () => watcher?.state ?? 'UNKNOWN',
 					onDecision: say,
 				});
-				const talk = (event: ConversationEvent) => {
-					void conversation?.handle(event);
+				const talk = (event: ConversationEvent, caught?: MomentKind) => {
+					void conversation?.handle(event, undefined, caught);
 				};
+
+				// Emergent moments (Iteration 8): now and then something small arises from
+				// what it is doing, how it feels and who it is - dancing to the radio,
+				// raging at a game. Some are private: being seen is embarrassing.
+				const momentRng = createRng(Math.floor(Math.random() * 2 ** 32));
+				let moment: Moment | null = null;
+				/** Caught mid-moment: what it says next is about that. */
+				let caughtDoing: MomentKind | null = null;
+				let selfTalk: string | null = null;
+				const clearSelfTalk = () => {
+					if (selfTalk !== null && line === selfTalk) line = null;
+					selfTalk = null;
+				};
+				/** Ends the current moment; `backToLife` resumes the activity it interrupted. */
+				function endMoment(backToLife: boolean) {
+					if (!moment) return;
+					const ended = moment;
+					moment = null;
+					momentKind = '';
+					clearTimeout(momentTimer);
+					game.setMoment(null);
+					clearSelfTalk();
+					if (ended.kind === 'dance' && backToLife && !engaged) resume();
+				}
+				const startMoment = (next: Moment) => {
+					moment = next;
+					momentKind = next.kind;
+					if (next.kind === 'dance') perform({ type: 'dance', target: 'room.center' });
+					else game.setMoment(next.kind);
+					if (next.line && line === null) {
+						// Said to itself - subtitled in brackets, never voiced at the player.
+						const said = `(${next.line})`;
+						selfTalk = said;
+						line = said;
+						setTimeout(
+							() => {
+								if (selfTalk === said) clearSelfTalk();
+							},
+							Math.min(next.seconds, 4) * 1000,
+						);
+					}
+					momentTimer = setTimeout(() => endMoment(true), next.seconds * 1000);
+				};
+				const personality = personalityFor(worldId ?? 'nobody');
+				const maybeMoment = () => {
+					if (destroyed || engaged || moment || !latest || wokenLocally || line !== null) return;
+					if (conversation?.thinking || game.characterState.busy) return;
+					const next = nextMoment(
+						{ activity: latest, needs: { hunger, energy, mood }, personality },
+						momentRng,
+					);
+					if (next) startMoment(next);
+				};
+				momentClock = setInterval(maybeMoment, MOMENT_CHECK_MS);
+				// `?debug&moment=dance` plays one right away (testing on real devices, E2E).
+				const forced = debug ? page.url.searchParams.get('moment') : null;
+				let forcedMoment = forced && isMomentKind(forced) ? forced : null;
+				playForced = () => {
+					if (!forcedMoment || destroyed || engaged || moment) return;
+					if (!latest || latest === 'sleep' || isAway(latest)) return;
+					startMoment({
+						kind: forcedMoment,
+						seconds: 60,
+						private: forcedMoment !== 'cheer' && forcedMoment !== 'yawn',
+					});
+					forcedMoment = null;
+				};
+				setTimeout(() => playForced(), 1_500);
 				/** Set while a shake is being handled: its wake-up goes through the shake endpoint. */
 				let shaking = false;
 				shakeRoom = (intensity) => {
@@ -218,21 +327,29 @@
 							glance(1.2);
 							break;
 						case 'woken':
+							endMoment(false);
 							wokenLocally = true;
 							justWoken = true;
 							if (!shaking) onWoken?.();
 							break;
 						case 'shaken':
+							endMoment(true);
 							// Not woken just now (that greeting comes at the window): it reacts on the spot.
 							if (!justWoken) talk('shaken');
 							break;
-						case 'detected':
+						case 'detected': {
+							// Seen in the middle of something private: it freezes, mortified.
+							const caught = moment?.private ? moment.kind : null;
+							endMoment(event.response === 'ignore');
+							if (caught) game.showEmotion('embarrassed', 0.5 + 0.5 * personality.shy);
 							if (event.response === 'ignore') {
 								glance(1.5);
-								// Doesn't come over, but may say so ("Not now.").
-								talk('ignoring_player');
+								// Doesn't come over, but may say so ("Not now." - or about being caught).
+								if (caught) talk('caught', caught);
+								else talk('ignoring_player');
 								break;
 							}
+							caughtDoing = caught;
 							engaged = true;
 							brain.warmUp?.();
 							clearTimeout(dwellTimer);
@@ -240,6 +357,7 @@
 							game.setAttention(true);
 							perform({ type: 'walkTo', target: 'window' });
 							break;
+						}
 						case 'interacting':
 							perform({ type: 'wave' });
 							break;
@@ -266,6 +384,8 @@
 						activity: wokenLocally ? 'idle' : (latest ?? 'idle'),
 						mood,
 						affinity,
+						// Lost in a private moment, it notices less.
+						absorbed: moment?.private === true,
 					}),
 					onEvent: react,
 					onState: (state) => (awareness = state),
@@ -284,8 +404,11 @@
 							watcher?.arrived();
 							listening = true;
 							// The character speaks first - it came over for a reason.
-							talk(justWoken ? 'woken_up' : 'player_at_window');
+							if (justWoken) talk('woken_up');
+							else if (caughtDoing) talk('caught', caughtDoing);
+							else talk('player_at_window');
 							justWoken = false;
+							caughtDoing = null;
 						}
 						return;
 					}
@@ -317,6 +440,8 @@
 			follow = undefined;
 			clearTimeout(dwellTimer);
 			clearTimeout(glanceTimer);
+			clearTimeout(momentTimer);
+			clearInterval(momentClock);
 			unsubscribe?.();
 			voice?.cancel();
 			watcher?.stop();
@@ -408,6 +533,7 @@
 	data-sensors={sensorsOn}
 	data-character-action={currentAction}
 	data-character-posture={posture}
+	data-moment={momentKind}
 	class="block h-full w-full touch-none select-none"
 	aria-label="A window into someone's room. Tap to knock on the glass."
 	onpointermove={onPointerMove}
@@ -443,6 +569,8 @@
 		<dd>{awareness}</dd>
 		<dt>action</dt>
 		<dd>{currentAction || '-'}</dd>
+		<dt>moment</dt>
+		<dd>{momentKind || '-'}</dd>
 		<dt>voice</dt>
 		<dd>{voiceAvailable ? (settings.voice ? 'on' : 'muted') : 'unavailable'}</dd>
 		<dt>brain</dt>
