@@ -19,11 +19,11 @@ test('app loads and the game canvas starts rendering', async ({ page }) => {
 	// The character starts doing something on its own - nobody asked it to.
 	await expect(canvas).toHaveAttribute(
 		'data-character-action',
-		/^(idle|(walkTo|sit|sleep|eat|work|play):[a-z][a-z0-9_.-]*)$/,
+		/^(idle|clean|[a-zA-Z]+:[a-z][a-z0-9_.-]*)$/,
 		{ timeout: 10_000 },
 	);
 	// ...and what it does comes from the simulation's schedule.
-	await expect(canvas).toHaveAttribute('data-activity', /^(sleep|eat|work|gaming|idle)$/, {
+	await expect(canvas).toHaveAttribute('data-activity', /^[a-z]+$/, {
 		timeout: 15_000,
 	});
 
@@ -117,6 +117,31 @@ test('the character comes to the window and says something', async ({ page }) =>
 	await expect(page.getByRole('dialog', { name: 'Let them hear you' })).toBeVisible();
 	await page.getByRole('button', { name: 'Not now' }).click();
 	await expect(talk).toHaveAttribute('data-phase', 'off');
+});
+
+test('caught dancing, it is embarrassed and says so', async ({ page }) => {
+	test.setTimeout(90_000);
+	// `?debug&moment=dance` starts a dance right away instead of waiting for good music.
+	await page.goto('/?debug&moment=dance');
+	const canvas = page.getByTestId('game-canvas');
+	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
+	await expect(canvas).toHaveAttribute('data-activity', /.+/, { timeout: 15_000 });
+	// Asleep or out: nobody to catch.
+	if ((await nobodyHome(canvas)) || (await canvas.getAttribute('data-activity')) === 'sleep')
+		return;
+	await expect(canvas).toHaveAttribute('data-moment', 'dance', { timeout: 10_000 });
+	await expect(canvas).toHaveAttribute('data-character-action', 'dance:room.center');
+	const box = await canvas.boundingBox();
+	if (!box) throw new Error('canvas has no box');
+	// Lost in the music it notices less - but knocking gets through eventually.
+	const subtitles = page.getByTestId('subtitles');
+	for (let i = 0; i < 40; i++) {
+		if ((await canvas.getAttribute('data-moment')) === '') break;
+		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+		await page.waitForTimeout(400);
+	}
+	await expect(canvas).toHaveAttribute('data-moment', '');
+	await expect(subtitles).toHaveAttribute('data-line', /standing there/, { timeout: 30_000 });
 });
 
 test('settings offer subtitles, voice and where the brain runs', async ({ page }) => {

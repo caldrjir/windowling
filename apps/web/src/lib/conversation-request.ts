@@ -1,5 +1,6 @@
 import { CONVERSATION_EVENTS } from '@windowling/ai';
 import { awarenessStateSchema } from '@windowling/shared';
+import { MOMENT_KINDS } from '@windowling/simulation';
 import { z } from 'zod';
 
 /**
@@ -15,6 +16,8 @@ export const conversationRequestSchema = z.object({
 		.array(z.object({ speaker: z.enum(['character', 'player']), text: z.string().max(300) }))
 		.max(6)
 		.default([]),
+	/** With event `caught`: the private moment it was caught in. */
+	caughtDoing: z.enum(MOMENT_KINDS).optional(),
 });
 
 export type ConversationRequest = z.infer<typeof conversationRequestSchema>;

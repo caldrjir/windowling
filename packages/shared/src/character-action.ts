@@ -37,6 +37,9 @@ export const characterActionSchema = z.discriminatedUnion('type', [
 	z.object({ type: z.literal('exercise'), target: knownTargetIdSchema }),
 	/** Sweep the flat (walks around with a broom - no single place). */
 	z.object({ type: z.literal('clean') }),
+	// Iteration 8 - emergent moments
+	/** Dance where there is room (only when the moment arises, never on request). */
+	z.object({ type: z.literal('dance'), target: knownTargetIdSchema }),
 	/** Leave the flat through a door (shower, going out). */
 	z.object({ type: z.literal('leave'), target: knownTargetIdSchema }),
 ]);

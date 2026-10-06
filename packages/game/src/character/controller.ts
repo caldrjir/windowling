@@ -72,6 +72,7 @@ const TARGET_POSTURE: Record<TargetAction['type'], Posture> = {
 	listen: 'sitting',
 	call: 'standing',
 	exercise: 'standing',
+	dance: 'standing',
 	leave: 'standing',
 };
 
@@ -86,6 +87,7 @@ const ACTIVITY_OF: Partial<Record<CharacterAction['type'], ActivityAnimation>> =
 	call: 'phone',
 	exercise: 'exercise',
 	clean: 'clean',
+	dance: 'dance',
 };
 
 /** Slower and heavier when sad, a little brisker when happy. */

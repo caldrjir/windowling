@@ -141,4 +141,24 @@ describe('MockCharacterAI', () => {
 		});
 		expect(again.speech).toBe('Stop shaking my flat!');
 	});
+
+	it('is embarrassed when caught, and refuses to talk about it later', async () => {
+		const ai = new MockCharacterAI();
+		const caught = await ai.decide({
+			...base,
+			awareness: 'DETECTED',
+			event: 'caught',
+			caughtDoing: 'dancing',
+		});
+		expect(caught.speech).toBe('...how long have you been standing there?');
+		expect(caught.emotion).toBe('embarrassed');
+		const later = await ai.decide({
+			...base,
+			awareness: 'INTERACTING',
+			event: 'player_said',
+			playerUtterance: 'Show me your dance moves!',
+			memories: [{ note: 'The player caught me dancing.', when: 'yesterday' }],
+		});
+		expect(later.speech).toBe("We're not talking about that.");
+	});
 });

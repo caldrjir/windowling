@@ -58,6 +58,8 @@ export const CONVERSATION_EVENTS = [
 	'player_silent',
 	/** The player shook the phone - the whole flat shook. */
 	'shaken',
+	/** It noticed the player in the middle of something private (see `caughtDoing`). */
+	'caught',
 ] as const;
 
 export type ConversationEvent = (typeof CONVERSATION_EVENTS)[number];
@@ -89,6 +91,10 @@ export interface CharacterAIContext {
 	memories?: Array<{ note: string; when: string }>;
 	/** How the character feels about the player. */
 	relationship?: Relationship;
+	/** For `caught`: what it was doing, in words ("dancing", "raging at a video game"). */
+	caughtDoing?: string;
+	/** 0..1, how easily it is embarrassed (personality). */
+	shyness?: number;
 }
 
 export interface CharacterAI {

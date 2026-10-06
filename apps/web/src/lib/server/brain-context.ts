@@ -7,7 +7,13 @@ import {
 	type Database,
 	type WorldRecord,
 } from '@windowling/database';
-import { howLongAgo, localClock, recall } from '@windowling/simulation';
+import {
+	CAUGHT_DOING,
+	howLongAgo,
+	localClock,
+	personalityFor,
+	recall,
+} from '@windowling/simulation';
 import type { ConversationRequest } from '$lib/conversation-request';
 
 /** How many memories the brain gets per moment - relevant ones, never the full history. */
@@ -40,6 +46,8 @@ export async function buildServerContext(
 	const clock = localClock(now, world.timeZone);
 	const cues = [request.event.replace(/_/g, ' '), request.playerUtterance ?? ''];
 	if (request.event === 'woken_up') cues.push('woke sleep night');
+	const caughtDoing = request.caughtDoing ? CAUGHT_DOING[request.caughtDoing] : undefined;
+	if (caughtDoing) cues.push(`caught ${caughtDoing}`);
 	const recalled = recall(memories, { now, cues }, RECALLED);
 
 	return {
@@ -55,6 +63,8 @@ export async function buildServerContext(
 			playerUtterance: request.playerUtterance,
 			recent: request.recent,
 			relationship,
+			caughtDoing,
+			shyness: personalityFor(world.id).shy,
 			memories: recalled.map((m) => ({ note: m.note, when: howLongAgo(m.createdAt, now) })),
 		},
 	};

@@ -111,4 +111,54 @@ describe('Animator', () => {
 		settle(a, 8);
 		expect(a.pose().headPitch).toBeCloseTo(calm, 2);
 	});
+
+	it('dances: bouncing and swaying, then stops cleanly', () => {
+		const a = new Animator();
+		a.setActivity('dance');
+		let sway = 0;
+		let bob = 0;
+		for (let i = 0; i < 120; i++) {
+			a.update(1 / 60);
+			sway = Math.max(sway, Math.abs(a.pose().sway));
+			bob = Math.max(bob, a.pose().bob);
+		}
+		expect(sway).toBeGreaterThan(0.05);
+		expect(bob).toBeGreaterThan(0.03);
+		a.setActivity('none');
+		settle(a, 1);
+		expect(Math.abs(a.pose().sway)).toBeLessThan(1e-6);
+	});
+
+	it('plays moments over the activity: singing moves the lips, cheering raises an arm', () => {
+		const a = new Animator();
+		a.setActivity('cook');
+		a.setMoment('sing');
+		let mouth = 0;
+		for (let i = 0; i < 120; i++) {
+			a.update(1 / 60);
+			mouth = Math.max(mouth, a.pose().mouth);
+		}
+		expect(mouth).toBeGreaterThan(0.3);
+		expect(a.activityWeight('cook')).toBe(1);
+		a.setMoment('cheer');
+		settle(a, 1);
+		expect(a.pose().wave).toBe(1);
+		a.setMoment(null);
+		settle(a, 1);
+		expect(a.momentWeight('cheer')).toBe(0);
+		expect(a.pose().wave).toBe(0);
+	});
+
+	it('nods off while dozing', () => {
+		const a = new Animator();
+		a.setState('sit');
+		settle(a, 1);
+		a.setMoment('doze');
+		let pitch = 0;
+		for (let i = 0; i < 6 * 60; i++) {
+			a.update(1 / 60);
+			pitch = Math.max(pitch, a.pose().headPitch);
+		}
+		expect(pitch).toBeGreaterThan(0.4);
+	});
 });

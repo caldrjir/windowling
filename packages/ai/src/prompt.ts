@@ -69,6 +69,8 @@ function describeEvent(context: CharacterAIContext): string {
 			return 'You noticed someone watching you through the window and walked over to it. You are standing at the window, looking at them.';
 		case 'player_said':
 			return 'You are at the window, talking to the person on the other side.';
+		case 'caught':
+			return `You were ${context.caughtDoing ?? 'doing something private'} and just realised someone was watching you through the window the whole time. You are embarrassed${(context.shyness ?? 0.5) > 0.6 ? ' - mortified, really' : ''}.`;
 		case 'shaken':
 			return 'The whole flat just shook violently - things flew around and you nearly fell over. Whoever is at the window probably did it.';
 		case 'player_silent':

@@ -30,6 +30,8 @@ export interface AwarenessContext {
 	mood: number;
 	/** -1..1, how it feels about the player (default neutral). */
 	affinity?: number;
+	/** Lost in a private moment (dancing, raging at a game...): it notices much later. */
+	absorbed?: boolean;
 }
 
 export type AwarenessInput =
@@ -173,7 +175,7 @@ export function stepAwareness(
 	let a = current;
 	const events: AwarenessEvent[] = [];
 	const asleep = ctx.activity === 'sleep';
-	const sensitivity = SENSITIVITY[ctx.activity];
+	const sensitivity = SENSITIVITY[ctx.activity] * (ctx.absorbed ? 0.4 : 1);
 
 	const detect = (woken = false) => {
 		const response = chooseResponse(ctx, rng, woken);
@@ -293,7 +295,8 @@ export function stepAwareness(
 				const curiosity = a.state === 'SUSPECTED' ? 3 : 1;
 				const roll = rng();
 				const looked =
-					a.watching > GRACE_SECONDS && roll < SPONTANEOUS_LOOK[ctx.activity] * curiosity * dt
+					a.watching > GRACE_SECONDS &&
+					roll < SPONTANEOUS_LOOK[ctx.activity] * curiosity * (ctx.absorbed ? 0.3 : 1) * dt
 						? LOOK_GAIN
 						: 0;
 				a = {

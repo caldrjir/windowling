@@ -19,7 +19,7 @@ import {
 	type CharacterSnapshot,
 	type ControllerEvent,
 } from './character/controller.ts';
-import type { Emotion } from './character/animation.ts';
+import type { Emotion, MomentAnimation } from './character/animation.ts';
 import { CharacterRig } from './character/rig.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import {
@@ -153,6 +153,11 @@ export class GameWorld {
 	/** Shows a feeling in posture for a few seconds (from a decision's emotion). */
 	showEmotion(emotion: Emotion, intensity: number): void {
 		this.character.animator.showEmotion(emotion, intensity);
+	}
+
+	/** Plays a short moment over the current activity (raging, dozing...); null ends it. */
+	setMoment(moment: MomentAnimation | null): void {
+		this.character.animator.setMoment(moment);
 	}
 
 	/**

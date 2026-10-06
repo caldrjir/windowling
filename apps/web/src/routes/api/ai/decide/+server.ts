@@ -56,6 +56,7 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 		{
 			event: body.event,
 			playerUtterance: body.playerUtterance,
+			caughtDoing: body.caughtDoing,
 			emotion: decision.emotion,
 			intensity: decision.intensity,
 			remember: decision.remember,

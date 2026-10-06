@@ -1,5 +1,6 @@
 import type { CharacterDecision, ConversationEvent, DialogueLine } from '@windowling/ai';
 import type { AwarenessState } from '@windowling/shared';
+import type { MomentKind } from '@windowling/simulation';
 
 /** Something that turns "what happened" into what the character says and does. */
 export interface Brain {
@@ -8,6 +9,8 @@ export interface Brain {
 		awareness: AwarenessState;
 		playerUtterance?: string;
 		recent: DialogueLine[];
+		/** With `caught`: the private moment it was caught in. */
+		caughtDoing?: MomentKind;
 	}): Promise<CharacterDecision | null>;
 	/** A conversation is likely soon (the character is walking to the window). */
 	warmUp?(): void;
@@ -77,7 +80,11 @@ export class Conversation {
 	}
 
 	/** Something happened that may make the character talk. Returns false if busy. */
-	async handle(event: ConversationEvent, playerUtterance?: string): Promise<boolean> {
+	async handle(
+		event: ConversationEvent,
+		playerUtterance?: string,
+		caughtDoing?: MomentKind,
+	): Promise<boolean> {
 		if (this.busy) return false;
 		this.busy = true;
 		try {
@@ -86,6 +93,7 @@ export class Conversation {
 				awareness: this.options.awareness(),
 				playerUtterance,
 				recent: [...this.lines],
+				...(caughtDoing ? { caughtDoing } : {}),
 			});
 			if (playerUtterance) this.remember({ speaker: 'player', text: playerUtterance });
 			if (!decision) return true;

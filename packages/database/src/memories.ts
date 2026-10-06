@@ -1,6 +1,7 @@
 import { NEW_ACQUAINTANCE, type Relationship } from '@windowling/shared';
 import {
 	applyRelationshipEvent,
+	CAUGHT_DOING,
 	emotionValence as emotionValenceOf,
 	tagsFor,
 	type Memory,
@@ -146,6 +147,9 @@ export async function recordRelationshipEvent(
 	});
 }
 
+/** Words for being caught mid-moment; unknown kinds are not remembered. */
+const CAUGHT_WORDS: Readonly<Record<string, string>> = CAUGHT_DOING;
+
 /** What a conversation step produced - structural, so this package needs no AI types. */
 export interface ConversationOutcome {
 	event:
@@ -154,8 +158,11 @@ export interface ConversationOutcome {
 		| 'player_said'
 		| 'ignoring_player'
 		| 'player_silent'
-		| 'shaken';
+		| 'shaken'
+		| 'caught';
 	playerUtterance?: string;
+	/** With `caught`: what it was caught doing (a moment kind, e.g. `dance`). */
+	caughtDoing?: string;
 	emotion: string;
 	intensity: number;
 	remember?: { kind: 'moment' | 'fact'; note: string };
@@ -206,6 +213,21 @@ export async function recordConversation(
 		case 'player_silent':
 			after = await recordRelationshipEvent(db, worldId, { type: 'silence' });
 			break;
+		case 'caught': {
+			after = await recordRelationshipEvent(db, worldId, { type: 'visit' });
+			const doing = outcome.caughtDoing ? (CAUGHT_WORDS[outcome.caughtDoing] ?? null) : null;
+			if (doing && outcome.caughtDoing) {
+				await remember(db, worldId, {
+					kind: 'moment',
+					note: `The player caught me ${doing}.`,
+					importance: 0.7,
+					tags: ['player', 'caught', 'embarrassed', outcome.caughtDoing],
+					emotion: 'embarrassed',
+					createdAt: now,
+				});
+			}
+			break;
+		}
 		case 'woken_up':
 		case 'ignoring_player':
 		case 'shaken': // recorded by recordShake when it happens
