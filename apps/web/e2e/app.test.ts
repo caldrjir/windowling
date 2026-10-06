@@ -152,8 +152,12 @@ test('shaking the phone shakes the room - and the character reacts', async ({ pa
 	const canvas = page.getByTestId('game-canvas');
 	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
 	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
+	await page.context().grantPermissions(['accelerometer', 'gyroscope']);
 	await page.getByRole('button', { name: 'Settings' }).click();
-	await expect(page.getByTestId('sensors-toggle')).toBeChecked();
+	const toggle = page.getByTestId('sensors-toggle');
+	// Browsers that ask for motion access (iOS, newer Chromium) need a tap to switch it on.
+	if (!(await toggle.isChecked())) await toggle.click();
+	await expect(toggle).toBeChecked();
 	await page.getByRole('button', { name: 'Settings' }).click();
 	await expect(canvas).toHaveAttribute('data-sensors', 'on');
 	// A hard shake: several jolts in a burst. Dispatched synchronously - a busy CI browser
