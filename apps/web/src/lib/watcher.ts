@@ -59,6 +59,11 @@ export class Watcher {
 		this.apply({ type: 'knock' });
 	}
 
+	/** The phone was shaken (intensity 0..1). */
+	shake(intensity: number): void {
+		this.apply({ type: 'shake', intensity });
+	}
+
 	/** The player said something (push-to-talk). */
 	spoke(): void {
 		this.apply({ type: 'spoke' });

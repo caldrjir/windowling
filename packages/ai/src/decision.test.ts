@@ -119,4 +119,26 @@ describe('MockCharacterAI', () => {
 			}),
 		).toBeNull();
 	});
+
+	it('reacts to the flat being shaken, and to it happening again', async () => {
+		const ai = new MockCharacterAI();
+		const justNow = { note: 'Someone shook my whole flat.', when: 'earlier today' };
+		const first = await ai.decide({
+			...base,
+			awareness: 'DETECTED',
+			event: 'shaken',
+			memories: [justNow],
+		});
+		expect(first.speech).toBe('Whoa! What was that?!');
+		const again = await ai.decide({
+			...base,
+			awareness: 'DETECTED',
+			event: 'shaken',
+			memories: [
+				justNow,
+				{ note: 'Someone shook my flat. Things slid around.', when: 'yesterday' },
+			],
+		});
+		expect(again.speech).toBe('Stop shaking my flat!');
+	});
 });

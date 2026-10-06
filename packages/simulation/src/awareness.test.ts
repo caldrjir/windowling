@@ -178,6 +178,20 @@ describe('stepAwareness', () => {
 	});
 });
 
+describe('shaking the room', () => {
+	it('is always noticed by someone awake', () => {
+		const { awareness, events } = run([{ type: 'shake', intensity: 0.3 }], 'work');
+		expect(events[0]).toEqual({ type: 'shaken', intensity: 0.3 });
+		expect(['DETECTED', 'IGNORING']).toContain(awareness.state);
+	});
+
+	it('rocks a sleeper gently, or throws them awake', () => {
+		expect(run([{ type: 'shake', intensity: 0.3 }], 'sleep').events).toEqual([{ type: 'stirred' }]);
+		const hard = run([{ type: 'shake', intensity: 0.8 }], 'sleep');
+		expect(hard.events.map((e) => e.type).slice(0, 3)).toEqual(['woken', 'shaken', 'detected']);
+	});
+});
+
 describe('chooseResponse', () => {
 	const share = (activity: Activity, mood: number, woken = false) => {
 		const rng = createRng(9);

@@ -145,6 +145,43 @@ test('memories stay private to their world', async ({ request }) => {
 	).toBe(401);
 });
 
+test('shaking the phone shakes the room - and the character reacts', async ({ page, isMobile }) => {
+	test.skip(!isMobile, 'Motion sensors are a phone thing');
+	test.setTimeout(60_000);
+	await page.goto('/');
+	const canvas = page.getByTestId('game-canvas');
+	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
+	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
+	await page.getByRole('button', { name: 'Settings' }).click();
+	await expect(page.getByTestId('sensors-toggle')).toBeChecked();
+	await page.getByRole('button', { name: 'Settings' }).click();
+	await expect(canvas).toHaveAttribute('data-sensors', 'on');
+	// A hard shake: several jolts in a burst. Dispatched synchronously - a busy CI browser
+	// would otherwise stretch the gaps beyond "within a second".
+	const shake = () =>
+		page.evaluate(() => {
+			for (let i = 0; i < 24; i++) {
+				const m = i % 4 < 2 ? 28 : 1;
+				window.dispatchEvent(
+					Object.assign(new Event('devicemotion'), {
+						acceleration: { x: m, y: 0, z: 0 },
+						accelerationIncludingGravity: null,
+					}),
+				);
+			}
+		});
+	// Phones stream motion continuously; a test only gets a few bursts - allow a second one.
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await shake();
+		await page.waitForTimeout(1_600);
+		if ((await canvas.getAttribute('data-awareness')) !== 'UNKNOWN') break;
+	}
+	// Awake: it knows someone is there now. Asleep: thrown out of bed.
+	await expect(canvas).toHaveAttribute('data-awareness', /^(DETECTED|INTERACTING|IGNORING)$/, {
+		timeout: 5_000,
+	});
+});
+
 test('the brain needs a session', async ({ request }) => {
 	const response = await request.post('/api/ai/decide', {
 		data: { event: 'player_at_window', awareness: 'DETECTED', recent: [] },

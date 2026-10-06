@@ -23,6 +23,21 @@ export class MockCharacterAI implements CharacterAI {
 				action: { type: 'lookAtPlayer' },
 			};
 		}
+		if (context.event === 'shaken') {
+			// The shake that just happened is already remembered - "again" needs an earlier one.
+			const again = (context.memories?.filter((m) => /shook my/i.test(m.note)).length ?? 0) >= 2;
+			const known = (rel?.familiarity ?? 0) >= 0.1;
+			return {
+				speech: again
+					? 'Stop shaking my flat!'
+					: known
+						? 'Hey! Was that you?!'
+						: 'Whoa! What was that?!',
+				emotion: again ? 'angry' : 'surprised',
+				intensity: 0.8,
+				action: { type: 'lookAtPlayer' },
+			};
+		}
 		if (context.event === 'player_silent') {
 			return {
 				speech: context.needs.mood < 0.35 ? 'Fine. Be like that.' : 'Okay... never mind.',

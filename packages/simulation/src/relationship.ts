@@ -9,7 +9,9 @@ export type RelationshipEvent =
 	/** Knocked awake. */
 	| { type: 'woken' }
 	/** It came over or spoke and the player stayed silent. */
-	| { type: 'silence' };
+	| { type: 'silence' }
+	/** The player shook the whole flat. Intensity 0..1. */
+	| { type: 'shaken'; intensity: number };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -37,6 +39,14 @@ export function applyRelationshipEvent(rel: Relationship, event: RelationshipEve
 			};
 		case 'silence':
 			return { ...rel, affinity: clamp(rel.affinity - 0.01, -1, 1) };
+		case 'shaken': {
+			const k = clamp(event.intensity, 0, 1);
+			return {
+				affinity: clamp(rel.affinity - 0.06 * k, -1, 1),
+				trust: clamp(rel.trust - 0.04 * k, 0, 1),
+				familiarity: rel.familiarity,
+			};
+		}
 	}
 }
 

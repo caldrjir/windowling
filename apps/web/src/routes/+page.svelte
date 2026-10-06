@@ -4,6 +4,7 @@
 	import GameCanvas from '$lib/components/GameCanvas.svelte';
 	import SettingsMenu from '$lib/components/SettingsMenu.svelte';
 	import { settings } from '$lib/settings.svelte';
+	import { sensorAccess } from '$lib/sensors/access.svelte';
 	import { CombinedBrain } from '$lib/brain/choose';
 	import { deviceBrain } from '$lib/brain/device-brain.svelte';
 	import { authClient } from '$lib/auth-client';
@@ -26,6 +27,7 @@
 
 	onMount(async () => {
 		settings.restore();
+		sensorAccess.init();
 		void deviceBrain.detect();
 		const timeZone = deviceTimeZone();
 		rememberTimeZone(timeZone);
@@ -51,6 +53,22 @@
 			if (response.ok) await invalidateAll();
 		} catch (error) {
 			console.warn('Could not report waking the character', error);
+		}
+	}
+
+	/** Shaken: remembered on the server; a hard shake may have woken it up. */
+	async function shaken(intensity: number) {
+		try {
+			const response = await fetch('/api/world/shake', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ intensity }),
+			});
+			if (response.ok && ((await response.json()) as { woken?: boolean }).woken) {
+				await invalidateAll();
+			}
+		} catch (error) {
+			console.warn('Could not report the shake', error);
 		}
 	}
 
@@ -83,6 +101,7 @@
 		activity={data.world?.character.activity.type ?? null}
 		mood={data.world?.character.mood ?? 0.6}
 		onWoken={wake}
+		onShaken={shaken}
 		characterName={data.world?.character.name ?? 'Someone'}
 		{brain}
 		affinity={data.world?.character.relationship.affinity ?? 0}

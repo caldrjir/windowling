@@ -10,11 +10,13 @@ interface Stored {
 	subtitles: SubtitleMode;
 	voice: boolean;
 	brain: BrainPreference;
+	/** Tilt and shake (phones). */
+	sensors: boolean;
 }
 
 const KEY = 'windowling:settings';
 // Subtitles on by default: we can't tell whether the device actually plays the voice.
-const DEFAULTS: Stored = { subtitles: 'always', voice: true, brain: 'auto' };
+const DEFAULTS: Stored = { subtitles: 'always', voice: true, brain: 'auto', sensors: true };
 
 function load(): Stored {
 	try {
@@ -26,6 +28,7 @@ function load(): Stored {
 				? (parsed.subtitles as SubtitleMode)
 				: DEFAULTS.subtitles,
 			voice: typeof parsed.voice === 'boolean' ? parsed.voice : DEFAULTS.voice,
+			sensors: typeof parsed.sensors === 'boolean' ? parsed.sensors : DEFAULTS.sensors,
 			brain: ['auto', 'device', 'cloud'].includes(parsed.brain ?? '')
 				? (parsed.brain as BrainPreference)
 				: DEFAULTS.brain,
@@ -39,6 +42,7 @@ class Settings {
 	subtitles = $state<SubtitleMode>(DEFAULTS.subtitles);
 	voice = $state(DEFAULTS.voice);
 	brain = $state<BrainPreference>(DEFAULTS.brain);
+	sensors = $state(DEFAULTS.sensors);
 
 	/** Call once in the browser (onMount). */
 	restore(): void {
@@ -46,13 +50,19 @@ class Settings {
 		this.subtitles = stored.subtitles;
 		this.voice = stored.voice;
 		this.brain = stored.brain;
+		this.sensors = stored.sensors;
 	}
 
 	save(): void {
 		try {
 			localStorage.setItem(
 				KEY,
-				JSON.stringify({ subtitles: this.subtitles, voice: this.voice, brain: this.brain }),
+				JSON.stringify({
+					subtitles: this.subtitles,
+					voice: this.voice,
+					brain: this.brain,
+					sensors: this.sensors,
+				}),
 			);
 		} catch {
 			// Not persisted - fine, it still applies for this visit.

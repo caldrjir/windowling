@@ -56,6 +56,8 @@ export const CONVERSATION_EVENTS = [
 	'ignoring_player',
 	/** It came over or talked, and the player said nothing back. */
 	'player_silent',
+	/** The player shook the phone - the whole flat shook. */
+	'shaken',
 ] as const;
 
 export type ConversationEvent = (typeof CONVERSATION_EVENTS)[number];

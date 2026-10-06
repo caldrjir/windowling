@@ -40,6 +40,8 @@ export type AwarenessInput =
 	| { type: 'knock' }
 	/** The player spoke to the character (push-to-talk). */
 	| { type: 'spoke' }
+	/** The phone was shaken - the whole room moved. Intensity 0..1. */
+	| { type: 'shake'; intensity: number }
 	/** The character reached the window after deciding to approach. */
 	| { type: 'arrived' }
 	/** The player left (tab hidden, app closed). */
@@ -61,7 +63,9 @@ export type AwarenessEvent =
 	/** Knocked while asleep: rolls over. */
 	| { type: 'stirred' }
 	/** Knocked awake. Persistent consequences are applied by the server. */
-	| { type: 'woken' };
+	| { type: 'woken' }
+	/** The room was shaken while it was awake (or shook it awake). */
+	| { type: 'shaken'; intensity: number };
 
 export interface AwarenessStep {
 	awareness: Awareness;
@@ -183,6 +187,31 @@ export function stepAwareness(
 			} else if (a.state === 'DETECTED' && a.atWindow && input.amount > 0.05) {
 				a = enter(a, 'INTERACTING');
 				events.push({ type: 'interacting' });
+			}
+			break;
+		}
+
+		case 'shake': {
+			const k = Math.min(1, Math.max(0, input.intensity));
+			a = { ...a, sinceInput: 0 };
+			if (asleep) {
+				// A gentle shake rocks a sleeper; a real one throws them out of bed.
+				if (k < 0.5) {
+					events.push({ type: 'stirred' });
+					break;
+				}
+				events.push({ type: 'woken' }, { type: 'shaken', intensity: k });
+				detect(true);
+				break;
+			}
+			events.push({ type: 'shaken', intensity: k });
+			// Nobody mistakes an earthquake for nothing: whoever is out there, it knows now.
+			if (a.state === 'UNKNOWN' || a.state === 'SUSPECTED' || a.state === 'IGNORING') {
+				a = { ...a, suspicion: 1 };
+				if (a.state === 'IGNORING') {
+					a = enter(a, 'DETECTED');
+					events.push({ type: 'detected', response: 'approach' });
+				}
 			}
 			break;
 		}

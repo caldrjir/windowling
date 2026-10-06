@@ -148,7 +148,13 @@ export async function recordRelationshipEvent(
 
 /** What a conversation step produced - structural, so this package needs no AI types. */
 export interface ConversationOutcome {
-	event: 'player_at_window' | 'woken_up' | 'player_said' | 'ignoring_player' | 'player_silent';
+	event:
+		| 'player_at_window'
+		| 'woken_up'
+		| 'player_said'
+		| 'ignoring_player'
+		| 'player_silent'
+		| 'shaken';
 	playerUtterance?: string;
 	emotion: string;
 	intensity: number;
@@ -202,6 +208,7 @@ export async function recordConversation(
 			break;
 		case 'woken_up':
 		case 'ignoring_player':
+		case 'shaken': // recorded by recordShake when it happens
 			break;
 	}
 	if (outcome.remember) {
@@ -215,4 +222,41 @@ export async function recordConversation(
 		});
 	}
 	return after;
+}
+
+/** One shake memory per minute is plenty - a long shake is still one event. */
+const SHAKE_COOLDOWN_MS = 60_000;
+
+/**
+ * The player shook the phone. Remembered (and resented) - but only once per
+ * minute, so a long shake doesn't flood the memory. Returns false when it was
+ * too soon after the last one.
+ */
+export async function recordShake(
+	db: Database,
+	worldId: string,
+	intensity: number,
+	now: Date = new Date(),
+): Promise<boolean> {
+	const k = Math.min(1, Math.max(0, intensity));
+	const [last] = await db
+		.select({ createdAt: memory.createdAt })
+		.from(memory)
+		.where(and(eq(memory.worldId, worldId), sql`'shaken' = any(${memory.tags})`))
+		.orderBy(desc(memory.createdAt))
+		.limit(1);
+	if (last && now.getTime() - last.createdAt.getTime() < SHAKE_COOLDOWN_MS) return false;
+	await remember(db, worldId, {
+		kind: 'moment',
+		note:
+			k > 0.6
+				? 'Someone shook my whole flat. Everything went flying and I nearly fell over.'
+				: 'Someone shook my flat. Things slid around.',
+		importance: 0.4 + 0.4 * k,
+		tags: ['player', 'shaken', 'shake', 'flat'],
+		emotion: k > 0.6 ? 'angry' : 'surprised',
+		createdAt: now,
+	});
+	await recordRelationshipEvent(db, worldId, { type: 'shaken', intensity: k });
+	return true;
 }

@@ -147,6 +147,15 @@ the same context from `POST /api/ai/context` and report back via `POST /api/ai/o
 server stays the one source of truth. Affinity also feeds `chooseResponse`: a liked player gets
 visits, an annoying one gets ignored.
 
+**Phone sensors (Iteration 6):** `lib/sensors/motion.ts` (pure, tested) maps device orientation
+relative to the pose at start to a gravity vector (clamped tilt, screen rotation aware) and
+detects shakes (3 jolts > 12 m/s² within 1 s → intensity). `PhoneSensors` feeds
+`GameWorld.setGravity` (loose bodies wake and roll; the camera leans) and `GameWorld.shake`
+(impulses, camera jitter, character startle). The awareness model treats a shake as unmistakable
+(a hard one wakes a sleeper); `POST /api/world/shake` remembers it (rate-limited), hurts the
+relationship and wakes a sleeper with the cause remembered. Opt-in via Settings; iOS needs a
+permission request from a tap.
+
 **Ears:** `TalkButton` (tap to start / tap to stop, or hold; Space on desktop) appears while the character is at the window. After a
 one-time consent it loads Whisper (`Xenova/whisper-tiny.en`, ~40 MB from the Hugging Face Hub,
 cached by the browser) in a Web Worker via transformers.js. The ONNX runtime is the plain CPU
