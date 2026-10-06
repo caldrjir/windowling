@@ -147,6 +147,13 @@ the same context from `POST /api/ai/context` and report back via `POST /api/ai/o
 server stays the one source of truth. Affinity also feeds `chooseResponse`: a liked player gets
 visits, an annoying one gets ignored.
 
+**A richer day (Iteration 7):** the scheduler knows 14 activities. `shower` and `out` are
+_away_: the character leaves through the door (`leave` action, controller `pass` steps, door
+animation) and the rig is hidden until any next action brings it back in; awareness ignores the
+player meanwhile. TV is "on our side of the glass" - only a flickering light reaches the sofa.
+Music while listening is generated in the browser (`lib/sound/music.ts`, pentatonic pad + melody,
+low-passed), started only after a user gesture and behind the "Sounds" switch.
+
 **Phone sensors (Iteration 6):** `lib/sensors/motion.ts` (pure, tested) maps device orientation
 relative to the pose at start to a gravity vector (clamped tilt, screen rotation aware) and
 detects shakes (3 jolts > 12 m/s² within 1 s → intensity). `PhoneSensors` feeds

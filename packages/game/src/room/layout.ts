@@ -42,6 +42,11 @@ export const FURNITURE = {
 	counter: { x: 2.7, z: 0.68, width: 0.55, height: 0.9, depth: 1.05 },
 } as const satisfies Record<string, Box>;
 
+/** Door in the left wall, near the front: to the bathroom and the rest of the world. */
+export const DOOR = { z: 1.15, width: 0.9, height: 2.05 } as const;
+/** Where the character is when it has left the flat (behind the door, out of sight). */
+export const OUTSIDE: Vec2 = { x: -ROOM.width / 2 - 0.7, z: DOOR.z };
+
 /** Window in the back wall (to the outside world of the flat). */
 export const BACK_WINDOW = { x: -0.1, y: 1.65, width: 1.5, height: 1.0 } as const;
 
@@ -80,6 +85,10 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 			y: FURNITURE.bed.height,
 			yaw: 0,
 		},
+	},
+	door: {
+		approach: { x: -ROOM.width / 2 + 0.55, z: DOOR.z },
+		approachYaw: -Math.PI / 2,
 	},
 	'kitchen.counter': {
 		approach: {

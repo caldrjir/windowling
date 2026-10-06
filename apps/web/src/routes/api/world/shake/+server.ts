@@ -1,5 +1,6 @@
 import { error, json } from '@sveltejs/kit';
-import { findWorldByUserId, recordShake, wakeCharacter } from '@windowling/database';
+import { catchUpWorld, findWorldByUserId, recordShake, wakeCharacter } from '@windowling/database';
+import { isAway } from '@windowling/shared';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
@@ -19,9 +20,14 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 	const parsed = shakeSchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Invalid shake');
 
-	const world = await findWorldByUserId(locals.db, locals.user.id);
-	if (!world) error(404, 'No world');
+	const found = await findWorldByUserId(locals.db, locals.user.id);
+	if (!found) error(404, 'No world');
 	const now = new Date();
+	const world = await catchUpWorld(locals.db, found, now);
+	// Nobody home: the flat shook, but nobody was there to mind.
+	if (isAway(world.character.life.activity)) {
+		return json({ woken: false, recorded: false }, { headers: { 'cache-control': 'no-store' } });
+	}
 	const { intensity } = parsed.data;
 	const woken =
 		intensity >= WAKES_AT ? await wakeCharacter(locals.db, locals.user.id, now, 'shake') : null;

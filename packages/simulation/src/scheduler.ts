@@ -75,8 +75,12 @@ export function scoreActivities({
 	let work = 0;
 	if (isWorkTime(local) && needs.energy > 0.2 && needs.hunger < 0.75) work = 2.2;
 
+	const evening = between(hour, 18, BEDTIME);
+	const weekendDay = isWeekend(local.weekday) && between(hour, 10, 20);
+	const workTime = isWorkTime(local);
+
 	let gaming = 0.6;
-	if (between(hour, 18, BEDTIME)) gaming += 0.9;
+	if (evening) gaming += 0.7;
 	if (isWeekend(local.weekday) && between(hour, 10, BEDTIME)) gaming += 0.6;
 	if (needs.mood < 0.5) gaming += 0.5;
 	if (needs.energy < 0.2) gaming *= 0.3;
@@ -85,7 +89,80 @@ export function scoreActivities({
 
 	const idle = night ? 0.2 : 0.7;
 
-	return { sleep, eat, work, gaming, idle };
+	// --- Iteration 7: a richer day. Leisure competes with gaming; chores happen sometimes.
+	const awake = !night;
+	let cook = 0;
+	if (awake && needs.hunger >= 0.2 && previous !== 'eat' && previous !== 'cook') {
+		// Proper cooking for dinner and weekend lunches; quick bites otherwise.
+		const proper =
+			between(hour, 17.5, 20.5) || (isWeekend(local.weekday) && between(hour, 11.5, 14));
+		if (proper && needs.energy > 0.3) {
+			cook = needs.hunger * 3 + 1.4;
+			eat *= 0.5; // dinner gets cooked, not grabbed
+		}
+	}
+
+	let clean = awake && needs.energy > 0.3 && previous !== 'clean' ? 0.3 : 0;
+	if (clean && isWeekend(local.weekday) && between(hour, 9, 18)) clean += 0.5;
+
+	let exercise = 0;
+	if (
+		awake &&
+		needs.energy > 0.5 &&
+		needs.hunger < 0.6 &&
+		previous !== 'eat' &&
+		previous !== 'cook'
+	) {
+		if (between(hour, 7, 9) || between(hour, 17, 20)) exercise = 0.7;
+		if (isWeekend(local.weekday) && between(hour, 9, 12)) exercise = 0.8;
+	}
+
+	let tv = evening ? 1.1 : weekendDay ? 0.55 : 0.3;
+	if (needs.energy < 0.35) tv += 0.3;
+	if (night) tv *= 0.15;
+	if (previous === 'tv') tv *= 0.5;
+
+	let music = awake ? 0.65 : 0.05;
+	if (needs.mood < 0.5) music += 0.3;
+	if (workTime) music *= 0.5;
+	if (previous === 'music') music *= 0.4;
+
+	let read = awake ? 0.5 : 0.1;
+	if (between(hour, 21, BEDTIME)) read += 1; // a book in bed before sleep
+	if (previous === 'read') read *= 0.4;
+
+	let phone = awake && !workTime ? 0.65 : 0;
+	if (isWeekend(local.weekday)) phone += 0.15;
+	if (previous === 'phone') phone = 0;
+
+	// Mornings start in the bathroom; a workout ends there.
+	let shower = awake ? 0.1 : 0;
+	if (previous === 'sleep' && awake) shower = 2.6;
+	if (previous === 'exercise') shower = 3;
+	if (previous === 'shower') shower = 0;
+
+	let out = 0;
+	if (awake && needs.energy > 0.35 && needs.hunger < 0.6 && previous !== 'out') {
+		if (weekendDay) out = 1;
+		else if (!isWeekend(local.weekday) && between(hour, 17, 20)) out = 0.6;
+	}
+
+	return {
+		sleep,
+		eat,
+		work,
+		gaming,
+		idle,
+		cook,
+		clean,
+		exercise,
+		tv,
+		music,
+		read,
+		phone,
+		shower,
+		out,
+	};
 }
 
 function randomBetween(rng: () => number, min: number, max: number): number {
@@ -97,7 +174,8 @@ export function chooseActivity(context: DecisionContext, rng: () => number): Dec
 	let best: Activity = 'idle';
 	let bestScore = -Infinity;
 	for (const activity of ACTIVITIES) {
-		const score = scores[activity] * (0.75 + 0.5 * rng());
+		// Wide enough that the same hour doesn't always look the same (opening the app is a surprise).
+		const score = scores[activity] * (0.65 + 0.7 * rng());
 		if (score > bestScore) {
 			best = activity;
 			bestScore = score;
@@ -131,6 +209,22 @@ function durationOf(
 			return randomBetween(rng, 40, 120) * MINUTE_MS;
 		case 'idle':
 			return randomBetween(rng, 10, 30) * MINUTE_MS;
+		case 'cook':
+			return randomBetween(rng, 30, 45) * MINUTE_MS;
+		case 'clean':
+		case 'exercise':
+			return randomBetween(rng, 20, 40) * MINUTE_MS;
+		case 'tv':
+			return randomBetween(rng, 30, 90) * MINUTE_MS;
+		case 'music':
+		case 'read':
+			return randomBetween(rng, 20, 60) * MINUTE_MS;
+		case 'phone':
+			return randomBetween(rng, 5, 20) * MINUTE_MS;
+		case 'shower':
+			return randomBetween(rng, 10, 20) * MINUTE_MS;
+		case 'out':
+			return randomBetween(rng, 40, 150) * MINUTE_MS;
 	}
 }
 
@@ -150,5 +244,22 @@ export function actionForActivity(activity: Activity): CharacterAction | null {
 			return { type: 'play', target: 'sofa' };
 		case 'idle':
 			return null;
+		case 'cook':
+			return { type: 'cook', target: 'kitchen.counter' };
+		case 'clean':
+			return { type: 'clean' };
+		case 'exercise':
+			return { type: 'exercise', target: 'room.center' };
+		case 'tv':
+			return { type: 'watch', target: 'sofa' };
+		case 'music':
+			return { type: 'listen', target: 'sofa' };
+		case 'read':
+			return { type: 'read', target: 'bed' };
+		case 'phone':
+			return { type: 'call', target: 'window' };
+		case 'shower':
+		case 'out':
+			return { type: 'leave', target: 'door' };
 	}
 }

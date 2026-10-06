@@ -27,6 +27,17 @@ describe('starter room targets', () => {
 		expect(targetSupports('bed', 'eat')).toBe(false);
 	});
 
+	it('knows where the richer day happens', () => {
+		expect(targetSupports('kitchen.counter', 'cook')).toBe(true);
+		expect(targetSupports('sofa', 'watch')).toBe(true);
+		expect(targetSupports('bed', 'read')).toBe(true);
+		expect(targetSupports('window', 'call')).toBe(true);
+		expect(targetSupports('room.center', 'exercise')).toBe(true);
+		expect(targetSupports('door', 'leave')).toBe(true);
+		expect(targetSupports('bed', 'leave')).toBe(false);
+		expect(targetSupports('sofa', 'clean')).toBe(false);
+	});
+
 	it('allows walking to any known target but not unknown ones', () => {
 		expect(targetSupports('bed', 'walkTo')).toBe(true);
 		expect(targetSupports('fridge', 'walkTo')).toBe(false);

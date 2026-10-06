@@ -1,4 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+/** The character may be out (shower, errands) when a test runs - then nobody answers. */
+async function nobodyHome(canvas: Locator): Promise<boolean> {
+	return /^(shower|out)$/.test((await canvas.getAttribute('data-activity')) ?? '');
+}
 
 test('app loads and the game canvas starts rendering', async ({ page }) => {
 	const errors: string[] = [];
@@ -73,6 +78,10 @@ test('knocking on the glass gets noticed - asleep or awake', async ({ page }) =>
 		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 		await page.waitForTimeout(150);
 	}
+	if (await nobodyHome(canvas)) {
+		await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
+		return;
+	}
 	await expect(canvas).toHaveAttribute('data-awareness', /^(DETECTED|INTERACTING|IGNORING)$/, {
 		timeout: 5_000,
 	});
@@ -88,6 +97,11 @@ test('the character comes to the window and says something', async ({ page }) =>
 	const box = await canvas.boundingBox();
 	if (!box) throw new Error('canvas has no box');
 	const subtitles = page.getByTestId('subtitles');
+	if (await nobodyHome(canvas)) {
+		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+		await expect(page.getByTestId('talk-button')).toHaveCount(0);
+		return;
+	}
 	// Knock until it decides to come over (it may ignore us for a while - its choice).
 	for (let i = 0; i < 40; i++) {
 		if ((await canvas.getAttribute('data-character-action')) === 'walkTo:window') break;
@@ -174,6 +188,12 @@ test('shaking the phone shakes the room - and the character reacts', async ({ pa
 				);
 			}
 		});
+	if (await nobodyHome(canvas)) {
+		await shake();
+		await page.waitForTimeout(1_000);
+		await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
+		return;
+	}
 	// Phones stream motion continuously; a test only gets a few bursts - allow a second one.
 	for (let attempt = 0; attempt < 3; attempt++) {
 		await shake();

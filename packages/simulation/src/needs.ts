@@ -28,6 +28,15 @@ const RATES: Record<Activity, Rates> = {
 	work: { hunger: 0.08, energy: -0.05, mood: -0.05 },
 	gaming: { hunger: 0.07, energy: -0.045, mood: 0.08 },
 	idle: { hunger: 0.075, energy: -0.035, mood: 0 },
+	cook: { hunger: -1.0, energy: -0.03, mood: 0.06 },
+	clean: { hunger: 0.09, energy: -0.06, mood: 0.03 },
+	exercise: { hunger: 0.12, energy: -0.12, mood: 0.1 },
+	tv: { hunger: 0.06, energy: -0.03, mood: 0.06 },
+	music: { hunger: 0.06, energy: -0.02, mood: 0.1 },
+	read: { hunger: 0.05, energy: -0.02, mood: 0.05 },
+	phone: { hunger: 0.06, energy: -0.03, mood: 0.12 },
+	shower: { hunger: 0.05, energy: 0.05, mood: 0.1 },
+	out: { hunger: 0.05, energy: -0.06, mood: 0.08 },
 };
 
 /** Mood slowly returns to this baseline when nothing pushes it. */

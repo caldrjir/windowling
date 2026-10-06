@@ -17,7 +17,7 @@ import {
 	type Material,
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
-import { BACK_WINDOW, FURNITURE, ROOM, type Box } from './layout.ts';
+import { BACK_WINDOW, DOOR, FURNITURE, ROOM, type Box } from './layout.ts';
 import { daylight, skyColor } from './sky.ts';
 
 const PALETTE = {
@@ -42,12 +42,20 @@ const PALETTE = {
 	counter: '#6b8f71',
 	worktop: '#d9d2c5',
 	bowl: '#f4a261',
+	door: '#a47551',
+	hallway: '#2a2622',
+	pan: '#3a3a3a',
+	tvGlow: '#7fb4ff',
 } as const;
 
 export interface Room {
 	group: Group;
 	/** Updates outside light for the given local time (hours, 0-24). */
 	setTimeOfDay(hours: number): void;
+	/** 0 closed .. 1 open. */
+	setDoor(openness: number): void;
+	/** The TV "on our side of the glass": its flicker on the room, 0 = off. */
+	setTvGlow(intensity: number, hue: number): void;
 }
 
 function mat(color: string, extra: Partial<MeshStandardMaterial> = {}): MeshStandardMaterial {
@@ -129,11 +137,59 @@ export function buildRoom(physics: PhysicsWorld): Room {
 			height,
 			depth,
 		};
-		const mesh = box(b, sideWall);
-		mesh.castShadow = false;
-		group.add(mesh);
+		// The collider is solid on both sides (loose things never leave through the door).
 		addStatic(physics, b);
+		if (side === 1) {
+			const mesh = box(b, sideWall);
+			mesh.castShadow = false;
+			group.add(mesh);
+		}
 	}
+
+	// Left wall with a doorway (one extruded shape, like the back wall). Shape x = room z.
+	const leftOutline = new Shape();
+	leftOutline.moveTo(-depth / 2, 0);
+	leftOutline.lineTo(depth / 2, 0);
+	leftOutline.lineTo(depth / 2, height);
+	leftOutline.lineTo(-depth / 2, height);
+	leftOutline.closePath();
+	const doorway = new Path();
+	doorway.moveTo(DOOR.z - DOOR.width / 2, 0);
+	doorway.lineTo(DOOR.z + DOOR.width / 2, 0);
+	doorway.lineTo(DOOR.z + DOOR.width / 2, DOOR.height);
+	doorway.lineTo(DOOR.z - DOOR.width / 2, DOOR.height);
+	doorway.closePath();
+	leftOutline.holes.push(doorway);
+	const leftWall = new Mesh(
+		new ExtrudeGeometry(leftOutline, { depth: wallThickness, bevelEnabled: false }),
+		sideWall,
+	);
+	leftWall.rotation.y = -Math.PI / 2;
+	leftWall.position.x = -width / 2;
+	leftWall.receiveShadow = true;
+	group.add(leftWall);
+	// A dim hallway behind the doorway.
+	const hallway = new Mesh(
+		new PlaneGeometry(DOOR.width + 0.4, DOOR.height + 0.2),
+		mat(PALETTE.hallway, { roughness: 1 }),
+	);
+	hallway.rotation.y = Math.PI / 2;
+	hallway.position.set(-width / 2 - 1, DOOR.height / 2, DOOR.z);
+	group.add(hallway);
+	// The door swings out into the hallway around its hinge.
+	const doorHinge = new Group();
+	doorHinge.position.set(-width / 2 - wallThickness / 2, 0, DOOR.z - DOOR.width / 2);
+	const doorPanel = new Mesh(
+		new BoxGeometry(0.04, DOOR.height, DOOR.width),
+		mat(PALETTE.door, { roughness: 0.6 }),
+	);
+	doorPanel.position.set(0, DOOR.height / 2, DOOR.width / 2);
+	doorPanel.castShadow = true;
+	const knob = new Mesh(new SphereGeometry(0.035, 12, 8), mat(PALETTE.handle, { metalness: 0.6 }));
+	knob.position.set(0.05, 1.0, DOOR.width - 0.12);
+	doorPanel.add(knob);
+	doorHinge.add(doorPanel);
+	group.add(doorHinge);
 
 	// Back window: frame + sky
 	const skyMaterial = new MeshBasicMaterial({ color: '#000000' });
@@ -337,6 +393,13 @@ export function buildRoom(physics: PhysicsWorld): Room {
 	fruitBowl.castShadow = true;
 	group.add(fruitBowl);
 	addStatic(physics, counter);
+	const pan = new Mesh(
+		new CylinderGeometry(0.13, 0.11, 0.06, 18),
+		mat(PALETTE.pan, { roughness: 0.4 }),
+	);
+	pan.position.set(counter.x + 0.02, counter.height + 0.03, counter.z - 0.25);
+	pan.castShadow = true;
+	group.add(pan);
 
 	// Floor lamp
 	const lamp = FURNITURE.lamp;
@@ -376,8 +439,20 @@ export function buildRoom(physics: PhysicsWorld): Room {
 	windowLight.target.position.set(0, 0, 1);
 	group.add(windowLight, windowLight.target);
 
+	// The TV stands on our side of the glass, facing the sofa: only its light gets in.
+	const tvLight = new PointLight(PALETTE.tvGlow, 0, 4, 1.5);
+	tvLight.position.set(FURNITURE.sofa.x, 0.9, FURNITURE.sofa.z + 1.9);
+	group.add(tvLight);
+
 	return {
 		group,
+		setDoor(openness: number) {
+			doorHinge.rotation.y = -Math.min(1, Math.max(0, openness)) * 1.4;
+		},
+		setTvGlow(intensity: number, hue: number) {
+			tvLight.intensity = intensity;
+			tvLight.color.setHSL(hue, 0.5, 0.65);
+		},
 		setTimeOfDay(hours: number) {
 			const [r, g, b] = skyColor(hours);
 			skyMaterial.color.setRGB(r, g, b);

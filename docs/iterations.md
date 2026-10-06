@@ -11,8 +11,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | 3   | Player Awareness                  | The player can watch unnoticed for a while               | done            |
 | 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done            |
 | 5   | Memory + Relationship             | Past events influence present behaviour                  | done            |
-| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | **in progress** |
-| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | planned         |
+| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done            |
+| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | **in progress** |
 | 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | planned         |
 | 9   | Economy                           | The character earns; the player gets real decisions      | planned         |
 | 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned         |
@@ -119,7 +119,7 @@ Definition of Done:
 - [x] Relationship with the player (affinity, trust, familiarity) from events - #40
 - [x] Behaviour: affinity changes whether it comes over; greetings reflect familiarity and grudges - #40
 
-## Iteration 6 – Mobile Sensors (in progress)
+## Iteration 6 – Mobile Sensors
 
 **Goal:** the player feels the world is physically held inside the phone.
 
@@ -131,3 +131,17 @@ Definition of Done:
 - [x] Physical reactions: things fly, the view jolts, the character loses balance - #43
 - [x] Consequences: noticed for sure, a hard shake wakes a sleeper, remembered, hurts the relationship - #43
 - [x] Opt-in toggles "Tilt the room" and "Shake the room", separately (iOS motion permission from a tap) - #42
+
+## Iteration 7 – Rich Autonomous Life (in progress)
+
+**Goal:** opening the app is unpredictable.
+
+Definition of Done:
+
+- [x] New activities: cook, clean, exercise, TV, music, read, phone, shower, going out - #46
+- [x] Away activities: the flat is empty, nobody notices knocks or shakes - #46
+- [x] Wider randomness so the same hour doesn't always look the same - #46
+- [x] A door: the character leaves and comes back; TV glow from our side of the glass - #47
+- [x] Props and animations: pan, broom, book, phone, workout, head-bobbing to music - #47
+- [x] Generative music while it listens (WebAudio, no recordings), "Sounds" switch - #47
+- [ ] Partying - deferred to Iteration 17 (needs other people)

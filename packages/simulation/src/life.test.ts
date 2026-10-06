@@ -1,4 +1,4 @@
-import type { Activity } from '@windowling/shared';
+import { ACTIVITIES, type Activity } from '@windowling/shared';
 import { describe, expect, it } from 'vitest';
 import { DAY_MS, HOUR_MS } from './catch-up.ts';
 import { advanceLife, startLife, wakeUp, type LifeContext, type LifeState } from './life.ts';
@@ -92,6 +92,16 @@ describe('advanceLife', () => {
 		expect(meals).toBeGreaterThanOrEqual(14);
 		expect(meals).toBeLessThanOrEqual(35);
 		expect(log.some((e) => e.activity === 'gaming')).toBe(true);
+	});
+
+	it('lives a varied life: every kind of activity shows up within two weeks', () => {
+		const { log } = liveThrough(MONDAY_MORNING, 14);
+		const seen = new Set(log.map((e) => e.activity));
+		for (const activity of ACTIVITIES) expect(seen, activity).toContain(activity);
+		// Mornings start in the bathroom more often than not.
+		const afterSleep = log.filter((e, i) => log[i - 1]?.activity === 'sleep');
+		const showers = afterSleep.filter((e) => e.activity === 'shower').length;
+		expect(showers / afterSleep.length).toBeGreaterThan(0.4);
 	});
 
 	it('keeps the character fed and rested over two weeks', () => {

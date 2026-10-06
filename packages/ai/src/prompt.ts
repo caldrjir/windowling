@@ -13,6 +13,15 @@ const DOING: Record<Activity, string> = {
 	work: 'You are working at your desk on the laptop.',
 	gaming: 'You are playing a game on the sofa.',
 	idle: 'You are hanging around the flat, not doing anything in particular.',
+	cook: 'You are cooking at the kitchen counter.',
+	clean: 'You are sweeping the flat.',
+	exercise: 'You are working out on the rug.',
+	tv: 'You are watching TV on the sofa.',
+	music: 'You are listening to music on the sofa.',
+	read: 'You are reading a book.',
+	phone: 'You are on the phone with a friend.',
+	shower: 'You are in the shower.',
+	out: 'You are out of the flat.',
 };
 
 function level(value: number, words: [low: string, mid: string, high: string]): string {
