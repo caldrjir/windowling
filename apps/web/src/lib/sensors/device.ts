@@ -62,18 +62,23 @@ export class PhoneSensors {
 	/** Low-pass estimate of gravity, to remove it when the browser has no pure `acceleration`. */
 	private lowPass: Gravity | null = null;
 
-	constructor(private readonly callbacks: SensorCallbacks) {}
+	constructor(
+		private readonly callbacks: SensorCallbacks,
+		/** Which of the two the player switched on. */
+		private readonly use: { tilt: boolean; shake: boolean } = { tilt: true, shake: true },
+	) {}
 
 	start(): void {
-		window.addEventListener('deviceorientation', this.onOrientation);
-		window.addEventListener('devicemotion', this.onMotion);
+		if (this.use.tilt) window.addEventListener('deviceorientation', this.onOrientation);
+		if (this.use.shake) window.addEventListener('devicemotion', this.onMotion);
 	}
 
 	stop(): void {
 		window.removeEventListener('deviceorientation', this.onOrientation);
 		window.removeEventListener('devicemotion', this.onMotion);
 		this.rest = null;
-		this.callbacks.onGravity({ x: 0, y: -9.81, z: 0 });
+		// Back to normal gravity when tilting stops.
+		if (this.use.tilt) this.callbacks.onGravity({ x: 0, y: -9.81, z: 0 });
 	}
 
 	/** Treat the current way the phone is held as "level" again. */

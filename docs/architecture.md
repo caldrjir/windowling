@@ -154,7 +154,7 @@ detects shakes (3 jolts > 12 m/s² within 1 s → intensity). `PhoneSensors` fee
 (impulses, camera jitter, character startle). The awareness model treats a shake as unmistakable
 (a hard one wakes a sleeper); `POST /api/world/shake` remembers it (rate-limited), hurts the
 relationship and wakes a sleeper with the cause remembered. Opt-in via Settings; iOS needs a
-permission request from a tap.
+permission request from a tap; tilt and shake are separate switches.
 
 **Ears:** `TalkButton` (tap to start / tap to stop, or hold; Space on desktop) appears while the character is at the window. After a
 one-time consent it loads Whisper (`Xenova/whisper-tiny.en`, ~40 MB from the Hugging Face Hub,

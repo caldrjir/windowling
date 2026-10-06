@@ -130,4 +130,4 @@ Definition of Done:
 - [x] Shake detection (several jolts within a second → intensity) - #43
 - [x] Physical reactions: things fly, the view jolts, the character loses balance - #43
 - [x] Consequences: noticed for sure, a hard shake wakes a sleeper, remembered, hurts the relationship - #43
-- [x] Opt-in toggle "Tilt & shake" (iOS motion permission from a tap) - #42
+- [x] Opt-in toggles "Tilt the room" and "Shake the room", separately (iOS motion permission from a tap) - #42

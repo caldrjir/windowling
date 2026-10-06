@@ -48,8 +48,8 @@
 	let listening = $state(false);
 	let speakToCharacter: ((text: string) => void) | undefined;
 	let shakeRoom: ((intensity: number) => void) | undefined;
-	/** Whether tilt & shake are being listened to (for the debug panel and E2E). */
-	let sensorsOn = $state(false);
+	/** Which sensors are being listened to: 'off', 'tilt', 'shake' or 'tilt,shake' (debug, E2E). */
+	let sensorsOn = $state('off');
 	/** `?debug` shows what the character is thinking (for testing on real devices). */
 	const debug = page.url.searchParams.has('debug');
 	let lastSaid = $state('');
@@ -335,16 +335,20 @@
 
 	// The phone is the box the room lives in: tilt is gravity, shaking shakes it.
 	$effect(() => {
-		if (status !== 'running' || !settings.sensors || !sensorAccess.granted) return;
-		const sensors = new PhoneSensors({
-			onGravity: (gravity) => world?.setGravity(gravity),
-			onShake: (intensity) => shakeRoom?.(intensity),
-		});
+		const use = { tilt: settings.tilt, shake: settings.shake };
+		if (status !== 'running' || !sensorAccess.granted || (!use.tilt && !use.shake)) return;
+		const sensors = new PhoneSensors(
+			{
+				onGravity: (gravity) => world?.setGravity(gravity),
+				onShake: (intensity) => shakeRoom?.(intensity),
+			},
+			use,
+		);
 		sensors.start();
-		sensorsOn = true;
+		sensorsOn = [use.tilt && 'tilt', use.shake && 'shake'].filter(Boolean).join(',');
 		return () => {
 			sensors.stop();
-			sensorsOn = false;
+			sensorsOn = 'off';
 		};
 	});
 
@@ -377,7 +381,7 @@
 	data-status={status}
 	data-activity={activity ?? ''}
 	data-awareness={awareness}
-	data-sensors={sensorsOn ? 'on' : 'off'}
+	data-sensors={sensorsOn}
 	data-character-action={currentAction}
 	data-character-posture={posture}
 	class="block h-full w-full touch-none select-none"
