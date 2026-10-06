@@ -85,6 +85,7 @@
 		onWoken={wake}
 		characterName={data.world?.character.name ?? 'Someone'}
 		{brain}
+		affinity={data.world?.character.relationship.affinity ?? 0}
 	/>
 
 	<header

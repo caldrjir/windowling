@@ -25,9 +25,11 @@
 		characterName: string;
 		/** Turns events into what the character says and does. */
 		brain: Brain;
+		/** -1..1, how it feels about the player: decides whether it comes over. */
+		affinity: number;
 	}
 
-	let { activity, mood, onWoken, characterName, brain }: Props = $props();
+	let { activity, mood, onWoken, characterName, brain, affinity }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let status = $state<Status>('loading');
@@ -241,6 +243,7 @@
 					context: () => ({
 						activity: wokenLocally ? 'idle' : (latest ?? 'idle'),
 						mood,
+						affinity,
 					}),
 					onEvent: react,
 					onState: (state) => (awareness = state),

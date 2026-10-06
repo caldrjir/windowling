@@ -1,4 +1,9 @@
-import { characterActionSchema, STARTER_ROOM_TARGETS, type Activity } from '@windowling/shared';
+import {
+	characterActionSchema,
+	STARTER_ROOM_TARGETS,
+	type Activity,
+	type Relationship,
+} from '@windowling/shared';
 import type { ChatMessage } from './chat-model.ts';
 import { EMOTIONS, type CharacterAIContext } from './decision.ts';
 
@@ -22,6 +27,29 @@ export function describeFeelings({ hunger, energy, mood }: CharacterAIContext['n
 	];
 	if (hunger > 0.6) feelings.push('You are hungry.');
 	return feelings.join(' ');
+}
+
+/** The relationship in words - the model never sees (or repeats) numbers. */
+export function describeRelationship(rel: Relationship): string {
+	const known =
+		rel.familiarity < 0.05
+			? 'You have never really met the person at the window.'
+			: rel.familiarity < 0.3
+				? 'You have seen the person at the window a few times.'
+				: 'You know the person at the window quite well by now.';
+	const feeling =
+		rel.affinity <= -0.4
+			? 'You dislike them.'
+			: rel.affinity < -0.1
+				? 'They have annoyed you before.'
+				: rel.affinity < 0.15
+					? 'You have no strong feelings about them.'
+					: rel.affinity < 0.5
+						? 'You like them.'
+						: 'You are fond of them.';
+	const trust =
+		rel.trust < 0.2 ? ' You do not trust them.' : rel.trust > 0.7 ? ' You trust them.' : '';
+	return `${known} ${feeling}${trust}`;
 }
 
 function describeEvent(context: CharacterAIContext): string {
@@ -64,6 +92,14 @@ export const DECISION_JSON_SCHEMA: Record<string, unknown> = {
 			required: ['type'],
 		},
 		goal: { type: 'string', pattern: '^[a-z][a-z0-9_]*$' },
+		remember: {
+			type: 'object',
+			properties: {
+				kind: { type: 'string', enum: ['moment', 'fact'] },
+				note: { type: 'string', maxLength: 160 },
+			},
+			required: ['kind', 'note'],
+		},
 	},
 	required: ['emotion', 'intensity', 'action'],
 };
@@ -85,6 +121,8 @@ export function buildMessages(context: CharacterAIContext): ChatMessage[] {
 		'Allowed actions: {"type":"idle"}, {"type":"lookAtPlayer"}, {"type":"wave"}, {"type":"walkTo","target":T}, {"type":"sit","target":T}, {"type":"sleep","target":"bed"}, {"type":"eat","target":"kitchen.counter"}, {"type":"work","target":"desk.chair"}, {"type":"play","target":"sofa"}.',
 		`Places T in your flat: ${TARGETS}.`,
 		'Usually keep looking at the player ({"type":"lookAtPlayer"}) while talking. Walk away only if you want to end the conversation.',
+		'Your memories are real: bring them up when they fit, and let them colour how you treat the player.',
+		'If something is worth remembering (the player told you something about themselves, a promise, something that hurt or delighted you), add "remember": {"kind": "fact" or "moment", "note": "first-person sentence"}.',
 	].join('\n');
 
 	const situation = [
@@ -93,6 +131,13 @@ export function buildMessages(context: CharacterAIContext): ChatMessage[] {
 		describeFeelings(context.needs),
 		describeEvent(context),
 	];
+	if (context.relationship) situation.push(describeRelationship(context.relationship));
+	if (context.memories?.length) {
+		situation.push(
+			'Things you remember:',
+			...context.memories.map((m) => `- (${m.when}) ${m.note}`),
+		);
+	}
 	const lines = context.recent
 		.slice(-6)
 		.map((line) => `${line.speaker === 'player' ? 'Player' : 'You'}: ${line.text}`);

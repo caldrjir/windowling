@@ -1,4 +1,9 @@
-import { catchUpWorld, getOrCreateWorldForUser, updateWorldTimeZone } from '@windowling/database';
+import {
+	catchUpWorld,
+	getOrCreateWorldForUser,
+	getRelationship,
+	updateWorldTimeZone,
+} from '@windowling/database';
 import type { WorldSummary } from '@windowling/shared';
 import { getServerEnv } from '$lib/server/config';
 import { TIME_ZONE_COOKIE } from '$lib/time-zone';
@@ -22,6 +27,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 	if (deviceTimeZone) record = await updateWorldTimeZone(locals.db, record, deviceTimeZone);
 
 	const { life } = record.character;
+	const relationship = await getRelationship(locals.db, record.id);
 	const world: WorldSummary = {
 		id: record.id,
 		createdAt: record.createdAt.toISOString(),
@@ -37,6 +43,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			},
 			mood: life.needs.mood,
 			needs: { hunger: life.needs.hunger, energy: life.needs.energy },
+			relationship,
 		},
 	};
 

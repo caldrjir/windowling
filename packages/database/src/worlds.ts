@@ -4,6 +4,7 @@ import {
 	createInitialCharacter,
 	DEFAULT_TIME_ZONE,
 	isValidTimeZone,
+	localClock,
 	planCatchUp,
 	startLife,
 	wakeUp,
@@ -11,6 +12,7 @@ import {
 } from '@windowling/simulation';
 import { and, eq, lt } from 'drizzle-orm';
 import type { Database } from './client.ts';
+import { remember, recordRelationshipEvent } from './memories.ts';
 import { character, world } from './schema/index.ts';
 
 export interface WorldRecord {
@@ -253,5 +255,17 @@ export async function wakeCharacter(
 		)
 		.returning({ id: character.id });
 	if (updated.length === 0) return null;
+
+	// It won't forget this in a hurry.
+	const clock = localClock(now, record.timeZone);
+	await remember(db, record.id, {
+		kind: 'moment',
+		note: `Someone knocked on my window at ${clock.time} on ${clock.weekday} and woke me up.`,
+		importance: 0.8,
+		tags: ['player', 'woken', 'knock', 'night', 'sleep'],
+		emotion: 'annoyed',
+		createdAt: now,
+	});
+	await recordRelationshipEvent(db, record.id, { type: 'woken' });
 	return { ...record, character: { ...record.character, life: woken } };
 }

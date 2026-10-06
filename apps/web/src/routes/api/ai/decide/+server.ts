@@ -4,18 +4,19 @@ import {
 	MockCharacterAI,
 	OpenAICompatibleChatModel,
 	type CharacterAI,
-	type CharacterAIContext,
 } from '@windowling/ai';
-import { catchUpWorld, consumeAiQuota, findWorldByUserId } from '@windowling/database';
-import { localClock, localTime, reviewAction } from '@windowling/simulation';
+import { consumeAiQuota, recordConversation } from '@windowling/database';
+import { localTime, reviewAction } from '@windowling/simulation';
 import { conversationRequestSchema } from '$lib/conversation-request';
+import { buildServerContext } from '$lib/server/brain-context';
 import { getServerEnv } from '$lib/server/config';
 import type { RequestHandler } from './$types';
 
 /**
  * The cloud brain. The client says what happened (event, what the player
- * said); the server knows who the character is and how it is doing, asks the
- * model, and lets the simulation review the proposed action.
+ * said); the server knows who the character is, how it is doing, how it feels
+ * about the player and what it remembers, asks the model, lets the simulation
+ * review the proposed action, and keeps the traces (memories, relationship).
  */
 export const POST: RequestHandler = async ({ locals, request, url }) => {
 	if (!locals.user) error(401, 'No session');
@@ -26,24 +27,11 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 	if (!parsed.success) error(400, 'Invalid conversation request');
 	const body = parsed.data;
 
-	const found = await findWorldByUserId(locals.db, locals.user.id);
-	if (!found) error(404, 'No world');
 	const now = new Date();
-	const world = await catchUpWorld(locals.db, found, now);
+	const built = await buildServerContext(locals.db, locals.user.id, body, now);
+	if (!built) error(404, 'No world');
+	const { world, context } = built;
 	const { life } = world.character;
-	const clock = localClock(now, world.timeZone);
-
-	const context: CharacterAIContext = {
-		characterName: world.character.name,
-		localTime: clock.time,
-		weekday: clock.weekday,
-		activity: body.event === 'woken_up' ? 'sleep' : life.activity,
-		needs: life.needs,
-		awareness: body.awareness,
-		event: body.event,
-		playerUtterance: body.playerUtterance,
-		recent: body.recent,
-	};
 
 	const ai = getServerEnv().ai;
 	let brain: CharacterAI = new MockCharacterAI();
@@ -62,6 +50,18 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 		energy: life.needs.energy,
 		hour: localTime(now, world.timeZone).hour,
 	});
+	await recordConversation(
+		locals.db,
+		world.id,
+		{
+			event: body.event,
+			playerUtterance: body.playerUtterance,
+			emotion: decision.emotion,
+			intensity: decision.intensity,
+			remember: decision.remember,
+		},
+		now,
+	);
 	return json(
 		{ decision: { ...decision, action }, source },
 		{ headers: { 'cache-control': 'no-store' } },

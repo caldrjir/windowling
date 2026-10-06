@@ -7,3 +7,5 @@ export * from './scheduler.ts';
 export * from './life.ts';
 export * from './awareness.ts';
 export * from './review.ts';
+export * from './relationship.ts';
+export * from './memory.ts';

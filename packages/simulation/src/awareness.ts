@@ -28,6 +28,8 @@ export interface AwarenessContext {
 	activity: Activity;
 	/** 0..1 */
 	mood: number;
+	/** -1..1, how it feels about the player (default neutral). */
+	affinity?: number;
 }
 
 export type AwarenessInput =
@@ -128,7 +130,8 @@ export function chooseResponse(
 ): 'approach' | 'ignore' {
 	// Freshly woken people come to complain.
 	if (woken) return rng() < 0.85 ? 'approach' : 'ignore';
-	let chance = 0.6 + (ctx.mood - 0.5) * 0.8;
+	// Past moments matter: someone it likes gets a visit, someone who annoyed it doesn't.
+	let chance = 0.6 + (ctx.mood - 0.5) * 0.8 + (ctx.affinity ?? 0) * 0.35;
 	if (ctx.activity === 'work') chance -= 0.3;
 	if (ctx.activity === 'gaming') chance -= 0.2;
 	return rng() < Math.min(0.95, Math.max(0.05, chance)) ? 'approach' : 'ignore';
