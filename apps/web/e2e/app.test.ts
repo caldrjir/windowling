@@ -154,12 +154,12 @@ test('shaking the phone shakes the room - and the character reacts', async ({ pa
 	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
 	await page.context().grantPermissions(['accelerometer', 'gyroscope']);
 	await page.getByRole('button', { name: 'Settings' }).click();
-	const toggle = page.getByTestId('sensors-toggle');
+	const toggle = page.getByTestId('shake-toggle');
 	// Browsers that ask for motion access (iOS, newer Chromium) need a tap to switch it on.
 	if (!(await toggle.isChecked())) await toggle.click();
 	await expect(toggle).toBeChecked();
 	await page.getByRole('button', { name: 'Settings' }).click();
-	await expect(canvas).toHaveAttribute('data-sensors', 'on');
+	await expect(canvas).toHaveAttribute('data-sensors', /shake/);
 	// A hard shake: several jolts in a burst. Dispatched synchronously - a busy CI browser
 	// would otherwise stretch the gaps beyond "within a second".
 	const shake = () =>
@@ -201,14 +201,21 @@ test('motion access is asked for with a tap where the browser requires it', asyn
 	const canvas = page.getByTestId('game-canvas');
 	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
 	await page.getByRole('button', { name: 'Settings' }).click();
-	const toggle = page.getByTestId('sensors-toggle');
-	await expect(toggle).not.toBeChecked();
+	const tilt = page.getByTestId('tilt-toggle');
+	const shake = page.getByTestId('shake-toggle');
+	await expect(tilt).not.toBeChecked();
 	await expect(canvas).toHaveAttribute('data-sensors', 'off');
-	await toggle.click();
-	await expect(toggle).toBeChecked();
-	await expect(canvas).toHaveAttribute('data-sensors', 'on');
-	await toggle.click();
+	await tilt.click();
+	await expect(tilt).toBeChecked();
+	// Allowed once, both work - each can be switched off on its own.
+	await expect(canvas).toHaveAttribute('data-sensors', 'tilt,shake');
+	await shake.click();
+	await expect(shake).not.toBeChecked();
+	await expect(canvas).toHaveAttribute('data-sensors', 'tilt');
+	await tilt.click();
 	await expect(canvas).toHaveAttribute('data-sensors', 'off');
+	await shake.click();
+	await expect(canvas).toHaveAttribute('data-sensors', 'shake');
 });
 
 test('the brain needs a session', async ({ request }) => {

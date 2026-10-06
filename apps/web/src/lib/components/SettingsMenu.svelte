@@ -36,15 +36,16 @@
 		}
 	}
 
-	async function toggleSensors(event: Event) {
+	/** Tilt and shake can be switched separately. */
+	async function toggleSensor(which: 'tilt' | 'shake', event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		// What the player sees: on only when both wanted and allowed.
-		const on = !(settings.sensors && sensorAccess.granted);
+		const on = !(settings[which] && sensorAccess.granted);
 		// Browsers that gate motion (iOS, newer Chromium) ask now - it has to come from this tap.
 		if (on && !sensorAccess.granted) await sensorAccess.request();
-		settings.sensors = on;
+		settings[which] = on;
 		settings.save();
-		input.checked = settings.sensors && sensorAccess.granted;
+		input.checked = settings[which] && sensorAccess.granted;
 	}
 
 	function toggleVoice() {
@@ -79,12 +80,21 @@
 			</label>
 			{#if sensorAccess.available}
 				<label class="flex items-center justify-between gap-3 py-1">
-					<span>Tilt &amp; shake</span>
+					<span>Tilt the room</span>
 					<input
 						type="checkbox"
-						data-testid="sensors-toggle"
-						checked={settings.sensors && sensorAccess.granted}
-						onchange={toggleSensors}
+						data-testid="tilt-toggle"
+						checked={settings.tilt && sensorAccess.granted}
+						onchange={(e) => toggleSensor('tilt', e)}
+					/>
+				</label>
+				<label class="flex items-center justify-between gap-3 py-1">
+					<span>Shake the room</span>
+					<input
+						type="checkbox"
+						data-testid="shake-toggle"
+						checked={settings.shake && sensorAccess.granted}
+						onchange={(e) => toggleSensor('shake', e)}
 					/>
 				</label>
 			{/if}

@@ -10,25 +10,39 @@ interface Stored {
 	subtitles: SubtitleMode;
 	voice: boolean;
 	brain: BrainPreference;
-	/** Tilt and shake (phones). */
-	sensors: boolean;
+	/** Phone tilt drives gravity in the room. */
+	tilt: boolean;
+	/** Shaking the phone shakes the room. */
+	shake: boolean;
 }
 
 const KEY = 'windowling:settings';
 // Subtitles on by default: we can't tell whether the device actually plays the voice.
-const DEFAULTS: Stored = { subtitles: 'always', voice: true, brain: 'auto', sensors: true };
+const DEFAULTS: Stored = {
+	subtitles: 'always',
+	voice: true,
+	brain: 'auto',
+	tilt: true,
+	shake: true,
+};
+
+const bool = (value: unknown): boolean | undefined =>
+	typeof value === 'boolean' ? value : undefined;
 
 function load(): Stored {
 	try {
 		const raw = localStorage.getItem(KEY);
 		if (!raw) return DEFAULTS;
 		const parsed = JSON.parse(raw) as Partial<Stored>;
+		const legacy = parsed as { sensors?: unknown };
 		return {
 			subtitles: ['off', 'auto', 'always'].includes(parsed.subtitles ?? '')
 				? (parsed.subtitles as SubtitleMode)
 				: DEFAULTS.subtitles,
 			voice: typeof parsed.voice === 'boolean' ? parsed.voice : DEFAULTS.voice,
-			sensors: typeof parsed.sensors === 'boolean' ? parsed.sensors : DEFAULTS.sensors,
+			// Before tilt and shake were separate there was one `sensors` switch.
+			tilt: bool(parsed.tilt) ?? bool(legacy.sensors) ?? DEFAULTS.tilt,
+			shake: bool(parsed.shake) ?? bool(legacy.sensors) ?? DEFAULTS.shake,
 			brain: ['auto', 'device', 'cloud'].includes(parsed.brain ?? '')
 				? (parsed.brain as BrainPreference)
 				: DEFAULTS.brain,
@@ -42,7 +56,8 @@ class Settings {
 	subtitles = $state<SubtitleMode>(DEFAULTS.subtitles);
 	voice = $state(DEFAULTS.voice);
 	brain = $state<BrainPreference>(DEFAULTS.brain);
-	sensors = $state(DEFAULTS.sensors);
+	tilt = $state(DEFAULTS.tilt);
+	shake = $state(DEFAULTS.shake);
 
 	/** Call once in the browser (onMount). */
 	restore(): void {
@@ -50,7 +65,8 @@ class Settings {
 		this.subtitles = stored.subtitles;
 		this.voice = stored.voice;
 		this.brain = stored.brain;
-		this.sensors = stored.sensors;
+		this.tilt = stored.tilt;
+		this.shake = stored.shake;
 	}
 
 	save(): void {
@@ -61,7 +77,8 @@ class Settings {
 					subtitles: this.subtitles,
 					voice: this.voice,
 					brain: this.brain,
-					sensors: this.sensors,
+					tilt: this.tilt,
+					shake: this.shake,
 				}),
 			);
 		} catch {
