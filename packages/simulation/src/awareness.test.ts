@@ -45,7 +45,7 @@ describe('stepAwareness', () => {
 	it('starts unaware - opening the app is not being noticed', () => {
 		expect(initialAwareness().state).toBe('UNKNOWN');
 		expect(run(seconds(10), 'work').awareness.state).toBe('UNKNOWN');
-		expect(noticedShare('idle', 5)).toBeLessThan(0.1);
+		expect(noticedShare('idle', 15)).toBe(0);
 	});
 
 	it('lets you watch a busy character unnoticed for a while, even keeping still', () => {

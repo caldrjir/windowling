@@ -20,6 +20,8 @@ export interface Awareness {
 	sleepKnocks: number[];
 	/** Knocks while being ignored - it gets annoying. */
 	ignoredKnocks: number;
+	/** Seconds the player has been watching this time (since opening / coming back). */
+	watching: number;
 }
 
 export interface AwarenessContext {
@@ -93,6 +95,8 @@ export const SPONTANEOUS_LOOK: Record<Activity, number> = {
 	sleep: 0,
 };
 const LOOK_GAIN = 0.5;
+/** Opening the app is never being noticed: no spontaneous looks in the first seconds. */
+export const GRACE_SECONDS = 15;
 const WAKE_KNOCKS = 3;
 const SLEEP_KNOCK_WINDOW = 8;
 /** At the window, waiting for the player to react. */
@@ -112,6 +116,7 @@ export function initialAwareness(): Awareness {
 		atWindow: false,
 		sleepKnocks: [],
 		ignoredKnocks: 0,
+		watching: 0,
 	};
 }
 
@@ -222,13 +227,18 @@ export function stepAwareness(
 				...a,
 				elapsed: a.elapsed + dt,
 				sinceInput: a.sinceInput + dt,
+				watching: a.watching + dt,
 				sleepKnocks: a.sleepKnocks.map((t) => t + dt).filter((t) => t <= SLEEP_KNOCK_WINDOW),
 			};
 			if (a.state === 'UNKNOWN' || a.state === 'SUSPECTED') {
 				const decay = a.sinceInput > STILL_AFTER ? STILL_DECAY : 0;
 				// Something felt off: it checks the window again much sooner.
 				const curiosity = a.state === 'SUSPECTED' ? 3 : 1;
-				const looked = rng() < SPONTANEOUS_LOOK[ctx.activity] * curiosity * dt ? LOOK_GAIN : 0;
+				const roll = rng();
+				const looked =
+					a.watching > GRACE_SECONDS && roll < SPONTANEOUS_LOOK[ctx.activity] * curiosity * dt
+						? LOOK_GAIN
+						: 0;
 				a = {
 					...a,
 					suspicion: Math.min(
