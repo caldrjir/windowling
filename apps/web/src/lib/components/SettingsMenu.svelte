@@ -78,6 +78,18 @@
 				<span>Voice</span>
 				<input type="checkbox" checked={settings.voice} onchange={toggleVoice} />
 			</label>
+			<label class="flex items-center justify-between gap-3 py-1">
+				<span>Sounds</span>
+				<input
+					type="checkbox"
+					data-testid="sounds-toggle"
+					checked={settings.sounds}
+					onchange={() => {
+						settings.sounds = !settings.sounds;
+						settings.save();
+					}}
+				/>
+			</label>
 			{#if sensorAccess.available}
 				<label class="flex items-center justify-between gap-3 py-1">
 					<span>Tilt the room</span>

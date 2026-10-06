@@ -14,6 +14,8 @@ interface Stored {
 	tilt: boolean;
 	/** Shaking the phone shakes the room. */
 	shake: boolean;
+	/** Sounds from the flat (music) - the character's voice has its own switch. */
+	sounds: boolean;
 }
 
 const KEY = 'windowling:settings';
@@ -24,6 +26,7 @@ const DEFAULTS: Stored = {
 	brain: 'auto',
 	tilt: true,
 	shake: true,
+	sounds: true,
 };
 
 const bool = (value: unknown): boolean | undefined =>
@@ -43,6 +46,7 @@ function load(): Stored {
 			// Before tilt and shake were separate there was one `sensors` switch.
 			tilt: bool(parsed.tilt) ?? bool(legacy.sensors) ?? DEFAULTS.tilt,
 			shake: bool(parsed.shake) ?? bool(legacy.sensors) ?? DEFAULTS.shake,
+			sounds: bool(parsed.sounds) ?? DEFAULTS.sounds,
 			brain: ['auto', 'device', 'cloud'].includes(parsed.brain ?? '')
 				? (parsed.brain as BrainPreference)
 				: DEFAULTS.brain,
@@ -58,6 +62,7 @@ class Settings {
 	brain = $state<BrainPreference>(DEFAULTS.brain);
 	tilt = $state(DEFAULTS.tilt);
 	shake = $state(DEFAULTS.shake);
+	sounds = $state(DEFAULTS.sounds);
 
 	/** Call once in the browser (onMount). */
 	restore(): void {
@@ -67,6 +72,7 @@ class Settings {
 		this.brain = stored.brain;
 		this.tilt = stored.tilt;
 		this.shake = stored.shake;
+		this.sounds = stored.sounds;
 	}
 
 	save(): void {
@@ -79,6 +85,7 @@ class Settings {
 					brain: this.brain,
 					tilt: this.tilt,
 					shake: this.shake,
+					sounds: this.sounds,
 				}),
 			);
 		} catch {

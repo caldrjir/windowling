@@ -1,4 +1,4 @@
-import type { Activity, AwarenessState } from '@windowling/shared';
+import { isAway, type Activity, type AwarenessState } from '@windowling/shared';
 
 /**
  * Whether the character knows it is being watched. Opening the app never
@@ -82,6 +82,16 @@ export const SENSITIVITY: Record<Activity, number> = {
 	work: 0.4,
 	gaming: 0.3,
 	sleep: 0,
+	cook: 0.6,
+	clean: 0.8,
+	exercise: 0.5,
+	tv: 0.4,
+	music: 0.5,
+	read: 0.4,
+	phone: 0.5,
+	// Not in the flat at all.
+	shower: 0,
+	out: 0,
 };
 const PRESENCE_GAIN = 0.006; // per second, just from someone being there
 const MOVEMENT_GAIN = 0.5; // per screen-width of movement
@@ -99,6 +109,15 @@ export const SPONTANEOUS_LOOK: Record<Activity, number> = {
 	work: 1 / 120,
 	gaming: 1 / 150,
 	sleep: 0,
+	cook: 1 / 60,
+	clean: 1 / 40,
+	exercise: 1 / 60,
+	tv: 1 / 120,
+	music: 1 / 60,
+	read: 1 / 120,
+	phone: 1 / 45,
+	shower: 0,
+	out: 0,
 };
 const LOOK_GAIN = 0.5;
 /** Opening the app is never being noticed: no spontaneous looks in the first seconds. */
@@ -165,6 +184,12 @@ export function stepAwareness(
 		events.push({ type: 'detected', response });
 		if (response === 'ignore') events.push({ type: 'ignoring' });
 	};
+
+	// Nobody home: knocks and shakes go unanswered, and whatever it knew is gone.
+	if (isAway(ctx.activity) && input.type !== 'away') {
+		if (current.state === 'UNKNOWN') return { awareness: current, events: [] };
+		return { awareness: initialAwareness(), events: [{ type: 'dismissed' }] };
+	}
 
 	switch (input.type) {
 		case 'away':

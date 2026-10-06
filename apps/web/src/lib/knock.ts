@@ -1,4 +1,4 @@
-let audio: AudioContext | undefined;
+import { audio, unlockAudio } from './sound/audio';
 
 /**
  * A knuckle on glass, synthesised (no audio assets): a short low thump with
@@ -7,8 +7,9 @@ let audio: AudioContext | undefined;
  */
 export function playKnock(): void {
 	try {
-		audio ??= new AudioContext();
-		const ctx = audio;
+		unlockAudio();
+		const ctx = audio();
+		if (!ctx) return;
 		const now = ctx.currentTime;
 
 		const thump = ctx.createOscillator();

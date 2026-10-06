@@ -5,9 +5,33 @@ export type AnimationState = 'idle' | 'walk' | 'sit' | 'lie';
 export const ANIMATION_STATES: readonly AnimationState[] = ['idle', 'walk', 'sit', 'lie'];
 
 /** What the hands are busy with, layered on top of the body state. */
-export type ActivityAnimation = 'none' | 'eat' | 'work' | 'play' | 'wave';
+export type ActivityAnimation =
+	| 'none'
+	| 'eat'
+	| 'work'
+	| 'play'
+	| 'wave'
+	| 'cook'
+	| 'clean'
+	| 'exercise'
+	| 'phone'
+	| 'read'
+	| 'tv'
+	| 'music';
 
-const ACTIVITY_LAYERS = ['eat', 'work', 'play', 'wave'] as const;
+const ACTIVITY_LAYERS = [
+	'eat',
+	'work',
+	'play',
+	'wave',
+	'cook',
+	'clean',
+	'exercise',
+	'phone',
+	'read',
+	'tv',
+	'music',
+] as const;
 type ActivityLayer = (typeof ACTIVITY_LAYERS)[number];
 
 /**
@@ -44,6 +68,10 @@ export interface Pose {
 	/** Visibility of hand-held props (0..1); the rig shows them above 0.5. */
 	bowl: number;
 	handheld: number;
+	/** Props for the richer day (shown above 0.5). */
+	broom: number;
+	book: number;
+	phone: number;
 	/** Right arm raised and waving (0..1) and its side-to-side swing. */
 	wave: number;
 	waveSwing: number;
@@ -77,7 +105,19 @@ const CROSSFADE_PER_SECOND = 3.5;
  */
 export class Animator {
 	private readonly weights: Record<AnimationState, number> = { idle: 1, walk: 0, sit: 0, lie: 0 };
-	private readonly layers: Record<ActivityLayer, number> = { eat: 0, work: 0, play: 0, wave: 0 };
+	private readonly layers: Record<ActivityLayer, number> = {
+		eat: 0,
+		work: 0,
+		play: 0,
+		wave: 0,
+		cook: 0,
+		clean: 0,
+		exercise: 0,
+		phone: 0,
+		read: 0,
+		tv: 0,
+		music: 0,
+	};
 	/** Looking at the player: head yaw relative to the body, and how much. */
 	private lookTarget: number | null = null;
 	private lookYaw = 0;
@@ -177,7 +217,9 @@ export class Animator {
 		this.emotionWeight = approach(this.emotionWeight, this.emotionLeft > 0 ? 1 : 0, dt * 2);
 		this.syllable += dt;
 		// Roughly 5 syllables a second, with open/close variation.
-		const target = this.speaking ? (Math.sin(this.syllable * 31) * 0.5 + 0.5) * 0.8 : 0;
+		// On the phone it talks in bursts, with pauses for the other side.
+		const onPhone = this.layers.phone > 0.5 && Math.sin(this.syllable * 0.9) > -0.2;
+		const target = this.speaking || onPhone ? (Math.sin(this.syllable * 31) * 0.5 + 0.5) * 0.8 : 0;
 		this.mouthOpen = approach(this.mouthOpen, target, dt * 12);
 		this.lookWeight = approach(this.lookWeight, this.lookTarget === null ? 0 : 1, dt * 2.5);
 		if (this.lookTarget !== null) this.lookYaw = this.lookTarget;
@@ -200,7 +242,14 @@ export class Animator {
 		const glanceYaw =
 			glancePhase > 0.75 ? Math.sin(((glancePhase - 0.75) / 0.25) * Math.PI) * 0.6 : 0;
 
-		const { eat, work, play, wave } = this.layers;
+		const { eat, work, play, wave, cook, clean, exercise, phone, read, tv, music } = this.layers;
+		/** Hands busy with something - no idle fidgeting or glancing around. */
+		const handsBusy = Math.min(1, eat + work + play + cook + clean + phone + read);
+		const stir = Math.sin(t * 4);
+		const sweep = Math.sin(t * 3.2);
+		// Squats: down and up every ~2.5 s.
+		const squat = exercise * (Math.sin(t * 2.5 - Math.PI / 2) * 0.5 + 0.5);
+		const bobHead = music * Math.sin(t * 7) * 0.12;
 		const look = this.lookWeight * (1 - w.lie * 0.6);
 		// Eating: a spoonful every ~4 s. Working: quick alternating typing. Gaming: thumbs + leaning in.
 		const bite = Math.max(0, Math.sin((t * Math.PI * 2) / 4)) ** 2;
@@ -217,36 +266,72 @@ export class Animator {
 			bob:
 				w.idle * Math.sin(t * 1.6) * 0.004 +
 				w.walk * Math.abs(Math.cos(this.walkPhase)) * 0.035 +
-				up * w.idle * Math.max(0, Math.sin(t * 7)) * 0.015,
+				up * w.idle * Math.max(0, Math.sin(t * 7)) * 0.015 -
+				squat * 0.25,
 			legSwing: w.walk * swing * 0.42,
 			armSwing:
 				w.walk * -swing * 0.45 * (1 - sad * 0.5) +
-				w.idle * Math.sin(t * 0.8) * 0.03 * (1 - eat - work - play),
-			knee: w.walk * Math.max(0, -Math.sin(this.walkPhase + 0.6)) * 0.45 + w.sit * (Math.PI / 2),
-			hipFlex: w.sit * (Math.PI / 2),
+				w.idle * Math.sin(t * 0.8) * 0.03 * (1 - handsBusy) +
+				clean * sweep * 0.25,
+			knee:
+				w.walk * Math.max(0, -Math.sin(this.walkPhase + 0.6)) * 0.45 +
+				w.sit * (Math.PI / 2) +
+				squat * 1.3,
+			hipFlex: w.sit * (Math.PI / 2) + squat * 0.9,
 			lie: w.lie,
 			breath: breath * (w.idle + w.sit + w.lie * 1.4),
 			headYaw:
-				(w.idle + w.sit) * glanceYaw * (1 - eat - work - play) * (1 - look) + this.lookYaw * look,
+				(w.idle + w.sit) * glanceYaw * (1 - handsBusy) * (1 - look) +
+				this.lookYaw * look +
+				phone * Math.sin(t * 0.4) * 0.3,
 			headPitch:
-				(eat * 0.3 + work * 0.12 + play * 0.4 + sad * 0.25 * (1 - w.lie)) * (1 - look) -
+				(eat * 0.3 +
+					work * 0.12 +
+					play * 0.4 +
+					cook * 0.35 +
+					clean * 0.25 +
+					read * 0.4 -
+					tv * 0.05 +
+					bobHead +
+					sad * 0.25 * (1 - w.lie)) *
+					(1 - look) -
 				look * 0.05 +
 				down * 0.35 -
 				up * 0.15 +
 				tense * Math.sin(t * 5) * 0.05,
-			armForward: eat * 0.7 + work * 0.75 + play * 0.65,
-			elbow: eat * 0.8 + work * (0.55 + typing) + play * (1.1 + typing * 0.5),
-			handToMouth: eat * bite,
+			armForward:
+				eat * 0.7 +
+				work * 0.75 +
+				play * 0.65 +
+				cook * (0.6 + stir * 0.08) +
+				clean * 0.55 +
+				read * 0.6 +
+				squat * 1.2,
+			elbow:
+				eat * 0.8 +
+				work * (0.55 + typing) +
+				play * (1.1 + typing * 0.5) +
+				cook * (0.9 + stir * 0.15) +
+				clean * 0.4 +
+				read * 1.3,
+			// The phone is held to the ear (close enough to the mouth for this rig).
+			handToMouth: eat * bite + phone,
 			slump:
 				(work * 0.15 +
 					play * gamingLean * 0.2 +
 					sad * 0.3 +
 					down * 0.25 -
 					up * 0.1 -
-					tense * 0.05) *
+					tense * 0.05 +
+					clean * 0.2 -
+					tv * 0.15 +
+					squat * 0.35) *
 				(1 - w.lie),
 			bowl: eat,
 			handheld: play,
+			broom: clean,
+			book: read,
+			phone,
 			wave,
 			waveSwing: Math.sin(t * 9) * wave,
 			mouth: this.mouthOpen,

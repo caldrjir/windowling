@@ -192,6 +192,23 @@ describe('shaking the room', () => {
 	});
 });
 
+describe('nobody home', () => {
+	it('knocks and shakes go unanswered while the character is out', () => {
+		expect(run([{ type: 'knock' }, { type: 'knock' }, { type: 'knock' }], 'out').events).toEqual(
+			[],
+		);
+		expect(run([{ type: 'shake', intensity: 1 }], 'shower').awareness.state).toBe('UNKNOWN');
+		expect(noticedShare('out', 30 * 60)).toBe(0);
+	});
+
+	it('forgets the player when it leaves', () => {
+		const interacting: Awareness = { ...initialAwareness(), state: 'INTERACTING', suspicion: 1 };
+		const { awareness, events } = run([{ type: 'tick', dt: 1 }], 'out', 0.6, interacting);
+		expect(awareness.state).toBe('UNKNOWN');
+		expect(events).toEqual([{ type: 'dismissed' }]);
+	});
+});
+
 describe('chooseResponse', () => {
 	const share = (activity: Activity, mood: number, woken = false) => {
 		const rng = createRng(9);

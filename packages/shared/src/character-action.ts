@@ -28,6 +28,17 @@ export const characterActionSchema = z.discriminatedUnion('type', [
 	z.object({ type: z.literal('eat'), target: knownTargetIdSchema }),
 	z.object({ type: z.literal('work'), target: knownTargetIdSchema }),
 	z.object({ type: z.literal('play'), target: knownTargetIdSchema }),
+	// Iteration 7 - a richer day
+	z.object({ type: z.literal('cook'), target: knownTargetIdSchema }),
+	z.object({ type: z.literal('watch'), target: knownTargetIdSchema }),
+	z.object({ type: z.literal('read'), target: knownTargetIdSchema }),
+	z.object({ type: z.literal('listen'), target: knownTargetIdSchema }),
+	z.object({ type: z.literal('call'), target: knownTargetIdSchema }),
+	z.object({ type: z.literal('exercise'), target: knownTargetIdSchema }),
+	/** Sweep the flat (walks around with a broom - no single place). */
+	z.object({ type: z.literal('clean') }),
+	/** Leave the flat through a door (shower, going out). */
+	z.object({ type: z.literal('leave'), target: knownTargetIdSchema }),
 ]);
 
 export type CharacterAction = z.infer<typeof characterActionSchema>;

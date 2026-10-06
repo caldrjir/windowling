@@ -21,6 +21,10 @@ const COLORS = {
 	food: '#e76f51',
 	handheld: '#2b2d42',
 	handheldScreen: '#8ecae6',
+	broomStick: '#b08968',
+	broomBrush: '#e9c46a',
+	book: '#9d4edd',
+	phone: '#1d1d1f',
 } as const;
 
 const THIGH = 0.44;
@@ -48,6 +52,9 @@ export class CharacterRig {
 	/** Props live in front of the chest; they are shown only while the activity needs them. */
 	private readonly bowl = new Group();
 	private readonly handheld = new Group();
+	private readonly broom = new Group();
+	private readonly book = new Group();
+	private readonly phone = new Group();
 	private readonly mouth: Mesh;
 
 	constructor() {
@@ -149,6 +156,28 @@ export class CharacterRig {
 		this.handheld.rotation.x = -0.9;
 		this.handheld.visible = false;
 		this.chest.add(this.handheld);
+
+		// Broom: held in front, brushing the floor ahead of the feet.
+		const stick = part(new CylinderGeometry(0.015, 0.015, 1.25, 8), COLORS.broomStick, 0);
+		const brush = part(new BoxGeometry(0.28, 0.08, 0.06), COLORS.broomBrush, -0.62);
+		this.broom.add(stick, brush);
+		this.broom.position.set(0.05, -0.2, 0.42);
+		this.broom.rotation.x = 0.45;
+		this.broom.visible = false;
+		this.chest.add(this.broom);
+
+		// Book: open in both hands, tilted towards the face.
+		this.book.add(part(new BoxGeometry(0.24, 0.02, 0.17), COLORS.book, 0));
+		this.book.position.set(0, 0.2, 0.3);
+		this.book.rotation.x = -0.75;
+		this.book.visible = false;
+		this.chest.add(this.book);
+
+		// Phone: at the right ear.
+		this.phone.add(part(new BoxGeometry(0.02, 0.13, 0.065), COLORS.phone, 0));
+		this.phone.position.set(0.12, 0.1, 0.02);
+		this.phone.visible = false;
+		this.head.add(this.phone);
 	}
 
 	/** Applies a world transform and a pose. Called once per rendered frame. */
@@ -198,6 +227,9 @@ export class CharacterRig {
 		this.mouth.scale.set(1 - pose.mouth * 0.2, 1 + pose.mouth * 2.2, 1);
 		this.bowl.visible = pose.bowl > 0.5;
 		this.handheld.visible = pose.handheld > 0.5;
+		this.broom.visible = pose.broom > 0.5;
+		this.book.visible = pose.book > 0.5;
+		this.phone.visible = pose.phone > 0.5;
 	}
 
 	dispose(): void {

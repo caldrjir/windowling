@@ -9,6 +9,8 @@
 	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
 	import { sensorAccess } from '$lib/sensors/access.svelte';
 	import { PhoneSensors } from '$lib/sensors/device';
+	import { unlockAudio } from '$lib/sound/audio';
+	import { Radio } from '$lib/sound/music';
 	import { Watcher } from '$lib/watcher';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
@@ -289,6 +291,9 @@
 					}
 					if (wandering) {
 						dwellTimer = setTimeout(() => wander(event.action), dwellSeconds * 1000);
+					} else if (event.action.type === 'clean' && latest === 'clean') {
+						// Another round with the broom, after a short breather.
+						dwellTimer = setTimeout(resume, 2_000 + Math.random() * 3_000);
 					}
 				});
 
@@ -333,6 +338,23 @@
 		world?.setMood(mood);
 	});
 
+	// Music from inside the flat while it listens to music (generated, see sound/music.ts).
+	const radio = new Radio();
+	let audioReady = $state(false);
+	$effect(() => {
+		const shouldPlay =
+			status === 'running' && activity === 'music' && settings.sounds && audioReady;
+		if (shouldPlay && !radio.playing) radio.start();
+		if (!shouldPlay && radio.playing) radio.stop();
+	});
+	$effect(() => () => radio.stop());
+
+	/** Browsers only allow sound after a gesture: the first tap or key unlocks it. */
+	function enableAudio() {
+		unlockAudio();
+		audioReady = true;
+	}
+
 	// The phone is the box the room lives in: tilt is gravity, shaking shakes it.
 	$effect(() => {
 		const use = { tilt: settings.tilt, shake: settings.shake };
@@ -374,6 +396,8 @@
 		watcher?.knock();
 	}
 </script>
+
+<svelte:window onpointerdown={enableAudio} onkeydown={enableAudio} />
 
 <canvas
 	bind:this={canvas}

@@ -201,6 +201,71 @@ describe('CharacterController', () => {
 		expect(c.animator.looking).toBe(0);
 	});
 
+	it('leaves through the door and comes back in', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'leave', target: 'door' });
+		let sawDoorOpen = false;
+		const events: ControllerEvent[] = [];
+		for (let t = 0; t < 15; t += 1 / 60) {
+			events.push(...c.update(1 / 60));
+			if (c.snapshot().door > 0.9) sawDoorOpen = true;
+		}
+		expect(sawDoorOpen).toBe(true);
+		expect(c.snapshot()).toMatchObject({ away: true, busy: false });
+		expect(c.snapshot().door).toBeLessThan(0.05);
+		expect(events).toContainEqual({ type: 'completed', action: { type: 'leave', target: 'door' } });
+
+		// Any next action starts by walking back in.
+		c.perform({ type: 'sit', target: 'sofa' });
+		run(c, 1);
+		expect(c.snapshot().away).toBe(false);
+		run(c, 15);
+		expect(c.snapshot()).toMatchObject({ posture: 'sitting', occupying: 'sofa' });
+	});
+
+	it('sweeps a loop through the room with the broom in hand', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'clean' });
+		run(c, 0.5);
+		expect(c.snapshot().activity).toBe('clean');
+		expect(c.animator.pose().broom).toBeGreaterThan(0);
+		const events = run(c, 30);
+		expect(events).toContainEqual({ type: 'completed', action: { type: 'clean' } });
+	});
+
+	it('does the richer day where it belongs', () => {
+		const cases = [
+			[{ type: 'cook', target: 'kitchen.counter' }, 'standing', 'cook'],
+			[{ type: 'watch', target: 'sofa' }, 'sitting', 'tv'],
+			[{ type: 'read', target: 'bed' }, 'sitting', 'read'],
+			[{ type: 'listen', target: 'sofa' }, 'sitting', 'music'],
+			[{ type: 'call', target: 'window' }, 'standing', 'phone'],
+			[{ type: 'exercise', target: 'room.center' }, 'standing', 'exercise'],
+		] as const;
+		for (const [action, posture, activity] of cases) {
+			const c = new CharacterController();
+			expect(c.perform(action), action.type).toBe(true);
+			run(c, 15);
+			expect(c.snapshot(), action.type).toMatchObject({ posture, activity });
+		}
+	});
+
+	it('squats while working out and holds the phone while calling', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'exercise', target: 'room.center' });
+		run(c, 10);
+		let deepest = 0;
+		for (let i = 0; i < 180; i++) {
+			c.update(1 / 60);
+			deepest = Math.max(deepest, c.animator.pose().knee);
+		}
+		expect(deepest).toBeGreaterThan(1);
+		const p = new CharacterController();
+		p.perform({ type: 'call', target: 'window' });
+		run(p, 10);
+		expect(p.animator.pose().phone).toBe(1);
+	});
+
 	it('turns to face the player on lookAtPlayer', () => {
 		const c = new CharacterController(TARGETS['room.center'].approach, Math.PI);
 		c.perform({ type: 'lookAtPlayer' });

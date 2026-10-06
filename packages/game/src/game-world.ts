@@ -242,7 +242,12 @@ export class GameWorld {
 
 		// Character runs on frame time (clamped so a background tab doesn't teleport it).
 		const events = this.character.update(Math.min(Math.max(frameSeconds, 0), 0.1));
-		this.rig.apply(this.character.snapshot(), this.character.animator.pose());
+		const snapshot = this.character.snapshot();
+		this.rig.apply(snapshot, this.character.animator.pose());
+		// Out of the flat: nobody to see. The door shows the coming and going.
+		this.rig.root.visible = !snapshot.away;
+		this.room.setDoor(snapshot.door);
+		this.updateTv(snapshot.activity === 'tv', now);
 		for (const event of events) for (const listener of this.listeners) listener(event);
 
 		for (let i = 0; i < steps; i++) {
@@ -261,6 +266,23 @@ export class GameWorld {
 		this.renderer.render(this.scene, this.camera);
 		this.frame = requestAnimationFrame(this.tick);
 	};
+
+	private tvFlicker = { next: 0, intensity: 0, hue: 0.6 };
+
+	/** A TV on our side of the glass: only its restless light reaches the room. */
+	private updateTv(on: boolean, now: number): void {
+		if (!on) {
+			if (this.tvFlicker.intensity !== 0) this.room.setTvGlow(0, 0.6);
+			this.tvFlicker.intensity = 0;
+			return;
+		}
+		if (now < this.tvFlicker.next) return;
+		// New "shot" every 0.3-1.5 s: brightness and colour jump like a programme.
+		this.tvFlicker.next = now + 300 + Math.random() * 1200;
+		this.tvFlicker.intensity = 1.5 + Math.random() * 2.5;
+		this.tvFlicker.hue = 0.5 + Math.random() * 0.2;
+		this.room.setTvGlow(this.tvFlicker.intensity, this.tvFlicker.hue);
+	}
 
 	private updateTimeOfDay(now: number, force = false): void {
 		if (!force && now - this.lastTimeOfDayUpdate < TIME_OF_DAY_REFRESH_MS) return;

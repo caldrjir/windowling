@@ -1,7 +1,7 @@
 import { targetSupports, type CharacterAction } from '@windowling/shared';
-import { TARGETS, type TargetPlacement, type Vec2 } from '../room/layout.ts';
+import { OUTSIDE, TARGETS, type TargetPlacement, type Vec2 } from '../room/layout.ts';
 import { Animator, type ActivityAnimation, type AnimationState } from './animation.ts';
-import { ease, turnTowards, wrapAngle, yawTowards } from './math.ts';
+import { approach, ease, turnTowards, wrapAngle, yawTowards } from './math.ts';
 import { planPath } from './path.ts';
 
 export type Posture = 'standing' | 'sitting' | 'lying';
@@ -18,9 +18,21 @@ type Step =
 	| { kind: 'turn'; yaw: number }
 	| { kind: 'settle'; use: Use; posture: 'sitting' | 'lying'; from: Vec2; elapsed: number }
 	| { kind: 'standUp'; to: Vec2; from: Use; elapsed: number }
-	| { kind: 'gesture'; activity: ActivityAnimation; duration: number; elapsed: number };
+	| { kind: 'gesture'; activity: ActivityAnimation; duration: number; elapsed: number }
+	/** Through the door: leaving the flat, or coming back. */
+	| { kind: 'pass'; from: Vec2; to: Vec2; leaving: boolean; elapsed: number };
 
 export const WAVE_SECONDS = 2.4;
+export const DOOR_PASS_SECONDS = 2.2;
+
+/** Where the broom goes: a loop through the open floor. */
+const SWEEP_TOUR: Vec2[] = [
+	{ x: 0, z: 0.3 },
+	{ x: -0.9, z: 1.0 },
+	{ x: 1.2, z: 0.9 },
+	{ x: 0.6, z: -0.6 },
+	{ x: -0.6, z: -0.3 },
+];
 
 export type ControllerEvent =
 	| { type: 'completed'; action: CharacterAction }
@@ -38,6 +50,10 @@ export interface CharacterSnapshot {
 	/** What the hands are doing once the character got where it was going. */
 	activity: ActivityAnimation;
 	busy: boolean;
+	/** Not in the flat (gone out through the door). */
+	away: boolean;
+	/** The door: 0 closed .. 1 open. */
+	door: number;
 }
 
 type TargetAction = Extract<CharacterAction, { target: string }>;
@@ -50,12 +66,26 @@ const TARGET_POSTURE: Record<TargetAction['type'], Posture> = {
 	work: 'sitting',
 	play: 'sitting',
 	sleep: 'lying',
+	cook: 'standing',
+	watch: 'sitting',
+	read: 'sitting',
+	listen: 'sitting',
+	call: 'standing',
+	exercise: 'standing',
+	leave: 'standing',
 };
 
 const ACTIVITY_OF: Partial<Record<CharacterAction['type'], ActivityAnimation>> = {
 	eat: 'eat',
 	work: 'work',
 	play: 'play',
+	cook: 'cook',
+	watch: 'tv',
+	read: 'read',
+	listen: 'music',
+	call: 'phone',
+	exercise: 'exercise',
+	clean: 'clean',
 };
 
 /** Slower and heavier when sad, a little brisker when happy. */
@@ -81,6 +111,8 @@ export class CharacterController {
 	private pending: CharacterAction | null = null;
 	private events: ControllerEvent[] = [];
 	private attentive = false;
+	private away = false;
+	private door = 0;
 
 	constructor(start: Vec2 = TARGETS['room.center'].approach, yaw = 0) {
 		this.x = start.x;
@@ -99,6 +131,8 @@ export class CharacterController {
 			animation: this.animator.state,
 			activity: this.animator.activity,
 			busy: this.action !== null || this.pending !== null,
+			away: this.away,
+			door: this.door,
 		};
 	}
 
@@ -134,6 +168,8 @@ export class CharacterController {
 			else remaining = 0;
 		}
 		if (this.steps.length === 0) this.speed = 0;
+		// The door is open only while someone is going through it.
+		this.door = approach(this.door, this.steps[0]?.kind === 'pass' ? 1 : 0, dt * 2.5);
 		// The player is "out there" in +z: yaw 0 in world space.
 		this.animator.setLook(this.attentive ? wrapAngle(-this.yaw) : null);
 		this.animator.update(dt, this.speed);
@@ -149,7 +185,12 @@ export class CharacterController {
 	}
 
 	private validate(action: CharacterAction): string | null {
-		if (action.type === 'idle' || action.type === 'lookAtPlayer' || action.type === 'wave') {
+		if (
+			action.type === 'idle' ||
+			action.type === 'lookAtPlayer' ||
+			action.type === 'wave' ||
+			action.type === 'clean'
+		) {
 			return null;
 		}
 		if (!(action.target in TARGETS)) return `unknown target "${action.target}"`;
@@ -186,25 +227,53 @@ export class CharacterController {
 			return;
 		}
 		this.animator.setActivity('none');
-		if (action.type === 'lookAtPlayer' && this.posture !== 'standing') {
+		if (this.away && action.type === 'leave') return; // already out
+		if (action.type === 'lookAtPlayer' && this.posture !== 'standing' && !this.away) {
 			// Seated: stays put. Head-turning towards the player arrives with awareness (Iteration 3).
 			return;
 		}
 
-		if (action.type === 'wave') {
+		if (action.type === 'wave' && !this.away) {
 			// Waves from wherever it is - no need to stand up from the sofa for that.
 			if (this.posture === 'standing') this.steps.push({ kind: 'turn', yaw: 0 });
 			this.steps.push({ kind: 'gesture', activity: 'wave', duration: WAVE_SECONDS, elapsed: 0 });
 			return;
 		}
 
-		const start = this.standUpIfNeeded();
+		// Coming home first, if it was out.
+		const start = this.away ? this.comeBack() : this.standUpIfNeeded();
 		switch (action.type) {
 			case 'idle':
 				break;
 			case 'lookAtPlayer':
+			case 'wave':
 				this.steps.push({ kind: 'turn', yaw: 0 });
 				break;
+			case 'clean': {
+				// Sweeping while walking a loop through the room.
+				this.animator.setActivity('clean');
+				let from = start;
+				for (const stop of SWEEP_TOUR) {
+					for (const point of planPath(from, stop)) this.steps.push({ kind: 'walk', to: point });
+					from = stop;
+				}
+				break;
+			}
+			case 'leave': {
+				const door = TARGETS.door;
+				for (const point of planPath(start, door.approach)) {
+					this.steps.push({ kind: 'walk', to: point });
+				}
+				this.steps.push({ kind: 'turn', yaw: door.approachYaw });
+				this.steps.push({
+					kind: 'pass',
+					from: door.approach,
+					to: OUTSIDE,
+					leaving: true,
+					elapsed: 0,
+				});
+				break;
+			}
 			default: {
 				if (!placement) break;
 				for (const point of planPath(start, placement.approach)) {
@@ -224,6 +293,13 @@ export class CharacterController {
 				break;
 			}
 		}
+	}
+
+	/** Queues walking back in through the door; returns where it will be standing. */
+	private comeBack(): Vec2 {
+		const inside = TARGETS.door.approach;
+		this.steps.push({ kind: 'pass', from: OUTSIDE, to: inside, leaving: false, elapsed: 0 });
+		return inside;
 	}
 
 	/** Queues a stand-up when seated; returns where the character will be standing. */
@@ -283,6 +359,20 @@ export class CharacterController {
 				this.animator.setActivity(step.activity);
 				step.elapsed += dt;
 				return step.elapsed < step.duration ? -1 : step.elapsed - step.duration;
+			}
+			case 'pass': {
+				// The door swings open first, then the character walks through it.
+				if (!step.leaving) this.away = false;
+				step.elapsed += dt;
+				const t = ease(Math.min(1, Math.max(0, (step.elapsed / DOOR_PASS_SECONDS - 0.3) / 0.7)));
+				this.animator.setState(t > 0 && t < 1 ? 'walk' : 'idle');
+				this.speed = t > 0 && t < 1 ? WALK_SPEED * 0.6 : 0;
+				this.yaw = yawTowards(step.from.x, step.from.z, step.to.x, step.to.z);
+				this.x = step.from.x + (step.to.x - step.from.x) * t;
+				this.z = step.from.z + (step.to.z - step.from.z) * t;
+				if (step.elapsed < DOOR_PASS_SECONDS) return -1;
+				if (step.leaving) this.away = true;
+				return step.elapsed - DOOR_PASS_SECONDS;
 			}
 			case 'standUp': {
 				this.speed = 0;
