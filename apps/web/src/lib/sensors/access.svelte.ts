@@ -20,7 +20,7 @@ class SensorAccess {
 
 	/** From a tap (iOS requirement). */
 	async request(): Promise<boolean> {
-		this.granted = await requestSensorPermission();
+		this.granted = sensorsNeedPermission() ? await requestSensorPermission() : this.available;
 		return this.granted;
 	}
 }

@@ -36,12 +36,15 @@
 		}
 	}
 
-	async function toggleSensors() {
-		const on = !settings.sensors;
-		// iOS asks for motion access - it has to come from this tap.
-		if (on && !sensorAccess.granted && sensorAccess.needsPermission) await sensorAccess.request();
+	async function toggleSensors(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		// What the player sees: on only when both wanted and allowed.
+		const on = !(settings.sensors && sensorAccess.granted);
+		// Browsers that gate motion (iOS, newer Chromium) ask now - it has to come from this tap.
+		if (on && !sensorAccess.granted) await sensorAccess.request();
 		settings.sensors = on;
 		settings.save();
+		input.checked = settings.sensors && sensorAccess.granted;
 	}
 
 	function toggleVoice() {

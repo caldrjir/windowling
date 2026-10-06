@@ -186,6 +186,31 @@ test('shaking the phone shakes the room - and the character reacts', async ({ pa
 	});
 });
 
+test('motion access is asked for with a tap where the browser requires it', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(!isMobile, 'Motion sensors are a phone thing');
+	// Behave like iOS: motion only after requestPermission() from a user gesture.
+	await page.addInitScript(() => {
+		const ask = async () => 'granted';
+		Object.assign(DeviceOrientationEvent, { requestPermission: ask });
+		Object.assign(DeviceMotionEvent, { requestPermission: ask });
+	});
+	await page.goto('/');
+	const canvas = page.getByTestId('game-canvas');
+	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
+	await page.getByRole('button', { name: 'Settings' }).click();
+	const toggle = page.getByTestId('sensors-toggle');
+	await expect(toggle).not.toBeChecked();
+	await expect(canvas).toHaveAttribute('data-sensors', 'off');
+	await toggle.click();
+	await expect(toggle).toBeChecked();
+	await expect(canvas).toHaveAttribute('data-sensors', 'on');
+	await toggle.click();
+	await expect(canvas).toHaveAttribute('data-sensors', 'off');
+});
+
 test('the brain needs a session', async ({ request }) => {
 	const response = await request.post('/api/ai/decide', {
 		data: { event: 'player_at_window', awareness: 'DETECTED', recent: [] },
