@@ -133,6 +133,18 @@ test('debug panel shows what the character is thinking', async ({ page }) => {
 	await expect(page.getByTestId('debug-panel')).toContainText('awareness', { timeout: 15_000 });
 });
 
+test('memories stay private to their world', async ({ request }) => {
+	const body = { event: 'player_at_window', awareness: 'DETECTED', recent: [] };
+	expect((await request.post('/api/ai/context', { data: body })).status()).toBe(401);
+	expect(
+		(
+			await request.post('/api/ai/outcome', {
+				data: { ...body, decision: { emotion: 'happy', intensity: 1, action: { type: 'idle' } } },
+			})
+		).status(),
+	).toBe(401);
+});
+
 test('the brain needs a session', async ({ request }) => {
 	const response = await request.post('/api/ai/decide', {
 		data: { event: 'player_at_window', awareness: 'DETECTED', recent: [] },

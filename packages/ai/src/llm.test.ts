@@ -52,6 +52,19 @@ describe('buildMessages', () => {
 		expect(user?.content).toContain('The player says: "Sorry!"');
 	});
 
+	it('brings in memories and the relationship, in words', () => {
+		const [system, user] = buildMessages({
+			...context,
+			memories: [{ note: 'Someone woke me up at 03:12.', when: 'yesterday' }],
+			relationship: { affinity: -0.3, trust: 0.1, familiarity: 0.2 },
+		});
+		expect(user?.content).toContain('- (yesterday) Someone woke me up at 03:12.');
+		expect(user?.content).toContain('They have annoyed you before.');
+		expect(user?.content).toContain('You do not trust them.');
+		expect(user?.content).not.toMatch(/0\.\d/);
+		expect(system?.content).toContain('"remember"');
+	});
+
 	it('turns needs into feelings', () => {
 		expect(describeFeelings({ hunger: 0.1, energy: 0.9, mood: 0.9 })).toBe(
 			'You are in a good mood. You feel rested.',
@@ -83,6 +96,17 @@ describe('LlmCharacterAI', () => {
 		// Stage directions removed, at most three sentences.
 		expect(decision.speech).toBe('Seriously? It is three in the morning. Go away.');
 		expect(model.calls[0]?.options.jsonSchema).toBe(DECISION_JSON_SCHEMA);
+	});
+
+	it('passes on what the model wants to remember', async () => {
+		const model = new ScriptedModel(
+			'{"speech":"Nice to meet you, Jiri.","emotion":"happy","intensity":0.6,"action":{"type":"lookAtPlayer"},"remember":{"kind":"fact","note":"The player told me their name is Jiri."}}',
+		);
+		const decision = await new LlmCharacterAI(model).decide({ ...context, event: 'player_said' });
+		expect(decision.remember).toEqual({
+			kind: 'fact',
+			note: 'The player told me their name is Jiri.',
+		});
 	});
 
 	it('falls back when the model invents actions or fails', async () => {

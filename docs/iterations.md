@@ -9,8 +9,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done            |
 | 2   | Autonomous Activities             | The character does things without player input           | done            |
 | 3   | Player Awareness                  | The player can watch unnoticed for a while               | done            |
-| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | **in progress** |
-| 5   | Memory + Relationship             | Past events influence present behaviour                  | planned         |
+| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done            |
+| 5   | Memory + Relationship             | Past events influence present behaviour                  | **in progress** |
 | 6   | Mobile Sensors                    | The world feels physically held inside the phone         | planned         |
 | 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | planned         |
 | 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | planned         |
@@ -90,7 +90,7 @@ Definition of Done:
 - [x] Knocking on the glass (ripple + synthesised sound); a sleeper stirs, repeated knocks wake it - #26
 - [x] Waking is persisted server-side (`POST /api/world/wake`): broken night, worse mood - #26
 
-## Iteration 4 – Voice + Local LLM (in progress)
+## Iteration 4 – Voice + Local LLM
 
 **Goal:** natural voice interaction without a text chat. Brain = combination of backends behind
 `CharacterAI` (decision in #28): on-device (WebLLM), cloud (Workers AI, any OpenAI-compatible
@@ -105,3 +105,16 @@ Definition of Done:
 - [x] Voice via browser speech (neural voice: #32), subtitles OFF/AUTO/ALWAYS, basic lip sync - #29
 - [x] Speech recognition in the browser (Whisper), push-to-talk - #30
 - [x] On-device brain (WebLLM) with download consent - #31
+
+## Iteration 5 – Memory + Relationship (in progress)
+
+**Goal:** events from the past influence present behaviour.
+
+Definition of Done:
+
+- [x] Short-term memory: the last lines of the current conversation - #29
+- [x] Episodic (`moment`) and semantic (`fact`) memories, written only by the server - #39
+- [x] The brain may ask to remember something (closed `remember` field, validated) - #39
+- [x] Recall: importance × recency × relevance, a handful per moment, never the full history - #39
+- [x] Relationship with the player (affinity, trust, familiarity) from events - #40
+- [x] Behaviour: affinity changes whether it comes over; greetings reflect familiarity and grudges - #40

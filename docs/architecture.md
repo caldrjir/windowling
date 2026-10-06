@@ -136,6 +136,17 @@ the database, checks the per-player daily quota in `ai_usage`, asks the model, a
 action and speaks through `TextToSpeech` (browser `speechSynthesis` for now, #32 tracks the
 neural voice) with subtitles (`OFF | AUTO | ALWAYS`) and a mouth driven by word boundaries.
 
+**Memory & relationship (Iteration 5):** `recordConversation` (database) is the single place
+where conversations leave traces - relationship events (`visit`, `conversation` with the
+emotion's valence, `silence`; `woken` from the wake endpoint) and memories (first sighting, what
+the player said, anything the brain put in the closed `remember` field). Moments are pruned to
+the 300 most valuable per world; facts are kept. Before each decision the server recalls a few
+memories (`recall`: importance × recency × keyword relevance - plain Postgres, embeddings can
+replace the relevance term later) and describes the relationship in words. On-device brains get
+the same context from `POST /api/ai/context` and report back via `POST /api/ai/outcome`, so the
+server stays the one source of truth. Affinity also feeds `chooseResponse`: a liked player gets
+visits, an annoying one gets ignored.
+
 **Ears:** `TalkButton` (tap to start / tap to stop, or hold; Space on desktop) appears while the character is at the window. After a
 one-time consent it loads Whisper (`Xenova/whisper-tiny.en`, ~40 MB from the Hugging Face Hub,
 cached by the browser) in a Web Worker via transformers.js. The ONNX runtime is the plain CPU
@@ -163,7 +174,10 @@ and repositories (`worlds.ts`). The only package that talks SQL.
 
 ```
 user (Better Auth, isAnonymous) 1 ── 1 world 1 ── 1 character
-  └─ session, account, verification (Better Auth)
+  │                                     ├── * memory        (moments + facts)
+  │                                     └── * relationship  (subject = player; NPCs later)
+  ├─ session, account, verification (Better Auth)
+  └─ * ai_usage (daily LLM quota)
 ```
 
 - `world`: `id uuid`, `user_id` (unique, FK → user, cascade), `last_simulated_at`, `timezone`
@@ -234,22 +248,23 @@ updates `world.timezone` after the catch-up (missed time is lived on the old clo
 
 ## Decisions log
 
-| Date       | Decision                                                         | Why                                                                                                                       |
-| ---------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                      | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.                          |
-| 2026-10-04 | TypeScript 5.9 (not 7)                                           | typescript-eslint and svelte-check don't support TS 7 yet.                                                                |
-| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                       | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                                         |
-| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only      | One ownership path; linking = ownership transfer.                                                                         |
-| 2026-10-04 | Account world wins on link conflict                              | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.                        |
-| 2026-10-04 | Anonymous user created client-side after hydration               | Crawlers/bots never mint users or worlds.                                                                                 |
-| 2026-10-04 | Internal packages consumed as TS source (no build step)          | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                                   |
-| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)            | Tests the real production runtime, not the Node dev server.                                                               |
-| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                       | No bundler WASM plugin needed; lazy-loaded on the client only.                                                            |
-| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**                | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created).                    |
-| 2026-10-05 | Character lives in the device time zone (`wl_tz` cookie)         | Player's choice (#10): "3 AM for me is 3 AM for it", follows the player when travelling.                                  |
-| 2026-10-05 | Server-authoritative life; client re-loads when an activity ends | One source of truth, no client/server divergence; activities last minutes, so few requests.                               |
-| 2026-10-05 | Awareness is browser session state; only waking is persisted     | Being watched exists only while someone looks; consequences (broken sleep) must survive.                                  |
-| 2026-10-05 | Brain = on-device / cloud (OpenAI-compatible) / Ollama / canned  | Player's choice (#28). REST instead of the Workers AI binding: portable, and `wrangler dev`/E2E need no Cloudflare login. |
-| 2026-10-05 | Browser `speechSynthesis` first, neural TTS later (#32)          | Local neural TTS needs GPL-3 espeak-ng and CDN-loaded runtimes; tracked to reach the best quality later.                  |
-| 2026-10-05 | Whisper in the browser, CPU WASM, self-hosted runtime            | Voice stays on the device; no third-party CDN scripts; fits Cloudflare asset limits.                                      |
-| 2026-10-05 | WebLLM kernels vendored in `static/webllm/`                      | No executable code from third-party hosts at runtime; pinned by checksum.                                                 |
+| Date       | Decision                                                          | Why                                                                                                                       |
+| ---------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-04 | SvelteKit **2.x** (not 3.0)                                       | 3.0 released days ago; Better Auth declares support for Kit 2 only. Upgrade tracked as an issue.                          |
+| 2026-10-04 | TypeScript 5.9 (not 7)                                            | typescript-eslint and svelte-check don't support TS 7 yet.                                                                |
+| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver                        | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.                                         |
+| 2026-10-04 | Anonymous users are Better Auth users; `world.user_id` only       | One ownership path; linking = ownership transfer.                                                                         |
+| 2026-10-04 | Account world wins on link conflict                               | Existing long-lived save is more valuable than a fresh anonymous one. Revisit if players complain.                        |
+| 2026-10-04 | Anonymous user created client-side after hydration                | Crawlers/bots never mint users or worlds.                                                                                 |
+| 2026-10-04 | Internal packages consumed as TS source (no build step)           | Vite/Vitest/drizzle-kit all read TS directly; zero build orchestration.                                                   |
+| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)             | Tests the real production runtime, not the Node dev server.                                                               |
+| 2026-10-04 | `@dimforge/rapier3d-compat` (inlined WASM)                        | No bundler WASM plugin needed; lazy-loaded on the client only.                                                            |
+| 2026-10-04 | Hyperdrive in front of Neon, **caching disabled**                 | Direct Worker→Neon TCP timed out; cached reads would serve stale game state (e.g. world just created).                    |
+| 2026-10-05 | Character lives in the device time zone (`wl_tz` cookie)          | Player's choice (#10): "3 AM for me is 3 AM for it", follows the player when travelling.                                  |
+| 2026-10-05 | Server-authoritative life; client re-loads when an activity ends  | One source of truth, no client/server divergence; activities last minutes, so few requests.                               |
+| 2026-10-05 | Awareness is browser session state; only waking is persisted      | Being watched exists only while someone looks; consequences (broken sleep) must survive.                                  |
+| 2026-10-05 | Brain = on-device / cloud (OpenAI-compatible) / Ollama / canned   | Player's choice (#28). REST instead of the Workers AI binding: portable, and `wrangler dev`/E2E need no Cloudflare login. |
+| 2026-10-05 | Browser `speechSynthesis` first, neural TTS later (#32)           | Local neural TTS needs GPL-3 espeak-ng and CDN-loaded runtimes; tracked to reach the best quality later.                  |
+| 2026-10-05 | Whisper in the browser, CPU WASM, self-hosted runtime             | Voice stays on the device; no third-party CDN scripts; fits Cloudflare asset limits.                                      |
+| 2026-10-05 | WebLLM kernels vendored in `static/webllm/`                       | No executable code from third-party hosts at runtime; pinned by checksum.                                                 |
+| 2026-10-06 | Memory recall by importance × recency × keywords (no vectors yet) | Free, plain Postgres, testable; embeddings can replace the relevance term behind `recall`.                                |

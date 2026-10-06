@@ -17,6 +17,7 @@ const world: WorldSummary = {
 		},
 		mood: 0.6,
 		needs: { hunger: 0.2, energy: 0.9 },
+		relationship: { affinity: 0, trust: 0.3, familiarity: 0 },
 	},
 };
 
@@ -44,7 +45,11 @@ describe('useDevice', () => {
 
 describe('CombinedBrain', () => {
 	it('answers on the device and lets the simulation review the action', async () => {
-		const fetchSpy = vi.fn();
+		const fetchSpy = vi.fn(async (url: string) =>
+			url === '/api/ai/context'
+				? Response.json({ memories: [{ note: 'Someone woke me up.', when: 'yesterday' }] })
+				: Response.json({ ok: true }),
+		);
 		vi.stubGlobal('fetch', fetchSpy);
 		const brain = new CombinedBrain({
 			world: () => world,
@@ -57,11 +62,14 @@ describe('CombinedBrain', () => {
 		expect(decision?.speech).toBe('Hi.');
 		// Rested at whatever time the test runs? Not necessarily night - but never an invalid action.
 		expect(['sleep', 'lookAtPlayer']).toContain(decision?.action.type);
-		expect(fetchSpy).not.toHaveBeenCalled();
+		// Memories come from the server; what happened goes back to it - no cloud LLM call.
+		const urls = fetchSpy.mock.calls.map((call) => call[0]);
+		expect(urls).toContain('/api/ai/context');
+		expect(urls).not.toContain('/api/ai/decide');
 	});
 
 	it('falls back to the cloud when the device model fails', async () => {
-		const fetchSpy = vi.fn(async () =>
+		const fetchSpy = vi.fn(async (_url: string) =>
 			Response.json({
 				decision: {
 					speech: 'From the cloud.',
@@ -78,7 +86,7 @@ describe('CombinedBrain', () => {
 			device: device(new Error('GPU lost')),
 		});
 		expect((await brain.decide(request))?.speech).toBe('From the cloud.');
-		expect(fetchSpy).toHaveBeenCalledOnce();
+		expect(fetchSpy.mock.calls.map((call) => call[0])).toContain('/api/ai/decide');
 	});
 
 	it('still says something when the server is unreachable', async () => {

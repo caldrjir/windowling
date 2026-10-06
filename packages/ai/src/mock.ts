@@ -11,9 +11,13 @@ export class MockCharacterAI implements CharacterAI {
 		if (context.awareness === 'UNKNOWN') {
 			return { emotion: 'neutral', intensity: 0, action: { type: 'idle' } };
 		}
+		const rel = context.relationship;
+		const remembersWaking = context.memories?.some((m) => /woke me up/i.test(m.note)) ?? false;
 		if (context.event === 'woken_up') {
 			return {
-				speech: `What the hell? It's ${context.localTime}.`,
+				speech: remembersWaking
+					? `Again?! It's ${context.localTime}. Seriously.`
+					: `What the hell? It's ${context.localTime}.`,
 				emotion: 'annoyed',
 				intensity: 0.8,
 				action: { type: 'lookAtPlayer' },
@@ -37,9 +41,20 @@ export class MockCharacterAI implements CharacterAI {
 			};
 		}
 		if (context.event === 'player_at_window') {
+			const grumpy = context.needs.mood < 0.35 || (rel?.affinity ?? 0) < -0.2;
+			const known = (rel?.familiarity ?? 0) >= 0.1;
+			const speech = remembersWaking
+				? 'You again? You woke me up, you know.'
+				: grumpy
+					? 'What do you want?'
+					: known
+						? (rel?.affinity ?? 0) > 0.3
+							? 'Hey, you! Good to see you.'
+							: "Oh, it's you again."
+						: 'Oh. Hi there.';
 			return {
-				speech: context.needs.mood < 0.35 ? 'What do you want?' : 'Oh. Hi there.',
-				emotion: context.needs.mood < 0.35 ? 'annoyed' : 'surprised',
+				speech,
+				emotion: grumpy || remembersWaking ? 'annoyed' : known ? 'happy' : 'surprised',
 				intensity: 0.4,
 				action: { type: 'lookAtPlayer' },
 			};

@@ -1,4 +1,10 @@
-import { characterActionSchema, type Activity, type AwarenessState } from '@windowling/shared';
+import {
+	characterActionSchema,
+	memoryKindSchema,
+	type Activity,
+	type AwarenessState,
+	type Relationship,
+} from '@windowling/shared';
 import { z } from 'zod';
 
 export const EMOTIONS = [
@@ -27,6 +33,13 @@ export const characterDecisionSchema = z.object({
 		.string()
 		.max(64)
 		.regex(/^[a-z][a-z0-9_]*$/)
+		.optional(),
+	/**
+	 * Something worth remembering from this moment, first person ("The player
+	 * told me their name is Jiri."). The server decides whether to keep it.
+	 */
+	remember: z
+		.object({ kind: memoryKindSchema, note: z.string().trim().min(3).max(160) })
 		.optional(),
 });
 
@@ -70,6 +83,10 @@ export interface CharacterAIContext {
 	playerUtterance?: string;
 	/** The last few lines of this conversation, oldest first. */
 	recent: DialogueLine[];
+	/** A few relevant memories (already selected - never the full history). */
+	memories?: Array<{ note: string; when: string }>;
+	/** How the character feels about the player. */
+	relationship?: Relationship;
 }
 
 export interface CharacterAI {

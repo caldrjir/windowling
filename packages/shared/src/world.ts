@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { activitySchema } from './activity.ts';
+import { relationshipSchema } from './relationship.ts';
 
 /** Public shape of a world as returned by the web API. */
 export const worldSummarySchema = z.object({
@@ -24,6 +25,8 @@ export const worldSummarySchema = z.object({
 			hunger: z.number().min(0).max(1),
 			energy: z.number().min(0).max(1),
 		}),
+		/** How it feels about the player - drives behaviour, never shown as numbers. */
+		relationship: relationshipSchema,
 	}),
 });
 

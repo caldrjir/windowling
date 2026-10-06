@@ -90,4 +90,33 @@ describe('MockCharacterAI', () => {
 		});
 		expect(decision.speech).toBe('Okay... never mind.');
 	});
+
+	it('remembers being woken up and treats familiar players differently', async () => {
+		const ai = new MockCharacterAI();
+		const again = await ai.decide({
+			...base,
+			awareness: 'DETECTED',
+			event: 'player_at_window',
+			memories: [{ note: 'Someone woke me up at 03:12 by knocking.', when: 'yesterday' }],
+		});
+		expect(again.speech).toBe('You again? You woke me up, you know.');
+		const friend = await ai.decide({
+			...base,
+			awareness: 'DETECTED',
+			event: 'player_at_window',
+			relationship: { affinity: 0.6, trust: 0.6, familiarity: 0.5 },
+		});
+		expect(friend.speech).toBe('Hey, you! Good to see you.');
+	});
+
+	it('rejects oversized memories', () => {
+		expect(
+			parseCharacterDecision({
+				emotion: 'happy',
+				intensity: 0.5,
+				action: { type: 'idle' },
+				remember: { kind: 'fact', note: 'x'.repeat(500) },
+			}),
+		).toBeNull();
+	});
 });

@@ -75,7 +75,9 @@ export class CombinedBrain implements Brain {
 	): Promise<CharacterDecision> {
 		const now = new Date();
 		const { character } = world;
-		const context = buildContext(world, request, now);
+		// Memories and the relationship live on the server, whichever brain thinks.
+		const remembered = await fetchServerContext(request);
+		const context = { ...buildContext(world, request, now), ...remembered };
 		const ai = new LlmCharacterAI(this.options.device, {
 			fallback: { decide: () => Promise.reject(new Error('on-device answer was unusable')) },
 		});
@@ -85,7 +87,40 @@ export class CombinedBrain implements Brain {
 			energy: character.needs.energy,
 			hour: localTime(now, world.timeZone).hour,
 		});
-		return { ...decision, action };
+		const reviewed = { ...decision, action };
+		void reportOutcome(request, reviewed);
+		return reviewed;
+	}
+}
+
+async function fetchServerContext(
+	request: Parameters<Brain['decide']>[0],
+): Promise<Pick<CharacterAIContext, 'memories' | 'relationship'>> {
+	try {
+		const response = await fetch('/api/ai/context', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(request),
+		});
+		if (!response.ok) return {};
+		return (await response.json()) as Pick<CharacterAIContext, 'memories' | 'relationship'>;
+	} catch {
+		return {};
+	}
+}
+
+async function reportOutcome(
+	request: Parameters<Brain['decide']>[0],
+	decision: CharacterDecision,
+): Promise<void> {
+	try {
+		await fetch('/api/ai/outcome', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ ...request, decision }),
+		});
+	} catch (error) {
+		console.warn('Could not save what happened', error);
 	}
 }
 
@@ -103,6 +138,7 @@ function buildContext(
 		weekday: clock.weekday,
 		activity: request.event === 'woken_up' ? 'sleep' : character.activity.type,
 		needs: { ...character.needs, mood: character.mood },
+		relationship: character.relationship,
 		awareness: request.awareness,
 		event: request.event,
 		playerUtterance: request.playerUtterance,
