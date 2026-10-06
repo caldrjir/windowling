@@ -49,6 +49,10 @@ export interface Pose {
 	waveSwing: number;
 	/** 0 closed .. 1 wide open (basic lip sync). */
 	mouth: number;
+	/** Thrown off balance (shaken room): arms out, body swaying. */
+	startle: number;
+	/** Sideways sway of the whole body while startled (radians). */
+	sway: number;
 }
 
 /** Feelings the body can show for a moment (mirrors the AI's emotion set). */
@@ -88,6 +92,8 @@ export class Animator {
 	private emotion: Emotion = 'neutral';
 	private emotionWeight = 0;
 	private emotionLeft = 0;
+	private startleLeft = 0;
+	private startleStrength = 0;
 	private time = 0;
 	private walkPhase = 0;
 	/** Seconds since the head last started a glance; drives occasional looking around. */
@@ -142,6 +148,12 @@ export class Animator {
 		this.emotionLeft = EMOTION_SECONDS * (0.5 + Math.min(1, Math.max(0, intensity)) * 0.5);
 	}
 
+	/** The ground moved: lose balance for a moment, harder for stronger jolts. */
+	startle(intensity: number): void {
+		this.startleStrength = Math.max(this.startleStrength, Math.min(1, Math.max(0, intensity)));
+		this.startleLeft = 0.8 + this.startleStrength;
+	}
+
 	get mood(): number {
 		return this._mood;
 	}
@@ -159,6 +171,8 @@ export class Animator {
 		for (const state of ANIMATION_STATES) {
 			this.weights[state] = approach(this.weights[state], state === this.target ? 1 : 0, step);
 		}
+		this.startleLeft = Math.max(0, this.startleLeft - dt);
+		if (this.startleLeft === 0) this.startleStrength = Math.max(0, this.startleStrength - dt * 2);
 		this.emotionLeft = Math.max(0, this.emotionLeft - dt);
 		this.emotionWeight = approach(this.emotionWeight, this.emotionLeft > 0 ? 1 : 0, dt * 2);
 		this.syllable += dt;
@@ -236,6 +250,8 @@ export class Animator {
 			wave,
 			waveSwing: Math.sin(t * 9) * wave,
 			mouth: this.mouthOpen,
+			startle: this.startleStrength,
+			sway: Math.sin(t * 17) * 0.12 * this.startleStrength * (1 - w.lie),
 		};
 	}
 }

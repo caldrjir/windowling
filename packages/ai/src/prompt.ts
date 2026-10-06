@@ -60,6 +60,8 @@ function describeEvent(context: CharacterAIContext): string {
 			return 'You noticed someone watching you through the window and walked over to it. You are standing at the window, looking at them.';
 		case 'player_said':
 			return 'You are at the window, talking to the person on the other side.';
+		case 'shaken':
+			return 'The whole flat just shook violently - things flew around and you nearly fell over. Whoever is at the window probably did it.';
 		case 'player_silent':
 			return 'You came to the window, but the person on the other side has not said or done anything for a while. Say something short as you turn away (or nothing at all) and go back to what you were doing.';
 		case 'ignoring_player':

@@ -45,9 +45,17 @@ export class PhysicsWorld {
 		this.world.timestep = seconds;
 	}
 
-	/** Gravity is mutable on purpose - later the phone's tilt drives it. */
+	/** Gravity is mutable on purpose - the phone's tilt drives it. Wakes resting bodies. */
 	setGravity(gravity: Vec3): void {
 		this.world.gravity = gravity;
+		this.world.forEachRigidBody((body) => {
+			if (body.isDynamic()) body.wakeUp();
+		});
+	}
+
+	get gravity(): Vec3 {
+		const g = this.world.gravity;
+		return { x: g.x, y: g.y, z: g.z };
 	}
 
 	addStaticBox(halfExtents: Vec3, position: Vec3): BodyHandle {
@@ -61,17 +69,31 @@ export class PhysicsWorld {
 		return body.handle;
 	}
 
-	addDynamicBox(halfExtents: Vec3, position: Vec3, rotation?: Quat): BodyHandle {
-		const desc = RAPIER.RigidBodyDesc.dynamic().setTranslation(position.x, position.y, position.z);
+	addDynamicBox(
+		halfExtents: Vec3,
+		position: Vec3,
+		rotation?: Quat,
+		{ density = 1, friction = 0.8, restitution = 0.2 } = {},
+	): BodyHandle {
+		const desc = RAPIER.RigidBodyDesc.dynamic()
+			.setTranslation(position.x, position.y, position.z)
+			.setLinearDamping(0.3)
+			.setAngularDamping(0.5);
 		if (rotation) desc.setRotation(rotation);
 		const body = this.world.createRigidBody(desc);
 		this.world.createCollider(
 			RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
-				.setRestitution(0.2)
-				.setFriction(0.8),
+				.setRestitution(restitution)
+				.setFriction(friction)
+				.setDensity(density),
 			body,
 		);
 		return body.handle;
+	}
+
+	/** Mass of a body in kg (for impulses that feel the same on light and heavy things). */
+	mass(handle: BodyHandle): number {
+		return this.world.getRigidBody(handle)?.mass() ?? 0;
 	}
 
 	addDynamicBall(radius: number, position: Vec3): BodyHandle {

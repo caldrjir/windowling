@@ -2,6 +2,7 @@
 	import type { BrainPreference } from '$lib/brain/choose';
 	import { DEVICE_MODEL_DOWNLOAD_GB, deviceBrain } from '$lib/brain/device-brain.svelte';
 	import { settings, type SubtitleMode } from '$lib/settings.svelte';
+	import { sensorAccess } from '$lib/sensors/access.svelte';
 
 	let open = $state(false);
 
@@ -35,6 +36,17 @@
 		}
 	}
 
+	async function toggleSensors(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		// What the player sees: on only when both wanted and allowed.
+		const on = !(settings.sensors && sensorAccess.granted);
+		// Browsers that gate motion (iOS, newer Chromium) ask now - it has to come from this tap.
+		if (on && !sensorAccess.granted) await sensorAccess.request();
+		settings.sensors = on;
+		settings.save();
+		input.checked = settings.sensors && sensorAccess.granted;
+	}
+
 	function toggleVoice() {
 		settings.voice = !settings.voice;
 		settings.save();
@@ -65,6 +77,17 @@
 				<span>Voice</span>
 				<input type="checkbox" checked={settings.voice} onchange={toggleVoice} />
 			</label>
+			{#if sensorAccess.available}
+				<label class="flex items-center justify-between gap-3 py-1">
+					<span>Tilt &amp; shake</span>
+					<input
+						type="checkbox"
+						data-testid="sensors-toggle"
+						checked={settings.sensors && sensorAccess.granted}
+						onchange={toggleSensors}
+					/>
+				</label>
+			{/if}
 			<div class="pt-2">
 				<span class="text-white/70">Subtitles</span>
 				<div class="mt-1 flex gap-1" role="radiogroup" aria-label="Subtitles">

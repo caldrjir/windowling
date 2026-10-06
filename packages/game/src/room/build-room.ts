@@ -82,6 +82,14 @@ export function buildRoom(physics: PhysicsWorld): Room {
 	group.add(floor);
 	physics.addStaticBox({ x: width / 2, y: 0.1, z: depth / 2 }, { x: 0, y: -0.1, z: 0 });
 
+	// The glass the player looks through, and a ceiling: invisible, but when the phone is
+	// tilted or shaken, loose things bump into them instead of falling out of the world.
+	physics.addStaticBox(
+		{ x: width / 2, y: height / 2, z: 0.05 },
+		{ x: 0, y: height / 2, z: depth / 2 + 0.05 },
+	);
+	physics.addStaticBox({ x: width / 2, y: 0.05, z: depth / 2 }, { x: 0, y: height + 0.05, z: 0 });
+
 	// Walls: back + sides. The front is open - that is the player's window.
 	const wallThickness = 0.1;
 	const backWall = mat(PALETTE.backWall);

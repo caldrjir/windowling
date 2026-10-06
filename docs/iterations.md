@@ -10,8 +10,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | 2   | Autonomous Activities             | The character does things without player input           | done            |
 | 3   | Player Awareness                  | The player can watch unnoticed for a while               | done            |
 | 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done            |
-| 5   | Memory + Relationship             | Past events influence present behaviour                  | **in progress** |
-| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | planned         |
+| 5   | Memory + Relationship             | Past events influence present behaviour                  | done            |
+| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | **in progress** |
 | 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | planned         |
 | 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | planned         |
 | 9   | Economy                           | The character earns; the player gets real decisions      | planned         |
@@ -106,7 +106,7 @@ Definition of Done:
 - [x] Speech recognition in the browser (Whisper), push-to-talk - #30
 - [x] On-device brain (WebLLM) with download consent - #31
 
-## Iteration 5 – Memory + Relationship (in progress)
+## Iteration 5 – Memory + Relationship
 
 **Goal:** events from the past influence present behaviour.
 
@@ -118,3 +118,16 @@ Definition of Done:
 - [x] Recall: importance × recency × relevance, a handful per moment, never the full history - #39
 - [x] Relationship with the player (affinity, trust, familiarity) from events - #40
 - [x] Behaviour: affinity changes whether it comes over; greetings reflect familiarity and grudges - #40
+
+## Iteration 6 – Mobile Sensors (in progress)
+
+**Goal:** the player feels the world is physically held inside the phone.
+
+Definition of Done:
+
+- [x] Device orientation → gravity in the room (relative to how the phone is held, portrait + landscape) - #42
+- [x] Loose objects (ball, books, cushion, mug), invisible glass + ceiling, camera lean - #42
+- [x] Shake detection (several jolts within a second → intensity) - #43
+- [x] Physical reactions: things fly, the view jolts, the character loses balance - #43
+- [x] Consequences: noticed for sure, a hard shake wakes a sleeper, remembered, hurts the relationship - #43
+- [x] Opt-in toggle "Tilt & shake" (iOS motion permission from a tap) - #42

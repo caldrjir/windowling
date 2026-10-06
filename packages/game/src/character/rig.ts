@@ -179,15 +179,19 @@ export class CharacterRig {
 				(side * pose.armSwing - sit * 0.5 * (1 - busy) - pose.armForward - mouth * 0.35) *
 					(1 - wave) -
 				wave * 2.7;
+			// Off balance: both arms fling out to the sides.
+			arm.rotation.x -= pose.startle * 0.4;
 			// Busy hands come together in front of the body; a waving arm swings out to the side.
 			arm.rotation.z =
 				-side * (0.08 - busy * 0.3) * (1 - wave) - side * wave * (0.25 + pose.waveSwing * 0.35);
+			arm.rotation.z -= side * pose.startle * 1.1;
 			this.forearms[i as 0 | 1].rotation.x =
 				(-0.15 - sit * 0.6 * (1 - busy) - pose.elbow - mouth * 1.4) * (1 - wave) - wave * 0.5;
 		}
 
 		// Relaxed lean back while seated reads as "sitting" even from the front.
 		this.chest.rotation.x = -0.18 * sit + pose.slump;
+		this.body.rotation.z = pose.sway;
 		this.chest.scale.set(1 + pose.breath * 0.015, 1, 1 + pose.breath * 0.025);
 		this.head.rotation.y = pose.headYaw;
 		this.head.rotation.x = pose.headPitch;

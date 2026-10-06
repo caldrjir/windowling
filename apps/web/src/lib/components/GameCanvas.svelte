@@ -7,6 +7,8 @@
 	import { playKnock } from '$lib/knock';
 	import { settings, showSubtitles } from '$lib/settings.svelte';
 	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
+	import { sensorAccess } from '$lib/sensors/access.svelte';
+	import { PhoneSensors } from '$lib/sensors/device';
 	import { Watcher } from '$lib/watcher';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
@@ -22,6 +24,8 @@
 		mood: number;
 		/** The player knocked the character awake; the server applies the consequences. */
 		onWoken?: () => void;
+		/** The player shook the phone; the server remembers it (and may wake a sleeper). */
+		onShaken?: (intensity: number) => void;
 		characterName: string;
 		/** Turns events into what the character says and does. */
 		brain: Brain;
@@ -29,7 +33,7 @@
 		affinity: number;
 	}
 
-	let { activity, mood, onWoken, characterName, brain, affinity }: Props = $props();
+	let { activity, mood, onWoken, onShaken, characterName, brain, affinity }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let status = $state<Status>('loading');
@@ -43,6 +47,9 @@
 	/** At the window and paying attention: the player may talk. */
 	let listening = $state(false);
 	let speakToCharacter: ((text: string) => void) | undefined;
+	let shakeRoom: ((intensity: number) => void) | undefined;
+	/** Whether tilt & shake are being listened to (for the debug panel and E2E). */
+	let sensorsOn = $state(false);
 	/** `?debug` shows what the character is thinking (for testing on real devices). */
 	const debug = page.url.searchParams.has('debug');
 	let lastSaid = $state('');
@@ -178,6 +185,15 @@
 				const talk = (event: ConversationEvent) => {
 					void conversation?.handle(event);
 				};
+				/** Set while a shake is being handled: its wake-up goes through the shake endpoint. */
+				let shaking = false;
+				shakeRoom = (intensity) => {
+					game.shake(intensity);
+					shaking = true;
+					watcher?.shake(intensity);
+					shaking = false;
+					onShaken?.(intensity);
+				};
 				speakToCharacter = (text) => {
 					watcher?.spoke();
 					void conversation?.handle('player_said', text);
@@ -202,7 +218,11 @@
 						case 'woken':
 							wokenLocally = true;
 							justWoken = true;
-							onWoken?.();
+							if (!shaking) onWoken?.();
+							break;
+						case 'shaken':
+							// Not woken just now (that greeting comes at the window): it reacts on the spot.
+							if (!justWoken) talk('shaken');
 							break;
 						case 'detected':
 							if (event.response === 'ignore') {
@@ -313,6 +333,21 @@
 		world?.setMood(mood);
 	});
 
+	// The phone is the box the room lives in: tilt is gravity, shaking shakes it.
+	$effect(() => {
+		if (status !== 'running' || !settings.sensors || !sensorAccess.granted) return;
+		const sensors = new PhoneSensors({
+			onGravity: (gravity) => world?.setGravity(gravity),
+			onShake: (intensity) => shakeRoom?.(intensity),
+		});
+		sensors.start();
+		sensorsOn = true;
+		return () => {
+			sensors.stop();
+			sensorsOn = false;
+		};
+	});
+
 	let lastPointer: { x: number; y: number } | null = null;
 
 	function onPointerMove(event: PointerEvent) {
@@ -342,6 +377,7 @@
 	data-status={status}
 	data-activity={activity ?? ''}
 	data-awareness={awareness}
+	data-sensors={sensorsOn ? 'on' : 'off'}
 	data-character-action={currentAction}
 	data-character-posture={posture}
 	class="block h-full w-full touch-none select-none"

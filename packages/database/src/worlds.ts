@@ -234,6 +234,8 @@ export async function wakeCharacter(
 	db: Database,
 	userId: string,
 	now: Date = new Date(),
+	/** What woke it - it remembers how. */
+	cause: 'knock' | 'shake' = 'knock',
 ): Promise<WorldRecord | null> {
 	const found = await findWorldByUserId(db, userId);
 	if (!found) return null;
@@ -260,9 +262,12 @@ export async function wakeCharacter(
 	const clock = localClock(now, record.timeZone);
 	await remember(db, record.id, {
 		kind: 'moment',
-		note: `Someone knocked on my window at ${clock.time} on ${clock.weekday} and woke me up.`,
+		note:
+			cause === 'shake'
+				? `Someone shook my whole flat at ${clock.time} on ${clock.weekday} and threw me out of sleep.`
+				: `Someone knocked on my window at ${clock.time} on ${clock.weekday} and woke me up.`,
 		importance: 0.8,
-		tags: ['player', 'woken', 'knock', 'night', 'sleep'],
+		tags: ['player', 'woken', cause, 'night', 'sleep'],
 		emotion: 'annoyed',
 		createdAt: now,
 	});

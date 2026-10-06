@@ -38,6 +38,13 @@ describe('applyRelationshipEvent', () => {
 		expect(woken.trust).toBeLessThan(NEW_ACQUAINTANCE.trust);
 	});
 
+	it('shaking the flat is not appreciated - the harder, the worse', () => {
+		const light = applyRelationshipEvent(NEW_ACQUAINTANCE, { type: 'shaken', intensity: 0.2 });
+		const hard = applyRelationshipEvent(NEW_ACQUAINTANCE, { type: 'shaken', intensity: 1 });
+		expect(hard.affinity).toBeLessThan(light.affinity);
+		expect(hard.trust).toBeLessThan(NEW_ACQUAINTANCE.trust);
+	});
+
 	it('stays within bounds no matter how often it happens', () => {
 		let rel = NEW_ACQUAINTANCE;
 		for (let i = 0; i < 100; i++) rel = applyRelationshipEvent(rel, { type: 'woken' });

@@ -9,6 +9,7 @@ import {
 	MAX_MOMENTS,
 	recordConversation,
 	recordRelationshipEvent,
+	recordShake,
 	remember,
 } from './memories.ts';
 import { user } from './schema/index.ts';
@@ -107,5 +108,16 @@ describe.skipIf(!url)('memories and relationship (postgres)', () => {
 		const notes = (await loadMemories(conn.db, world.id)).map((m) => m.note);
 		expect(notes).toContain('Someone knocked on my window at 03:12 on Monday and woke me up.');
 		expect((await getRelationship(conn.db, world.id)).affinity).toBeLessThan(0);
+	});
+
+	it('remembers being shaken, once a minute at most', async () => {
+		const world = await newWorld();
+		const now = new Date('2026-10-06T10:00:00Z');
+		expect(await recordShake(conn.db, world.id, 0.9, now)).toBe(true);
+		expect(await recordShake(conn.db, world.id, 0.9, new Date(now.getTime() + 10_000))).toBe(false);
+		expect(await recordShake(conn.db, world.id, 0.3, new Date(now.getTime() + 61_000))).toBe(true);
+		const shakes = (await loadMemories(conn.db, world.id)).filter((m) => m.tags.includes('shaken'));
+		expect(shakes).toHaveLength(2);
+		expect((await getRelationship(conn.db, world.id)).affinity).toBeLessThan(-0.05);
 	});
 });
