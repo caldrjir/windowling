@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { isSilent, Recorder } from '$lib/voice/recorder';
+	import {
+		isSilent,
+		microphoneProblem,
+		Recorder,
+		type MicrophoneProblem,
+	} from '$lib/voice/recorder';
 	import {
 		cleanTranscript,
 		WHISPER_DOWNLOAD_MB,
@@ -25,8 +30,11 @@
 	let phase = $state<State>('off');
 	let percent = $state(0);
 	let heard = $state('');
+	/** Why the last attempt failed - the label tells the player what to do. */
+	let problem = $state<MicrophoneProblem | 'loading'>('failed');
 	let stt: SpeechToText | undefined;
 	const recorder = new Recorder();
+	recorder.onLimit = () => void release();
 
 	function consented(): boolean {
 		try {
@@ -52,6 +60,7 @@
 			console.error('Speech recognition failed to load', error);
 			stt?.dispose();
 			stt = undefined;
+			problem = 'loading';
 			phase = 'error';
 		} finally {
 			clearInterval(keepWaiting);
@@ -72,6 +81,7 @@
 			phase = 'recording';
 		} catch (error) {
 			console.warn('Microphone unavailable', error);
+			problem = microphoneProblem(error);
 			phase = 'error';
 		}
 	}
@@ -119,11 +129,31 @@
 		off: 'Talk',
 		consent: 'Talk',
 		loading: 'Getting ready…',
-		ready: 'Hold to talk',
-		recording: 'Listening…',
+		ready: 'Tap to talk',
+		recording: 'Listening… tap when done',
 		listening: 'Thinking…',
 		error: "Couldn't hear you · tap to retry",
 	};
+
+	const PROBLEM: Record<MicrophoneProblem | 'loading', string> = {
+		loading: "Couldn't load speech recognition · tap to retry",
+		denied: 'Microphone blocked - allow it for this site, then tap',
+		unsupported: "This browser can't use the microphone - open the page in Chrome or Safari",
+		failed: "Couldn't start the microphone · tap to retry",
+	};
+
+	/** Tap to start talking, tap again to stop (holding works too - see onpointerup). */
+	let pressedAt = 0;
+	function onPointerDown(event: PointerEvent) {
+		event.stopPropagation();
+		pressedAt = performance.now();
+		if (phase === 'recording') void release();
+		else void press();
+	}
+	function onPointerUp() {
+		// A long press means "hold to talk": releasing ends it. A tap keeps recording.
+		if (phase === 'recording' && performance.now() - pressedAt > 600) void release();
+	}
 </script>
 
 <svelte:window onkeydown={(e) => onKey(e, true)} onkeyup={(e) => onKey(e, false)} />
@@ -168,13 +198,9 @@
 				data-testid="talk-button"
 				data-phase={phase}
 				disabled={phase === 'loading' || phase === 'listening'}
-				onpointerdown={(e) => {
-					e.stopPropagation();
-					void press();
-				}}
-				onpointerup={() => void release()}
-				onpointerleave={() => void release()}
-				onpointercancel={() => void release()}
+				data-problem={phase === 'error' ? problem : ''}
+				onpointerdown={onPointerDown}
+				onpointerup={onPointerUp}
 				oncontextmenu={(e) => e.preventDefault()}
 			>
 				<svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
@@ -182,7 +208,11 @@
 						d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
 					/>
 				</svg>
-				{phase === 'loading' ? `${LABEL.loading} ${percent}%` : LABEL[phase]}
+				{phase === 'loading'
+					? `${LABEL.loading} ${percent}%`
+					: phase === 'error'
+						? PROBLEM[problem]
+						: LABEL[phase]}
 			</button>
 		{/if}
 	</div>

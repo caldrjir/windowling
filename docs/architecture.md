@@ -136,7 +136,7 @@ the database, checks the per-player daily quota in `ai_usage`, asks the model, a
 action and speaks through `TextToSpeech` (browser `speechSynthesis` for now, #32 tracks the
 neural voice) with subtitles (`OFF | AUTO | ALWAYS`) and a mouth driven by word boundaries.
 
-**Ears:** `TalkButton` (hold, or Space) appears while the character is at the window. After a
+**Ears:** `TalkButton` (tap to start / tap to stop, or hold; Space on desktop) appears while the character is at the window. After a
 one-time consent it loads Whisper (`Xenova/whisper-tiny.en`, ~40 MB from the Hugging Face Hub,
 cached by the browser) in a Web Worker via transformers.js. The ONNX runtime is the plain CPU
 WASM build served from our own assets (Vite aliases `onnxruntime-web/webgpu` → `/wasm`: the

@@ -42,7 +42,21 @@ export function isSilent(audio: Float32Array, threshold = 0.01): boolean {
  * Hold-to-talk microphone capture. The stream is opened on the first press
  * (that is when the browser asks for permission) and closed when released.
  */
+export type MicrophoneProblem = 'unsupported' | 'denied' | 'failed';
+
+/** Why the microphone could not be opened, in words a player can act on. */
+export function microphoneProblem(error: unknown): MicrophoneProblem {
+	if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+		return 'unsupported';
+	}
+	const name = error instanceof DOMException ? error.name : '';
+	if (name === 'NotAllowedError' || name === 'SecurityError') return 'denied';
+	return 'failed';
+}
+
 export class Recorder {
+	/** Called when a recording hits MAX_RECORDING_SECONDS on its own. */
+	onLimit: (() => void) | undefined;
 	private stream: MediaStream | undefined;
 	private recorder: MediaRecorder | undefined;
 	private chunks: Blob[] = [];
@@ -54,6 +68,9 @@ export class Recorder {
 
 	async start(): Promise<void> {
 		if (this.recording) return;
+		if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+			throw new Error('This browser has no microphone access');
+		}
 		this.stream = await navigator.mediaDevices.getUserMedia({
 			audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
 		});
@@ -63,7 +80,7 @@ export class Recorder {
 			if (event.data.size > 0) this.chunks.push(event.data);
 		};
 		this.recorder.start();
-		this.limit = setTimeout(() => this.recorder?.stop(), MAX_RECORDING_SECONDS * 1000);
+		this.limit = setTimeout(() => this.onLimit?.(), MAX_RECORDING_SECONDS * 1000);
 	}
 
 	/** Stops and returns 16 kHz mono PCM. */
