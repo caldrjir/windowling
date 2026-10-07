@@ -68,6 +68,8 @@ const MAX_LINES = 6;
 export class Conversation {
 	private lines: DialogueLine[] = [];
 	private busy = false;
+	/** What the player said while the character was still busy - answered next. */
+	private waiting: string | null = null;
 
 	constructor(private readonly options: ConversationOptions) {}
 
@@ -79,13 +81,21 @@ export class Conversation {
 		return this.lines;
 	}
 
-	/** Something happened that may make the character talk. Returns false if busy. */
+	/**
+	 * Something happened that may make the character talk. Returns false if
+	 * busy - except for the player's words, which are never dropped: they are
+	 * answered as soon as the character is done (the latest, if several).
+	 */
 	async handle(
 		event: ConversationEvent,
 		playerUtterance?: string,
 		caughtDoing?: MomentKind,
 	): Promise<boolean> {
-		if (this.busy) return false;
+		if (this.busy) {
+			if (event !== 'player_said' || !playerUtterance) return false;
+			this.waiting = playerUtterance;
+			return true;
+		}
 		this.busy = true;
 		try {
 			const decision = await this.options.brain.decide({
@@ -102,12 +112,16 @@ export class Conversation {
 			return true;
 		} finally {
 			this.busy = false;
+			const next = this.waiting;
+			this.waiting = null;
+			if (next) void this.handle('player_said', next);
 		}
 	}
 
 	/** The player left or the character turned away: start fresh next time. */
 	reset(): void {
 		this.lines = [];
+		this.waiting = null;
 	}
 
 	private remember(line: DialogueLine): void {

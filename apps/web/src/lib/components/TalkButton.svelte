@@ -20,9 +20,11 @@
 		onUtterance: (text: string) => void;
 		/** The player is busy answering (pressing, downloading): the character keeps waiting. */
 		onActivity: () => void;
+		/** The microphone is on: the character stops talking and listens. */
+		onListening?: () => void;
 	}
 
-	let { visible, characterName, onUtterance, onActivity }: Props = $props();
+	let { visible, characterName, onUtterance, onActivity, onListening }: Props = $props();
 
 	type State = 'off' | 'consent' | 'loading' | 'ready' | 'recording' | 'listening' | 'error';
 	const CONSENT_KEY = 'windowling:stt-consent';
@@ -30,6 +32,9 @@
 	let phase = $state<State>('off');
 	let percent = $state(0);
 	let heard = $state('');
+	/** Nothing understandable came through - say so instead of silently doing nothing. */
+	let missed = $state(false);
+	let missedTimer: ReturnType<typeof setTimeout> | undefined;
 	/** Why the last attempt failed - the label tells the player what to do. */
 	let problem = $state<MicrophoneProblem | 'loading'>('failed');
 	let stt: SpeechToText | undefined;
@@ -79,6 +84,8 @@
 		try {
 			await recorder.start();
 			phase = 'recording';
+			missed = false;
+			onListening?.();
 		} catch (error) {
 			console.warn('Microphone unavailable', error);
 			problem = microphoneProblem(error);
@@ -91,27 +98,33 @@
 		phase = 'listening';
 		try {
 			const audio = await recorder.stop();
-			if (isSilent(audio) || !stt) {
-				phase = 'ready';
-				return;
-			}
-			const text = cleanTranscript(await stt.transcribe(audio));
+			const text = isSilent(audio) || !stt ? '' : cleanTranscript(await stt.transcribe(audio));
 			if (text) {
 				heard = text;
 				setTimeout(() => (heard = ''), 4_000);
 				onUtterance(text);
-			}
+			} else showMissed();
 		} catch (error) {
 			console.warn('Could not understand that', error);
+			showMissed();
 		}
 		phase = 'ready';
 	}
 
-	// Desktop: hold Space to talk.
+	function showMissed() {
+		missed = true;
+		clearTimeout(missedTimer);
+		missedTimer = setTimeout(() => (missed = false), 3_000);
+	}
+
+	let button = $state<HTMLButtonElement>();
+
+	// Desktop: hold Space to talk (also when the talk button itself has focus).
 	function onKey(event: KeyboardEvent, down: boolean) {
 		if (!visible || event.code !== 'Space' || event.repeat) return;
 		if (
 			event.target instanceof HTMLElement &&
+			event.target !== button &&
 			event.target.closest('input, textarea, select, button')
 		)
 			return;
@@ -121,6 +134,7 @@
 	}
 
 	onDestroy(() => {
+		clearTimeout(missedTimer);
 		void recorder.stop();
 		stt?.dispose();
 	});
@@ -195,8 +209,10 @@
 				'recording'
 					? 'bg-red-500/70'
 					: 'bg-white/15 hover:bg-white/25'}"
+				bind:this={button}
 				data-testid="talk-button"
 				data-phase={phase}
+				data-missed={missed}
 				disabled={phase === 'loading' || phase === 'listening'}
 				data-problem={phase === 'error' ? problem : ''}
 				onpointerdown={onPointerDown}
@@ -212,7 +228,9 @@
 					? `${LABEL.loading} ${percent}%`
 					: phase === 'error'
 						? PROBLEM[problem]
-						: LABEL[phase]}
+						: phase === 'ready' && missed
+							? "Didn't catch that · tap to talk"
+							: LABEL[phase]}
 			</button>
 		{/if}
 	</div>

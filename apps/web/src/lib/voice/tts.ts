@@ -34,6 +34,45 @@ const PROSODY: Record<string, { rate: number; pitch: number }> = {
 	nervous: { rate: 1.1, pitch: 1.05 },
 };
 
+/** Joke voices some systems ship (macOS: Bubbles, Bells, Zarvox...) - never a person's voice. */
+const NOVELTY =
+	/\b(albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|fred|good news|grandma|grandpa|hysterical|jester|junior|kathy|organ|princess|ralph|rocko|sandy|shelley|superstar|trinoids|whisper|wobble|zarvox|eddy|flo|reed)\b/i;
+
+type VoiceInfo = Pick<SpeechSynthesisVoice, 'name' | 'lang' | 'localService'>;
+
+/**
+ * How good a voice is likely to sound as a person, or null when it must not
+ * be used (not English, a joke voice). Names are all browsers give us.
+ */
+export function voiceQuality(voice: VoiceInfo): number | null {
+	if (!voice.lang.toLowerCase().startsWith('en') || NOVELTY.test(voice.name)) return null;
+	let score = 0;
+	if (/natural|neural/i.test(voice.name)) score += 6;
+	if (/premium|enhanced|siri/i.test(voice.name)) score += 5;
+	if (/google/i.test(voice.name)) score += 4;
+	// Decent built-in voices on Apple devices and Windows.
+	if (/samantha|daniel|karen|moira|tessa|serena|alex|ava|zoe|aria|jenny|guy/i.test(voice.name)) {
+		score += 2;
+	}
+	if (/espeak|robot/i.test(voice.name)) score -= 4;
+	if (/^en[-_](us|gb)/i.test(voice.lang)) score += 1;
+	return score;
+}
+
+/**
+ * The voice for this character: on-device voices first (nothing is sent
+ * anywhere), the best-sounding of those, the same one every visit (`seed`
+ * picks among equally good ones).
+ */
+export function pickVoice<V extends VoiceInfo>(voices: readonly V[], seed: number): V | null {
+	const usable = voices.filter((v) => voiceQuality(v) !== null);
+	const local = usable.filter((v) => v.localService);
+	const pool = local.length ? local : usable;
+	const best = Math.max(...pool.map((v) => voiceQuality(v) ?? 0));
+	const top = pool.filter((v) => voiceQuality(v) === best);
+	return top[seed % Math.max(1, top.length)] ?? null;
+}
+
 /**
  * `speechSynthesis` with an English voice, preferring ones that run on the
  * device (`localService`). No download, but quality depends on the OS.
@@ -52,13 +91,7 @@ export class BrowserSpeech implements TextToSpeech {
 	}
 
 	private pickVoice(): void {
-		const english = speechSynthesis
-			.getVoices()
-			.filter((v) => v.lang.toLowerCase().startsWith('en'));
-		const local = english.filter((v) => v.localService);
-		const pool = local.length ? local : english;
-		// Stable per character: the same voice every visit.
-		this.voice = pool.length ? (pool[this.seed % pool.length] ?? null) : null;
+		this.voice = pickVoice(speechSynthesis.getVoices(), this.seed);
 	}
 
 	speak(text: string, { emotion, intensity, onWord }: SpeakOptions): Promise<void> {

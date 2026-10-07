@@ -19,6 +19,8 @@ export class Radio {
 	private timer: ReturnType<typeof setInterval> | undefined;
 	private output: GainNode | undefined;
 	private beat = 0;
+	private degree = 2;
+	private ducked = false;
 
 	get playing(): boolean {
 		return this.timer !== undefined;
@@ -32,10 +34,26 @@ export class Radio {
 		filter.frequency.value = 1400; // muffled by the window
 		this.output = ctx.createGain();
 		this.output.gain.setValueAtTime(0, ctx.currentTime);
-		this.output.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 2);
+		this.output.gain.linearRampToValueAtTime(this.level, ctx.currentTime + 2);
 		this.output.connect(filter).connect(ctx.destination);
 		this.beat = 0;
 		this.timer = setInterval(() => this.tick(), 400);
+	}
+
+	/** Turned down while the character talks to the player (and up again after). */
+	duck(on: boolean): void {
+		if (on === this.ducked) return;
+		this.ducked = on;
+		const ctx = audio();
+		const out = this.output;
+		if (!ctx || !out) return;
+		out.gain.cancelScheduledValues(ctx.currentTime);
+		out.gain.setValueAtTime(out.gain.value, ctx.currentTime);
+		out.gain.linearRampToValueAtTime(this.level, ctx.currentTime + (on ? 0.4 : 2));
+	}
+
+	private get level(): number {
+		return this.ducked ? 0.008 : 0.04;
 	}
 
 	stop(): void {
@@ -61,11 +79,12 @@ export class Radio {
 			const chord = CHORDS[(this.beat / 8) % CHORDS.length] ?? CHORDS[0] ?? [];
 			for (const frequency of chord) this.note(frequency, now, 3.2, 0.35, 'triangle');
 		}
-		// Melody: mostly steps, sometimes rests.
-		if (Math.random() < 0.7) {
-			const index = Math.floor(Math.random() * SCALE.length);
-			const frequency = SCALE[index] ?? 440;
-			this.note(frequency, now, 0.5, 0.5, 'sine');
+		// Melody: a slow tune moving by steps (no random jumps - those sound like bubbles).
+		if (this.beat % 2 === 0 && Math.random() < 0.6) {
+			const move = Math.random() < 0.5 ? -1 : 1;
+			this.degree = Math.min(SCALE.length - 1, Math.max(0, this.degree + move));
+			const frequency = SCALE[this.degree] ?? 440;
+			this.note(frequency, now, 1.2, 0.3, 'triangle', 0.15);
 		}
 		this.beat++;
 	}
@@ -76,6 +95,7 @@ export class Radio {
 		length: number,
 		volume: number,
 		type: OscillatorType,
+		attack = 0.05,
 	): void {
 		const ctx = audio();
 		const out = this.output;
@@ -85,7 +105,7 @@ export class Radio {
 		osc.type = type;
 		osc.frequency.value = frequency;
 		gain.gain.setValueAtTime(0, at);
-		gain.gain.linearRampToValueAtTime(volume, at + 0.05);
+		gain.gain.linearRampToValueAtTime(volume, at + attack);
 		gain.gain.exponentialRampToValueAtTime(0.001, at + length);
 		osc.connect(gain).connect(out);
 		osc.start(at);

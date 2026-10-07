@@ -1,5 +1,5 @@
 import { targetSupports, type CharacterAction } from '@windowling/shared';
-import { OUTSIDE, TARGETS, type TargetPlacement, type Vec2 } from '../room/layout.ts';
+import { OUTSIDE, TARGETS, type Spot, type Vec2 } from '../room/layout.ts';
 import { Animator, type ActivityAnimation, type AnimationState } from './animation.ts';
 import { approach, ease, turnTowards, wrapAngle, yawTowards } from './math.ts';
 import { planPath } from './path.ts';
@@ -8,16 +8,32 @@ export type Posture = 'standing' | 'sitting' | 'lying';
 
 export const WALK_SPEED = 1.1; // m/s
 export const TURN_SPEED = 4; // rad/s
-export const SETTLE_SECONDS = 1.0;
-export const STAND_UP_SECONDS = 0.9;
-
-type Use = NonNullable<TargetPlacement['use']>;
+/** Lowering onto a seat, lying back, getting up (the pose blends over the same time). */
+export const SIT_SECONDS = 0.8;
+export const LIE_SECONDS = 1.2;
+export const STAND_UP_SECONDS = 0.8;
+/** Backing up to a seat or stepping away from it. */
+export const SHUFFLE_SPEED = 0.6; // m/s
 
 type Step =
 	| { kind: 'walk'; to: Vec2 }
 	| { kind: 'turn'; yaw: number }
-	| { kind: 'settle'; use: Use; posture: 'sitting' | 'lying'; from: Vec2; elapsed: number }
-	| { kind: 'standUp'; to: Vec2; from: Use; elapsed: number }
+	/** A few small steps without turning: backing up to a seat, stepping away from it. */
+	| { kind: 'shuffle'; to: Vec2; seat: string }
+	/**
+	 * Sitting down, lying back, sitting up, getting up: the root moves from
+	 * where it is to `to` while the body blends into `state` over `seconds`.
+	 */
+	| {
+			kind: 'settle';
+			to: Spot;
+			state: AnimationState;
+			posture: Posture;
+			seat: string;
+			seconds: number;
+			elapsed: number;
+			from?: Spot;
+	  }
 	| { kind: 'gesture'; activity: ActivityAnimation; duration: number; elapsed: number }
 	/** Through the door: leaving the flat, or coming back. */
 	| { kind: 'pass'; from: Vec2; to: Vec2; leaving: boolean; elapsed: number };
@@ -54,9 +70,14 @@ export interface CharacterSnapshot {
 	away: boolean;
 	/** The door: 0 closed .. 1 open. */
 	door: number;
+	/** How far the swivel chair is turned from facing the desk (radians). */
+	swivel: number;
 }
 
 type TargetAction = Extract<CharacterAction, { target: string }>;
+
+/** Targets one can sit or lie on. */
+type SeatId = keyof typeof TARGETS;
 
 /** Posture each targeted action ends in. */
 const TARGET_POSTURE: Record<TargetAction['type'], Posture> = {
@@ -107,7 +128,9 @@ export class CharacterController {
 	private yaw = 0;
 	private speed = 0;
 	private posture: Posture = 'standing';
-	private occupying: { id: string; use: Use; approach: Vec2 } | null = null;
+	/** Seat or bed the character is on (sitting or lying). */
+	private occupying: SeatId | null = null;
+	private swivel = 0;
 	private steps: Step[] = [];
 	private action: CharacterAction | null = null;
 	private pending: CharacterAction | null = null;
@@ -129,12 +152,13 @@ export class CharacterController {
 			z: this.z,
 			yaw: this.yaw,
 			posture: this.posture,
-			occupying: this.occupying?.id ?? null,
+			occupying: this.occupying,
 			animation: this.animator.state,
 			activity: this.animator.activity,
 			busy: this.action !== null || this.pending !== null,
 			away: this.away,
 			door: this.door,
+			swivel: this.swivel,
 		};
 	}
 
@@ -150,7 +174,7 @@ export class CharacterController {
 		}
 		// Never cut a sit-down / stand-up in half - finish it, then switch.
 		const current = this.steps[0];
-		if (current && (current.kind === 'settle' || current.kind === 'standUp')) {
+		if (current?.kind === 'settle') {
 			this.pending = action;
 			return true;
 		}
@@ -172,6 +196,7 @@ export class CharacterController {
 		if (this.steps.length === 0) this.speed = 0;
 		// The door is open only while someone is going through it.
 		this.door = approach(this.door, this.steps[0]?.kind === 'pass' ? 1 : 0, dt * 2.5);
+		this.updateSwivel(dt);
 		// The player is "out there" in +z: yaw 0 in world space.
 		this.animator.setLook(this.attentive ? wrapAngle(-this.yaw) : null);
 		this.animator.update(dt, this.speed);
@@ -219,14 +244,25 @@ export class CharacterController {
 		const placement = 'target' in action ? TARGETS[action.target as keyof typeof TARGETS] : null;
 
 		// Already where we need to be? (e.g. stop gaming and keep sitting on the sofa)
+		const wanted = 'target' in action ? TARGET_POSTURE[action.type] : 'standing';
 		if (
 			'target' in action &&
 			action.type !== 'walkTo' &&
-			TARGET_POSTURE[action.type] !== 'standing' &&
-			this.occupying?.id === action.target &&
-			this.posture === TARGET_POSTURE[action.type]
+			wanted !== 'standing' &&
+			this.occupying === action.target
 		) {
-			return;
+			if (this.posture === wanted) return;
+			// Same bed: lie back or sit up without getting off it.
+			this.animator.setActivity('none');
+			const { seat, lie } = TARGETS[this.occupying];
+			if (seat && lie) {
+				this.steps.push(
+					wanted === 'lying'
+						? this.settleStep(this.occupying, lie, 'lie', 'lying', LIE_SECONDS)
+						: this.settleStep(this.occupying, seat.at, 'sit', 'sitting', LIE_SECONDS),
+				);
+				return;
+			}
 		}
 		this.animator.setActivity('none');
 		if (this.away && action.type === 'leave') return; // already out
@@ -283,14 +319,17 @@ export class CharacterController {
 				}
 				this.steps.push({ kind: 'turn', yaw: placement.approachYaw });
 				const posture = TARGET_POSTURE[action.type];
-				if (posture !== 'standing' && placement.use) {
-					this.steps.push({
-						kind: 'settle',
-						use: placement.use,
-						posture,
-						from: placement.approach,
-						elapsed: 0,
-					});
+				const id = action.target as SeatId;
+				if (posture !== 'standing' && placement.seat) {
+					// Back up to the seat, then sit down onto it.
+					const { seat } = placement;
+					this.steps.push({ kind: 'shuffle', to: seat.edge, seat: id });
+					this.steps.push(this.settleStep(id, seat.at, 'sit', 'sitting', SIT_SECONDS));
+					if (posture === 'lying' && placement.lie) {
+						this.steps.push(this.settleStep(id, placement.lie, 'lie', 'lying', LIE_SECONDS));
+					} else if (seat.turnTo !== undefined) {
+						this.steps.push({ kind: 'turn', yaw: seat.turnTo });
+					}
 				}
 				break;
 			}
@@ -304,12 +343,56 @@ export class CharacterController {
 		return inside;
 	}
 
-	/** Queues a stand-up when seated; returns where the character will be standing. */
+	/**
+	 * Queues getting up when seated or lying - the way down, backwards: sit up,
+	 * turn the chair back, stand up at the edge, step away. Returns where the
+	 * character will be standing.
+	 */
 	private standUpIfNeeded(): Vec2 {
-		if (this.posture === 'standing' || !this.occupying) return { x: this.x, z: this.z };
-		const { use, approach } = this.occupying;
-		this.steps.push({ kind: 'standUp', to: approach, from: use, elapsed: 0 });
+		const id = this.occupying;
+		if (this.posture === 'standing' || !id) return { x: this.x, z: this.z };
+		const { seat, approach, approachYaw } = TARGETS[id];
+		if (!seat) return { x: this.x, z: this.z };
+		if (this.posture === 'lying') {
+			this.steps.push(this.settleStep(id, seat.at, 'sit', 'sitting', LIE_SECONDS));
+		}
+		if (seat.turnTo !== undefined) this.steps.push({ kind: 'turn', yaw: seat.at.yaw });
+		this.steps.push(
+			this.settleStep(
+				id,
+				{ ...seat.edge, y: 0, yaw: approachYaw },
+				'idle',
+				'standing',
+				STAND_UP_SECONDS,
+			),
+		);
+		this.steps.push({ kind: 'shuffle', to: approach, seat: id });
 		return approach;
+	}
+
+	private settleStep(
+		seat: SeatId,
+		to: Spot,
+		state: AnimationState,
+		posture: Posture,
+		seconds: number,
+	): Step {
+		return { kind: 'settle', to, state, posture, seat, seconds, elapsed: 0 };
+	}
+
+	/** The swivel chair turns with whoever sits on it, and to meet them as they sit down. */
+	private updateSwivel(dt: number): void {
+		const chair = TARGETS['desk.chair'].seat;
+		if (!chair || chair.turnTo === undefined) return;
+		if (this.occupying === 'desk.chair') {
+			this.swivel = wrapAngle(this.yaw - chair.turnTo);
+			return;
+		}
+		const step = this.steps[0];
+		const near =
+			(step?.kind === 'shuffle' || step?.kind === 'settle') && step.seat === 'desk.chair';
+		const target = near ? wrapAngle(chair.at.yaw - chair.turnTo) : 0;
+		this.swivel = turnTowards(this.swivel, target, dt * 3);
 	}
 
 	/** Runs a step for up to `dt`; returns leftover time (>= 0) if it finished, -1 otherwise. */
@@ -343,18 +426,35 @@ export class CharacterController {
 				this.yaw = turnTowards(this.yaw, step.yaw, TURN_SPEED * dt);
 				return Math.abs(wrapAngle(step.yaw - this.yaw)) < 1e-3 ? dt : -1;
 			}
+			case 'shuffle': {
+				this.animator.setState('walk');
+				const dx = step.to.x - this.x;
+				const dz = step.to.z - this.z;
+				const distance = Math.hypot(dx, dz);
+				this.speed = SHUFFLE_SPEED;
+				const travel = SHUFFLE_SPEED * dt;
+				if (travel >= distance) {
+					this.x = step.to.x;
+					this.z = step.to.z;
+					this.speed = 0;
+					return dt - distance / SHUFFLE_SPEED;
+				}
+				this.x += (dx / distance) * travel;
+				this.z += (dz / distance) * travel;
+				return -1;
+			}
 			case 'settle': {
 				this.speed = 0;
-				this.animator.setState(step.posture === 'sitting' ? 'sit' : 'lie');
+				const from = (step.from ??= { x: this.x, z: this.z, y: this.y, yaw: this.yaw });
+				// The pose blends over exactly the time the body takes to get there.
+				this.animator.setState(step.state, step.seconds);
 				step.elapsed += dt;
-				const t = ease(step.elapsed / SETTLE_SECONDS);
-				this.x = step.from.x + (step.use.x - step.from.x) * t;
-				this.z = step.from.z + (step.use.z - step.from.z) * t;
-				this.y = step.use.y * t;
-				this.yaw = turnTowards(this.yaw, step.use.yaw, TURN_SPEED * dt);
-				if (step.elapsed < SETTLE_SECONDS) return -1;
-				this.yaw = step.use.yaw;
-				return step.elapsed - SETTLE_SECONDS;
+				const t = Math.min(1, step.elapsed / step.seconds);
+				this.x = from.x + (step.to.x - from.x) * t;
+				this.z = from.z + (step.to.z - from.z) * t;
+				this.y = from.y + (step.to.y - from.y) * t;
+				this.yaw = wrapAngle(from.yaw + wrapAngle(step.to.yaw - from.yaw) * t);
+				return step.elapsed < step.seconds ? -1 : step.elapsed - step.seconds;
 			}
 			case 'gesture': {
 				this.speed = 0;
@@ -376,16 +476,6 @@ export class CharacterController {
 				if (step.leaving) this.away = true;
 				return step.elapsed - DOOR_PASS_SECONDS;
 			}
-			case 'standUp': {
-				this.speed = 0;
-				this.animator.setState('idle');
-				step.elapsed += dt;
-				const t = ease(step.elapsed / STAND_UP_SECONDS);
-				this.x = step.from.x + (step.to.x - step.from.x) * t;
-				this.z = step.from.z + (step.to.z - step.from.z) * t;
-				this.y = step.from.y * (1 - t);
-				return step.elapsed < STAND_UP_SECONDS ? -1 : step.elapsed - STAND_UP_SECONDS;
-			}
 		}
 	}
 
@@ -394,21 +484,12 @@ export class CharacterController {
 		if (!step) return;
 		if (step.kind === 'settle') {
 			this.posture = step.posture;
-			const id = this.action && 'target' in this.action ? this.action.target : '';
-			this.occupying = { id, use: step.use, approach: step.from };
-		}
-		if (step.kind === 'standUp') {
-			this.posture = 'standing';
-			this.occupying = null;
-			this.y = 0;
+			this.occupying = step.posture === 'standing' ? null : (step.seat as SeatId);
+			this.y = step.to.y;
 			if (this.pending) {
 				const next = this.pending;
 				this.begin(next);
 			}
-		}
-		if (step.kind === 'settle' && this.pending) {
-			const next = this.pending;
-			this.begin(next);
 		}
 		if (this.steps.length === 0 && this.posture === 'standing') this.animator.setState('idle');
 	}

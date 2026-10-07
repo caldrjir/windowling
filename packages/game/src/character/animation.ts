@@ -143,6 +143,7 @@ export class Animator {
 	private lookYaw = 0;
 	private lookWeight = 0;
 	private target: AnimationState = 'idle';
+	private fadePerSecond = CROSSFADE_PER_SECOND;
 	private activityTarget: ActivityAnimation = 'none';
 	/** 0..1, how the character feels; shows in posture and pace. */
 	private _mood = 0.6;
@@ -167,8 +168,10 @@ export class Animator {
 		return this.weights[state];
 	}
 
-	setState(state: AnimationState): void {
+	/** Blends to `state`; `seconds` sets how long the blend takes (default: a quick crossfade). */
+	setState(state: AnimationState, seconds?: number): void {
 		this.target = state;
+		this.fadePerSecond = seconds ? 1 / seconds : CROSSFADE_PER_SECOND;
 	}
 
 	get activity(): ActivityAnimation {
@@ -242,7 +245,11 @@ export class Animator {
 		this.walkPhase += dt * Math.max(speed, 0) * 5.2;
 		const step = dt * CROSSFADE_PER_SECOND;
 		for (const state of ANIMATION_STATES) {
-			this.weights[state] = approach(this.weights[state], state === this.target ? 1 : 0, step);
+			this.weights[state] = approach(
+				this.weights[state],
+				state === this.target ? 1 : 0,
+				dt * this.fadePerSecond,
+			);
 		}
 		this.startleLeft = Math.max(0, this.startleLeft - dt);
 		if (this.startleLeft === 0) this.startleStrength = Math.max(0, this.startleStrength - dt * 2);

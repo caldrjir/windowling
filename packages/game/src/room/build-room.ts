@@ -17,7 +17,7 @@ import {
 	type Material,
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
-import { BACK_WINDOW, DOOR, FURNITURE, ROOM, type Box } from './layout.ts';
+import { BACK_WINDOW, DOOR, FURNITURE, ROOM, TARGETS, type Box } from './layout.ts';
 import { daylight, skyColor } from './sky.ts';
 
 const PALETTE = {
@@ -56,6 +56,10 @@ export interface Room {
 	setDoor(openness: number): void;
 	/** The TV "on our side of the glass": its flicker on the room, 0 = off. */
 	setTvGlow(intensity: number, hue: number): void;
+	/** The swivel chair turned this far from facing the desk (radians). */
+	setChairSwivel(angle: number): void;
+	/** 0 the duvet lies flat .. 1 it covers someone lying in bed. */
+	setDuvet(cover: number): void;
 }
 
 function mat(color: string, extra: Partial<MeshStandardMaterial> = {}): MeshStandardMaterial {
@@ -236,7 +240,7 @@ export function buildRoom(physics: PhysicsWorld): Room {
 				z: bed.z - bed.depth / 2 + 0.3,
 				y: bed.height,
 				width: bed.width - 0.3,
-				height: 0.12,
+				height: 0.18,
 				depth: 0.35,
 			},
 			mat(PALETTE.pillow),
@@ -248,6 +252,20 @@ export function buildRoom(physics: PhysicsWorld): Room {
 			mat(PALETTE.bedFrame),
 		),
 	);
+	// The duvet: flat on the bed, raised over whoever lies in it (head on the pillow).
+	const lie = TARGETS.bed.lie;
+	const duvetStart = (lie?.z ?? bed.z) - 0.45;
+	const duvetEnd = bed.z + bed.depth / 2 - 0.02;
+	const duvet = new Mesh(
+		new BoxGeometry(bed.width - 0.04, 1, duvetEnd - duvetStart),
+		mat(PALETTE.blanket),
+	);
+	duvet.geometry.translate(0, 0.5, 0);
+	duvet.position.set(bed.x, bed.height, (duvetStart + duvetEnd) / 2);
+	duvet.castShadow = true;
+	duvet.receiveShadow = true;
+	duvet.visible = false;
+	group.add(duvet);
 	addStatic(physics, bed);
 
 	// Sofa: base, back rest, arm rests
@@ -327,18 +345,19 @@ export function buildRoom(physics: PhysicsWorld): Room {
 	// Desk chair: seat + back rest (back rest towards the camera, chair faces the desk)
 	const chair = FURNITURE.deskChair;
 	const chairMat = mat(PALETTE.chair);
-	group.add(box({ ...chair, y: chair.height - 0.06, height: 0.06 }, chairMat));
-	group.add(
-		box(
-			{ x: chair.x, z: chair.z, width: 0.08, height: chair.height - 0.06, depth: 0.08 },
-			chairMat,
-		),
-	);
-	group.add(
+	// A swivel chair: everything turns around the pole.
+	const swivel = new Group();
+	swivel.position.set(chair.x, 0, chair.z);
+	group.add(swivel);
+	// Parts are placed relative to the pole.
+	const seat = { ...chair, x: 0, z: 0 };
+	swivel.add(box({ ...seat, y: chair.height - 0.06, height: 0.06 }, chairMat));
+	swivel.add(box({ x: 0, z: 0, width: 0.08, height: chair.height - 0.06, depth: 0.08 }, chairMat));
+	swivel.add(
 		box(
 			{
-				x: chair.x,
-				z: chair.z + chair.depth / 2 - 0.03,
+				x: 0,
+				z: chair.depth / 2 - 0.03,
 				y: chair.height,
 				width: chair.width,
 				height: 0.45,
@@ -448,6 +467,15 @@ export function buildRoom(physics: PhysicsWorld): Room {
 		group,
 		setDoor(openness: number) {
 			doorHinge.rotation.y = -Math.min(1, Math.max(0, openness)) * 1.4;
+		},
+		setChairSwivel(angle: number) {
+			swivel.rotation.y = angle;
+		},
+		setDuvet(cover: number) {
+			const c = Math.min(1, Math.max(0, cover));
+			duvet.visible = c > 0.01;
+			// Thick enough to cover a body lying on the mattress.
+			duvet.scale.y = 0.02 + c * 0.26;
 		},
 		setTvGlow(intensity: number, hue: number) {
 			tvLight.intensity = intensity;
