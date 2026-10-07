@@ -30,6 +30,9 @@ describe('isSilent', () => {
 describe('cleanTranscript', () => {
 	it('drops Whisper non-speech tags and empty results', () => {
 		expect(cleanTranscript(' [BLANK_AUDIO] ')).toBe('');
+		expect(cleanTranscript('you')).toBe('');
+		expect(cleanTranscript('Thanks for watching!')).toBe('');
+		expect(cleanTranscript('you are funny')).toBe('you are funny');
 		expect(cleanTranscript('(music) ')).toBe('');
 		expect(cleanTranscript(' Hi there!  (laughs) ')).toBe('Hi there!');
 	});

@@ -134,7 +134,18 @@ an LLM may produce (speech, emotion, intensity, one `CharacterAction`, optional 
 the database, checks the per-player daily quota in `ai_usage`, asks the model, and runs
 `reviewAction` from the simulation) → `GameCanvas` shows the emotion, performs the reviewed
 action and speaks through `TextToSpeech` (browser `speechSynthesis` for now, #32 tracks the
-neural voice) with subtitles (`OFF | AUTO | ALWAYS`) and a mouth driven by word boundaries.
+neural voice; `pickVoice` prefers on-device voices, ranks them by likely quality and never
+uses joke voices such as macOS "Bubbles") with subtitles (`OFF | AUTO | ALWAYS`) and a mouth
+driven by word boundaries. The player's words are never dropped: said while the character is
+still talking, they are answered right after. Music from the radio is turned down meanwhile.
+
+**Sitting and lying (controller):** seats describe how to get on them (`seat.edge`, `seat.at`,
+`lie`, `seat.turnTo` in `room/layout.ts`). The character walks to the approach point, turns its
+back to the seat, shuffles to the edge and only then sits down; the pose blends over exactly the
+time the body takes to move (`Animator.setState(state, seconds)`), so it never sits in mid-air
+and slides. Into bed it sits on the edge first, then lies back with the head on the pillow and
+the duvet comes up over it. The desk chair swivels: approached from the side, then turned to the
+desk with the character on it. Getting up is the same path backwards.
 
 **Memory & relationship (Iteration 5):** `recordConversation` (database) is the single place
 where conversations leave traces - relationship events (`visit`, `conversation` with the

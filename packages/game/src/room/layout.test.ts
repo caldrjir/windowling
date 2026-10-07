@@ -18,7 +18,20 @@ describe('room layout', () => {
 
 	it('gives seats and beds a place to sit or lie', () => {
 		for (const id of ['sofa', 'desk.chair', 'bed'] as const) {
-			expect(TARGETS[id].use, id).toBeDefined();
+			expect(TARGETS[id].seat, id).toBeDefined();
+		}
+		expect(TARGETS.bed.lie).toBeDefined();
+	});
+
+	it('turns the back to a seat before sitting down on it', () => {
+		for (const id of ['sofa', 'desk.chair', 'bed'] as const) {
+			const { approach, approachYaw, seat } = TARGETS[id];
+			if (!seat) throw new Error(id);
+			expect(approachYaw, id).toBeCloseTo(seat.at.yaw, 6);
+			// Backing up from the approach towards the seat: the seat is behind the character.
+			const back = { x: -Math.sin(approachYaw), z: -Math.cos(approachYaw) };
+			const towards = { x: seat.at.x - approach.x, z: seat.at.z - approach.z };
+			expect(back.x * towards.x + back.z * towards.z, id).toBeGreaterThan(0.3);
 		}
 	});
 

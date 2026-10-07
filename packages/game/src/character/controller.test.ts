@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TARGETS } from '../room/layout.ts';
+import { FURNITURE, insideBox, TARGETS } from '../room/layout.ts';
 import { CharacterController, type ControllerEvent } from './controller.ts';
 import { wrapAngle } from './math.ts';
 
@@ -32,7 +32,7 @@ describe('CharacterController', () => {
 		c.perform({ type: 'sit', target: 'sofa' });
 		run(c, 10);
 		const s = c.snapshot();
-		const use = TARGETS.sofa.use!;
+		const use = TARGETS.sofa.seat!.at;
 		expect(s).toMatchObject({ posture: 'sitting', occupying: 'sofa', animation: 'sit' });
 		expect(s.y).toBeCloseTo(use.y, 3);
 		expect(s.x).toBeCloseTo(use.x, 3);
@@ -62,6 +62,99 @@ describe('CharacterController', () => {
 		c.perform({ type: 'sleep', target: 'bed' });
 		run(c, 12);
 		expect(c.snapshot()).toMatchObject({ posture: 'lying', occupying: 'bed', animation: 'lie' });
+	});
+
+	it('only starts sitting down once it stands at the seat, back turned', () => {
+		for (const [target, box] of [
+			['sofa', FURNITURE.sofa],
+			['desk.chair', FURNITURE.deskChair],
+			['bed', FURNITURE.bed],
+		] as const) {
+			const c = new CharacterController();
+			c.perform({ type: 'sit', target });
+			const seat = TARGETS[target].seat!;
+			let started = false;
+			for (let i = 0; i < 60 * 15; i++) {
+				c.update(1 / 60);
+				const s = c.snapshot();
+				const sitting = c.animator.weight('sit');
+				if (!started && sitting > 0.02) {
+					started = true;
+					// Lowering begins at the edge, facing away from the seat - not mid-room.
+					expect(Math.hypot(s.x - seat.edge.x, s.z - seat.edge.z), target).toBeLessThan(0.05);
+					expect(Math.abs(wrapAngle(s.yaw - seat.at.yaw)), target).toBeLessThan(0.05);
+				}
+				// Standing up straight, its feet never go into the furniture.
+				if (sitting < 0.02) expect(insideBox(s, box, -0.02), target).toBe(false);
+				// The body goes down as fast as it moves onto the seat (no sliding while seated).
+				if (started && s.posture === 'standing') {
+					const toSeat = Math.hypot(seat.at.x - seat.edge.x, seat.at.z - seat.edge.z);
+					const travelled = Math.hypot(s.x - seat.edge.x, s.z - seat.edge.z) / toSeat;
+					expect(Math.abs(travelled - sitting), target).toBeLessThan(0.1);
+				}
+			}
+			expect(started, target).toBe(true);
+			expect(c.snapshot().posture, target).toBe('sitting');
+		}
+	});
+
+	it('gets into bed by sitting on the edge, then lies back with the head on the pillow', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'sleep', target: 'bed' });
+		const { seat, lie } = TARGETS.bed;
+		let satOnEdge = false;
+		for (let i = 0; i < 60 * 15; i++) {
+			c.update(1 / 60);
+			const s = c.snapshot();
+			if (s.posture === 'sitting' && Math.abs(s.x - seat!.at.x) < 1e-6) satOnEdge = true;
+		}
+		expect(satOnEdge).toBe(true);
+		const s = c.snapshot();
+		expect(s).toMatchObject({ posture: 'lying', occupying: 'bed' });
+		expect(s.x).toBeCloseTo(lie!.x, 3);
+		expect(s.z).toBeCloseTo(lie!.z, 3);
+		expect(s.y).toBeCloseTo(lie!.y, 3);
+		expect(wrapAngle(s.yaw - lie!.yaw)).toBeCloseTo(0, 3);
+		// And out again the same way: sit up, stand at the edge, step away.
+		c.perform({ type: 'walkTo', target: 'room.center' });
+		run(c, 1.6); // sat up (1.2 s), now getting up from the edge
+		expect(c.snapshot()).toMatchObject({ posture: 'sitting', occupying: 'bed' });
+		run(c, 15);
+		expect(c.snapshot()).toMatchObject({ posture: 'standing', occupying: null, y: 0 });
+	});
+
+	it('reads in bed sitting on its edge, and lies down from there without getting up', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'read', target: 'bed' });
+		run(c, 12);
+		expect(c.snapshot()).toMatchObject({ posture: 'sitting', occupying: 'bed' });
+		c.perform({ type: 'sleep', target: 'bed' });
+		let stood = false;
+		for (let i = 0; i < 60 * 5; i++) {
+			c.update(1 / 60);
+			if (c.snapshot().posture === 'standing') stood = true;
+		}
+		expect(stood).toBe(false);
+		expect(c.snapshot().posture).toBe('lying');
+	});
+
+	it('turns the swivel chair to the desk with the character on it, and back', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'work', target: 'desk.chair' });
+		let receiving = 0;
+		for (let i = 0; i < 60 * 15; i++) {
+			c.update(1 / 60);
+			const s = c.snapshot();
+			if (s.posture === 'standing' && c.animator.weight('sit') > 0.5) receiving = s.swivel;
+		}
+		const turned = wrapAngle(TARGETS['desk.chair'].seat!.at.yaw - Math.PI);
+		expect(receiving).toBeCloseTo(turned, 2);
+		const seated = c.snapshot();
+		expect(wrapAngle(seated.yaw - Math.PI)).toBeCloseTo(0, 3);
+		expect(seated.swivel).toBeCloseTo(0, 3);
+		c.perform({ type: 'walkTo', target: 'room.center' });
+		run(c, 15);
+		expect(c.snapshot().swivel).toBeCloseTo(0, 3);
 	});
 
 	it('finishes sitting down before switching to a new action', () => {

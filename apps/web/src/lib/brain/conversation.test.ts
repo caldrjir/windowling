@@ -31,10 +31,14 @@ describe('Conversation', () => {
 		expect(c.recent).toHaveLength(3);
 	});
 
-	it('never answers two things at once', async () => {
-		let release: () => void = () => {};
+	it('never answers two things at once, but never drops what the player said', async () => {
+		const releases: Array<() => void> = [];
+		const asked: Array<string | undefined> = [];
 		const brain: Brain = {
-			decide: () => new Promise((resolve) => (release = () => resolve(reply('ok')))),
+			decide: (request) => {
+				asked.push(request.playerUtterance);
+				return new Promise((resolve) => releases.push(() => resolve(reply('ok'))));
+			},
 		};
 		const c = new Conversation({
 			brain,
@@ -42,8 +46,16 @@ describe('Conversation', () => {
 			onDecision: async () => {},
 		});
 		const first = c.handle('player_at_window');
-		expect(await c.handle('player_said', 'hello?')).toBe(false);
-		release();
-		expect(await first).toBe(true);
+		// Other events are skipped while it is busy...
+		expect(await c.handle('player_silent')).toBe(false);
+		// ...but the player's words wait for their turn (the latest of them).
+		expect(await c.handle('player_said', 'hello?')).toBe(true);
+		expect(await c.handle('player_said', 'are you there?')).toBe(true);
+		expect(asked).toEqual([undefined]);
+		releases[0]?.();
+		await first;
+		await new Promise((r) => setTimeout(r, 0));
+		expect(asked).toEqual([undefined, 'are you there?']);
+		releases[1]?.();
 	});
 });

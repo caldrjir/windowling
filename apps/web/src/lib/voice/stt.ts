@@ -92,5 +92,7 @@ export function cleanTranscript(text: string): string {
 		.replace(/\s+/g, ' ')
 		.trim();
 	if (!/[a-z0-9]/i.test(cleaned)) return '';
+	// Its favourite things to "hear" in noise.
+	if (/^(you|thanks for watching|thank you for watching)[.!]*$/i.test(cleaned)) return '';
 	return cleaned.slice(0, 300);
 }

@@ -219,7 +219,8 @@ export class CharacterRig {
 		}
 
 		// Relaxed lean back while seated reads as "sitting" even from the front.
-		this.chest.rotation.x = -0.18 * sit + pose.slump;
+		// Lying: the head and shoulders rest propped up on the pillow.
+		this.chest.rotation.x = -0.18 * sit + pose.slump + 0.3 * pose.lie;
 		this.body.rotation.z = pose.sway;
 		this.chest.scale.set(1 + pose.breath * 0.015, 1, 1 + pose.breath * 0.025);
 		this.head.rotation.y = pose.headYaw;

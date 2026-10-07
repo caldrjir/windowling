@@ -472,6 +472,10 @@
 		if (shouldPlay && !radio.playing) radio.start();
 		if (!shouldPlay && radio.playing) radio.stop();
 	});
+	// It turns the music down to talk to you.
+	$effect(() => {
+		radio.duck(listening || line !== null);
+	});
 	$effect(() => () => radio.stop());
 
 	/** Browsers only allow sound after a gesture: the first tap or key unlocks it. */
@@ -546,6 +550,7 @@
 	{characterName}
 	onUtterance={(text) => speakToCharacter?.(text)}
 	onActivity={() => watcher?.spoke()}
+	onListening={() => voice?.cancel()}
 />
 
 <Subtitles

@@ -21,13 +21,33 @@ export interface Box {
 	depth: number;
 }
 
+/** A place for the character's root, facing `yaw`, at height `y`. */
+export interface Spot {
+	x: number;
+	z: number;
+	y: number;
+	yaw: number;
+}
+
 export interface TargetPlacement {
 	/** Where the character stands before using the target. */
 	approach: Vec2;
 	/** Yaw (radians) the character faces at the approach point. 0 = facing +z. */
 	approachYaw: number;
-	/** Where the character's root goes while using it (sitting / lying). */
-	use?: { x: number; z: number; y: number; yaw: number };
+	/**
+	 * Seats (and beds): back turned, it steps from `approach` to `edge` and only
+	 * then sits down onto `at` - like a person, not lowering itself mid-air.
+	 */
+	seat?: {
+		/** Standing right in front of the seat, feet where they will stay. */
+		edge: Vec2;
+		/** Where the root goes while seated. */
+		at: Spot;
+		/** A swivel chair: once seated, it turns (with the chair) to face this way. */
+		turnTo?: number;
+	};
+	/** Beds: from the seat on the edge, it lies back to here (head on the pillow). */
+	lie?: Spot;
 }
 
 export const FURNITURE = {
@@ -51,6 +71,8 @@ export const OUTSIDE: Vec2 = { x: -ROOM.width / 2 - 0.7, z: DOOR.z };
 export const BACK_WINDOW = { x: -0.1, y: 1.65, width: 1.5, height: 1.0 } as const;
 
 const SEAT_DEPTH_OFFSET = 0.15;
+/** How far in front of a seat the feet are once seated (thigh length). */
+const THIGH_REACH = 0.42;
 
 export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 	'room.center': { approach: { x: 0, z: 0.3 }, approachYaw: 0 },
@@ -59,30 +81,54 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 	sofa: {
 		approach: { x: FURNITURE.sofa.x, z: FURNITURE.sofa.z + 1.0 },
 		approachYaw: 0,
-		use: {
-			x: FURNITURE.sofa.x,
-			z: FURNITURE.sofa.z + SEAT_DEPTH_OFFSET,
-			y: FURNITURE.sofa.height,
-			yaw: 0,
+		seat: {
+			edge: { x: FURNITURE.sofa.x, z: FURNITURE.sofa.z + FURNITURE.sofa.depth / 2 + 0.12 },
+			at: {
+				x: FURNITURE.sofa.x,
+				z: FURNITURE.sofa.z + SEAT_DEPTH_OFFSET,
+				y: FURNITURE.sofa.height,
+				yaw: 0,
+			},
 		},
 	},
+	// The desk chair is a swivel chair with its back to the room: it is reached from
+	// the side, sat on sideways, then turned to the desk (chair and all).
 	'desk.chair': {
-		approach: { x: FURNITURE.deskChair.x, z: FURNITURE.deskChair.z + 0.75 },
-		approachYaw: Math.PI,
-		use: {
-			x: FURNITURE.deskChair.x,
-			z: FURNITURE.deskChair.z,
-			y: FURNITURE.deskChair.height,
-			yaw: Math.PI,
+		approach: { x: FURNITURE.deskChair.x - 0.75, z: FURNITURE.deskChair.z },
+		approachYaw: -Math.PI / 2,
+		seat: {
+			edge: { x: FURNITURE.deskChair.x - THIGH_REACH, z: FURNITURE.deskChair.z },
+			at: {
+				x: FURNITURE.deskChair.x,
+				z: FURNITURE.deskChair.z,
+				y: FURNITURE.deskChair.height,
+				yaw: -Math.PI / 2,
+			},
+			turnTo: Math.PI,
 		},
 	},
+	// Into bed like a person: sit on the edge, then swing the legs up and lie back.
 	bed: {
 		approach: { x: FURNITURE.bed.x + FURNITURE.bed.width / 2 + 0.45, z: FURNITURE.bed.z + 0.3 },
-		approachYaw: -Math.PI / 2,
-		use: {
+		approachYaw: Math.PI / 2,
+		seat: {
+			edge: {
+				x: FURNITURE.bed.x + FURNITURE.bed.width / 2 - 0.25 + THIGH_REACH,
+				z: FURNITURE.bed.z + 0.3,
+			},
+			at: {
+				x: FURNITURE.bed.x + FURNITURE.bed.width / 2 - 0.25,
+				z: FURNITURE.bed.z + 0.3,
+				y: FURNITURE.bed.height,
+				yaw: Math.PI / 2,
+			},
+		},
+		lie: {
 			x: FURNITURE.bed.x,
-			z: FURNITURE.bed.z + 0.2,
-			y: FURNITURE.bed.height,
+			// Head on the pillow (towards the back wall), feet towards the foot end.
+			z: FURNITURE.bed.z + 0.08,
+			// On the mattress (sinking in a little), not in it.
+			y: FURNITURE.bed.height + 0.1,
 			yaw: 0,
 		},
 	},

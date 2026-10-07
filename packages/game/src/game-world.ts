@@ -252,6 +252,10 @@ export class GameWorld {
 		// Out of the flat: nobody to see. The door shows the coming and going.
 		this.rig.root.visible = !snapshot.away;
 		this.room.setDoor(snapshot.door);
+		this.room.setChairSwivel(snapshot.swivel);
+		// The duvet comes up over the second half of lying down (and goes as it sits up).
+		const lying = snapshot.occupying === 'bed' ? this.character.animator.weight('lie') : 0;
+		this.room.setDuvet(Math.max(0, lying * 2 - 1));
 		this.updateTv(snapshot.activity === 'tv', now);
 		for (const event of events) for (const listener of this.listeners) listener(event);
 
