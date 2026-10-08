@@ -23,6 +23,9 @@ charcoal textiles, black steel, terracotta, muted greens - with personal clutter
   identical on every device.
 - **Real light.** ACES tone mapping, an environment map for reflections (`RoomEnvironment`),
   daylight through the window, warm lamps at night.
+- **Fast on weak devices too.** Detail costs frame time: prefer standard PBR to clear coat and
+  sheen, reflections only on metal. `AdaptiveResolution` drops the pixel ratio when frames get
+  slow (never below 0.75) instead of letting the room stutter.
 - **Lived in.** Every surface carries a sign of use: a mug, a notebook, a plant.
 - **Footprints stay the truth.** Models are visual; walking, sitting and physics use the
   footprints and seats in `room/layout.ts`. A model must fit its footprint (tested).

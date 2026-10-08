@@ -24,6 +24,7 @@ import {
 } from './character/controller.ts';
 import type { Emotion, MomentAnimation } from './character/animation.ts';
 import { CharacterRig } from './character/rig.ts';
+import { AdaptiveResolution } from './adaptive-resolution.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import {
 	initPhysics,
@@ -61,6 +62,7 @@ const TIME_OF_DAY_REFRESH_MS = 30_000;
 export class GameWorld {
 	private readonly renderer: WebGLRenderer;
 	private readonly environment: Texture;
+	private readonly resolution: AdaptiveResolution;
 	private readonly scene = new Scene();
 	private readonly camera = new PerspectiveCamera(40, 1, 0.1, 100);
 	private readonly physics: PhysicsWorld;
@@ -95,7 +97,10 @@ export class GameWorld {
 	) {
 		this.now = options.now ?? (() => new Date());
 		this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2));
+		this.resolution = new AdaptiveResolution(
+			Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2),
+		);
+		this.renderer.setPixelRatio(this.resolution.ratio);
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.shadowMap.enabled = true;
@@ -257,6 +262,12 @@ export class GameWorld {
 	private readonly tick = (now: number): void => {
 		if (this._status !== 'running') return;
 		const frameSeconds = (now - this.lastTime) / 1000;
+		// A device that can't keep up draws fewer pixels rather than a choppy room.
+		const ratio = this.resolution.update(frameSeconds);
+		if (ratio !== null) {
+			this.renderer.setPixelRatio(ratio);
+			this.resize();
+		}
 		const { steps, alpha } = this.accumulator.advance(frameSeconds);
 		this.lastTime = now;
 
