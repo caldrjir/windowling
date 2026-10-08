@@ -1,7 +1,8 @@
 # CLAUDE.md
 
 Guidance for Claude Code (and humans) working in this repository.
-Read `docs/product.md` and `docs/architecture.md` before larger changes.
+Read `docs/product.md` and `docs/architecture.md` before larger changes, and
+`docs/art-direction.md` before modelling anything visible.
 
 ## What this is
 

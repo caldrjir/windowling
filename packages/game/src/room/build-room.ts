@@ -15,9 +15,12 @@ import {
 	ExtrudeGeometry,
 	SphereGeometry,
 	type Material,
+	type Texture,
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
 import { BACK_WINDOW, DOOR, FURNITURE, ROOM, TARGETS, type Box } from './layout.ts';
+import { buildDesk } from './furniture/desk.ts';
+import { buildOfficeChair } from './furniture/office-chair.ts';
 import { daylight, skyColor } from './sky.ts';
 
 const PALETTE = {
@@ -30,10 +33,6 @@ const PALETTE = {
 	pillow: '#efe6d8',
 	sofa: '#4f6d7a',
 	cushion: '#5d7f8d',
-	desk: '#b08968',
-	chair: '#3d405b',
-	laptop: '#2b2d35',
-	screen: '#9cc3ff',
 	lampPole: '#2f2f33',
 	lampShade: '#ffe2b8',
 	windowFrame: '#f1ece4',
@@ -81,8 +80,11 @@ function addStatic(physics: PhysicsWorld, b: Box): void {
 	);
 }
 
-/** Builds the starter flat (meshes + static colliders). No game logic. */
-export function buildRoom(physics: PhysicsWorld): Room {
+/**
+ * Builds the starter flat (meshes + static colliders). No game logic.
+ * `reflections` is an environment map for metal parts (none in tests).
+ */
+export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = null): Room {
 	const group = new Group();
 	group.name = 'room';
 	const { width, depth, height } = ROOM;
@@ -307,65 +309,16 @@ export function buildRoom(physics: PhysicsWorld): Room {
 	);
 	addStatic(physics, sofa);
 
-	// Desk with laptop
+	// Desk: oak top on a steel frame, with a laptop, coffee, a plant and a notebook.
 	const desk = FURNITURE.desk;
-	const deskMat = mat(PALETTE.desk, { roughness: 0.6 });
-	group.add(box({ ...desk, y: desk.height - 0.05, height: 0.05 }, deskMat));
-	for (const sx of [-1, 1]) {
-		for (const sz of [-1, 1]) {
-			group.add(
-				box(
-					{
-						x: desk.x + sx * (desk.width / 2 - 0.05),
-						z: desk.z + sz * (desk.depth / 2 - 0.05),
-						width: 0.05,
-						height: desk.height - 0.05,
-						depth: 0.05,
-					},
-					deskMat,
-				),
-			);
-		}
-	}
-	group.add(
-		box(
-			{ x: desk.x, z: desk.z + 0.05, y: desk.height, width: 0.36, height: 0.02, depth: 0.25 },
-			mat(PALETTE.laptop),
-		),
-	);
-	const screen = new Mesh(
-		new BoxGeometry(0.36, 0.24, 0.015),
-		mat(PALETTE.laptop, { emissive: new Color(PALETTE.screen), emissiveIntensity: 0.6 }),
-	);
-	screen.position.set(desk.x, desk.height + 0.13, desk.z - 0.08);
-	screen.rotation.x = -0.25;
-	group.add(screen);
+	group.add(buildDesk(desk, reflections));
 	addStatic(physics, desk);
 
-	// Desk chair: seat + back rest (back rest towards the camera, chair faces the desk)
+	// Desk chair: an office chair whose top half swivels (back rest towards the camera at rest).
 	const chair = FURNITURE.deskChair;
-	const chairMat = mat(PALETTE.chair);
-	// A swivel chair: everything turns around the pole.
-	const swivel = new Group();
-	swivel.position.set(chair.x, 0, chair.z);
-	group.add(swivel);
-	// Parts are placed relative to the pole.
-	const seat = { ...chair, x: 0, z: 0 };
-	swivel.add(box({ ...seat, y: chair.height - 0.06, height: 0.06 }, chairMat));
-	swivel.add(box({ x: 0, z: 0, width: 0.08, height: chair.height - 0.06, depth: 0.08 }, chairMat));
-	swivel.add(
-		box(
-			{
-				x: 0,
-				z: chair.depth / 2 - 0.03,
-				y: chair.height,
-				width: chair.width,
-				height: 0.45,
-				depth: 0.05,
-			},
-			chairMat,
-		),
-	);
+	const officeChair = buildOfficeChair(chair, reflections);
+	group.add(officeChair.group);
+	const swivel = officeChair.swivel;
 	addStatic(physics, chair);
 
 	// Kitchenette: fridge + counter with a fruit bowl
