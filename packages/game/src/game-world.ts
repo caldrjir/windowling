@@ -1,3 +1,4 @@
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import {
 	ACESFilmicToneMapping,
 	Color,
@@ -12,6 +13,8 @@ import {
 	SRGBColorSpace,
 	Vector3,
 	WebGLRenderer,
+	PMREMGenerator,
+	Texture,
 } from 'three';
 import type { CharacterAction } from '@windowling/shared';
 import {
@@ -21,6 +24,7 @@ import {
 } from './character/controller.ts';
 import type { Emotion, MomentAnimation } from './character/animation.ts';
 import { CharacterRig } from './character/rig.ts';
+import { AdaptiveResolution } from './adaptive-resolution.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import {
 	initPhysics,
@@ -57,6 +61,8 @@ const TIME_OF_DAY_REFRESH_MS = 30_000;
  */
 export class GameWorld {
 	private readonly renderer: WebGLRenderer;
+	private readonly environment: Texture;
+	private readonly resolution: AdaptiveResolution;
 	private readonly scene = new Scene();
 	private readonly camera = new PerspectiveCamera(40, 1, 0.1, 100);
 	private readonly physics: PhysicsWorld;
@@ -91,18 +97,25 @@ export class GameWorld {
 	) {
 		this.now = options.now ?? (() => new Date());
 		this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2));
+		this.resolution = new AdaptiveResolution(
+			Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2),
+		);
+		this.renderer.setPixelRatio(this.resolution.ratio);
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = PCFShadowMap;
 
 		this.scene.background = new Color('#14151f');
+		// Soft reflections of a generic room for the metal parts (see room/materials.ts).
+		const pmrem = new PMREMGenerator(this.renderer);
+		this.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+		pmrem.dispose();
 
 		this.physics = PhysicsWorld.create();
 		this.physics.setTimestep(PHYSICS_STEP);
 
-		this.room = buildRoom(this.physics);
+		this.room = buildRoom(this.physics, this.environment);
 		this.scene.add(this.room.group);
 		this.addLooseThings();
 		this.scene.add(this.rig.root);
@@ -230,18 +243,31 @@ export class GameWorld {
 			if (object instanceof Mesh) {
 				object.geometry.dispose();
 				const materials = Array.isArray(object.material) ? object.material : [object.material];
-				for (const material of materials) material.dispose();
+				for (const material of materials) {
+					// Procedural textures (wood grain, fabric) belong to their materials.
+					for (const value of Object.values(material)) {
+						if (value instanceof Texture) value.dispose();
+					}
+					material.dispose();
+				}
 			}
 		});
 		this.listeners.clear();
 		this.rig.dispose();
 		this.physics.dispose();
+		this.environment.dispose();
 		this.renderer.dispose();
 	}
 
 	private readonly tick = (now: number): void => {
 		if (this._status !== 'running') return;
 		const frameSeconds = (now - this.lastTime) / 1000;
+		// A device that can't keep up draws fewer pixels rather than a choppy room.
+		const ratio = this.resolution.update(frameSeconds);
+		if (ratio !== null) {
+			this.renderer.setPixelRatio(ratio);
+			this.resize();
+		}
 		const { steps, alpha } = this.accumulator.advance(frameSeconds);
 		this.lastTime = now;
 
