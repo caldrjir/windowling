@@ -448,6 +448,9 @@ export class CharacterController {
 				const from = (step.from ??= { x: this.x, z: this.z, y: this.y, yaw: this.yaw });
 				// The pose blends over exactly the time the body takes to get there.
 				this.animator.setState(step.state, step.seconds);
+				this.animator.setRecline(
+					step.state === 'sit' ? (TARGETS[step.seat as SeatId].seat?.recline ?? 0) : 0,
+				);
 				step.elapsed += dt;
 				const t = Math.min(1, step.elapsed / step.seconds);
 				this.x = from.x + (step.to.x - from.x) * t;

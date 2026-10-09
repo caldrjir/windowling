@@ -1,4 +1,5 @@
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import type { Object3D } from 'three';
 import {
 	ACESFilmicToneMapping,
 	Color,
@@ -9,7 +10,6 @@ import {
 	Quaternion,
 	Scene,
 	SphereGeometry,
-	BoxGeometry,
 	SRGBColorSpace,
 	Vector3,
 	WebGLRenderer,
@@ -33,6 +33,7 @@ import {
 	type BodyTransform,
 	type Vec3,
 } from './physics.ts';
+import { buildBook, buildMug, buildThrowPillow } from './room/furniture/props.ts';
 import { buildRoom, type Room } from './room/build-room.ts';
 import { frameRoom } from './room/framing.ts';
 
@@ -47,7 +48,7 @@ export interface GameWorldOptions {
 
 interface PhysicsMesh {
 	handle: BodyHandle;
-	mesh: Mesh;
+	mesh: Object3D;
 	previous: BodyTransform;
 	current: BodyTransform;
 }
@@ -388,55 +389,54 @@ export class GameWorld {
 				new MeshStandardMaterial({ color: '#e07a5f', roughness: 0.5 }),
 			),
 		);
-		const boxes: Array<{ size: Vec3; at: Vec3; color: string; density: number }> = [
-			// Two books on the floor by the bed
+		const things: Array<{ size: Vec3; at: Vec3; density: number; model: Object3D }> = [
+			// Two books on the floor by the bed.
 			{
 				size: { x: 0.22, y: 0.04, z: 0.3 },
 				at: { x: -1.25, y: 0.05, z: 0.9 },
-				color: '#8d5a97',
 				density: 0.8,
+				model: buildBook({ x: 0.22, y: 0.04, z: 0.3 }, '#6b4a7a'),
 			},
 			{
 				size: { x: 0.2, y: 0.05, z: 0.27 },
 				at: { x: -1.2, y: 0.12, z: 0.88 },
-				color: '#2a9d8f',
 				density: 0.8,
+				model: buildBook({ x: 0.2, y: 0.05, z: 0.27 }, '#2f6f68'),
 			},
-			// A cushion on the bed
+			// A throw pillow on the free side of the bed.
 			{
-				size: { x: 0.45, y: 0.12, z: 0.35 },
-				at: { x: -2.2, y: 0.65, z: -0.4 },
-				color: '#e9c46a',
+				size: { x: 0.42, y: 0.13, z: 0.34 },
+				at: { x: -2.55, y: 0.75, z: -0.45 },
 				density: 0.15,
+				model: buildThrowPillow({ x: 0.42, y: 0.13, z: 0.34 }, '#c9a66b'),
 			},
-			// A mug on the desk
+			// The coffee mug on the desk.
 			{
 				size: { x: 0.08, y: 0.1, z: 0.08 },
-				at: { x: 2.4, y: 0.82, z: -1.8 },
-				color: '#f1faee',
+				at: { x: 2.4, y: 0.82, z: -1.76 },
 				density: 0.6,
+				model: buildMug(),
 			},
 		];
-		for (const box of boxes) {
+		for (const thing of things) {
 			this.track(
 				this.physics.addDynamicBox(
-					{ x: box.size.x / 2, y: box.size.y / 2, z: box.size.z / 2 },
-					box.at,
+					{ x: thing.size.x / 2, y: thing.size.y / 2, z: thing.size.z / 2 },
+					thing.at,
 					undefined,
-					{ density: box.density },
+					{ density: thing.density },
 				),
-				new Mesh(
-					new BoxGeometry(box.size.x, box.size.y, box.size.z),
-					new MeshStandardMaterial({ color: box.color, roughness: 0.7 }),
-				),
+				thing.model,
 			);
 		}
 		this.syncMeshes(1);
 	}
 
-	private track(handle: BodyHandle, mesh: Mesh): void {
-		mesh.castShadow = true;
-		mesh.receiveShadow = true;
+	private track(handle: BodyHandle, mesh: Object3D): void {
+		mesh.traverse((part) => {
+			part.castShadow = true;
+			part.receiveShadow = true;
+		});
 		this.scene.add(mesh);
 		const transform = this.physics.getTransform(handle);
 		if (!transform) throw new Error('physics body was not created');

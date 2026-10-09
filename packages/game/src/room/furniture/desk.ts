@@ -9,7 +9,6 @@ import {
 	MeshStandardMaterial,
 	SphereGeometry,
 	SRGBColorSpace,
-	TorusGeometry,
 	Vector2,
 	type BufferGeometry,
 	type Material,
@@ -100,35 +99,6 @@ function laptop(reflections: Texture | null): Group {
 	return g;
 }
 
-function mug(): Group {
-	const g = new Group();
-	const profile = [
-		new Vector2(0, 0),
-		new Vector2(0.037, 0),
-		new Vector2(0.04, 0.005),
-		new Vector2(0.041, 0.095),
-		new Vector2(0.037, 0.095),
-		new Vector2(0.036, 0.008),
-		new Vector2(0, 0.008),
-	];
-	const glaze = ceramic('#eae4da');
-	g.add(part(new LatheGeometry(profile, 28), glaze));
-	const handle = part(new TorusGeometry(0.024, 0.006, 8, 16, Math.PI), glaze, 0.04, 0.05, 0);
-	handle.rotation.z = -Math.PI / 2;
-	g.add(handle);
-	// Coffee, a little below the rim.
-	g.add(
-		part(
-			new CylinderGeometry(0.036, 0.036, 0.002, 24),
-			new MeshStandardMaterial({ color: '#3b2416', roughness: 0.15 }),
-			0,
-			0.08,
-			0,
-		),
-	);
-	return g;
-}
-
 function plant(): Group {
 	const g = new Group();
 	const pot = [
@@ -199,7 +169,8 @@ function notebook(): Group {
 /**
  * A Scandinavian work desk: solid oak top on a slim black steel frame, a
  * shallow drawer, and the things that live on it - laptop, coffee, a plant,
- * a notebook. Built around the desk's footprint (`box`); the front faces +z.
+ * a notebook (the coffee mug is a loose prop, see
+ * `props.ts`). Built around the desk's footprint (`box`); the front faces +z.
  */
 export function buildDesk(box: Box, reflections: Texture | null = null): Group {
 	const g = new Group();
@@ -241,10 +212,6 @@ export function buildDesk(box: Box, reflections: Texture | null = null): Group {
 	const pc = laptop(reflections);
 	pc.position.set(0, surface, 0.04);
 	g.add(pc);
-	const coffee = mug();
-	coffee.position.set(0.32, surface, 0.12);
-	coffee.rotation.y = -0.7;
-	g.add(coffee);
 	const green = plant();
 	green.position.set(-w / 2 + 0.12, surface, -d / 2 + 0.13);
 	g.add(green);
