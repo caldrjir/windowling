@@ -147,6 +147,9 @@ export class Animator {
 	private activityTarget: ActivityAnimation = 'none';
 	/** 0..1, how the character feels; shows in posture and pace. */
 	private _mood = 0.6;
+	/** Leaning back into the seat (radians), e.g. deep into a sofa. */
+	private recline = 0;
+	private reclineTarget = 0;
 	private speaking = false;
 	private mouthOpen = 0;
 	private syllable = 0;
@@ -234,6 +237,11 @@ export class Animator {
 		return this._mood;
 	}
 
+	/** How far to lean back while seated - the seat decides (sofa vs. chair). */
+	setRecline(radians: number): void {
+		this.reclineTarget = radians;
+	}
+
 	setMood(mood: number): void {
 		this._mood = Math.min(1, Math.max(0, mood));
 	}
@@ -251,6 +259,7 @@ export class Animator {
 				dt * this.fadePerSecond,
 			);
 		}
+		this.recline = approach(this.recline, this.reclineTarget, dt * 0.6);
 		this.startleLeft = Math.max(0, this.startleLeft - dt);
 		if (this.startleLeft === 0) this.startleStrength = Math.max(0, this.startleStrength - dt * 2);
 		this.emotionLeft = Math.max(0, this.emotionLeft - dt);
@@ -372,7 +381,9 @@ export class Animator {
 				nod -
 				gape * 0.3 -
 				cheer * 0.2 +
-				dance * beat * 0.1,
+				dance * beat * 0.1 +
+				// Leaning back, it keeps looking ahead, not at the ceiling.
+				this.recline * w.sit * 0.8,
 			armForward:
 				eat * 0.7 +
 				work * 0.75 +
@@ -407,7 +418,8 @@ export class Animator {
 					squat * 0.35 +
 					doze * 0.3 +
 					rage * 0.15) *
-				(1 - w.lie),
+					(1 - w.lie) -
+				this.recline * w.sit,
 			bowl: eat,
 			handheld: play,
 			broom: clean,

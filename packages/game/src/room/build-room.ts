@@ -19,8 +19,10 @@ import {
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
 import { BACK_WINDOW, DOOR, FURNITURE, ROOM, TARGETS, type Box } from './layout.ts';
+import { buildBed } from './furniture/bed.ts';
 import { buildDesk } from './furniture/desk.ts';
 import { buildOfficeChair } from './furniture/office-chair.ts';
+import { buildSofa } from './furniture/sofa.ts';
 import { daylight, skyColor } from './sky.ts';
 
 const PALETTE = {
@@ -28,11 +30,6 @@ const PALETTE = {
 	backWall: '#d8c8b2',
 	sideWall: '#cbb9a2',
 	rug: '#5f7397',
-	bedFrame: '#6d4c3d',
-	blanket: '#7c9a8a',
-	pillow: '#efe6d8',
-	sofa: '#4f6d7a',
-	cushion: '#5d7f8d',
 	lampPole: '#2f2f33',
 	lampShade: '#ffe2b8',
 	windowFrame: '#f1ece4',
@@ -226,87 +223,16 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	rug.receiveShadow = true;
 	group.add(rug);
 
-	// Bed: frame, mattress/blanket, pillow (head towards the back wall)
+	// Bed (oak frame, upholstered headboard, linen, a duvet that covers the sleeper) and nightstand.
 	const bed = FURNITURE.bed;
-	group.add(box({ ...bed, height: 0.3 }, mat(PALETTE.bedFrame)));
-	group.add(
-		box(
-			{ ...bed, width: bed.width - 0.08, depth: bed.depth - 0.08, height: 0.2, y: 0.3 },
-			mat(PALETTE.blanket),
-		),
-	);
-	group.add(
-		box(
-			{
-				x: bed.x,
-				z: bed.z - bed.depth / 2 + 0.3,
-				y: bed.height,
-				width: bed.width - 0.3,
-				height: 0.18,
-				depth: 0.35,
-			},
-			mat(PALETTE.pillow),
-		),
-	);
-	group.add(
-		box(
-			{ x: bed.x, z: bed.z - bed.depth / 2 + 0.04, width: bed.width, height: 0.9, depth: 0.08 },
-			mat(PALETTE.bedFrame),
-		),
-	);
-	// The duvet: flat on the bed, raised over whoever lies in it (head on the pillow).
-	const lie = TARGETS.bed.lie;
-	const duvetStart = (lie?.z ?? bed.z) - 0.45;
-	const duvetEnd = bed.z + bed.depth / 2 - 0.02;
-	const duvet = new Mesh(
-		new BoxGeometry(bed.width - 0.04, 1, duvetEnd - duvetStart),
-		mat(PALETTE.blanket),
-	);
-	duvet.geometry.translate(0, 0.5, 0);
-	duvet.position.set(bed.x, bed.height, (duvetStart + duvetEnd) / 2);
-	duvet.castShadow = true;
-	duvet.receiveShadow = true;
-	duvet.visible = false;
-	group.add(duvet);
+	const realBed = buildBed(bed, TARGETS.bed.lie, FURNITURE.nightstand);
+	group.add(realBed.group);
 	addStatic(physics, bed);
+	addStatic(physics, FURNITURE.nightstand);
 
-	// Sofa: base, back rest, arm rests
+	// Sofa: oak legs, deep cushions, a throw pillow and a knitted throw.
 	const sofa = FURNITURE.sofa;
-	const sofaMat = mat(PALETTE.sofa);
-	group.add(box({ ...sofa, height: sofa.height }, sofaMat));
-	group.add(
-		box(
-			{ x: sofa.x, z: sofa.z - sofa.depth / 2 + 0.12, width: sofa.width, height: 0.9, depth: 0.24 },
-			sofaMat,
-		),
-	);
-	for (const side of [-1, 1]) {
-		group.add(
-			box(
-				{
-					x: sofa.x + side * (sofa.width / 2 - 0.1),
-					z: sofa.z,
-					width: 0.2,
-					height: 0.62,
-					depth: sofa.depth,
-				},
-				sofaMat,
-			),
-		);
-	}
-	group.add(
-		box(
-			{
-				x: sofa.x,
-				z: sofa.z + 0.05,
-				y: sofa.height,
-				width: sofa.width - 0.45,
-				height: 0.08,
-				depth: sofa.depth - 0.3,
-			},
-			mat(PALETTE.cushion),
-		),
-	);
+	group.add(buildSofa(sofa));
 	addStatic(physics, sofa);
 
 	// Desk: oak top on a steel frame, with a laptop, coffee, a plant and a notebook.
@@ -425,10 +351,7 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 			swivel.rotation.y = angle;
 		},
 		setDuvet(cover: number) {
-			const c = Math.min(1, Math.max(0, cover));
-			duvet.visible = c > 0.01;
-			// Thick enough to cover a body lying on the mattress.
-			duvet.scale.y = 0.02 + c * 0.26;
+			realBed.setCover(cover);
 		},
 		setTvGlow(intensity: number, hue: number) {
 			tvLight.intensity = intensity;

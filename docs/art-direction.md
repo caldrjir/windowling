@@ -32,13 +32,21 @@ charcoal textiles, black steel, terracotta, muted greens - with personal clutter
 
 ## Where we are
 
-| Piece                                         | State                                                          |
-| --------------------------------------------- | -------------------------------------------------------------- |
-| Desk (oak, steel frame, laptop, mug, plant)   | realistic (`room/furniture/desk.ts`)                           |
-| Office chair (5-star base, mesh back, swivel) | realistic (`room/furniture/office-chair.ts`)                   |
-| Sofa, bed, kitchenette, fridge, lamp, door    | placeholder blocks - next                                      |
-| Walls, floor, window                          | flat colours - need plaster, wooden floor boards, a real frame |
-| Character                                     | primitive placeholder - the biggest gap; needs a rigged model  |
+| Piece                                                | State                                                          |
+| ---------------------------------------------------- | -------------------------------------------------------------- |
+| Desk (oak, steel frame, laptop, plant, notebook)     | realistic (`room/furniture/desk.ts`)                           |
+| Office chair (5-star base, mesh back, swivel)        | realistic (`room/furniture/office-chair.ts`)                   |
+| Sofa (oak legs, seat + back cushions, pillow, throw) | realistic (`room/furniture/sofa.ts`)                           |
+| Bed (oak frame, headboard, linen, duvet), nightstand | realistic (`room/furniture/bed.ts`)                            |
+| Loose props (mug, books, throw pillow)               | realistic (`room/furniture/props.ts`), moved by physics        |
+| Kitchenette, fridge, floor lamp, door                | placeholder blocks - next                                      |
+| Walls, floor, window                                 | flat colours - need plaster, wooden floor boards, a real frame |
+| Character                                            | primitive placeholder - the biggest gap; needs a rigged model  |
+
+The duvet is a deformable sheet: flat on the made bed, draping over the edges, raised over the
+body (chest, legs, toes) as the character lies down - computed per vertex, not a box on top.
+Seats say how far the character leans back (`seat.recline`): deep into the sofa, upright on
+the desk chair and the edge of the bed.
 
 The character is the hardest part: a realistic person needs a rigged, skinned model with
 facial animation, and realism raises the bar for animation too (the uncanny valley is worse

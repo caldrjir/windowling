@@ -45,6 +45,8 @@ export interface TargetPlacement {
 		at: Spot;
 		/** A swivel chair: once seated, it turns (with the chair) to face this way. */
 		turnTo?: number;
+		/** How far it leans back once seated (radians): deep into a sofa, upright on a chair. */
+		recline?: number;
 	};
 	/** Beds: from the seat on the edge, it lies back to here (head on the pillow). */
 	lie?: Spot;
@@ -53,6 +55,8 @@ export interface TargetPlacement {
 export const FURNITURE = {
 	bed: { x: -2.2, z: -1.15, width: 1.4, height: 0.5, depth: 2.1 },
 	sofa: { x: -0.1, z: -1.82, width: 1.8, height: 0.45, depth: 0.85 },
+	// Between the bed and the sofa, at the head of the bed.
+	nightstand: { x: -1.26, z: -2.04, width: 0.4, height: 0.5, depth: 0.36 },
 	desk: { x: 2.05, z: -1.88, width: 1.3, height: 0.75, depth: 0.65 },
 	deskChair: { x: 2.05, z: -1.15, width: 0.5, height: 0.47, depth: 0.5 },
 	rug: { x: 0, z: 0.1, width: 2.6, height: 0.01, depth: 1.7 },
@@ -70,7 +74,8 @@ export const OUTSIDE: Vec2 = { x: -ROOM.width / 2 - 0.7, z: DOOR.z };
 /** Window in the back wall (to the outside world of the flat). */
 export const BACK_WINDOW = { x: -0.1, y: 1.65, width: 1.5, height: 1.0 } as const;
 
-const SEAT_DEPTH_OFFSET = 0.15;
+/** Seated well back on the sofa, against the back cushions. */
+const SEAT_DEPTH_OFFSET = 0.05;
 /** How far in front of a seat the feet are once seated (thigh length). */
 const THIGH_REACH = 0.42;
 
@@ -86,9 +91,11 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 			at: {
 				x: FURNITURE.sofa.x,
 				z: FURNITURE.sofa.z + SEAT_DEPTH_OFFSET,
-				y: FURNITURE.sofa.height,
+				// Sinks into the cushion a little.
+				y: FURNITURE.sofa.height - 0.03,
 				yaw: 0,
 			},
+			recline: 0.32,
 		},
 	},
 	// The desk chair is a swivel chair with its back to the room: it is reached from
@@ -105,6 +112,7 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 				yaw: -Math.PI / 2,
 			},
 			turnTo: Math.PI,
+			recline: 0.06,
 		},
 	},
 	// Into bed like a person: sit on the edge, then swing the legs up and lie back.
@@ -124,7 +132,8 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 			},
 		},
 		lie: {
-			x: FURNITURE.bed.x,
+			// On the right half of the double bed, the side it gets in from.
+			x: FURNITURE.bed.x + 0.32,
 			// Head on the pillow (towards the back wall), feet towards the foot end.
 			z: FURNITURE.bed.z + 0.08,
 			// On the mattress (sinking in a little), not in it.

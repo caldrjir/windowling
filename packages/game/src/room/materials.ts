@@ -133,9 +133,14 @@ function paintMesh(ctx: CanvasRenderingContext2D): void {
 	}
 }
 
+/**
+ * sRGB components (0..255) of a CSS hex colour - what a canvas paints. (Not
+ * `new Color(...)`: three.js converts that to linear light, which would make
+ * every painted texture far too dark.)
+ */
 const hex = (color: string): [number, number, number] => {
-	const c = new Color(color);
-	return [c.r * 255, c.g * 255, c.b * 255].map((v) => Math.round(v)) as [number, number, number];
+	const c = new Color(color).getHex(SRGBColorSpace);
+	return [(c >> 16) & 255, (c >> 8) & 255, c & 255];
 };
 
 /** Lacquered oak (desk top, legs). `repeat` scales the grain to the part. */
