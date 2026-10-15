@@ -14,6 +14,7 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Box, Spot } from '../layout.ts';
 import { ceramic, fabric, oak } from '../materials.ts';
+import { keepSeparate } from '../merge-static.ts';
 
 function part(geometry: BufferGeometry, material: Material, x = 0, y = 0, z = 0): Mesh {
 	const mesh = new Mesh(geometry, material);
@@ -188,6 +189,7 @@ export function buildBed(box: Box, lie?: Spot, nightstand?: Box): Bed {
 		lie ? { ...lie, x: lie.x - box.x, z: lie.z - box.z } : undefined,
 	);
 	const cover = part(geometry, fabric('#7f9583', [8, 10]), 0, box.height, 0);
+	keepSeparate(cover); // reshaped as the sleeper lies down
 	g(cover);
 
 	// Nightstand with a small lamp and a book, on the free side of the bed.

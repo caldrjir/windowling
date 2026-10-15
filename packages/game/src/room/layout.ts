@@ -66,6 +66,12 @@ export const FURNITURE = {
 	counter: { x: 2.7, z: 0.68, width: 0.55, height: 0.9, depth: 1.05 },
 } as const satisfies Record<string, Box>;
 
+/** Where the frying pan stands on the hob (the cooking spot faces it). */
+export const KITCHEN_PAN = {
+	x: FURNITURE.counter.x - 0.08,
+	z: FURNITURE.counter.z - FURNITURE.counter.depth / 2 + 0.38,
+} as const;
+
 /** Door in the left wall, near the front: to the bathroom and the rest of the world. */
 export const DOOR = { z: 1.15, width: 0.9, height: 2.05 } as const;
 /** Where the character is when it has left the flat (behind the door, out of sight). */
@@ -145,13 +151,17 @@ export const TARGETS: Record<StarterRoomTargetId, TargetPlacement> = {
 		approach: { x: -ROOM.width / 2 + 0.55, z: DOOR.z },
 		approachYaw: -Math.PI / 2,
 	},
+	// In front of the hob, turned to the pan - three-quarters to the window, so the player
+	// sees the cooking (and the eating) rather than a back.
 	'kitchen.counter': {
 		approach: {
-			x: FURNITURE.counter.x - FURNITURE.counter.width / 2 - 0.4,
-			z: FURNITURE.counter.z,
+			x: FURNITURE.counter.x - FURNITURE.counter.width / 2 - 0.38,
+			z: KITCHEN_PAN.z - 0.13,
 		},
-		// Half-turned towards the room, so the player sees what is being eaten.
-		approachYaw: Math.PI / 3,
+		approachYaw: Math.atan2(
+			KITCHEN_PAN.x - (FURNITURE.counter.x - FURNITURE.counter.width / 2 - 0.38),
+			0.13,
+		),
 	},
 };
 

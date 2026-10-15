@@ -11,6 +11,7 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Box } from '../layout.ts';
 import { aluminium, blackPlastic, chairMesh, chrome, fabric } from '../materials.ts';
+import { keepSeparate } from '../merge-static.ts';
 
 function part(geometry: BufferGeometry, material: Material, x = 0, y = 0, z = 0): Mesh {
 	const mesh = new Mesh(geometry, material);
@@ -91,6 +92,7 @@ export function buildOfficeChair(box: Box, reflections: Texture | null = null): 
 
 	// Everything above the piston turns with the person sitting on it.
 	const swivel = new Group();
+	keepSeparate(swivel); // turns with the sitter
 	group.add(swivel);
 	const cushion = fabric('#3b3f47', [5, 5]);
 	// Mechanism plate under the seat.

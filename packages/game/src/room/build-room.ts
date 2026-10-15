@@ -18,11 +18,13 @@ import {
 	type Texture,
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
-import { BACK_WINDOW, DOOR, FURNITURE, ROOM, TARGETS, type Box } from './layout.ts';
+import { BACK_WINDOW, DOOR, FURNITURE, KITCHEN_PAN, ROOM, TARGETS, type Box } from './layout.ts';
 import { buildBed } from './furniture/bed.ts';
 import { buildDesk } from './furniture/desk.ts';
+import { buildFridge, buildKitchenLine } from './furniture/kitchen.ts';
 import { buildOfficeChair } from './furniture/office-chair.ts';
 import { buildSofa } from './furniture/sofa.ts';
+import { keepSeparate, mergeStatic } from './merge-static.ts';
 import { daylight, skyColor } from './sky.ts';
 
 const PALETTE = {
@@ -33,14 +35,9 @@ const PALETTE = {
 	lampPole: '#2f2f33',
 	lampShade: '#ffe2b8',
 	windowFrame: '#f1ece4',
-	fridge: '#e8ecef',
 	handle: '#9aa3ab',
-	counter: '#6b8f71',
-	worktop: '#d9d2c5',
-	bowl: '#f4a261',
 	door: '#a47551',
 	hallway: '#2a2622',
-	pan: '#3a3a3a',
 	tvGlow: '#7fb4ff',
 } as const;
 
@@ -192,6 +189,7 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	knob.position.set(0.05, 1.0, DOOR.width - 0.12);
 	doorPanel.add(knob);
 	doorHinge.add(doorPanel);
+	keepSeparate(doorHinge); // it swings
 	group.add(doorHinge);
 
 	// Back window: frame + sky
@@ -247,57 +245,13 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	const swivel = officeChair.swivel;
 	addStatic(physics, chair);
 
-	// Kitchenette: fridge + counter with a fruit bowl
+	// Kitchenette: a fridge-freezer and a kitchen line with hob, sink and wall cabinets.
 	const fridge = FURNITURE.fridge;
-	group.add(box(fridge, mat(PALETTE.fridge, { roughness: 0.4 })));
-	for (const [y, h] of [
-		[1.15, 0.35],
-		[0.55, 0.45],
-	] as const) {
-		group.add(
-			box(
-				{
-					x: fridge.x - fridge.width / 2 - 0.015,
-					z: fridge.z + 0.18,
-					y,
-					width: 0.03,
-					height: h,
-					depth: 0.03,
-				},
-				mat(PALETTE.handle, { roughness: 0.3, metalness: 0.6 }),
-			),
-		);
-	}
+	group.add(buildFridge(fridge, reflections));
 	addStatic(physics, fridge);
 	const counter = FURNITURE.counter;
-	group.add(box({ ...counter, height: counter.height - 0.04 }, mat(PALETTE.counter)));
-	group.add(
-		box(
-			{
-				...counter,
-				x: counter.x - 0.02,
-				y: counter.height - 0.04,
-				height: 0.04,
-				width: counter.width + 0.04,
-			},
-			mat(PALETTE.worktop, { roughness: 0.5 }),
-		),
-	);
-	const fruitBowl = new Mesh(
-		new SphereGeometry(0.12, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
-		mat(PALETTE.bowl, { roughness: 0.5 }),
-	);
-	fruitBowl.position.set(counter.x + 0.05, counter.height + 0.12, counter.z + 0.3);
-	fruitBowl.castShadow = true;
-	group.add(fruitBowl);
+	group.add(buildKitchenLine(counter, { pan: KITCHEN_PAN }, reflections));
 	addStatic(physics, counter);
-	const pan = new Mesh(
-		new CylinderGeometry(0.13, 0.11, 0.06, 18),
-		mat(PALETTE.pan, { roughness: 0.4 }),
-	);
-	pan.position.set(counter.x + 0.02, counter.height + 0.03, counter.z - 0.25);
-	pan.castShadow = true;
-	group.add(pan);
 
 	// Floor lamp
 	const lamp = FURNITURE.lamp;
@@ -341,6 +295,9 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	const tvLight = new PointLight(PALETTE.tvGlow, 0, 4, 1.5);
 	tvLight.position.set(FURNITURE.sofa.x, 0.9, FURNITURE.sofa.z + 1.9);
 	group.add(tvLight);
+
+	// Hundreds of furniture parts, a few dozen draw calls.
+	mergeStatic(group);
 
 	return {
 		group,

@@ -48,6 +48,27 @@ body (chest, legs, toes) as the character lies down - computed per vertex, not a
 Seats say how far the character leans back (`seat.recline`): deep into the sofa, upright on
 the desk chair and the edge of the bed.
 
+## The character: fully realistic (decided 2026-10-15)
+
+A believable person, not a stylised figure. Plan:
+
+1. **Model** - MakeHuman / MPFB (CC0 output, open source, no licence fees): body shaped from
+   its morph targets, realistic skin textures (albedo, normal, roughness), eyes, brows, lashes,
+   hair cards, everyday clothes; the _game engine_ skeleton (~50 bones, fingers included) and
+   face shape keys for expressions and visemes. Exported to glTF, compressed (Draco/KTX2),
+   loaded lazily. Built headless in Blender by a script in the repo, so it is reproducible.
+2. **Animation** - the procedural poses we already compute (walk cycle, sitting, lying,
+   cooking, typing, moments) drive the real skeleton's bones; mocap clips (e.g. the CMU
+   database, free for any use) replace them activity by activity. Lip sync from the voice's
+   word boundaries to visemes, blinking, eye contact with the player.
+3. **Performance** - one skinned mesh, a texture atlas, LOD for phones; `AdaptiveResolution`
+   keeps weak devices smooth.
+
+Blocked on assets: MakeHuman's skins, hair and clothes are downloaded from
+makehumancommunity.org, which this project's cloud environment cannot reach yet (its network
+policy). The base mesh, targets, rigs and eyes are in the MakeHuman Git repository and are
+available.
+
 The character is the hardest part: a realistic person needs a rigged, skinned model with
 facial animation, and realism raises the bar for animation too (the uncanny valley is worse
 than honest stylisation). That decision - authored model vs. generated, how realistic - is open.
