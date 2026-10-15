@@ -1,6 +1,7 @@
 import { Box3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { FURNITURE, TARGETS } from '../layout.ts';
+import { FURNITURE, KITCHEN_PAN, TARGETS } from '../layout.ts';
+import { buildFridge, buildKitchenLine } from './kitchen.ts';
 import { buildBed } from './bed.ts';
 import { buildDesk } from './desk.ts';
 import { buildOfficeChair } from './office-chair.ts';
@@ -92,5 +93,33 @@ describe('furniture models', () => {
 		expect(covering - empty).toBeGreaterThan(0.15);
 		model.setCover(0);
 		expect(duvetTop()).toBeCloseTo(empty, 5);
+	});
+
+	it('builds the kitchen line and the fridge inside their footprints', () => {
+		const counter = FURNITURE.counter;
+		const line = new Box3().setFromObject(buildKitchenLine(counter, { pan: KITCHEN_PAN }));
+		// The worktop overhangs the fronts by a couple of centimetres, like a real one.
+		expect(line.min.x).toBeGreaterThanOrEqual(counter.x - counter.width / 2 - 0.03);
+		expect(line.max.x).toBeLessThanOrEqual(counter.x + counter.width / 2 + 0.01);
+		expect(line.min.z).toBeGreaterThanOrEqual(counter.z - counter.depth / 2 - 0.01);
+		expect(line.max.z).toBeLessThanOrEqual(counter.z + counter.depth / 2 + 0.01);
+		// Wall cabinets hang above it, below the ceiling.
+		expect(line.max.y).toBeLessThan(2.3);
+		const fridge = FURNITURE.fridge;
+		const box = new Box3().setFromObject(buildFridge(fridge));
+		// Handles stand off the door a few centimetres.
+		expect(box.min.x).toBeGreaterThanOrEqual(fridge.x - fridge.width / 2 - 0.05);
+		expect(box.max.x).toBeLessThanOrEqual(fridge.x + fridge.width / 2 + 0.01);
+		expect(box.max.y).toBeLessThanOrEqual(fridge.height + 0.01);
+	});
+
+	it('cooks facing the pan on the hob', () => {
+		const spot = TARGETS['kitchen.counter'];
+		const towards = Math.atan2(KITCHEN_PAN.x - spot.approach.x, KITCHEN_PAN.z - spot.approach.z);
+		expect(spot.approachYaw).toBeCloseTo(towards, 2);
+		// Close enough to reach it.
+		expect(
+			Math.hypot(KITCHEN_PAN.x - spot.approach.x, KITCHEN_PAN.z - spot.approach.z),
+		).toBeLessThan(0.65);
 	});
 });
