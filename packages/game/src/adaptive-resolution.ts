@@ -6,6 +6,9 @@ const FAST = 1 / 50;
 const SLOW_FOR = 1.5;
 const FAST_FOR = 8;
 const STEP = 0.25;
+/** Far too slow (under ~12 fps): react sooner and in bigger steps. */
+const VERY_SLOW = 1 / 12;
+const VERY_SLOW_FOR = 0.75;
 
 /**
  * Dynamic resolution: a weak device draws fewer pixels instead of showing a
@@ -40,11 +43,12 @@ export class AdaptiveResolution {
 		this.slowFor = this.average > SLOW ? this.slowFor + sample : 0;
 		this.fastFor = this.average < FAST ? this.fastFor + sample : 0;
 
-		if (this.slowFor >= SLOW_FOR && this._ratio > this.min) {
+		const crawling = this.average > VERY_SLOW;
+		if (this.slowFor >= (crawling ? VERY_SLOW_FOR : SLOW_FOR) && this._ratio > this.min) {
 			// We went up to this ratio and it is too slow after all: don't try it again.
 			if (this.lastStep === 'up') this.ceiling = Math.max(this.min, this._ratio - STEP);
 			this.lastStep = 'down';
-			return this.set(this._ratio - STEP);
+			return this.set(this._ratio - (crawling ? STEP * 2 : STEP));
 		}
 		if (this.fastFor >= FAST_FOR && this._ratio < this.ceiling) {
 			this.lastStep = 'up';

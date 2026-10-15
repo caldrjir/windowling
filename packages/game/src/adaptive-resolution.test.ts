@@ -19,7 +19,7 @@ describe('AdaptiveResolution', () => {
 
 	it('draws fewer pixels, step by step, when frames are slow', () => {
 		const r = new AdaptiveResolution(2);
-		expect(frames(r, 2, 1 / 15)).toEqual([1.75]);
+		expect(frames(r, 2, 1 / 20)).toEqual([1.75]);
 		frames(r, 20, 1 / 15);
 		expect(r.ratio).toBe(0.75); // never below the floor
 	});
@@ -49,5 +49,12 @@ describe('AdaptiveResolution', () => {
 		expect(r.ratio).toBe(1.75);
 		frames(r, 60, 1 / 60);
 		expect(r.ratio).toBe(1.75);
+	});
+
+	it('drops faster when frames crawl (a weak phone, software rendering)', () => {
+		const r = new AdaptiveResolution(2);
+		const changes = frames(r, 3, 1 / 6);
+		expect(changes[0]).toBe(1.5);
+		expect(r.ratio).toBe(0.75);
 	});
 });

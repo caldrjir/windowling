@@ -144,18 +144,39 @@ const hex = (color: string): [number, number, number] => {
 };
 
 /** Lacquered oak (desk top, legs). `repeat` scales the grain to the part. */
+/**
+ * Painted wood grain, by seed. Painting is per pixel, so each seed is painted
+ * once and shared (a canvas is plain pixels, not a GPU resource; every
+ * material still gets its own texture so `repeat` can differ).
+ */
+const woodCanvases = new Map<number, HTMLCanvasElement>();
+function woodCanvas(seed: number): HTMLCanvasElement | null {
+	const cached = woodCanvases.get(seed);
+	if (cached) return cached;
+	const ctx = canvas(256);
+	if (!ctx) return null;
+	paintWood(ctx, hex('#d6b48a'), seed);
+	woodCanvases.set(seed, ctx.canvas);
+	return ctx.canvas;
+}
+
+/** Oiled oak (desk top, legs). `repeat` scales the grain to the part; two boards' worth of grain. */
 export function oak(repeat: [number, number] = [1, 1], seed = 3): MeshStandardMaterial {
 	// Oiled rather than clear-coated: a clear coat doubles the shading cost on every pixel.
 	const material = new MeshStandardMaterial({ color: '#ffffff', roughness: 0.5 });
-	const ctx = canvas(512);
-	if (ctx) {
-		paintWood(ctx, hex('#d6b48a'), seed);
-		material.map = texture(ctx, repeat);
+	const painted = woodCanvas(seed % 2 === 0 ? 2 : 3);
+	if (painted) {
+		const map = new CanvasTexture(painted);
+		map.wrapS = RepeatWrapping;
+		map.wrapT = RepeatWrapping;
+		map.repeat.set(repeat[0], repeat[1]);
+		map.colorSpace = SRGBColorSpace;
+		map.anisotropy = 4;
+		material.map = map;
 	} else material.color.set('#b98f63');
 	return material;
 }
 
-/** Charcoal upholstery for seats. */
 export function fabric(color = '#3a3d44', repeat: [number, number] = [4, 4]): MeshStandardMaterial {
 	const material = new MeshStandardMaterial({ color: '#ffffff', roughness: 0.92 });
 	const ctx = canvas(128);
