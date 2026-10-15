@@ -134,7 +134,11 @@ export class GameWorld {
 		options: GameWorldOptions = {},
 	): Promise<GameWorld> {
 		await initPhysics();
-		return new GameWorld(canvas, options);
+		const world = new GameWorld(canvas, options);
+		// Compile every shader before the first frame, in parallel where the browser can:
+		// otherwise the first frame blocks the page for seconds on weak devices.
+		await world.renderer.compileAsync(world.scene, world.camera);
+		return world;
 	}
 
 	get status(): GameWorldStatus {
