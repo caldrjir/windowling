@@ -98,9 +98,11 @@ export class GameWorld {
 	) {
 		this.now = options.now ?? (() => new Date());
 		this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
-		this.resolution = new AdaptiveResolution(
-			Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2),
-		);
+		// Without a GPU (software WebGL) every pixel costs CPU the page needs for
+		// everything else: start low and stay there instead of finding out slowly.
+		this.resolution = softwareRendering(this.renderer)
+			? new AdaptiveResolution(0.5, 0.5)
+			: new AdaptiveResolution(Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2));
 		this.renderer.setPixelRatio(this.resolution.ratio);
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
@@ -446,4 +448,12 @@ export class GameWorld {
 		if (!transform) throw new Error('physics body was not created');
 		this.bodies.push({ handle, mesh, previous: transform, current: transform });
 	}
+}
+
+/** WebGL drawn by the CPU (SwiftShader, llvmpipe): no GPU to lean on. */
+function softwareRendering(renderer: WebGLRenderer): boolean {
+	const gl = renderer.getContext();
+	const info = gl.getExtension('WEBGL_debug_renderer_info');
+	const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '');
+	return /swiftshader|llvmpipe|softpipe|software/i.test(name);
 }
