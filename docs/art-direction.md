@@ -25,23 +25,28 @@ charcoal textiles, black steel, terracotta, muted greens - with personal clutter
   daylight through the window, warm lamps at night.
 - **Fast on weak devices too.** Detail costs frame time: prefer standard PBR to clear coat and
   sheen, reflections only on metal. `AdaptiveResolution` drops the pixel ratio when frames get
-  slow (never below 0.75) instead of letting the room stutter.
+  slow (never below 0.75; WebGL without a GPU starts at 0.5) instead of letting the room stutter.
 - **Lived in.** Every surface carries a sign of use: a mug, a notebook, a plant.
 - **Footprints stay the truth.** Models are visual; walking, sitting and physics use the
   footprints and seats in `room/layout.ts`. A model must fit its footprint (tested).
 
 ## Where we are
 
-| Piece                                                | State                                                          |
-| ---------------------------------------------------- | -------------------------------------------------------------- |
-| Desk (oak, steel frame, laptop, plant, notebook)     | realistic (`room/furniture/desk.ts`)                           |
-| Office chair (5-star base, mesh back, swivel)        | realistic (`room/furniture/office-chair.ts`)                   |
-| Sofa (oak legs, seat + back cushions, pillow, throw) | realistic (`room/furniture/sofa.ts`)                           |
-| Bed (oak frame, headboard, linen, duvet), nightstand | realistic (`room/furniture/bed.ts`)                            |
-| Loose props (mug, books, throw pillow)               | realistic (`room/furniture/props.ts`), moved by physics        |
-| Kitchenette, fridge, floor lamp, door                | placeholder blocks - next                                      |
-| Walls, floor, window                                 | flat colours - need plaster, wooden floor boards, a real frame |
-| Character                                            | primitive placeholder - the biggest gap; needs a rigged model  |
+| Piece                                                | State                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------- |
+| Desk (oak, steel frame, laptop, plant, notebook)     | realistic (`room/furniture/desk.ts`)                          |
+| Office chair (5-star base, mesh back, swivel)        | realistic (`room/furniture/office-chair.ts`)                  |
+| Sofa (oak legs, seat + back cushions, pillow, throw) | realistic (`room/furniture/sofa.ts`)                          |
+| Bed (oak frame, headboard, linen, duvet), nightstand | realistic (`room/furniture/bed.ts`)                           |
+| Loose props (mug, books, throw pillow)               | realistic (`room/furniture/props.ts`), moved by physics       |
+| Kitchenette, fridge                                  | realistic (`room/furniture/kitchen.ts`)                       |
+| Floor lamp (oak tripod, linen drum shade)            | realistic (`room/furniture/floor-lamp.ts`)                    |
+| Walls, floor, skirting, door, window, rug, prints    | realistic (`room/architecture.ts`)                            |
+| Character                                            | primitive placeholder - the biggest gap; needs a rigged model |
+
+The back window looks out on the tenement across the street under the real sky; its windows
+light up at night. The street is drawn only through the glass (a stencil mask), so it never
+shows around the room when the camera looks in from above.
 
 The duvet is a deformable sheet: flat on the made bed, draping over the edges, raised over the
 body (chest, legs, toes) as the character lies down - computed per vertex, not a box on top.

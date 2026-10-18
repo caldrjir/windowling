@@ -97,7 +97,13 @@ export class GameWorld {
 		options: GameWorldOptions,
 	) {
 		this.now = options.now ?? (() => new Date());
-		this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
+		this.renderer = new WebGLRenderer({
+			canvas,
+			antialias: true,
+			// The street outside is drawn only through the window (room/architecture.ts).
+			stencil: true,
+			powerPreference: 'low-power',
+		});
 		// Without a GPU (software WebGL) every pixel costs CPU the page needs for
 		// everything else: start low and stay there instead of finding out slowly.
 		this.resolution = softwareRendering(this.renderer)

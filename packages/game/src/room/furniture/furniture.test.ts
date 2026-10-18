@@ -1,9 +1,11 @@
 import { Box3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { FURNITURE, KITCHEN_PAN, TARGETS } from '../layout.ts';
+import { buildDoor, buildWindow } from '../architecture.ts';
+import { DOOR, FURNITURE, KITCHEN_PAN, ROOM, TARGETS } from '../layout.ts';
 import { buildFridge, buildKitchenLine } from './kitchen.ts';
 import { buildBed } from './bed.ts';
 import { buildDesk } from './desk.ts';
+import { buildFloorLamp } from './floor-lamp.ts';
 import { buildOfficeChair } from './office-chair.ts';
 import { buildSofa } from './sofa.ts';
 
@@ -121,5 +123,43 @@ describe('furniture models', () => {
 		expect(
 			Math.hypot(KITCHEN_PAN.x - spot.approach.x, KITCHEN_PAN.z - spot.approach.z),
 		).toBeLessThan(0.65);
+	});
+
+	it('builds the floor lamp inside its footprint, with the bulb in the shade', () => {
+		const lamp = FURNITURE.lamp;
+		const { group, bulb } = buildFloorLamp(lamp);
+		const bounds = new Box3().setFromObject(group);
+		expect(bounds.min.x).toBeGreaterThanOrEqual(lamp.x - lamp.width / 2 - 0.01);
+		expect(bounds.max.x).toBeLessThanOrEqual(lamp.x + lamp.width / 2 + 0.01);
+		expect(bounds.min.z).toBeGreaterThanOrEqual(lamp.z - lamp.depth / 2 - 0.01);
+		expect(bounds.max.z).toBeLessThanOrEqual(lamp.z + lamp.depth / 2 + 0.01);
+		expect(bounds.max.y).toBeCloseTo(lamp.height, 2);
+		expect(bulb.x).toBeCloseTo(lamp.x);
+		expect(bulb.y).toBeGreaterThan(lamp.height - 0.3);
+	});
+
+	it('hangs the door leaf inside the doorway, so it swings clear of the frame', () => {
+		const { hinge } = buildDoor();
+		const leaf = new Box3().setFromObject(hinge);
+		expect(leaf.min.z).toBeGreaterThanOrEqual(DOOR.z - DOOR.width / 2);
+		expect(leaf.max.z).toBeLessThanOrEqual(DOOR.z + DOOR.width / 2 + 0.01);
+		expect(leaf.max.y).toBeLessThan(DOOR.height);
+	});
+
+	it('keeps the window, its curtains and the sill clear of the sofa and the lamp', () => {
+		const { group } = buildWindow(null);
+		group.updateMatrixWorld(true);
+		const lamp = FURNITURE.lamp;
+		const sofa = FURNITURE.sofa;
+		group.traverse((object) => {
+			// The street outside is far behind the wall; everything else hangs on it.
+			if (object.position.z < -ROOM.depth / 2 - 1) return;
+			if (!('geometry' in object)) return;
+			const box = new Box3().setFromObject(object);
+			if (box.isEmpty() || box.min.z < -ROOM.depth / 2 - 1) return;
+			expect(box.max.x).toBeLessThan(lamp.x - lamp.width / 2);
+			expect(box.min.y).toBeGreaterThan(0.75); // above the sofa's back
+			expect(box.max.z).toBeLessThan(sofa.z + sofa.depth / 2);
+		});
 	});
 });

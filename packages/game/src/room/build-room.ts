@@ -1,42 +1,41 @@
 import {
 	BoxGeometry,
-	Color,
-	CylinderGeometry,
 	DirectionalLight,
 	Group,
 	HemisphereLight,
 	Mesh,
-	MeshBasicMaterial,
 	MeshStandardMaterial,
 	PlaneGeometry,
 	Path,
 	PointLight,
 	Shape,
 	ExtrudeGeometry,
-	SphereGeometry,
 	type Material,
 	type Texture,
 } from 'three';
 import type { PhysicsWorld } from '../physics.ts';
 import { BACK_WINDOW, DOOR, FURNITURE, KITCHEN_PAN, ROOM, TARGETS, type Box } from './layout.ts';
+import {
+	buildDoor,
+	buildPrint,
+	buildRug,
+	buildSkirting,
+	buildWindow,
+	WALL,
+} from './architecture.ts';
 import { buildBed } from './furniture/bed.ts';
+import { buildFloorLamp } from './furniture/floor-lamp.ts';
 import { buildDesk } from './furniture/desk.ts';
 import { buildFridge, buildKitchenLine } from './furniture/kitchen.ts';
 import { buildOfficeChair } from './furniture/office-chair.ts';
 import { buildSofa } from './furniture/sofa.ts';
 import { keepSeparate, mergeStatic } from './merge-static.ts';
+import { floorboards, plaster } from './materials.ts';
 import { daylight, skyColor } from './sky.ts';
 
 const PALETTE = {
-	floor: '#8a6448',
-	backWall: '#d8c8b2',
-	sideWall: '#cbb9a2',
-	rug: '#5f7397',
-	lampPole: '#2f2f33',
-	lampShade: '#ffe2b8',
-	windowFrame: '#f1ece4',
-	handle: '#9aa3ab',
-	door: '#a47551',
+	backWall: '#ece5d9',
+	sideWall: '#e4dccf',
 	hallway: '#2a2622',
 	tvGlow: '#7fb4ff',
 } as const;
@@ -83,8 +82,8 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	group.name = 'room';
 	const { width, depth, height } = ROOM;
 
-	// Floor
-	const floor = new Mesh(new PlaneGeometry(width, depth), mat(PALETTE.floor, { roughness: 0.7 }));
+	// Oak floorboards.
+	const floor = new Mesh(new PlaneGeometry(width, depth), floorboards([width / 2.4, depth / 2.4]));
 	floor.rotation.x = -Math.PI / 2;
 	floor.receiveShadow = true;
 	group.add(floor);
@@ -99,9 +98,9 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	physics.addStaticBox({ x: width / 2, y: 0.05, z: depth / 2 }, { x: 0, y: height + 0.05, z: 0 });
 
 	// Walls: back + sides. The front is open - that is the player's window.
-	const wallThickness = 0.1;
-	const backWall = mat(PALETTE.backWall);
-	const sideWall = mat(PALETTE.sideWall);
+	const wallThickness = WALL;
+	const backWall = plaster(PALETTE.backWall);
+	const sideWall = plaster(PALETTE.sideWall);
 	const win = BACK_WINDOW;
 	const backZ = -depth / 2 - wallThickness / 2;
 	// One solid wall with a hole for the window - no seams between pieces.
@@ -140,7 +139,7 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 		// The collider is solid on both sides (loose things never leave through the door).
 		addStatic(physics, b);
 		if (side === 1) {
-			const mesh = box(b, sideWall);
+			const mesh = box(b, plaster(PALETTE.sideWall, 2.7));
 			mesh.castShadow = false;
 			group.add(mesh);
 		}
@@ -176,50 +175,28 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	hallway.rotation.y = Math.PI / 2;
 	hallway.position.set(-width / 2 - 1, DOOR.height / 2, DOOR.z);
 	group.add(hallway);
-	// The door swings out into the hallway around its hinge.
-	const doorHinge = new Group();
-	doorHinge.position.set(-width / 2 - wallThickness / 2, 0, DOOR.z - DOOR.width / 2);
-	const doorPanel = new Mesh(
-		new BoxGeometry(0.04, DOOR.height, DOOR.width),
-		mat(PALETTE.door, { roughness: 0.6 }),
-	);
-	doorPanel.position.set(0, DOOR.height / 2, DOOR.width / 2);
-	doorPanel.castShadow = true;
-	const knob = new Mesh(new SphereGeometry(0.035, 12, 8), mat(PALETTE.handle, { metalness: 0.6 }));
-	knob.position.set(0.05, 1.0, DOOR.width - 0.12);
-	doorPanel.add(knob);
-	doorHinge.add(doorPanel);
-	keepSeparate(doorHinge); // it swings
-	group.add(doorHinge);
+	// A panelled door that swings out into the hallway, in a lined frame.
+	const door = buildDoor();
+	keepSeparate(door.hinge); // it swings
+	group.add(door.frame, door.hinge);
+	const doorHinge = door.hinge;
 
-	// Back window: frame + sky
-	const skyMaterial = new MeshBasicMaterial({ color: '#000000' });
-	const sky = new Mesh(new PlaneGeometry(win.width, win.height), skyMaterial);
-	sky.position.set(win.x, win.y, -depth / 2 - wallThickness);
-	group.add(sky);
-	const frame = mat(PALETTE.windowFrame, { roughness: 0.5 });
-	const bar = 0.05;
-	for (const [w, h, x, y] of [
-		[win.width + bar * 2, bar, win.x, win.y + win.height / 2],
-		[win.width + bar * 2, bar, win.x, win.y - win.height / 2],
-		[bar, win.height, win.x - win.width / 2, win.y],
-		[bar, win.height, win.x + win.width / 2, win.y],
-		[bar, win.height, win.x, win.y],
-	] as const) {
-		const piece = new Mesh(new BoxGeometry(w, h, 0.08), frame);
-		piece.position.set(x, y, -depth / 2 - 0.02);
-		group.add(piece);
-	}
+	// Back window: casement, sill, curtains - and the street outside.
+	const backWindow = buildWindow(reflections);
+	group.add(backWindow.group);
+	group.add(buildSkirting());
 
-	// Rug
-	const rug = new Mesh(
-		new PlaneGeometry(FURNITURE.rug.width, FURNITURE.rug.depth),
-		mat(PALETTE.rug, { roughness: 1 }),
-	);
-	rug.rotation.x = -Math.PI / 2;
-	rug.position.set(FURNITURE.rug.x, 0.005, FURNITURE.rug.z);
-	rug.receiveShadow = true;
-	group.add(rug);
+	// Prints: one above the desk, one on the wall beside the bed.
+	const deskPrint = buildPrint('arches', 0.5, 0.7);
+	deskPrint.position.set(FURNITURE.desk.x, 1.55, -depth / 2);
+	group.add(deskPrint);
+	const bedPrint = buildPrint('hills', 0.8, 0.58);
+	bedPrint.rotation.y = Math.PI / 2;
+	bedPrint.position.set(-width / 2, 1.45, FURNITURE.bed.z + 0.1);
+	group.add(bedPrint);
+
+	// A wool rug.
+	group.add(buildRug(FURNITURE.rug));
 
 	// Bed (oak frame, upholstered headboard, linen, a duvet that covers the sleeper) and nightstand.
 	const bed = FURNITURE.bed;
@@ -253,17 +230,10 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	group.add(buildKitchenLine(counter, { pan: KITCHEN_PAN }, reflections));
 	addStatic(physics, counter);
 
-	// Floor lamp
+	// Tripod floor lamp with a linen shade.
 	const lamp = FURNITURE.lamp;
-	const pole = new Mesh(new CylinderGeometry(0.02, 0.02, lamp.height, 8), mat(PALETTE.lampPole));
-	pole.position.set(lamp.x, lamp.height / 2, lamp.z);
-	group.add(pole);
-	const shade = new Mesh(
-		new CylinderGeometry(0.12, 0.2, 0.25, 16, 1, true),
-		mat(PALETTE.lampShade, { emissive: new Color(PALETTE.lampShade), emissiveIntensity: 0.9 }),
-	);
-	shade.position.set(lamp.x, lamp.height, lamp.z);
-	group.add(shade);
+	const floorLamp = buildFloorLamp(lamp);
+	group.add(floorLamp.group);
 	addStatic(physics, lamp);
 
 	// Lights
@@ -271,7 +241,7 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 	group.add(ambient);
 
 	const lampLight = new PointLight('#ffcf94', 6, 7, 1.6);
-	lampLight.position.set(lamp.x, lamp.height - 0.05, lamp.z + 0.1);
+	lampLight.position.copy(floorLamp.bulb);
 	group.add(lampLight);
 
 	const key = new DirectionalLight('#fff1dc', 1.4);
@@ -315,9 +285,8 @@ export function buildRoom(physics: PhysicsWorld, reflections: Texture | null = n
 			tvLight.color.setHSL(hue, 0.5, 0.65);
 		},
 		setTimeOfDay(hours: number) {
-			const [r, g, b] = skyColor(hours);
-			skyMaterial.color.setRGB(r, g, b);
 			const day = daylight(hours);
+			backWindow.setOutside(day, skyColor(hours));
 			windowLight.intensity = day * 1.6;
 			ambient.intensity = 0.35 + day * 0.5;
 			// Ambience only: until the simulation owns the lamp, it glows brighter at night.
