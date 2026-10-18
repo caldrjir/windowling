@@ -99,7 +99,7 @@ function laptop(reflections: Texture | null): Group {
 	return g;
 }
 
-function plant(): Group {
+export function buildPlant(): Group {
 	const g = new Group();
 	const pot = [
 		new Vector2(0, 0),
@@ -212,7 +212,7 @@ export function buildDesk(box: Box, reflections: Texture | null = null): Group {
 	const pc = laptop(reflections);
 	pc.position.set(0, surface, 0.04);
 	g.add(pc);
-	const green = plant();
+	const green = buildPlant();
 	green.position.set(-w / 2 + 0.12, surface, -d / 2 + 0.13);
 	g.add(green);
 	const notes = notebook();

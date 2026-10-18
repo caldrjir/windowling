@@ -97,16 +97,24 @@ export class GameWorld {
 		options: GameWorldOptions,
 	) {
 		this.now = options.now ?? (() => new Date());
-		this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' });
+		this.renderer = new WebGLRenderer({
+			canvas,
+			antialias: true,
+			// The street outside is drawn only through the window (room/architecture.ts).
+			stencil: true,
+			powerPreference: 'low-power',
+		});
 		// Without a GPU (software WebGL) every pixel costs CPU the page needs for
 		// everything else: start low and stay there instead of finding out slowly.
-		this.resolution = softwareRendering(this.renderer)
+		const software = softwareRendering(this.renderer);
+		this.resolution = software
 			? new AdaptiveResolution(0.5, 0.5)
 			: new AdaptiveResolution(Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2));
 		this.renderer.setPixelRatio(this.resolution.ratio);
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
-		this.renderer.shadowMap.enabled = true;
+		// Shadows double the shaders to compile and the work per frame: not without a GPU.
+		this.renderer.shadowMap.enabled = !software;
 		this.renderer.shadowMap.type = PCFShadowMap;
 
 		this.scene.background = new Color('#14151f');
