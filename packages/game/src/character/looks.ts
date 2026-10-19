@@ -30,3 +30,6 @@ export function lookFor(seed: string): CharacterLook {
 export function characterModelUrl(look: CharacterLook): string {
 	return `/characters/${look.id}.glb`;
 }
+
+/** Motion capture every character plays (see `scripts/mocap.mjs`). */
+export const CHARACTER_MOTIONS_URL = '/characters/motions.json';

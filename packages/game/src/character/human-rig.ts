@@ -14,19 +14,31 @@ import {
 import type { Pose } from './animation.ts';
 import type { CharacterSnapshot } from './controller.ts';
 import { HeldProps } from './held-props.ts';
+import {
+	sampleHips,
+	sampleRotation,
+	type MotionClip,
+	type MotionName,
+	type Motions,
+} from './motions.ts';
 
 /**
  * A realistic person: a MakeHuman model (tools/character) skinned to the
  * "game_engine" skeleton, driven by the same poses as the placeholder rig.
  *
- * Poses are rotations in the character's own space (it faces +z, +x is its
- * left, y is up), applied at the joints: a thigh swings about x at the hip,
- * a knee bends about x. The model is authored in an A-pose, so arms and legs
- * are first brought to hang naturally; the pose then moves them from there.
+ * Two sources move it, blended bone by bone:
+ * - motion capture (`motions.ts`) while it stands, walks, waves, sweeps or
+ *   dances: real people's movement - weight shifts, heel-to-toe steps, swinging hips;
+ * - procedural poses for what has to fit the flat exactly (sitting on its
+ *   chair, lying in its bed, hands on a keyboard), and for looking around.
+ *
+ * Procedural poses are rotations in the character's own space (it faces +z,
+ * +x is its left, y is up), applied at the joints: a thigh swings about x at
+ * the hip, a knee bends about x. The model is authored in an A-pose, so arms
+ * and legs are first brought to hang naturally; the pose moves them from there.
  */
 
 const X = new Vector3(1, 0, 0);
-const Y = new Vector3(0, 1, 0);
 
 /** Model space directions the limbs hang in when relaxed (left side; mirrored for right). */
 const HANG = {
@@ -45,8 +57,37 @@ const BLINK_SECONDS = 0.15;
 /** Thigh joints sit this far above the seat when sitting (the buttocks). */
 const SEATED_HIP = 0.1;
 
+/** The bones the rig moves, each after its parent. */
+const CHAIN: readonly (readonly [string, string | null])[] = [
+	['pelvis', null],
+	['spine_01', 'pelvis'],
+	['spine_02', 'spine_01'],
+	['spine_03', 'spine_02'],
+	['neck_01', 'spine_03'],
+	['head', 'neck_01'],
+	...(['l', 'r'] as const).flatMap(
+		(s) =>
+			[
+				[`clavicle_${s}`, 'spine_03'],
+				[`upperarm_${s}`, `clavicle_${s}`],
+				[`lowerarm_${s}`, `upperarm_${s}`],
+				[`hand_${s}`, `lowerarm_${s}`],
+				[`thigh_${s}`, 'pelvis'],
+				[`calf_${s}`, `thigh_${s}`],
+				[`foot_${s}`, `calf_${s}`],
+				[`ball_${s}`, `foot_${s}`],
+			] as const,
+	),
+];
+
+const ARMS = /^(clavicle|upperarm|lowerarm|hand)_/;
+const AXIAL = new Set(['pelvis', 'spine_01', 'spine_02', 'spine_03', 'neck_01', 'head']);
+const LEGS = /^(thigh|calf|foot|ball)_/;
+
 interface Joint {
 	bone: Bone;
+	/** Direction from the joint to its child at rest (model space), if it has one. */
+	direction: Vector3 | null;
 	/** Rest rotation of the bone in model space. */
 	rest: Quaternion;
 	/** Rest rotation of its parent in model space. */
@@ -70,10 +111,15 @@ export class HumanRig {
 	/** Pivots the whole body: lying down, swaying. */
 	private readonly body = new Group();
 	private readonly joints = new Map<string, Joint>();
+	/** Per motion and bone: lines the bone up with the motion's T-pose. */
+	private readonly motionFixes = new Map<MotionName, Map<string, Quaternion>>();
+	private readonly motions: Motions | null;
+	/** Hip joint to ankle, to scale the motions' hip movement to this body. */
+	private readonly legLength: number;
+	/** The pelvis's parent's rest rotation, inverted (to move the hips in model space). */
+	private readonly pelvisParentInverse: Quaternion;
 	private readonly pelvis: Bone;
 	private readonly pelvisRest: Vector3;
-	/** Model space up, expressed in the pelvis's parent space (for moving the hips). */
-	private readonly pelvisUp: Vector3;
 	private readonly restHip: number;
 	private readonly props = new HeldProps();
 	private readonly morphs: { mesh: Mesh; index: Record<string, number> }[] = [];
@@ -82,7 +128,8 @@ export class HumanRig {
 	/** Nobody sleeps in their shoes. */
 	private readonly shoes: Mesh[] = [];
 
-	constructor(model: Object3D) {
+	constructor(model: Object3D, motions: Motions | null = null) {
+		this.motions = motions;
 		this.root.name = 'character';
 		this.root.add(this.body);
 		this.body.add(model);
@@ -105,33 +152,68 @@ export class HumanRig {
 		const parentRest = pelvis.parent
 			? pelvis.parent.getWorldQuaternion(new Quaternion())
 			: new Quaternion();
-		this.pelvisUp = Y.clone().applyQuaternion(parentRest.invert());
+		this.pelvisParentInverse = parentRest.clone().invert();
 		this.restHip = pelvis.getWorldPosition(new Vector3()).y;
 
-		const restDirection = (b: Bone): Vector3 => {
-			const child = b.children.find((c): c is Bone => c instanceof Bone);
-			const from = b.getWorldPosition(new Vector3());
-			if (!child) return new Vector3(0, 1, 0);
-			return child.getWorldPosition(new Vector3()).sub(from).normalize();
+		const at = (name: string) => bone(name).getWorldPosition(new Vector3());
+		const restDirection = (b: Bone): Vector3 | null => {
+			// A hand points along its middle finger.
+			const child =
+				b.children.find((c): c is Bone => c instanceof Bone && c.name.startsWith('middle_')) ??
+				b.children.find((c): c is Bone => c instanceof Bone);
+			if (!child) return null;
+			return child
+				.getWorldPosition(new Vector3())
+				.sub(b.getWorldPosition(new Vector3()))
+				.normalize();
 		};
-		const addJoint = (name: string, hang?: Vector3) => {
+		const hang: Record<string, Vector3> = {};
+		for (const side of ['l', 'r'] as const) {
+			const mirror = (v: Vector3) => (side === 'l' ? v.clone() : new Vector3(-v.x, v.y, v.z));
+			hang[`upperarm_${side}`] = mirror(HANG.upperarm);
+			hang[`lowerarm_${side}`] = mirror(HANG.lowerarm);
+			hang[`thigh_${side}`] = mirror(HANG.thigh);
+			hang[`calf_${side}`] = mirror(HANG.calf);
+		}
+		for (const [name] of CHAIN) {
 			const b = bone(name);
 			const rest = b.getWorldQuaternion(new Quaternion());
 			const parentRestQ = b.parent
 				? b.parent.getWorldQuaternion(new Quaternion())
 				: new Quaternion();
-			const fix = hang
-				? new Quaternion().setFromUnitVectors(restDirection(b), hang.clone().normalize())
-				: new Quaternion();
-			this.joints.set(name, { bone: b, rest, parentRest: parentRestQ, fix });
-		};
-		for (const name of ['spine_01', 'spine_02', 'spine_03', 'neck_01', 'head']) addJoint(name);
-		for (const side of ['l', 'r'] as const) {
-			const mirror = (v: Vector3) => (side === 'l' ? v.clone() : new Vector3(-v.x, v.y, v.z));
-			addJoint(`upperarm_${side}`, mirror(HANG.upperarm));
-			addJoint(`lowerarm_${side}`, mirror(HANG.lowerarm));
-			addJoint(`thigh_${side}`, mirror(HANG.thigh));
-			addJoint(`calf_${side}`, mirror(HANG.calf));
+			const direction = restDirection(b);
+			const target = hang[name];
+			const fix =
+				target && direction
+					? new Quaternion().setFromUnitVectors(direction, target.clone().normalize())
+					: new Quaternion();
+			this.joints.set(name, { bone: b, direction, rest, parentRest: parentRestQ, fix });
+		}
+		this.legLength = at('thigh_l').distanceTo(at('calf_l')) + at('calf_l').distanceTo(at('foot_l'));
+
+		for (const [clipName, clip] of Object.entries(motions?.clips ?? {})) {
+			// Down each chain: a bone first turns with its parent (so the twist of an arm
+			// carries on to the hand), then swings onto the motion's T-pose direction.
+			const fixes = new Map<string, Quaternion>();
+			for (const [name, parentName] of CHAIN) {
+				const joint = this.joints.get(name);
+				if (!joint) continue;
+				const inherited = (parentName && fixes.get(parentName)?.clone()) || new Quaternion();
+				const source = clip.restDirections[name];
+				// The trunk stands upright in both rest poses: its bones correspond as they
+				// are (their directions differ by anatomy, not by pose). Limbs line up.
+				const fix =
+					joint.direction && source && !AXIAL.has(name)
+						? new Quaternion()
+								.setFromUnitVectors(
+									joint.direction.clone().applyQuaternion(inherited),
+									new Vector3(...source).normalize(),
+								)
+								.multiply(inherited)
+						: inherited;
+				fixes.set(name, fix);
+			}
+			this.motionFixes.set(clipName as MotionName, fixes);
 		}
 
 		// Relaxed hands: fingers curl a little (the model's rest pose has them straight).
@@ -198,15 +280,45 @@ export class HumanRig {
 		}
 	}
 
-	/** Model-space delta `delta` applied at joint `name`, on top of its A-pose fix. */
-	private pose(name: string, delta: Quaternion, parentDelta: Quaternion): Quaternion {
+	/** Procedural: model-space `delta` at joint `name`, on top of its A-pose fix (into `out`). */
+	private pose(
+		out: Map<string, Quaternion>,
+		name: string,
+		delta: Quaternion,
+		parent: Quaternion,
+	): Quaternion {
 		const joint = this.joints.get(name);
-		if (!joint) return parentDelta;
+		if (!joint) return parent;
 		const world = delta.clone().multiply(joint.fix);
-		// local = (parentDelta * parentRest)^-1 * (world * rest)
-		const parent = parentDelta.clone().multiply(joint.parentRest).invert();
-		joint.bone.quaternion.copy(parent.multiply(world.clone().multiply(joint.rest)));
+		out.set(name, world);
 		return world;
+	}
+
+	/** Motion capture: the clip's rotation of every bone at `time`, blended into `out` by `weight`. */
+	private play(
+		out: Map<string, Quaternion>,
+		name: MotionName,
+		time: number,
+		weight: number,
+		only?: RegExp,
+	): void {
+		const clip = this.motions?.clips[name];
+		const fixes = this.motionFixes.get(name);
+		if (!clip || !fixes || weight <= 0) return;
+		const delta = new Quaternion();
+		for (const [bone, fix] of fixes) {
+			if (only && !only.test(bone)) continue;
+			if (!sampleRotation(clip, bone, time, delta)) continue;
+			const world = delta.clone().multiply(fix);
+			const current = out.get(bone);
+			out.set(bone, current && weight < 1 ? current.slerp(world, weight) : world);
+		}
+	}
+
+	private hips(clip: MotionClip | undefined, time: number, weight: number, into: Vector3): void {
+		if (!clip || weight <= 0) return;
+		const offset = sampleHips(clip, time, new Vector3()).multiplyScalar(this.legLength);
+		into.lerp(offset, weight);
 	}
 
 	/** Applies a world transform and a pose. Called once per rendered frame. */
@@ -220,23 +332,22 @@ export class HumanRig {
 
 		const sit = Math.min(1, pose.hipFlex / (Math.PI / 2));
 		const down = Math.max(sit, pose.lie);
-		// Seated or lying, the hips rest just above the surface the root is placed on.
-		const hip = (this.restHip + pose.bob) * (1 - down) + SEATED_HIP * down;
-		this.pelvis.position.copy(this.pelvisRest).addScaledVector(this.pelvisUp, hip - this.restHip);
 		// Lying: the whole body turns back so the head points to the pillow (-z).
 		this.body.rotation.set((-Math.PI / 2) * pose.lie, 0, pose.sway);
 
+		// --- Procedural pose (fits furniture; hands at work; looking around).
+		const proc = new Map<string, Quaternion>();
 		// Spine: leaning back while seated, slumping, propped up in bed - spread over three joints.
 		const lean = (-0.18 * sit + pose.slump + 0.3 * pose.lie) / 3;
 		const breath = pose.breath * 0.012;
 		let chest = new Quaternion();
-		chest = this.pose('spine_01', chest.clone().multiply(q(X, lean)), chest);
-		chest = this.pose('spine_02', chest.clone().multiply(q(X, lean - breath)), chest);
-		chest = this.pose('spine_03', chest.clone().multiply(q(X, lean + breath)), chest);
+		chest = this.pose(proc, 'spine_01', chest.clone().multiply(q(X, lean)), chest);
+		chest = this.pose(proc, 'spine_02', chest.clone().multiply(q(X, lean - breath)), chest);
+		chest = this.pose(proc, 'spine_03', chest.clone().multiply(q(X, lean + breath)), chest);
 		const look = (share: number) =>
 			new Quaternion().setFromEuler(new Euler(pose.headPitch * share, pose.headYaw * share, 0));
-		const neck = this.pose('neck_01', chest.clone().multiply(look(0.4)), chest);
-		this.pose('head', neck.clone().multiply(look(0.6)), neck);
+		const neck = this.pose(proc, 'neck_01', chest.clone().multiply(look(0.4)), chest);
+		this.pose(proc, 'head', neck.clone().multiply(look(0.6)), neck);
 
 		const busy = Math.min(1, pose.armForward / 0.6);
 		for (const side of ['r', 'l'] as const) {
@@ -244,9 +355,14 @@ export class HumanRig {
 			const s = side === 'r' ? 1 : -1;
 			const mouth = side === 'l' ? pose.handToMouth : 0;
 			const wave = side === 'l' ? pose.wave : 0;
-			const legs = new Quaternion();
-			const thigh = this.pose(`thigh_${side}`, q(X, -s * pose.legSwing - pose.hipFlex), legs);
+			const thigh = this.pose(
+				proc,
+				`thigh_${side}`,
+				q(X, -s * pose.legSwing - pose.hipFlex),
+				new Quaternion(),
+			);
 			this.pose(
+				proc,
 				`calf_${side}`,
 				thigh
 					.clone()
@@ -265,10 +381,11 @@ export class HumanRig {
 				s * wave * (0.25 + pose.waveSwing * 0.35) -
 				s * pose.startle * 1.1;
 			const arm = new Quaternion().setFromEuler(new Euler(armX, 0, armZ));
-			const upper = this.pose(`upperarm_${side}`, chest.clone().multiply(arm), chest);
+			const upper = this.pose(proc, `upperarm_${side}`, chest.clone().multiply(arm), chest);
 			const elbow =
 				(-0.15 - sit * 0.6 * (1 - busy) - pose.elbow - mouth * 1.4) * (1 - wave) - wave * 0.5;
 			this.pose(
+				proc,
 				`lowerarm_${side}`,
 				upper
 					.clone()
@@ -277,6 +394,77 @@ export class HumanRig {
 				upper,
 			);
 		}
+
+		// --- Motion capture, standing: idle, walking, sweeping, dancing, waving.
+		const mocap = new Map<string, Quaternion>();
+		const hip = new Vector3();
+		const clips = this.motions?.clips;
+		const standing = this.motions ? 1 - down : 0;
+		if (standing > 0 && clips) {
+			const walk = clips.walk;
+			const gaitTime = pose.gait * (walk?.duration ?? 1);
+			this.play(mocap, 'idle', now, 1);
+			this.hips(clips.idle, now, 1, hip);
+			this.play(mocap, 'sweep', now, pose.broom);
+			this.hips(clips.sweep, now, pose.broom, hip);
+			this.play(mocap, 'dance', now, pose.dancing);
+			this.hips(clips.dance, now, pose.dancing, hip);
+			this.play(mocap, 'walk', gaitTime, pose.walking);
+			this.hips(walk, gaitTime, pose.walking, hip);
+			this.play(mocap, 'wave', now, pose.wave, ARMS);
+		}
+
+		// How much each part follows the motion capture rather than the procedural pose.
+		const handsBusy = Math.min(
+			1,
+			(pose.armForward / 0.3) * (1 - pose.broom) * (1 - pose.dancing) +
+				pose.handToMouth +
+				pose.startle * 2,
+		);
+		const looking = Math.min(1, (Math.abs(pose.headYaw) + Math.abs(pose.headPitch)) * 3);
+		// Standing still, the captured fidgeting is toned down (half of it reads as alive,
+		// all of it as restless); the head is its own, looking around.
+		const moving = Math.min(1, pose.walking + pose.dancing + pose.broom + pose.wave);
+		const calm = 0.55 + 0.45 * moving;
+		const follow = (name: string): number => {
+			if (LEGS.test(name) || name === 'pelvis') return standing * calm;
+			if (ARMS.test(name)) return standing * calm * (1 - handsBusy * (1 - pose.wave));
+			if (name === 'neck_01' || name === 'head') return standing * moving * (1 - looking);
+			return standing * calm * (1 - handsBusy * 0.5);
+		};
+
+		// --- Blend and pose the skeleton, parents first.
+		const world = new Map<string, Quaternion>();
+		for (const [name, parentName] of CHAIN) {
+			const joint = this.joints.get(name);
+			if (!joint) continue;
+			const parent = parentName ? (world.get(parentName) ?? new Quaternion()) : new Quaternion();
+			const a = proc.get(name) ?? parent;
+			const b = mocap.get(name) ?? parent;
+			const w = mocap.has(name) ? follow(name) : 0;
+			const blended = w <= 0 ? a.clone() : w >= 1 ? b.clone() : a.clone().slerp(b, w);
+			world.set(name, blended);
+			// local = (parentWorld * parentRest)^-1 * (world * rest)
+			joint.bone.quaternion.copy(
+				parent
+					.clone()
+					.multiply(joint.parentRest)
+					.invert()
+					.multiply(blended.clone().multiply(joint.rest)),
+			);
+		}
+
+		// Hips: seated or lying they rest just above the surface the root is placed on;
+		// standing they move as captured.
+		const procHip = new Vector3(
+			0,
+			(this.restHip + pose.bob) * (1 - down) + SEATED_HIP * down - this.restHip,
+			0,
+		);
+		const offset = procHip.lerp(hip, standing * calm);
+		this.pelvis.position
+			.copy(this.pelvisRest)
+			.add(offset.applyQuaternion(this.pelvisParentInverse));
 
 		// Face: talking opens the jaw; the eyes blink every few seconds, and close in bed.
 		this.morph('jawOpen', pose.mouth * 0.7);

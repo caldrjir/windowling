@@ -193,7 +193,11 @@ export class CharacterController {
 			if (remaining >= 0) this.finishStep();
 			else remaining = 0;
 		}
-		if (this.steps.length === 0) this.speed = 0;
+		if (this.steps.length === 0) {
+			this.speed = 0;
+			// Nowhere to go (also when a new action cut a walk short): stand, don't freeze mid-stride.
+			if (this.posture === 'standing') this.animator.setState('idle');
+		}
 		// The door is open only while someone is going through it.
 		this.door = approach(this.door, this.steps[0]?.kind === 'pass' ? 1 : 0, dt * 2.5);
 		this.updateSwivel(dt);

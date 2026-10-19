@@ -25,6 +25,7 @@ import {
 import type { Emotion, MomentAnimation } from './character/animation.ts';
 import { CharacterRig } from './character/rig.ts';
 import { HumanRig } from './character/human-rig.ts';
+import { isMotions, type Motions } from './character/motions.ts';
 import { AdaptiveResolution } from './adaptive-resolution.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import {
@@ -283,12 +284,15 @@ export class GameWorld {
 	 * a GPU the placeholder stays: a skinned body is too much for software rendering.
 	 * Resolves once the person is in the room (or immediately when it can't be).
 	 */
-	async loadCharacter(url: string): Promise<void> {
+	async loadCharacter(url: string, motionsUrl?: string): Promise<void> {
 		if (this.software || this.isDisposed()) return;
 		const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-		const gltf = await new GLTFLoader().loadAsync(url);
+		const [gltf, motions] = await Promise.all([
+			new GLTFLoader().loadAsync(url),
+			motionsUrl ? loadMotions(motionsUrl) : Promise.resolve(null),
+		]);
 		if (this.isDisposed()) return;
-		const human = new HumanRig(gltf.scene);
+		const human = new HumanRig(gltf.scene, motions);
 		human.apply(this.character.snapshot(), this.character.animator.pose());
 		// Compile its shaders off the frame loop, so the swap doesn't stutter.
 		await this.renderer.compileAsync(human.root, this.camera, this.scene);
@@ -497,4 +501,15 @@ function softwareRendering(renderer: WebGLRenderer): boolean {
 	const info = gl.getExtension('WEBGL_debug_renderer_info');
 	const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '');
 	return /swiftshader|llvmpipe|softpipe|software/i.test(name);
+}
+
+/** Motion capture for the character; without it, it moves procedurally. */
+async function loadMotions(url: string): Promise<Motions | null> {
+	try {
+		const response = await fetch(url);
+		const json: unknown = response.ok ? await response.json() : null;
+		return isMotions(json) ? json : null;
+	} catch {
+		return null;
+	}
 }

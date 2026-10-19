@@ -133,7 +133,7 @@
 			try {
 				// Loaded lazily so the page shell renders before the 3D engine arrives.
 				const [
-					{ GameWorld, characterModelUrl, lookFor },
+					{ GameWorld, CHARACTER_MOTIONS_URL, characterModelUrl, lookFor },
 					{ actionForActivity, createRng, nextAmbientAction, nextMoment, personalityFor },
 				] = await Promise.all([import('@windowling/game'), import('@windowling/simulation')]);
 				const created = await GameWorld.create(canvas);
@@ -148,9 +148,11 @@
 				showPerson = (id) => {
 					const look = lookFor(id);
 					voice?.prefer?.(look.voice);
-					game.loadCharacter(characterModelUrl(look)).catch((error: unknown) => {
-						console.warn('Could not load the character model', error);
-					});
+					game
+						.loadCharacter(characterModelUrl(look), CHARACTER_MOTIONS_URL)
+						.catch((error: unknown) => {
+							console.warn('Could not load the character model', error);
+						});
 				};
 
 				// The simulation decides what to do; the game world only carries it out.

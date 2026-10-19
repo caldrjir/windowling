@@ -91,6 +91,11 @@ export interface Pose {
 	startle: number;
 	/** Sideways sway of the whole body while startled (radians). */
 	sway: number;
+	/** How much of the body is walking (0..1) and where in its stride (0..1, a full cycle). */
+	walking: number;
+	gait: number;
+	/** Dancing (0..1). */
+	dancing: number;
 }
 
 /** Feelings the body can show for a moment (mirrors the AI's emotion set). */
@@ -433,6 +438,9 @@ export class Animator {
 			sway:
 				(Math.sin(t * 17) * 0.12 * this.startleStrength + groove * 0.12 * dance + fury * 0.5) *
 				(1 - w.lie),
+			walking: w.walk,
+			gait: (this.walkPhase / (Math.PI * 2)) % 1,
+			dancing: dance,
 		};
 	}
 }

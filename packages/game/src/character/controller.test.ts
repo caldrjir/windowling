@@ -46,6 +46,17 @@ describe('CharacterController', () => {
 		expect(c.snapshot().animation).toBe('walk');
 	});
 
+	it('stops walking when a new action cuts the walk short (no frozen stride)', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'walkTo', target: 'kitchen.counter' });
+		run(c, 0.5);
+		expect(c.snapshot().animation).toBe('walk');
+		c.perform({ type: 'idle' });
+		run(c, 1);
+		expect(c.snapshot().animation).toBe('idle');
+		expect(c.animator.weight('walk')).toBeLessThan(0.05);
+	});
+
 	it('stands up before walking somewhere else', () => {
 		const c = new CharacterController();
 		c.perform({ type: 'sit', target: 'desk.chair' });
