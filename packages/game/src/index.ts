@@ -7,6 +7,7 @@ export type {
 export type { CharacterSnapshot, ControllerEvent, Posture } from './character/controller.ts';
 export {
 	CHARACTER_LOOKS,
+	CHARACTER_MOTIONS_URL,
 	characterModelUrl,
 	lookFor,
 	type CharacterLook,

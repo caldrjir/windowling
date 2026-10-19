@@ -103,6 +103,9 @@ the whole room in view from ultrawide desktops to portrait phones (higher angle 
   `GameWorld.loadCharacter(url)` swaps it in once loaded (the placeholder stays without a GPU);
   the page picks the person with `lookFor(worldId)`. The model's textures are decoded via
   `blob:` URLs, hence `blob:` in the CSP's `connect-src`.
+  It plays motion capture (`/characters/motions.json`, made from CMU's BVH takes by
+  `packages/game/scripts/mocap.mjs`) while standing and walking, and the procedural pose
+  where the furniture decides (sitting, lying) or the hands are busy; blended per bone.
 
 `GameWorld.perform(action)`, `setMood(mood)` and `onCharacterEvent()` are the only ways in.
 Activities (`eat`, `work`, `play`) are animation layers on top of the posture (bowl, typing,

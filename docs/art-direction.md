@@ -64,16 +64,21 @@ name; the voice is picked to fit (`prefer` in `voice/tts.ts`).
    `tools/character/build_character.py`: body shaped from its macro targets, realistic skin,
    eyes, brows, lashes, teeth, hair, everyday clothes; MPFB's `game_engine` skeleton (53 bones,
    fingers included). Exported as glTF with WebP textures, ~2 MB, loaded after the room.
-2. **Animation** - the procedural poses (walk, sit, lie, cook, type, moments) drive the real
-   skeleton (`HumanRig`): rotations in the character's own space at the joints, on top of a fix
-   that brings the A-pose arms and legs to hang naturally. Hands rest with curled fingers; shoes
-   come off in bed. The face has morph targets: `jawOpen` (talking) and `blink` (every few
-   seconds, closed in bed), made from MakeHuman's face bones.
+2. **Animation** - motion capture where the body moves freely: standing (weight shifting from
+   leg to leg, toned down), walking (heel to toe, swinging hips and arms, phase-locked to the
+   walking speed), sweeping, dancing, waving - real people from the CMU Graphics Lab Motion
+   Capture Database (free for any use), converted by `packages/game/scripts/mocap.mjs` into
+   `/characters/motions.json`. Each bone is lined up with the take's T-pose (limbs; the trunk
+   as it is) and plays the take's rotations - one set of motions for every body. Procedural
+   poses where the flat decides: sitting on its chair, lying in its bed, hands on a keyboard or
+   a bowl, looking at the player; `HumanRig` blends the two bone by bone. Hands rest with curled
+   fingers; shoes come off in bed. The face has morph targets: `jawOpen` (talking) and `blink`
+   (every few seconds, closed in bed), made from MakeHuman's face bones.
 3. **Performance** - without a GPU (software WebGL) the simple placeholder figure stays: a
    skinned body would be too slow there.
 
-Next: mocap clips (e.g. the CMU database) activity by activity, visemes from the voice, eye
-contact with the player, more people.
+Next: captured sitting down, getting up and lying down; more takes per activity; visemes from
+the voice; eye contact with the player; more people.
 
 Realism raises the bar for animation too (the uncanny valley is worse than honest
 stylisation): procedural poses are the floor, not the goal.

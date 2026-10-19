@@ -1,8 +1,9 @@
-import { Bone, Group, Vector3 } from 'three';
+import { Bone, Group, Quaternion, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { Animator, type Pose } from './animation.ts';
 import { HumanRig } from './human-rig.ts';
 import { CHARACTER_LOOKS, characterModelUrl, lookFor } from './looks.ts';
+import type { MotionClip, Motions } from './motions.ts';
 
 /**
  * A skeleton shaped like the exported characters (bone names of MPFB's
@@ -119,6 +120,37 @@ describe('HumanRig', () => {
 		rig.apply(place, pose({ wave: 1 }), 0);
 		expect(at(rig, 'hand_l').y).toBeGreaterThan(at(rig, 'head').y);
 		expect(at(rig, 'hand_r').y).toBeLessThan(1.2);
+	});
+
+	/**
+	 * Motion capture: a T-pose take whose every frame holds the left arm straight
+	 * down (a quarter turn about z from the T-pose) - played while it stands.
+	 */
+	const armDown = (): Motions => {
+		const down = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), -Math.PI / 2).toArray();
+		const still = (): MotionClip => ({
+			duration: 1,
+			loop: true,
+			frames: 1,
+			restDirections: { upperarm_l: [1, 0, 0], lowerarm_l: [1, 0, 0] },
+			rotations: { upperarm_l: down, lowerarm_l: down },
+			hips: [0, 0, 0],
+		});
+		return { fps: 30, clips: { idle: still(), walk: still() } };
+	};
+
+	it('plays motion capture while standing, lined up from its T-pose', () => {
+		const rig = new HumanRig(skeleton(), armDown());
+		rig.apply(place, pose({ walking: 1 }), 0);
+		expect(direction(rig, 'upperarm_l', 'lowerarm_l').y).toBeLessThan(-0.99);
+		expect(direction(rig, 'lowerarm_l', 'hand_l').y).toBeLessThan(-0.99);
+	});
+
+	it('sits procedurally (the furniture decides), even with motion capture', () => {
+		const rig = new HumanRig(skeleton(), armDown());
+		rig.apply({ ...place, y: 0.45 }, pose({ hipFlex: Math.PI / 2, knee: Math.PI / 2 }), 0);
+		expect(direction(rig, 'thigh_l', 'calf_l').z).toBeGreaterThan(0.95);
+		expect(at(rig, 'thigh_l').y - 0.45).toBeLessThan(0.15);
 	});
 });
 

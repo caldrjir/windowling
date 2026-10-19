@@ -49,3 +49,15 @@ blender-4.2.23-linux-x64/blender -b --python tools/character/build_character.py 
 
 The models are CC0: MakeHuman's base mesh, targets and system assets are CC0, and so is what
 MPFB generates from them. MPFB itself (GPL) is only the build tool; none of its code ships.
+
+## Motion capture
+
+`apps/web/static/characters/motions.json` holds the motions every character plays (walking,
+standing, sweeping, dancing, waving, a yawn). They come from the CMU Graphics Lab Motion Capture
+Database (free for any use, including commercial) in Bruce Hahne's BVH conversion
+(github.com/Shriinivas/cmubvh). To rebuild, put the takes named in `CLIPS` in
+`packages/game/scripts/mocap.mjs` into a folder and run:
+
+```bash
+node packages/game/scripts/mocap.mjs <folder with the .bvh files>
+```

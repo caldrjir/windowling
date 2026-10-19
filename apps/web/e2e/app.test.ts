@@ -289,7 +289,9 @@ test('different visitors get different worlds', async ({ browser }) => {
 	expect(ids[0]).not.toBe(ids[1]);
 });
 
-test('the people who live in the worlds are served as glTF models', async ({ request }) => {
+test('the people who live in the worlds are served as glTF models, with their motions', async ({
+	request,
+}) => {
 	for (const id of ['ava', 'theo', 'maya', 'kenji']) {
 		const response = await request.get(`/characters/${id}.glb`);
 		expect(response.ok()).toBe(true);
@@ -298,6 +300,12 @@ test('the people who live in the worlds are served as glTF models', async ({ req
 		expect(body.subarray(0, 4).toString('ascii')).toBe('glTF');
 		expect(body.readUInt32LE(4)).toBe(2);
 	}
+	// ...and the motion capture they move with.
+	const motions = await request.get('/characters/motions.json');
+	expect(motions.ok()).toBe(true);
+	const { clips } = (await motions.json()) as { clips: Record<string, { frames: number }> };
+	expect(clips.walk?.frames).toBeGreaterThan(10);
+	expect(clips.idle?.frames).toBeGreaterThan(10);
 });
 
 test('PWA manifest is served and installable-shaped', async ({ request }) => {
