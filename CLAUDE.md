@@ -48,6 +48,7 @@ packages/game        Three.js renderer + Rapier physics + rAF loop. No game deci
 packages/ai          AI interfaces, decision schema, mocks (real Ollama etc. later)
 packages/database    Drizzle schema, migrations, client, repositories. The ONLY place with SQL.
 docs/                Product, architecture, iterations, development
+tools/character      Blender build of the realistic characters (MakeHuman CC0 -> glTF)
 docker/              Local infrastructure (Postgres init scripts)
 ```
 

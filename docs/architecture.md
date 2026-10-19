@@ -98,6 +98,11 @@ the whole room in view from ultrawide desktops to portrait phones (higher angle 
 - `planPath` - straight line, or a detour through the room-centre hub when furniture is in the way.
 - `Animator` - crossfading state machine (`idle`, `walk`, `sit`, `lie`) producing a `Pose`.
 - `CharacterRig` - placeholder figure from primitives; only applies a transform + pose.
+- `HumanRig` - the realistic person (a glTF model from `tools/character`, served as
+  `/characters/<id>.glb`): drives its skeleton and face morphs from the same poses.
+  `GameWorld.loadCharacter(url)` swaps it in once loaded (the placeholder stays without a GPU);
+  the page picks the person with `lookFor(worldId)`. The model's textures are decoded via
+  `blob:` URLs, hence `blob:` in the CSP's `connect-src`.
 
 `GameWorld.perform(action)`, `setMood(mood)` and `onCharacterEvent()` are the only ways in.
 Activities (`eat`, `work`, `play`) are animation layers on top of the posture (bowl, typing,

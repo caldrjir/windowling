@@ -1,0 +1,101 @@
+{
+	"$comment": "Who lives in a world. Each world gets one variant, picked from its seed. Macro values are MakeHuman's (0..1): age 0.5 = 25 years, 0.56 ~ 28.",
+	"variants": [
+		{
+			"id": "ava",
+			"macro": {
+				"gender": 0.0,
+				"age": 0.56,
+				"muscle": 0.5,
+				"weight": 0.48,
+				"height": 0.45,
+				"proportions": 0.6,
+				"cupsize": 0.5,
+				"firmness": 0.5,
+				"race": {
+					"caucasian": 0.9,
+					"asian": 0.05,
+					"african": 0.05
+				}
+			},
+			"skin": "young_caucasian_female",
+			"eyes": "brownlight",
+			"eyebrows": "eyebrow010",
+			"eyelashes": "eyelashes01",
+			"hair": "ponytail01",
+			"clothes": ["female_sportsuit01", "shoes05"]
+		},
+		{
+			"id": "theo",
+			"macro": {
+				"gender": 1.0,
+				"age": 0.56,
+				"muscle": 0.55,
+				"weight": 0.5,
+				"height": 0.55,
+				"proportions": 0.6,
+				"cupsize": 0.5,
+				"firmness": 0.5,
+				"race": {
+					"caucasian": 0.9,
+					"asian": 0.05,
+					"african": 0.05
+				}
+			},
+			"skin": "young_caucasian_male",
+			"eyes": "blue",
+			"eyebrows": "eyebrow001",
+			"eyelashes": "eyelashes02",
+			"hair": "short04",
+			"clothes": ["male_casualsuit06", "shoes05"]
+		},
+		{
+			"id": "maya",
+			"macro": {
+				"gender": 0.0,
+				"age": 0.56,
+				"muscle": 0.5,
+				"weight": 0.52,
+				"height": 0.5,
+				"proportions": 0.6,
+				"cupsize": 0.5,
+				"firmness": 0.5,
+				"race": {
+					"caucasian": 0.1,
+					"asian": 0.05,
+					"african": 0.85
+				}
+			},
+			"skin": "young_african_female",
+			"eyes": "brown",
+			"eyebrows": "eyebrow006",
+			"eyelashes": "eyelashes01",
+			"hair": "afro01",
+			"clothes": ["male_casualsuit06", "shoes02"]
+		},
+		{
+			"id": "kenji",
+			"macro": {
+				"gender": 1.0,
+				"age": 0.56,
+				"muscle": 0.55,
+				"weight": 0.46,
+				"height": 0.48,
+				"proportions": 0.6,
+				"cupsize": 0.5,
+				"firmness": 0.5,
+				"race": {
+					"caucasian": 0.05,
+					"asian": 0.9,
+					"african": 0.05
+				}
+			},
+			"skin": "young_asian_male",
+			"eyes": "brown",
+			"eyebrows": "eyebrow003",
+			"eyelashes": "eyelashes02",
+			"hair": "short01",
+			"clothes": ["male_casualsuit03", "shoes04"]
+		}
+	]
+}

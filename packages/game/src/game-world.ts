@@ -24,6 +24,7 @@ import {
 } from './character/controller.ts';
 import type { Emotion, MomentAnimation } from './character/animation.ts';
 import { CharacterRig } from './character/rig.ts';
+import { HumanRig } from './character/human-rig.ts';
 import { AdaptiveResolution } from './adaptive-resolution.ts';
 import { FixedStepAccumulator } from './fixed-step.ts';
 import {
@@ -75,7 +76,9 @@ export class GameWorld {
 	});
 	private readonly bodies: PhysicsMesh[] = [];
 	private readonly character = new CharacterController();
-	private readonly rig = new CharacterRig();
+	/** The placeholder figure until the realistic model has loaded (or without a GPU). */
+	private rig: CharacterRig | HumanRig = new CharacterRig();
+	private readonly software: boolean;
 	private readonly listeners = new Set<(event: ControllerEvent) => void>();
 	private readonly resizeObserver: ResizeObserver;
 	private frame = 0;
@@ -107,6 +110,7 @@ export class GameWorld {
 		// Without a GPU (software WebGL) every pixel costs CPU the page needs for
 		// everything else: start low and stay there instead of finding out slowly.
 		const software = softwareRendering(this.renderer);
+		this.software = software;
 		this.resolution = software
 			? new AdaptiveResolution(0.5, 0.5)
 			: new AdaptiveResolution(Math.min(window.devicePixelRatio, options.maxPixelRatio ?? 2));
@@ -272,6 +276,35 @@ export class GameWorld {
 		this.physics.dispose();
 		this.environment.dispose();
 		this.renderer.dispose();
+	}
+
+	/**
+	 * Swaps the placeholder figure for a realistic person (a glTF model). Without
+	 * a GPU the placeholder stays: a skinned body is too much for software rendering.
+	 * Resolves once the person is in the room (or immediately when it can't be).
+	 */
+	async loadCharacter(url: string): Promise<void> {
+		if (this.software || this.isDisposed()) return;
+		const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+		const gltf = await new GLTFLoader().loadAsync(url);
+		if (this.isDisposed()) return;
+		const human = new HumanRig(gltf.scene);
+		human.apply(this.character.snapshot(), this.character.animator.pose());
+		// Compile its shaders off the frame loop, so the swap doesn't stutter.
+		await this.renderer.compileAsync(human.root, this.camera, this.scene);
+		if (this.isDisposed()) {
+			human.dispose();
+			return;
+		}
+		this.scene.remove(this.rig.root);
+		this.rig.dispose();
+		this.rig = human;
+		this.scene.add(human.root);
+	}
+
+	/** Checked again after every await: the world may have been unmounted meanwhile. */
+	private isDisposed(): boolean {
+		return this._status === 'disposed';
 	}
 
 	private readonly tick = (now: number): void => {
