@@ -20,7 +20,11 @@ export interface TextToSpeech {
 	readonly available: boolean;
 	speak(text: string, options: SpeakOptions): Promise<void>;
 	cancel(): void;
+	/** Prefer voices that fit the person we see (a woman shouldn't speak with a man's voice). */
+	prefer?(gender: VoiceGender): void;
 }
+
+export type VoiceGender = 'female' | 'male';
 
 /** Voice character per emotion: a bit slower when sad or tired, faster when angry. */
 const PROSODY: Record<string, { rate: number; pitch: number }> = {
@@ -59,15 +63,38 @@ export function voiceQuality(voice: VoiceInfo): number | null {
 	return score;
 }
 
+const FEMALE =
+	/\b(female|woman|samantha|karen|moira|tessa|serena|ava|zoe|aria|jenny|victoria|susan|allison|fiona|kate|emma|libby|sonia|natasha|michelle|joanna|salli|kendra|kimberly|ivy|amy|olivia|catherine|zira|hazel|heather|linda|google us english)\b/i;
+const MALE =
+	/\b(male|man|daniel|alex|guy|tom|oliver|arthur|ryan|thomas|aaron|george|james|eric|christopher|brian|matthew|joey|justin|rishi|gordon|lee|david|mark|richard|william)\b/i;
+
+/** Whose voice it sounds like, from its name (all browsers tell us), or null when unknown. */
+export function voiceGender(voice: Pick<VoiceInfo, 'name'>): VoiceGender | null {
+	// "Female" also contains "male": test it first.
+	if (FEMALE.test(voice.name)) return 'female';
+	if (MALE.test(voice.name)) return 'male';
+	return null;
+}
+
 /**
  * The voice for this character: on-device voices first (nothing is sent
- * anywhere), the best-sounding of those, the same one every visit (`seed`
- * picks among equally good ones).
+ * anywhere), one that fits the person (`gender`) where the device has one,
+ * the best-sounding of those, the same one every visit (`seed` picks among
+ * equally good ones).
  */
-export function pickVoice<V extends VoiceInfo>(voices: readonly V[], seed: number): V | null {
+export function pickVoice<V extends VoiceInfo>(
+	voices: readonly V[],
+	seed: number,
+	gender?: VoiceGender,
+): V | null {
 	const usable = voices.filter((v) => voiceQuality(v) !== null);
 	const local = usable.filter((v) => v.localService);
-	const pool = local.length ? local : usable;
+	let pool = local.length ? local : usable;
+	if (gender) {
+		const fitting = pool.filter((v) => voiceGender(v) === gender);
+		const unknown = pool.filter((v) => voiceGender(v) === null);
+		pool = fitting.length ? fitting : unknown.length ? unknown : pool;
+	}
 	const best = Math.max(...pool.map((v) => voiceQuality(v) ?? 0));
 	const top = pool.filter((v) => voiceQuality(v) === best);
 	return top[seed % Math.max(1, top.length)] ?? null;
@@ -79,6 +106,7 @@ export function pickVoice<V extends VoiceInfo>(voices: readonly V[], seed: numbe
  */
 export class BrowserSpeech implements TextToSpeech {
 	private voice: SpeechSynthesisVoice | null = null;
+	private gender: VoiceGender | undefined;
 
 	constructor(private readonly seed = 0) {
 		if (!this.available) return;
@@ -91,7 +119,12 @@ export class BrowserSpeech implements TextToSpeech {
 	}
 
 	private pickVoice(): void {
-		this.voice = pickVoice(speechSynthesis.getVoices(), this.seed);
+		this.voice = pickVoice(speechSynthesis.getVoices(), this.seed, this.gender);
+	}
+
+	prefer(gender: VoiceGender): void {
+		this.gender = gender;
+		if (this.available) this.pickVoice();
 	}
 
 	speak(text: string, { emotion, intensity, onWord }: SpeakOptions): Promise<void> {

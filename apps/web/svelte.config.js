@@ -17,7 +17,8 @@ const config = {
 				'style-src': ['self', 'unsafe-inline'],
 				'img-src': ['self', 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
 				// Models for on-device speech recognition come from the Hugging Face Hub (data only).
-				'connect-src': ['self', 'https://huggingface.co', 'https://*.hf.co'],
+				// blob: - the character model's textures are decoded from the .glb in memory.
+				'connect-src': ['self', 'blob:', 'https://huggingface.co', 'https://*.hf.co'],
 				'worker-src': ['self'],
 				'manifest-src': ['self'],
 				'object-src': ['none'],

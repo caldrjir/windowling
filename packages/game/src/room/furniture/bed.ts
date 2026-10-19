@@ -46,7 +46,7 @@ export interface Bed {
  */
 function duvet(mattress: { width: number; depth: number }, lie: Spot | undefined) {
 	const width = mattress.width + OVERHANG * 2;
-	const start = (lie?.z ?? 0) - 0.5; // just below the shoulders
+	const start = (lie?.z ?? 0) - 0.58; // just below the shoulders
 	// Over the foot end it hangs down, like the sides.
 	const end = mattress.depth / 2 + OVERHANG;
 	const length = end - start;
@@ -66,17 +66,17 @@ function duvet(mattress: { width: number; depth: number }, lie: Spot | undefined
 			const outX = Math.max(0, Math.abs(x) - half);
 			const outZ = Math.max(0, z - mattress.depth / 2);
 			const drop = Math.min(0.16, (outX + outZ) * 1.6);
-			// The body under it: highest over the chest, lower over the legs, a soft hump across.
 			// The body under it, measured from where it lies: chest, legs, toes tenting it up.
 			const fromHips = z - (lie?.z ?? 0);
-			// Smooth steps between chest (0.2), legs (0.15) and toes tenting it (0.28), then off the end.
+			// Smooth steps between chest (0.28), legs (0.22) and toes tenting it (0.34), then off the end.
 			const smooth = (a: number, b: number) => {
 				const t = Math.min(1, Math.max(0, (fromHips - a) / (b - a)));
 				return t * t * (3 - 2 * t);
 			};
 			const height =
-				0.2 - 0.05 * smooth(0.0, 0.3) + 0.13 * smooth(0.55, 0.85) - 0.28 * smooth(1.0, 1.12);
-			const across = Math.exp(-(((x - bodyX) / 0.24) ** 2));
+				0.28 - 0.06 * smooth(0.0, 0.35) + 0.12 * smooth(0.6, 0.85) - 0.34 * smooth(0.95, 1.08);
+			// Wide enough for arms lying alongside the body.
+			const across = Math.exp(-(((x - bodyX) / 0.36) ** 2));
 			const hump = cover * Math.max(0, height) * across;
 			position.setY(i, y + hump - drop);
 		}

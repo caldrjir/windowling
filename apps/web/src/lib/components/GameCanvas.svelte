@@ -91,6 +91,9 @@
 	let brainInfo = $state('');
 	// Not reactive: imperative objects Svelte must not track.
 	let world: GameWorld | undefined;
+	/** Loads the person who lives in the world (once the world is known). */
+	let showPerson: ((worldId: string) => void) | undefined;
+	let shownFor: string | null = null;
 	let follow: ((activity: Activity | null) => void) | undefined;
 	let watcher: Watcher | undefined;
 	let rippleId = 0;
@@ -130,7 +133,7 @@
 			try {
 				// Loaded lazily so the page shell renders before the 3D engine arrives.
 				const [
-					{ GameWorld },
+					{ GameWorld, characterModelUrl, lookFor },
 					{ actionForActivity, createRng, nextAmbientAction, nextMoment, personalityFor },
 				] = await Promise.all([import('@windowling/game'), import('@windowling/simulation')]);
 				const created = await GameWorld.create(canvas);
@@ -140,6 +143,15 @@
 				}
 				const game = created;
 				world = game;
+
+				// Who lives here: a realistic person, the same one every visit to this world.
+				showPerson = (id) => {
+					const look = lookFor(id);
+					voice?.prefer?.(look.voice);
+					game.loadCharacter(characterModelUrl(look)).catch((error: unknown) => {
+						console.warn('Could not load the character model', error);
+					});
+				};
 
 				// The simulation decides what to do; the game world only carries it out.
 				// While idle there is no fixed place, so the character wanders a little.
@@ -179,6 +191,7 @@
 				/** Knocked awake: the first words will be a complaint. */
 				let justWoken = false;
 				const tts = new BrowserSpeech(characterName.length);
+				if (worldId) tts.prefer(lookFor(worldId).voice);
 				voice = tts;
 				voiceAvailable = tts.available;
 
@@ -461,6 +474,12 @@
 	$effect(() => {
 		if (status !== 'running') return;
 		world?.setMood(mood);
+	});
+
+	$effect(() => {
+		if (status !== 'running' || !worldId || worldId === shownFor) return;
+		shownFor = worldId;
+		showPerson?.(worldId);
 	});
 
 	// Music from inside the flat while it listens to music (generated, see sound/music.ts).

@@ -33,17 +33,17 @@ charcoal textiles, black steel, terracotta, muted greens - with personal clutter
 
 ## Where we are
 
-| Piece                                                | State                                                         |
-| ---------------------------------------------------- | ------------------------------------------------------------- |
-| Desk (oak, steel frame, laptop, plant, notebook)     | realistic (`room/furniture/desk.ts`)                          |
-| Office chair (5-star base, mesh back, swivel)        | realistic (`room/furniture/office-chair.ts`)                  |
-| Sofa (oak legs, seat + back cushions, pillow, throw) | realistic (`room/furniture/sofa.ts`)                          |
-| Bed (oak frame, headboard, linen, duvet), nightstand | realistic (`room/furniture/bed.ts`)                           |
-| Loose props (mug, books, throw pillow)               | realistic (`room/furniture/props.ts`), moved by physics       |
-| Kitchenette, fridge                                  | realistic (`room/furniture/kitchen.ts`)                       |
-| Floor lamp (oak tripod, linen drum shade)            | realistic (`room/furniture/floor-lamp.ts`)                    |
-| Walls, floor, skirting, door, window, rug, prints    | realistic (`room/architecture.ts`)                            |
-| Character                                            | primitive placeholder - the biggest gap; needs a rigged model |
+| Piece                                                | State                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------- |
+| Desk (oak, steel frame, laptop, plant, notebook)     | realistic (`room/furniture/desk.ts`)                    |
+| Office chair (5-star base, mesh back, swivel)        | realistic (`room/furniture/office-chair.ts`)            |
+| Sofa (oak legs, seat + back cushions, pillow, throw) | realistic (`room/furniture/sofa.ts`)                    |
+| Bed (oak frame, headboard, linen, duvet), nightstand | realistic (`room/furniture/bed.ts`)                     |
+| Loose props (mug, books, throw pillow)               | realistic (`room/furniture/props.ts`), moved by physics |
+| Kitchenette, fridge                                  | realistic (`room/furniture/kitchen.ts`)                 |
+| Floor lamp (oak tripod, linen drum shade)            | realistic (`room/furniture/floor-lamp.ts`)              |
+| Walls, floor, skirting, door, window, rug, prints    | realistic (`room/architecture.ts`)                      |
+| Character                                            | realistic (`tools/character`, `character/human-rig.ts`) |
 
 The back window looks out on the tenement across the street under the real sky; its windows
 light up at night. The street is drawn only through the glass (a stencil mask), so it never
@@ -54,27 +54,26 @@ body (chest, legs, toes) as the character lies down - computed per vertex, not a
 Seats say how far the character leans back (`seat.recline`): deep into the sofa, upright on
 the desk chair and the edge of the bed.
 
-## The character: fully realistic (decided 2026-10-15)
+## The character: fully realistic
 
-A believable person, not a stylised figure. Plan:
+Four people (`tools/character/variants.json`): two women and two men in their late twenties,
+different in build, skin, hair and clothes. Each world gets one, picked from its id like its
+name; the voice is picked to fit (`prefer` in `voice/tts.ts`).
 
-1. **Model** - MakeHuman / MPFB (CC0 output, open source, no licence fees): body shaped from
-   its morph targets, realistic skin textures (albedo, normal, roughness), eyes, brows, lashes,
-   hair cards, everyday clothes; the _game engine_ skeleton (~50 bones, fingers included) and
-   face shape keys for expressions and visemes. Exported to glTF, compressed (Draco/KTX2),
-   loaded lazily. Built headless in Blender by a script in the repo, so it is reproducible.
-2. **Animation** - the procedural poses we already compute (walk cycle, sitting, lying,
-   cooking, typing, moments) drive the real skeleton's bones; mocap clips (e.g. the CMU
-   database, free for any use) replace them activity by activity. Lip sync from the voice's
-   word boundaries to visemes, blinking, eye contact with the player.
-3. **Performance** - one skinned mesh, a texture atlas, LOD for phones; `AdaptiveResolution`
-   keeps weak devices smooth.
+1. **Model** - MakeHuman via MPFB (CC0 output), built headless in Blender by
+   `tools/character/build_character.py`: body shaped from its macro targets, realistic skin,
+   eyes, brows, lashes, teeth, hair, everyday clothes; MPFB's `game_engine` skeleton (53 bones,
+   fingers included). Exported as glTF with WebP textures, ~2 MB, loaded after the room.
+2. **Animation** - the procedural poses (walk, sit, lie, cook, type, moments) drive the real
+   skeleton (`HumanRig`): rotations in the character's own space at the joints, on top of a fix
+   that brings the A-pose arms and legs to hang naturally. Hands rest with curled fingers; shoes
+   come off in bed. The face has morph targets: `jawOpen` (talking) and `blink` (every few
+   seconds, closed in bed), made from MakeHuman's face bones.
+3. **Performance** - without a GPU (software WebGL) the simple placeholder figure stays: a
+   skinned body would be too slow there.
 
-Blocked on assets: MakeHuman's skins, hair and clothes are downloaded from
-makehumancommunity.org, which this project's cloud environment cannot reach yet (its network
-policy). The base mesh, targets, rigs and eyes are in the MakeHuman Git repository and are
-available.
+Next: mocap clips (e.g. the CMU database) activity by activity, visemes from the voice, eye
+contact with the player, more people.
 
-The character is the hardest part: a realistic person needs a rigged, skinned model with
-facial animation, and realism raises the bar for animation too (the uncanny valley is worse
-than honest stylisation). That decision - authored model vs. generated, how realistic - is open.
+Realism raises the bar for animation too (the uncanny valley is worse than honest
+stylisation): procedural poses are the floor, not the goal.
