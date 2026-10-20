@@ -141,10 +141,20 @@ an LLM may produce (speech, emotion, intensity, one `CharacterAction`, optional 
 `Conversation.handle(event)` → `POST /api/ai/decide` (the server reads the character's state from
 the database, checks the per-player daily quota in `ai_usage`, asks the model, and runs
 `reviewAction` from the simulation) → `GameCanvas` shows the emotion, performs the reviewed
-action and speaks through `TextToSpeech` (browser `speechSynthesis` for now, #32 tracks the
-neural voice; `pickVoice` prefers on-device voices, ranks them by likely quality and never
-uses joke voices such as macOS "Bubbles") with subtitles (`OFF | AUTO | ALWAYS`) and a mouth
-driven by word boundaries. The player's words are never dropped: said while the character is
+action and speaks through `TextToSpeech` with subtitles (`OFF | AUTO | ALWAYS`) and a moving
+mouth. `CharacterVoice` picks the voice: the neural one when the player downloaded it, else the
+browser's `speechSynthesis` (`pickVoice` prefers on-device voices, ranks them by likely quality
+and never uses joke voices such as macOS "Bubbles"; the mouth follows word boundaries).
+
+**Neural voice (#32):** Kokoro-82M (Apache-2.0) in a Web Worker (`voice/tts.worker.ts`) on our
+own ONNX runtime (WASM, CPU). Only the q8 weights (~92 MB) come from the Hugging Face Hub, once,
+after the player agrees in Settings, then from the Cache API. Text becomes phonemes with
+`voice/g2p.ts`, a port of Misaki's dictionary path (Misaki is the phonemizer Kokoro was trained
+with) - no eSpeak NG (GPL-3) anywhere: the dictionary is `static/voice/lexicon-us.json`, homographs
+are picked by the word before, unknown words are split into known ones or read by letter sounds.
+The first sentence is made alone so the voice starts early; the rest follows in one piece. The
+mouth opens on syllable onsets found in the audio. Emotions set the speed. A device that makes
+speech much slower than real time (twice in a row) goes back to the browser voice (`slow`). The player's words are never dropped: said while the character is
 still talking, they are answered right after. Music from the radio is turned down meanwhile.
 
 **Sitting and lying (controller):** seats describe how to get on them (`seat.edge`, `seat.at`,
@@ -312,6 +322,7 @@ updates `world.timezone` after the catch-up (missed time is lived on the old clo
 | 2026-10-05 | Awareness is browser session state; only waking is persisted      | Being watched exists only while someone looks; consequences (broken sleep) must survive.                                  |
 | 2026-10-05 | Brain = on-device / cloud (OpenAI-compatible) / Ollama / canned   | Player's choice (#28). REST instead of the Workers AI binding: portable, and `wrangler dev`/E2E need no Cloudflare login. |
 | 2026-10-05 | Browser `speechSynthesis` first, neural TTS later (#32)           | Local neural TTS needs GPL-3 espeak-ng and CDN-loaded runtimes; tracked to reach the best quality later.                  |
+| 2026-10-20 | Neural voice: Kokoro-82M + own Misaki-based G2P, opt-in download  | Best open voice that runs in a browser; the G2P port avoids GPL-3 eSpeak NG; weights from the Hub like Whisper's (#32).   |
 | 2026-10-05 | Whisper in the browser, CPU WASM, self-hosted runtime             | Voice stays on the device; no third-party CDN scripts; fits Cloudflare asset limits.                                      |
 | 2026-10-05 | WebLLM kernels vendored in `static/webllm/`                       | No executable code from third-party hosts at runtime; pinned by checksum.                                                 |
 | 2026-10-06 | Memory recall by importance × recency × keywords (no vectors yet) | Free, plain Postgres, testable; embeddings can replace the relevance term behind `recall`.                                |

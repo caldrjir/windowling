@@ -12,3 +12,6 @@ apps/web/src/worker-configuration.d.ts
 
 # Generated motion capture (scripts/mocap.mjs): kept compact.
 apps/web/static/characters/motions.json
+
+# Pronunciation dictionary for the neural voice (scripts/voice-lexicon.mjs).
+apps/web/static/voice/lexicon-us.json

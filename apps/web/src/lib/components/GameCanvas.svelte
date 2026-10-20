@@ -17,6 +17,7 @@
 	import { playKnock } from '$lib/knock';
 	import { settings, showSubtitles } from '$lib/settings.svelte';
 	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
+	import { CharacterVoice, neuralVoice } from '$lib/voice/neural-voice.svelte';
 	import { sensorAccess } from '$lib/sensors/access.svelte';
 	import { PhoneSensors } from '$lib/sensors/device';
 	import { unlockAudio } from '$lib/sound/audio';
@@ -192,7 +193,12 @@
 				};
 				/** Knocked awake: the first words will be a complaint. */
 				let justWoken = false;
-				const tts = new BrowserSpeech(characterName.length);
+				// The neural voice when it was downloaded (loads in the background), else the browser's.
+				void neuralVoice.detect();
+				const tts = new CharacterVoice(
+					new BrowserSpeech(characterName.length),
+					characterName.length,
+				);
 				if (worldId) tts.prefer(lookFor(worldId).voice);
 				voice = tts;
 				voiceAvailable = tts.available;
