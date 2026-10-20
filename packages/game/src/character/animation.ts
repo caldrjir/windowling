@@ -1,4 +1,4 @@
-import { approach } from './math.ts';
+import { approach, ease } from './math.ts';
 
 export type AnimationState = 'idle' | 'walk' | 'sit' | 'lie';
 
@@ -113,6 +113,12 @@ export type Emotion =
 const EMOTION_SECONDS = 6;
 
 const CROSSFADE_PER_SECOND = 3.5;
+
+/**
+ * Lying down on the bed (0 sitting on its edge .. 1 lying): the part of it in which the
+ * legs swing up onto the bed - and the body turns to lie along it (the controller turns it then).
+ */
+export const BED_SWING: readonly [number, number] = [0.4, 0.85];
 
 /**
  * Crossfading state machine. `setState` picks the target; `update` advances
@@ -341,6 +347,23 @@ export class Animator {
 		const up = feel * (e === 'happy' || e === 'surprised' ? 1 : 0);
 		const tense = feel * (e === 'angry' || e === 'annoyed' || e === 'nervous' ? 1 : 0);
 
+		// Between sitting on the edge of the bed and lying in it (0 sitting .. 1 lying), like a
+		// person: lean back first, lift the bent legs onto the bed, then stretch out flat - not
+		// a plank tipping over with its legs in the air. Getting up runs the same in reverse.
+		const bed = w.sit + w.lie;
+		const lying = bed > 0 ? w.lie / bed : 0;
+		// Leaning back onto the elbows while the legs still hang off the edge...
+		const recline = 0.55 * ease(lying / 0.45) + 0.45 * ease((lying - 0.6) / 0.4);
+		// ...bent legs lifted onto the bed as it turns along it (BED_SWING)...
+		const legLift = 0.35 * Math.sin(Math.PI * ease((lying - BED_SWING[0]) / 0.5));
+		// Propped on the elbows while leaning back (arms back, forearms on the bed).
+		const propped = bed * Math.sin(Math.PI * Math.min(1, lying / 0.8));
+		// ...and stretched out at the end.
+		const bedKnee =
+			lying < 0.7
+				? Math.PI / 2 + (1.0 - Math.PI / 2) * ease((lying - BED_SWING[0]) / 0.3)
+				: 1.0 + (0.08 - 1.0) * ease((lying - 0.7) / 0.3);
+
 		return {
 			bob:
 				w.idle * Math.sin(t * 1.6) * 0.004 +
@@ -357,11 +380,11 @@ export class Animator {
 				dance * beat * 0.7,
 			knee:
 				w.walk * Math.max(0, -Math.sin(this.walkPhase + 0.6)) * 0.45 +
-				w.sit * (Math.PI / 2) +
+				bed * bedKnee +
 				squat * 1.3 +
 				dance * Math.abs(beat) * 0.3,
-			hipFlex: w.sit * (Math.PI / 2) + squat * 0.9,
-			lie: w.lie,
+			hipFlex: bed * ((Math.PI / 2) * (1 - recline) + legLift) + squat * 0.9,
+			lie: bed * recline,
 			breath: breath * (w.idle + w.sit + w.lie * 1.4),
 			headYaw:
 				(w.idle + w.sit) * glanceYaw * (1 - handsBusy) * (1 - look) +
@@ -390,6 +413,7 @@ export class Animator {
 				// Leaning back, it keeps looking ahead, not at the ceiling.
 				this.recline * w.sit * 0.8,
 			armForward:
+				-propped * 0.55 +
 				eat * 0.7 +
 				work * 0.75 +
 				play * 0.65 +
@@ -401,6 +425,7 @@ export class Animator {
 				rage * 0.3 +
 				fury,
 			elbow:
+				propped * 1.1 +
 				eat * 0.8 +
 				work * (0.55 + typing) +
 				play * (1.1 + typing * 0.5) +

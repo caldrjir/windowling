@@ -72,8 +72,11 @@ name; the voice is picked to fit (`prefer` in `voice/tts.ts`).
    as it is) and plays the take's rotations - one set of motions for every body. Procedural
    poses where the flat decides: sitting on its chair, lying in its bed, hands on a keyboard or
    a bowl, looking at the player; `HumanRig` blends the two bone by bone. Hands rest with curled
-   fingers; shoes come off in bed. The face has morph targets: `jawOpen` (talking) and `blink`
+   fingers. The face has morph targets: `jawOpen` (talking) and `blink`
    (every few seconds, closed in bed), made from MakeHuman's face bones.
+   Getting into bed is choreographed like a person does it: sit on the edge, lean back onto the
+   elbows with the legs still hanging, swing the bent legs up while turning along the bed
+   (`BED_SWING`), stretch out; getting up runs the same in reverse.
 3. **Performance** - without a GPU (software WebGL) the simple placeholder figure stays: a
    skinned body would be too slow there.
 
