@@ -96,6 +96,13 @@ describe('HumanRig', () => {
 		expect(hand.y).toBeLessThan(0.45 + 0.4);
 	});
 
+	it('keeps its hips on the bed while leaning back to lie down', () => {
+		const rig = new HumanRig(skeleton());
+		// Part way from sitting to lying: reclined, so the hips flex less than when sitting.
+		rig.apply({ ...place, y: 0.5 }, pose({ lie: 0.42, hipFlex: 0.92, knee: Math.PI / 2 }), 0);
+		expect(at(rig, 'thigh_l').y - 0.5).toBeLessThan(0.2);
+	});
+
 	it('lies on its back with the head towards the pillow (-z)', () => {
 		const rig = new HumanRig(skeleton());
 		rig.apply({ ...place, y: 0.6 }, pose({ lie: 1 }), 0);

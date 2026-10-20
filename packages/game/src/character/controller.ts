@@ -1,6 +1,6 @@
 import { targetSupports, type CharacterAction } from '@windowling/shared';
 import { OUTSIDE, TARGETS, type Spot, type Vec2 } from '../room/layout.ts';
-import { Animator, type ActivityAnimation, type AnimationState } from './animation.ts';
+import { Animator, BED_SWING, type ActivityAnimation, type AnimationState } from './animation.ts';
 import { approach, ease, turnTowards, wrapAngle, yawTowards } from './math.ts';
 import { planPath } from './path.ts';
 
@@ -457,10 +457,16 @@ export class CharacterController {
 				);
 				step.elapsed += dt;
 				const t = Math.min(1, step.elapsed / step.seconds);
-				this.x = from.x + (step.to.x - from.x) * t;
-				this.z = from.z + (step.to.z - from.z) * t;
+				// Between sitting on the bed's edge and lying in it, the body turns along the bed
+				// and moves onto it while the legs swing up - not before (legs in the air beside
+				// the bed, or through the mattress).
+				let turn = t;
+				if (step.state === 'lie') turn = swing(t);
+				else if (this.posture === 'lying') turn = 1 - swing(1 - t);
+				this.x = from.x + (step.to.x - from.x) * turn;
+				this.z = from.z + (step.to.z - from.z) * turn;
 				this.y = from.y + (step.to.y - from.y) * t;
-				this.yaw = wrapAngle(from.yaw + wrapAngle(step.to.yaw - from.yaw) * t);
+				this.yaw = wrapAngle(from.yaw + wrapAngle(step.to.yaw - from.yaw) * turn);
 				return step.elapsed < step.seconds ? -1 : step.elapsed - step.seconds;
 			}
 			case 'gesture': {
@@ -500,4 +506,9 @@ export class CharacterController {
 		}
 		if (this.steps.length === 0 && this.posture === 'standing') this.animator.setState('idle');
 	}
+}
+
+/** How far the body has turned along the bed at `lying` (0..1) of lying down. */
+function swing(lying: number): number {
+	return ease((lying - BED_SWING[0]) / (BED_SWING[1] - BED_SWING[0]));
 }

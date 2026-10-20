@@ -129,7 +129,7 @@ export class CharacterRig {
 		// Seated or lying, the hips rest just above the surface the root is placed on.
 		const restingHip = 0.1;
 		this.hips.position.y =
-			standingHip * (1 - Math.max(sit, pose.lie)) + restingHip * Math.max(sit, pose.lie);
+			standingHip * (1 - Math.min(1, sit + pose.lie)) + restingHip * Math.min(1, sit + pose.lie);
 		// Lying: rotate the whole body back so the head points to the pillow (-z).
 		this.body.rotation.x = (-Math.PI / 2) * pose.lie;
 

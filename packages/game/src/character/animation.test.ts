@@ -46,6 +46,27 @@ describe('Animator', () => {
 		expect(a.pose().lie).toBe(1);
 	});
 
+	it('gets into bed like a person: leans back first, legs up later, then stretches out', () => {
+		const a = new Animator();
+		a.setState('sit');
+		settle(a, 1);
+		a.setState('lie', 1);
+		// A quarter of the way: leaning back, the legs still hanging off the edge.
+		settle(a, 0.25);
+		const early = a.pose();
+		expect(early.lie).toBeGreaterThan(0.2); // reclining
+		expect(early.knee).toBeCloseTo(Math.PI / 2, 1); // feet still down
+		// Halfway through the swing: knees bent, thighs raised to clear the bed.
+		settle(a, 0.35);
+		const swinging = a.pose();
+		expect(swinging.knee).toBeGreaterThan(0.6);
+		expect(swinging.knee).toBeLessThan(Math.PI / 2);
+		// In bed: flat, legs (almost) straight.
+		settle(a, 1);
+		expect(a.pose().lie).toBe(1);
+		expect(a.pose().knee).toBeLessThan(0.1);
+	});
+
 	it('layers activities on top of the body and fades them in', () => {
 		const a = new Animator();
 		a.setState('sit');

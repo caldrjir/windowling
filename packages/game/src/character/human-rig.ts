@@ -125,8 +125,6 @@ export class HumanRig {
 	private readonly morphs: { mesh: Mesh; index: Record<string, number> }[] = [];
 	private readonly owned: Material[] = [];
 	private nextBlink = 0;
-	/** Nobody sleeps in their shoes. */
-	private readonly shoes: Mesh[] = [];
 
 	constructor(model: Object3D, motions: Motions | null = null) {
 		this.motions = motions;
@@ -244,7 +242,6 @@ export class HumanRig {
 		mesh.receiveShadow = true;
 		// The body bends far from its rest bounds (lying, sitting): never cull it.
 		mesh.frustumCulled = false;
-		if (/shoe/i.test(mesh.name)) this.shoes.push(mesh);
 		const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
 		for (const material of materials) {
 			if (!(material instanceof MeshStandardMaterial)) continue;
@@ -331,7 +328,8 @@ export class HumanRig {
 		this.root.rotation.y = state.yaw;
 
 		const sit = Math.min(1, pose.hipFlex / (Math.PI / 2));
-		const down = Math.max(sit, pose.lie);
+		// Off its feet: sitting, lying, or between the two (leaning back, the hips flex less).
+		const down = Math.min(1, sit + pose.lie);
 		// Lying: the whole body turns back so the head points to the pillow (-z).
 		this.body.rotation.set((-Math.PI / 2) * pose.lie, 0, pose.sway);
 
@@ -472,7 +470,6 @@ export class HumanRig {
 			'blink',
 			Math.max(this.blink(now), Math.min(1, Math.max(0, (pose.lie - 0.6) / 0.3))),
 		);
-		for (const shoe of this.shoes) shoe.visible = pose.lie < 0.5;
 		this.props.update(pose);
 	}
 

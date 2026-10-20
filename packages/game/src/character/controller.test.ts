@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FURNITURE, insideBox, TARGETS } from '../room/layout.ts';
-import { CharacterController, type ControllerEvent } from './controller.ts';
+import { CharacterController, LIE_SECONDS, type ControllerEvent } from './controller.ts';
 import { wrapAngle } from './math.ts';
 
 function run(controller: CharacterController, seconds: number, dt = 1 / 60): ControllerEvent[] {
@@ -73,6 +73,24 @@ describe('CharacterController', () => {
 		c.perform({ type: 'sleep', target: 'bed' });
 		run(c, 12);
 		expect(c.snapshot()).toMatchObject({ posture: 'lying', occupying: 'bed', animation: 'lie' });
+	});
+
+	it('turns along the bed only while lifting its legs onto it', () => {
+		const c = new CharacterController();
+		c.perform({ type: 'sleep', target: 'bed' });
+		// Until it sits on the edge: same way as the seat faces.
+		let seated = c.snapshot();
+		for (let t = 0; t < 12 && c.snapshot().posture !== 'sitting'; t += 1 / 60) {
+			c.update(1 / 60);
+			seated = c.snapshot();
+		}
+		expect(seated.posture).toBe('sitting');
+		// Leaning back (the first part of lying down) it doesn't turn yet.
+		run(c, LIE_SECONDS * 0.3);
+		expect(wrapAngle(c.snapshot().yaw - seated.yaw)).toBeCloseTo(0, 2);
+		run(c, LIE_SECONDS);
+		expect(c.snapshot().posture).toBe('lying');
+		expect(wrapAngle(c.snapshot().yaw - (TARGETS.bed.lie?.yaw ?? 0))).toBeCloseTo(0, 2);
 	});
 
 	it('only starts sitting down once it stands at the seat, back turned', () => {
