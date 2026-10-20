@@ -8,12 +8,8 @@ export interface SpeakOptions {
 }
 
 /**
- * The character's voice. Swappable: the browser's built-in voices today,
- * a neural voice later.
- *
- * TODO(#32): replace the default with the best possible neural voice
- * (natural, emotional, local and free) once licensing and self-hosting are
- * solved - see https://github.com/caldrjir/windowling/issues/32.
+ * The character's voice. Swappable: the browser's built-in voices
+ * (`BrowserSpeech`) or the neural voice (`neural-voice.svelte.ts`).
  */
 export interface TextToSpeech {
 	/** False when this device cannot speak at all (subtitles take over). */
@@ -37,6 +33,13 @@ const PROSODY: Record<string, { rate: number; pitch: number }> = {
 	embarrassed: { rate: 0.95, pitch: 1.05 },
 	nervous: { rate: 1.1, pitch: 1.05 },
 };
+
+/** How a line is said: rate and pitch (1 = neutral), stronger feelings further from neutral. */
+export function prosody(emotion: string, intensity: number): { rate: number; pitch: number } {
+	const target = PROSODY[emotion] ?? { rate: 1, pitch: 1 };
+	const k = Math.min(1, Math.max(0, intensity));
+	return { rate: 1 + (target.rate - 1) * k, pitch: 1 + (target.pitch - 1) * k };
+}
 
 /** Joke voices some systems ship (macOS: Bubbles, Bells, Zarvox...) - never a person's voice. */
 const NOVELTY =
@@ -133,10 +136,9 @@ export class BrowserSpeech implements TextToSpeech {
 			const utterance = new SpeechSynthesisUtterance(text);
 			utterance.lang = this.voice?.lang ?? 'en-US';
 			if (this.voice) utterance.voice = this.voice;
-			const prosody = PROSODY[emotion] ?? { rate: 1, pitch: 1 };
-			const k = Math.min(1, Math.max(0, intensity));
-			utterance.rate = 1 + (prosody.rate - 1) * k;
-			utterance.pitch = 1 + (prosody.pitch - 1) * k;
+			const { rate, pitch } = prosody(emotion, intensity);
+			utterance.rate = rate;
+			utterance.pitch = pitch;
 			utterance.onboundary = (event) => {
 				if (event.name === 'word') onWord?.();
 			};

@@ -144,7 +144,7 @@ test('caught dancing, it is embarrassed and says so', async ({ page }) => {
 	await expect(subtitles).toHaveAttribute('data-line', /standing there/, { timeout: 30_000 });
 });
 
-test('settings offer subtitles, voice and where the brain runs', async ({ page }) => {
+test('settings offer subtitles, voice and where the brain runs', async ({ page, request }) => {
 	await page.goto('/');
 	await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-status', 'running', {
 		timeout: 15_000,
@@ -160,6 +160,14 @@ test('settings offer subtitles, voice and where the brain runs', async ({ page }
 		/^(unsupported|absent|downloaded)$/,
 		{ timeout: 10_000 },
 	);
+	// The natural voice too: offered, never downloaded unasked; its own data is served by us.
+	await expect(page.getByTestId('neural-voice')).toHaveAttribute('data-status', 'absent');
+	const lexicon = (await (await request.get('/voice/lexicon-us.json')).json()) as Record<
+		string,
+		unknown
+	>;
+	expect(lexicon.hello).toBe('həlˈO');
+	expect((await request.get('/voice/af_heart.bin')).headers()['content-length']).toBe('522240');
 	await page.reload();
 	await page.getByRole('button', { name: 'Settings' }).click();
 	await expect(

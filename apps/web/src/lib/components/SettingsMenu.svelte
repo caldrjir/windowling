@@ -3,6 +3,8 @@
 	import { DEVICE_MODEL_DOWNLOAD_GB, deviceBrain } from '$lib/brain/device-brain.svelte';
 	import { settings, type SubtitleMode } from '$lib/settings.svelte';
 	import { sensorAccess } from '$lib/sensors/access.svelte';
+	import { KOKORO_DOWNLOAD_MB } from '$lib/voice/kokoro';
+	import { neuralVoice } from '$lib/voice/neural-voice.svelte';
 
 	let open = $state(false);
 
@@ -48,6 +50,14 @@
 		input.checked = settings[which] && sensorAccess.granted;
 	}
 
+	async function downloadVoice() {
+		try {
+			await neuralVoice.download();
+		} catch (error) {
+			console.error('Could not set up the natural voice', error);
+		}
+	}
+
 	function toggleVoice() {
 		settings.voice = !settings.voice;
 		settings.save();
@@ -78,6 +88,31 @@
 				<span>Voice</span>
 				<input type="checkbox" checked={settings.voice} onchange={toggleVoice} />
 			</label>
+			{#if settings.voice && neuralVoice.status !== 'unsupported'}
+				<p
+					class="pb-1 text-xs text-white/60"
+					data-testid="neural-voice"
+					data-status={neuralVoice.status}
+				>
+					{#if neuralVoice.status === 'absent'}
+						A natural voice, made on this device.
+						<button
+							class="mt-1 block rounded-md bg-white/15 px-2 py-1 text-white hover:bg-white/25"
+							onclick={downloadVoice}>Download (~{KOKORO_DOWNLOAD_MB} MB, once)</button
+						>
+					{:else if neuralVoice.status === 'downloading'}
+						Getting the voice ready… {neuralVoice.progress}%
+					{:else if neuralVoice.status === 'loading'}
+						Getting the voice ready…
+					{:else if neuralVoice.status === 'ready'}
+						Natural voice on.
+					{:else if neuralVoice.status === 'slow'}
+						This device is too slow for the natural voice - the system voice is used.
+					{:else if neuralVoice.status === 'error'}
+						Couldn't start the natural voice - the system voice is used.
+					{/if}
+				</p>
+			{/if}
 			<label class="flex items-center justify-between gap-3 py-1">
 				<span>Sounds</span>
 				<input
