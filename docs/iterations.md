@@ -3,29 +3,29 @@
 Each iteration is a GitHub milestone (`Iteration N – Name`). Issues belong to exactly one
 milestone. Only the current iteration is implemented; later ones guide architecture only.
 
-| #   | Name                              | Milestone outcome                                        | Status          |
-| --- | --------------------------------- | -------------------------------------------------------- | --------------- |
-| 0   | Foundation                        | Production-ready technical base                          | done            |
-| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done            |
-| 2   | Autonomous Activities             | The character does things without player input           | done            |
-| 3   | Player Awareness                  | The player can watch unnoticed for a while               | done            |
-| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done            |
-| 5   | Memory + Relationship             | Past events influence present behaviour                  | done            |
-| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done            |
-| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | done            |
-| 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | **in progress** |
-| 9   | Economy                           | The character earns; the player gets real decisions      | planned         |
-| 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned         |
-| 11  | Career                            | Skills, opportunities, autonomous career choices         | planned         |
-| 12  | Social World                      | Abstract NPCs with identity, personality, shared history | planned         |
-| 13  | Dating                            | Player advises, character decides                        | planned         |
-| 14  | Physical NPC Visits               | Visitors, shared activities, conflicts                   | planned         |
-| 15  | Multiplayer Bridge                | Paired worlds, characters decide to cross                | planned         |
-| 16  | Multi-device Physical Interaction | Characters walk between adjacent phones                  | planned         |
-| 17  | Parties and Group Interaction     | Several NPCs in one household, each with memory          | planned         |
-| 18  | Partner                           | Partner as persistent household member                   | planned         |
-| 19  | Family                            | Shared household, children, changed priorities           | planned         |
-| 20  | Long-term Life Progression        | A save that can exist for years                          | planned         |
+| #   | Name                              | Milestone outcome                                        | Status   |
+| --- | --------------------------------- | -------------------------------------------------------- | -------- |
+| 0   | Foundation                        | Production-ready technical base                          | done     |
+| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done     |
+| 2   | Autonomous Activities             | The character does things without player input           | done     |
+| 3   | Player Awareness                  | The player can watch unnoticed for a while               | done     |
+| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done     |
+| 5   | Memory + Relationship             | Past events influence present behaviour                  | done     |
+| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done     |
+| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | done     |
+| 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | done     |
+| 9   | Economy                           | The character earns; the player gets real decisions      | **next** |
+| 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned  |
+| 11  | Career                            | Skills, opportunities, autonomous career choices         | planned  |
+| 12  | Social World                      | Abstract NPCs with identity, personality, shared history | planned  |
+| 13  | Dating                            | Player advises, character decides                        | planned  |
+| 14  | Physical NPC Visits               | Visitors, shared activities, conflicts                   | planned  |
+| 15  | Multiplayer Bridge                | Paired worlds, characters decide to cross                | planned  |
+| 16  | Multi-device Physical Interaction | Characters walk between adjacent phones                  | planned  |
+| 17  | Parties and Group Interaction     | Several NPCs in one household, each with memory          | planned  |
+| 18  | Partner                           | Partner as persistent household member                   | planned  |
+| 19  | Family                            | Shared household, children, changed priorities           | planned  |
+| 20  | Long-term Life Progression        | A save that can exist for years                          | planned  |
 
 ## Iteration 0 – Foundation
 
@@ -146,7 +146,7 @@ Definition of Done:
 - [x] Generative music while it listens (WebAudio, no recordings), "Sounds" switch - #47
 - [ ] Partying - deferred to Iteration 17 (needs other people)
 
-## Iteration 8 – Emergent Moments (in progress)
+## Iteration 8 – Emergent Moments
 
 **Goal:** situations feel scripted, but emerge from combined systems.
 
@@ -159,3 +159,5 @@ Definition of Done:
 - [x] Absorbed in a private moment, it notices the player less - #50
 - [x] Caught mid-moment: it freezes, is embarrassed (shy = mortified), says so, remembers it and
       doesn't want to talk about it later - #50
+- [x] Beyond the plan: a finished room, realistic people (one per world), motion capture,
+      getting into and out of bed - #62, #63, #64, #66
