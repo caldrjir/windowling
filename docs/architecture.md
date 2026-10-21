@@ -96,6 +96,10 @@ Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
   for music, the blanket for TV/reading, coffee at breakfast, decor for the mood at home) and some
   choices (more music, cosier TV evenings). `roomBelongings` is what leaves the server: in the
   room, by the door, on the way - for the renderer and the brain ("A parcel with ... is waiting").
+  Gifts (#74): `buyGift` takes the price out of the envelope (never out of nothing, never something
+  it has); when it unpacks a present it decides by its own taste (`tasteFor`: per world, nudged by
+  personality) whether it likes it - used, or put away in the cupboard - and remembers who sent it.
+  `POST /api/world/gift {item}`: the client names only the thing.
 - `wakeUp(life, at)` - interrupts sleep with a mood penalty; the scheduler decides what next.
 - `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then
   wanders using `nextAmbientAction`).

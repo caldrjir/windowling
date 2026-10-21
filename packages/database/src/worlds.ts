@@ -352,6 +352,20 @@ async function rememberShopping(
 				createdAt: b.orderedAt,
 			});
 		}
+		if (b.unpackedAt && !old?.unpackedAt && b.gift) {
+			const liked = !b.storedAway;
+			await remember(db, record.id, {
+				kind: 'moment',
+				note: liked
+					? `The player bought me ${name} with my savings. I love it.`
+					: `The player spent my savings on ${name}. Not really my thing - it is in the cupboard.`,
+				importance: 0.75,
+				tags: ['player', 'gift', b.item, liked ? 'liked' : 'disliked'],
+				emotion: liked ? 'happy' : 'annoyed',
+				createdAt: b.unpackedAt,
+			});
+			await recordRelationshipEvent(db, record.id, { type: 'gift', liked });
+		}
 		if (b.unpackedAt && !old?.unpackedAt && !b.gift) {
 			await remember(db, record.id, {
 				kind: 'fact',

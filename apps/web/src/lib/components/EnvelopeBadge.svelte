@@ -1,12 +1,29 @@
 <script lang="ts">
 	import { dollars, envelope } from '$lib/money/envelope.svelte';
+	import { ITEM_IDS, ITEMS, type ItemId, type RoomBelongings } from '@windowling/shared';
 
 	interface Props {
 		characterName: string;
+		/** What it has (or waits for): no presents it already owns. */
+		belongings?: RoomBelongings;
 	}
 
-	let { characterName }: Props = $props();
+	let { characterName, belongings }: Props = $props();
 	let open = $state(false);
+	let sent = $state<ItemId | null>(null);
+	const owned = $derived(
+		new Set<ItemId>([
+			...(belongings?.items ?? []),
+			...(belongings?.parcels ?? []),
+			...(belongings?.ordered ?? []),
+			...(belongings?.stored ?? []),
+		]),
+	);
+	const gifts = $derived(ITEM_IDS.filter((id) => !owned.has(id)));
+
+	async function give(item: ItemId) {
+		if (await envelope.buyGift(item)) sent = item;
+	}
 </script>
 
 <!-- The savings the player keeps for the character: a paper envelope, not a balance. -->
@@ -39,6 +56,27 @@
 						void envelope.giveBack();
 					}}>Give it all back</button
 				>
+				{#if sent}
+					<p class="mt-3 text-white/70" data-testid="gift-sent">
+						{ITEMS[sent].name} is on its way to {characterName}.
+					</p>
+				{:else if gifts.length}
+					<p class="mt-3 text-white/60">Or buy {characterName} something with it:</p>
+					<ul class="mt-1 space-y-1" data-testid="gifts">
+						{#each gifts as id (id)}
+							<li>
+								<button
+									class="flex w-full justify-between gap-2 rounded-md px-2 py-1 text-left hover:bg-white/15 disabled:opacity-40"
+									disabled={envelope.busy || ITEMS[id].price > envelope.cents}
+									onclick={() => void give(id)}
+									><span>{ITEMS[id].name}</span><span class="text-white/60"
+										>{dollars(ITEMS[id].price)}</span
+									></button
+								>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</div>
 		{/if}
 	</div>

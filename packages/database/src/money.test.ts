@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
+import { ITEMS } from '@windowling/shared';
 import { DOLLAR } from '@windowling/simulation';
 import { eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getTestDatabaseUrl } from '../test/test-database.ts';
 import { createDatabase, type DatabaseConnection } from './client.ts';
 import { getRelationship, loadMemories, PLAYER } from './memories.ts';
-import { answerMoney, bringUpMoney, giveBackMoney } from './money.ts';
+import { answerMoney, bringUpMoney, buyGiftFor, giveBackMoney } from './money.ts';
 import { character, relationship, user, world } from './schema/index.ts';
-import { findWorldByUserId, getOrCreateWorldForUser } from './worlds.ts';
+import { catchUpWorld, findWorldByUserId, getOrCreateWorldForUser } from './worlds.ts';
 
 const url = getTestDatabaseUrl();
 // Mid-month Wednesday evening: no rent worries.
@@ -109,5 +110,35 @@ describe.skipIf(!url)('entrusted money (postgres)', () => {
 		expect(await giveBackMoney(conn.db, userId, NOW)).toBeNull();
 		// An answer with no open question moves nothing.
 		expect(await answerMoney(conn.db, userId, true, NOW)).toBeNull();
+	});
+
+	it('buys a gift from the envelope - only with enough in it, never twice; it arrives and is remembered', async () => {
+		const { userId, worldId } = await friendWithSavings();
+		// No envelope yet: nothing to pay with.
+		expect(await buyGiftFor(conn.db, userId, 'plant', NOW)).toEqual({
+			ok: false,
+			reason: 'not_enough',
+		});
+		await bringUpMoney(conn.db, userId, NOW);
+		const entrusted = await answerMoney(conn.db, userId, true, NOW);
+		const bought = await buyGiftFor(conn.db, userId, 'plant', NOW);
+		expect(bought).toEqual({
+			ok: true,
+			item: 'plant',
+			envelope: (entrusted?.envelope ?? 0) - ITEMS.plant.price,
+		});
+		expect(await buyGiftFor(conn.db, userId, 'plant', NOW)).toEqual({ ok: false, reason: 'owned' });
+		const after = await findWorldByUserId(conn.db, userId);
+		expect(after?.character.envelope.cents).toBe(bought?.ok ? bought.envelope : -1);
+		expect(after?.character.life.belongings.find((b) => b.item === 'plant')?.gift).toBe(true);
+
+		// Two days later the parcel has come and been unpacked - and it knows who sent it.
+		const found = await findWorldByUserId(conn.db, userId);
+		if (!found) throw new Error('world');
+		await catchUpWorld(conn.db, found, new Date(NOW.getTime() + 2 * 24 * 3600e3));
+		const memories = await loadMemories(conn.db, worldId);
+		expect(
+			memories.some((m) => /The player (bought me|spent my savings on) a floor plant/.test(m.note)),
+		).toBe(true);
 	});
 });

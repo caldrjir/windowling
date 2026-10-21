@@ -6,7 +6,10 @@ import {
 	type ItemId,
 	type RoomBelongings,
 } from '@windowling/shared';
+import { createRng } from './ambient.ts';
 import { HOUR_MS, MINUTE_MS } from './catch-up.ts';
+import { hashString } from './character.ts';
+import { personalityFor } from './personality.ts';
 import { DOLLAR, justPaid, moneyFeeling, spend, type Money } from './money.ts';
 import { localTime } from './time.ts';
 
@@ -39,6 +42,7 @@ export function parcelsWaiting(belongings: readonly Belonging[], at: Date): Belo
 export function roomBelongings(belongings: readonly Belonging[], at: Date): RoomBelongings {
 	return {
 		items: itemsInRoom(belongings),
+		stored: belongings.filter((b) => b.unpackedAt !== null && b.storedAway).map((b) => b.item),
 		parcels: parcelsWaiting(belongings, at).map((b) => b.item),
 		ordered: belongings
 			.filter((b) => b.unpackedAt === null && b.arrivesAt.getTime() > at.getTime())
@@ -89,15 +93,20 @@ export function maybeOrder(
 	return { money: spend(money, ITEMS[item].price), belongings: [...belongings, order] };
 }
 
-/** It finished unpacking: the oldest parcel that was waiting is now in its place. */
+/**
+ * It finished unpacking: the oldest parcel that was waiting is now in its
+ * place - or, a present it doesn't like, in the cupboard.
+ */
 export function unpackParcel(
 	belongings: readonly Belonging[],
 	started: Date,
 	ended: Date,
+	seed: string,
 ): Belonging[] {
 	const parcel = parcelsWaiting(belongings, started)[0];
 	if (!parcel) return [...belongings];
-	return belongings.map((b) => (b === parcel ? { ...b, unpackedAt: ended } : b));
+	const storedAway = parcel.gift && !likesGift(seed, parcel.item);
+	return belongings.map((b) => (b === parcel ? { ...b, unpackedAt: ended, storedAway } : b));
 }
 
 /** What owning things does to an hour of an activity (needs per hour). */
@@ -114,4 +123,57 @@ export function comforts(
 	if ((activity === 'tv' || activity === 'read') && has('blanket')) mood += 0.03;
 	if (activity === 'eat' && has('coffee_machine')) energy += 0.12;
 	return { mood, energy };
+}
+
+// --- gifts (#74) ---------------------------------------------------------------
+
+/** How much it would like each thing (0..1): its own taste, nudged by who it is. */
+export function tasteFor(seed: string, item: ItemId): number {
+	const rng = createRng(hashString(`taste:${seed}:${item}`));
+	const p = personalityFor(seed);
+	const nudge: Record<ItemId, number> = {
+		plant: 0.1,
+		art_print: (1 - p.competitive) * 0.2,
+		string_lights: p.exuberant * 0.3,
+		headphones: (1 - p.chatty) * 0.25,
+		blanket: p.shy * 0.25,
+		coffee_machine: p.competitive * 0.2,
+	};
+	return Math.min(1, rng() * 0.8 + nudge[item]);
+}
+
+/** A present it doesn't care for goes in the cupboard (and it says so). */
+export const LIKES_ABOVE = 0.3;
+
+export function likesGift(seed: string, item: ItemId): boolean {
+	return tasteFor(seed, item) > LIKES_ABOVE;
+}
+
+export type GiftRefusal = 'unknown_item' | 'owned' | 'not_enough';
+
+/**
+ * The player buys `item` for it from the envelope (the savings it entrusted).
+ * Never something it has (or waits for), never more than the envelope holds.
+ */
+export function buyGift(
+	envelopeCents: number,
+	belongings: readonly Belonging[],
+	item: ItemId,
+	at: Date,
+	timeZone: string,
+	rng: () => number,
+): { envelopeCents: number; belongings: Belonging[] } | GiftRefusal {
+	const info = ITEMS[item];
+	if (!(ITEM_IDS as readonly string[]).includes(item)) return 'unknown_item';
+	if (belongings.some((b) => b.item === item)) return 'owned';
+	if (envelopeCents < info.price) return 'not_enough';
+	const gift: Belonging = {
+		item,
+		orderedAt: at,
+		arrivesAt: deliveryTime(at, timeZone, rng),
+		unpackedAt: null,
+		gift: true,
+		storedAway: false,
+	};
+	return { envelopeCents: envelopeCents - info.price, belongings: [...belongings, gift] };
 }

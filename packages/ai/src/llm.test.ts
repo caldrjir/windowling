@@ -74,14 +74,19 @@ describe('buildMessages', () => {
 
 	it('knows its things: in the flat, by the door, on the way', () => {
 		expect(
-			describeHome({ items: ['plant', 'headphones'], parcels: ['blanket'], ordered: [] }),
+			describeHome({
+				items: ['plant', 'headphones'],
+				parcels: ['blanket'],
+				ordered: [],
+				stored: [],
+			}),
 		).toBe(
 			'Things you bought for your flat: a floor plant and a pair of good headphones. A parcel with a soft blanket for the sofa is waiting by your door.',
 		);
-		expect(describeHome({ items: [], parcels: [], ordered: ['coffee_machine'] })).toBe(
+		expect(describeHome({ items: [], parcels: [], ordered: ['coffee_machine'], stored: [] })).toBe(
 			'You ordered a coffee machine online; it has not come yet.',
 		);
-		expect(describeHome({ items: [], parcels: [], ordered: [] })).toBe('');
+		expect(describeHome({ items: [], parcels: [], ordered: [], stored: [] })).toBe('');
 	});
 
 	it('turns money into feelings, never amounts', () => {

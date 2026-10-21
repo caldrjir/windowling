@@ -185,5 +185,5 @@ Definition of Done:
       blanket, coffee machine) - #73
 - [x] Things get used: better music, cosier TV, a perkier breakfast, a nicer home; it remembers
       what it bought and knows what it has - #73
-- [ ] Gifts: the player buys something from the envelope; the character decides whether it likes
+- [x] Gifts: the player buys something from the envelope; the character decides whether it likes
       it - #74

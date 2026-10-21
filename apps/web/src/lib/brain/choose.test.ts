@@ -20,7 +20,7 @@ const world: WorldSummary = {
 		relationship: { affinity: 0, trust: 0.3, familiarity: 0 },
 		money: { feeling: 'fine', justPaid: false, rentWorry: false },
 		envelope: 0,
-		belongings: { items: [], parcels: [], ordered: [] },
+		belongings: { items: [], parcels: [], ordered: [], stored: [] },
 	},
 };
 
