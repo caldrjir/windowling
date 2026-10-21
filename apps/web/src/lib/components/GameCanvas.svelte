@@ -5,6 +5,7 @@
 		type Activity,
 		type AwarenessState,
 		type CharacterAction,
+		type MoneySense,
 	} from '@windowling/shared';
 	import type { CharacterDecision, ConversationEvent } from '@windowling/ai';
 	import {
@@ -52,6 +53,8 @@
 		/** 0 exhausted .. 1 rested, and 0 full .. 1 starving: moments arise from them. */
 		energy: number;
 		hunger: number;
+		/** How its money feels: worries come out in what it mutters. */
+		money?: MoneySense;
 		/** Who it is (personality) is derived from the world. */
 		worldId: string | null;
 	}
@@ -66,6 +69,7 @@
 		affinity,
 		energy,
 		hunger,
+		money,
 		worldId,
 	}: Props = $props();
 
@@ -297,7 +301,7 @@
 					if (destroyed || engaged || moment || !latest || wokenLocally || line !== null) return;
 					if (conversation?.thinking || game.characterState.busy) return;
 					const next = nextMoment(
-						{ activity: latest, needs: { hunger, energy, mood }, personality },
+						{ activity: latest, needs: { hunger, energy, mood }, personality, money },
 						momentRng,
 					);
 					if (next) startMoment(next);

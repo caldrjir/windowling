@@ -1,4 +1,9 @@
-import { ACTIVITIES, type Activity, type CharacterAction } from '@windowling/shared';
+import {
+	ACTIVITIES,
+	type Activity,
+	type CharacterAction,
+	type MoneyFeeling,
+} from '@windowling/shared';
 import { HOUR_MS, MINUTE_MS } from './catch-up.ts';
 import type { Needs } from './needs.ts';
 import { hoursUntil, isWeekend, type LocalTime } from './time.ts';
@@ -13,6 +18,10 @@ export interface DecisionContext {
 	local: LocalTime;
 	/** What the character was doing until now (null for a brand-new life). */
 	previous: Activity | null;
+	/** How money feels (never the amount). */
+	money?: MoneyFeeling;
+	/** Payday was today or yesterday. */
+	justPaid?: boolean;
 }
 
 export interface Decision {
@@ -54,7 +63,10 @@ export function scoreActivities({
 	needs,
 	local,
 	previous,
+	money = 'fine',
+	justPaid = false,
 }: DecisionContext): Record<Activity, number> {
+	const short = money === 'broke' || money === 'tight';
 	const { hour } = local;
 	const night = isNight(local);
 	const lateEvening = between(hour, 21.5, BEDTIME);
@@ -73,7 +85,7 @@ export function scoreActivities({
 	}
 
 	let work = 0;
-	if (isWorkTime(local) && needs.energy > 0.2 && needs.hunger < 0.75) work = 2.2;
+	if (isWorkTime(local) && needs.energy > 0.2 && needs.hunger < 0.75) work = short ? 2.8 : 2.2;
 
 	const evening = between(hour, 18, BEDTIME);
 	const weekendDay = isWeekend(local.weekday) && between(hour, 10, 20);
@@ -133,6 +145,8 @@ export function scoreActivities({
 
 	let phone = awake && !workTime ? 0.65 : 0;
 	if (isWeekend(local.weekday)) phone += 0.15;
+	// Short of money: calling around (an extra shift, a friend who owes it).
+	if (short && awake) phone += 0.35;
 	if (previous === 'phone') phone = 0;
 
 	// Mornings start in the bathroom; a workout ends there.
@@ -145,6 +159,10 @@ export function scoreActivities({
 	if (awake && needs.energy > 0.35 && needs.hunger < 0.6 && previous !== 'out') {
 		if (weekendDay) out = 1;
 		else if (!isWeekend(local.weekday) && between(hour, 17, 20)) out = 0.6;
+		// Going out costs money: none when broke, rarely when tight, a treat after payday.
+		if (money === 'broke') out = 0;
+		else if (money === 'tight') out *= 0.35;
+		else if (justPaid) out *= 1.8;
 	}
 
 	return {

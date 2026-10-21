@@ -141,6 +141,22 @@ describe.skipIf(!url)('worlds repository (postgres)', () => {
 		expect(reloaded?.lastSimulatedAt).toEqual(later);
 	});
 
+	it('keeps the character’s money: a week away includes a payday', async () => {
+		const userId = await createUser(true);
+		const start = new Date('2026-10-05T06:00:00.000Z'); // Monday 08:00 in Prague
+		const world = await getOrCreateWorldForUser(conn.db, userId, {
+			now: start,
+			timeZone: 'Europe/Prague',
+		});
+		const nextMonday = new Date('2026-10-12T06:00:00.000Z');
+		const advanced = await catchUpWorld(conn.db, world, nextMonday);
+		const { money } = advanced.character.life;
+		expect(money.paidAt?.getTime()).toBeGreaterThan(start.getTime());
+		expect(money.balance).not.toBe(world.character.life.money.balance);
+		const reloaded = await findWorldByUserId(conn.db, userId);
+		expect(reloaded?.character.life.money).toEqual(money);
+	});
+
 	it('follows the device into another time zone', async () => {
 		const userId = await createUser(true);
 		const world = await getOrCreateWorldForUser(conn.db, userId, { timeZone: 'Europe/Prague' });

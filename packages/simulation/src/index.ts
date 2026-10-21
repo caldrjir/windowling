@@ -11,3 +11,4 @@ export * from './relationship.ts';
 export * from './memory.ts';
 export * from './personality.ts';
 export * from './moments.ts';
+export * from './money.ts';

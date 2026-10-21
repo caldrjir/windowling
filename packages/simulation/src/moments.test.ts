@@ -1,3 +1,4 @@
+import type { MoneySense } from '@windowling/shared';
 import { describe, expect, it } from 'vitest';
 import { createRng } from './ambient.ts';
 import { nextMoment, type MomentContext, type MomentKind } from './moments.ts';
@@ -87,5 +88,32 @@ describe('nextMoment', () => {
 				expect(m.line).toMatch(/!/);
 			}
 		}
+	});
+});
+
+describe('money on its mind', () => {
+	const ctx = {
+		activity: 'idle' as const,
+		needs: { hunger: 0.3, energy: 0.8, mood: 0.6 },
+		personality: { competitive: 0.5, exuberant: 0.5, shy: 0.5, chatty: 1 },
+	};
+	const mutterings = (money?: MoneySense) => {
+		const rng = createRng(7);
+		const lines: string[] = [];
+		for (let i = 0; i < 400; i++) {
+			const moment = nextMoment({ ...ctx, money }, rng);
+			if (moment?.kind === 'mutter' && moment.line) lines.push(moment.line);
+		}
+		return lines;
+	};
+
+	it('mutters about rent when money is short, never when it is fine', () => {
+		const money = /rent|pasta|takeaway|shift|where does it all go/i;
+		expect(
+			mutterings({ feeling: 'broke', justPaid: false, rentWorry: true }).some((l) => money.test(l)),
+		).toBe(true);
+		expect(
+			mutterings({ feeling: 'fine', justPaid: false, rentWorry: false }).some((l) => money.test(l)),
+		).toBe(false);
 	});
 });

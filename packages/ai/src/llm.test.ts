@@ -3,7 +3,13 @@ import type { ChatMessage, ChatModel, CompletionOptions } from './chat-model.ts'
 import { OpenAICompatibleChatModel } from './chat-model.ts';
 import type { CharacterAIContext } from './decision.ts';
 import { LlmCharacterAI } from './llm.ts';
-import { buildMessages, DECISION_JSON_SCHEMA, describeFeelings, extractJson } from './prompt.ts';
+import {
+	buildMessages,
+	DECISION_JSON_SCHEMA,
+	describeFeelings,
+	describeMoney,
+	extractJson,
+} from './prompt.ts';
 
 const context: CharacterAIContext = {
 	characterName: 'Riley',
@@ -63,6 +69,16 @@ describe('buildMessages', () => {
 		expect(user?.content).toContain('You do not trust them.');
 		expect(user?.content).not.toMatch(/0\.\d/);
 		expect(system?.content).toContain('"remember"');
+	});
+
+	it('turns money into feelings, never amounts', () => {
+		expect(describeMoney({ feeling: 'broke', justPaid: false, rentWorry: true })).toBe(
+			'You are broke and worried about money. Rent is due in a few days and you are not sure you can cover it.',
+		);
+		expect(describeMoney({ feeling: 'fine', justPaid: true, rentWorry: false })).toBe(
+			'You just got paid.',
+		);
+		expect(describeMoney({ feeling: 'fine', justPaid: false, rentWorry: false })).toBe('');
 	});
 
 	it('turns needs into feelings', () => {

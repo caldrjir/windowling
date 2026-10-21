@@ -1,4 +1,4 @@
-import type { Activity } from '@windowling/shared';
+import type { Activity, MoneySense } from '@windowling/shared';
 import type { Needs } from './needs.ts';
 import type { Personality } from './personality.ts';
 
@@ -24,6 +24,8 @@ export interface MomentContext {
 	activity: Activity;
 	needs: Needs;
 	personality: Personality;
+	/** How money feels: worries come out as muttering, payday as singing. */
+	money?: MoneySense;
 }
 
 const MUTTERINGS = [
@@ -34,9 +36,20 @@ const MUTTERINGS = [
 	'Hmm. Not bad, actually.',
 	'Right. Focus.',
 ];
+const MONEY_MUTTERINGS = [
+	'Rent, rent, rent...',
+	'Where does it all go?',
+	'Pasta again. Fine.',
+	'Okay, no takeaway this week.',
+	'I really need that extra shift.',
+];
 const RAGE_LINES = ['Come ON!', 'That was NOT fair!', 'Are you kidding me?!', 'Unbelievable!'];
 const CHEER_LINES = ['Yes! YES!', 'Get in!', 'Who is the best? Me.'];
 const SINGING = ['♪ la la la ♪', '♪ mm-hmm, mm-hmm ♪', '♪ ...and I said hey... ♪'];
+
+const worried = (money: MoneySense | undefined) =>
+	money !== undefined &&
+	(money.feeling === 'broke' || money.feeling === 'tight' || money.rentWorry);
 
 const pick = (lines: readonly string[], rng: () => number) =>
 	lines[Math.floor(rng() * lines.length)] ?? lines[0];
@@ -47,7 +60,7 @@ const RULES: ReadonlyArray<{
 	chance: (ctx: MomentContext) => number;
 	seconds: [number, number];
 	private: boolean;
-	line?: (rng: () => number) => string | undefined;
+	line?: (rng: () => number, ctx: MomentContext) => string | undefined;
 }> = [
 	{
 		// music + good mood + exuberant (+ some energy) -> dancing
@@ -61,9 +74,9 @@ const RULES: ReadonlyArray<{
 	},
 	{
 		kind: 'sing',
-		chance: ({ activity, needs, personality }) =>
+		chance: ({ activity, needs, personality, money }) =>
 			(activity === 'music' || activity === 'cook' || activity === 'clean') && needs.mood > 0.55
-				? 0.1 + 0.3 * personality.exuberant
+				? 0.1 + 0.3 * personality.exuberant + (money?.justPaid ? 0.1 : 0)
 				: 0,
 		seconds: [8, 15],
 		private: true,
@@ -100,13 +113,15 @@ const RULES: ReadonlyArray<{
 	},
 	{
 		kind: 'mutter',
-		chance: ({ activity, personality }) =>
+		chance: ({ activity, personality, money }) =>
 			activity === 'idle' || activity === 'cook' || activity === 'clean' || activity === 'work'
-				? 0.05 + 0.25 * personality.chatty
+				? 0.05 + 0.25 * personality.chatty + (worried(money) ? 0.08 : 0)
 				: 0,
 		seconds: [3, 5],
 		private: true,
-		line: (rng) => pick(MUTTERINGS, rng),
+		// Money on its mind comes out in what it mutters.
+		line: (rng, { money }) =>
+			pick(worried(money) && rng() < 0.6 ? MONEY_MUTTERINGS : MUTTERINGS, rng),
 	},
 	{
 		kind: 'yawn',
@@ -132,7 +147,7 @@ export function nextMoment(ctx: MomentContext, rng: () => number): Moment | null
 				kind: rule.kind,
 				seconds: min + rng() * (max - min),
 				private: rule.private,
-				line: rule.line?.(rng),
+				line: rule.line?.(rng, ctx),
 			};
 		}
 	}

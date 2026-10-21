@@ -3,29 +3,29 @@
 Each iteration is a GitHub milestone (`Iteration N – Name`). Issues belong to exactly one
 milestone. Only the current iteration is implemented; later ones guide architecture only.
 
-| #   | Name                              | Milestone outcome                                        | Status   |
-| --- | --------------------------------- | -------------------------------------------------------- | -------- |
-| 0   | Foundation                        | Production-ready technical base                          | done     |
-| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done     |
-| 2   | Autonomous Activities             | The character does things without player input           | done     |
-| 3   | Player Awareness                  | The player can watch unnoticed for a while               | done     |
-| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done     |
-| 5   | Memory + Relationship             | Past events influence present behaviour                  | done     |
-| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done     |
-| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | done     |
-| 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | done     |
-| 9   | Economy                           | The character earns; the player gets real decisions      | **next** |
-| 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned  |
-| 11  | Career                            | Skills, opportunities, autonomous career choices         | planned  |
-| 12  | Social World                      | Abstract NPCs with identity, personality, shared history | planned  |
-| 13  | Dating                            | Player advises, character decides                        | planned  |
-| 14  | Physical NPC Visits               | Visitors, shared activities, conflicts                   | planned  |
-| 15  | Multiplayer Bridge                | Paired worlds, characters decide to cross                | planned  |
-| 16  | Multi-device Physical Interaction | Characters walk between adjacent phones                  | planned  |
-| 17  | Parties and Group Interaction     | Several NPCs in one household, each with memory          | planned  |
-| 18  | Partner                           | Partner as persistent household member                   | planned  |
-| 19  | Family                            | Shared household, children, changed priorities           | planned  |
-| 20  | Long-term Life Progression        | A save that can exist for years                          | planned  |
+| #   | Name                              | Milestone outcome                                        | Status          |
+| --- | --------------------------------- | -------------------------------------------------------- | --------------- |
+| 0   | Foundation                        | Production-ready technical base                          | done            |
+| 1   | Room + Character                  | A simple living space with a character (idle, walk, sit) | done            |
+| 2   | Autonomous Activities             | The character does things without player input           | done            |
+| 3   | Player Awareness                  | The player can watch unnoticed for a while               | done            |
+| 4   | Voice + Local LLM                 | Natural voice interaction without a text chat            | done            |
+| 5   | Memory + Relationship             | Past events influence present behaviour                  | done            |
+| 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done            |
+| 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | done            |
+| 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | done            |
+| 9   | Economy                           | The character earns; the player gets real decisions      | **in progress** |
+| 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned         |
+| 11  | Career                            | Skills, opportunities, autonomous career choices         | planned         |
+| 12  | Social World                      | Abstract NPCs with identity, personality, shared history | planned         |
+| 13  | Dating                            | Player advises, character decides                        | planned         |
+| 14  | Physical NPC Visits               | Visitors, shared activities, conflicts                   | planned         |
+| 15  | Multiplayer Bridge                | Paired worlds, characters decide to cross                | planned         |
+| 16  | Multi-device Physical Interaction | Characters walk between adjacent phones                  | planned         |
+| 17  | Parties and Group Interaction     | Several NPCs in one household, each with memory          | planned         |
+| 18  | Partner                           | Partner as persistent household member                   | planned         |
+| 19  | Family                            | Shared household, children, changed priorities           | planned         |
+| 20  | Long-term Life Progression        | A save that can exist for years                          | planned         |
 
 ## Iteration 0 – Foundation
 
@@ -161,3 +161,15 @@ Definition of Done:
       doesn't want to talk about it later - #50
 - [x] Beyond the plan: a finished room, realistic people (one per world), motion capture,
       getting into and out of bed - #62, #63, #64, #66
+
+## Iteration 9 – Economy (in progress)
+
+**Goal:** the character earns; the player gets real decisions.
+
+Definition of Done:
+
+- [x] Money in the simulation: weekly wages, rent on the 1st, groceries and evenings out - #69
+- [x] Money shows in behaviour, never as a number: no evenings out when broke, a treat after
+      payday, money worries in mood and muttering, feelings in the LLM context - #69
+- [ ] Entrusted money: with enough trust it asks the player to keep some savings, later asks for
+      them back - the player decides, and it remembers - #70

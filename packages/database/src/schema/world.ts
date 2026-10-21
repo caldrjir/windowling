@@ -1,4 +1,4 @@
-import { doublePrecision, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { doublePrecision, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from './auth.ts';
 
 const timestamps = {
@@ -44,5 +44,10 @@ export const character = pgTable('character', {
 	activityStartedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 	/** An activity that already ended is re-decided on the next catch-up. */
 	activityEndsAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+	// Money (Iteration 9), in cents. Never shown as a number.
+	balanceCents: integer().notNull().default(90_000),
+	/** Wages earned since the last payday. */
+	unpaidCents: integer().notNull().default(0),
+	paidAt: timestamp({ withTimezone: true }),
 	...timestamps,
 });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { activitySchema } from './activity.ts';
+import { moneySenseSchema } from './money.ts';
 import { relationshipSchema } from './relationship.ts';
 
 /** Public shape of a world as returned by the web API. */
@@ -27,6 +28,8 @@ export const worldSummarySchema = z.object({
 		}),
 		/** How it feels about the player - drives behaviour, never shown as numbers. */
 		relationship: relationshipSchema,
+		/** How its money feels - the amount never leaves the server. */
+		money: moneySenseSchema,
 	}),
 });
 

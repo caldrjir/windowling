@@ -107,6 +107,7 @@
 		affinity={data.world?.character.relationship.affinity ?? 0}
 		energy={data.world?.character.needs.energy ?? 0.7}
 		hunger={data.world?.character.needs.hunger ?? 0.3}
+		money={data.world?.character.money}
 		worldId={data.world?.id ?? null}
 	/>
 
