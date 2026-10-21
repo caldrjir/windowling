@@ -18,7 +18,8 @@ export type TargetAffordance =
 	| 'call'
 	| 'exercise'
 	| 'dance'
-	| 'leave';
+	| 'leave'
+	| 'unpack';
 
 export interface RoomTarget {
 	id: string;
@@ -38,7 +39,7 @@ export const STARTER_ROOM_TARGETS = [
 	{ id: 'bed', affordances: ['sit', 'sleep', 'read'] },
 	{ id: 'kitchen.counter', affordances: ['stand', 'eat', 'cook'] },
 	// To the bathroom and the rest of the world.
-	{ id: 'door', affordances: ['stand', 'leave'] },
+	{ id: 'door', affordances: ['stand', 'leave', 'unpack'] },
 ] as const satisfies readonly RoomTarget[];
 
 export type StarterRoomTargetId = (typeof STARTER_ROOM_TARGETS)[number]['id'];
@@ -58,6 +59,7 @@ const AFFORDANCE_FOR_ACTION: Partial<Record<CharacterActionType, TargetAffordanc
 	exercise: 'exercise',
 	dance: 'dance',
 	leave: 'leave',
+	unpack: 'unpack',
 };
 
 /** True when `actionType` can be performed at `targetId` in the starter room. */

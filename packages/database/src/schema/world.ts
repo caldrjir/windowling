@@ -1,4 +1,12 @@
-import { doublePrecision, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+	doublePrecision,
+	integer,
+	jsonb,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth.ts';
 
 const timestamps = {
@@ -57,5 +65,7 @@ export const character = pgTable('character', {
 	moneyAskAt: timestamp({ withTimezone: true }),
 	/** When it last brought money up (it doesn't nag). */
 	moneyAskedAt: timestamp({ withTimezone: true }),
+	/** Things it owns or waits for (Iteration 10): shared `Belonging`s, validated when read. */
+	belongings: jsonb().notNull().default([]),
 	...timestamps,
 });

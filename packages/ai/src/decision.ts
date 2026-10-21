@@ -7,6 +7,7 @@ import {
 	type MoneyAskKind,
 	type MoneyOutcome,
 	type MoneySense,
+	type RoomBelongings,
 } from '@windowling/shared';
 import { z } from 'zod';
 
@@ -98,6 +99,8 @@ export interface CharacterAIContext {
 	moneyOutcome?: MoneyOutcome;
 	/** Savings the player is keeping for it, in whole dollars. */
 	entrustedDollars?: number;
+	/** Its things: in the flat, a parcel by the door, ordered (Iteration 10). */
+	home?: RoomBelongings;
 	awareness: AwarenessState;
 	event: ConversationEvent;
 	/** What the player just said, if anything. */

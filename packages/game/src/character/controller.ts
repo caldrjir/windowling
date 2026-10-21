@@ -1,5 +1,5 @@
 import { targetSupports, type CharacterAction } from '@windowling/shared';
-import { OUTSIDE, TARGETS, type Spot, type Vec2 } from '../room/layout.ts';
+import { OUTSIDE, TARGETS, UNPACK_SPOT, type Spot, type Vec2 } from '../room/layout.ts';
 import { Animator, BED_SWING, type ActivityAnimation, type AnimationState } from './animation.ts';
 import { approach, ease, turnTowards, wrapAngle, yawTowards } from './math.ts';
 import { planPath } from './path.ts';
@@ -95,6 +95,7 @@ const TARGET_POSTURE: Record<TargetAction['type'], Posture> = {
 	exercise: 'standing',
 	dance: 'standing',
 	leave: 'standing',
+	unpack: 'standing',
 };
 
 const ACTIVITY_OF: Partial<Record<CharacterAction['type'], ActivityAnimation>> = {
@@ -109,6 +110,7 @@ const ACTIVITY_OF: Partial<Record<CharacterAction['type'], ActivityAnimation>> =
 	exercise: 'exercise',
 	clean: 'clean',
 	dance: 'dance',
+	unpack: 'unpack',
 };
 
 /** Slower and heavier when sad, a little brisker when happy. */
@@ -299,6 +301,14 @@ export class CharacterController {
 					for (const point of planPath(from, stop)) this.steps.push({ kind: 'walk', to: point });
 					from = stop;
 				}
+				break;
+			}
+			case 'unpack': {
+				// The parcel lies by the door: crouch over it.
+				for (const point of planPath(start, UNPACK_SPOT)) {
+					this.steps.push({ kind: 'walk', to: point });
+				}
+				this.steps.push({ kind: 'turn', yaw: UNPACK_SPOT.yaw });
 				break;
 			}
 			case 'leave': {

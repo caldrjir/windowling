@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FURNITURE, insideBox, TARGETS } from '../room/layout.ts';
+import { FURNITURE, insideBox, TARGETS, UNPACK_SPOT } from '../room/layout.ts';
 import { CharacterController, LIE_SECONDS, type ControllerEvent } from './controller.ts';
 import { wrapAngle } from './math.ts';
 
@@ -25,6 +25,31 @@ describe('CharacterController', () => {
 		expect(wrapAngle(s.yaw - TARGETS.window.approachYaw)).toBeCloseTo(0, 2);
 		expect(events).toEqual([{ type: 'completed', action: { type: 'walkTo', target: 'window' } }]);
 		expect(s.busy).toBe(false);
+	});
+
+	it('crouches over a parcel by the door to unpack it, from anywhere, around the furniture', () => {
+		for (const from of ['bed', 'desk.chair', 'kitchen.counter', 'sofa'] as const) {
+			const c = new CharacterController();
+			c.perform({ type: 'sit', target: from === 'kitchen.counter' ? 'sofa' : from });
+			run(c, 10);
+			c.perform({ type: 'unpack', target: 'door' });
+			let crossed = false;
+			for (let t = 0; t < 15; t += 1 / 60) {
+				c.update(1 / 60);
+				const { x, z, posture } = c.snapshot();
+				if (posture === 'standing') {
+					const { rug: _rug, ...solid } = FURNITURE;
+					crossed ||= Object.values(solid).some((box) => insideBox({ x, z }, box, -0.05));
+				}
+			}
+			const s = c.snapshot();
+			expect(s.x).toBeCloseTo(UNPACK_SPOT.x, 2);
+			expect(s.z).toBeCloseTo(UNPACK_SPOT.z, 2);
+			expect(crossed).toBe(false);
+			expect(c.animator.activityWeight('unpack')).toBeGreaterThan(0.5);
+			// Crouched: knees bent like a squat.
+			expect(c.animator.pose().knee).toBeGreaterThan(0.8);
+		}
 	});
 
 	it('sits down on the sofa and reports the seat height', () => {

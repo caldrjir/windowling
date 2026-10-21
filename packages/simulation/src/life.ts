@@ -1,4 +1,4 @@
-import type { Activity } from '@windowling/shared';
+import type { Activity, Belonging } from '@windowling/shared';
 import { createRng } from './ambient.ts';
 import { HOUR_MS } from './catch-up.ts';
 import { hashString } from './character.ts';
@@ -18,6 +18,7 @@ import {
 	type Money,
 } from './money.ts';
 import { applyNeeds, clampNeeds, INITIAL_NEEDS, type Needs } from './needs.ts';
+import { comforts, itemsInRoom, maybeOrder, parcelsWaiting, unpackParcel } from './shopping.ts';
 import { chooseActivity } from './scheduler.ts';
 import { localTime } from './time.ts';
 
@@ -25,6 +26,8 @@ import { localTime } from './time.ts';
 export interface LifeState {
 	needs: Needs;
 	money: Money;
+	/** Things it owns or waits for (Iteration 10). */
+	belongings: Belonging[];
 	activity: Activity;
 	activityStartedAt: Date;
 	activityEndsAt: Date;
@@ -40,29 +43,42 @@ export interface LifeContext {
 /** Hard stop for pathological inputs; 14 days of 10-minute activities is ~2000. */
 const MAX_DECISIONS = 10_000;
 
-/** Decides what to do next; whatever it costs is paid when it starts. */
+type Carried = Pick<LifeState, 'needs' | 'money' | 'belongings'>;
+
+/**
+ * Decides what to do next; whatever it costs is paid when it starts. On the
+ * phone with money to spare it may order something (shopping, Iteration 10).
+ */
 function decide(
 	at: Date,
-	needs: Needs,
-	money: Money,
+	carried: Carried,
 	previous: Activity | null,
 	ctx: LifeContext,
 ): LifeState {
+	const { needs, belongings } = carried;
 	const rng = createRng(hashString(`${ctx.seed}:${at.getTime()}`));
+	const items = itemsInRoom(belongings);
 	const { activity, durationMs } = chooseActivity(
 		{
 			needs,
 			previous,
 			local: localTime(at, ctx.timeZone),
-			money: moneyFeeling(money),
-			justPaid: justPaid(money, at),
+			money: moneyFeeling(carried.money),
+			justPaid: justPaid(carried.money, at),
+			parcelWaiting: parcelsWaiting(belongings, at).length > 0,
+			owns: items,
 		},
 		rng,
 	);
 	const duration = Math.max(60_000, Math.round(durationMs));
+	const money = spend(carried.money, activityCost(activity, duration));
+	const shopRng = createRng(hashString(`${ctx.seed}:${at.getTime()}:shop`));
+	const order =
+		activity === 'phone' ? maybeOrder(money, belongings, at, ctx.timeZone, shopRng) : null;
 	return {
 		needs,
-		money: spend(money, activityCost(activity, duration)),
+		money: order?.money ?? money,
+		belongings: order?.belongings ?? belongings,
 		activity,
 		activityStartedAt: at,
 		activityEndsAt: new Date(at.getTime() + duration),
@@ -75,14 +91,23 @@ export function startLife(
 	ctx: LifeContext,
 	needs: Needs = INITIAL_NEEDS,
 	money: Money = INITIAL_MONEY,
+	belongings: Belonging[] = [],
 ): LifeState {
-	return decide(now, needs, money, null, ctx);
+	return decide(now, { needs, money, belongings }, null, ctx);
 }
 
-/** Time passing over one stretch of an activity: needs change (money worries included). */
+/** Time passing over one stretch of an activity: needs change (money worries, home comforts). */
 function live(state: LifeState, from: number, to: number): LifeState {
 	const worry = moneyWorry(moneyFeeling(state.money));
-	return { ...state, needs: applyNeeds(state.needs, state.activity, (to - from) / HOUR_MS, worry) };
+	const comfort = comforts(itemsInRoom(state.belongings), state.activity);
+	const hours = (to - from) / HOUR_MS;
+	return {
+		...state,
+		needs: applyNeeds(state.needs, state.activity, hours, {
+			mood: worry + comfort.mood,
+			energy: comfort.energy,
+		}),
+	};
 }
 
 /**
@@ -102,7 +127,9 @@ function settle(state: LifeState, ctx: LifeContext): LifeState {
 		needs = clampNeeds({ ...needs, mood: needs.mood + PAYDAY_MOOD });
 	}
 	if (rentMonth(start, ctx.timeZone) !== rentMonth(end, ctx.timeZone)) money = payRent(money);
-	return { ...state, needs, money };
+	const belongings =
+		state.activity === 'unpack' ? unpackParcel(state.belongings, start, end) : state.belongings;
+	return { ...state, needs, money, belongings };
 }
 
 /**
@@ -118,7 +145,7 @@ export function advanceLife(state: LifeState, from: Date, to: Date, ctx: LifeCon
 
 	// The stored activity ended before we resume (e.g. part of a long absence was skipped).
 	if (current.activityEndsAt.getTime() <= clock) {
-		current = decide(new Date(clock), current.needs, current.money, current.activity, ctx);
+		current = decide(new Date(clock), current, current.activity, ctx);
 	}
 
 	for (let i = 0; i < MAX_DECISIONS; i++) {
@@ -127,7 +154,7 @@ export function advanceLife(state: LifeState, from: Date, to: Date, ctx: LifeCon
 		clock = boundary;
 		if (current.activityEndsAt.getTime() > end) return lived;
 		const settled = settle(lived, ctx);
-		current = decide(current.activityEndsAt, settled.needs, settled.money, current.activity, ctx);
+		current = decide(current.activityEndsAt, settled, current.activity, ctx);
 	}
 	return current;
 }

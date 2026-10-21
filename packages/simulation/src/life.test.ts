@@ -98,7 +98,10 @@ describe('advanceLife', () => {
 	it('lives a varied life: every kind of activity shows up within two weeks', () => {
 		const { log } = liveThrough(MONDAY_MORNING, 14);
 		const seen = new Set(log.map((e) => e.activity));
-		for (const activity of ACTIVITIES) expect(seen, activity).toContain(activity);
+		// Unpacking needs a parcel first (shopping has its own tests).
+		for (const activity of ACTIVITIES.filter((a) => a !== 'unpack')) {
+			expect(seen, activity).toContain(activity);
+		}
 		// Mornings start in the bathroom more often than not.
 		const afterSleep = log.filter((e, i) => log[i - 1]?.activity === 'sleep');
 		const showers = afterSleep.filter((e) => e.activity === 'shower').length;
@@ -124,6 +127,7 @@ describe('advanceLife', () => {
 		const stale: LifeState = {
 			needs: { hunger: 0.4, energy: 0.6, mood: 0.6 },
 			money: INITIAL_MONEY,
+			belongings: [],
 			activity: 'gaming',
 			activityStartedAt: new Date('2026-09-01T10:00:00Z'),
 			activityEndsAt: new Date('2026-09-01T11:00:00Z'),

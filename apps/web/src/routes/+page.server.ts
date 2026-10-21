@@ -5,7 +5,7 @@ import {
 	updateWorldTimeZone,
 } from '@windowling/database';
 import type { WorldSummary } from '@windowling/shared';
-import { moneySense } from '@windowling/simulation';
+import { moneySense, roomBelongings } from '@windowling/simulation';
 import { getServerEnv } from '$lib/server/config';
 import { TIME_ZONE_COOKIE } from '$lib/time-zone';
 import type { PageServerLoad } from './$types';
@@ -46,6 +46,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			needs: { hunger: life.needs.hunger, energy: life.needs.energy },
 			money: moneySense(life.money, new Date(), record.timeZone),
 			envelope: record.character.envelope.cents,
+			belongings: roomBelongings(life.belongings, new Date()),
 			relationship,
 		},
 	};

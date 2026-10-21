@@ -114,6 +114,7 @@
 		energy={data.world?.character.needs.energy ?? 0.7}
 		hunger={data.world?.character.needs.hunger ?? 0.3}
 		money={data.world?.character.money}
+		belongings={data.world?.character.belongings}
 		worldId={data.world?.id ?? null}
 	/>
 

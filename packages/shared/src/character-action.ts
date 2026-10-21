@@ -42,6 +42,9 @@ export const characterActionSchema = z.discriminatedUnion('type', [
 	z.object({ type: z.literal('dance'), target: knownTargetIdSchema }),
 	/** Leave the flat through a door (shower, going out). */
 	z.object({ type: z.literal('leave'), target: knownTargetIdSchema }),
+	// Iteration 10 - shopping
+	/** Unpack a delivered parcel where it was left (by the door). */
+	z.object({ type: z.literal('unpack'), target: knownTargetIdSchema }),
 ]);
 
 export type CharacterAction = z.infer<typeof characterActionSchema>;

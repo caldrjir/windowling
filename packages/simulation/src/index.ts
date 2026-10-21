@@ -13,3 +13,4 @@ export * from './personality.ts';
 export * from './moments.ts';
 export * from './money.ts';
 export * from './entrust.ts';
+export * from './shopping.ts';

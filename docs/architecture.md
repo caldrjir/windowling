@@ -88,6 +88,14 @@ Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
   character and lapses after 10 minutes; only `answerMoneyAsk` (an answer to that question) or
   `giveBackAll` moves money, so it is never created, lost or moved twice. Giving it back when asked
   builds trust like nothing else; keeping it hurts it most - and both are remembered.
+- Shopping (Iteration 10, `shopping.ts`): `LifeState.belongings` (shared `Belonging`: item,
+  ordered/arrives/unpacked, gift). On the phone with money to spare (comfortable, or fine and just
+  paid) it may order one thing it doesn't own, keeping a cushion; one parcel at a time. Couriers
+  come in the daytime (`deliveryTime`); a waiting parcel makes `unpack` (at the door) the thing to
+  do once home and awake, outside work. Owned things change life a little (`comforts`: headphones
+  for music, the blanket for TV/reading, coffee at breakfast, decor for the mood at home) and some
+  choices (more music, cosier TV evenings). `roomBelongings` is what leaves the server: in the
+  room, by the door, on the way - for the renderer and the brain ("A parcel with ... is waiting").
 - `wakeUp(life, at)` - interrupts sleep with a mood penalty; the scheduler decides what next.
 - `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then
   wanders using `nextAmbientAction`).
@@ -120,7 +128,9 @@ the whole room in view from ultrawide desktops to portrait phones (higher angle 
   `packages/game/scripts/mocap.mjs`) while standing and walking, and the procedural pose
   where the furniture decides (sitting, lying) or the hands are busy; blended per bone.
 
-`GameWorld.perform(action)`, `setMood(mood)` and `onCharacterEvent()` are the only ways in.
+`GameWorld.perform(action)`, `setMood(mood)`, `setBelongings(items, parcels)` and
+`onCharacterEvent()` are the only ways in. Bought things (`room/belongings.ts`) have fixed places;
+parcels stack by the door, where `unpack` crouches over them.
 Activities (`eat`, `work`, `play`) are animation layers on top of the posture (bowl, typing,
 handheld); mood shows in walking pace and slumped shoulders. The renderer never decides.
 

@@ -91,6 +91,7 @@ export const SENSITIVITY: Record<Activity, number> = {
 	music: 0.5,
 	read: 0.4,
 	phone: 0.5,
+	unpack: 0.6,
 	// Not in the flat at all.
 	shower: 0,
 	out: 0,
@@ -113,6 +114,7 @@ export const SPONTANEOUS_LOOK: Record<Activity, number> = {
 	sleep: 0,
 	cook: 1 / 60,
 	clean: 1 / 40,
+	unpack: 1 / 50,
 	exercise: 1 / 60,
 	tv: 1 / 120,
 	music: 1 / 60,

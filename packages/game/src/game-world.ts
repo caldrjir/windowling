@@ -16,7 +16,7 @@ import {
 	PMREMGenerator,
 	Texture,
 } from 'three';
-import type { CharacterAction } from '@windowling/shared';
+import type { CharacterAction, ItemId } from '@windowling/shared';
 import {
 	CharacterController,
 	type CharacterSnapshot,
@@ -36,6 +36,7 @@ import {
 	type Vec3,
 } from './physics.ts';
 import { buildBook, buildMug, buildThrowPillow } from './room/furniture/props.ts';
+import { buildBelongings } from './room/belongings.ts';
 import { buildRoom, type Room } from './room/build-room.ts';
 import { frameRoom } from './room/framing.ts';
 
@@ -70,6 +71,7 @@ export class GameWorld {
 	private readonly camera = new PerspectiveCamera(40, 1, 0.1, 100);
 	private readonly physics: PhysicsWorld;
 	private readonly room: Room;
+	private readonly belongings = buildBelongings();
 	private readonly now: () => Date;
 	private readonly accumulator = new FixedStepAccumulator({
 		step: PHYSICS_STEP,
@@ -133,6 +135,7 @@ export class GameWorld {
 
 		this.room = buildRoom(this.physics, this.environment);
 		this.scene.add(this.room.group);
+		this.scene.add(this.belongings.group);
 		this.addLooseThings();
 		this.scene.add(this.rig.root);
 		this.rig.apply(this.character.snapshot(), this.character.animator.pose());
@@ -169,6 +172,11 @@ export class GameWorld {
 	}
 
 	/** The character looks at the player (true) or minds its own business (false). */
+	/** What it owns (in their places) and how many parcels wait by the door (Iteration 10). */
+	setBelongings(items: readonly ItemId[], parcels: number): void {
+		this.belongings.set(items, parcels);
+	}
+
 	setAttention(on: boolean): void {
 		this.character.setAttention(on);
 	}
