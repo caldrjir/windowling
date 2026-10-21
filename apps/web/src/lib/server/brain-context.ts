@@ -11,6 +11,7 @@ import {
 	CAUGHT_DOING,
 	howLongAgo,
 	localClock,
+	moneySense,
 	personalityFor,
 	recall,
 } from '@windowling/simulation';
@@ -58,6 +59,7 @@ export async function buildServerContext(
 			weekday: clock.weekday,
 			activity: request.event === 'woken_up' ? 'sleep' : life.activity,
 			needs: life.needs,
+			money: moneySense(life.money, now, world.timeZone),
 			awareness: request.awareness,
 			event: request.event,
 			playerUtterance: request.playerUtterance,

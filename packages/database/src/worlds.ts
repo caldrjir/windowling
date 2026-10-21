@@ -39,10 +39,15 @@ const worldColumns = {
 	activity: character.activity,
 	activityStartedAt: character.activityStartedAt,
 	activityEndsAt: character.activityEndsAt,
+	balanceCents: character.balanceCents,
+	unpaidCents: character.unpaidCents,
+	paidAt: character.paidAt,
 };
 
 type WorldRow = {
-	[K in keyof typeof worldColumns]: (typeof worldColumns)[K]['_']['data'];
+	[K in keyof typeof worldColumns]: (typeof worldColumns)[K]['_']['notNull'] extends true
+		? (typeof worldColumns)[K]['_']['data']
+		: (typeof worldColumns)[K]['_']['data'] | null;
 };
 
 function toRecord(row: WorldRow): WorldRecord {
@@ -61,6 +66,7 @@ function toRecord(row: WorldRow): WorldRecord {
 			name: row.characterName,
 			life: {
 				needs: { hunger: row.hunger, energy: row.energy, mood: row.mood },
+				money: { balance: row.balanceCents, unpaid: row.unpaidCents, paidAt: row.paidAt },
 				activity: activity.success ? activity.data : 'idle',
 				activityStartedAt: row.activityStartedAt,
 				activityEndsAt: activity.success ? row.activityEndsAt : row.activityStartedAt,
@@ -77,6 +83,9 @@ function lifeColumns(life: LifeState) {
 		activity: life.activity,
 		activityStartedAt: life.activityStartedAt,
 		activityEndsAt: life.activityEndsAt,
+		balanceCents: life.money.balance,
+		unpaidCents: life.money.unpaid,
+		paidAt: life.money.paidAt,
 	};
 }
 

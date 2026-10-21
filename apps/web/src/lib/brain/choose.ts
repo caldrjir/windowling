@@ -144,6 +144,7 @@ function buildContext(
 		weekday: clock.weekday,
 		activity: request.event === 'woken_up' ? 'sleep' : character.activity.type,
 		needs: { ...character.needs, mood: character.mood },
+		money: character.money,
 		relationship: character.relationship,
 		awareness: request.awareness,
 		event: request.event,

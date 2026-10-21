@@ -4,6 +4,7 @@ import {
 	type Activity,
 	type AwarenessState,
 	type Relationship,
+	type MoneySense,
 } from '@windowling/shared';
 import { z } from 'zod';
 
@@ -81,6 +82,8 @@ export interface CharacterAIContext {
 	activity: Activity;
 	/** 0..1 inner state; the prompt turns these into words, never shown to the player. */
 	needs: { hunger: number; energy: number; mood: number };
+	/** How its money feels (never an amount). */
+	money?: MoneySense;
 	awareness: AwarenessState;
 	event: ConversationEvent;
 	/** What the player just said, if anything. */

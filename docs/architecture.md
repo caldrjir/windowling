@@ -75,6 +75,12 @@ Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
   often once suspicious), so it can start the contact without any input - the player never has
   to do anything. If the player stays silent at the window it says so and goes back. On detection the
   character approaches (mood, activity, just woken) or ignores the player. Session state only.
+- `Money` (Iteration 9, integer cents, never shown): wages for every hour worked, paid on Friday
+  at 17:00 local time; rent on the 1st; groceries when cooking or eating, an evening out. Settled
+  when an activity ends, so a life never depends on how time was split into visits. Behaviour sees
+  only `moneyFeeling` (`broke | tight | fine | comfortable`) and `justPaid`: broke means no evenings
+  out and more reliable work, payday a treat; worries wear the mood down and come out in what it
+  mutters. `moneySense` is all that leaves the server (page data, LLM context) - never an amount.
 - `wakeUp(life, at)` - interrupts sleep with a mood penalty; the scheduler decides what next.
 - `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then
   wanders using `nextAmbientAction`).

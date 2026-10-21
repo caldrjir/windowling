@@ -61,8 +61,8 @@ export function clampNeeds(needs: Needs): Needs {
 	};
 }
 
-/** Needs after spending `hours` on `activity`. */
-export function applyNeeds(needs: Needs, activity: Activity, hours: number): Needs {
+/** Needs after spending `hours` on `activity`; `worry` pulls the mood down per hour (money). */
+export function applyNeeds(needs: Needs, activity: Activity, hours: number, worry = 0): Needs {
 	let current = clampNeeds(needs);
 	let remaining = Math.max(0, hours);
 	const rates = RATES[activity];
@@ -74,7 +74,7 @@ export function applyNeeds(needs: Needs, activity: Activity, hours: number): Nee
 			MOOD_DRIFT_PER_HOUR * h,
 			Math.max(-MOOD_DRIFT_PER_HOUR * h, MOOD_BASELINE - current.mood),
 		);
-		let moodRate = rates.mood;
+		let moodRate = rates.mood + worry;
 		if (current.hunger > HUNGRY) moodRate += HUNGRY_MOOD_PER_HOUR;
 		if (current.energy < TIRED && activity !== 'sleep') moodRate += TIRED_MOOD_PER_HOUR;
 		current = clampNeeds({

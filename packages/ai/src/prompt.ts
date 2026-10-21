@@ -2,6 +2,7 @@ import {
 	characterActionSchema,
 	STARTER_ROOM_TARGETS,
 	type Activity,
+	type MoneySense,
 	type Relationship,
 } from '@windowling/shared';
 import type { ChatMessage } from './chat-model.ts';
@@ -35,6 +36,19 @@ export function describeFeelings({ hunger, energy, mood }: CharacterAIContext['n
 		level(energy, ['You are exhausted.', 'You are a bit tired.', 'You feel rested.']),
 	];
 	if (hunger > 0.6) feelings.push('You are hungry.');
+	return feelings.join(' ');
+}
+
+/** Money as the character feels it - the model never sees amounts. */
+export function describeMoney(money: MoneySense): string {
+	const feelings: string[] = [];
+	if (money.feeling === 'broke') feelings.push('You are broke and worried about money.');
+	else if (money.feeling === 'tight') feelings.push('Money is tight right now.');
+	else if (money.feeling === 'comfortable')
+		feelings.push('You have some savings and feel relaxed about money.');
+	if (money.justPaid) feelings.push('You just got paid.');
+	if (money.rentWorry)
+		feelings.push('Rent is due in a few days and you are not sure you can cover it.');
 	return feelings.join(' ');
 }
 
@@ -144,6 +158,8 @@ export function buildMessages(context: CharacterAIContext): ChatMessage[] {
 		describeFeelings(context.needs),
 		describeEvent(context),
 	];
+	const money = context.money ? describeMoney(context.money) : '';
+	if (money) situation.push(money);
 	if (context.relationship) situation.push(describeRelationship(context.relationship));
 	if (context.memories?.length) {
 		situation.push(

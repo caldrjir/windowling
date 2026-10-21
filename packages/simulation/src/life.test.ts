@@ -2,6 +2,7 @@ import { ACTIVITIES, type Activity } from '@windowling/shared';
 import { describe, expect, it } from 'vitest';
 import { DAY_MS, HOUR_MS } from './catch-up.ts';
 import { advanceLife, startLife, wakeUp, type LifeContext, type LifeState } from './life.ts';
+import { INITIAL_MONEY } from './money.ts';
 import { localTime } from './time.ts';
 
 const CTX: LifeContext = { seed: 'world-1', timeZone: 'Europe/Prague' };
@@ -122,6 +123,7 @@ describe('advanceLife', () => {
 	it('resumes sensibly after a stored activity ended long ago', () => {
 		const stale: LifeState = {
 			needs: { hunger: 0.4, energy: 0.6, mood: 0.6 },
+			money: INITIAL_MONEY,
 			activity: 'gaming',
 			activityStartedAt: new Date('2026-09-01T10:00:00Z'),
 			activityEndsAt: new Date('2026-09-01T11:00:00Z'),
