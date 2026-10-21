@@ -152,5 +152,8 @@ function buildContext(
 		recent: request.recent,
 		caughtDoing: request.caughtDoing ? CAUGHT_DOING[request.caughtDoing] : undefined,
 		shyness: personalityFor(world.id).shy,
+		moneyAsk: request.moneyAsk,
+		moneyOutcome: request.moneyOutcome,
+		entrustedDollars: request.entrustedDollars,
 	};
 }

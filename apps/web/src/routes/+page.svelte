@@ -9,9 +9,15 @@
 	import { deviceBrain } from '$lib/brain/device-brain.svelte';
 	import { authClient } from '$lib/auth-client';
 	import { deviceTimeZone, rememberTimeZone } from '$lib/time-zone';
+	import { envelope } from '$lib/money/envelope.svelte';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
+
+	// The player's envelope (#70) follows the server's books whenever the page data reloads.
+	$effect(() => {
+		envelope.cents = data.world?.character.envelope ?? 0;
+	});
 	let failed = $state(false);
 
 	// On-device model when downloaded and wanted, else the cloud (#28, #31).

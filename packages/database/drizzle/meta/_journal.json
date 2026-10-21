@@ -36,6 +36,13 @@
       "when": 1792588510608,
       "tag": "0004_money",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792589189537,
+      "tag": "0005_entrusted_money",
+      "breakpoints": true
     }
   ]
 }

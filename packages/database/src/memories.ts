@@ -159,7 +159,10 @@ export interface ConversationOutcome {
 		| 'ignoring_player'
 		| 'player_silent'
 		| 'shaken'
-		| 'caught';
+		| 'caught'
+		| 'money_entrust'
+		| 'money_return'
+		| 'money_answered';
 	playerUtterance?: string;
 	/** With `caught`: what it was caught doing (a moment kind, e.g. `dance`). */
 	caughtDoing?: string;
@@ -181,6 +184,11 @@ export async function recordConversation(
 	const before = await getRelationship(db, worldId);
 	let after = before;
 	switch (outcome.event) {
+		case 'money_entrust':
+		case 'money_return':
+			// It came over to talk about money: a visit (the money itself is settled in money.ts).
+			after = await recordRelationshipEvent(db, worldId, { type: 'visit' });
+			break;
 		case 'player_at_window':
 			after = await recordRelationshipEvent(db, worldId, { type: 'visit' });
 			if (before.familiarity === 0) {
@@ -231,6 +239,7 @@ export async function recordConversation(
 		case 'woken_up':
 		case 'ignoring_player':
 		case 'shaken': // recorded by recordShake when it happens
+		case 'money_answered': // recorded by the money repository when the money moves
 			break;
 	}
 	if (outcome.remember) {

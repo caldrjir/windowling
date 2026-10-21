@@ -4,6 +4,8 @@ import {
 	type Activity,
 	type AwarenessState,
 	type Relationship,
+	type MoneyAskKind,
+	type MoneyOutcome,
 	type MoneySense,
 } from '@windowling/shared';
 import { z } from 'zod';
@@ -61,6 +63,12 @@ export const CONVERSATION_EVENTS = [
 	'shaken',
 	/** It noticed the player in the middle of something private (see `caughtDoing`). */
 	'caught',
+	/** It came over to ask the player to keep some of its savings (see `moneyAsk`). */
+	'money_entrust',
+	/** It came over to ask for its entrusted money back (see `moneyAsk`). */
+	'money_return',
+	/** The player answered a question about money (see `moneyOutcome`). */
+	'money_answered',
 ] as const;
 
 export type ConversationEvent = (typeof CONVERSATION_EVENTS)[number];
@@ -84,6 +92,12 @@ export interface CharacterAIContext {
 	needs: { hunger: number; energy: number; mood: number };
 	/** How its money feels (never an amount). */
 	money?: MoneySense;
+	/** What it asks about money right now (the server decided the amount). */
+	moneyAsk?: { kind: MoneyAskKind; dollars: number };
+	/** With `money_answered`: what the player chose. */
+	moneyOutcome?: MoneyOutcome;
+	/** Savings the player is keeping for it, in whole dollars. */
+	entrustedDollars?: number;
 	awareness: AwarenessState;
 	event: ConversationEvent;
 	/** What the player just said, if anything. */

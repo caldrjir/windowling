@@ -5,6 +5,7 @@
 		type Activity,
 		type AwarenessState,
 		type CharacterAction,
+		type MoneyOutcome,
 		type MoneySense,
 	} from '@windowling/shared';
 	import type { CharacterDecision, ConversationEvent } from '@windowling/ai';
@@ -19,6 +20,9 @@
 	import { settings, showSubtitles } from '$lib/settings.svelte';
 	import { BrowserSpeech, type TextToSpeech } from '$lib/voice/tts';
 	import { CharacterVoice, neuralVoice } from '$lib/voice/neural-voice.svelte';
+	import { envelope } from '$lib/money/envelope.svelte';
+	import EnvelopeBadge from './EnvelopeBadge.svelte';
+	import MoneyChoice from './MoneyChoice.svelte';
 	import { sensorAccess } from '$lib/sensors/access.svelte';
 	import { PhoneSensors } from '$lib/sensors/device';
 	import { unlockAudio } from '$lib/sound/audio';
@@ -118,6 +122,7 @@
 		let momentTimer: ReturnType<typeof setTimeout> | undefined;
 		let momentClock: ReturnType<typeof setInterval> | undefined;
 		let unsubscribe: (() => void) | undefined;
+		let stopMoney: (() => void) | undefined;
 		let conversation: Conversation | undefined;
 
 		const onVisibilityChange = () => {
@@ -241,6 +246,7 @@
 					if (leaving) {
 						listening = false;
 						engaged = false;
+						envelope.forget();
 						game.setAttention(false);
 						conversation?.reset();
 					}
@@ -253,6 +259,29 @@
 				const talk = (event: ConversationEvent, caught?: MomentKind) => {
 					void conversation?.handle(event, undefined, caught);
 				};
+				// Entrusted money (#70): at the window it may bring money up - the server decides.
+				const greet = async () => {
+					const question = await envelope.moment();
+					if (question && engaged) {
+						void conversation?.handle(
+							question.kind === 'entrust' ? 'money_entrust' : 'money_return',
+							undefined,
+							undefined,
+							{
+								moneyAsk: { kind: question.kind, dollars: Math.round(question.cents / 100) },
+								entrustedDollars: Math.round(envelope.cents / 100),
+							},
+						);
+					} else talk('player_at_window');
+				};
+				const reactToMoney = (outcome: MoneyOutcome) => {
+					if (!engaged) return;
+					void conversation?.handle('money_answered', undefined, undefined, {
+						moneyOutcome: outcome,
+						entrustedDollars: Math.round(envelope.cents / 100),
+					});
+				};
+				stopMoney = envelope.listen(reactToMoney);
 
 				// Emergent moments (Iteration 8): now and then something small arises from
 				// what it is doing, how it feels and who it is - dancing to the radio,
@@ -391,6 +420,7 @@
 							clearTimeout(glanceTimer);
 							game.setAttention(false);
 							conversation?.reset();
+							envelope.forget();
 							// The player didn't answer - fine, they don't have to. It says so and moves on.
 							if (event.type === 'ignoring' && event.reason === 'no_response') {
 								talk('player_silent');
@@ -431,7 +461,7 @@
 							// The character speaks first - it came over for a reason.
 							if (justWoken) talk('woken_up');
 							else if (caughtDoing) talk('caught', caughtDoing);
-							else talk('player_at_window');
+							else void greet();
 							justWoken = false;
 							caughtDoing = null;
 						}
@@ -468,6 +498,7 @@
 			clearTimeout(momentTimer);
 			clearInterval(momentClock);
 			unsubscribe?.();
+			stopMoney?.();
 			voice?.cancel();
 			watcher?.stop();
 			watcher = undefined;
@@ -583,6 +614,10 @@
 	onActivity={() => watcher?.spoke()}
 	onListening={() => voice?.cancel()}
 />
+
+<MoneyChoice visible={listening} {characterName} onActivity={() => watcher?.spoke()} />
+
+<EnvelopeBadge {characterName} />
 
 <Subtitles
 	{line}
