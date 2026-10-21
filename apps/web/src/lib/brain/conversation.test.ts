@@ -58,4 +58,34 @@ describe('Conversation', () => {
 		expect(asked).toEqual([undefined, 'are you there?']);
 		releases[1]?.();
 	});
+
+	it('reacts to the player’s answer about money even while still talking', async () => {
+		const releases: Array<() => void> = [];
+		const events: Array<{ event: string; outcome?: string }> = [];
+		const brain: Brain = {
+			decide: (request) => {
+				events.push({ event: request.event, outcome: request.moneyOutcome });
+				return new Promise((resolve) => releases.push(() => resolve(reply('ok'))));
+			},
+		};
+		const c = new Conversation({
+			brain,
+			awareness: () => 'INTERACTING',
+			onDecision: async () => {},
+		});
+		const asking = c.handle('money_entrust', undefined, undefined, {
+			moneyAsk: { kind: 'entrust', dollars: 300 },
+		});
+		expect(
+			await c.handle('money_answered', undefined, undefined, { moneyOutcome: 'entrusted' }),
+		).toBe(true);
+		releases[0]?.();
+		await asking;
+		await new Promise((r) => setTimeout(r, 0));
+		expect(events).toEqual([
+			{ event: 'money_entrust', outcome: undefined },
+			{ event: 'money_answered', outcome: 'entrusted' },
+		]);
+		releases[1]?.();
+	});
 });

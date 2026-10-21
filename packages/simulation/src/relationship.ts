@@ -1,4 +1,4 @@
-import type { Relationship } from '@windowling/shared';
+import type { MoneyOutcome, Relationship } from '@windowling/shared';
 
 /** Things that happen between the character and the player. */
 export type RelationshipEvent =
@@ -11,7 +11,9 @@ export type RelationshipEvent =
 	/** It came over or spoke and the player stayed silent. */
 	| { type: 'silence' }
 	/** The player shook the whole flat. Intensity 0..1. */
-	| { type: 'shaken'; intensity: number };
+	| { type: 'shaken'; intensity: number }
+	/** What came of a question about money (entrusted savings). */
+	| { type: 'money'; outcome: MoneyOutcome };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -39,6 +41,8 @@ export function applyRelationshipEvent(rel: Relationship, event: RelationshipEve
 			};
 		case 'silence':
 			return { ...rel, affinity: clamp(rel.affinity - 0.01, -1, 1) };
+		case 'money':
+			return moneyEffect(rel, event.outcome);
 		case 'shaken': {
 			const k = clamp(event.intensity, 0, 1);
 			return {
@@ -70,5 +74,29 @@ export function emotionValence(emotion: string): number {
 			return -1;
 		default:
 			return 0;
+	}
+}
+
+/**
+ * Money is where trust is really tested: giving it back when asked builds it
+ * more than anything; keeping it when it is needed hurts more than anything.
+ */
+function moneyEffect(rel: Relationship, outcome: MoneyOutcome): Relationship {
+	const change = (affinity: number, trust: number): Relationship => ({
+		affinity: clamp(rel.affinity + affinity, -1, 1),
+		trust: clamp(rel.trust + trust, 0, 1),
+		familiarity: clamp(rel.familiarity + 0.02, 0, 1),
+	});
+	switch (outcome) {
+		case 'entrusted':
+			return change(0.03, 0.03);
+		case 'declined':
+			return change(0, 0);
+		case 'returned':
+			return change(0.06, 0.12);
+		case 'withheld':
+			return change(-0.1, -0.15);
+		case 'returned_unasked':
+			return change(0.02, 0.04);
 	}
 }

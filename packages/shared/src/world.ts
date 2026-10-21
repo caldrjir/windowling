@@ -30,6 +30,8 @@ export const worldSummarySchema = z.object({
 		relationship: relationshipSchema,
 		/** How its money feels - the amount never leaves the server. */
 		money: moneySenseSchema,
+		/** Savings the player keeps for it, in cents (the player's envelope, #70). */
+		envelope: z.number().int().min(0),
 	}),
 });
 

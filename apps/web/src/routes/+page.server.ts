@@ -45,6 +45,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			mood: life.needs.mood,
 			needs: { hunger: life.needs.hunger, energy: life.needs.energy },
 			money: moneySense(life.money, new Date(), record.timeZone),
+			envelope: record.character.envelope.cents,
 			relationship,
 		},
 	};

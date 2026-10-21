@@ -81,6 +81,13 @@ Pure TypeScript, no DOM, no three.js, no DB. Testable with plain Vitest.
   only `moneyFeeling` (`broke | tight | fine | comfortable`) and `justPaid`: broke means no evenings
   out and more reliable work, payday a treat; worries wear the mood down and come out in what it
   mutters. `moneySense` is all that leaves the server (page data, LLM context) - never an amount.
+- Entrusted money (#70, `entrust.ts`): with enough trust, familiarity and liking, and savings to
+  spare, `moneyMoment` makes it ask the player at the window to keep some (30% of what is above
+  its cushion, at most $1,000 in all, not more often than every 3 days); when money is short it asks
+  for it back first (whatever it thinks of the player by then). The question is stored on the
+  character and lapses after 10 minutes; only `answerMoneyAsk` (an answer to that question) or
+  `giveBackAll` moves money, so it is never created, lost or moved twice. Giving it back when asked
+  builds trust like nothing else; keeping it hurts it most - and both are remembered.
 - `wakeUp(life, at)` - interrupts sleep with a mood penalty; the scheduler decides what next.
 - `actionForActivity` - activity -> `CharacterAction` (`idle` = no fixed place: the web layer then
   wanders using `nextAmbientAction`).
@@ -151,6 +158,16 @@ action and speaks through `TextToSpeech` with subtitles (`OFF | AUTO | ALWAYS`) 
 mouth. `CharacterVoice` picks the voice: the neural one when the player downloaded it, else the
 browser's `speechSynthesis` (`pickVoice` prefers on-device voices, ranks them by likely quality
 and never uses joke voices such as macOS "Bubbles"; the mouth follows word boundaries).
+
+**Entrusted money (#70):** when the character arrives at the window the page asks
+`POST /api/world/money {type: 'moment'}`; the server (`bringUpMoney`) decides whether it brings
+money up and stores the question. The brain then words it (events `money_entrust` /
+`money_return`, the amount from the server) and the player answers with two buttons
+(`MoneyChoice`) - `{type: 'answer', yes}`; the client never names an amount. What came of it
+(`money_answered` + outcome) is what the character reacts to. The player's envelope (what they keep,
+in the page data as `envelope`) is a small paper envelope in the corner; "Give it all back" is
+`{type: 'give_back'}`. Every change is an optimistic update guarded by the stored envelope and
+balance, so two tabs or a double click can't move money twice.
 
 **Neural voice (#32):** Kokoro-82M (Apache-2.0) in a Web Worker (`voice/tts.worker.ts`) on our
 own ONNX runtime (WASM, CPU). Only the q8 weights (~92 MB) come from the Hugging Face Hub, once,

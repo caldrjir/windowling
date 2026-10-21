@@ -2,6 +2,7 @@ import {
 	characterActionSchema,
 	STARTER_ROOM_TARGETS,
 	type Activity,
+	type MoneyOutcome,
 	type MoneySense,
 	type Relationship,
 } from '@windowling/shared';
@@ -89,10 +90,27 @@ function describeEvent(context: CharacterAIContext): string {
 			return 'The whole flat just shook violently - things flew around and you nearly fell over. Whoever is at the window probably did it.';
 		case 'player_silent':
 			return 'You came to the window, but the person on the other side has not said or done anything for a while. Say something short as you turn away (or nothing at all) and go back to what you were doing.';
+		case 'money_entrust':
+			return `You came to the window to ask the person outside to keep $${String(context.moneyAsk?.dollars ?? 0)} of your savings for you - you would only spend it otherwise, and you trust them. Ask them in your own words and say the amount.`;
+		case 'money_return':
+			return `You came to the window because you need your money back: the person outside is keeping some of your savings for you, and you need $${String(context.moneyAsk?.dollars ?? 0)} of it now. Ask them for it in your own words and say the amount.`;
+		case 'money_answered':
+			return MONEY_OUTCOMES[context.moneyOutcome ?? 'declined'];
 		case 'ignoring_player':
 			return 'You noticed someone watching you through the window. You do not feel like going over - say something short without getting up, or nothing at all, and carry on with what you are doing.';
 	}
 }
+
+const MONEY_OUTCOMES: Record<MoneyOutcome, string> = {
+	entrusted:
+		'You are at the window. The person outside just agreed to keep your savings for you. React.',
+	declined: 'You are at the window. The person outside would not keep your savings for you. React.',
+	returned: 'You are at the window. The person outside just gave you your money back. React.',
+	withheld:
+		'You are at the window. You asked for your own money back - you need it - and the person outside refused to give it to you. React.',
+	returned_unasked:
+		'You are at the window. The person outside just gave you back all the money you had left with them, without you even asking. React.',
+};
 
 const TARGETS = STARTER_ROOM_TARGETS.map((t) => `${t.id} (${t.affordances.join('/')})`).join(', ');
 
@@ -160,6 +178,11 @@ export function buildMessages(context: CharacterAIContext): ChatMessage[] {
 	];
 	const money = context.money ? describeMoney(context.money) : '';
 	if (money) situation.push(money);
+	if (context.entrustedDollars && context.event !== 'money_answered') {
+		situation.push(
+			`The person at the window is keeping $${String(context.entrustedDollars)} of your savings for you.`,
+		);
+	}
 	if (context.relationship) situation.push(describeRelationship(context.relationship));
 	if (context.memories?.length) {
 		situation.push(

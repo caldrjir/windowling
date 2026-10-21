@@ -10,10 +10,13 @@ import {
 import {
 	CAUGHT_DOING,
 	howLongAgo,
+	DOLLAR,
 	localClock,
 	moneySense,
+	pendingAsk,
 	personalityFor,
 	recall,
+	type Envelope,
 } from '@windowling/simulation';
 import type { ConversationRequest } from '$lib/conversation-request';
 
@@ -60,6 +63,7 @@ export async function buildServerContext(
 			activity: request.event === 'woken_up' ? 'sleep' : life.activity,
 			needs: life.needs,
 			money: moneySense(life.money, now, world.timeZone),
+			...moneyTalk(world.character.envelope, request, now),
 			awareness: request.awareness,
 			event: request.event,
 			playerUtterance: request.playerUtterance,
@@ -69,5 +73,24 @@ export async function buildServerContext(
 			shyness: personalityFor(world.id).shy,
 			memories: recalled.map((m) => ({ note: m.note, when: howLongAgo(m.createdAt, now) })),
 		},
+	};
+}
+
+/** Money in this moment: the open question (amount from the database), the answer, the envelope. */
+function moneyTalk(
+	envelope: Envelope,
+	request: ConversationRequest,
+	now: Date,
+): Pick<CharacterAIContext, 'moneyAsk' | 'moneyOutcome' | 'entrustedDollars'> {
+	const ask = pendingAsk(envelope, now);
+	const asking = request.event === 'money_entrust' || request.event === 'money_return';
+	return {
+		...(asking && ask
+			? { moneyAsk: { kind: ask.kind, dollars: Math.round(ask.cents / DOLLAR) } }
+			: {}),
+		...(request.event === 'money_answered' && request.moneyOutcome
+			? { moneyOutcome: request.moneyOutcome }
+			: {}),
+		...(envelope.cents > 0 ? { entrustedDollars: Math.round(envelope.cents / DOLLAR) } : {}),
 	};
 }

@@ -49,5 +49,13 @@ export const character = pgTable('character', {
 	/** Wages earned since the last payday. */
 	unpaidCents: integer().notNull().default(0),
 	paidAt: timestamp({ withTimezone: true }),
+	// Entrusted money (#70): what the player keeps for it, and its open question.
+	entrustedCents: integer().notNull().default(0),
+	/** `entrust` | `return`; validated when read. */
+	moneyAskKind: text(),
+	moneyAskCents: integer(),
+	moneyAskAt: timestamp({ withTimezone: true }),
+	/** When it last brought money up (it doesn't nag). */
+	moneyAskedAt: timestamp({ withTimezone: true }),
 	...timestamps,
 });

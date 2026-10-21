@@ -1,4 +1,38 @@
+import type { MoneyOutcome } from '@windowling/shared';
 import type { CharacterAI, CharacterAIContext, CharacterDecision } from './decision.ts';
+
+const MONEY_REACTIONS: Record<MoneyOutcome, CharacterDecision> = {
+	entrusted: {
+		speech: "Thanks. Seriously. Don't let me talk you into giving it back for pizza.",
+		emotion: 'happy',
+		intensity: 0.6,
+		action: { type: 'lookAtPlayer' },
+	},
+	declined: {
+		speech: "Yeah, okay. Fair enough. I'll just... try not to spend it.",
+		emotion: 'embarrassed',
+		intensity: 0.4,
+		action: { type: 'lookAtPlayer' },
+	},
+	returned: {
+		speech: 'You have no idea how much that helps. Thank you.',
+		emotion: 'happy',
+		intensity: 0.8,
+		action: { type: 'lookAtPlayer' },
+	},
+	withheld: {
+		speech: "That's MY money. I can't believe you.",
+		emotion: 'angry',
+		intensity: 0.9,
+		action: { type: 'idle' },
+	},
+	returned_unasked: {
+		speech: 'Oh! All of it? I... thanks. I guess I can manage it myself now.',
+		emotion: 'surprised',
+		intensity: 0.6,
+		action: { type: 'lookAtPlayer' },
+	},
+};
 
 /**
  * Deterministic stand-in when no language model is available (not
@@ -55,6 +89,28 @@ export class MockCharacterAI implements CharacterAI {
 				intensity: 0.8,
 				action: { type: 'lookAtPlayer' },
 			};
+		}
+		if (context.event === 'money_entrust') {
+			return {
+				speech: `Hey... could you keep $${String(context.moneyAsk?.dollars ?? 0)} for me? I'd only blow it.`,
+				emotion: 'nervous',
+				intensity: 0.4,
+				action: { type: 'lookAtPlayer' },
+			};
+		}
+		if (context.event === 'money_return') {
+			const cold = (rel?.affinity ?? 0) < 0;
+			return {
+				speech: cold
+					? `I need my $${String(context.moneyAsk?.dollars ?? 0)} back. Now, please.`
+					: `Um, about my money... could I get $${String(context.moneyAsk?.dollars ?? 0)} back? Rent's coming.`,
+				emotion: 'nervous',
+				intensity: cold ? 0.7 : 0.5,
+				action: { type: 'lookAtPlayer' },
+			};
+		}
+		if (context.event === 'money_answered') {
+			return MONEY_REACTIONS[context.moneyOutcome ?? 'declined'];
 		}
 		if (context.event === 'player_silent') {
 			return {

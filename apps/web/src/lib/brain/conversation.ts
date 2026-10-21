@@ -1,22 +1,37 @@
 import type { CharacterDecision, ConversationEvent, DialogueLine } from '@windowling/ai';
-import type { AwarenessState } from '@windowling/shared';
+import type { AwarenessState, MoneyAskKind, MoneyOutcome } from '@windowling/shared';
 import type { MomentKind } from '@windowling/simulation';
 
 /** Something that turns "what happened" into what the character says and does. */
 export interface Brain {
-	decide(request: {
-		event: ConversationEvent;
-		awareness: AwarenessState;
-		playerUtterance?: string;
-		recent: DialogueLine[];
-		/** With `caught`: the private moment it was caught in. */
-		caughtDoing?: MomentKind;
-	}): Promise<CharacterDecision | null>;
+	decide(
+		request: {
+			event: ConversationEvent;
+			awareness: AwarenessState;
+			playerUtterance?: string;
+			recent: DialogueLine[];
+			/** With `caught`: the private moment it was caught in. */
+			caughtDoing?: MomentKind;
+		} & MoneyTalk,
+	): Promise<CharacterDecision | null>;
 	/** A conversation is likely soon (the character is walking to the window). */
 	warmUp?(): void;
 	/** Diagnostics for the debug panel. */
 	readonly lastSource?: BrainSource | null;
 	readonly lastError?: string | null;
+}
+
+/**
+ * Money in a conversation (#70). The server decides and keeps the amounts;
+ * these only let an on-device brain word it (the server ignores them).
+ */
+export interface MoneyTalk {
+	/** With `money_entrust` / `money_return`: what it asks. */
+	moneyAsk?: { kind: MoneyAskKind; dollars: number };
+	/** With `money_answered`: what the player chose. */
+	moneyOutcome?: MoneyOutcome;
+	/** Savings the player is keeping for it, in dollars. */
+	entrustedDollars?: number;
 }
 
 /** Where the last decision came from - shown in the debug panel (`?debug`). */
@@ -68,8 +83,8 @@ const MAX_LINES = 6;
 export class Conversation {
 	private lines: DialogueLine[] = [];
 	private busy = false;
-	/** What the player said while the character was still busy - answered next. */
-	private waiting: string | null = null;
+	/** What the player said or did while the character was still busy - answered next. */
+	private waiting: { event: ConversationEvent; utterance?: string; money: MoneyTalk } | null = null;
 
 	constructor(private readonly options: ConversationOptions) {}
 
@@ -83,18 +98,26 @@ export class Conversation {
 
 	/**
 	 * Something happened that may make the character talk. Returns false if
-	 * busy - except for the player's words, which are never dropped: they are
+	 * busy - except for the player's words and answers, which are never dropped: they are
 	 * answered as soon as the character is done (the latest, if several).
 	 */
 	async handle(
 		event: ConversationEvent,
 		playerUtterance?: string,
 		caughtDoing?: MomentKind,
+		money: MoneyTalk = {},
 	): Promise<boolean> {
 		if (this.busy) {
-			if (event !== 'player_said' || !playerUtterance) return false;
-			this.waiting = playerUtterance;
-			return true;
+			// The player's words and answers are never dropped; anything else is.
+			if (event === 'player_said' && playerUtterance) {
+				this.waiting = { event, utterance: playerUtterance, money: {} };
+				return true;
+			}
+			if (event === 'money_answered') {
+				this.waiting = { event, money };
+				return true;
+			}
+			return false;
 		}
 		this.busy = true;
 		try {
@@ -104,6 +127,7 @@ export class Conversation {
 				playerUtterance,
 				recent: [...this.lines],
 				...(caughtDoing ? { caughtDoing } : {}),
+				...money,
 			});
 			if (playerUtterance) this.remember({ speaker: 'player', text: playerUtterance });
 			if (!decision) return true;
@@ -114,7 +138,7 @@ export class Conversation {
 			this.busy = false;
 			const next = this.waiting;
 			this.waiting = null;
-			if (next) void this.handle('player_said', next);
+			if (next) void this.handle(next.event, next.utterance, undefined, next.money);
 		}
 	}
 

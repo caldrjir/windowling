@@ -171,5 +171,5 @@ Definition of Done:
 - [x] Money in the simulation: weekly wages, rent on the 1st, groceries and evenings out - #69
 - [x] Money shows in behaviour, never as a number: no evenings out when broke, a treat after
       payday, money worries in mood and muttering, feelings in the LLM context - #69
-- [ ] Entrusted money: with enough trust it asks the player to keep some savings, later asks for
+- [x] Entrusted money: with enough trust it asks the player to keep some savings, later asks for
       them back - the player decides, and it remembers - #70

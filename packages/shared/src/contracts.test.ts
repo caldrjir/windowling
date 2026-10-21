@@ -64,6 +64,7 @@ describe('worldSummarySchema', () => {
 				needs: { hunger: 0.3, energy: 0.7 },
 				relationship: { affinity: 0.2, trust: 0.4, familiarity: 0.1 },
 				money: { feeling: 'tight', justPaid: false, rentWorry: true },
+				envelope: 30_000,
 			},
 		};
 		expect(worldSummarySchema.parse(summary)).toEqual(summary);

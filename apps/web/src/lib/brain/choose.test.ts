@@ -19,6 +19,7 @@ const world: WorldSummary = {
 		needs: { hunger: 0.2, energy: 0.9 },
 		relationship: { affinity: 0, trust: 0.3, familiarity: 0 },
 		money: { feeling: 'fine', justPaid: false, rentWorry: false },
+		envelope: 0,
 	},
 };
 

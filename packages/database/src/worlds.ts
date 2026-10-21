@@ -1,4 +1,4 @@
-import { activitySchema } from '@windowling/shared';
+import { activitySchema, moneyAskKindSchema } from '@windowling/shared';
 import {
 	advanceLife,
 	createInitialCharacter,
@@ -8,6 +8,7 @@ import {
 	planCatchUp,
 	startLife,
 	wakeUp,
+	type Envelope,
 	type LifeState,
 } from '@windowling/simulation';
 import { and, eq, lt } from 'drizzle-orm';
@@ -22,7 +23,13 @@ export interface WorldRecord {
 	lastSimulatedAt: Date;
 	/** IANA zone of the player's device. */
 	timeZone: string;
-	character: { id: string; name: string; life: LifeState };
+	character: {
+		id: string;
+		name: string;
+		life: LifeState;
+		/** Money the player keeps for it (#70). */
+		envelope: Envelope;
+	};
 }
 
 const worldColumns = {
@@ -42,6 +49,11 @@ const worldColumns = {
 	balanceCents: character.balanceCents,
 	unpaidCents: character.unpaidCents,
 	paidAt: character.paidAt,
+	entrustedCents: character.entrustedCents,
+	moneyAskKind: character.moneyAskKind,
+	moneyAskCents: character.moneyAskCents,
+	moneyAskAt: character.moneyAskAt,
+	moneyAskedAt: character.moneyAskedAt,
 };
 
 type WorldRow = {
@@ -71,11 +83,32 @@ function toRecord(row: WorldRow): WorldRecord {
 				activityStartedAt: row.activityStartedAt,
 				activityEndsAt: activity.success ? row.activityEndsAt : row.activityStartedAt,
 			},
+			envelope: toEnvelope(row),
 		},
 	};
 }
 
-function lifeColumns(life: LifeState) {
+function toEnvelope(row: WorldRow): Envelope {
+	const kind = moneyAskKindSchema.safeParse(row.moneyAskKind);
+	const ask =
+		kind.success && row.moneyAskCents !== null && row.moneyAskAt !== null
+			? { kind: kind.data, cents: row.moneyAskCents, at: row.moneyAskAt }
+			: null;
+	return { cents: Math.max(0, row.entrustedCents), ask, lastAskAt: row.moneyAskedAt };
+}
+
+/** Columns for an envelope (what the player keeps, the open question). */
+export function envelopeColumns(envelope: Envelope) {
+	return {
+		entrustedCents: envelope.cents,
+		moneyAskKind: envelope.ask?.kind ?? null,
+		moneyAskCents: envelope.ask?.cents ?? null,
+		moneyAskAt: envelope.ask?.at ?? null,
+		moneyAskedAt: envelope.lastAskAt,
+	};
+}
+
+export function lifeColumns(life: LifeState) {
 	return {
 		hunger: life.needs.hunger,
 		energy: life.needs.energy,

@@ -192,6 +192,35 @@ test('memories stay private to their world', async ({ request }) => {
 	).toBe(401);
 });
 
+test('entrusted money moves only on the server’s terms', async ({ page, request }) => {
+	// Strangers can't touch it.
+	expect((await request.post('/api/world/money', { data: { type: 'moment' } })).status()).toBe(401);
+
+	await page.goto('/');
+	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
+	const money = (data: unknown) =>
+		page.evaluate(async (body) => {
+			const response = await fetch('/api/world/money', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(body),
+			});
+			return { status: response.status, body: (await response.json()) as unknown };
+		}, data);
+	// A new acquaintance doesn't hand its savings to the person at the window...
+	expect(await money({ type: 'moment' })).toEqual({
+		status: 200,
+		body: { ask: null, envelope: 0 },
+	});
+	// ...and nobody can answer a question it never asked, take back what was never given,
+	// or name an amount.
+	expect((await money({ type: 'answer', yes: true })).status).toBe(409);
+	expect((await money({ type: 'give_back' })).status).toBe(409);
+	expect((await money({ type: 'answer', yes: true, cents: 100_000 })).status).toBe(409);
+	expect((await money({ type: 'withdraw', cents: 100 })).status).toBe(400);
+	await expect(page.getByTestId('envelope')).toHaveCount(0);
+});
+
 test('shaking the phone shakes the room - and the character reacts', async ({ page, isMobile }) => {
 	test.skip(!isMobile, 'Motion sensors are a phone thing');
 	test.setTimeout(60_000);
