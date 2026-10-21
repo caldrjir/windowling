@@ -218,6 +218,21 @@ test('entrusted money moves only on the server’s terms', async ({ page, reques
 	expect((await money({ type: 'give_back' })).status).toBe(409);
 	expect((await money({ type: 'answer', yes: true, cents: 100_000 })).status).toBe(409);
 	expect((await money({ type: 'withdraw', cents: 100 })).status).toBe(400);
+	// Nor buy it presents with money that isn't there (#74).
+	const gift = (data: unknown) =>
+		page.evaluate(async (body) => {
+			const response = await fetch('/api/world/gift', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(body),
+			});
+			return { status: response.status, body: (await response.json()) as unknown };
+		}, data);
+	expect(await gift({ item: 'plant' })).toEqual({
+		status: 409,
+		body: { ok: false, reason: 'not_enough' },
+	});
+	expect((await gift({ item: 'yacht' })).status).toBe(400);
 	await expect(page.getByTestId('envelope')).toHaveCount(0);
 });
 

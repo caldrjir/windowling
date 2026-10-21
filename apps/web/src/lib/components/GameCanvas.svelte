@@ -627,7 +627,7 @@
 
 <MoneyChoice visible={listening} {characterName} onActivity={() => watcher?.spoke()} />
 
-<EnvelopeBadge {characterName} />
+<EnvelopeBadge {characterName} {belongings} />
 
 <Subtitles
 	{line}

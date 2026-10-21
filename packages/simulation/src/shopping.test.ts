@@ -6,11 +6,15 @@ import { DOLLAR, type Money } from './money.ts';
 import { applyNeeds } from './needs.ts';
 import { scoreActivities } from './scheduler.ts';
 import {
+	buyGift,
 	comforts,
 	deliveryTime,
 	itemsInRoom,
+	likesGift,
 	maybeOrder,
 	parcelsWaiting,
+	roomBelongings,
+	tasteFor,
 	unpackParcel,
 } from './shopping.ts';
 import { localTime } from './time.ts';
@@ -87,7 +91,7 @@ describe('shopping', () => {
 		const belongings = [parcel('plant', 5), parcel('blanket', 2), parcel('headphones', 30)];
 		const at = new Date(MONDAY.getTime() + 6 * HOUR_MS);
 		expect(parcelsWaiting(belongings, at).map((b) => b.item)).toEqual(['blanket', 'plant']);
-		const after = unpackParcel(belongings, at, new Date(at.getTime() + 600_000));
+		const after = unpackParcel(belongings, at, new Date(at.getTime() + 600_000), 'w');
 		expect(itemsInRoom(after)).toEqual(['blanket']);
 	});
 
@@ -125,5 +129,51 @@ describe('shopping', () => {
 			CTX,
 		);
 		expect(liveFor(20, rich).life.belongings).toEqual(once.belongings);
+	});
+});
+
+describe('gifts', () => {
+	const at = new Date('2026-10-14T10:00:00Z');
+
+	it('come out of the envelope, never out of nothing - and never twice the same', () => {
+		const bought = buyGift(10_000, [], 'blanket', at, 'UTC', always);
+		if (typeof bought === 'string') throw new Error(bought);
+		expect(bought.envelopeCents).toBe(10_000 - ITEMS.blanket.price);
+		expect(bought.belongings[0]).toMatchObject({ item: 'blanket', gift: true, unpackedAt: null });
+		expect(buyGift(10_000, bought.belongings, 'blanket', at, 'UTC', always)).toBe('owned');
+		expect(buyGift(ITEMS.coffee_machine.price - 1, [], 'coffee_machine', at, 'UTC', always)).toBe(
+			'not_enough',
+		);
+	});
+
+	it('it decides whether it likes a present: liked ones are used, the rest put away', () => {
+		const seeds = Array.from({ length: 40 }, (_, i) => `world-${String(i)}`);
+		const liked = seeds.filter((seed) => likesGift(seed, 'string_lights')).length;
+		// Mostly welcome, but not by everyone.
+		expect(liked).toBeGreaterThan(20);
+		expect(liked).toBeLessThan(40);
+		const disliker = seeds.find((seed) => !likesGift(seed, 'string_lights')) ?? 'x';
+		const gift: Belonging = {
+			item: 'string_lights',
+			orderedAt: at,
+			arrivesAt: at,
+			unpackedAt: null,
+			gift: true,
+			storedAway: false,
+		};
+		const later = new Date(at.getTime() + HOUR_MS);
+		const unpacked = unpackParcel([gift], later, later, disliker);
+		expect(unpacked[0]?.storedAway).toBe(true);
+		expect(itemsInRoom(unpacked)).toEqual([]);
+		expect(roomBelongings(unpacked, later).stored).toEqual(['string_lights']);
+		// Its own purchases always come out of the box.
+		expect(itemsInRoom(unpackParcel([{ ...gift, gift: false }], later, later, disliker))).toEqual([
+			'string_lights',
+		]);
+	});
+
+	it('likes or dislikes the same way every time (its taste is its own)', () => {
+		expect(likesGift('w1', 'plant')).toBe(likesGift('w1', 'plant'));
+		expect(tasteFor('w1', 'plant')).toBe(tasteFor('w1', 'plant'));
 	});
 });

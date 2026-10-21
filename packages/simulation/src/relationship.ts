@@ -13,7 +13,9 @@ export type RelationshipEvent =
 	/** The player shook the whole flat. Intensity 0..1. */
 	| { type: 'shaken'; intensity: number }
 	/** What came of a question about money (entrusted savings). */
-	| { type: 'money'; outcome: MoneyOutcome };
+	| { type: 'money'; outcome: MoneyOutcome }
+	/** It unpacked a present from the player (#74). */
+	| { type: 'gift'; liked: boolean };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -43,6 +45,15 @@ export function applyRelationshipEvent(rel: Relationship, event: RelationshipEve
 			return { ...rel, affinity: clamp(rel.affinity - 0.01, -1, 1) };
 		case 'money':
 			return moneyEffect(rel, event.outcome);
+		case 'gift':
+			// Someone thought of it - though with its own money, so a miss stings a little.
+			return event.liked
+				? {
+						affinity: clamp(rel.affinity + 0.08, -1, 1),
+						trust: clamp(rel.trust + 0.02, 0, 1),
+						familiarity: clamp(rel.familiarity + 0.02, 0, 1),
+					}
+				: { ...rel, affinity: clamp(rel.affinity - 0.03, -1, 1) };
 		case 'shaken': {
 			const k = clamp(event.intensity, 0, 1);
 			return {

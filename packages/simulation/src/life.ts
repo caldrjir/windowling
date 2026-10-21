@@ -128,7 +128,9 @@ function settle(state: LifeState, ctx: LifeContext): LifeState {
 	}
 	if (rentMonth(start, ctx.timeZone) !== rentMonth(end, ctx.timeZone)) money = payRent(money);
 	const belongings =
-		state.activity === 'unpack' ? unpackParcel(state.belongings, start, end) : state.belongings;
+		state.activity === 'unpack'
+			? unpackParcel(state.belongings, start, end, ctx.seed)
+			: state.belongings;
 	return { ...state, needs, money, belongings };
 }
 

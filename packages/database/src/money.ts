@@ -1,15 +1,19 @@
-import type { MoneyOutcome } from '@windowling/shared';
+import type { ItemId, MoneyOutcome } from '@windowling/shared';
 import {
 	answerMoneyAsk,
 	askAboutMoney,
+	buyGift,
+	createRng,
 	DOLLAR,
 	giveBackAll,
+	hashString,
 	localClock,
 	moneyMoment,
 	type MoneyAsk,
+	type GiftRefusal,
 	type MoneySettlement,
 } from '@windowling/simulation';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { Database } from './client.ts';
 import { getRelationship, recordRelationshipEvent, remember } from './memories.ts';
 import { character } from './schema/index.ts';
@@ -163,4 +167,38 @@ async function settle(
 		cents: settlement.cents,
 		envelope: settlement.envelope.cents,
 	};
+}
+
+export type GiftResult =
+	{ ok: true; item: ItemId; envelope: number } | { ok: false; reason: GiftRefusal | 'busy' };
+
+/**
+ * The player buys `item` for the character from the envelope (#74). The price
+ * comes only out of the envelope, never out of nothing; never twice.
+ */
+export async function buyGiftFor(
+	db: Database,
+	userId: string,
+	item: ItemId,
+	now: Date = new Date(),
+): Promise<GiftResult | null> {
+	const found = await findWorldByUserId(db, userId);
+	if (!found) return null;
+	const world = await catchUpWorld(db, found, now);
+	const { life, envelope } = world.character;
+	const rng = createRng(hashString(`${world.id}:${now.getTime()}:gift`));
+	const bought = buyGift(envelope.cents, life.belongings, item, now, world.timeZone, rng);
+	if (typeof bought === 'string') return { ok: false, reason: bought };
+	const saved = await db
+		.update(character)
+		.set({ entrustedCents: bought.envelopeCents, belongings: bought.belongings })
+		.where(
+			and(
+				unchangedEnvelope(world),
+				sql`${character.belongings} = ${JSON.stringify(life.belongings)}::jsonb`,
+			),
+		)
+		.returning({ id: character.id });
+	if (saved.length === 0) return { ok: false, reason: 'busy' };
+	return { ok: true, item, envelope: bought.envelopeCents };
 }

@@ -1,4 +1,5 @@
-import type { MoneyAskKind, MoneyOutcome } from '@windowling/shared';
+import { invalidateAll } from '$app/navigation';
+import type { ItemId, MoneyAskKind, MoneyOutcome } from '@windowling/shared';
 
 /** What the character asks about money, as the server decided it. */
 export interface MoneyQuestion {
@@ -57,6 +58,36 @@ class Envelope {
 	/** Hand everything back, unasked. */
 	giveBack(): Promise<MoneyOutcome | null> {
 		return this.settle({ type: 'give_back' });
+	}
+
+	/**
+	 * Buy it something from the envelope (#74). The server prices it and keeps
+	 * the books; true when it is on its way.
+	 */
+	async buyGift(item: ItemId): Promise<boolean> {
+		if (this.busy) return false;
+		this.busy = true;
+		try {
+			const response = await fetch('/api/world/gift', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ item }),
+			});
+			const result = (await response.json().catch(() => null)) as {
+				ok?: boolean;
+				envelope?: number;
+			} | null;
+			if (!response.ok || !result?.ok || result.envelope === undefined) return false;
+			this.cents = result.envelope;
+			// Its things changed (a parcel is on the way): refresh what the page knows.
+			await invalidateAll();
+			return true;
+		} catch (error) {
+			console.warn('Could not buy the gift', error);
+			return false;
+		} finally {
+			this.busy = false;
+		}
 	}
 
 	/** The character walked off: an unanswered question lapses. */

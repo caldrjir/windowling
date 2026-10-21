@@ -54,5 +54,7 @@ export const roomBelongingsSchema = z.object({
 	parcels: z.array(itemIdSchema),
 	/** Ordered, not delivered yet. */
 	ordered: z.array(itemIdSchema),
+	/** Presents it didn't care for, put away (#74). */
+	stored: z.array(itemIdSchema),
 });
 export type RoomBelongings = z.infer<typeof roomBelongingsSchema>;
