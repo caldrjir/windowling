@@ -47,8 +47,9 @@ describe('money', () => {
 	it('earns roughly a working week and spends some of it on food and evenings out', () => {
 		const week = liveFor(7);
 		const earned = week.life.money.balance + week.life.money.unpaid - INITIAL_MONEY.balance;
-		// ~35-40 hours of work minus a week of groceries and evenings out (no rent this week).
-		expect(earned).toBeGreaterThan(300 * DOLLAR);
+		// ~35-40 hours of work minus a week of groceries, evenings out and maybe something
+		// for the flat (no rent this week).
+		expect(earned).toBeGreaterThan(200 * DOLLAR);
 		expect(earned).toBeLessThan(40 * HOURLY_WAGE);
 	});
 
@@ -75,9 +76,16 @@ describe('money', () => {
 	});
 
 	it('feels it: money worries wear the mood down', () => {
-		const broke = liveFor(3, { balance: -200 * DOLLAR, unpaid: 0, paidAt: null });
-		const fine = liveFor(3, { balance: 1_500 * DOLLAR, unpaid: 0, paidAt: null });
-		expect(broke.life.needs.mood).toBeLessThan(fine.life.needs.mood);
+		// Across several lives, so the dice of single days don't decide.
+		const mood = (balance: number) => {
+			const seeds = ['a', 'b', 'c', 'd', 'e', 'f'];
+			const total = seeds.reduce((sum, seed) => {
+				const ctx = { ...CTX, seed };
+				return sum + liveFor(3, { balance, unpaid: 0, paidAt: null }, MONDAY, ctx).life.needs.mood;
+			}, 0);
+			return total / seeds.length;
+		};
+		expect(mood(-200 * DOLLAR)).toBeLessThan(mood(1_500 * DOLLAR) - 0.03);
 	});
 
 	it('is deterministic however the time is split into visits', () => {

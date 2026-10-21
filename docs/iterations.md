@@ -14,8 +14,8 @@ milestone. Only the current iteration is implemented; later ones guide architect
 | 6   | Mobile Sensors                    | The world feels physically held inside the phone         | done            |
 | 7   | Rich Autonomous Life              | Opening the app is unpredictable                         | done            |
 | 8   | Emergent Moments                  | Situations feel scripted but emerge from systems         | done            |
-| 9   | Economy                           | The character earns; the player gets real decisions      | **in progress** |
-| 10  | Shopping + Physical Progression   | The room tells the save's history                        | planned         |
+| 9   | Economy                           | The character earns; the player gets real decisions      | done            |
+| 10  | Shopping + Physical Progression   | The room tells the save's history                        | **in progress** |
 | 11  | Career                            | Skills, opportunities, autonomous career choices         | planned         |
 | 12  | Social World                      | Abstract NPCs with identity, personality, shared history | planned         |
 | 13  | Dating                            | Player advises, character decides                        | planned         |
@@ -162,7 +162,7 @@ Definition of Done:
 - [x] Beyond the plan: a finished room, realistic people (one per world), motion capture,
       getting into and out of bed - #62, #63, #64, #66
 
-## Iteration 9 – Economy (in progress)
+## Iteration 9 – Economy
 
 **Goal:** the character earns; the player gets real decisions.
 
@@ -173,3 +173,17 @@ Definition of Done:
       payday, money worries in mood and muttering, feelings in the LLM context - #69
 - [x] Entrusted money: with enough trust it asks the player to keep some savings, later asks for
       them back - the player decides, and it remembers - #70
+
+## Iteration 10 – Shopping + Physical Progression (in progress)
+
+**Goal:** the room tells the save's history.
+
+Definition of Done:
+
+- [x] It shops by itself with money to spare: a parcel comes in the daytime, waits by the door, it
+      unpacks it, and the thing stays in its place (plant, print, string lights, headphones,
+      blanket, coffee machine) - #73
+- [x] Things get used: better music, cosier TV, a perkier breakfast, a nicer home; it remembers
+      what it bought and knows what it has - #73
+- [ ] Gifts: the player buys something from the envelope; the character decides whether it likes
+      it - #74

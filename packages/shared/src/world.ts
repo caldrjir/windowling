@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { activitySchema } from './activity.ts';
+import { roomBelongingsSchema } from './belongings.ts';
 import { moneySenseSchema } from './money.ts';
 import { relationshipSchema } from './relationship.ts';
 
@@ -32,6 +33,8 @@ export const worldSummarySchema = z.object({
 		money: moneySenseSchema,
 		/** Savings the player keeps for it, in cents (the player's envelope, #70). */
 		envelope: z.number().int().min(0),
+		/** Its things: in the room, by the door, on the way (Iteration 10). */
+		belongings: roomBelongingsSchema,
 	}),
 });
 

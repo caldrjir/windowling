@@ -37,6 +37,8 @@ const RATES: Record<Activity, Rates> = {
 	phone: { hunger: 0.06, energy: -0.03, mood: 0.12 },
 	shower: { hunger: 0.05, energy: 0.05, mood: 0.1 },
 	out: { hunger: 0.05, energy: -0.06, mood: 0.08 },
+	// Something new! (Iteration 10)
+	unpack: { hunger: 0.06, energy: -0.03, mood: 0.35 },
 };
 
 /** Mood slowly returns to this baseline when nothing pushes it. */
@@ -61,8 +63,16 @@ export function clampNeeds(needs: Needs): Needs {
 	};
 }
 
-/** Needs after spending `hours` on `activity`; `worry` pulls the mood down per hour (money). */
-export function applyNeeds(needs: Needs, activity: Activity, hours: number, worry = 0): Needs {
+/**
+ * Needs after spending `hours` on `activity`. `extra` adds per hour on top of
+ * the activity (money worries, home comforts).
+ */
+export function applyNeeds(
+	needs: Needs,
+	activity: Activity,
+	hours: number,
+	extra: { mood?: number; energy?: number } = {},
+): Needs {
 	let current = clampNeeds(needs);
 	let remaining = Math.max(0, hours);
 	const rates = RATES[activity];
@@ -74,12 +84,12 @@ export function applyNeeds(needs: Needs, activity: Activity, hours: number, worr
 			MOOD_DRIFT_PER_HOUR * h,
 			Math.max(-MOOD_DRIFT_PER_HOUR * h, MOOD_BASELINE - current.mood),
 		);
-		let moodRate = rates.mood + worry;
+		let moodRate = rates.mood + (extra.mood ?? 0);
 		if (current.hunger > HUNGRY) moodRate += HUNGRY_MOOD_PER_HOUR;
 		if (current.energy < TIRED && activity !== 'sleep') moodRate += TIRED_MOOD_PER_HOUR;
 		current = clampNeeds({
 			hunger: current.hunger + rates.hunger * h,
-			energy: current.energy + rates.energy * h,
+			energy: current.energy + (rates.energy + (extra.energy ?? 0)) * h,
 			mood: current.mood + drift + moodRate * h,
 		});
 	}

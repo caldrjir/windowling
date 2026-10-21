@@ -1,10 +1,12 @@
 import {
 	characterActionSchema,
+	ITEMS,
 	STARTER_ROOM_TARGETS,
 	type Activity,
 	type MoneyOutcome,
 	type MoneySense,
 	type Relationship,
+	type RoomBelongings,
 } from '@windowling/shared';
 import type { ChatMessage } from './chat-model.ts';
 import { EMOTIONS, type CharacterAIContext } from './decision.ts';
@@ -24,6 +26,7 @@ const DOING: Record<Activity, string> = {
 	phone: 'You are on the phone with a friend.',
 	shower: 'You are in the shower.',
 	out: 'You are out of the flat.',
+	unpack: 'You are unpacking a parcel that was delivered.',
 };
 
 function level(value: number, words: [low: string, mid: string, high: string]): string {
@@ -51,6 +54,24 @@ export function describeMoney(money: MoneySense): string {
 	if (money.rentWorry)
 		feelings.push('Rent is due in a few days and you are not sure you can cover it.');
 	return feelings.join(' ');
+}
+
+const list = (names: string[]) =>
+	names.length < 2
+		? (names[0] ?? '')
+		: `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''}`;
+
+/** Its things in words: what is in the flat, what came, what is on the way. */
+export function describeHome(home: RoomBelongings): string {
+	const lines: string[] = [];
+	if (home.items.length) {
+		lines.push(`Things you bought for your flat: ${list(home.items.map((i) => ITEMS[i].name))}.`);
+	}
+	const parcel = home.parcels[0];
+	if (parcel) lines.push(`A parcel with ${ITEMS[parcel].name} is waiting by your door.`);
+	const ordered = home.ordered[0];
+	if (ordered) lines.push(`You ordered ${ITEMS[ordered].name} online; it has not come yet.`);
+	return lines.join(' ');
 }
 
 /** The relationship in words - the model never sees (or repeats) numbers. */
@@ -178,6 +199,8 @@ export function buildMessages(context: CharacterAIContext): ChatMessage[] {
 	];
 	const money = context.money ? describeMoney(context.money) : '';
 	if (money) situation.push(money);
+	const home = context.home ? describeHome(context.home) : '';
+	if (home) situation.push(home);
 	if (context.entrustedDollars && context.event !== 'money_answered') {
 		situation.push(
 			`The person at the window is keeping $${String(context.entrustedDollars)} of your savings for you.`,

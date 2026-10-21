@@ -5,3 +5,4 @@ export * from './room.ts';
 export * from './activity.ts';
 export * from './relationship.ts';
 export * from './money.ts';
+export * from './belongings.ts';

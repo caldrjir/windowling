@@ -7,6 +7,7 @@
 		type CharacterAction,
 		type MoneyOutcome,
 		type MoneySense,
+		type RoomBelongings,
 	} from '@windowling/shared';
 	import type { CharacterDecision, ConversationEvent } from '@windowling/ai';
 	import {
@@ -59,6 +60,8 @@
 		hunger: number;
 		/** How its money feels: worries come out in what it mutters. */
 		money?: MoneySense;
+		/** What it owns and what waits by the door. */
+		belongings?: RoomBelongings;
 		/** Who it is (personality) is derived from the world. */
 		worldId: string | null;
 	}
@@ -74,6 +77,7 @@
 		energy,
 		hunger,
 		money,
+		belongings,
 		worldId,
 	}: Props = $props();
 
@@ -517,6 +521,12 @@
 	$effect(() => {
 		if (status !== 'running') return;
 		world?.setMood(mood);
+	});
+
+	// Its things in their places, parcels by the door (Iteration 10).
+	$effect(() => {
+		if (status !== 'running' || !belongings) return;
+		world?.setBelongings(belongings.items, belongings.parcels.length);
 	});
 
 	$effect(() => {

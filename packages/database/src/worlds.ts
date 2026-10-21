@@ -1,4 +1,4 @@
-import { activitySchema, moneyAskKindSchema } from '@windowling/shared';
+import { activitySchema, belongingSchema, ITEMS, moneyAskKindSchema } from '@windowling/shared';
 import {
 	advanceLife,
 	createInitialCharacter,
@@ -54,6 +54,7 @@ const worldColumns = {
 	moneyAskCents: character.moneyAskCents,
 	moneyAskAt: character.moneyAskAt,
 	moneyAskedAt: character.moneyAskedAt,
+	belongings: character.belongings,
 };
 
 type WorldRow = {
@@ -79,6 +80,7 @@ function toRecord(row: WorldRow): WorldRecord {
 			life: {
 				needs: { hunger: row.hunger, energy: row.energy, mood: row.mood },
 				money: { balance: row.balanceCents, unpaid: row.unpaidCents, paidAt: row.paidAt },
+				belongings: parseBelongings(row.belongings),
 				activity: activity.success ? activity.data : 'idle',
 				activityStartedAt: row.activityStartedAt,
 				activityEndsAt: activity.success ? row.activityEndsAt : row.activityStartedAt,
@@ -86,6 +88,15 @@ function toRecord(row: WorldRow): WorldRecord {
 			envelope: toEnvelope(row),
 		},
 	};
+}
+
+/** Rows from another release may hold things we don't know: keep what parses. */
+function parseBelongings(raw: unknown): LifeState['belongings'] {
+	if (!Array.isArray(raw)) return [];
+	return raw.flatMap((entry: unknown) => {
+		const parsed = belongingSchema.safeParse(entry);
+		return parsed.success ? [parsed.data] : [];
+	});
 }
 
 function toEnvelope(row: WorldRow): Envelope {
@@ -119,6 +130,7 @@ export function lifeColumns(life: LifeState) {
 		balanceCents: life.money.balance,
 		unpaidCents: life.money.unpaid,
 		paidAt: life.money.paidAt,
+		belongings: life.belongings,
 	};
 }
 
@@ -260,6 +272,7 @@ export async function catchUpWorld(
 		// Someone else already simulated further; their state is the truth.
 		return (await findWorldByUserId(db, record.userId)) ?? record;
 	}
+	await rememberShopping(db, record, record.character.life.belongings, life.belongings);
 	return {
 		...record,
 		lastSimulatedAt: plan.to,
@@ -315,4 +328,38 @@ export async function wakeCharacter(
 	});
 	await recordRelationshipEvent(db, record.id, { type: 'woken' });
 	return { ...record, character: { ...record.character, life: woken } };
+}
+
+/** What it bought and unpacked while nobody was watching, it remembers. */
+async function rememberShopping(
+	db: Database,
+	record: WorldRecord,
+	before: LifeState['belongings'],
+	after: LifeState['belongings'],
+): Promise<void> {
+	const was = new Map(before.map((b) => [b.item, b]));
+	for (const b of after) {
+		const old = was.get(b.item);
+		const name = ITEMS[b.item].name;
+		if (!old && !b.gift) {
+			const clock = localClock(b.orderedAt, record.timeZone);
+			await remember(db, record.id, {
+				kind: 'moment',
+				note: `I ordered ${name} online on ${clock.weekday}.`,
+				importance: 0.45,
+				tags: ['shopping', 'bought', b.item],
+				emotion: 'happy',
+				createdAt: b.orderedAt,
+			});
+		}
+		if (b.unpackedAt && !old?.unpackedAt && !b.gift) {
+			await remember(db, record.id, {
+				kind: 'fact',
+				note: `I have ${name} in my flat - I bought it myself.`,
+				importance: 0.5,
+				tags: ['home', 'owns', b.item],
+				createdAt: b.unpackedAt,
+			});
+		}
+	}
 }

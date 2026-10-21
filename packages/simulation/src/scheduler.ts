@@ -2,6 +2,7 @@ import {
 	ACTIVITIES,
 	type Activity,
 	type CharacterAction,
+	type ItemId,
 	type MoneyFeeling,
 } from '@windowling/shared';
 import { HOUR_MS, MINUTE_MS } from './catch-up.ts';
@@ -22,6 +23,10 @@ export interface DecisionContext {
 	money?: MoneyFeeling;
 	/** Payday was today or yesterday. */
 	justPaid?: boolean;
+	/** A parcel is waiting by the door (Iteration 10). */
+	parcelWaiting?: boolean;
+	/** Things in the flat that make some activities nicer (Iteration 10). */
+	owns?: readonly ItemId[];
 }
 
 export interface Decision {
@@ -65,6 +70,8 @@ export function scoreActivities({
 	previous,
 	money = 'fine',
 	justPaid = false,
+	parcelWaiting = false,
+	owns = [],
 }: DecisionContext): Record<Activity, number> {
 	const short = money === 'broke' || money === 'tight';
 	const { hour } = local;
@@ -131,11 +138,13 @@ export function scoreActivities({
 
 	let tv = evening ? 1.1 : weekendDay ? 0.55 : 0.3;
 	if (needs.energy < 0.35) tv += 0.3;
+	if (owns.includes('blanket') && evening) tv += 0.1;
 	if (night) tv *= 0.15;
 	if (previous === 'tv') tv *= 0.5;
 
 	let music = awake ? 0.65 : 0.05;
 	if (needs.mood < 0.5) music += 0.3;
+	if (owns.includes('headphones')) music += 0.15;
 	if (workTime) music *= 0.5;
 	if (previous === 'music') music *= 0.4;
 
@@ -165,7 +174,11 @@ export function scoreActivities({
 		else if (justPaid) out *= 1.8;
 	}
 
+	// A parcel by the door: who could wait? (Not in the middle of work, though.)
+	const unpack = parcelWaiting && awake && !workTime && previous !== 'unpack' ? 2.4 : 0;
+
 	return {
+		unpack,
 		sleep,
 		eat,
 		work,
@@ -243,6 +256,8 @@ function durationOf(
 			return randomBetween(rng, 10, 20) * MINUTE_MS;
 		case 'out':
 			return randomBetween(rng, 40, 150) * MINUTE_MS;
+		case 'unpack':
+			return randomBetween(rng, 8, 15) * MINUTE_MS;
 	}
 }
 
@@ -279,5 +294,7 @@ export function actionForActivity(activity: Activity): CharacterAction | null {
 		case 'shower':
 		case 'out':
 			return { type: 'leave', target: 'door' };
+		case 'unpack':
+			return { type: 'unpack', target: 'door' };
 	}
 }

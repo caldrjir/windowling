@@ -21,6 +21,8 @@ export const activitySchema = z.enum([
 	'phone',
 	'shower',
 	'out',
+	// Iteration 10 - a parcel came: unpack it at the door
+	'unpack',
 ]);
 
 export type Activity = z.infer<typeof activitySchema>;

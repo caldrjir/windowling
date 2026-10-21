@@ -16,6 +16,7 @@ import {
 	pendingAsk,
 	personalityFor,
 	recall,
+	roomBelongings,
 	type Envelope,
 } from '@windowling/simulation';
 import type { ConversationRequest } from '$lib/conversation-request';
@@ -63,6 +64,7 @@ export async function buildServerContext(
 			activity: request.event === 'woken_up' ? 'sleep' : life.activity,
 			needs: life.needs,
 			money: moneySense(life.money, now, world.timeZone),
+			home: roomBelongings(life.belongings, now),
 			...moneyTalk(world.character.envelope, request, now),
 			awareness: request.awareness,
 			event: request.event,

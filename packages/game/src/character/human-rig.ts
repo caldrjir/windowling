@@ -424,8 +424,10 @@ export class HumanRig {
 		// all of it as restless); the head is its own, looking around.
 		const moving = Math.min(1, pose.walking + pose.dancing + pose.broom + pose.wave);
 		const calm = 0.55 + 0.45 * moving;
+		// Crouching (squats, unpacking a parcel): the legs are the pose's, not the captured stance.
+		const crouch = Math.min(1, Math.max(0, (pose.knee - 0.4) / 0.6)) * (1 - pose.walking);
 		const follow = (name: string): number => {
-			if (LEGS.test(name) || name === 'pelvis') return standing * calm;
+			if (LEGS.test(name) || name === 'pelvis') return standing * calm * (1 - crouch);
 			if (ARMS.test(name)) return standing * calm * (1 - handsBusy * (1 - pose.wave));
 			if (name === 'neck_01' || name === 'head') return standing * moving * (1 - looking);
 			return standing * calm * (1 - handsBusy * 0.5);
@@ -459,7 +461,7 @@ export class HumanRig {
 			(this.restHip + pose.bob) * (1 - down) + SEATED_HIP * down - this.restHip,
 			0,
 		);
-		const offset = procHip.lerp(hip, standing * calm);
+		const offset = procHip.lerp(hip, standing * calm * (1 - crouch));
 		this.pelvis.position
 			.copy(this.pelvisRest)
 			.add(offset.applyQuaternion(this.pelvisParentInverse));

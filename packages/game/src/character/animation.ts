@@ -18,7 +18,8 @@ export type ActivityAnimation =
 	| 'read'
 	| 'tv'
 	| 'music'
-	| 'dance';
+	| 'dance'
+	| 'unpack';
 
 /**
  * A short moment on top of whatever it is doing (Iteration 8). The web layer
@@ -41,6 +42,7 @@ const ACTIVITY_LAYERS = [
 	'tv',
 	'music',
 	'dance',
+	'unpack',
 ] as const;
 type ActivityLayer = (typeof ACTIVITY_LAYERS)[number];
 
@@ -139,6 +141,7 @@ export class Animator {
 		tv: 0,
 		music: 0,
 		dance: 0,
+		unpack: 0,
 	};
 	private readonly moments: Record<MomentAnimation, number> = {
 		rage: 0,
@@ -317,7 +320,7 @@ export class Animator {
 		const glanceYaw =
 			glancePhase > 0.75 ? Math.sin(((glancePhase - 0.75) / 0.25) * Math.PI) * 0.6 : 0;
 
-		const { eat, work, play, wave, cook, clean, exercise, phone, read, tv, music, dance } =
+		const { eat, work, play, wave, cook, clean, exercise, phone, read, tv, music, dance, unpack } =
 			this.layers;
 		const { rage, cheer, doze, yawn, sing } = this.moments;
 		// Dancing: bouncing on the beat (~2 per second), swaying, arms pumping.
@@ -329,7 +332,9 @@ export class Animator {
 		// A yawn: mouth wide, head back, a hand up.
 		const gape = yawn * (Math.sin(Math.min(1, (t % 5) / 3.5) * Math.PI) * 0.9);
 		/** Hands busy with something - no idle fidgeting or glancing around. */
-		const handsBusy = Math.min(1, eat + work + play + cook + clean + phone + read);
+		const handsBusy = Math.min(1, eat + work + play + cook + clean + phone + read + unpack);
+		// Unpacking a parcel on the floor: crouched over it, hands tearing at the tape.
+		const tear = Math.sin(t * 5);
 		const stir = Math.sin(t * 4);
 		const sweep = Math.sin(t * 3.2);
 		// Squats: down and up every ~2.5 s.
@@ -369,7 +374,8 @@ export class Animator {
 				w.idle * Math.sin(t * 1.6) * 0.004 +
 				w.walk * Math.abs(Math.cos(this.walkPhase)) * 0.035 +
 				up * w.idle * Math.max(0, Math.sin(t * 7)) * 0.015 -
-				squat * 0.25 +
+				squat * 0.25 -
+				unpack * 0.3 +
 				dance * Math.abs(beat) * 0.06 +
 				cheer * w.idle * Math.max(0, Math.sin(t * 8)) * 0.05,
 			legSwing: w.walk * swing * 0.42 + dance * groove * 0.25,
@@ -382,8 +388,9 @@ export class Animator {
 				w.walk * Math.max(0, -Math.sin(this.walkPhase + 0.6)) * 0.45 +
 				bed * bedKnee +
 				squat * 1.3 +
+				unpack * 1.25 +
 				dance * Math.abs(beat) * 0.3,
-			hipFlex: bed * ((Math.PI / 2) * (1 - recline) + legLift) + squat * 0.9,
+			hipFlex: bed * ((Math.PI / 2) * (1 - recline) + legLift) + squat * 0.9 + unpack * 1.0,
 			lie: bed * recline,
 			breath: breath * (w.idle + w.sit + w.lie * 1.4),
 			headYaw:
@@ -397,7 +404,8 @@ export class Animator {
 					play * 0.4 +
 					cook * 0.35 +
 					clean * 0.25 +
-					read * 0.4 -
+					read * 0.4 +
+					unpack * 0.5 -
 					tv * 0.05 +
 					bobHead +
 					sad * 0.25 * (1 - w.lie)) *
@@ -421,6 +429,7 @@ export class Animator {
 				clean * 0.55 +
 				read * 0.6 +
 				squat * 1.2 +
+				unpack * (1.0 + tear * 0.1) +
 				dance * (0.5 + beat * 0.3) +
 				rage * 0.3 +
 				fury,
@@ -432,6 +441,7 @@ export class Animator {
 				cook * (0.9 + stir * 0.15) +
 				clean * 0.4 +
 				read * 1.3 +
+				unpack * (0.5 + tear * 0.25) +
 				dance * 1.2 +
 				rage * 0.4,
 			// The phone is held to the ear (close enough to the mouth for this rig).
@@ -446,6 +456,7 @@ export class Animator {
 					clean * 0.2 -
 					tv * 0.15 +
 					squat * 0.35 +
+					unpack * 0.3 +
 					doze * 0.3 +
 					rage * 0.15) *
 					(1 - w.lie) -

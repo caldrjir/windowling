@@ -74,6 +74,11 @@ export const KITCHEN_PAN = {
 
 /** Door in the left wall, near the front: to the bathroom and the rest of the world. */
 export const DOOR = { z: 1.15, width: 0.9, height: 2.05 } as const;
+/** Where the courier leaves parcels: on the floor by the door, out of the way (Iteration 10). */
+export const PARCEL: Vec2 = { x: -ROOM.width / 2 + 0.3, z: DOOR.z - DOOR.width / 2 - 0.4 };
+/** Crouching over a parcel to unpack it, facing it. */
+export const UNPACK_SPOT = { x: PARCEL.x + 0.5, z: PARCEL.z, yaw: -Math.PI / 2 } as const;
+
 /** Where the character is when it has left the flat (behind the door, out of sight). */
 export const OUTSIDE: Vec2 = { x: -ROOM.width / 2 - 0.7, z: DOOR.z };
 

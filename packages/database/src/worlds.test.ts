@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { getTestDatabaseUrl } from '../test/test-database.ts';
 import { createDatabase, type DatabaseConnection } from './client.ts';
-import { user } from './schema/index.ts';
+import { loadMemories } from './memories.ts';
+import { character, user } from './schema/index.ts';
 import {
 	catchUpWorld,
 	findWorldByUserId,
@@ -155,6 +156,27 @@ describe.skipIf(!url)('worlds repository (postgres)', () => {
 		expect(money.balance).not.toBe(world.character.life.money.balance);
 		const reloaded = await findWorldByUserId(conn.db, userId);
 		expect(reloaded?.character.life.money).toEqual(money);
+	});
+
+	it('keeps what it bought: orders, parcels and things in the room, remembered', async () => {
+		const userId = await createUser(true);
+		const start = new Date('2026-10-05T06:00:00.000Z');
+		const world = await getOrCreateWorldForUser(conn.db, userId, {
+			now: start,
+			timeZone: 'Europe/Prague',
+		});
+		await conn.db
+			.update(character)
+			.set({ balanceCents: 300_000 })
+			.where(eq(character.id, world.character.id));
+		const rich = (await findWorldByUserId(conn.db, userId)) ?? world;
+		const advanced = await catchUpWorld(conn.db, rich, new Date('2026-10-17T06:00:00.000Z'));
+		const { belongings } = advanced.character.life;
+		expect(belongings.length).toBeGreaterThan(0);
+		const reloaded = await findWorldByUserId(conn.db, userId);
+		expect(reloaded?.character.life.belongings).toEqual(belongings);
+		const memories = await loadMemories(conn.db, world.id);
+		expect(memories.some((m) => /I ordered .* online/.test(m.note))).toBe(true);
 	});
 
 	it('follows the device into another time zone', async () => {
