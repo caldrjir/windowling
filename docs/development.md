@@ -2,18 +2,21 @@
 
 ## Local setup
 
-See the [README](../README.md#getting-started). Short version:
+See the [README](../README.md#getting-started). Short version (Windows, macOS, Linux):
 
 ```bash
 corepack enable && pnpm install
-cp .env.example .env            # set BETTER_AUTH_SECRET (openssl rand -base64 32)
-docker compose up -d
-pnpm db:migrate
-pnpm dev
+pnpm setup:local    # .env + local secrets, docker compose up, pnpm db:migrate
+pnpm dev            # http://localhost:5173
+pnpm preview        # http://localhost:8787 - production Worker with the site gate (password "windowling")
 ```
 
-No Docker? Any PostgreSQL 16+ works (production and CI run 18) - create databases `windowling` and `windowling_test`
-and point `DATABASE_URL` / `TEST_DATABASE_URL` at them.
+No Docker? Any PostgreSQL 16+ works (production and CI run 18) - create databases `windowling`
+and `windowling_test`, point `DATABASE_URL` / `TEST_DATABASE_URL` in `.env` at them and run
+`pnpm setup:local` again (it skips Docker when it is not available).
+
+All local configuration lives in the root `.env`: `pnpm dev`, the database tools, E2E and
+`pnpm preview` (`apps/web/scripts/preview.mjs` passes it to `wrangler dev`) all read it.
 
 ## Daily workflow
 

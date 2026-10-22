@@ -1,11 +1,12 @@
 import { pbkdf2Sync } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 import { E2E_SITE_PASSWORD, GATE_STATE } from './e2e/gate';
 
 // E2E runs the production build inside the real Workers runtime (wrangler dev / workerd)
 // against a real Postgres, so it also proves the Cloudflare build works.
 try {
-	process.loadEnvFile(new URL('../../.env', import.meta.url).pathname);
+	process.loadEnvFile(fileURLToPath(new URL('../../.env', import.meta.url)));
 } catch {
 	// CI provides env directly
 }

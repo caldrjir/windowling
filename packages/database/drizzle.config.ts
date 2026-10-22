@@ -1,8 +1,9 @@
 import { defineConfig } from 'drizzle-kit';
+import { fileURLToPath } from 'node:url';
 
 // Local development keeps a single .env in the repository root.
 try {
-	process.loadEnvFile(new URL('../../.env', import.meta.url).pathname);
+	process.loadEnvFile(fileURLToPath(new URL('../../.env', import.meta.url)));
 } catch {
 	// No .env file - rely on the real environment (CI, production).
 }

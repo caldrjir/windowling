@@ -67,9 +67,10 @@ docker/                        Local infrastructure (Postgres init scripts)
 
 ```bash
 pnpm install               # install
-docker compose up -d       # local Postgres (+ windowling_test DB)
+pnpm setup:local           # .env + local secrets, Docker Postgres, migrations (idempotent)
+pnpm dev                   # http://localhost:5173 (no site password)
+pnpm preview               # http://localhost:8787, production Worker, site password "windowling"
 pnpm db:migrate            # apply migrations
-pnpm dev                   # http://localhost:5173
 pnpm check                 # lint + format:check + typecheck + test + build (run before pushing)
 pnpm test                  # unit + DB integration tests (Vitest)
 pnpm test:e2e              # Playwright against the built Worker in workerd
@@ -96,5 +97,7 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 - Assets are revalidated by default; `static/service-worker.js` is a kill switch that removes
   the old app's service worker and caches. Don't add a caching SW without versioning games.
 - `/api/auth/*` is routed by path in `hooks.server.ts` (not Better Auth's origin-matching helper).
+- Local scripts must run on Windows too: Node scripts, `fileURLToPath` (never `URL.pathname`),
+  no shell-only syntax in package.json scripts.
 - Env is validated by `parseServerEnv` (`apps/web/src/lib/server/env.ts`). Add new vars there,
   to `.env.example`, and to `docs/development.md`.
