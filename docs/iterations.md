@@ -18,6 +18,7 @@ Auth, CI/CD, release-please) carries on.
 - Kill-switch service worker removes the old app's caches.
 - Invite-only: the whole site behind one shared password (site gate).
 - Mobile: responsive hub; VOIDBORN touch controls (stick + dash) and compact phone HUD/menus.
+- STARSPIRE (deck-building roguelike) joins the library, with a phone layout for battles.
 
 ## Game Center 2 – Accounts & Cloud Saves
 
