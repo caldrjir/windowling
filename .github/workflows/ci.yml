@@ -93,14 +93,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Apply migrations
         run: pnpm db:migrate
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - name: Install Playwright Chromium
-        run: pnpm --filter @windowling/web exec playwright install --with-deps chromium
+      # Google Chrome is preinstalled on GitHub's Ubuntu runners: no browser download.
       - name: Run E2E
+        env:
+          PLAYWRIGHT_CHANNEL: chrome
         run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

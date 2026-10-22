@@ -70,7 +70,9 @@ Convention: each completed iteration is at least one minor release.
 - DB tests use `TEST_DATABASE_URL`, migrate it automatically, and are skipped locally if it is
   unset (never in CI).
 - E2E builds the app and runs it with `wrangler dev` (the real Workers runtime), on
-  `http://127.0.0.1:8787`. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use a preinstalled Chromium.
+  `http://127.0.0.1:8787`. Browser: `PLAYWRIGHT_CHANNEL=chrome|msedge` uses the installed Chrome /
+  Edge (no download; CI uses the runner's Chrome), `PLAYWRIGHT_CHROMIUM_EXECUTABLE` any Chromium
+  binary, otherwise Playwright's own (`playwright install --only-shell chromium`).
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without
   credentials). E2E checks the hub, the language contract, launching VOIDBORN and stats.
 

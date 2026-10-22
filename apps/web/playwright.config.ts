@@ -35,6 +35,16 @@ const varFlags = Object.entries(vars)
 	.map(([key, value]) => `--var '${key}:${value}'`)
 	.join(' ');
 
+// Browser for the tests, no download needed when one is already installed:
+//   PLAYWRIGHT_CHANNEL=chrome | msedge  - the installed Google Chrome / Microsoft Edge
+//   PLAYWRIGHT_CHROMIUM_EXECUTABLE=path - any Chromium binary
+//   neither                             - Playwright's own Chromium (playwright install chromium)
+// Both can live in the root .env (pnpm setup:local picks one).
+const launchOptions = {
+	channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
+	executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
+};
+
 export default defineConfig({
 	testDir: './e2e',
 	fullyParallel: true,
@@ -52,14 +62,14 @@ export default defineConfig({
 			name: 'desktop-chromium',
 			use: {
 				...devices['Desktop Chrome'],
-				launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE },
+				launchOptions,
 			},
 		},
 		{
 			name: 'mobile-chromium',
 			use: {
 				...devices['Pixel 7'],
-				launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE },
+				launchOptions,
 			},
 		},
 	],
