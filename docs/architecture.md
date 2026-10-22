@@ -45,6 +45,10 @@ Shipped as static assets, untouched by the build. The contract with the hub is b
 | `gamecenter.stats.<id>` | game        | `{ playTime (s), lastPlayed (ms), progress (0..1), stats }` |
 | e.g. `voidborn.save.v1` | game        | the game's own save - never read or migrated by the hub     |
 
+Games must work on phones too: VOIDBORN reads touch input (a floating stick anywhere on the
+play field + a dash button, in `js/main.js` `Input`) next to keyboard and gamepad; its logic,
+balance and save format are unchanged.
+
 ### Server - `apps/web/src/lib/server` and `hooks.server.ts`
 
 Request lifecycle:

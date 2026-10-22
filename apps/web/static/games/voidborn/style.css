@@ -364,3 +364,63 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var
 .lang button:hover { color: var(--text); }
 .lang button.on { background: rgba(85,246,255,.16); color: var(--cyan); text-shadow: 0 0 10px rgba(85,246,255,.6); }
 .corner-lang { position: fixed; right: 20px; bottom: 14px; z-index: 11; }
+
+/* ── Dotykové ovládání ─────────────────────────────────── */
+#cv { touch-action: none; }
+#dashBtn { display: none; }
+#stick { position: fixed; left: 0; top: 0; z-index: 6; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .12s; }
+#stick.on { opacity: 1; }
+#stick::before, #stick i { content: ''; position: absolute; border-radius: 50%; }
+#stick::before { width: 112px; height: 112px; left: -56px; top: -56px; border: 2px solid rgba(85,246,255,.35); background: rgba(85,246,255,.06); }
+#stick i { width: 48px; height: 48px; left: -24px; top: -24px; background: rgba(85,246,255,.35); box-shadow: 0 0 18px var(--cyan); }
+body.touch #dashBtn { display: grid; place-items: center; pointer-events: auto; touch-action: none; position: absolute;
+  right: calc(22px + env(safe-area-inset-right)); bottom: calc(26px + env(safe-area-inset-bottom)); width: 84px; height: 84px; border-radius: 50%;
+  border: 2px solid rgba(85,246,255,.55); background: rgba(8,4,24,.55); color: var(--cyan); font-weight: 800; font-size: 13px; letter-spacing: .15em;
+  text-shadow: 0 0 10px var(--cyan); box-shadow: 0 0 22px -4px var(--cyan); }
+body.touch #dashBtn:active { background: rgba(85,246,255,.25); }
+body.touch .version { display: none; }
+body.touch #fps, body.touch kbd { display: none; }
+@media (max-width: 600px) {
+  .screen { padding-bottom: 72px; }
+  .hud-left { left: 12px; top: 16px; gap: 7px; }
+  .hud-right { right: 12px; top: 16px; }
+  .hp-bar { width: 110px; height: 13px; }
+  .hp span { font-size: 13px; }
+  .slots { max-width: 150px; gap: 4px; }
+  .slot { width: 30px; height: 30px; font-size: 15px; }
+  .slot b { font-size: 9px; }
+  .slots.small .slot { width: 22px; height: 22px; font-size: 11px; }
+  .hud-center { top: 40px; }
+  #timer { font-size: 24px; }
+  #sectorTag { font-size: 9px; letter-spacing: .2em; }
+  .hstat { font-size: 15px; }
+  #bossBar { top: 96px; width: 72vw; }
+  .corner-lang { right: 12px; bottom: 10px; }
+  .cards { gap: 10px; margin: 18px 0; }
+  .card { display: grid; grid-template-columns: 52px 1fr; align-items: center; justify-items: start; column-gap: 16px; row-gap: 4px;
+    width: 100%; min-height: 0; padding: 14px 14px 14px 18px; text-align: left; }
+  .card > :not(.cico):not(.ck) { grid-column: 2; }
+  .card .cico { grid-row: 1 / span 6; width: 44px; height: 44px; font-size: 24px; margin: 0 0 0 4px; }
+  .card h3 { font-size: 17px; }
+  .card p { font-size: 13px; }
+  .card .pips { justify-content: flex-start; }
+  .card .ctype { margin-top: 2px; }
+  .card:hover, .card.focus { transform: none; }
+}
+@media (max-height: 500px) {
+  .screen { padding-top: 16px; padding-bottom: 16px; }
+  .menu-left .tagline { margin: 6px 0 18px; }
+  .menu-left .logo { font-size: clamp(36px, 7vw, 64px); }
+  .hud-left { gap: 6px; }
+  .slot { width: 30px; height: 30px; font-size: 15px; }
+  .slots.small .slot { width: 22px; height: 22px; font-size: 11px; }
+  #overlay { place-items: start center; }
+  .ov-title { font-size: 30px; }
+  .ov-sub { margin-top: 6px; }
+  .cards { margin: 14px 0; gap: 12px; }
+  .card { min-height: 0; padding: 16px 14px 14px; gap: 6px; }
+  .card .cico { width: 50px; height: 50px; font-size: 26px; margin: 4px 0 8px; }
+  .card h3 { font-size: 16px; }
+  .card p { font-size: 13px; }
+  .card:hover, .card.focus { transform: translateY(-3px); }
+}

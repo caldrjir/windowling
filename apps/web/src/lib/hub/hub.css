@@ -119,3 +119,40 @@ kbd { font-family: var(--f-u); font-size: 12px; padding: 2px 7px; border-radius:
 .account button:hover { color: var(--text); background: rgba(255,255,255,.1); }
 .account button.google { color: var(--text); }
 @media (max-width: 900px) { .account b { display: none; } }
+
+/* Phones */
+@media (hover: none) { .hint { display: none; } }
+@media (max-width: 600px) {
+  .top { flex-wrap: wrap; gap: 10px 12px; padding: 14px 16px; }
+  .brand { gap: 10px; }
+  .brand-mark { width: 28px; height: 28px; }
+  .brand span { font-size: 17px; }
+  .clock { display: none; }
+  .account button { padding: 6px 12px; font-size: 12px; }
+  main { padding: 0 16px 28px; }
+  .hero { min-height: 0; border-radius: 22px; }
+  .hero-info { padding: 26px 20px; gap: 14px; }
+  .eyebrow { font-size: 11px; letter-spacing: .22em; }
+  .hero-title { font-size: clamp(34px, 11vw, 48px); }
+  .tagline { font-size: 17px; }
+  .desc { font-size: 14px; }
+  .actions { gap: 12px; }
+  .play { width: 100%; justify-content: center; padding: 16px 24px; font-size: 16px; }
+  .stats { gap: 8px; }
+  .stat { padding: 11px; }
+  .stat b { font-size: 16px; }
+  .library { margin-top: 28px; }
+  .lib-head { margin-bottom: 14px; }
+  .lib-head h2 { font-size: 19px; }
+  .shelf { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .gcard { border-radius: 16px; }
+  .gcard .gc-info { padding: 12px; }
+  .gcard h3 { font-size: 16px; }
+  .gcard p { font-size: 11px; }
+  .gcard .gc-tag { top: 10px; left: 10px; font-size: 10px; padding: 4px 8px; }
+  .gcard:hover, .gcard.sel { transform: none; }
+  .soon-in svg { width: 30px; height: 30px; margin-bottom: 8px; }
+  .soon-in b { font-size: 12px; }
+  .soon-in small { font-size: 10px; }
+  .foot { flex-wrap: wrap; gap: 6px 16px; padding: 14px 16px 22px; font-size: 12px; }
+}

@@ -11,7 +11,37 @@ const Input = (() => {
     onKey(e);
   });
   window.addEventListener('keyup', e => keys.delete(e.code));
-  window.addEventListener('blur', () => keys.clear());
+  window.addEventListener('blur', () => { keys.clear(); stickEnd(); });
+
+  // Dotyk: plovoucí joystick kdekoli na ploše + tlačítko úskoku.
+  const STICK_R = 56;
+  let stick = null;
+  const stickEl = document.getElementById('stick'), knobEl = stickEl.firstElementChild;
+  function stickEnd(e) {
+    if (!stick || (e && e.pointerId !== stick.id)) return;
+    stick = null;
+    stickEl.classList.remove('on');
+  }
+  window.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    document.body.classList.add('touch');
+    if (G.state !== 'play' || stick || e.target.closest('button, #overlay')) return;
+    stick = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 };
+    stickEl.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+    knobEl.style.transform = '';
+    stickEl.classList.add('on');
+  });
+  window.addEventListener('pointermove', e => {
+    if (!stick || e.pointerId !== stick.id) return;
+    let dx = e.clientX - stick.ox, dy = e.clientY - stick.oy;
+    const l = Math.hypot(dx, dy);
+    if (l > STICK_R) { dx *= STICK_R / l; dy *= STICK_R / l; }
+    stick.x = dx / STICK_R; stick.y = dy / STICK_R;
+    knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+  });
+  window.addEventListener('pointerup', stickEnd);
+  window.addEventListener('pointercancel', stickEnd);
+  document.getElementById('dashBtn').addEventListener('pointerdown', e => { e.preventDefault(); pressed.add('Space'); });
 
   function pad() {
     const gp = navigator.getGamepads ? Array.from(navigator.getGamepads()).find(g => g) : null;
@@ -38,6 +68,8 @@ const Input = (() => {
       if (gp.buttons[12] && gp.buttons[12].pressed) y -= 1;
       if (gp.buttons[13] && gp.buttons[13].pressed) y += 1;
     }
+    if (stick && G.state !== 'play') stickEnd();
+    if (stick && Math.hypot(stick.x, stick.y) > 0.15) { x += stick.x; y += stick.y; }
     const l = Math.hypot(x, y);
     if (l > 1) { x /= l; y /= l; }
     return { x, y };
