@@ -260,3 +260,9 @@ test('DRIFTWOOD runs on computers and is blocked on phones', async ({
 	}
 	expect(errors).toEqual([]);
 });
+
+test('/favicon.ico points browsers at the SVG icon', async ({ request }) => {
+	const res = await request.get('/favicon.ico', { maxRedirects: 0 });
+	expect(res.status()).toBe(308);
+	expect(res.headers().location).toBe('/favicon.svg');
+});
