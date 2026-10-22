@@ -39,7 +39,7 @@ Architecture and boundaries: [`docs/architecture.md`](docs/architecture.md).
 
 ## Prerequisites
 
-- **Node.js 22 LTS** (`.nvmrc`; `>=22.12`)
+- **Node.js 24 LTS** (`.nvmrc`; `>=24`)
 - **pnpm 10** - `corepack enable` picks the pinned version from `package.json`
 - **Docker** (for local PostgreSQL) - or any PostgreSQL 16+ (production runs 18) you point `DATABASE_URL` at
 
