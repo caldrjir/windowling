@@ -29,6 +29,7 @@ follow the player; later, some games are played together (multiplayer).
 - Hero with the selected game: cover, description, tags, play / continue button.
 - Library shelf with game cards and free slots.
 - Per-game stats from this browser: play time, last played, progress and game-specific numbers.
+- Who is playing right now: per game, signed-in players and anonymous players (live, ~15 s).
 - Account: Google sign-in button, or the player's name and avatar with sign-out.
 
 ## Roadmap (high level)

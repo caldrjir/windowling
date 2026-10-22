@@ -58,6 +58,15 @@ adapter-cloudflare (aliased as `sveltekit-worker`; the adapter writes it to the 
 so the static games are protected. A correct password sets an HTTP-only cookie (30 days)
 signed with the password hash.
 
+### Live players - `presence`
+
+Every game page loads `static/games/presence.js`. While the tab is visible it POSTs
+`/api/presence` (`{ client, game }`, a random per-tab id) every 25 s and says goodbye on
+`pagehide` / when hidden (`sendBeacon`). The server records the tab in the `presence` table,
+with `user_id` taken from the Better Auth session (null = anonymous), and prunes rows older than
+60 s. `GET /api/presence` returns, per game, distinct signed-in players and anonymous tabs; the
+hub polls it every 15 s. No personal data beyond the user link; rows live for a minute.
+
 ### Server - `apps/web/src/lib/server` and `hooks.server.ts`
 
 Request lifecycle:

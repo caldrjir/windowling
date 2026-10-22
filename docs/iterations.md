@@ -19,6 +19,7 @@ Auth, CI/CD, release-please) carries on.
 - Invite-only: the whole site behind one shared password (site gate).
 - Mobile: responsive hub; VOIDBORN touch controls (stick + dash) and compact phone HUD/menus.
 - STARSPIRE (deck-building roguelike) joins the library, with a phone layout for battles.
+- Live player counts per game (signed-in vs anonymous) from game-tab heartbeats.
 
 ## Game Center 2 – Accounts & Cloud Saves
 

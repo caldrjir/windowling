@@ -27,6 +27,12 @@
 	// Stats live in the player's browser (written by the games); read after mount.
 	let saved = $state<Record<string, Stats | null>>({});
 	let signingIn = $state(false);
+	// Who is playing what right now (heartbeats from static/games/presence.js).
+	interface Live {
+		signedIn: number;
+		anonymous: number;
+	}
+	let live = $state<Record<string, Live>>({});
 
 	const L = (cs: string, en: string) => (lang === 'en' ? en : cs);
 	const locale = $derived(lang === 'en' ? 'en-US' : 'cs-CZ');
@@ -34,6 +40,26 @@
 		(lang === 'en' && g.en[k]) || g[k];
 
 	const game = $derived(GAMES[sel]);
+	const playing = (id: string) => (live[id]?.signedIn ?? 0) + (live[id]?.anonymous ?? 0);
+	function liveText(id: string): string {
+		const l = live[id];
+		if (!l || !playing(id)) return L('Teď nikdo nehraje', 'Nobody is playing right now');
+		const parts: string[] = [];
+		if (l.signedIn)
+			parts.push(
+				L(`${l.signedIn} přihlášen${l.signedIn === 1 ? 'ý' : 'í'}`, `${l.signedIn} signed in`),
+			);
+		if (l.anonymous) parts.push(L(`${l.anonymous} anonymní`, `${l.anonymous} anonymous`));
+		return `${L('Právě hraje', 'Playing now')}: ${parts.join(' · ')}`;
+	}
+	async function refreshLive() {
+		try {
+			const res = await fetch('/api/presence', { cache: 'no-store' });
+			if (res.ok) live = ((await res.json()) as { games: Record<string, Live> }).games;
+		} catch {
+			// Offline or locked: keep the last numbers.
+		}
+	}
 	const stats = $derived(game ? saved[game.id] : null);
 
 	function readStats(g: Game): Stats | null {
@@ -274,12 +300,17 @@
 		resize();
 		raf = requestAnimationFrame(frame);
 		const clock = setInterval(() => (now = new Date()), 10_000);
+		void refreshLive();
+		const liveTimer = setInterval(() => {
+			if (!document.hidden) void refreshLive();
+		}, 15_000);
 		const onPageShow = () => (launching = null);
 		addEventListener('resize', resize);
 		addEventListener('pageshow', onPageShow);
 		return () => {
 			cancelAnimationFrame(raf);
 			clearInterval(clock);
+			clearInterval(liveTimer);
 			removeEventListener('resize', resize);
 			removeEventListener('pageshow', onPageShow);
 		};
@@ -351,6 +382,9 @@
 				<div class="chips">
 					{#each tx(game, 'genres') as genre (genre)}<span>{genre}</span>{/each}
 				</div>
+				<div class="live" class:on={playing(game.id) > 0} data-testid="live">
+					<i></i>{liveText(game.id)}
+				</div>
 				<p class="desc">{tx(game, 'description')}</p>
 				{#if feats}
 					<div class="feats">
@@ -417,6 +451,9 @@
 					>
 						<canvas bind:this={cardCanvases[i]}></canvas>
 						<span class="gc-tag">{s ? fmtDur(s.playTime) : L('NOVÉ', 'NEW')}</span>
+						{#if playing(g.id)}
+							<span class="gc-live" title={liveText(g.id)}><i></i>{playing(g.id)}</span>
+						{/if}
 						<div class="gc-info">
 							<h3>{g.title}</h3>
 							<p>{tx(g, 'genres').join(' · ')}</p>
