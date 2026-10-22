@@ -45,6 +45,33 @@ test('launches VOIDBORN and comes back to the center', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 });
 
+test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
+	test.skip(!isMobile, 'touch controls are for phones');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/voidborn/index.html');
+	await page.touchscreen.tap(100, 100);
+	await page.locator('[data-go="hangar"]').tap();
+	await page.locator('#startBtn').tap();
+	await expect(page.locator('#dashBtn')).toBeVisible();
+
+	// Drag a floating stick to the right: the ship follows.
+	const cdp = await context.newCDPSession(page);
+	const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x = 0, y = 0) =>
+		cdp.send('Input.dispatchTouchEvent', {
+			type,
+			touchPoints: type === 'touchEnd' ? [] : [{ x, y }],
+		});
+	await touch('touchStart', 120, 500);
+	for (let i = 1; i <= 8; i++) await touch('touchMove', 120 + i * 8, 500);
+	await expect
+		// The game's state is a top-level `const G` (not on window).
+		.poll(() => page.evaluate<number>('G.p.x'))
+		.toBeGreaterThan(50);
+	await touch('touchEnd');
+	expect(errors).toEqual([]);
+});
+
 test('shows the stats a game saved in this browser', async ({ page }) => {
 	await page.goto('/');
 	await page.evaluate(() =>

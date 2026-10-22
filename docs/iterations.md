@@ -16,6 +16,7 @@ Auth, CI/CD, release-please) carries on.
 - Google sign-in (button + sign-out); anonymous users removed.
 - Production database wiped; old tables dropped (migration `0007_game_center`).
 - Kill-switch service worker removes the old app's caches.
+- Mobile: responsive hub; VOIDBORN touch controls (stick + dash) and compact phone HUD/menus.
 
 ## Game Center 2 – Accounts & Cloud Saves
 

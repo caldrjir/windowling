@@ -59,7 +59,8 @@ docker/                        Local infrastructure (Postgres init scripts)
    which redirects to `/`).
 2. Add an entry to `GAMES` in `apps/web/src/lib/games/registry.ts` (texts in cs + en, `path`,
    `statsKey`, cover colours).
-3. Extend `apps/web/e2e/app.test.ts` so the game launches without page errors.
+3. Make it playable on phones (touch input, small screens) and extend `apps/web/e2e/app.test.ts`
+   so it launches without page errors (desktop and mobile projects).
 4. If it loads anything external, update the CSP in `apps/web/svelte.config.js`.
 
 ## Commands
