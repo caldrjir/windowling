@@ -12,9 +12,9 @@ test('the game center opens with its library', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 	await expect(page.locator('.brand')).toContainText('WINDOWLING');
 	await expect(page.locator('.hero-title')).toHaveText('VOIDBORN');
-	// One game and free slots on the shelf.
+	// Two games and free slots on the shelf.
 	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(4);
-	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(3);
+	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(2);
 	expect(errors).toEqual([]);
 });
 
@@ -46,16 +46,51 @@ test('launches VOIDBORN and comes back to the center', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 });
 
-test('right-click in VOIDBORN does not open the browser menu', async ({ page }) => {
-	await page.goto('/games/voidborn/index.html');
-	await expect(page.locator('#s-title')).not.toBeEmpty();
-	const prevented = await page.evaluate(
-		() =>
-			!document
-				.getElementById('cv')
-				?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
-	);
-	expect(prevented).toBe(true);
+for (const [game, canvas] of [
+	['voidborn', 'cv'],
+	['starspire', 'fx'],
+] as const) {
+	test(`right-click in ${game} does not open the browser menu`, async ({ page }) => {
+		await page.goto(`/games/${game}/index.html`);
+		await expect(page.locator('#s-title')).not.toBeEmpty();
+		const prevented = await page.evaluate(
+			(id) =>
+				!document
+					.getElementById(id)
+					?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+			canvas,
+		);
+		expect(prevented).toBe(true);
+	});
+}
+
+test('launches STARSPIRE from the center and plays a card', async ({ page, isMobile }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	// First tap selects the card on the shelf, the second one launches it.
+	const card = page.getByTestId('shelf').locator('.gcard').nth(1);
+	await card.click();
+	await expect(page.locator('.hero-title')).toHaveText('STARSPIRE');
+	await card.click();
+	await page.waitForURL('**/games/starspire/**');
+	await expect(page).toHaveTitle('STARSPIRE');
+
+	const tap = (selector: string) =>
+		isMobile
+			? page.locator(selector).first().tap({ force: true })
+			: page.locator(selector).first().click({ force: true });
+	await page.locator('#s-title').click();
+	await tap('[data-go="heroes"]');
+	await tap('[data-act="startRun"]');
+	await tap('.node.avail');
+	await expect(page.locator('#hand .card')).toHaveCount(5);
+	await expect(page.locator('#endTurn')).toBeInViewport();
+	// Tap a card, then the enemy: the card is played and costs energy.
+	await tap('#hand .card');
+	await tap('.enemy:not(.dead)');
+	await expect(page.locator('#hand .card')).toHaveCount(4);
+	expect(errors).toEqual([]);
 });
 
 test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {

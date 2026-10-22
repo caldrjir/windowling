@@ -6,8 +6,8 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 ## What this is
 
 **Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
-games with a shared shell, language switch, per-game stats and Google sign-in. The first game
-is **VOIDBORN**. Later games will store progress in Postgres and some will be multiplayer.
+games with a shared shell, language switch, per-game stats and Google sign-in. The library
+holds **VOIDBORN** and **STARSPIRE**. Later games will store progress in Postgres and some will be multiplayer.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
@@ -19,7 +19,7 @@ Its history is in git and `CHANGELOG.md`.)
    never changes them. A game is a static page under `apps/web/static/games/<id>/`.
 3. **Shared browser contract.** `gamecenter.lang` (`cs` / `en`) is shared by hub and games;
    each game writes `gamecenter.stats.<id>` (`playTime`, `lastPlayed`, `progress`, `stats`).
-   Never rename these keys or a game's own save key (VOIDBORN: `voidborn.save.v1`).
+   Never rename these keys or a game's own save key (`voidborn.save.v1`, `starspire.save.v1`).
 4. **Secrets never reach the browser.** DB credentials and OAuth secrets live only in
    `$lib/server` and Worker env. Anything a game needs from the DB goes through a server route.
 5. **Signing in is optional.** Everything works anonymously; Google sign-in adds an account.

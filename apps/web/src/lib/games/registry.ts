@@ -206,4 +206,151 @@ export const GAMES: Game[] = [
 			ctx.restore();
 		},
 	},
+	{
+		id: 'starspire',
+		title: 'STARSPIRE',
+		tagline: 'Vystoupej po věži souhvězdí.',
+		description:
+			'Taktický roguelike s balíčkem karet. Skládej si balíček během výstupu, sbírej relikvie, čti záměry nepřátel a porážej živá souhvězdí. Tři hrdinové, tři akty a deset stupňů Zatmění.',
+		genres: ['Deckbuilder', 'Roguelike', 'Strategie'],
+		features: ['76 karet', '3 hrdinové', '34 relikvií', '10 stupňů Zatmění'],
+		en: {
+			tagline: 'Climb the tower of constellations.',
+			description:
+				'A tactical deck-building roguelike. Build your deck as you climb, collect relics, read enemy intents and defeat living constellations. Three heroes, three acts and ten levels of Eclipse.',
+			genres: ['Deckbuilder', 'Roguelike', 'Strategy'],
+			features: ['76 cards', '3 heroes', '34 relics', '10 Eclipse levels'],
+		},
+		statLabels: {
+			victories: ['Vítězství', 'Victories'],
+			best: ['Nejvyšší patro', 'Highest floor'],
+			eclipse: ['Nejvyšší Zatmění', 'Highest Eclipse'],
+			achievements: ['Úspěchy', 'Achievements'],
+		},
+		path: '/games/starspire/index.html',
+		colors: ['#ffd98a', '#b99bff', '#4b2a8a'],
+		statsKey: 'gamecenter.stats.starspire',
+		cover(ctx, w, h, t) {
+			const s = Math.min(w, h);
+			const g = ctx.createRadialGradient(
+				w * 0.6,
+				h * 0.35,
+				0,
+				w * 0.5,
+				h * 0.5,
+				Math.hypot(w, h) * 0.7,
+			);
+			g.addColorStop(0, '#2a1a52');
+			g.addColorStop(0.5, '#120b2a');
+			g.addColorStop(1, '#05030c');
+			ctx.fillStyle = g;
+			ctx.fillRect(0, 0, w, h);
+			for (let i = 0; i < 110; i++) {
+				const x = ((i * 97.13) % 1) * w,
+					y = ((i * 53.71) % 1) * h,
+					tw = 0.3 + 0.7 * Math.abs(Math.sin(t * 0.8 + i));
+				ctx.fillStyle = `rgba(240,230,255,${0.12 + 0.45 * tw * ((i % 4) / 4)})`;
+				ctx.fillRect(x, y, 1.5, 1.5);
+			}
+			ctx.save();
+			ctx.globalCompositeOperation = 'lighter';
+			const star = (x: number, y: number, r: number, c: string) => {
+				const sg = ctx.createRadialGradient(x, y, 0, x, y, r);
+				sg.addColorStop(0, '#fff');
+				sg.addColorStop(0.2, c);
+				sg.addColorStop(1, 'rgba(0,0,0,0)');
+				ctx.fillStyle = sg;
+				ctx.fillRect(x - r, y - r, r * 2, r * 2);
+			};
+			// A tower of stars
+			const cx = w * 0.62,
+				base = h * 0.98,
+				top = h * 0.12;
+			const pts: [number, number][] = [];
+			for (let i = 0; i <= 9; i++) {
+				const k = i / 9,
+					y = base - (base - top) * k,
+					half = s * 0.16 * (1 - k * 0.85);
+				pts.push([cx - half, y], [cx + half, y]);
+			}
+			ctx.strokeStyle = 'rgba(255,217,138,0.45)';
+			ctx.lineWidth = Math.max(1, s * 0.004);
+			ctx.beginPath();
+			for (let i = 0; i < pts.length - 2; i += 2) {
+				const [a, b, c, d] = [pts[i], pts[i + 1], pts[i + 2], pts[i + 3]];
+				if (!a || !b || !c || !d) continue;
+				ctx.moveTo(a[0], a[1]);
+				ctx.lineTo(c[0], c[1]);
+				ctx.moveTo(b[0], b[1]);
+				ctx.lineTo(d[0], d[1]);
+				if (i % 4 === 0) {
+					ctx.moveTo(a[0], a[1]);
+					ctx.lineTo(d[0], d[1]);
+				}
+			}
+			ctx.stroke();
+			pts.forEach(([x, y], i) => star(x, y, s * (0.018 + 0.008 * Math.sin(t * 2 + i)), '#ffd98a'));
+			star(cx, top - s * 0.05, s * (0.09 + 0.015 * Math.sin(t * 1.5)), '#ffe7a8');
+			// Orbiting constellations
+			const cons: [number, number][][] = [
+				[
+					[0, 0],
+					[0.5, -0.3],
+					[1, -0.1],
+					[1.4, -0.5],
+					[1.2, 0.3],
+				],
+				[
+					[0, 0],
+					[0.4, 0.4],
+					[0.9, 0.2],
+					[1.3, 0.6],
+				],
+			];
+			cons.forEach((c, j) => {
+				const ox = w * (0.12 + j * 0.05) + Math.sin(t * 0.2 + j) * s * 0.03,
+					oy = h * (0.3 + j * 0.35),
+					sc = s * 0.13;
+				ctx.strokeStyle = j ? 'rgba(185,155,255,0.5)' : 'rgba(127,180,255,0.5)';
+				ctx.beginPath();
+				c.forEach(([x, y], i) =>
+					i ? ctx.lineTo(ox + x * sc, oy + y * sc) : ctx.moveTo(ox + x * sc, oy + y * sc),
+				);
+				ctx.stroke();
+				c.forEach(([x, y], i) =>
+					star(
+						ox + x * sc,
+						oy + y * sc,
+						s * 0.016 * (1 + 0.3 * Math.sin(t * 3 + i + j)),
+						j ? '#b99bff' : '#7fb4ff',
+					),
+				);
+			});
+			ctx.restore();
+			// Cards
+			for (let i = 0; i < 3; i++) {
+				const a = -0.25 + i * 0.25 + Math.sin(t * 0.7 + i) * 0.03;
+				ctx.save();
+				ctx.translate(w * 0.24 + i * s * 0.07, h * 0.86);
+				ctx.rotate(a);
+				const cw = s * 0.13,
+					ch = cw * 1.4;
+				const cg = ctx.createLinearGradient(0, -ch, 0, 0);
+				cg.addColorStop(0, '#3a2a6a');
+				cg.addColorStop(1, '#140c2a');
+				ctx.fillStyle = cg;
+				ctx.strokeStyle = '#ffd98a';
+				ctx.lineWidth = Math.max(1, s * 0.004);
+				ctx.beginPath();
+				ctx.rect(-cw / 2, -ch, cw, ch);
+				ctx.fill();
+				ctx.stroke();
+				ctx.fillStyle = 'rgba(255,217,138,0.85)';
+				ctx.beginPath();
+				ctx.arc(0, -ch * 0.6, cw * 0.18, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.restore();
+			}
+		},
+	},
 ];
