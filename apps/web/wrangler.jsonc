@@ -30,6 +30,15 @@
 		{ "pattern": "windowling.com", "custom_domain": true },
 		{ "pattern": "www.windowling.com", "custom_domain": true },
 	],
+	// DRIFTWOOD multiplayer: one Durable Object per world (WebSockets) and one lobby
+	// listing the worlds being played. SQLite-backed (available on the free plan).
+	"durable_objects": {
+		"bindings": [
+			{ "name": "DRIFTWOOD_ROOM", "class_name": "DriftwoodRoom" },
+			{ "name": "DRIFTWOOD_LOBBY", "class_name": "DriftwoodLobby" },
+		],
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DriftwoodRoom", "DriftwoodLobby"] }],
 	// Cloudflare Hyperdrive in front of Neon (pooling, fast connects). Query caching is
 	// disabled on purpose: player data must never be served stale. When bound, it takes
 	// precedence over DATABASE_URL in production. `localConnectionString` is only used by

@@ -7,7 +7,7 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 
 **Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
-holds **VOIDBORN**, **STARSPIRE** and **DRIFTWOOD**. Later games will store progress in Postgres and some will be multiplayer.
+holds **VOIDBORN**, **STARSPIRE** and **DRIFTWOOD** (with multiplayer worlds). Later games will store progress in Postgres.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
@@ -43,6 +43,7 @@ apps/web                       SvelteKit app: hub UI, auth, server routes, PWA s
 apps/web/src/lib/games         Game catalogue (registry.ts) - one entry per game
 apps/web/src/lib/hub           Hub stylesheet
 apps/web/src/lib/server        Server-only code: env, auth, DB access (never imported by the client)
+apps/web/src/worker            Worker entry: site gate, DRIFTWOOD multiplayer (Durable Objects)
 apps/web/static/games/<id>     The games themselves (static HTML/CSS/JS)
 packages/database              Drizzle schema, migrations, client. The ONLY place with SQL.
 docs/                          Product, architecture, iterations, development
@@ -101,5 +102,8 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 - `/api/auth/*` is routed by path in `hooks.server.ts` (not Better Auth's origin-matching helper).
 - Local scripts must run on Windows too: Node scripts, `fileURLToPath` (never `URL.pathname`),
   no shell-only syntax in package.json scripts.
+- DRIFTWOOD multiplayer (`/api/driftwood/*`) lives in the Worker entry, not SvelteKit; its
+  Durable Objects exist only in `pnpm preview`/production, not in `pnpm dev`. Changing DO
+  classes needs a new `migrations` tag in `wrangler.jsonc`.
 - Env is validated by `parseServerEnv` (`apps/web/src/lib/server/env.ts`). Add new vars there,
   to `.env.example`, and to `docs/development.md`.

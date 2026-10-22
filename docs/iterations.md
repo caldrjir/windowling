@@ -21,6 +21,8 @@ Auth, CI/CD, release-please) carries on.
 - STARSPIRE (deck-building roguelike) joins the library, with a phone layout for battles.
 - DRIFTWOOD (first-person 3D survival) joins the library; computers only (blocked on phones/tablets).
 - Live player counts per game (signed-in vs anonymous) from game-tab heartbeats.
+- DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
+  players see each other, in-game chat.
 
 ## Game Center 2 – Accounts & Cloud Saves
 
@@ -31,6 +33,6 @@ Auth, CI/CD, release-please) carries on.
 ## Later
 
 - More games in the library.
-- Multiplayer: a Durable Object per room (WebSocket), lobby in the hub, identities from
+- Multiplayer for more games (same pattern as DRIFTWOOD), lobby in the hub, identities from
   Better Auth sessions, results persisted to Postgres.
 - Leaderboards.
