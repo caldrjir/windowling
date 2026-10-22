@@ -39,9 +39,14 @@ Architecture and boundaries: [`docs/architecture.md`](docs/architecture.md).
 
 ## Prerequisites
 
-- **Node.js 24 LTS** (`.nvmrc`; `>=24`)
+Works on Windows, macOS and Linux.
+
+- **Node.js 24 LTS** (`.nvmrc`) - installer from nodejs.org, or `fnm` / `nvm` / `nvm-windows`
 - **pnpm 10** - `corepack enable` picks the pinned version from `package.json`
-- **Docker** (for local PostgreSQL) - or any PostgreSQL 16+ (production runs 18) you point `DATABASE_URL` at
+  (on Windows run it once in an administrator terminal, or use `npm install -g pnpm@10`)
+- **Docker Desktop** (local PostgreSQL) - or any PostgreSQL 16+ (production runs 18) you point
+  `DATABASE_URL` at
+- **Git**
 
 ## Getting started
 
@@ -50,17 +55,21 @@ git clone https://github.com/caldrjir/windowling.git
 cd windowling
 corepack enable
 pnpm install
-
-cp .env.example .env
-# set BETTER_AUTH_SECRET, e.g.:  openssl rand -base64 32
-
-docker compose up -d     # PostgreSQL on :5432 with databases windowling + windowling_test
-pnpm db:migrate          # apply migrations
-pnpm dev                 # http://localhost:5173
+pnpm setup:local   # .env with local secrets, Postgres in Docker, migrations
+pnpm dev           # http://localhost:5173
 ```
 
-Open the hub and launch VOIDBORN. With Google credentials configured, the hub also shows
-"Přihlásit přes Google" / "Sign in with Google".
+`pnpm setup:local` is safe to run again; it never overwrites values already in `.env`.
+
+| Command        | URL                     | What it is                                                     |
+| -------------- | ----------------------- | -------------------------------------------------------------- |
+| `pnpm dev`     | <http://localhost:5173> | Dev server with hot reload. No site password.                  |
+| `pnpm preview` | <http://localhost:8787> | The production Worker locally (workerd), password `windowling` |
+
+Open the hub and launch VOIDBORN. To try it on your phone, run `pnpm dev --host` and open
+the printed network address on the same Wi-Fi. With Google credentials in `.env`, the hub also
+shows "Přihlásit přes Google" / "Sign in with Google" (redirect URI
+`http://localhost:5173/api/auth/callback/google`).
 
 ## Environment variables
 
@@ -76,6 +85,7 @@ validated at startup - the server refuses to start with a readable list of probl
 | `PUBLIC_APP_URL`       | yes      | Public app URL (trusted origin)                                   |
 | `GOOGLE_CLIENT_ID`     | no       | Google OAuth client id (both or neither)                          |
 | `GOOGLE_CLIENT_SECRET` | no       | Google OAuth client secret                                        |
+| `SITE_PASSWORD_HASH`   | preview  | Site gate hash for `pnpm preview` (set by `pnpm setup:local`)     |
 
 Google OAuth redirect URIs:
 
@@ -86,6 +96,7 @@ Google OAuth redirect URIs:
 
 | Command                     | What it does                                                           |
 | --------------------------- | ---------------------------------------------------------------------- |
+| `pnpm setup:local`          | One-time local setup: `.env`, Postgres (Docker), migrations            |
 | `pnpm dev`                  | Dev server with HMR                                                    |
 | `pnpm check`                | Everything CI's quality job runs: lint, format, types, tests, build    |
 | `pnpm lint` / `lint:fix`    | ESLint (incl. architecture boundary rules)                             |
@@ -94,7 +105,7 @@ Google OAuth redirect URIs:
 | `pnpm test`                 | Vitest - unit tests + DB integration tests (`TEST_DATABASE_URL`)       |
 | `pnpm test:e2e`             | Playwright: builds, runs the Worker in workerd, tests desktop + mobile |
 | `pnpm build`                | Production build for Cloudflare Workers                                |
-| `pnpm preview`              | Build + run the production Worker locally (`wrangler dev`)             |
+| `pnpm preview`              | Build + run the production Worker locally on :8787 (site gate on)      |
 | `pnpm db:generate --name x` | Generate a migration from schema changes                               |
 | `pnpm db:migrate`           | Apply migrations to `DATABASE_URL`                                     |
 | `pnpm db:studio`            | Drizzle Studio                                                         |

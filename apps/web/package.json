@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "pnpm build && wrangler dev --port 8787",
+		"preview": "node scripts/preview.mjs",
 		"typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"test:e2e": "playwright test",
 		"cf-typegen": "wrangler types src/worker-configuration.d.ts",

@@ -8,6 +8,7 @@
 		"node": ">=24"
 	},
 	"scripts": {
+		"setup:local": "node scripts/setup-local.mjs",
 		"dev": "pnpm --filter @windowling/web dev",
 		"build": "pnpm --filter @windowling/web build",
 		"preview": "pnpm --filter @windowling/web preview",
