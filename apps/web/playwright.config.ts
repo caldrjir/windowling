@@ -1,4 +1,6 @@
+import { pbkdf2Sync } from 'node:crypto';
 import { defineConfig, devices } from '@playwright/test';
+import { E2E_SITE_PASSWORD, GATE_STATE } from './e2e/gate';
 
 // E2E runs the production build inside the real Workers runtime (wrangler dev / workerd)
 // against a real Postgres, so it also proves the Cloudflare build works.
@@ -16,14 +18,20 @@ const BASE_URL = `http://127.0.0.1:${PORT}`;
 const databaseUrl = process.env.E2E_DATABASE_URL ?? process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('E2E needs DATABASE_URL (or E2E_DATABASE_URL).');
 
+// The site gate is on (wrangler.jsonc); e2e/global-setup.ts signs in once with this password.
+const salt = Buffer.from('e2e-salt-1234567');
+const sitePasswordHash = `pbkdf2-sha256$1000$${salt.toString('base64')}$${pbkdf2Sync(E2E_SITE_PASSWORD, salt, 1000, 32, 'sha256').toString('base64')}`;
+
 const vars: Record<string, string> = {
+	SITE_PASSWORD_HASH: sitePasswordHash,
 	DATABASE_URL: databaseUrl,
 	BETTER_AUTH_SECRET: 'e2e-only-secret-not-used-anywhere-else-0123456789',
 	BETTER_AUTH_URL: BASE_URL,
 	PUBLIC_APP_URL: BASE_URL,
 };
 const varFlags = Object.entries(vars)
-	.map(([key, value]) => `--var ${key}:${JSON.stringify(value)}`)
+	// Single quotes: the password hash contains `$`, which a shell would expand.
+	.map(([key, value]) => `--var '${key}:${value}'`)
 	.join(' ');
 
 export default defineConfig({
@@ -32,8 +40,10 @@ export default defineConfig({
 	forbidOnly: Boolean(process.env.CI),
 	retries: process.env.CI ? 1 : 0,
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+	globalSetup: './e2e/global-setup.ts',
 	use: {
 		baseURL: BASE_URL,
+		storageState: GATE_STATE,
 		trace: 'retain-on-failure',
 	},
 	projects: [

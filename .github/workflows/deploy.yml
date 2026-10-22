@@ -65,13 +65,14 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          SITE_PASSWORD_HASH: ${{ secrets.SITE_PASSWORD_HASH }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         # Written as JSON (no shell/dotenv quoting pitfalls) to a private temp file; never printed.
         run: |
           umask 077
           node -e '
-            const required = ["DATABASE_URL", "BETTER_AUTH_SECRET"];
+            const required = ["DATABASE_URL", "BETTER_AUTH_SECRET", "SITE_PASSWORD_HASH"];
             const missing = required.filter((k) => !process.env[k]);
             if (missing.length) {
               console.error("::error::Missing production secrets: " + missing.map((k) => k === "DATABASE_URL" ? "WORKER_DATABASE_URL" : k).join(", "));

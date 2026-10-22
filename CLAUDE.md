@@ -89,6 +89,9 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 
 - Cloudflare Workers: DB clients are per request (`acquireDatabase` in `apps/web/src/lib/server/db.ts`).
   Never cache I/O objects in module scope for production code paths.
+- The site is behind a password (`src/worker/gate.ts`, the Worker entry). Static assets go
+  through it (`run_worker_first`); SvelteKit hooks never see static files. The adapter writes
+  its worker to the paths in `wrangler.sveltekit.jsonc`, never to `wrangler.jsonc` `main`.
 - Workers static assets serve `/games/<id>/index.html` as `/games/<id>/` (default `html_handling`).
 - Assets are revalidated by default; `static/service-worker.js` is a kill switch that removes
   the old app's service worker and caches. Don't add a caching SW without versioning games.

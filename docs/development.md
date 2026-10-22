@@ -109,6 +109,7 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    | `WORKER_DATABASE_URL`     | Neon pooled connection string                         |
    | `BETTER_AUTH_SECRET`      | `openssl rand -base64 32` (never reuse the local one) |
    | `CLOUDFLARE_API_TOKEN`    | token from step 2                                     |
+   | `SITE_PASSWORD_HASH`      | site gate password hash, see "Site password" below    |
    | `GOOGLE_CLIENT_ID`        | optional, step 4                                      |
    | `GOOGLE_CLIENT_SECRET`    | optional, step 4                                      |
 
@@ -124,6 +125,22 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
 
 After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.
+
+## Site password
+
+The whole site (hub, games, API) is behind one shared password - `apps/web/src/worker/gate.ts`,
+switched on by `SITE_GATE: "on"` in `apps/web/wrangler.jsonc`. Only the deploy smoke test
+(`/api/health`) and a few cookie-less browser files stay open. The password is never stored;
+the Worker secret `SITE_PASSWORD_HASH` holds a salted PBKDF2 hash. To set or change it:
+
+```bash
+node apps/web/scripts/site-password.mjs   # type a password, or Enter to generate one
+```
+
+Put the printed `SITE_PASSWORD_HASH=...` value into the GitHub `production` environment
+secret `SITE_PASSWORD_HASH` and re-run the Deploy workflow. Changing it signs everybody out.
+Deploy fails early when the secret is missing, so the site never goes out unprotected.
+`pnpm dev` runs without the gate; E2E runs with it (password in `apps/web/e2e/gate.ts`).
 
 ## Troubleshooting
 

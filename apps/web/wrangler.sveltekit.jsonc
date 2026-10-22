@@ -1,0 +1,9 @@
+// Read only by @sveltejs/adapter-cloudflare at build time: where to write the SvelteKit
+// worker and the static assets. The deployed Worker is configured in wrangler.jsonc,
+// whose entry (src/worker/index.ts) wraps this output with the site gate.
+{
+	"name": "windowling",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2026-09-01",
+	"assets": { "binding": "ASSETS", "directory": ".svelte-kit/cloudflare" },
+}
