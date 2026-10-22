@@ -17,6 +17,9 @@ export default ts.config(
 			'**/playwright-report/',
 			'**/test-results/',
 			'packages/database/drizzle/',
+			// Self-contained static web games (plain scripts, not part of the app's modules).
+			'apps/web/static/games/',
+			'apps/web/static/service-worker.js',
 		],
 	},
 	js.configs.recommended,
@@ -53,43 +56,7 @@ export default ts.config(
 		files: ['**/*.test.ts', '**/e2e/**/*.ts', '**/test/**/*.ts'],
 		rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
 	},
-	// Architecture boundaries: lower layers must never reach up.
-	{
-		files: ['packages/simulation/**/*.ts', 'packages/shared/**/*.ts', 'packages/ai/**/*.ts'],
-		rules: {
-			'no-restricted-imports': [
-				'error',
-				{
-					patterns: [
-						{
-							group: ['three', 'three/*', '@dimforge/*', '@windowling/game', 'svelte', 'svelte/*'],
-							message: 'Simulation, AI and shared code must stay renderer- and UI-independent.',
-						},
-						{
-							group: ['@windowling/database', 'drizzle-orm', 'drizzle-orm/*', 'postgres'],
-							message: 'Database access belongs in packages/database only.',
-						},
-					],
-				},
-			],
-		},
-	},
-	{
-		files: ['packages/game/**/*.ts'],
-		rules: {
-			'no-restricted-imports': [
-				'error',
-				{
-					patterns: [
-						{
-							group: ['@windowling/database', '@windowling/ai', 'svelte', 'svelte/*'],
-							message: 'The game package renders state; it does not own data, AI or UI.',
-						},
-					],
-				},
-			],
-		},
-	},
+	// Architecture boundary: SQL lives in packages/database only.
 	{
 		files: ['apps/web/**/*.ts', 'apps/web/**/*.svelte'],
 		rules: {

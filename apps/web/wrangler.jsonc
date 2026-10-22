@@ -15,12 +15,9 @@
 	"vars": {
 		"PUBLIC_APP_URL": "https://windowling.com",
 		"BETTER_AUTH_URL": "https://windowling.com",
-		// Workers AI over its OpenAI-compatible REST API (portable: any such API works).
-		"AI_API_URL": "https://api.cloudflare.com/client/v4/accounts/e4d21a54530afdeb8db4fc66a1338b18/ai/v1",
-		"AI_MODEL": "@cf/meta/llama-3.1-8b-instruct-fp8",
 	},
 	// Secrets (never in this file): DATABASE_URL, BETTER_AUTH_SECRET,
-	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, AI_API_KEY - uploaded by the Deploy workflow from the
+	// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET - uploaded by the Deploy workflow from the
 	// GitHub `production` environment (see docs/development.md#deployment).
 	// www is served by the same Worker and 301-redirected to the apex (hooks.server.ts).
 	"routes": [
@@ -28,7 +25,7 @@
 		{ "pattern": "www.windowling.com", "custom_domain": true },
 	],
 	// Cloudflare Hyperdrive in front of Neon (pooling, fast connects). Query caching is
-	// disabled on purpose: game state must never be served stale. When bound, it takes
+	// disabled on purpose: player data must never be served stale. When bound, it takes
 	// precedence over DATABASE_URL in production. `localConnectionString` is only used by
 	// `wrangler dev` (E2E) and points at the Docker Compose database - not a secret.
 	"hyperdrive": [

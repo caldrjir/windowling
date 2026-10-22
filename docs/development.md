@@ -20,7 +20,7 @@ and point `DATABASE_URL` / `TEST_DATABASE_URL` at them.
 1. Pick (or create) an issue in the current milestone. Label it (`type:`, `area:`).
 2. Branch from `master`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`.
 3. Commit with [Conventional Commits](https://www.conventionalcommits.org/):
-   `feat(game): add idle animation`, `fix(auth): keep world on link`.
+   `feat(web): add game tile`, `fix(auth): keep session after sign-in`.
 4. `pnpm check` before pushing (same as CI's quality job). Run `pnpm test:e2e` for UI/auth/server changes.
 5. Open a PR to `master`, title in Conventional Commit form, body `Closes #<issue>`.
 6. CI green → **squash merge**. `master` deploys to production automatically.
@@ -60,7 +60,6 @@ Convention: each completed iteration is at least one minor release.
 | Layer                  | Tool                   | Where                               |
 | ---------------------- | ---------------------- | ----------------------------------- |
 | Contracts / pure logic | Vitest                 | `packages/*/src/**/*.test.ts`       |
-| Physics (headless)     | Vitest + Rapier        | `packages/game/src/physics.test.ts` |
 | Data access            | Vitest + real Postgres | `packages/database/src/*.test.ts`   |
 | Server config          | Vitest                 | `apps/web/src/**/*.test.ts`         |
 | End to end             | Playwright (workerd)   | `apps/web/e2e/` - desktop + Pixel 7 |
@@ -69,8 +68,8 @@ Convention: each completed iteration is at least one minor release.
   unset (never in CI).
 - E2E builds the app and runs it with `wrangler dev` (the real Workers runtime), on
   `http://127.0.0.1:8787`. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use a preinstalled Chromium.
-- Google OAuth is not exercised against real Google in E2E; linking logic is covered by the
-  repository integration tests.
+- Google OAuth is not exercised against real Google in E2E (the button is hidden without
+  credentials). E2E checks the hub, the language contract, launching VOIDBORN and stats.
 
 ## Environments
 
@@ -112,10 +111,8 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    | `CLOUDFLARE_API_TOKEN`    | token from step 2                                     |
    | `GOOGLE_CLIENT_ID`        | optional, step 4                                      |
    | `GOOGLE_CLIENT_SECRET`    | optional, step 4                                      |
-   | `WORKERS_AI_API_TOKEN`    | optional, step 6 (the character's cloud brain)        |
 
-   `BETTER_AUTH_URL`, `PUBLIC_APP_URL`, `AI_API_URL` and `AI_MODEL` are plain vars in
-   `apps/web/wrangler.jsonc`.
+   `BETTER_AUTH_URL` and `PUBLIC_APP_URL` are plain vars in `apps/web/wrangler.jsonc`.
 
 4. **Google Cloud Console** → OAuth client (Web): authorized origins `https://windowling.com`,
    `http://localhost:5173`; redirect URIs `https://windowling.com/api/auth/callback/google`,
@@ -125,31 +122,14 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    **caching disabled**. In production the Worker connects through it; `WORKER_DATABASE_URL`
    is only a fallback when the binding is absent.
 
-6. **Workers AI** (cloud brain, free tier ~10k neurons/day ≈ 750 short replies): My Profile →
-   API Tokens → Create custom token with only **Account → Workers AI → Read** for your account.
-   Store it as `WORKERS_AI_API_TOKEN`. Without it the character falls back to canned reactions.
-   `AI_DAILY_LIMIT` (default 60 per player per UTC day) protects the shared allowance.
-
 After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.
-
-## The character's brain locally
-
-The cloud brain is any OpenAI-compatible chat API. With [Ollama](https://ollama.com) running
-(`ollama pull llama3.2`), set in `.env`:
-
-```bash
-AI_API_URL=http://localhost:11434/v1
-AI_MODEL=llama3.2
-```
-
-Leave `AI_API_URL` empty to use the canned reactions (E2E always does).
 
 ## Troubleshooting
 
 - **`Invalid environment configuration`** at startup - the message lists each missing/invalid
   variable. Compare with `.env.example`.
-- **Worker bundle too large** - something pulled three.js/Rapier or a big lib into server code.
+- **Worker bundle too large** - something pulled a big lib into server code.
   Check `pnpm --filter @windowling/web exec wrangler deploy --dry-run --outdir /tmp/w`.
 - **Auth 404 behind a proxy** - `/api/auth/*` is routed by path; check `BETTER_AUTH_URL` and
   `PUBLIC_APP_URL` match the origin the browser uses (trusted origins).

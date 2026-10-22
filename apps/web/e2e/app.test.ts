@@ -1,387 +1,97 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-/** The character may be out (shower, errands) when a test runs - then nobody answers. */
-async function nobodyHome(canvas: Locator): Promise<boolean> {
-	return /^(shower|out)$/.test((await canvas.getAttribute('data-activity')) ?? '');
-}
+// The center picks its language from the browser; the tests start in Czech.
+test.use({ locale: 'cs-CZ' });
 
-test('app loads and the game canvas starts rendering', async ({ page }) => {
+test('the game center opens with its library', async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
 
 	await page.goto('/');
-	await expect(page).toHaveTitle('Windowling');
-
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toBeVisible();
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-
-	// The character starts doing something on its own - nobody asked it to.
-	await expect(canvas).toHaveAttribute(
-		'data-character-action',
-		/^(idle|clean|[a-zA-Z]+:[a-z][a-z0-9_.-]*)$/,
-		{ timeout: 10_000 },
-	);
-	// ...and what it does comes from the simulation's schedule.
-	await expect(canvas).toHaveAttribute('data-activity', /^[a-z]+$/, {
-		timeout: 15_000,
-	});
-
-	const box = await canvas.boundingBox();
-	const viewport = page.viewportSize();
-	expect(box?.width).toBe(viewport?.width);
-	expect(box?.height).toBe(viewport?.height);
+	await expect(page).toHaveTitle('Windowling Game Center');
+	await expect(page.locator('.brand')).toContainText('WINDOWLING');
+	await expect(page.locator('.hero-title')).toHaveText('VOIDBORN');
+	// One game and free slots on the shelf.
+	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(4);
+	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(3);
 	expect(errors).toEqual([]);
 });
 
-test('a first visit creates an anonymous world that survives a reload', async ({ page }) => {
+test('switches language and keeps it for the games', async ({ page }) => {
 	await page.goto('/');
-
-	const status = page.getByTestId('world-status');
-	await expect(status).toContainText("'s place", { timeout: 15_000 });
-	const worldId = await status.getAttribute('data-world-id');
-	expect(worldId).toMatch(/^[0-9a-f-]{36}$/);
-
+	await page.getByRole('button', { name: 'EN', exact: true }).click();
+	await expect(page.locator('.lib-head h2')).toHaveText('Library');
+	await expect(page.getByTestId('play')).toContainText('PLAY');
+	expect(await page.evaluate(() => localStorage.getItem('gamecenter.lang'))).toBe('en');
 	await page.reload();
-	await expect(status).toContainText("'s place");
-	await expect(status).toHaveAttribute('data-world-id', worldId!);
+	await expect(page.locator('.lib-head h2')).toHaveText('Library');
+	await page.getByRole('button', { name: 'CS', exact: true }).click();
+	await expect(page.locator('.lib-head h2')).toHaveText('Knihovna');
 });
 
-test('the character lives in the time zone of the device', async ({ browser }) => {
-	const context = await browser.newContext({ timezoneId: 'Pacific/Auckland' });
-	const page = await context.newPage();
+test('launches VOIDBORN and comes back to the center', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
 	await page.goto('/');
-	const status = page.getByTestId('world-status');
-	await expect(status).toHaveAttribute('data-time-zone', 'Pacific/Auckland', { timeout: 15_000 });
-	await context.close();
+	await page.getByTestId('play').click();
+	// Workers assets serve index.html as the directory URL.
+	await page.waitForURL('**/games/voidborn/**');
+	await expect(page).toHaveTitle('VOIDBORN');
+	await expect(page.locator('#s-title')).not.toBeEmpty();
+	expect(errors).toEqual([]);
+	// The game returns via ../../index.html: that lands on the center.
+	await page.goto('/index.html');
+	await expect(page).toHaveURL(/\/$/);
+	await expect(page).toHaveTitle('Windowling Game Center');
 });
 
-test('the character does not notice you just because you opened the app', async ({ page }) => {
+test('shows the stats a game saved in this browser', async ({ page }) => {
 	await page.goto('/');
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
-	await page.waitForTimeout(2_000);
-	// At most a suspicious glance - it doesn't *know* you are there yet.
-	await expect(canvas).toHaveAttribute('data-awareness', /^(UNKNOWN|SUSPECTED)$/);
-});
-
-test('knocking on the glass gets noticed - asleep or awake', async ({ page }) => {
-	await page.goto('/');
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-	await expect(canvas).toHaveAttribute('data-activity', /.+/, { timeout: 15_000 });
-	const box = await canvas.boundingBox();
-	if (!box) throw new Error('canvas has no box');
-	// A sleeper needs several knocks in quick succession; anyone awake notices sooner.
-	for (let i = 0; i < 4; i++) {
-		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-		await page.waitForTimeout(150);
-	}
-	if (await nobodyHome(canvas)) {
-		await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
-		return;
-	}
-	await expect(canvas).toHaveAttribute('data-awareness', /^(DETECTED|INTERACTING|IGNORING)$/, {
-		timeout: 5_000,
-	});
-});
-
-test('the character comes to the window and says something', async ({ page }) => {
-	// It may brush us off first and only come over after more knocking - its choice.
-	test.setTimeout(90_000);
-	await page.goto('/');
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-	await expect(canvas).toHaveAttribute('data-activity', /.+/, { timeout: 15_000 });
-	const box = await canvas.boundingBox();
-	if (!box) throw new Error('canvas has no box');
-	const subtitles = page.getByTestId('subtitles');
-	if (await nobodyHome(canvas)) {
-		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-		await expect(page.getByTestId('talk-button')).toHaveCount(0);
-		return;
-	}
-	// Knock until it decides to come over (it may ignore us for a while - its choice).
-	for (let i = 0; i < 40; i++) {
-		if ((await canvas.getAttribute('data-character-action')) === 'walkTo:window') break;
-		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-		await page.waitForTimeout(400);
-	}
-	// At the window it speaks first, and you can answer (after a one-time download consent).
-	const talk = page.getByTestId('talk-button');
-	await expect(talk).toBeVisible({ timeout: 20_000 });
-	await expect(subtitles).toHaveAttribute('data-line', /\w+/, { timeout: 20_000 });
-	await expect(subtitles.getByRole('paragraph')).toBeVisible();
-	await talk.dispatchEvent('pointerdown');
-	await expect(page.getByRole('dialog', { name: 'Let them hear you' })).toBeVisible();
-	await page.getByRole('button', { name: 'Not now' }).click();
-	await expect(talk).toHaveAttribute('data-phase', 'off');
-});
-
-test('caught dancing, it is embarrassed and says so', async ({ page }) => {
-	test.setTimeout(90_000);
-	// `?debug&moment=dance` starts a dance right away instead of waiting for good music.
-	await page.goto('/?debug&moment=dance');
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-	await expect(canvas).toHaveAttribute('data-activity', /.+/, { timeout: 15_000 });
-	// Asleep or out: nobody to catch.
-	if ((await nobodyHome(canvas)) || (await canvas.getAttribute('data-activity')) === 'sleep')
-		return;
-	await expect(canvas).toHaveAttribute('data-moment', 'dance', { timeout: 10_000 });
-	await expect(canvas).toHaveAttribute('data-character-action', 'dance:room.center');
-	const box = await canvas.boundingBox();
-	if (!box) throw new Error('canvas has no box');
-	// Lost in the music it notices less - but knocking gets through eventually.
-	const subtitles = page.getByTestId('subtitles');
-	for (let i = 0; i < 40; i++) {
-		if ((await canvas.getAttribute('data-moment')) === '') break;
-		await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-		await page.waitForTimeout(400);
-	}
-	await expect(canvas).toHaveAttribute('data-moment', '');
-	await expect(subtitles).toHaveAttribute('data-line', /standing there/, { timeout: 30_000 });
-});
-
-test('settings offer subtitles, voice and where the brain runs', async ({ page, request }) => {
-	await page.goto('/');
-	await expect(page.getByTestId('game-canvas')).toHaveAttribute('data-status', 'running', {
-		timeout: 15_000,
-	});
-	await page.getByRole('button', { name: 'Settings' }).click();
-	await expect(page.getByRole('radiogroup', { name: 'Subtitles' })).toBeVisible();
-	const brain = page.getByRole('radiogroup', { name: 'Brain' });
-	await brain.getByRole('radio', { name: 'Cloud' }).click();
-	await expect(brain.getByRole('radio', { name: 'Cloud' })).toHaveAttribute('aria-checked', 'true');
-	// Never downloads anything by itself: the device brain only reports what it found.
-	await expect(page.getByTestId('device-brain')).toHaveAttribute(
-		'data-status',
-		/^(unsupported|absent|downloaded)$/,
-		{ timeout: 10_000 },
+	await page.evaluate(() =>
+		localStorage.setItem(
+			'gamecenter.stats.voidborn',
+			JSON.stringify({
+				playTime: 3725,
+				lastPlayed: Date.now() - 60_000,
+				progress: 0.25,
+				stats: { kills: 1234, sectors: 2 },
+			}),
+		),
 	);
-	// The natural voice too: offered, never downloaded unasked; its own data is served by us.
-	await expect(page.getByTestId('neural-voice')).toHaveAttribute('data-status', 'absent');
-	const lexicon = (await (await request.get('/voice/lexicon-us.json')).json()) as Record<
-		string,
-		unknown
-	>;
-	expect(lexicon.hello).toBe('həlˈO');
-	expect((await request.get('/voice/af_heart.bin')).headers()['content-length']).toBe('522240');
 	await page.reload();
-	await page.getByRole('button', { name: 'Settings' }).click();
-	await expect(
-		page.getByRole('radiogroup', { name: 'Brain' }).getByRole('radio', { name: 'Cloud' }),
-	).toHaveAttribute('aria-checked', 'true');
+	await expect(page.getByTestId('play')).toContainText('POKRAČOVAT');
+	await expect(page.locator('.stats')).toContainText('1');
+	await expect(page.locator('.stats')).toContainText('Dobyté sektory');
+	await expect(page.locator('.prog')).toContainText('25');
+	await expect(page.locator('.foot')).toContainText('1 h 2 min');
 });
 
-test('debug panel shows what the character is thinking', async ({ page }) => {
-	await page.goto('/?debug');
-	await expect(page.getByTestId('debug-panel')).toContainText('awareness', { timeout: 15_000 });
-});
-
-test('memories stay private to their world', async ({ request }) => {
-	const body = { event: 'player_at_window', awareness: 'DETECTED', recent: [] };
-	expect((await request.post('/api/ai/context', { data: body })).status()).toBe(401);
-	expect(
-		(
-			await request.post('/api/ai/outcome', {
-				data: { ...body, decision: { emotion: 'happy', intensity: 1, action: { type: 'idle' } } },
-			})
-		).status(),
-	).toBe(401);
-});
-
-test('entrusted money moves only on the server’s terms', async ({ page, request }) => {
-	// Strangers can't touch it.
-	expect((await request.post('/api/world/money', { data: { type: 'moment' } })).status()).toBe(401);
-
-	await page.goto('/');
-	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
-	const money = (data: unknown) =>
-		page.evaluate(async (body) => {
-			const response = await fetch('/api/world/money', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(body),
-			});
-			return { status: response.status, body: (await response.json()) as unknown };
-		}, data);
-	// A new acquaintance doesn't hand its savings to the person at the window...
-	expect(await money({ type: 'moment' })).toEqual({
-		status: 200,
-		body: { ask: null, envelope: 0 },
-	});
-	// ...and nobody can answer a question it never asked, take back what was never given,
-	// or name an amount.
-	expect((await money({ type: 'answer', yes: true })).status).toBe(409);
-	expect((await money({ type: 'give_back' })).status).toBe(409);
-	expect((await money({ type: 'answer', yes: true, cents: 100_000 })).status).toBe(409);
-	expect((await money({ type: 'withdraw', cents: 100 })).status).toBe(400);
-	// Nor buy it presents with money that isn't there (#74).
-	const gift = (data: unknown) =>
-		page.evaluate(async (body) => {
-			const response = await fetch('/api/world/gift', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(body),
-			});
-			return { status: response.status, body: (await response.json()) as unknown };
-		}, data);
-	expect(await gift({ item: 'plant' })).toEqual({
-		status: 409,
-		body: { ok: false, reason: 'not_enough' },
-	});
-	expect((await gift({ item: 'yacht' })).status).toBe(400);
-	await expect(page.getByTestId('envelope')).toHaveCount(0);
-});
-
-test('shaking the phone shakes the room - and the character reacts', async ({ page, isMobile }) => {
-	test.skip(!isMobile, 'Motion sensors are a phone thing');
-	test.setTimeout(60_000);
-	await page.goto('/');
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-	await expect(page.getByTestId('world-status')).toContainText("'s place", { timeout: 15_000 });
-	await page.context().grantPermissions(['accelerometer', 'gyroscope']);
-	await page.getByRole('button', { name: 'Settings' }).click();
-	const toggle = page.getByTestId('shake-toggle');
-	// Browsers that ask for motion access (iOS, newer Chromium) need a tap to switch it on.
-	if (!(await toggle.isChecked())) await toggle.click();
-	await expect(toggle).toBeChecked();
-	await page.getByRole('button', { name: 'Settings' }).click();
-	await expect(canvas).toHaveAttribute('data-sensors', /shake/);
-	// A hard shake: several jolts in a burst. Dispatched synchronously - a busy CI browser
-	// would otherwise stretch the gaps beyond "within a second".
-	const shake = () =>
-		page.evaluate(() => {
-			for (let i = 0; i < 24; i++) {
-				const m = i % 4 < 2 ? 28 : 1;
-				window.dispatchEvent(
-					Object.assign(new Event('devicemotion'), {
-						acceleration: { x: m, y: 0, z: 0 },
-						accelerationIncludingGravity: null,
-					}),
-				);
-			}
-		});
-	if (await nobodyHome(canvas)) {
-		await shake();
-		await page.waitForTimeout(1_000);
-		await expect(canvas).toHaveAttribute('data-awareness', 'UNKNOWN');
-		return;
-	}
-	// Phones stream motion continuously; a test only gets a few bursts - allow a second one.
-	for (let attempt = 0; attempt < 3; attempt++) {
-		await shake();
-		await page.waitForTimeout(1_600);
-		if ((await canvas.getAttribute('data-awareness')) !== 'UNKNOWN') break;
-	}
-	// Awake: it knows someone is there now. Asleep: thrown out of bed.
-	await expect(canvas).toHaveAttribute('data-awareness', /^(DETECTED|INTERACTING|IGNORING)$/, {
-		timeout: 5_000,
-	});
-});
-
-test('motion access is asked for with a tap where the browser requires it', async ({
+test('signing in is offered only when Google is configured, and nobody is signed in by default', async ({
 	page,
-	isMobile,
-}) => {
-	test.skip(!isMobile, 'Motion sensors are a phone thing');
-	// Behave like iOS: motion only after requestPermission() from a user gesture.
-	await page.addInitScript(() => {
-		const ask = async () => 'granted';
-		Object.assign(DeviceOrientationEvent, { requestPermission: ask });
-		Object.assign(DeviceMotionEvent, { requestPermission: ask });
-	});
-	await page.goto('/');
-	const canvas = page.getByTestId('game-canvas');
-	await expect(canvas).toHaveAttribute('data-status', 'running', { timeout: 15_000 });
-	await page.getByRole('button', { name: 'Settings' }).click();
-	const tilt = page.getByTestId('tilt-toggle');
-	const shake = page.getByTestId('shake-toggle');
-	await expect(tilt).not.toBeChecked();
-	await expect(canvas).toHaveAttribute('data-sensors', 'off');
-	await tilt.click();
-	await expect(tilt).toBeChecked();
-	// Allowed once, both work - each can be switched off on its own.
-	await expect(canvas).toHaveAttribute('data-sensors', 'tilt,shake');
-	await shake.click();
-	await expect(shake).not.toBeChecked();
-	await expect(canvas).toHaveAttribute('data-sensors', 'tilt');
-	await tilt.click();
-	await expect(canvas).toHaveAttribute('data-sensors', 'off');
-	await shake.click();
-	await expect(canvas).toHaveAttribute('data-sensors', 'shake');
-});
-
-test('the brain needs a session', async ({ request }) => {
-	const response = await request.post('/api/ai/decide', {
-		data: { event: 'player_at_window', awareness: 'DETECTED', recent: [] },
-	});
-	expect(response.status()).toBe(401);
-});
-
-test('waking needs a session and only works on a sleeping character', async ({ request }) => {
-	const response = await request.post('/api/world/wake');
-	expect(response.status()).toBe(401);
-});
-
-test('different visitors get different worlds', async ({ browser }) => {
-	const ids: string[] = [];
-	for (let i = 0; i < 2; i++) {
-		const context = await browser.newContext();
-		const page = await context.newPage();
-		await page.goto('/');
-		const status = page.getByTestId('world-status');
-		await expect(status).toContainText("'s place", { timeout: 15_000 });
-		ids.push((await status.getAttribute('data-world-id'))!);
-		await context.close();
-	}
-	expect(ids[0]).not.toBe(ids[1]);
-});
-
-test('the people who live in the worlds are served as glTF models, with their motions', async ({
 	request,
 }) => {
-	for (const id of ['ava', 'theo', 'maya', 'kenji']) {
-		const response = await request.get(`/characters/${id}.glb`);
-		expect(response.ok()).toBe(true);
-		const body = await response.body();
-		// A binary glTF: "glTF" magic, version 2.
-		expect(body.subarray(0, 4).toString('ascii')).toBe('glTF');
-		expect(body.readUInt32LE(4)).toBe(2);
-	}
-	// ...and the motion capture they move with.
-	const motions = await request.get('/characters/motions.json');
-	expect(motions.ok()).toBe(true);
-	const { clips } = (await motions.json()) as { clips: Record<string, { frames: number }> };
-	expect(clips.walk?.frames).toBeGreaterThan(10);
-	expect(clips.idle?.frames).toBeGreaterThan(10);
+	await page.goto('/');
+	// E2E runs without Google credentials: no sign-in button, no user.
+	await expect(page.getByTestId('account')).not.toContainText('Odhlásit');
+	await expect(page.getByTestId('account').getByRole('button')).toHaveCount(0);
+	const session = await request.get('/api/auth/get-session');
+	expect(session.ok()).toBe(true);
+	expect(await session.json()).toBeNull();
 });
 
-test('PWA manifest is served and installable-shaped', async ({ request }) => {
-	const response = await request.get('/manifest.webmanifest');
-	expect(response.ok()).toBe(true);
-	const manifest = await response.json();
-	expect(manifest.display).toBe('standalone');
-	expect(manifest.start_url).toBe('/');
-	const sizes = manifest.icons.map((icon: { sizes: string }) => icon.sizes);
-	expect(sizes).toEqual(expect.arrayContaining(['192x192', '512x512']));
-	for (const icon of manifest.icons) {
-		expect((await request.get(icon.src)).ok()).toBe(true);
+test('the previous app is gone', async ({ request }) => {
+	for (const path of ['/api/ai/decide', '/api/world/money', '/api/world/wake']) {
+		expect((await request.post(path, { data: {} })).status(), path).toBe(404);
 	}
+	expect((await request.get('/characters/ava.glb')).status()).toBe(404);
+	// The old service worker is replaced by one that cleans up after it.
+	const sw = await request.get('/service-worker.js');
+	expect(sw.ok()).toBe(true);
+	expect(await sw.text()).toContain('unregister');
 });
 
-test('health endpoint reports a reachable database', async ({ request }) => {
+test('health endpoint reports the database', async ({ request }) => {
 	const response = await request.get('/api/health');
 	expect(response.ok()).toBe(true);
 	expect(await response.json()).toEqual({ status: 'ok', database: 'ok' });
-});
-
-test('security headers are set on pages', async ({ request }) => {
-	const response = await request.get('/');
-	const csp = response.headers()['content-security-policy'];
-	expect(csp).toContain("frame-ancestors 'none'");
-	expect(csp).toContain("object-src 'none'");
 });

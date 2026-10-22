@@ -82,5 +82,13 @@
 	{
 		"title": "Iteration 20 – Long-term Life Progression",
 		"description": "Aging, moving, changing careers, relationships, goals and preferences."
+	},
+	{
+		"title": "Game Center 1 – Launch",
+		"description": "Windowling Game Center replaces the life simulation: SvelteKit hub, VOIDBORN, Google sign-in, clean database."
+	},
+	{
+		"title": "Game Center 2 – Accounts & Cloud Saves",
+		"description": "Stats and saves stored per Google account in Postgres; local saves imported on first sign-in."
 	}
 ]

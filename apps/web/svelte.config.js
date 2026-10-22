@@ -12,13 +12,12 @@ const config = {
 			mode: 'auto',
 			directives: {
 				'default-src': ['self'],
-				// Rapier ships its physics engine as WebAssembly.
-				'script-src': ['self', 'wasm-unsafe-eval'],
-				'style-src': ['self', 'unsafe-inline'],
+				'script-src': ['self'],
+				// Google Fonts (stylesheet + font files); nothing else from third parties.
+				'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
+				'font-src': ['self', 'https://fonts.gstatic.com'],
 				'img-src': ['self', 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
-				// Models for on-device speech recognition come from the Hugging Face Hub (data only).
-				// blob: - the character model's textures are decoded from the .glb in memory.
-				'connect-src': ['self', 'blob:', 'https://huggingface.co', 'https://*.hf.co'],
+				'connect-src': ['self'],
 				'worker-src': ['self'],
 				'manifest-src': ['self'],
 				'object-src': ['none'],

@@ -67,7 +67,6 @@ jobs:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          AI_API_KEY: ${{ secrets.WORKERS_AI_API_TOKEN }}
         # Written as JSON (no shell/dotenv quoting pitfalls) to a private temp file; never printed.
         run: |
           umask 077
@@ -79,7 +78,7 @@ jobs:
               process.exit(1);
             }
             const secrets = Object.fromEntries(
-              [...required, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "AI_API_KEY"]
+              [...required, "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]
                 .filter((k) => process.env[k])
                 .map((k) => [k, process.env[k]]),
             );

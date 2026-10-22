@@ -50,6 +50,13 @@
       "when": 1792613951429,
       "tag": "0006_belongings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792694816921,
+      "tag": "0007_game_center",
+      "breakpoints": true
     }
   ]
 }
