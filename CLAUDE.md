@@ -7,7 +7,7 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 
 **Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
-holds **VOIDBORN** and **STARSPIRE**. Later games will store progress in Postgres and some will be multiplayer.
+holds **VOIDBORN**, **STARSPIRE** and **DRIFTWOOD**. Later games will store progress in Postgres and some will be multiplayer.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
@@ -19,7 +19,7 @@ Its history is in git and `CHANGELOG.md`.)
    never changes them. A game is a static page under `apps/web/static/games/<id>/`.
 3. **Shared browser contract.** `gamecenter.lang` (`cs` / `en`) is shared by hub and games;
    each game writes `gamecenter.stats.<id>` (`playTime`, `lastPlayed`, `progress`, `stats`).
-   Never rename these keys or a game's own save key (`voidborn.save.v1`, `starspire.save.v1`).
+   Never rename these keys or a game's own save key (`voidborn.save.v1`, `starspire.save.v1`, `driftwood.save.v1`).
 4. **Secrets never reach the browser.** DB credentials and OAuth secrets live only in
    `$lib/server` and Worker env. Anything a game needs from the DB goes through a server route.
 5. **Signing in is optional.** Everything works anonymously; Google sign-in adds an account.
@@ -60,7 +60,8 @@ docker/                        Local infrastructure (Postgres init scripts)
    Load `<script src="../presence.js"></script>` so the hub can count its players.
 2. Add an entry to `GAMES` in `apps/web/src/lib/games/registry.ts` (texts in cs + en, `path`,
    `statsKey`, cover colours).
-3. Make it playable on phones (touch input, small screens) and extend `apps/web/e2e/app.test.ts`
+3. Make it playable on phones (touch input, small screens) - or, for mouse + keyboard games,
+   set `desktopOnly: true` and load `js/desktop-only.js`-style redirect (see DRIFTWOOD) - and extend `apps/web/e2e/app.test.ts`
    so it launches without page errors (desktop and mobile projects).
 4. If it loads anything external, update the CSP in `apps/web/svelte.config.js`.
 

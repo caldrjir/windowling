@@ -18,11 +18,12 @@ follow the player; later, some games are played together (multiplayer).
 
 ## Library
 
-| Game      | Genre                            | Status   |
-| --------- | -------------------------------- | -------- |
-| VOIDBORN  | Roguelite, bullet heaven         | Released |
-| STARSPIRE | Deckbuilder, roguelike, strategy | Released |
-| -         | Free slots (2 shown)             | Planned  |
+| Game      | Genre                            | Status                    |
+| --------- | -------------------------------- | ------------------------- |
+| VOIDBORN  | Roguelite, bullet heaven         | Released                  |
+| STARSPIRE | Deckbuilder, roguelike, strategy | Released                  |
+| DRIFTWOOD | First-person survival, 3D        | Released (computers only) |
+| -         | Free slot (1 shown)              | Planned                   |
 
 ## What the hub shows
 

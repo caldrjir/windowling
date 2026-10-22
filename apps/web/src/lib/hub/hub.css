@@ -165,3 +165,9 @@ kbd { font-family: var(--f-u); font-size: 12px; padding: 2px 7px; border-radius:
 .gcard .gc-live { position: absolute; top: 14px; right: 14px; z-index: 1; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.45); backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(77,255,154,.4); color: #b8ffd0; }
 .gcard .gc-live i { width: 7px; height: 7px; border-radius: 50%; background: #4dff9a; box-shadow: 0 0 8px #4dff9a; animation: pulse 1.6s infinite; }
 @media (max-width: 600px) { .gcard .gc-live { top: 10px; right: 10px; font-size: 10px; padding: 4px 8px; } }
+
+/* Desktop-only games */
+.play:disabled { cursor: not-allowed; animation: none; background: rgba(255,255,255,.12); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line-2); }
+.play:disabled:hover { transform: none; }
+.gcard .gc-pc { position: absolute; left: 14px; top: 46px; z-index: 1; font-size: 10px; font-weight: 800; letter-spacing: .15em; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,.45); box-shadow: inset 0 0 0 1px var(--line-2); color: var(--muted); }
+@media (max-width: 600px) { .gcard .gc-pc { left: 10px; top: 38px; } }

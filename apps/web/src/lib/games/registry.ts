@@ -22,6 +22,8 @@ export interface Game extends GameTexts {
 	/** Accent colours: the center takes on the selected game's look. */
 	colors: [string, string, string];
 	statsKey: string;
+	/** Needs mouse + keyboard: phones and tablets cannot launch it. */
+	desktopOnly?: boolean;
 	cover(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void;
 }
 
@@ -350,6 +352,136 @@ export const GAMES: Game[] = [
 				ctx.arc(0, -ch * 0.6, cw * 0.18, 0, Math.PI * 2);
 				ctx.fill();
 				ctx.restore();
+			}
+		},
+	},
+	{
+		id: 'driftwood',
+		title: 'DRIFTWOOD',
+		tagline: 'Přežij na opuštěném ostrově.',
+		description:
+			'Survival z pohledu první osoby. Kácej stromy, těž kámen a železo, lov a vař, staň si přístřešek a přečkej noci plné vlků. Každý ostrov je jiný – a jediná cesta domů vede přes moře.',
+		genres: ['Survival', '3D', 'Crafting'],
+		features: ['Procedurální ostrovy', 'Den a noc', '18 receptů', '3 obtížnosti'],
+		en: {
+			tagline: 'Survive the forsaken island.',
+			description:
+				'First-person survival. Fell trees, mine stone and iron, hunt and cook, build a shelter and outlast nights full of wolves. Every island is different – and the only way home is across the sea.',
+			genres: ['Survival', '3D', 'Crafting'],
+			features: ['Procedural islands', 'Day & night cycle', '18 recipes', '3 difficulties'],
+		},
+		statLabels: {
+			best: ['Nejvíc přežitých dní', 'Most days survived'],
+			escapes: ['Útěky z ostrova', 'Escapes'],
+			wolves: ['Zabití vlci', 'Wolves slain'],
+			achievements: ['Úspěchy', 'Achievements'],
+		},
+		path: '/games/driftwood/index.html',
+		colors: ['#ffb35c', '#7fe0d0', '#ff7a4a'],
+		statsKey: 'gamecenter.stats.driftwood',
+		desktopOnly: true,
+		cover(ctx, w, h, t) {
+			const s = Math.min(w, h),
+				hz = h * 0.58;
+			const g = ctx.createLinearGradient(0, 0, 0, hz);
+			g.addColorStop(0, '#2b2a5e');
+			g.addColorStop(0.55, '#d8607a');
+			g.addColorStop(1, '#ffc56a');
+			ctx.fillStyle = g;
+			ctx.fillRect(0, 0, w, hz);
+			// slunce
+			const sx = w * 0.62,
+				sy = hz - s * 0.06 + Math.sin(t * 0.2) * s * 0.01;
+			const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, s * 0.35);
+			sg.addColorStop(0, 'rgba(255,240,200,1)');
+			sg.addColorStop(0.18, 'rgba(255,200,120,0.9)');
+			sg.addColorStop(1, 'rgba(255,150,90,0)');
+			ctx.fillStyle = sg;
+			ctx.fillRect(0, 0, w, hz);
+			ctx.fillStyle = '#fff3d6';
+			ctx.beginPath();
+			ctx.arc(sx, sy, s * 0.07, 0, Math.PI * 2);
+			ctx.fill();
+			// moře
+			const sea = ctx.createLinearGradient(0, hz, 0, h);
+			sea.addColorStop(0, '#e08a6a');
+			sea.addColorStop(0.25, '#3a6a8a');
+			sea.addColorStop(1, '#10283a');
+			ctx.fillStyle = sea;
+			ctx.fillRect(0, hz, w, h - hz);
+			for (let i = 0; i < 26; i++) {
+				const y = hz + Math.pow(i / 26, 1.6) * (h - hz),
+					wv = Math.sin(t * 1.2 + i) * s * 0.02;
+				ctx.fillStyle = `rgba(255,${200 - i * 3},${150 - i * 2},${0.5 - i * 0.017})`;
+				ctx.fillRect(
+					sx - s * (0.06 + i * 0.012) + wv,
+					y,
+					s * (0.12 + i * 0.024),
+					Math.max(1, s * 0.004),
+				);
+			}
+			// ostrov
+			ctx.fillStyle = '#2a1f3a';
+			ctx.beginPath();
+			ctx.moveTo(w * 0.02, hz);
+			ctx.lineTo(w * 0.12, hz - s * 0.08);
+			ctx.lineTo(w * 0.2, hz - s * 0.16);
+			ctx.lineTo(w * 0.26, hz - s * 0.11);
+			ctx.lineTo(w * 0.33, hz - s * 0.2);
+			ctx.lineTo(w * 0.42, hz - s * 0.06);
+			ctx.lineTo(w * 0.5, hz);
+			ctx.fill();
+			// palmy
+			const palm = (x: number, hh: number, lean: number) => {
+				ctx.strokeStyle = '#1f1730';
+				ctx.lineWidth = Math.max(2, s * 0.012);
+				ctx.lineCap = 'round';
+				const tx = x + lean * s * 0.05,
+					ty = hz - hh;
+				ctx.beginPath();
+				ctx.moveTo(x, hz - s * 0.02);
+				ctx.quadraticCurveTo(x + lean * s * 0.01, hz - hh * 0.5, tx, ty);
+				ctx.stroke();
+				ctx.lineWidth = Math.max(1.5, s * 0.008);
+				for (let i = 0; i < 6; i++) {
+					const a = -Math.PI / 2 + (i - 2.5) * 0.55 + Math.sin(t * 1.5 + i + x) * 0.05;
+					ctx.beginPath();
+					ctx.moveTo(tx, ty);
+					ctx.quadraticCurveTo(
+						tx + Math.cos(a) * s * 0.06,
+						ty + Math.sin(a) * s * 0.05 - s * 0.01,
+						tx + Math.cos(a) * s * 0.1,
+						ty + Math.sin(a) * s * 0.04 + s * 0.035,
+					);
+					ctx.stroke();
+				}
+			};
+			palm(w * 0.14, s * 0.2, 0.6);
+			palm(w * 0.22, s * 0.26, -0.3);
+			palm(w * 0.4, s * 0.17, 0.8);
+			// vor
+			const rx = w * 0.72 + Math.sin(t * 0.3) * s * 0.03,
+				ry = hz + s * 0.12 + Math.sin(t * 1.4) * s * 0.006;
+			ctx.fillStyle = '#1a1424';
+			ctx.fillRect(rx - s * 0.06, ry, s * 0.12, s * 0.018);
+			ctx.fillRect(rx - s * 0.002, ry - s * 0.11, s * 0.006, s * 0.11);
+			ctx.beginPath();
+			ctx.moveTo(rx + s * 0.004, ry - s * 0.105);
+			ctx.lineTo(rx + s * 0.06, ry - s * 0.03);
+			ctx.lineTo(rx + s * 0.004, ry - s * 0.02);
+			ctx.fill();
+			// ptáci
+			ctx.strokeStyle = 'rgba(40,30,60,0.8)';
+			ctx.lineWidth = Math.max(1, s * 0.004);
+			for (let i = 0; i < 4; i++) {
+				const bx = ((t * 0.02 * s + i * s * 0.18) % (w * 1.2)) - w * 0.1,
+					by = h * (0.18 + i * 0.05),
+					f = Math.sin(t * 6 + i) * s * 0.008;
+				ctx.beginPath();
+				ctx.moveTo(bx - s * 0.02, by - f);
+				ctx.quadraticCurveTo(bx - s * 0.008, by - s * 0.01, bx, by);
+				ctx.quadraticCurveTo(bx + s * 0.008, by - s * 0.01, bx + s * 0.02, by - f);
+				ctx.stroke();
 			}
 		},
 	},
