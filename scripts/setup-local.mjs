@@ -58,6 +58,24 @@ if (
 ) {
 	console.log(`  set the local site password for pnpm preview: "${LOCAL_SITE_PASSWORD}"`);
 }
+// E2E with a browser that is already installed, so `playwright install` is not needed.
+const chrome =
+	{
+		win32: [
+			`${process.env.PROGRAMFILES}\\Google\\Chrome\\Application\\chrome.exe`,
+			`${process.env['PROGRAMFILES(X86)']}\\Google\\Chrome\\Application\\chrome.exe`,
+			`${process.env.LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
+		],
+		darwin: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],
+		linux: ['/opt/google/chrome/chrome'],
+	}[process.platform] ?? [];
+// Edge ships with Windows; elsewhere prefer Chrome when it is there.
+const channel = chrome.some((path) => existsSync(path)) ? 'chrome' : windows ? 'msedge' : null;
+if (channel && setIfEmpty('PLAYWRIGHT_CHANNEL', channel)) {
+	console.log(
+		`  E2E will use the installed ${channel === 'chrome' ? 'Google Chrome' : 'Microsoft Edge'}`,
+	);
+}
 writeFileSync(envPath, env);
 
 step('Postgres (docker compose up -d --wait)');
@@ -80,4 +98,4 @@ console.log(`
   pnpm dev       → http://localhost:5173  (fast dev server, no site password)
   pnpm preview   → http://localhost:8787  (production Worker locally, password "${LOCAL_SITE_PASSWORD}")
   pnpm test      → unit + database tests
-  pnpm test:e2e  → browser tests (first time: pnpm --filter @windowling/web exec playwright install chromium)`);
+  pnpm test:e2e  → browser tests${channel ? '' : ' (first time: pnpm --filter @windowling/web exec playwright install --only-shell chromium)'}`);

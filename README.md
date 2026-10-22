@@ -110,7 +110,9 @@ Google OAuth redirect URIs:
 | `pnpm db:migrate`           | Apply migrations to `DATABASE_URL`                                     |
 | `pnpm db:studio`            | Drizzle Studio                                                         |
 
-First E2E run: `pnpm --filter @windowling/web exec playwright install chromium`.
+E2E needs no browser download when Chrome or Edge is installed: `pnpm setup:local` sets
+`PLAYWRIGHT_CHANNEL=chrome` (or `msedge` on Windows) in `.env`. Without either, run once:
+`pnpm --filter @windowling/web exec playwright install --only-shell chromium`.
 
 ## Deployment overview
 
