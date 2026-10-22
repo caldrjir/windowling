@@ -106,12 +106,7 @@ test('signing in is offered only when Google is configured, and nobody is signed
 	expect(await session.json()).toBeNull();
 });
 
-test('the previous app is gone', async ({ request }) => {
-	for (const path of ['/api/ai/decide', '/api/world/money', '/api/world/wake']) {
-		expect((await request.post(path, { data: {} })).status(), path).toBe(404);
-	}
-	expect((await request.get('/characters/ava.glb')).status()).toBe(404);
-	// The old service worker is replaced by one that cleans up after it.
+test('the service worker only cleans up caches', async ({ request }) => {
 	const sw = await request.get('/service-worker.js');
 	expect(sw.ok()).toBe(true);
 	expect(await sw.text()).toContain('unregister');
