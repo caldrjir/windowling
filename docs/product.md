@@ -22,7 +22,7 @@ follow the player; later, some games are played together (multiplayer).
 | --------- | -------------------------------- | ------------------------- |
 | VOIDBORN  | Roguelite, bullet heaven         | Released                  |
 | STARSPIRE | Deckbuilder, roguelike, strategy | Released                  |
-| DRIFTWOOD | First-person survival, 3D        | Released (computers only) |
+| DRIFTWOOD | First-person survival, 3D, co-op | Released (computers only) |
 | -         | Free slot (1 shown)              | Planned                   |
 
 ## What the hub shows
@@ -39,5 +39,6 @@ follow the player; later, some games are played together (multiplayer).
 2. **Accounts & cloud saves** - stats and saves stored per account in Postgres. (Game Center 2)
 3. **More games** - fill the shelf.
 4. **Multiplayer** - real-time games through Cloudflare Durable Objects (WebSockets).
+   DRIFTWOOD already has shared worlds (up to 8 players, nicknames, chat).
 
 See [`iterations.md`](iterations.md).

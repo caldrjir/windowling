@@ -9,7 +9,7 @@
 │  catalogue · stats · language · account   │◄──────►│  hooks: env → db → Better Auth       │
 │                                           │        │  /api/auth/*  (Google OAuth)         │
 │ Game /games/<id>/ (static HTML/CSS/JS)    │        │  /api/health                         │
-│  own logic + localStorage save            │        │  (later) /api/games/*, multiplayer   │
+│  own logic + localStorage save            │        │  /api/driftwood/* → Durable Objects  │
 └───────────────────────────────────────────┘        └──────────────────┬───────────────────┘
           localStorage: gamecenter.lang,                                │ TCP (postgres.js)
           gamecenter.stats.<id>, <game save>                 ┌──────────▼──────────┐
@@ -112,25 +112,45 @@ and `checkDatabase()`. The only package that talks SQL. Today the schema is just
   connections to Neon. Plain Postgres TCP - any Postgres works.
 - Static assets are revalidated by default (ETag), so a deploy is visible on the next load.
 
+## DRIFTWOOD multiplayer - `apps/web/src/worker/driftwood`
+
+Shared worlds for up to 8 players, served by the Worker entry (behind the site gate) because
+SvelteKit cannot hand a WebSocket to a Durable Object.
+
+- `DriftwoodRoom` (SQLite-backed Durable Object, one per world, named by its 6-letter code):
+  hibernatable WebSockets; keeps seed, mode, clock, harvested nodes (with regrow time),
+  structures and the last 40 chat lines, so a world can be re-joined later. Relays player
+  states (~10/s) and chat. The longest-connected player is the host and keeps the clock.
+- `DriftwoodLobby` (one instance): worlds somebody is playing in right now.
+- `api.ts`: `GET/POST /api/driftwood/rooms`, `GET /api/driftwood/rooms/:code`,
+  `GET /api/driftwood/rooms/:code/ws`. Creating and connecting are same-origin only.
+- `protocol.ts`: every client message is parsed and bounded (sizes, coordinates, ids, text);
+  unit-tested.
+- Client: `static/games/driftwood/js/mp.js` wraps the game's own functions (world build,
+  harvesting, building, saving, menus) without changing the game logic. Nickname in
+  `driftwood.nick`, the player's own state per world in `driftwood.mp.<code>`; the solo save
+  `driftwood.save.v1` is never touched by a multiplayer session.
+- Per player (not shared): inventory, health, animals. Time is shared (sleeping moves it
+  for everybody). `pnpm dev` has no Durable Objects - use `pnpm preview`.
+
 ## Future: cloud saves and multiplayer
 
 - **Cloud saves**: a `game_save (user_id, game_id, data jsonb, updated_at)` table and
   `GET/PUT /api/games/<id>/save`; games keep writing `localStorage`, the hub syncs it.
-- **Multiplayer**: a Durable Object per room (WebSocket hibernation API) bound to the same
-  Worker; the hub creates/joins rooms, identity from the Better Auth session, results written
-  to Postgres at the end of a match. Games stay static pages that open a WebSocket to
-  `/api/rooms/<id>`.
+- **More multiplayer**: the same pattern as DRIFTWOOD (a Durable Object per room); identity
+  from the Better Auth session and results written to Postgres when a game needs them.
 
 ## Decisions log
 
-| Date       | Decision                                              | Why                                                                                       |
-| ---------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 2026-10-04 | SvelteKit 2.x, TypeScript 5.9                         | Better Auth and tooling support.                                                          |
-| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver            | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.         |
-| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`) | Tests the real production runtime.                                                        |
-| 2026-10-04 | Hyperdrive in front of Neon, caching disabled         | Direct Worker→Neon TCP timed out; cached reads would be stale.                            |
-| 2026-10-22 | Life simulation replaced by Windowling Game Center    | Product pivot; DB wiped, old packages removed (history in git).                           |
-| 2026-10-22 | Hub in SvelteKit, games as untouched static pages     | Server-only secrets and a path to DB/multiplayer, without rewriting games.                |
-| 2026-10-22 | Google-only Better Auth, no anonymous users           | Anonymous play needs no account; localStorage holds progress until cloud saves.           |
-| 2026-10-22 | One shared site password in the Worker entry          | Invite-only for now; must also cover static games, which bypass SvelteKit hooks.          |
-| 2026-10-22 | Kill-switch service worker instead of a caching one   | Old SW would keep serving the removed app; games have no versioned assets for precaching. |
+| Date       | Decision                                                | Why                                                                                         |
+| ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 2026-10-04 | SvelteKit 2.x, TypeScript 5.9                           | Better Auth and tooling support.                                                            |
+| 2026-10-04 | postgres.js over TCP, not Neon HTTP driver              | Works with Docker, Neon, Hyperdrive, any Postgres; real transactions; no lock-in.           |
+| 2026-10-04 | E2E runs the built Worker in workerd (`wrangler dev`)   | Tests the real production runtime.                                                          |
+| 2026-10-04 | Hyperdrive in front of Neon, caching disabled           | Direct Worker→Neon TCP timed out; cached reads would be stale.                              |
+| 2026-10-22 | Life simulation replaced by Windowling Game Center      | Product pivot; DB wiped, old packages removed (history in git).                             |
+| 2026-10-22 | Hub in SvelteKit, games as untouched static pages       | Server-only secrets and a path to DB/multiplayer, without rewriting games.                  |
+| 2026-10-22 | Google-only Better Auth, no anonymous users             | Anonymous play needs no account; localStorage holds progress until cloud saves.             |
+| 2026-10-22 | One shared site password in the Worker entry            | Invite-only for now; must also cover static games, which bypass SvelteKit hooks.            |
+| 2026-10-22 | Kill-switch service worker instead of a caching one     | Old SW would keep serving the removed app; games have no versioned assets for precaching.   |
+| 2026-10-22 | DRIFTWOOD multiplayer in Durable Objects (Worker entry) | WebSockets need a DO; SQLite-backed DOs are on the free plan; no DB needed for world state. |
