@@ -26,6 +26,7 @@ const OPEN_PATHS = new Set([
 	GATE_PATH,
 	'/api/health',
 	'/favicon.svg',
+	'/favicon.ico',
 	'/robots.txt',
 	'/manifest.webmanifest',
 	'/service-worker.js',

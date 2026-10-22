@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRIFTWOOD</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script src="js/desktop-only.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="under"></div>
+<div id="hurt"></div>
+<div id="hud" hidden>
+  <div id="compass"><div id="compass-strip"></div><i></i></div>
+  <div id="clock"></div>
+  <div id="objective"></div>
+  <div id="cross"></div>
+  <div id="prompt" hidden></div>
+  <div id="msg"></div>
+  <div id="resume" hidden></div>
+  <div id="feed"></div>
+  <div id="bars">
+    <div class="bar hp" id="b-hp"><span></span><i></i></div>
+    <div class="bar food" id="b-food"><span></span><i></i></div>
+    <div class="bar water" id="b-water"><span></span><i></i></div>
+    <div class="bar warm" id="b-warm"><span></span><i></i></div>
+    <div class="bar stam" id="b-stam"><i></i></div>
+  </div>
+  <div id="hotbar"></div>
+</div>
+<div id="inv" hidden></div>
+<div id="screen" hidden></div>
+<div id="overlay" hidden></div>
+<div id="fade"></div>
+<div id="toasts"></div>
+<script src="vendor/three.min.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/noise.js"></script>
+<script src="js/data.js"></script>
+<script src="js/world.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/character.js"></script>
+<script src="js/player.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+<script src="../presence.js"></script>
+</body>
+</html>

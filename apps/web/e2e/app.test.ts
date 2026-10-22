@@ -12,9 +12,9 @@ test('the game center opens with its library', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 	await expect(page.locator('.brand')).toContainText('WINDOWLING');
 	await expect(page.locator('.hero-title')).toHaveText('VOIDBORN');
-	// Two games and free slots on the shelf.
+	// Three games and a free slot on the shelf.
 	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(4);
-	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(2);
+	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(1);
 	expect(errors).toEqual([]);
 });
 
@@ -209,7 +209,7 @@ test('the center shows who is playing a game right now', async ({ context, page,
 	};
 	// Other tests play in parallel, so at least this tab is counted (nobody is signed in in E2E).
 	expect(games.voidborn?.anonymous).toBeGreaterThanOrEqual(1);
-	expect(Object.keys(games).sort()).toEqual(['starspire', 'voidborn']);
+	expect(Object.keys(games).sort()).toEqual(['driftwood', 'starspire', 'voidborn']);
 
 	await page.goto('/');
 	await expect(page.getByTestId('live')).toContainText('Právě hraje');
@@ -221,4 +221,48 @@ test('the center shows who is playing a game right now', async ({ context, page,
 		data: { client: 'abcdefgh1234', game: 'not-a-game' },
 	});
 	expect(bad.status()).toBe(400);
+});
+
+test('DRIFTWOOD runs on computers and is blocked on phones', async ({
+	page,
+	request,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	const card = page.getByTestId('shelf').locator('.gcard').nth(2);
+	await card.click();
+	await expect(page.locator('.hero-title')).toHaveText('DRIFTWOOD');
+	await expect(card.locator('.gc-pc')).toHaveText('PC');
+
+	if (isMobile) {
+		await expect(page.getByTestId('play')).toBeDisabled();
+		await expect(page.getByTestId('play')).toHaveText('JEN NA POČÍTAČI');
+		// A second tap on the card does not launch it either, and a direct link goes back.
+		await card.click();
+		await expect(page).toHaveURL(/\/$/);
+		await page.goto('/games/driftwood/index.html');
+		await page.waitForURL((url) => url.pathname === '/');
+		await expect(page).toHaveTitle('Windowling Game Center');
+	} else {
+		// The 3D game itself is not rendered here: headless Chrome on GPU-less CI runners
+		// crashes in WebGL. The hub must launch it, and the game must be served.
+		const game = await request.get('/games/driftwood/index.html');
+		expect(game.ok()).toBe(true);
+		expect(await game.text()).toContain('<title>DRIFTWOOD</title>');
+		await page.route('**/games/driftwood/**', (route) =>
+			route.fulfill({ contentType: 'text/html', body: '<title>DRIFTWOOD</title>' }),
+		);
+		await page.getByTestId('play').click();
+		await page.waitForURL('**/games/driftwood/**');
+		await expect(page).toHaveTitle('DRIFTWOOD');
+	}
+	expect(errors).toEqual([]);
+});
+
+test('/favicon.ico points browsers at the SVG icon', async ({ request }) => {
+	const res = await request.get('/favicon.ico', { maxRedirects: 0 });
+	expect(res.status()).toBe(308);
+	expect(res.headers().location).toBe('/favicon.svg');
 });

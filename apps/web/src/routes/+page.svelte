@@ -27,6 +27,9 @@
 	// Stats live in the player's browser (written by the games); read after mount.
 	let saved = $state<Record<string, Stats | null>>({});
 	let signingIn = $state(false);
+	// Phones and tablets (no hover, coarse pointer) cannot play mouse + keyboard games.
+	let touchOnly = $state(false);
+	const blocked = (g: Game) => Boolean(g.desktopOnly) && touchOnly;
 	// Who is playing what right now (heartbeats from static/games/presence.js).
 	interface Live {
 		signedIn: number;
@@ -144,6 +147,7 @@
 		if (sound) blip(880, 0.07, 0.04, 'triangle');
 	}
 	function launch(g: Game) {
+		if (blocked(g)) return;
 		blip(220, 0.5, 0.06, 'sawtooth');
 		blip(660, 0.4, 0.04, 'triangle');
 		launching = g;
@@ -300,6 +304,7 @@
 		resize();
 		raf = requestAnimationFrame(frame);
 		const clock = setInterval(() => (now = new Date()), 10_000);
+		touchOnly = matchMedia('(hover: none) and (pointer: coarse)').matches;
 		void refreshLive();
 		const liveTimer = setInterval(() => {
 			if (!document.hidden) void refreshLive();
@@ -392,12 +397,23 @@
 					</div>
 				{/if}
 				<div class="actions">
-					<button class="play" data-testid="play" onclick={() => launch(game)}
-						><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5l13 7.5-13 7.5z" /></svg
-						>{stats ? L('POKRAČOVAT', 'CONTINUE') : L('HRÁT', 'PLAY')}</button
-					>
+					{#if blocked(game)}
+						<button class="play" data-testid="play" disabled
+							>{L('JEN NA POČÍTAČI', 'DESKTOP ONLY')}</button
+						>
+					{:else}
+						<button class="play" data-testid="play" onclick={() => launch(game)}
+							><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5l13 7.5-13 7.5z" /></svg
+							>{stats ? L('POKRAČOVAT', 'CONTINUE') : L('HRÁT', 'PLAY')}</button
+						>
+					{/if}
 					<div class="last">
-						{#if last && stats}
+						{#if blocked(game)}
+							{L(
+								'Tahle hra potřebuje myš a klávesnici — spusť ji na počítači.',
+								'This game needs a mouse and keyboard — play it on a computer.',
+							)}
+						{:else if last && stats}
 							{L('Naposledy', 'Last played')} <b>{last}</b> · {L('odehráno', 'total')}
 							<b>{fmtDur(stats.playTime)}</b>
 						{:else}
@@ -453,6 +469,9 @@
 						<span class="gc-tag">{s ? fmtDur(s.playTime) : L('NOVÉ', 'NEW')}</span>
 						{#if playing(g.id)}
 							<span class="gc-live" title={liveText(g.id)}><i></i>{playing(g.id)}</span>
+						{/if}
+						{#if g.desktopOnly}
+							<span class="gc-pc" title={L('Jen na počítači', 'Desktop only')}>PC</span>
 						{/if}
 						<div class="gc-info">
 							<h3>{g.title}</h3>
