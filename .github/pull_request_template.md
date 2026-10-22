@@ -14,4 +14,4 @@
 - [ ] Schema change comes with a migration (`pnpm db:generate`)
 - [ ] Docs updated for architectural or workflow changes
 - [ ] No secrets, tokens or personal data committed
-- [ ] Does not break the North Star: the character lives without the player
+- [ ] Games keep their logic, balance and save format; secrets stay server-side

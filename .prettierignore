@@ -10,8 +10,7 @@ pnpm-lock.yaml
 packages/database/drizzle/meta
 apps/web/src/worker-configuration.d.ts
 
-# Generated motion capture (scripts/mocap.mjs): kept compact.
-apps/web/static/characters/motions.json
-
-# Pronunciation dictionary for the neural voice (scripts/voice-lexicon.mjs).
-apps/web/static/voice/lexicon-us.json
+# Games are self-contained static web games, kept as their authors wrote them.
+apps/web/static/games/
+# The center's stylesheet keeps its compact, hand-written layout.
+apps/web/src/lib/hub/hub.css

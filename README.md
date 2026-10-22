@@ -1,42 +1,38 @@
-# Windowling
+# Windowling Game Center
 
-> Someone lives here. Take a look.
+> Pick a game. Play.
 
-Windowling is a persistent web life simulation. You don't play a character - you look
-through a window into the life of an autonomous one. It sleeps, works, eats, games and
-makes friends whether or not you're watching. You create opportunities; it makes decisions.
+A web game hub: a library of browser games with one look, a shared CS/EN language switch,
+per-game stats and optional Google sign-in. The first game is **VOIDBORN**. Later: cloud
+saves per account and multiplayer games.
 
-Production: <https://windowling.com> · Product vision: [`docs/product.md`](docs/product.md)
-
-**Status:** Iteration 0 - technical foundation. See [`docs/iterations.md`](docs/iterations.md).
+Production: <https://windowling.com> · Product: [`docs/product.md`](docs/product.md) ·
+Iterations: [`docs/iterations.md`](docs/iterations.md)
 
 ## Tech stack
 
-| Concern      | Choice                                                        |
-| ------------ | ------------------------------------------------------------- |
-| Language     | TypeScript (strict) everywhere                                |
-| App shell    | SvelteKit 2 + Svelte 5 (runes), Vite 8                        |
-| Styling      | Tailwind CSS 4                                                |
-| 3D / physics | three.js + Rapier (WASM)                                      |
-| Database     | PostgreSQL (Neon in production, Docker locally), Drizzle ORM  |
-| Auth         | Better Auth - anonymous users + Google OAuth, account linking |
-| Hosting      | Cloudflare Workers (`@sveltejs/adapter-cloudflare`)           |
-| Tests        | Vitest (unit + DB integration), Playwright (E2E on workerd)   |
-| Quality      | ESLint 10 (flat config), Prettier, svelte-check               |
-| Monorepo     | pnpm workspaces                                               |
-| CI/CD        | GitHub Actions, release-please, Dependabot                    |
+| Concern   | Choice                                                       |
+| --------- | ------------------------------------------------------------ |
+| Language  | TypeScript (strict) everywhere                               |
+| App shell | SvelteKit 2 + Svelte 5 (runes), Vite 8                       |
+| Games     | Static HTML/CSS/vanilla JS under `apps/web/static/games/`    |
+| Database  | PostgreSQL (Neon in production, Docker locally), Drizzle ORM |
+| Auth      | Better Auth - Google OAuth                                   |
+| Hosting   | Cloudflare Workers (`@sveltejs/adapter-cloudflare`)          |
+| Tests     | Vitest (unit + DB integration), Playwright (E2E on workerd)  |
+| Quality   | ESLint 10 (flat config), Prettier, svelte-check              |
+| Monorepo  | pnpm workspaces                                              |
+| CI/CD     | GitHub Actions, release-please, Dependabot                   |
 
 ## Repository layout
 
 ```
-apps/web             SvelteKit app (routes, auth, UI overlay, PWA, server routes)
-packages/shared      Shared contracts (zod schemas, types)
-packages/simulation  Headless life simulation - no rendering, no DB
-packages/game        three.js renderer + Rapier physics + render loop
-packages/ai          AI interfaces + decision schema + mock (real local AI later)
-packages/database    Drizzle schema, migrations, client, repositories
-docs/                Product, architecture, iterations, development guide
-docker/              Local infrastructure helpers
+apps/web                    SvelteKit app (hub, auth, server routes, PWA shell)
+apps/web/src/lib/games      Game catalogue
+apps/web/static/games/<id>  The games (static, shipped as-is)
+packages/database           Drizzle schema, migrations, client
+docs/                       Product, architecture, iterations, development guide
+docker/                     Local infrastructure helpers
 ```
 
 Architecture and boundaries: [`docs/architecture.md`](docs/architecture.md).
@@ -63,9 +59,8 @@ pnpm db:migrate          # apply migrations
 pnpm dev                 # http://localhost:5173
 ```
 
-Open the app: an anonymous player and their world are created automatically. Reload - it's
-the same world. With Google credentials configured, "Sign in with Google" links that world to
-the account.
+Open the hub and launch VOIDBORN. With Google credentials configured, the hub also shows
+"Přihlásit přes Google" / "Sign in with Google".
 
 ## Environment variables
 

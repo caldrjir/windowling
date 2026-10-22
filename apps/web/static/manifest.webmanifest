@@ -1,14 +1,14 @@
 {
-	"name": "Windowling",
+	"name": "Windowling Game Center",
 	"short_name": "Windowling",
-	"description": "Someone lives here. Take a look.",
+	"description": "Games to play in your browser.",
 	"id": "/",
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
 	"orientation": "any",
-	"background_color": "#1b1d2a",
-	"theme_color": "#1b1d2a",
+	"background_color": "#07051a",
+	"theme_color": "#07051a",
 	"icons": [
 		{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
 		{ "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

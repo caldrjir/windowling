@@ -14,16 +14,10 @@
 		"description": "apps/web - SvelteKit shell, routes, UI"
 	},
 	{
-		"name": "area: game",
+		"name": "area: games",
 		"color": "f9d0c4",
-		"description": "packages/game - renderer, physics, animation"
+		"description": "Games in apps/web/static/games and the catalogue"
 	},
-	{
-		"name": "area: simulation",
-		"color": "0e8a16",
-		"description": "packages/simulation - autonomous life"
-	},
-	{ "name": "area: ai", "color": "5319e7", "description": "packages/ai - LLM, STT, TTS, vision" },
 	{
 		"name": "area: database",
 		"color": "006b75",
@@ -32,7 +26,7 @@
 	{
 		"name": "area: auth",
 		"color": "b60205",
-		"description": "Better Auth, sessions, account linking"
+		"description": "Better Auth, Google sign-in, sessions"
 	},
 	{ "name": "area: infra", "color": "bfd4f2", "description": "CI/CD, Cloudflare, environments" },
 	{ "name": "area: pwa", "color": "c2e0c6", "description": "Installability, mobile shell" },
@@ -44,10 +38,5 @@
 		"description": "Waiting for a product/tech decision"
 	},
 	{ "name": "blocked", "color": "000000", "description": "Cannot progress, see comments" },
-	{
-		"name": "north star",
-		"color": "fef2c0",
-		"description": "Directly serves 'what is it doing right now?'"
-	},
 	{ "name": "dependencies", "color": "0366d6", "description": "Dependency updates" }
 ]

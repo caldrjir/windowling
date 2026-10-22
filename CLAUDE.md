@@ -1,70 +1,66 @@
 # CLAUDE.md
 
 Guidance for Claude Code (and humans) working in this repository.
-Read `docs/product.md` and `docs/architecture.md` before larger changes, and
-`docs/art-direction.md` before modelling anything visible.
+Read `docs/product.md` and `docs/architecture.md` before larger changes.
 
 ## What this is
 
-Windowling is a persistent web life simulation. The player does not control a character -
-they look through a window into the life of an autonomous one that keeps living when the app
-is closed. North Star: _"I didn't open the app to make it live. I opened it to see what it's
-doing."_ If a change weakens that feeling, question the change.
+**Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
+games with a shared shell, language switch, per-game stats and Google sign-in. The first game
+is **VOIDBORN**. Later games will store progress in Postgres and some will be multiplayer.
+
+(Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
+Its history is in git and `CHANGELOG.md`.)
 
 ## Product principles
 
-1. **Character is autonomous.** It has its own needs, preferences, moods and plans.
-2. **Player does not directly control the character.** No "make it do X" buttons.
-3. **World exists independently from the player.** Opening the app ≠ the character noticing.
-4. **AI is not the simulation engine.** The LLM never runs the game loop.
-5. **AI produces high-level decisions** - a closed schema (`characterDecisionSchema`), never code.
-6. **Simulation validates decisions** against state before anything happens.
-7. **Game engine visualizes state.** It renders; it does not decide.
-8. **Prefer emergent systems over scripted dialogues.** Combine states, don't hardcode scenes.
-9. **Show state through behaviour, not dashboards.** No `Hunger: 27%` in the UI.
-10. **Real time matters.** 3 AM in the real world is 3 AM for the character.
-11. **Persistent consequences matter.** Events are remembered and change what comes next.
-12. **Player creates opportunities, character makes decisions.**
+1. **The hub is a launcher, not a game.** It lists games, shows their stats, starts them.
+2. **Games are self-contained.** A game owns its logic, balance and save format; the hub
+   never changes them. A game is a static page under `apps/web/static/games/<id>/`.
+3. **Shared browser contract.** `gamecenter.lang` (`cs` / `en`) is shared by hub and games;
+   each game writes `gamecenter.stats.<id>` (`playTime`, `lastPlayed`, `progress`, `stats`).
+   Never rename these keys or a game's own save key (VOIDBORN: `voidborn.save.v1`).
+4. **Secrets never reach the browser.** DB credentials and OAuth secrets live only in
+   `$lib/server` and Worker env. Anything a game needs from the DB goes through a server route.
+5. **Signing in is optional.** Everything works anonymously; Google sign-in adds an account.
 
 ## Engineering principles
 
 - Strict TypeScript everywhere. No `any`, no non-null assertions in production code.
+  (Game code in `static/games` is plain JS shipped as-is and is excluded from lint/format.)
 - Simple architecture, explicit package boundaries, no premature abstractions or microservices.
 - No vendor lock-in without a good reason (plain Postgres, standard OAuth, portable code).
 - Every schema change ships with a Drizzle migration (`pnpm db:generate`). CI fails on drift.
-- No secrets in the repo. Ever. Use `.env` locally, Wrangler/GitHub secrets in production.
-- Test critical logic: simulation, contracts, data access, auth/world linking.
-- Keep the renderer independent from the simulation, and the LLM independent from rendering.
-- Free-first: no dependency on paid AI APIs; prefer local/open-source tooling.
-- Implement only the current iteration (`docs/iterations.md`), but don't block future ones.
+- No secrets in the repo. Ever. Use `.env` locally, GitHub `production` environment in production.
+- Test critical logic: data access, auth, server routes, the hub's contract with games (E2E).
+- Implement only the current iteration (`docs/iterations.md`), but don't block future ones
+  (accounts with cloud saves, multiplayer via Durable Objects).
 
 ## Repository map
 
 ```
-apps/web             SvelteKit app shell: routes, auth, UI overlay, server routes, PWA
-packages/shared      Contracts only: zod schemas + types shared across packages
-packages/simulation  Headless life simulation (time, catch-up, character state). Pure TS.
-packages/game        Three.js renderer + Rapier physics + rAF loop. No game decisions.
-packages/ai          AI interfaces, decision schema, mocks (real Ollama etc. later)
-packages/database    Drizzle schema, migrations, client, repositories. The ONLY place with SQL.
-docs/                Product, architecture, iterations, development
-tools/character      Blender build of the realistic characters (MakeHuman CC0 -> glTF)
-docker/              Local infrastructure (Postgres init scripts)
+apps/web                       SvelteKit app: hub UI, auth, server routes, PWA shell
+apps/web/src/lib/games         Game catalogue (registry.ts) - one entry per game
+apps/web/src/lib/hub           Hub stylesheet
+apps/web/src/lib/server        Server-only code: env, auth, DB access (never imported by the client)
+apps/web/static/games/<id>     The games themselves (static HTML/CSS/JS)
+packages/database              Drizzle schema, migrations, client. The ONLY place with SQL.
+docs/                          Product, architecture, iterations, development
+docker/                        Local infrastructure (Postgres init scripts)
 ```
 
-Dependency direction (enforced by ESLint `no-restricted-imports`):
+- `apps/web` must not import `drizzle-orm`/`postgres` directly - use `@windowling/database`
+  (enforced by ESLint `no-restricted-imports`).
+- SvelteKit refuses to bundle `$lib/server` into client code - keep secrets there.
 
-```
-apps/web ──► database ──► simulation ──► (nothing UI/DB)
-   │    └──► game (lazy, browser only)
-   └──────► shared ◄── ai, simulation
-```
+## Adding a game
 
-- `simulation`, `ai`, `shared` must not import three, rapier, svelte, or database code.
-- `game` must not import database, ai or svelte.
-- `apps/web` must not import `drizzle-orm`/`postgres` directly - use `@windowling/database`.
-- Svelte never renders individual game objects and never drives frames. `GameCanvas.svelte`
-  only mounts/unmounts `GameWorld`.
+1. Put the game in `apps/web/static/games/<id>/` (it may link back with `../../index.html`,
+   which redirects to `/`).
+2. Add an entry to `GAMES` in `apps/web/src/lib/games/registry.ts` (texts in cs + en, `path`,
+   `statsKey`, cover colours).
+3. Extend `apps/web/e2e/app.test.ts` so the game launches without page errors.
+4. If it loads anything external, update the CSP in `apps/web/svelte.config.js`.
 
 ## Commands
 
@@ -83,7 +79,7 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 
 - Work from a GitHub issue in the current iteration's milestone.
 - Branch from `master`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`, `docs/<topic>`.
-- Conventional Commits (`feat(simulation): add hunger decay`). PRs are squash-merged; the
+- Conventional Commits (`feat(web): add game tile`). PRs are squash-merged; the
   PR title must be a Conventional Commit (CI checks it). release-please derives versions.
 - Run `pnpm check` before pushing. CI must be green before merge; `master` deploys to production.
 - Update the relevant docs in the same PR when architecture, workflow or env vars change.
@@ -92,10 +88,9 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 
 - Cloudflare Workers: DB clients are per request (`acquireDatabase` in `apps/web/src/lib/server/db.ts`).
   Never cache I/O objects in module scope for production code paths.
-- three.js / Rapier must stay out of the server bundle: `GameCanvas` guards the dynamic import
-  with `import.meta.env.SSR`. Check `wrangler deploy --dry-run` size if you touch imports.
+- Workers static assets serve `/games/<id>/index.html` as `/games/<id>/` (default `html_handling`).
+- Assets are revalidated by default; `static/service-worker.js` is a kill switch that removes
+  the old app's service worker and caches. Don't add a caching SW without versioning games.
 - `/api/auth/*` is routed by path in `hooks.server.ts` (not Better Auth's origin-matching helper).
-- Anonymous players are real Better Auth users (`isAnonymous`). Linking to Google moves the world
-  via `transferWorldOwnership`; a user can never own two worlds (unique `world.user_id`).
 - Env is validated by `parseServerEnv` (`apps/web/src/lib/server/env.ts`). Add new vars there,
   to `.env.example`, and to `docs/development.md`.

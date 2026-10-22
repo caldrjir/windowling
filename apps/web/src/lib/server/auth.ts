@@ -1,7 +1,6 @@
-import { schema, transferWorldOwnership, type Database } from '@windowling/database';
+import { schema, type Database } from '@windowling/database';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { anonymous } from 'better-auth/plugins';
 import type { ServerEnv } from './env.ts';
 
 /**
@@ -10,7 +9,7 @@ import type { ServerEnv } from './env.ts';
  */
 export function createAuth(db: Database, env: ServerEnv) {
 	return betterAuth({
-		appName: 'Windowling',
+		appName: 'Windowling Game Center',
 		baseURL: env.BETTER_AUTH_URL,
 		secret: env.BETTER_AUTH_SECRET,
 		trustedOrigins: [env.PUBLIC_APP_URL, env.BETTER_AUTH_URL],
@@ -26,25 +25,13 @@ export function createAuth(db: Database, env: ServerEnv) {
 		socialProviders: env.google
 			? { google: { clientId: env.google.clientId, clientSecret: env.google.clientSecret } }
 			: {},
-		account: {
-			accountLinking: { enabled: true, trustedProviders: ['google'] },
-		},
 		session: {
-			expiresIn: 60 * 60 * 24 * 365, // anonymous players must not lose their world quickly
+			expiresIn: 60 * 60 * 24 * 90,
 			updateAge: 60 * 60 * 24,
 		},
 		advanced: {
 			useSecureCookies: env.BETTER_AUTH_URL.startsWith('https://'),
 		},
-		plugins: [
-			anonymous({
-				// Anonymous -> Google: the existing world moves to the account.
-				// If the account already owns a world, that one wins (see docs/architecture.md).
-				onLinkAccount: async ({ anonymousUser, newUser }) => {
-					await transferWorldOwnership(db, anonymousUser.user.id, newUser.user.id);
-				},
-			}),
-		],
 	});
 }
 

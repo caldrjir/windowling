@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOIDBORN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Unbounded:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="scan"></div>
+<div id="noise"></div>
+
+<div id="hud" hidden>
+  <div class="xp"><i id="xpFill"></i></div>
+  <div class="hud-left">
+    <div class="hp"><span class="lvl-tag" id="lvlTag">ÚR 1</span><div class="hp-bar"><i id="hpGhost"></i><i id="hpFill"></i></div><span id="hpTxt">100</span></div>
+    <div class="dash" id="dashPips"></div>
+    <div id="wSlots" class="slots"></div>
+    <div id="pSlots" class="slots small"></div>
+  </div>
+  <div class="hud-center"><div id="timer">00:00</div><div id="sectorTag"></div></div>
+  <div class="hud-right">
+    <button class="pause-btn" id="pauseBtn" title="Pause (Esc)">II</button>
+    <div class="hstat" id="killStat"></div>
+    <div class="hstat sh" id="shardStat"></div>
+  </div>
+  <div id="bossBar" hidden><div id="bossName"></div><div class="bb"><i id="bossFill"></i></div></div>
+  <div id="fps"></div>
+</div>
+
+<section class="screen" id="s-title"></section>
+<section class="screen" id="s-menu"></section>
+<section class="screen" id="s-hangar"></section>
+<section class="screen" id="s-forge"></section>
+<section class="screen" id="s-ach"></section>
+<section class="screen" id="s-codex"></section>
+<section class="screen" id="s-settings"></section>
+
+<div id="overlay" hidden></div>
+<div id="banner"></div>
+<div id="toasts"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data.js"></script>
+<script src="js/data_en.js"></script>
+<script src="js/save.js"></script>
+<script src="js/game.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

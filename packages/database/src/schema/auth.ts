@@ -1,5 +1,5 @@
 /**
- * Tables owned by Better Auth (core + anonymous plugin).
+ * Tables owned by Better Auth (core). Sign-in is with Google only.
  * Field names must match what Better Auth expects; regenerate/compare with
  * `pnpm dlx @better-auth/cli generate` when upgrading Better Auth or adding plugins.
  */
@@ -19,7 +19,6 @@ export const user = pgTable('user', {
 	email: text().notNull().unique(),
 	emailVerified: boolean().notNull().default(false),
 	image: text(),
-	isAnonymous: boolean().notNull().default(false),
 	...timestamps,
 });
 
