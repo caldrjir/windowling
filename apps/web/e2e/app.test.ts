@@ -46,6 +46,18 @@ test('launches VOIDBORN and comes back to the center', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 });
 
+test('right-click in VOIDBORN does not open the browser menu', async ({ page }) => {
+	await page.goto('/games/voidborn/index.html');
+	await expect(page.locator('#s-title')).not.toBeEmpty();
+	const prevented = await page.evaluate(
+		() =>
+			!document
+				.getElementById('cv')
+				?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+	);
+	expect(prevented).toBe(true);
+});
+
 test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
 	test.skip(!isMobile, 'touch controls are for phones');
 	const errors: string[] = [];
