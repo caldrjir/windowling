@@ -57,6 +57,13 @@
       "when": 1792694816921,
       "tag": "0007_game_center",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792705459355,
+      "tag": "0008_presence",
+      "breakpoints": true
     }
   ]
 }

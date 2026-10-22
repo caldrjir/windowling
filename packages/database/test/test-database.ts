@@ -1,7 +1,9 @@
+import { fileURLToPath } from 'node:url';
+
 /** Resolves the integration-test database URL; tests are skipped locally without one. */
 export function getTestDatabaseUrl(): string | undefined {
 	try {
-		process.loadEnvFile(new URL('../../../.env', import.meta.url).pathname);
+		process.loadEnvFile(fileURLToPath(new URL('../../../.env', import.meta.url)));
 	} catch {
 		// no .env - fine in CI
 	}

@@ -192,3 +192,33 @@ test.describe('without the site password', () => {
 		await expect(page).toHaveTitle('Windowling Game Center');
 	});
 });
+
+test('the center shows who is playing a game right now', async ({ context, page, request }) => {
+	// Another tab opens VOIDBORN; the game tells the center it is being played.
+	const game = await context.newPage();
+	const heartbeat = game.waitForResponse(
+		(r) => r.url().endsWith('/api/presence') && r.request().method() === 'POST',
+	);
+	await game.goto('/games/voidborn/index.html');
+	expect((await heartbeat).status()).toBe(204);
+
+	const res = await request.get('/api/presence');
+	expect(res.ok()).toBe(true);
+	const { games } = (await res.json()) as {
+		games: Record<string, { signedIn: number; anonymous: number }>;
+	};
+	// Other tests play in parallel, so at least this tab is counted (nobody is signed in in E2E).
+	expect(games.voidborn?.anonymous).toBeGreaterThanOrEqual(1);
+	expect(Object.keys(games).sort()).toEqual(['starspire', 'voidborn']);
+
+	await page.goto('/');
+	await expect(page.getByTestId('live')).toContainText('Právě hraje');
+	await expect(page.getByTestId('live')).toContainText('anonymní');
+	await expect(page.getByTestId('shelf').locator('.gc-live').first()).toBeVisible();
+
+	// Unknown games and malformed heartbeats are rejected.
+	const bad = await request.post('/api/presence', {
+		data: { client: 'abcdefgh1234', game: 'not-a-game' },
+	});
+	expect(bad.status()).toBe(400);
+});

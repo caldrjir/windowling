@@ -57,6 +57,7 @@ docker/                        Local infrastructure (Postgres init scripts)
 
 1. Put the game in `apps/web/static/games/<id>/` (it may link back with `../../index.html`,
    which redirects to `/`).
+   Load `<script src="../presence.js"></script>` so the hub can count its players.
 2. Add an entry to `GAMES` in `apps/web/src/lib/games/registry.ts` (texts in cs + en, `path`,
    `statsKey`, cover colours).
 3. Make it playable on phones (touch input, small screens) and extend `apps/web/e2e/app.test.ts`
