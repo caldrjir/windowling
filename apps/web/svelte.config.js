@@ -5,7 +5,8 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter(),
+		// The adapter only needs output paths; the deployed Worker is wrangler.jsonc.
+		adapter: adapter({ config: 'wrangler.sveltekit.jsonc' }),
 		// One .env for the whole monorepo.
 		env: { dir: '../../' },
 		csp: {

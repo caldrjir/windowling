@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { E2E_SITE_PASSWORD } from './gate';
 
 // The center picks its language from the browser; the tests start in Czech.
 test.use({ locale: 'cs-CZ' });
@@ -116,4 +117,31 @@ test('health endpoint reports the database', async ({ request }) => {
 	const response = await request.get('/api/health');
 	expect(response.ok()).toBe(true);
 	expect(await response.json()).toEqual({ status: 'ok', database: 'ok' });
+});
+
+test.describe('without the site password', () => {
+	test.use({ storageState: { cookies: [], origins: [] } });
+
+	test('the hub, the games and the API are locked', async ({ page, request }) => {
+		await page.goto('/games/voidborn/index.html');
+		await expect(page).toHaveURL(/\/gate\?next=%2Fgames%2Fvoidborn%2Findex\.html$/);
+		await expect(page.locator('input[type=password]')).toBeVisible();
+		expect((await request.get('/games/voidborn/js/game.js')).status()).toBe(401);
+		expect((await request.get('/api/auth/get-session')).status()).toBe(401);
+		// The deploy smoke test still works.
+		expect((await request.get('/api/health')).ok()).toBe(true);
+	});
+
+	test('the right password lets you in and back to where you were going', async ({ page }) => {
+		await page.goto('/games/voidborn/index.html');
+		await page.locator('input[type=password]').fill('not the password');
+		await page.locator('button[type=submit]').click();
+		await expect(page.getByRole('alert')).toBeVisible();
+
+		await page.locator('input[type=password]').fill(E2E_SITE_PASSWORD);
+		await page.locator('button[type=submit]').click();
+		await expect(page).toHaveTitle('VOIDBORN');
+		await page.goto('/');
+		await expect(page).toHaveTitle('Windowling Game Center');
+	});
 });

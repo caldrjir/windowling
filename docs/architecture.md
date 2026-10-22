@@ -49,6 +49,15 @@ Games must work on phones too: VOIDBORN reads touch input (a floating stick anyw
 play field + a dash button, in `js/main.js` `Input`) next to keyboard and gamepad; its logic,
 balance and save format are unchanged.
 
+### Site gate - `apps/web/src/worker`
+
+The deployed Worker entry (`wrangler.jsonc` `main`) is `src/worker/index.ts`: it checks the
+site password and only then hands the request to the SvelteKit worker built by
+adapter-cloudflare (aliased as `sveltekit-worker`; the adapter writes it to the paths in
+`wrangler.sveltekit.jsonc`). `assets.run_worker_first` routes static files through it too,
+so the static games are protected. A correct password sets an HTTP-only cookie (30 days)
+signed with the password hash.
+
 ### Server - `apps/web/src/lib/server` and `hooks.server.ts`
 
 Request lifecycle:
@@ -82,6 +91,8 @@ and `checkDatabase()`. The only package that talks SQL. Today the schema is just
 - CSP (SvelteKit, nonces) on hub pages: scripts only from self; styles/fonts from self and
   Google Fonts; images from self and Google avatars; `connect-src 'self'`;
   `frame-ancestors 'none'`. Static game pages are plain assets without this header.
+- Site gate: one shared password (PBKDF2 hash as a Worker secret, HMAC-signed pass cookie,
+  1 s delay per wrong attempt, `noindex`); fails closed when the hash is missing.
 - Better Auth: secure cookies on HTTPS, trusted origins, CSRF/origin checks.
 - Future server routes for games validate input with zod and act only for `locals.user`.
 
@@ -112,4 +123,5 @@ and `checkDatabase()`. The only package that talks SQL. Today the schema is just
 | 2026-10-22 | Life simulation replaced by Windowling Game Center    | Product pivot; DB wiped, old packages removed (history in git).                           |
 | 2026-10-22 | Hub in SvelteKit, games as untouched static pages     | Server-only secrets and a path to DB/multiplayer, without rewriting games.                |
 | 2026-10-22 | Google-only Better Auth, no anonymous users           | Anonymous play needs no account; localStorage holds progress until cloud saves.           |
+| 2026-10-22 | One shared site password in the Worker entry          | Invite-only for now; must also cover static games, which bypass SvelteKit hooks.          |
 | 2026-10-22 | Kill-switch service worker instead of a caching one   | Old SW would keep serving the removed app; games have no versioned assets for precaching. |
