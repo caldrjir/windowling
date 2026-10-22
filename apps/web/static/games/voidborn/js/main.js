@@ -12,6 +12,9 @@ const Input = (() => {
   });
   window.addEventListener('keyup', e => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); stickEnd(); });
+  // Pravé tlačítko (a dlouhý stisk na mobilu) by otevřelo menu prohlížeče, to vezme oknu
+  // fokus a hra se pozastaví. Ve hře nemá smysl, tak ho vypneme.
+  window.addEventListener('contextmenu', e => e.preventDefault());
 
   // Dotyk: plovoucí joystick kdekoli na ploše + tlačítko úskoku.
   const STICK_R = 56;
