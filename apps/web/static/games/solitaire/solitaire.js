@@ -98,16 +98,64 @@ const Solitaire = (() => {
   }
   function levelMode(n) { const ch = Math.floor((n - 1) / 20), k = (n - 1) % 20; return [['klondike1', 'freecell'], ['klondike1', 'freecell', 'spider1'], ['klondike3', 'freecell', 'spider1'], ['klondike3', 'spider2', 'freecell'], ['spider2', 'klondike3', 'freecell'], ['spider2', 'klondike3', 'spider2']][ch][k % [2, 3, 3, 3, 3, 3][ch]]; }
 
+  // ── Kresba karet (SVG 100×140, symboly ve sdíleném skrytém <svg>) ──
+  function defs() {
+    if (document.getElementById('slDefs')) return;
+    const d = document.createElement('div');
+    d.innerHTML = `<svg id="slDefs" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+      <linearGradient id="slRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5577"/><stop offset="1" stop-color="#c2124a"/></linearGradient>
+      <linearGradient id="slBlk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3270"/><stop offset="1" stop-color="#110c2e"/></linearGradient>
+      <linearGradient id="slGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".5" stop-color="#e8c574"/><stop offset="1" stop-color="#b8892e"/></linearGradient>
+      <linearGradient id="slFaceR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1f4"/><stop offset="1" stop-color="#ffd2de"/></linearGradient>
+      <linearGradient id="slFaceB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef0ff"/><stop offset="1" stop-color="#cfd4ff"/></linearGradient>
+      <radialGradient id="slBackG" cx=".5" cy=".35" r=".9"><stop offset="0" stop-color="#4b33b8"/><stop offset=".55" stop-color="#241466"/><stop offset="1" stop-color="#0d0830"/></radialGradient>
+      <pattern id="slLat" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 5h10M5 0v10" stroke="#e8c574" stroke-width=".6" opacity=".35"/></pattern>
+      <symbol id="slS0" viewBox="0 0 20 20"><path d="M10 1.2C8 4 2 7.6 2 11.6c0 2.7 2 4.5 4.4 4.5 1.4 0 2.6-.7 3.2-1.6-.3 2-1.2 3.4-2.8 4.3h6.4c-1.6-.9-2.5-2.3-2.8-4.3.6.9 1.8 1.6 3.2 1.6 2.4 0 4.4-1.8 4.4-4.5C18 7.6 12 4 10 1.2z"/></symbol>
+      <symbol id="slS1" viewBox="0 0 20 20"><path d="M10 18C4.2 13.6 1.2 10.2 1.2 6.6 1.2 3.8 3.3 1.8 5.9 1.8c1.8 0 3.2 1 4.1 2.5.9-1.5 2.3-2.5 4.1-2.5 2.6 0 4.7 2 4.7 4.8 0 3.6-3 7-8.8 11.4z"/></symbol>
+      <symbol id="slS2" viewBox="0 0 20 20"><path d="M10 .8 17.6 10 10 19.2 2.4 10z"/></symbol>
+      <symbol id="slS3" viewBox="0 0 20 20"><circle cx="10" cy="5.6" r="4.2"/><circle cx="5" cy="11.2" r="4.2"/><circle cx="15" cy="11.2" r="4.2"/><path d="M9 10.5 7.6 18.8h4.8L11 10.5z"/></symbol>
+      <symbol id="slBack" viewBox="0 0 100 140"><rect width="100" height="140" rx="9" fill="url(#slBackG)"/><rect width="100" height="140" rx="9" fill="url(#slLat)"/>
+        <rect x="6" y="6" width="88" height="128" rx="6" fill="none" stroke="url(#slGold)" stroke-width="1.6"/><rect x="10" y="10" width="80" height="120" rx="4" fill="none" stroke="#e8c574" stroke-width=".6" opacity=".6"/>
+        <circle cx="50" cy="70" r="21" fill="#140c44" stroke="url(#slGold)" stroke-width="1.6"/><path d="M50 52 54 66 68 70 54 74 50 88 46 74 32 70 46 66z" fill="url(#slGold)"/><circle cx="50" cy="70" r="3.5" fill="#fff6d8"/>
+        <circle cx="24" cy="26" r="1.3" fill="#fff"/><circle cx="76" cy="30" r="1" fill="#fff"/><circle cx="28" cy="112" r="1" fill="#fff"/><circle cx="74" cy="114" r="1.4" fill="#fff"/></symbol>
+    </defs></svg>`;
+    document.body.appendChild(d.firstChild);
+  }
+  // rozložení symbolů 2–10 (dolní polovina se otáčí)
+  const PIPS = { 2: [[50, 29], [50, 111]], 3: [[50, 29], [50, 70], [50, 111]], 4: [[34, 29], [66, 29], [34, 111], [66, 111]], 5: [[34, 29], [66, 29], [50, 70], [34, 111], [66, 111]],
+    6: [[34, 29], [66, 29], [34, 70], [66, 70], [34, 111], [66, 111]], 7: [[34, 29], [66, 29], [50, 48], [34, 70], [66, 70], [34, 111], [66, 111]],
+    8: [[34, 29], [66, 29], [50, 48], [34, 70], [66, 70], [50, 92], [34, 111], [66, 111]], 9: [[34, 29], [66, 29], [34, 55], [66, 55], [50, 70], [34, 85], [66, 85], [34, 111], [66, 111]],
+    10: [[34, 29], [66, 29], [50, 39], [34, 55], [66, 55], [34, 85], [66, 85], [50, 101], [34, 111], [66, 111]] };
+  const EMBLEM = {
+    11: '<path d="M0-13 3.4-3.4 13 0 3.4 3.4 0 13-3.4 3.4-13 0-3.4-3.4z"/><circle r="2.6" fill="#fff"/>',
+    12: '<path d="M5-13a13 13 0 1 0 0 26a10 10 0 1 1 0-26z"/><path d="M9-6 10.4-2.4 14-1 10.4.4 9 4 7.6.4 4-1 7.6-2.4z"/>',
+    13: '<path d="M-15 7-17-9-7.5-1.5 0-14 7.5-1.5 17-9 15 7z"/><rect x="-15" y="8" width="30" height="4.5" rx="1.5"/><circle cy="-14" r="2.4"/>',
+  };
+  function cardSvg(r, s) {
+    const fill = RED(s) ? 'url(#slRed)' : 'url(#slBlk)', sym = `#slS${s}`;
+    const pip = (x, y, w, flip) => `<use href="${sym}" x="${x - w / 2}" y="${y - w / 2}" width="${w}" height="${w}"${flip ? ` transform="rotate(180 ${x} ${y})"` : ''}/>`;
+    const corner = `<text x="12" y="24" class="sl-rk" text-anchor="middle">${RANK[r]}</text>${pip(12, 35, 13)}`;
+    let mid;
+    if (r === 1) mid = `<circle cx="50" cy="70" r="27" fill="none" stroke="url(#slGold)" stroke-width="1.2" opacity=".8"/>${pip(50, 70, 40)}`;
+    else if (r <= 10) mid = PIPS[r].map(([x, y]) => pip(x, y, r >= 9 ? 15 : 17, y > 72)).join('');
+    else mid = `<rect x="22" y="17" width="56" height="106" rx="6" fill="${RED(s) ? 'url(#slFaceR)' : 'url(#slFaceB)'}" stroke="url(#slGold)" stroke-width="1.4"/>
+      <g transform="translate(50 46)">${EMBLEM[r]}</g><text x="50" y="96" class="sl-fc" text-anchor="middle">${RANK[r]}</text>${pip(50, 110, 11)}`;
+    return `<svg viewBox="0 0 100 140" class="sl-f" fill="${fill}"><g class="sl-pips">${mid}</g><g class="sl-big">${r > 10 ? `<text x="50" y="96" class="sl-fc" text-anchor="middle">${RANK[r]}</text>` : pip(50, 82, r === 1 ? 46 : 36)}</g>${corner}<g transform="rotate(180 50 70)">${corner}</g></svg>`;
+  }
+  const BACK = '<svg viewBox="0 0 100 140" class="sl-f"><use href="#slBack"/></svg>';
+
   // ── Hrací plocha ──
   function create(el, P, saved, api) {
+    defs();
     const mode = P.mode, spider = mode.startsWith('spider'), klon = mode.startsWith('klondike'), fc = mode === 'freecell';
     let S = saved && saved.S ? saved.S : JSON.parse(P.S), hist = saved && saved.hist ? saved.hist : [], moves = saved && saved.moves || 0, done = false;
-    el.innerHTML = `<div class="sl-wrap ${mode}"><div class="sl-head"><div><small>${L('TAHY', 'MOVES')}</small><b class="sl-moves">0</b></div><div class="sl-mode">${(DIFFS.find(d => d.id === mode) || {}).name || mode}</div></div>
+    el.innerHTML = `<div class="sl-wrap ${mode}"><div class="sl-head"><div><small>${L('TAHY', 'MOVES')}</small><b class="sl-moves">0</b></div><div><small>${spider ? L('HOTOVÉ ŘADY', 'RUNS') : L('NA ZÁKLADNÁCH', 'HOME')}</small><b class="sl-home">0</b></div><div class="sl-mode">${(DIFFS.find(d => d.id === mode) || {}).name || mode}</div></div>
       <div class="sl-table"></div>
-      <div class="k-tools"><button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button><button class="k-tool" data-t="hint">${api.icon('bulb')}<span>${L('Nápověda', 'Hint')}</span></button><button class="k-tool" data-t="auto" hidden>${api.icon('check')}<span>${L('Dokončit', 'Finish')}</span></button></div></div>`;
+      <div class="k-tools"><button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button><button class="k-tool" data-t="hint">${api.icon('bulb')}<span>${L('Nápověda', 'Hint')}</span></button></div></div>`;
     const table = el.querySelector('.sl-table');
     const cols = spider ? 10 : fc ? 8 : 7;
-    let cw = 80, chh = 112, gap = 8, pos = {};
+    let cw = 80, chh = 112, gap = 8, pos = {}, dealing = !saved, autoOn = false;
+    const pend = new Map();
     const cardEls = new Map();
     function size() {
       const vw = Math.min((document.getElementById('kView') || el).clientWidth - 20, 1000);
@@ -115,6 +163,7 @@ const Solitaire = (() => {
       cw = Math.floor(Math.min(96, (vw - gap * (cols + 1)) / cols)); chh = Math.round(cw * 1.4);
       table.style.width = (cw * cols + gap * (cols + 1)) + 'px';
       table.style.setProperty('--cw', cw + 'px'); table.style.setProperty('--ch', chh + 'px');
+      table.classList.toggle('small', cw < 62);
     }
     // místa hromádek
     function slots() {
@@ -131,7 +180,8 @@ const Solitaire = (() => {
       const maxH = Math.max(innerHeight - 260, chh * 3), ty = s.t0[1];
       // hromádky (rámečky)
       let frames = '';
-      for (const [k, [x, y]] of Object.entries(s)) frames += `<div class="sl-slot ${k[0]}" data-p="${k}" style="left:${x}px;top:${y}px">${k === 'stock' ? '↻' : k[0] === 'f' && !spider ? 'A' : ''}</div>`;
+      const mark = k => (k === 'stock' ? '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : k[0] === 'f' ? '<svg viewBox="0 0 24 24"><path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z" fill="currentColor"/></svg>' : '');
+      for (const [k, [x, y]] of Object.entries(s)) frames += `<div class="sl-slot ${k[0]} ${k === 'stock' ? 'stock' : ''}" data-p="${k}" style="left:${x}px;top:${y}px">${mark(k)}</div>`;
       table.querySelectorAll('.sl-slot').forEach(e => e.remove()); table.insertAdjacentHTML('afterbegin', frames);
       const place = (c, x, y, z) => { pos[c.id] = { x, y, z }; };
       if (klon) {
@@ -154,15 +204,24 @@ const Solitaire = (() => {
       const live = new Set(all.map(c => c.id));
       for (const c of all) {
         let e = cardEls.get(c.id);
-        if (!e) { e = document.createElement('div'); e.className = 'sl-card'; e.dataset.id = c.id; table.appendChild(e); cardEls.set(c.id, e); }
         const p = pos[c.id];
-        e.style.transform = `translate(${p.x}px, ${p.y}px)`; e.style.zIndex = p.z;
-        e.classList.toggle('up', c.up); e.classList.toggle('red', RED(c.s));
-        e.innerHTML = c.up ? `<b>${RANK[c.r]}</b><i>${SUITS[c.s]}</i><em>${SUITS[c.s]}</em>` : '';
+        if (!e) {
+          e = document.createElement('div'); e.className = 'sl-card'; e.dataset.id = c.id; table.appendChild(e); cardEls.set(c.id, e);
+          // rozdání: karty přiletí z balíčku
+          if (dealing) { const st = s.stock || s.t0; e.style.transition = 'none'; e.style.transform = `translate(${st[0]}px, ${st[1]}px)`; pend.set(e, pend.size); }
+        }
+        if (!pend.has(e)) e.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        e.style.zIndex = p.z;
+        const face = c.up ? `${c.r}${c.s}` : 'b';
+        if (e.dataset.f !== face) { e.dataset.f = face; e.classList.toggle('up', c.up); e.classList.toggle('red', RED(c.s)); e.innerHTML = c.up ? cardSvg(c.r, c.s) : BACK; if (c.up && !dealing) { e.classList.add('turn'); setTimeout(() => e.classList.remove('turn'), 320); } }
+      }
+      if (dealing) {
+        dealing = false;
+        requestAnimationFrame(() => requestAnimationFrame(() => { pend.forEach((k, e) => { const p = pos[+e.dataset.id]; e.style.transition = ''; e.style.transitionDelay = `${Math.min(k * 14, 900)}ms`; if (p) e.style.transform = `translate(${p.x}px, ${p.y}px)`; setTimeout(() => { e.style.transitionDelay = ''; }, 1500); }); pend.clear(); }));
       }
       for (const [id, e] of cardEls) if (!live.has(id)) { e.remove(); cardEls.delete(id); }
       el.querySelector('.sl-moves').textContent = moves;
-      el.querySelector('[data-t="auto"]').hidden = !(klon && !S.stock.length && !S.waste.length && S.t.every(c => c.every(x => x.up)) && !done);
+      el.querySelector('.sl-home').textContent = spider ? `${S.f.length} / 8` : `${S.f.reduce((a, f) => a + f.length, 0)} / 52`;
     }
     // najdi kartu a její hromádku
     function locate(id) {
@@ -230,7 +289,30 @@ const Solitaire = (() => {
       if (fc && cards.length === 1) for (let i = 0; i < 4; i++) if (!S.cells[i]) return { p: 'c', i };
       return null;
     }
-    function after() { layout(); api.changed(); autoFoundation(); check(); }
+    function after() { layout(); api.changed(); autoFoundation(); check(); autoFinish(); }
+    // Když už nic neleží lícem dolů (Klondike) nebo jsou všechny sloupce seřazené (FreeCell), hra se dohraje sama.
+    function canFinish() {
+      if (done) return false;
+      if (klon) return S.t.every(c => c.every(x => x.up));
+      if (fc) return S.t.every(c => c.every((x, k) => !k || x.r < c[k - 1].r));
+      return false;
+    }
+    function autoFinish() {
+      if (autoOn || !canFinish()) return;
+      autoOn = true; table.classList.add('auto');
+      let idle = 0;
+      const step = () => {
+        if (done) { autoOn = false; return; }
+        const locs = S.t.map((c, i) => ({ p: 't', i, k: c.length - 1 })).filter(l => l.k >= 0);
+        if (S.waste.length) locs.push({ p: 'w', k: S.waste.length - 1 });
+        if (fc) S.cells.forEach((c, i) => { if (c) locs.push({ p: 'c', i }); });
+        locs.sort((a, b) => picked(a)[0].r - picked(b)[0].r);
+        for (const loc of locs) for (let i = 0; i < 4; i++) if (legal(loc, { p: 'f', i })) { move(loc, { p: 'f', i }); idle = 0; setTimeout(step, 85); return; }
+        if (klon && (S.stock.length || S.waste.length) && idle <= S.stock.length + S.waste.length + 2) { idle++; drawStock(); setTimeout(step, 55); return; }
+        autoOn = false; table.classList.remove('auto'); // uvízlo (Klondike 3) – dohraje hráč
+      };
+      setTimeout(step, 350);
+    }
     function autoFoundation() { // FreeCell: bezpečné karty samy na základnu
       if (!fc) return;
       // bezpečné: dvojky vždy, jinak když obě opačné barvy mají aspoň r-1 karet
@@ -269,7 +351,7 @@ const Solitaire = (() => {
     // ── Táhnutí ──
     let drag = null;
     table.addEventListener('pointerdown', e => {
-      if (done) return;
+      if (done || autoOn) return;
       const ce = e.target.closest('.sl-card'), slot = e.target.closest('.sl-slot');
       if ((ce && locate(+ce.dataset.id) && locate(+ce.dataset.id).p === 's') || (slot && slot.dataset.p === 'stock' && !ce)) { drawStock(); return; }
       if (!ce) return;
@@ -284,30 +366,36 @@ const Solitaire = (() => {
       if (!drag.moved && Math.hypot(dx, dy) < 6) return;
       drag.moved = true;
       drag.els.forEach((ce, k) => { const p = pos[drag.cards[k].id]; ce.classList.add('drag'); ce.style.transform = `translate(${p.x + dx}px, ${p.y + dy}px)`; ce.style.zIndex = 1000 + k; });
+      const t = target(drag, dx, dy);
+      table.querySelectorAll('.drop').forEach(x => x.classList.remove('drop'));
+      if (t) { const top_ = t.p === 't' ? top(S.t[t.i]) : t.p === 'f' ? top(S.f[t.i]) : S.cells[t.i]; const tel = top_ ? cardEls.get(top_.id) : table.querySelector(`[data-p="${t.p === 'c' ? 'c' : t.p}${t.i}"]`); if (tel) tel.classList.add('drop'); }
     });
-    table.addEventListener('pointerup', e => {
-      if (!drag) return; const d = drag; drag = null;
-      d.els.forEach(ce => ce.classList.remove('drag'));
-      if (!d.moved) { const dest = bestDest(d.loc); if (dest) move(d.loc, dest); else { api.sound('error'); layout(); } return; }
-      // cíl podle středu první karty
-      const r = table.getBoundingClientRect(), p = pos[d.cards[0].id], cx = p.x + (e.clientX - d.x0) + cw / 2, cy = p.y + (e.clientY - d.y0) + chh / 2;
+    // nejbližší povolený cíl pro přetahovanou kartu
+    function target(d, dx, dy) {
+      const p = pos[d.cards[0].id], cx = p.x + dx + cw / 2, cy = p.y + dy + chh / 2;
       const s = slots(); let best = null, bd = 1e9;
       const cand = [];
       for (let i = 0; i < S.t.length; i++) { const t = top(S.t[i]); const tp = t ? pos[t.id] : { x: s['t' + i][0], y: s['t' + i][1] }; cand.push({ dest: { p: 't', i }, x: tp.x, y: tp.y }); }
       if (!spider) for (let i = 0; i < 4; i++) cand.push({ dest: { p: 'f', i }, x: s['f' + i][0], y: s['f' + i][1] });
       if (fc) for (let i = 0; i < 4; i++) cand.push({ dest: { p: 'c', i }, x: s['c' + i][0], y: s['c' + i][1] });
       for (const c of cand) { const dd = Math.hypot(c.x + cw / 2 - cx, c.y + chh / 2 - cy); if (dd < bd && dd < cw * 1.3 && legal(d.loc, c.dest)) { bd = dd; best = c.dest; } }
-      void r;
+      return best;
+    }
+    table.addEventListener('pointerup', e => {
+      if (!drag) return; const d = drag; drag = null;
+      d.els.forEach(ce => ce.classList.remove('drag'));
+      table.querySelectorAll('.drop').forEach(x => x.classList.remove('drop'));
+      if (!d.moved) { const dest = bestDest(d.loc); if (dest) move(d.loc, dest); else { api.sound('error'); layout(); } return; }
+      const best = target(d, e.clientX - d.x0, e.clientY - d.y0);
       if (best) move(d.loc, best); else { api.sound('soft'); layout(); }
     });
     el.querySelector('.k-tools').addEventListener('click', e => {
       const t = e.target.closest('[data-t]'); if (!t || done) return;
       if (t.dataset.t === 'undo' && hist.length) { const h = JSON.parse(hist.pop()); S = h.S; moves = h.moves; api.hint(); api.sound('erase'); layout(); api.changed(); }
       if (t.dataset.t === 'hint') hint();
-      if (t.dataset.t === 'auto') { const step = () => { for (const loc of [...S.t.map((c, i) => ({ p: 't', i, k: c.length - 1 })).filter(l => l.k >= 0)]) { for (let i = 0; i < 4; i++) if (legal(loc, { p: 'f', i })) { move(loc, { p: 'f', i }); if (!done) setTimeout(step, 70); return; } } }; step(); }
     });
     addEventListener('resize', layout);
-    layout(); autoFoundation();
+    layout(); autoFoundation(); autoFinish();
     return {
       getState: () => (done ? null : { S, hist: hist.slice(-60), moves }),
       progress: () => S.f.reduce((a, f) => a + f.length, 0) / (S.f.length * 13),
@@ -318,8 +406,9 @@ const Solitaire = (() => {
   }
 
   function art(el) {
+    defs();
     let h = '<div class="sl-art">';
-    [[13, 0], [12, 1], [11, 3], [1, 2], [10, 1]].forEach(([r, s], k) => { h += `<div class="sl-card up ${RED(s) ? 'red' : ''}" style="transform:translate(${20 + k * 36}px, ${40 + Math.abs(2 - k) * 14}px) rotate(${(k - 2) * 9}deg)"><b>${RANK[r]}</b><i>${SUITS[s]}</i><em>${SUITS[s]}</em></div>`; });
+    [[13, 0], [12, 1], [11, 3], [1, 2], [10, 1]].forEach(([r, s], k) => { h += `<div class="sl-card up ${RED(s) ? 'red' : ''}" style="transform:translate(${20 + k * 36}px, ${40 + Math.abs(2 - k) * 14}px) rotate(${(k - 2) * 9}deg)">${cardSvg(r, s)}</div>`; });
     el.innerHTML = h + '</div>';
   }
   return { DIFFS, generate, create, art, deal, klondikeWinnable, levelMode };
@@ -336,12 +425,14 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
     <li><b>FreeCell:</b> všechny karty jsou vidět, máš 4 volná pole na odložení. Kolik karet přesuneš najednou, záleží na volných polích.</li>
     <li><b>Pavouk:</b> skládej sestupně v jedné barvě od krále po eso. Hotová řada sama odejde. Balíček rozdá do každého sloupce jednu kartu.</li>
     <li>Karty táhni, nebo na ně klepni a hra je pošle na nejlepší místo. <b>Zpět</b> a <b>Nápověda</b> se počítají do hvězd.</li>
+    <li>Jakmile v Klondike nic neleží lícem dolů (ve FreeCell jsou všechny sloupce seřazené), hra se dohraje sama.</li>
     <li>Každé rozdání Klondike na denní výzvě a na Cestě jde dohrát.</li></ul>`,
     `<p>Move every card to the <b>foundations</b> by suit, from ace to king.</p>
     <ul><li><b>Klondike:</b> build columns down in alternating colours. Only a king goes to an empty column. Tap the stock to turn one card (or three).</li>
     <li><b>FreeCell:</b> every card is visible and you have 4 free cells. How many cards you can move at once depends on free spaces.</li>
     <li><b>Spider:</b> build down in one suit from king to ace; a complete run leaves by itself. The stock deals one card to every column.</li>
     <li>Drag cards, or tap one and the game sends it to the best place. <b>Undo</b> and <b>Hint</b> count against stars.</li>
+    <li>Once no Klondike card is face down (or every FreeCell column is in order), the game finishes itself.</li>
     <li>Every Klondike deal in the daily and on the Path can be won.</li></ul>`),
   achievements: [],
 });

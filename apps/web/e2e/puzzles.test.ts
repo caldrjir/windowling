@@ -218,6 +218,20 @@ test('solitaire sends a tapped card to a legal place or draws from the stock', a
 	await expect.poll(() => page.locator('.sl-card.up').count()).toBeGreaterThan(7);
 });
 
+test('solitaire finishes by itself once no card is face down', async ({ page }) => {
+	await page.goto('/games/solitaire/index.html');
+	// A Klondike game with every card but the kings home and the kings face up in the tableau.
+	await page.evaluate(`(() => {
+		const f = [0, 1, 2, 3].map((s) => [...Array(12)].map((_, k) => ({ id: s * 13 + k, s, r: k + 1, up: true })));
+		const t = [0, 1, 2, 3].map((s) => [{ id: s * 13 + 12, s, r: 13, up: true }]).concat([[], [], []]);
+		Kit._test.save.cur = { kind: 'free', key: null, diff: 'klondike1', seed: 1, time: 10, mistakes: 0, hints: 0,
+			state: { S: { mode: 'klondike1', stock: [], waste: [], f, t, cells: [], draw: 1 }, hist: [], moves: 5 } };
+	})()`);
+	await page.reload();
+	await page.locator('[data-k="resume"]').click();
+	await expect(page.locator('#kModal:not([hidden]) .k-result')).toBeVisible({ timeout: 8000 });
+});
+
 test('mahjong sends tapped tiles to the tray where a matching pair vanishes', async ({ page }) => {
 	await startFree(page, 'mahjong');
 	const left = Number(await page.locator('.mj-left').textContent());

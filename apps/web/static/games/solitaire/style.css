@@ -1,25 +1,47 @@
-/* SOLITAIRE – karty */
-.sl-wrap { display: grid; justify-items: center; gap: 10px; width: 100%; }
-.sl-head { display: flex; gap: 10px; align-items: center; }
-.sl-head div:first-child { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+/* SOLITAIRE – vesmírný stůl a karty kreslené v SVG */
+.sl-wrap { display: grid; justify-items: center; gap: 12px; width: 100%; }
+.sl-head { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; justify-content: center; }
+.sl-head > div { display: grid; align-content: center; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 92px; }
 .sl-head small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
-.sl-head b { font-family: var(--f-d); font-size: 18px; }
-.sl-mode { font-family: var(--f-d); font-size: 14px; color: var(--a); }
-.sl-table { position: relative; min-height: 300px; border-radius: 18px; background: radial-gradient(ellipse at 50% 0%, rgba(40,30,90,.5), rgba(8,6,24,.82)); box-shadow: inset 0 0 0 1px var(--line-2); touch-action: none; user-select: none; -webkit-user-select: none; }
-.sl-slot { position: absolute; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .1); box-shadow: inset 0 0 0 2px rgba(255,255,255,.1); display: grid; place-items: center; color: rgba(255,255,255,.18); font-size: calc(var(--cw) * .4); font-family: var(--f-d); }
-.sl-slot.s { cursor: pointer; }
-.sl-slot.hint { box-shadow: inset 0 0 0 3px var(--a), 0 0 20px var(--a); }
-.sl-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .1); transition: transform .16s ease-out; cursor: pointer;
-  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--a) 55%, #1b1250), #120c33 70%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.18), 0 3px 8px -3px rgba(0,0,0,.7); overflow: hidden; }
-.sl-card:not(.up)::before { content: ''; position: absolute; inset: 12%; border-radius: 8%; background: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 70%, #fff, transparent), radial-gradient(1px 1px at 80% 80%, #fff, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
-.sl-card.up { background: linear-gradient(160deg, #fbfaff, #e6e2f7); color: #1d1840; box-shadow: 0 2px 6px -2px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.08); }
-.sl-card.up.red { color: #d81b60; }
-.sl-card b { position: absolute; left: 7%; top: 3%; font-family: var(--f-d); font-weight: 700; font-size: calc(var(--cw) * .27); line-height: 1; letter-spacing: -.04em; }
-.sl-card i { position: absolute; right: 7%; top: 3%; font-style: normal; font-size: calc(var(--cw) * .27); line-height: 1; }
-.sl-card em { position: absolute; left: 50%; top: 58%; transform: translate(-50%, -50%); font-style: normal; font-size: calc(var(--cw) * .62); opacity: .85; }
-.sl-card.drag { transition: none; box-shadow: 0 16px 30px -10px rgba(0,0,0,.8); }
-.sl-card.hint { box-shadow: 0 0 0 3px var(--a), 0 0 22px var(--a); }
-.sl-card.fly { transition: transform 1s cubic-bezier(.5,0,.5,1); transform: translate(calc(50vw - 50%), -120vh) rotate(40deg) !important; }
+.sl-head b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.sl-head .sl-mode { font-family: var(--f-d); font-size: 14px; color: #f4d68a; background: linear-gradient(135deg, rgba(232, 197, 116, .16), rgba(232, 197, 116, .04)); box-shadow: inset 0 0 0 1px rgba(232, 197, 116, .35); }
+
+/* stůl: sametová noc se zlatým lemem */
+.sl-table { position: relative; min-height: 300px; border-radius: 22px; touch-action: none; user-select: none; -webkit-user-select: none;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, .5), transparent), radial-gradient(1px 1px at 78% 12%, rgba(255, 255, 255, .4), transparent),
+    radial-gradient(1.5px 1.5px at 44% 72%, rgba(255, 255, 255, .35), transparent), radial-gradient(1px 1px at 88% 64%, rgba(255, 255, 255, .45), transparent),
+    radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--c) 32%, transparent), transparent 70%),
+    radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--a) 14%, transparent), transparent 60%),
+    linear-gradient(180deg, #120c35, #07051a);
+  box-shadow: inset 0 0 0 1px rgba(232, 197, 116, .28), inset 0 0 60px rgba(0, 0, 0, .55), 0 30px 60px -30px rgba(0, 0, 0, .8); }
+.sl-table.auto { box-shadow: inset 0 0 0 1px rgba(232, 197, 116, .6), inset 0 0 60px rgba(0, 0, 0, .55), 0 0 40px -10px rgba(232, 197, 116, .45); }
+.sl-slot { position: absolute; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .1); display: grid; place-items: center;
+  border: 1.5px dashed rgba(232, 197, 116, .22); background: rgba(255, 255, 255, .025); color: rgba(232, 197, 116, .28); transition: box-shadow .2s, border-color .2s; }
+.sl-slot svg { width: 42%; height: 42%; }
+.sl-slot.f { border-style: solid; background: radial-gradient(circle at 50% 45%, rgba(232, 197, 116, .1), transparent 70%); }
+.sl-slot.stock { cursor: pointer; color: rgba(255, 255, 255, .35); }
+.sl-slot.stock:hover { border-color: var(--a); color: var(--a); }
+.sl-slot.hint, .sl-slot.drop { border-color: var(--a); box-shadow: 0 0 0 2px var(--a), 0 0 22px var(--a); }
+
+/* karty */
+.sl-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .09); cursor: pointer; overflow: hidden;
+  transition: transform .2s cubic-bezier(.25, .8, .3, 1), box-shadow .15s; background: #1a1050;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .08), 0 4px 10px -4px rgba(0, 0, 0, .8); }
+.sl-card.up { background: linear-gradient(165deg, #ffffff 0%, #f7f4ff 55%, #ece6fb 100%); box-shadow: inset 0 0 0 1px rgba(40, 30, 90, .14), 0 4px 10px -4px rgba(0, 0, 0, .75); }
+.sl-f { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sl-rk { font-family: var(--f-d); font-weight: 900; font-size: 21px; letter-spacing: -1.5px; }
+.sl-fc { font-family: var(--f-d); font-weight: 900; font-size: 34px; }
+.sl-big { display: none; }
+.sl-table.small .sl-pips { display: none; }
+.sl-table.small .sl-big { display: inline; }
+.sl-table.small .sl-rk { font-size: 25px; }
+@media (hover: hover) { .sl-card.up:hover { box-shadow: inset 0 0 0 1px rgba(40, 30, 90, .14), 0 0 0 1.5px color-mix(in srgb, var(--a) 70%, transparent), 0 8px 16px -6px rgba(0, 0, 0, .8); } }
+.sl-card.turn .sl-f { animation: slTurn .32s ease; }
+@keyframes slTurn { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+.sl-card.drag { transition: none; box-shadow: inset 0 0 0 1px rgba(40, 30, 90, .14), 0 22px 36px -12px rgba(0, 0, 0, .9); }
+.sl-card.hint, .sl-card.drop { box-shadow: 0 0 0 2.5px var(--a), 0 0 24px var(--a); }
+.sl-card.fly { transition: transform 1.1s cubic-bezier(.5, 0, .5, 1); transform: translate(calc(50vw - 50%), -120vh) rotate(40deg) !important; }
+
 .sl-art { position: relative; width: 260px; height: 260px; --cw: 92px; --ch: 129px; }
-.sl-art .sl-card { transition: none; }
-@media (max-width: 500px) { .sl-card b, .sl-card i { font-size: calc(var(--cw) * .34); } .sl-card em { font-size: calc(var(--cw) * .55); top: 64%; } }
+.sl-art .sl-card { transition: none; box-shadow: 0 10px 22px -8px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(40, 30, 90, .14); }
