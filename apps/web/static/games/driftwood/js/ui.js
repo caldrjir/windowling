@@ -25,6 +25,7 @@ const UI = {
     document.addEventListener('click', e => {
       const t = e.target.closest('[data-act],[data-slot],[data-craft],[data-mode],[data-lang],[data-view],[data-look]');
       if (!t) return;
+      if (UI._dragged && t.dataset.slot !== undefined) return;
       Sound.play.ui();
       const d = t.dataset;
       if (d.act && UI.acts[d.act]) UI.acts[d.act](t);
@@ -41,6 +42,58 @@ const UI = {
       if (d.set) { SAVE.settings[d.set] = +e.target.value; Game.applySettings(); persist(); }
     });
     document.addEventListener('contextmenu', e => e.preventDefault());
+    this.initDrag();
+  },
+
+  // Přetahování v inventáři: na jiný slot = prohodit / doplnit stoh, mimo okno = vyhodit.
+  initDrag() {
+    let drag = null;
+    const end = () => { if (drag && drag.ghost) drag.ghost.remove(); if (drag && drag.el) drag.el.classList.remove('dragging'); drag = null; };
+    document.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || !this.invOpen) return;
+      const el = e.target.closest('#inv [data-slot]');
+      if (!el || !Inv.slots[+el.dataset.slot]) return;
+      drag = { i: +el.dataset.slot, el, x: e.clientX, y: e.clientY, ghost: null };
+    });
+    document.addEventListener('pointermove', e => {
+      if (!drag) return;
+      if (!drag.ghost) {
+        if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
+        drag.ghost = drag.el.cloneNode(true);
+        drag.ghost.classList.add('drag-ghost'); drag.ghost.classList.remove('pick', 'sel');
+        document.body.appendChild(drag.ghost);
+        drag.el.classList.add('dragging');
+        this.selSlot = null;
+      }
+      drag.ghost.style.left = e.clientX + 'px'; drag.ghost.style.top = e.clientY + 'px';
+      const out = !e.target.closest('.inv-panel');
+      drag.ghost.classList.toggle('out', out);
+    });
+    document.addEventListener('pointerup', e => {
+      if (!drag || !drag.ghost) { drag = null; return; }
+      const from = drag.i;
+      const over = document.elementFromPoint(e.clientX, e.clientY);
+      const to = over && over.closest('#inv [data-slot]');
+      const inPanel = over && over.closest('.inv-panel');
+      end();
+      // klik, který po puštění následuje, už slot nevybírá
+      this._dragged = true; setTimeout(() => { this._dragged = false; }, 0);
+      if (to) this.moveSlot(from, +to.dataset.slot);
+      else if (!inPanel) Drops.dropSlot(from, 0);
+      if (this.invOpen) this.renderInv();
+      this.renderHotbar();
+    });
+    document.addEventListener('pointercancel', end);
+  },
+  moveSlot(a, b) {
+    if (a === b) return;
+    const s = Inv.slots[a], t = Inv.slots[b];
+    if (s && t && s.id === t.id && ITEMS[s.id].stack > 1 && s.dur === undefined && t.dur === undefined && s.ch === undefined && t.ch === undefined) {
+      const k = Math.min(s.n, ITEMS[s.id].stack - t.n);
+      if (k > 0) { t.n += k; s.n -= k; if (!s.n) Inv.slots[a] = null; Sound.play.ui(); return; }
+    }
+    Inv.swap(a, b);
+    Sound.play.ui();
   },
   acts: {
     continue: () => Game.continueGame(),
@@ -113,7 +166,7 @@ const UI = {
       <div class="keys">
         <span><kbd>W A S D</kbd></span><span>${L('Pohyb', 'Move')}</span><span><kbd>Shift</kbd></span><span>${L('Sprint', 'Sprint')}</span><span><kbd>${L('Mezerník', 'Space')}</kbd></span><span>${L('Skok / plavání nahoru', 'Jump / swim up')}</span>
         <span><kbd>${L('Levé tl.', 'LMB')}</kbd></span><span>${L('Těžit, útočit, stavět', 'Harvest, attack, build')}</span><span><kbd>${L('Pravé tl.', 'RMB')}</kbd></span><span>${L('Jíst, pít, použít', 'Eat, drink, use')}</span>
-        <span><kbd>E</kbd></span><span>${L('Sebrat, napít se, použít stavbu', 'Pick up, drink, use structure')}</span><span><kbd>Tab</kbd></span><span>${L('Inventář a výroba', 'Inventory & crafting')}</span><span><kbd>1–6</kbd></span><span>${L('Výběr v liště', 'Select hotbar slot')}</span><span><kbd>V</kbd></span><span>${L('Přepnout pohled 1./3. osoba', 'Toggle 1st/3rd person')}</span>
+        <span><kbd>E</kbd></span><span>${L('Sebrat, napít se, použít stavbu', 'Pick up, drink, use structure')}</span><span><kbd>Tab</kbd></span><span>${L('Inventář a výroba', 'Inventory & crafting')}</span><span><kbd>1–6</kbd></span><span>${L('Výběr v liště', 'Select hotbar slot')}</span><span><kbd>V</kbd></span><span>${L('Přepnout pohled 1./3. osoba', 'Toggle 1st/3rd person')}</span><span><kbd>Q</kbd></span><span>${L('Vyhodit předmět (Shift+Q celý stoh)', 'Drop item (Shift+Q whole stack)')}</span>
       </div>
       <div class="set"><label>${L('Smazat veškerý postup', 'Erase all progress')}</label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>
       <button class="btn" data-act="${Game.playing ? 'resumePause' : 'back'}">${L('Zpět', 'Back')}</button></div>`, 'm-panel');
@@ -163,6 +216,7 @@ const UI = {
       if (t.kind === 'node') { const d = NODES[t.node.type]; prompt = d.gather ? `[E] ${L('Sebrat', 'Pick up')}: ${d.name}` : `[LMB] ${d.name}${d.needs && !(it && it.tool && it.tool.type === d.needs) ? L(' — potřebuješ krumpáč', ' — needs a pickaxe') : ''}`; }
       else if (t.kind === 'animal') prompt = `${t.a.d.name} <span class="hpm"><i style="width:${t.a.hp / t.a.d.hp * 100}%"></i></span>`;
       else if (t.kind === 'structure') prompt = `[E] ${ITEMS[t.s.type].name}${t.s.type === 'shelter' ? L(' — spát', ' — sleep') : t.s.type === 'raft' ? L(' — vyplout', ' — set sail') : L(' — výroba', ' — crafting')}`;
+      else if (t.kind === 'drop') prompt = `[E] ${L('Sebrat', 'Pick up')}: <span style="color:${ITEMS[t.d.item.id].color}">${Drops.label(t.d)}</span>`;
       else if (t.kind === 'water') prompt = t.fresh ? L('[E] Napít se', '[E] Drink') : L('[E] Slaná voda', '[E] Salt water');
     }
     prompt = prompt.replace('[LTM]', '[LMB]');
@@ -217,7 +271,7 @@ const UI = {
       <div class="inv-left">
         <h3>${L('Inventář', 'Inventory')}${P.armor ? ` <span class="armor-tag">${icon('armor')} ${L('Zbroj', 'Armor')}</span>` : ''}</h3>
         <div class="grid">${Inv.slots.map((s, i) => this.slotHTML(s, i, false)).join('')}</div>
-        <p class="hint">${L('Kliknutím na dva sloty je prohodíš. Horní řada je lišta (1–6).', 'Click two slots to swap them. The top row is your hotbar (1–6).')}</p>
+        <p class="hint">${L('Přetáhni předmět na jiný slot (nebo klikni na dva sloty). Přetažením mimo okno ho vyhodíš. Horní řada je lišta (1–6).', 'Drag an item to another slot (or click two slots). Drag it outside the window to drop it. The top row is your hotbar (1–6).')}</p>
         <div class="stations">${['campfire', 'workbench', 'furnace'].map(t => `<span class="${near(t) ? 'on' : ''}">${icon(ITEMS[t].icon)} ${ITEMS[t].name}</span>`).join('')}</div>
       </div>
       <div class="inv-right">

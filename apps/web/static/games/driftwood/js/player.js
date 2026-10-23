@@ -140,6 +140,7 @@ const Player = {
     for (const k in World.meshes) objs.push(World.meshes[k]);
     for (const a of Animals.list) if (!a.dead && Math.hypot(a.x - P.x, a.z - P.z) < 8) objs.push(a.mesh);
     for (const s of World.structures) if (Math.hypot(s.x - P.x, s.z - P.z) < 8) objs.push(s.mesh);
+    for (const d of Drops.list) if (Math.hypot(d.x - P.x, d.z - P.z) < 8) objs.push(d.mesh);
     objs.push(World.terrain);
     const hits = ray.intersectObjects(objs, true);
     this.target = null;
@@ -153,8 +154,9 @@ const Player = {
         if (node && node.alive) { this.target = { kind: 'node', node, point: h.point, dist: h.distance }; break; }
         continue;
       }
-      while (o && !o.userData.animal && !o.userData.structure) o = o.parent;
+      while (o && !o.userData.animal && !o.userData.structure && !o.userData.drop) o = o.parent;
       if (!o) continue;
+      if (o.userData.drop) { this.target = { kind: 'drop', d: o.userData.drop, point: h.point, dist: h.distance }; break; }
       if (o.userData.animal) { this.target = { kind: 'animal', a: o.userData.animal, point: h.point, dist: h.distance }; break; }
       if (o.userData.structure) { this.target = { kind: 'structure', s: o.userData.structure, point: h.point, dist: h.distance }; break; }
     }
@@ -172,9 +174,12 @@ const Player = {
         }
       }
     }
+    // předmět u nohou se dá sebrat, i když se na něj hráč přímo nedívá
+    if (!this.target || this.target.kind === 'water') { const d = Drops.near(P); if (d) this.target = { kind: 'drop', d, point: d.mesh.position, dist: 1 }; }
   },
 
   primary(env) {
+    if (this.target && this.target.kind === 'drop' && !(this.selItem() && this.selItem().place)) { env.msg(L('Stiskni E pro sebrání', 'Press E to pick up')); return; }
     const P = this.P, it = this.selItem(), slot = this.sel();
     if (it && it.place) { this.place(env); P.cd = 0.4; return; }
     const tool = it && it.tool;
@@ -248,6 +253,7 @@ const Player = {
   interact(env) {
     const P = this.P, t = this.target;
     if (!t) return;
+    if (t.kind === 'drop') { Drops.take(t.d); return; }
     if (t.kind === 'node' && NODES[t.node.type].gather) { this.gather(t.node, env); return; }
     if (t.kind === 'structure') {
       const s = t.s;

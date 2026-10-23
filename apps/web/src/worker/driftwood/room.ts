@@ -7,9 +7,11 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
 	CHAT_HISTORY,
+	MAX_DROPS,
 	MAX_PLAYERS,
 	MAX_STRUCTURES,
 	parseClientMessage,
+	type Drop,
 	type Look,
 	type PlayerState,
 	type RoomMeta,
@@ -129,6 +131,37 @@ export class DriftwoodRoom extends DurableObject<DriftwoodEnv> {
 				this.broadcast(msg, ws);
 				break;
 			}
+			case 'drop': {
+				// The oldest item disappears when the ground is full, as in solo play.
+				const drop: Drop = {
+					id: crypto.randomUUID().replace(/-/g, '').slice(0, 10),
+					item: msg.item,
+					x: msg.x,
+					z: msg.z,
+				};
+				const drops = [...((await this.ctx.storage.get<Drop[]>('drops')) ?? []), drop].slice(
+					-MAX_DROPS,
+				);
+				await this.ctx.storage.put('drops', drops);
+				this.broadcast({ t: 'drop', d: drop });
+				break;
+			}
+			case 'take': {
+				// The input gate holds other messages during these storage calls: first taker wins.
+				const drops = (await this.ctx.storage.get<Drop[]>('drops')) ?? [];
+				const drop = drops.find((d) => d.id === msg.id);
+				if (!drop) {
+					ws.send(JSON.stringify({ t: 'gone', id: msg.id }));
+					return;
+				}
+				await this.ctx.storage.put(
+					'drops',
+					drops.filter((d) => d !== drop),
+				);
+				ws.send(JSON.stringify({ t: 'took', d: drop }));
+				this.broadcast({ t: 'gone', id: drop.id }, ws);
+				break;
+			}
 		}
 	}
 
@@ -168,12 +201,13 @@ export class DriftwoodRoom extends DurableObject<DriftwoodEnv> {
 
 	private async welcome(ws: WebSocket, me: Attachment): Promise<void> {
 		const s = this.ctx.storage;
-		const [meta, clock, nodes, structures, chat] = await Promise.all([
+		const [meta, clock, nodes, structures, chat, drops] = await Promise.all([
 			s.get<RoomMeta>('meta'),
 			s.get<Clock>('clock'),
 			s.get<Record<string, number>>('nodes'),
 			s.get<Structure[]>('structures'),
 			s.get<ChatLine[]>('chat'),
+			s.get<Drop[]>('drops'),
 		]);
 		const now = Date.now();
 		const others = this.joined(ws).map(({ a }) => ({
@@ -194,6 +228,7 @@ export class DriftwoodRoom extends DurableObject<DriftwoodEnv> {
 					.filter(([, until]) => until > now)
 					.map(([key, until]) => [key, Math.round((until - now) / 1000)]),
 				structures: structures ?? [],
+				drops: drops ?? [],
 				chat: chat ?? [],
 				players: others,
 			}),

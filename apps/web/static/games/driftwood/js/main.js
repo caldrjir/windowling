@@ -64,7 +64,7 @@ const Game = {
   buildWorld(seed) {
     if (this.scene && G.seed === seed && this.built) return;
     this.scene = new THREE.Scene();
-    World.structures = []; World.clouds = [];
+    World.structures = []; World.clouds = []; Drops.list = [];
     World.generate(seed, this.scene);
     Animals.init(this.scene);
     Particles.init(this.scene);
@@ -110,6 +110,7 @@ const Game = {
       Player.keys.add(e.code);
       if (e.code === 'KeyE') Player.interact(this.env);
       if (e.code === 'KeyV') this.toggleView();
+      if (e.code === 'KeyQ') Drops.dropSlot(Player.P.sel, e.shiftKey ? 0 : 1);
       const n = '123456'.indexOf(e.key);
       if (n >= 0) { Player.P.sel = n; UI.renderHotbar(); }
       if (e.code === 'Space') e.preventDefault();
@@ -145,6 +146,7 @@ const Game = {
     Object.assign(G, { mode, hour: 8, day: 1, flags: {}, won: false });
     Player.init();
     Inv.reset();
+    Drops.clear();
     Player.spawnOnBeach(mulberry32(seed + 3));
     SAVE.stats.worlds++;
     this.playing = true; this.playStart();
@@ -162,6 +164,7 @@ const Game = {
     Object.assign(Player.P, W.P);
     Inv.slots = W.inv.concat(new Array(INV_SIZE).fill(null)).slice(0, INV_SIZE);
     for (const s of W.structures) World.addStructure(s.type, s.x, s.z, s.rot);
+    Drops.clear(); Drops.load(W.drops);
     for (const [k, list] of Object.entries(W.dead || {})) for (const [i, left] of list) { const o = World.nodes[k][i]; if (o) { o.alive = false; o.respawn = left; World.refreshNode(o); } }
     this.playing = true; this.playStart();
   },
@@ -179,6 +182,7 @@ const Game = {
       seed: G.seed, mode: G.mode, hour: G.hour, day: G.day, flags: G.flags,
       P: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: Math.max(1, P.hp), hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, stamina: P.stamina, armor: P.armor, spawn: P.spawn, sel: P.sel },
       inv: Inv.slots, structures: World.structures.filter(s => s.type !== 'raft').map(s => ({ type: s.type, x: s.x, z: s.z, rot: s.rot })), dead,
+      drops: Drops.save(),
     };
     persist();
   },
@@ -189,6 +193,7 @@ const Game = {
     this.unlock(true);
     // vyčistit stavby (menu ukazuje čistý ostrov)
     for (const s of World.structures.slice()) World.removeStructure(s);
+    Drops.clear();
     Animals.clear();
     if (Player.ghost) { this.scene.remove(Player.ghost); Player.ghost = null; Player.ghostType = null; }
     UI.menu();
@@ -360,6 +365,7 @@ const Game = {
     this.nightF = L0.night;
     World.updateWater(t, this.playing ? cx : 0, this.playing ? cz : 0);
     World.updateStructures(t);
+    Drops.update(t);
     for (const c of World.clouds) { c.position.x += c.userData.v * dt; if (c.position.x > 400) c.position.x = -400; }
     Particles.update(dt);
     // pochodeň

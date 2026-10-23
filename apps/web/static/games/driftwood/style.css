@@ -203,3 +203,9 @@ p.mp-code { text-transform: none; width: auto; margin: 4px 0 12px; color: var(--
 #mpBar span { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #mpBar em { font-style: normal; font-weight: 700; letter-spacing: .15em; color: var(--sun); margin-left: 4px; }
 #screen:not([hidden]) ~ #mpBar, #screen:not([hidden]) ~ #mpChat { display: none; }
+
+/* ── Přetahování v inventáři a předměty na zemi (Windowling) ── */
+#inv .slot { touch-action: none; user-select: none; }
+#inv .slot.dragging { opacity: .35; }
+.drag-ghost { position: fixed; z-index: 60; pointer-events: none; transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 10px 30px rgba(0,0,0,.5); border-color: var(--sea); margin: 0 !important; }
+.drag-ghost.out { border-color: #ff8a6e; box-shadow: 0 0 0 2px #ff8a6e, 0 10px 30px rgba(0,0,0,.5); }
