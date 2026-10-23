@@ -1,4 +1,4 @@
-/* MAHJONG – kameny */
+/* MAHJONG – kameny: slonovinová tvář, nefritové tělo, kresby v SVG */
 .mj-wrap { display: grid; justify-items: center; gap: 12px; width: 100%; }
 .mj-head { display: flex; gap: 10px; }
 .mj-head div { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 96px; }
@@ -6,19 +6,56 @@
 .mj-head b { font-family: var(--f-d); font-size: 18px; }
 .mj-scroll { max-width: 100%; overflow-x: auto; padding: 8px; }
 .mj-board { position: relative; margin: 0 auto; }
-.mj-t { position: absolute; left: 0; top: 0; width: var(--tw); height: var(--th); border-radius: calc(var(--tw) * .14); display: grid; place-items: center; align-content: center; gap: 0; padding: 0;
-  background: linear-gradient(160deg, #fffdf6, #ece6d6); color: #222;
-  box-shadow: var(--dz) var(--dz) 0 #b9ad92, calc(var(--dz) + 1px) calc(var(--dz) + 1px) 0 #7d6f55, 0 6px 14px -4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.12);
-  transition: transform .15s, opacity .25s, filter .2s; cursor: pointer; overflow: hidden; }
-.mj-t .mj-n { position: absolute; left: 8%; top: 4%; font-family: var(--f-d); font-weight: 700; font-size: calc(var(--tw) * .26); line-height: 1; }
-.mj-t .mj-s { font-size: calc(var(--tw) * .2); line-height: 1.05; text-align: center; letter-spacing: -.08em; margin-top: 18%; }
-.mj-t .mj-big { font-size: calc(var(--tw) * .56); line-height: 1; font-weight: 700; font-family: var(--f-d); }
-.mj-t .mj-cap { font-size: calc(var(--tw) * .13); color: #6b5f46; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
-.mj-t.blocked { filter: brightness(.72) saturate(.7); }
-.mj-t.sel { background: linear-gradient(160deg, #fff, color-mix(in srgb, var(--a) 40%, #fff)); box-shadow: var(--dz) var(--dz) 0 #b9ad92, 0 0 0 3px var(--a), 0 0 22px var(--a); }
-.mj-t.hint { box-shadow: var(--dz) var(--dz) 0 #b9ad92, 0 0 0 3px var(--good), 0 0 22px var(--good); }
-.mj-t.gone { opacity: 0; filter: brightness(2); }
+
+.mj-t {
+  --face: linear-gradient(165deg, #fffdf7 0%, #fbf4e4 45%, #efe2c6 100%);
+  --edge: #1fae94; --edge-2: #0b5f52;
+  position: absolute; left: 0; top: 0; width: var(--tw); height: var(--th); padding: 0;
+  border-radius: calc(var(--tw) * .16); display: block; overflow: visible; cursor: pointer;
+  background: var(--face);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .9),
+    inset 0 calc(var(--tw) * -.05) calc(var(--tw) * .08) rgba(150, 120, 70, .18),
+    calc(var(--dz) * .5) calc(var(--dz) * .5) 0 #e2d3b2,
+    var(--dz) var(--dz) 0 var(--edge),
+    calc(var(--dz) + 1.5px) calc(var(--dz) + 1.5px) 0 var(--edge-2),
+    calc(var(--dz) + 4px) calc(var(--dz) + 8px) 14px -4px rgba(0, 0, 0, .65);
+  transition: margin .14s ease, opacity .25s, filter .2s, box-shadow .2s;
+}
+/* jemný zlatý rámeček a lesk */
+.mj-t::before { content: ''; position: absolute; inset: calc(var(--tw) * .07); border-radius: calc(var(--tw) * .1); border: 1px solid rgba(190, 150, 80, .35); pointer-events: none; }
+.mj-t::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(130deg, rgba(255, 255, 255, .7) 0%, rgba(255, 255, 255, 0) 38%); pointer-events: none; }
+.mj-f { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.mj-num { font-family: var(--f-d); font-weight: 900; font-size: 22px; }
+.mj-wind { font-family: var(--f-d); font-weight: 900; font-size: 58px; fill: #2c2178; }
+.mj-cap { font-family: var(--f-u); font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; fill: #8a7550; }
+.mj-zs { filter: drop-shadow(0 0 2px rgba(177, 76, 255, .6)); }
+
+@media (hover: hover) { .mj-t:not(.blocked):hover { margin-top: -2px; } }
+.mj-t.blocked { filter: brightness(.68) saturate(.55); }
+.mj-t.sel {
+  margin-top: -4px; --face: linear-gradient(165deg, #ffffff, color-mix(in srgb, var(--a) 28%, #fff8e6));
+  box-shadow: inset 0 0 0 1px #fff, 0 0 0 2.5px var(--a), 0 0 26px color-mix(in srgb, var(--a) 80%, transparent),
+    var(--dz) var(--dz) 0 var(--edge), calc(var(--dz) + 1.5px) calc(var(--dz) + 1.5px) 0 var(--edge-2);
+}
+.mj-t.hint { box-shadow: inset 0 0 0 1px #fff, 0 0 0 2.5px var(--good), 0 0 24px var(--good), var(--dz) var(--dz) 0 var(--edge), calc(var(--dz) + 1.5px) calc(var(--dz) + 1.5px) 0 var(--edge-2); }
+.mj-t.gone { opacity: 0; filter: brightness(1.8); }
 .mj-t.shake { animation: mjShake .3s; }
 @keyframes mjShake { 25% { margin-left: -3px; } 75% { margin-left: 3px; } }
 .k-tool.on { box-shadow: inset 0 0 0 2px var(--a), 0 0 18px var(--a); }
-.mj-art { position: relative; width: 260px; height: 260px; --tw: 60px; --th: 80px; --dz: 5px; }
+
+/* Odkládací políčka */
+.mj-tray { display: flex; gap: 10px; padding: 10px 12px; border-radius: 18px; background: rgba(0, 0, 0, .28); box-shadow: inset 0 2px 10px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--line); }
+.mj-slot { position: relative; width: calc(var(--tw, 44px) + 10px); height: calc(var(--tw, 44px) * 1.34 + 10px); border-radius: 12px; display: grid; place-items: center;
+  border: 1.5px dashed rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .03); transition: box-shadow .2s, border-color .2s, background .2s; }
+.mj-slot i { font-style: normal; font-family: var(--f-d); font-size: 13px; color: var(--dim); }
+.mj-slot.ready { border-color: var(--a); background: color-mix(in srgb, var(--a) 10%, transparent); box-shadow: 0 0 18px -4px var(--a); animation: mjReady 1.2s infinite; }
+@keyframes mjReady { 50% { box-shadow: 0 0 26px -2px var(--a); } }
+.mj-slot.full { border-style: solid; border-color: transparent; }
+.mj-mini { position: relative; display: block; width: var(--tw, 44px); height: calc(var(--tw, 44px) * 1.34); border-radius: calc(var(--tw, 44px) * .16); background: linear-gradient(165deg, #fffdf7, #efe2c6);
+  box-shadow: inset 0 0 0 1px #fff, 2px 3px 0 #1fae94, 3px 4px 0 #0b5f52, 0 8px 14px -6px rgba(0, 0, 0, .7); animation: kPop .25s; }
+.mj-slot.sel .mj-mini { box-shadow: inset 0 0 0 1px #fff, 0 0 0 2.5px var(--a), 0 0 22px var(--a), 2px 3px 0 #1fae94; transform: translateY(-3px); }
+.mj-slot.hint .mj-mini { box-shadow: inset 0 0 0 1px #fff, 0 0 0 2.5px var(--good), 0 0 22px var(--good), 2px 3px 0 #1fae94; }
+
+.mj-art { position: relative; width: 260px; height: 260px; --tw: 60px; --th: 80px; --dz: 6px; }
+.mj-art .mj-t { cursor: default; }
