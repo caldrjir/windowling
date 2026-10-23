@@ -78,7 +78,9 @@ generate(seed, diff), create(el, puzzle, saved, api), rules })`; its catalogue e
 seed (daily puzzles and Path levels are the same for everyone) and give a unique solution; test
 them in Node before shipping. Add it to `apps/web/e2e/puzzles.test.ts`. For online play add
 `online: { kind: 'race' }` and an instance `progress()` (0..1), or `kind: 'turn'` and play
-through `opts.net` (see `docs/architecture.md`, Online puzzles).
+through `opts.net` (see `docs/architecture.md`, Online puzzles). Leaderboards come for free
+(daily, levels, `metric: 'score'` or `ranked: true` free modes); keep diffs whose puzzles differ
+per game (random deals) unranked.
 
 ## Commands
 

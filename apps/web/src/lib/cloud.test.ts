@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanNickname, SYNC_KEY_RE } from './cloud';
+import { BOARD_RE, cleanNickname, SYNC_KEY_RE } from './cloud';
 
 describe('cloud saves', () => {
 	it('keeps only the keys games use for progress', () => {
@@ -30,5 +30,20 @@ describe('cloud saves', () => {
 		expect(cleanNickname('x'.repeat(21))).toBeNull();
 		expect(cleanNickname('<script>')).toBeNull();
 		expect(cleanNickname(42)).toBeNull();
+	});
+
+	it('accepts only comparable leaderboard boards', () => {
+		for (const b of [
+			'daily:2026-10-23:time',
+			'level:37:time',
+			'free:sprint:time',
+			'free:classic:score',
+			'best:floor',
+			'online:wins',
+			'total:played',
+		])
+			expect(BOARD_RE.test(b)).toBe(true);
+		for (const b of ['daily:today:time', 'level:1:speed', 'free:Hard:time', 'x:time', 'best'])
+			expect(BOARD_RE.test(b)).toBe(false);
 	});
 });

@@ -71,6 +71,13 @@
       "when": 1792759211844,
       "tag": "0009_cloud_saves",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792760926001,
+      "tag": "0010_scores",
+      "breakpoints": true
     }
   ]
 }

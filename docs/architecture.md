@@ -207,6 +207,22 @@ Signed-in players keep their progress in their account; anonymous play is unchan
   (`GET/POST /api/profile`, unique regardless of case). The hub copies it into
   `gamecenter.puzzles` (online puzzles) and `driftwood.nick`.
 
+## Leaderboards
+
+- Table `score (user_id, game, board, value)`: a signed-in player's best result per board.
+  A board (`BOARD_RE` in `src/lib/cloud.ts`) only groups comparable results:
+  `daily:<date>:time` (the same daily puzzle), `level:<n>:time` (the same Path level),
+  `free:<diff>:time|score` (free play only in modes with fixed rules: `metric: 'score'` or
+  `ranked: true` diffs), `online:wins`, `best:survive|floor|days` (VOIDBORN, STARSPIRE,
+  DRIFTWOOD records) and `total:played` (play time of every game). Time is better when lower,
+  everything else when higher.
+- The puzzle kit keeps its best result per board in its save (`lb`); `sync.js` sends changed
+  results of all games (`lb`, the action games' records, `playTime`) to `POST /api/scores`
+  after each sync. Results come from the browser, so the server only range-checks them.
+- `GET /api/scores?game&board` is public: the top players (only players with a nickname), the
+  asking player's place and the count. Shown in every puzzle (Žebříčky, and from the result of a
+  daily or level) and in the center for the selected game (record board or play time).
+
 ## Future: multiplayer
 
 - **More multiplayer**: the same pattern as DRIFTWOOD (a Durable Object per room); identity
@@ -229,3 +245,4 @@ Signed-in players keep their progress in their account; anonymous play is unchan
 | 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |
 | 2026-10-23 | Online puzzles: one generic room DO for turns and races | One server for 13 games; the room enforces turn order and timing, the games keep rules.     |
 | 2026-10-23 | Cloud saves mirror localStorage keys, newest write wins | Games stay untouched; one generic sync script for all games; per-key time stamps.           |
+| 2026-10-23 | Leaderboards per comparable board only                  | Fair rankings: same daily puzzle, same level, same rules; client-reported, range-checked.   |

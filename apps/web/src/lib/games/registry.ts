@@ -37,6 +37,8 @@ export interface Game extends GameTexts {
 	desktopOnly?: boolean;
 	/** Online play: live turn-based games, races on the same puzzle, or shared worlds. */
 	online?: 'turn' | 'race' | 'world';
+	/** The leaderboard the center shows (puzzles: today's daily puzzle). */
+	record?: { board: string; label: [string, string] };
 	cover(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void;
 }
 
@@ -46,6 +48,7 @@ export const GAME_SLOTS = 4;
 const ACTION_GAMES: Game[] = [
 	{
 		id: 'voidborn',
+		record: { board: 'best:survive', label: ['Nejdelší přežití', 'Longest survival'] },
 		title: 'VOIDBORN',
 		tagline: 'Přežij nekonečný příval prázdnoty.',
 		description:
@@ -223,6 +226,7 @@ const ACTION_GAMES: Game[] = [
 	},
 	{
 		id: 'starspire',
+		record: { board: 'best:floor', label: ['Nejvyšší patro', 'Highest floor'] },
 		title: 'STARSPIRE',
 		tagline: 'Vystoupej po věži souhvězdí.',
 		description:
@@ -370,6 +374,7 @@ const ACTION_GAMES: Game[] = [
 	},
 	{
 		id: 'driftwood',
+		record: { board: 'best:days', label: ['Nejvíc přežitých dní', 'Most days survived'] },
 		title: 'DRIFTWOOD',
 		tagline: 'Přežij na opuštěném ostrově.',
 		description:
