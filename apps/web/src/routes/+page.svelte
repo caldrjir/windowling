@@ -38,6 +38,8 @@
 		readonly lastSync: number;
 	}
 	const gcSync = () => (window as unknown as { GCSync?: SyncApi }).GCSync;
+	// Background music settings (static/games/music.js).
+	const openMusic = () => (window as unknown as { GCMusic?: { open: () => void } }).GCMusic?.open();
 	let syncState = $state('');
 	let syncedAt = $state(0);
 	let nickOpen = $state(false);
@@ -519,6 +521,24 @@
 	</div>
 	<nav class="tabs"><button class="on">{L('Knihovna', 'Library')}</button></nav>
 	<div class="spacer"></div>
+	<button class="music" onclick={openMusic} data-testid="music-btn" title={L('Hudba', 'Music')}
+		><svg viewBox="0 0 24 24" aria-hidden="true"
+			><path
+				d="M9 18V5l11-2v13"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linejoin="round"
+			/><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2" /><circle
+				cx="17"
+				cy="16"
+				r="3"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			/></svg
+		><span>{L('Hudba', 'Music')}</span></button
+	>
 	<div class="lang" role="group" aria-label={L('Jazyk', 'Language')}>
 		<button class:on={lang === 'cs'} onclick={() => setLang('cs')}>CS</button>
 		<button class:on={lang === 'en'} onclick={() => setLang('en')}>EN</button>

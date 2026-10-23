@@ -194,6 +194,50 @@ test('STARSPIRE Saga: one deck through the levels, retry after a fall', async ({
 	expect(errors).toEqual([]);
 });
 
+test('background music: a default playlist per game, your own playlist, or none', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/sudoku/index.html');
+	// The generated default playlist starts with the first touch of the page.
+	await page.locator('#kMusic').click();
+	await expect(page.getByTestId('music-settings')).toBeVisible();
+	await expect
+		.poll(() => page.evaluate('window.GCGen ? [GCGen.playing, GCGen.tracks.length] : []'))
+		.toEqual([true, 4]);
+	expect(await page.evaluate('GCMusic.gameMusic')).toBe(true);
+
+	// Your own playlist: an unknown link is refused, a YouTube link is kept.
+	await page.locator('[data-src="own"]').click();
+	const link = page.locator('.gcm-own input[type=url]');
+	await link.fill('https://example.com/song');
+	await expect(page.locator('.gcm-hint')).toHaveClass(/bad/);
+	await link.fill('https://www.youtube.com/playlist?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG');
+	await expect(page.locator('.gcm-hint')).toHaveText('YouTube');
+	await page.locator('[data-a="save"]').click();
+	await expect(page.getByTestId('music')).toBeVisible();
+	expect(await page.evaluate('[GCGen.playing, GCMusic.gameMusic]')).toEqual([false, false]);
+
+	// The setting follows to the other games: the action games keep only their sounds.
+	await page.goto('/games/voidborn/index.html');
+	await expect(page.getByTestId('music')).toBeVisible();
+	expect(await page.evaluate('GCMusic.gameMusic')).toBe(false);
+
+	// No music at all, set from the hub.
+	await page.goto('/');
+	await page.getByTestId('music-btn').click();
+	await page.locator('[data-src="off"]').click();
+	await page.locator('[data-a="save"]').click();
+	await expect(page.getByTestId('music')).toHaveCount(0);
+	expect(
+		await page.evaluate(
+			() => JSON.parse(localStorage.getItem('gamecenter.music') ?? '{}') as object,
+		),
+	).toMatchObject({ src: 'off' });
+	expect(errors).toEqual([]);
+});
+
 test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
 	test.skip(!isMobile, 'touch controls are for phones');
 	const errors: string[] = [];

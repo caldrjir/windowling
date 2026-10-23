@@ -36,7 +36,10 @@ const Sound = (() => {
     apply();
     setInterval(tickAmbient, 120);
   }
-  function apply() { if (ctx) { sfx.gain.value = vol.sfx * 0.9; amb.gain.value = vol.sfx * 0.6; mus.gain.value = vol.music * 0.5; } }
+  // Hudba Game Center (music.js): vlastní playlist nebo ticho ztlumí jen hudbu hry, zvuky zůstanou.
+  const gm = () => (window.GCMusic && !window.GCMusic.gameMusic ? 0 : 1);
+  if (window.GCMusic) window.GCMusic.on(() => apply());
+  function apply() { if (ctx) { sfx.gain.value = vol.sfx * 0.9; amb.gain.value = vol.sfx * 0.6; mus.gain.value = vol.music * 0.5 * gm(); } }
   function setVolume(k, v) { vol[k] = v; apply(); }
   const ok = (n, g) => { if (!ctx) return false; const t = ctx.currentTime; if (last[n] !== undefined && t - last[n] < g) return false; last[n] = t; return true; };
   function tone(o) {

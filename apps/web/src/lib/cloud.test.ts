@@ -5,6 +5,7 @@ describe('cloud saves', () => {
 	it('keeps only the keys games use for progress', () => {
 		for (const key of [
 			'gamecenter.lang',
+			'gamecenter.music',
 			'gamecenter.puzzles',
 			'gamecenter.stats.voidborn',
 			'sudoku.save.v1',

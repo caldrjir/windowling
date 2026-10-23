@@ -67,6 +67,24 @@ with `user_id` taken from the Better Auth session (null = anonymous), and prunes
 60 s. `GET /api/presence` returns, per game, distinct signed-in players and anonymous tabs; the
 hub polls it every 15 s. No personal data beyond the user link; rows live for a minute.
 
+### Background music - `static/games/music.js`
+
+The hub and every game page load `music.js` (after `sync.js`). The synced key
+`gamecenter.music` (`{ src: 'game' | 'own' | 'off', url, vol, side }`) chooses the music:
+
+- `game` (default): VOIDBORN, STARSPIRE and DRIFTWOOD play their own music; the puzzle games get
+  a generated playlist (`music-gen.js`, Web Audio, four tracks per game seeded by its id, the
+  same for everyone; no audio files).
+- `own`: a YouTube, SoundCloud or Spotify link plays in a small player card on every page
+  (the services' official embeds; their players must stay visible while playing, hiding the
+  card pauses). The hub CSP allows their scripts and frames.
+- `off`: only the games' sound effects.
+
+Games mute only their music bus while `GCMusic.gameMusic` is false (`GCMusic.on` tells them
+when it changes), so sound effects always play over the music. Browsers start sound only after
+a click, so a page continues the playlist with the first touch; the place in the playlist is
+kept per tab (`sessionStorage`).
+
 ### Server - `apps/web/src/lib/server` and `hooks.server.ts`
 
 Request lifecycle:

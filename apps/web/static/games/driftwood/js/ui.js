@@ -163,6 +163,7 @@ const UI = {
       <div class="set"><label>${L('Stíny', 'Shadows')}</label><button class="toggle ${s.shadows ? 'on' : ''}" data-act="toggleShadows"></button></div>
       <div class="set"><label>${L('Efekty a prostředí', 'Effects & ambience')}</label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
       <div class="set"><label>${L('Hudba', 'Music')}</label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
+      ${window.GCMusic ? `<div class="set"><label>${L('Vlastní playlist', 'Your playlist')}</label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}
       <div class="keys">
         <span><kbd>W A S D</kbd></span><span>${L('Pohyb', 'Move')}</span><span><kbd>Shift</kbd></span><span>${L('Sprint', 'Sprint')}</span><span><kbd>${L('Mezerník', 'Space')}</kbd></span><span>${L('Skok / plavání nahoru', 'Jump / swim up')}</span>
         <span><kbd>${L('Levé tl.', 'LMB')}</kbd></span><span>${L('Těžit, útočit, stavět', 'Harvest, attack, build')}</span><span><kbd>${L('Pravé tl.', 'RMB')}</kbd></span><span>${L('Jíst, pít, použít', 'Eat, drink, use')}</span>
