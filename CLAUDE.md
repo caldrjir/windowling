@@ -63,7 +63,9 @@ docker/                        Local infrastructure (Postgres init scripts)
 1. Put the game in `apps/web/static/games/<id>/` (it may link back with `../../index.html`,
    which redirects to `/`).
    Load `<script src="../presence.js"></script>` so the hub can count its players, and
-   `<script src="../sync.js"></script>` as the first script in `<head>` (cloud saves). Save to
+   `<script src="../sync.js"></script>` as the first script in `<head>` (cloud saves), followed by
+   `<script src="../music.js"></script>` (background music: a game with music of its own mutes it
+   while `GCMusic.gameMusic` is false and keeps its sound effects; other games get a generated playlist). Save to
    `<id>.save.v1` / `gamecenter.stats.<id>` so the progress follows a signed-in player.
 2. Add an entry to `GAMES` in `apps/web/src/lib/games/registry.ts` (texts in cs + en, `path`,
    `statsKey`, cover colours).

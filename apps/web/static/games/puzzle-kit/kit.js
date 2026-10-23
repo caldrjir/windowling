@@ -50,7 +50,7 @@ const Kit = (() => {
     trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a4 4 0 01-4 4M7 5H4v2a4 4 0 004 4"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     brush: '<path d="M14 4l6 6-8 8H6v-6z"/><path d="M4 20c0-2 1-3 2-3"/>', help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.7-2.5 2.2-2.5 4M12 17.5v.5"/>',
     pause: '<path d="M8 5v14M16 5v14"/>', check: '<path d="M4 12.5l5 5L20 6.5"/>', lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>', quest: '<path d="M5 4h14v16l-7-4-7 4z"/>', sound: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 8a5 5 0 010 8"/>', mute: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', quest: '<path d="M5 4h14v16l-7-4-7 4z"/>', sound: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 8a5 5 0 010 8"/>', mute: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>',
     undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>', bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
     erase: '<path d="M20 20H9L4 15l10-10 7 7-6 6"/>', pencil: '<path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', home: '<path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 010 6.8M18 14.3c2.2.7 3.5 2.8 3.5 5.7"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
@@ -264,13 +264,16 @@ const Kit = (() => {
         <div class="k-sp"></div>
         <div class="k-pill" id="kTimer" hidden></div>
         <div class="k-pill k-shards" title="${L('Hvězdný prach', 'Stardust')}">${icon('gem')}<b id="kShards">0</b></div>
-        <button class="k-icon" id="kSound" aria-label="${L('Zvuk', 'Sound')}"></button>
+        <button class="k-icon" id="kMusic" aria-label="${L('Hudba', 'Music')}" title="${L('Hudba', 'Music')}">${icon('music')}</button>
+        <button class="k-icon" id="kSound" aria-label="${L('Zvuky', 'Sounds')}"></button>
       </header>
       <main id="kView"></main>
       <div id="kModal" hidden></div>
       <div id="kToasts"></div>
       <canvas id="kFx"></canvas>`;
     $('#kBack').onclick = () => { SOUND.ui(); back(); };
+    $('#kMusic').onclick = () => { SOUND.ui(); if (window.GCMusic) window.GCMusic.open(); };
+    $('#kMusic').hidden = !window.GCMusic;
     $('#kSound').onclick = () => { META.sound = !META.sound; saveMeta(); soundBtn(); SOUND.ui(); };
     soundBtn();
     $('#kHub').addEventListener('click', () => { leavePlay(); persist(); });

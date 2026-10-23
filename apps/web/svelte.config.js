@@ -13,7 +13,19 @@ const config = {
 			mode: 'auto',
 			directives: {
 				'default-src': ['self'],
-				'script-src': ['self'],
+				// Your own playlist (static/games/music.js): the YouTube, SoundCloud and Spotify players.
+				'script-src': [
+					'self',
+					'https://www.youtube.com',
+					'https://w.soundcloud.com',
+					'https://open.spotify.com',
+				],
+				'frame-src': [
+					'https://www.youtube.com',
+					'https://www.youtube-nocookie.com',
+					'https://w.soundcloud.com',
+					'https://open.spotify.com',
+				],
 				// Google Fonts (stylesheet + font files); nothing else from third parties.
 				'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
 				'font-src': ['self', 'https://fonts.gstatic.com'],

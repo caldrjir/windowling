@@ -765,6 +765,7 @@ const UI = (() => {
         <div class="set-row"><label>${L('Jazyk', 'Language')}</label><div class="lang">${['cs', 'en'].map(l => `<button class="${l === LANG ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div></div>
         <div class="set-row"><label>${L('Efekty', 'Effects')}</label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
         <div class="set-row"><label>${L('Hudba', 'Music')}</label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
+        ${window.GCMusic ? `<div class="set-row"><label>${L('Vlastní playlist', 'Your playlist')}</label><button class="btn" data-act="musicSettings">${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}
         <div class="set-row"><label>${L('Rychlé animace', 'Fast animations')}</label><button class="toggle ${s.fast ? 'on' : ''}" data-act="toggleFast"></button></div>
         <div class="keys"><span><kbd>1</kbd>–<kbd>0</kbd></span><span>${L('Vybrat kartu (podruhé zahrát)', 'Select a card (again to play)')}</span><span><kbd>←</kbd><kbd>→</kbd></span><span>${L('Změnit cíl', 'Change target')}</span><span><kbd>E</kbd></span><span>${L('Ukončit kolo', 'End turn')}</span><span><kbd>Esc</kbd></span><span>${L('Zrušit / menu', 'Cancel / menu')}</span><span>${L('Myš', 'Mouse')}</span><span>${L('Přetáhni kartu na nepřítele, nebo nahoru pro zahrání', 'Drag a card onto an enemy, or upward to play it')}</span></div>
         <div class="set-row"><label>${L('Smazat veškerý postup', 'Erase all progress')}</label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div></div>`;
@@ -806,6 +807,7 @@ const UI = (() => {
     sagaRetry: () => { Run.retryLevel(); Sound.play.start(); renderMap(); banner(L(`Úroveň ${R.level + 1}`, `Level ${R.level + 1}`), L('Nový pokus', 'Another try'), 'turn'); },
     sagaEnd: () => gameOver(false, true),
     hub: () => { persist(); location.href = '../../index.html'; },
+    musicSettings: () => window.GCMusic.open(),
     toggleFast: () => { SAVE.settings.fast = !SAVE.settings.fast; persist(); go('settings'); },
     wipe: () => modal(`<div class="panel"><h2>${L('Smazat veškerý postup?', 'Erase all progress?')}</h2><p class="muted">${L('Tohle nejde vrátit.', 'This cannot be undone.')}</p><div class="row-btns"><button class="btn danger" data-act="wipeYes">${L('Smazat', 'Erase')}</button><button class="btn" data-act="closeModal">${L('Zrušit', 'Cancel')}</button></div></div>`),
     wipeYes: () => { const st = SAVE.settings; SAVE = defaultSave(); SAVE.settings = st; persist(); closeModal(); go('menu'); },
