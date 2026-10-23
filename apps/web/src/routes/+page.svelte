@@ -31,6 +31,19 @@
 	// Stats live in the player's browser (written by the games); read after mount.
 	let saved = $state<Record<string, Stats | null>>({});
 	let signingIn = $state(false);
+	// Cloud saves (static/games/sync.js) and the nickname chosen after the first sign-in.
+	interface SyncApi {
+		sync: () => Promise<{ state: string }>;
+		readonly state: string;
+		readonly lastSync: number;
+	}
+	const gcSync = () => (window as unknown as { GCSync?: SyncApi }).GCSync;
+	let syncState = $state('');
+	let syncedAt = $state(0);
+	let nickOpen = $state(false);
+	let nickInput = $state('');
+	let nickError = $state('');
+	let nickBusy = $state(false);
 	// Phones and tablets (no hover, coarse pointer) cannot play mouse + keyboard games.
 	let touchOnly = $state(false);
 	const blocked = (g: Game) => Boolean(g.desktopOnly) && touchOnly;
@@ -195,6 +208,70 @@
 			signingIn = false;
 		}
 	}
+	function loadSaved() {
+		const loaded: Record<string, Stats | null> = {};
+		let best = 0;
+		GAMES.forEach((g, i) => {
+			const s = readStats(g);
+			loaded[g.id] = s;
+			// The last game played is selected.
+			if (s?.lastPlayed && s.lastPlayed > best) {
+				best = s.lastPlayed;
+				sel = i;
+			}
+		});
+		saved = loaded;
+	}
+	function openNick() {
+		const suggestion = (data.user?.nickname ?? data.user?.name ?? '').split(' ')[0] ?? '';
+		nickInput = suggestion.slice(0, 20);
+		nickError = '';
+		nickOpen = true;
+	}
+	async function saveNick(e: SubmitEvent) {
+		e.preventDefault();
+		nickBusy = true;
+		nickError = '';
+		try {
+			const res = await fetch('/api/profile', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ nickname: nickInput }),
+			});
+			if (res.status === 409)
+				nickError = L('Tuhle přezdívku už někdo má.', 'Somebody already has this nickname.');
+			else if (!res.ok)
+				nickError = L(
+					'3–20 znaků: písmena, číslice, mezera, tečka, pomlčka.',
+					'3–20 characters: letters, digits, space, dot, dash.',
+				);
+			else {
+				nickOpen = false;
+				await invalidateAll();
+			}
+		} catch {
+			nickError = L('Nepodařilo se uložit, zkus to znovu.', 'Could not save, try again.');
+		} finally {
+			nickBusy = false;
+		}
+	}
+	// The account nickname is the player's name in the games too (online puzzles, DRIFTWOOD).
+	$effect(() => {
+		const nick = data.user?.nickname;
+		if (!nick) return;
+		try {
+			const meta = JSON.parse(localStorage.getItem('gamecenter.puzzles') ?? '{}') as Record<
+				string,
+				unknown
+			>;
+			if (meta.nick !== nick)
+				localStorage.setItem('gamecenter.puzzles', JSON.stringify({ ...meta, nick }));
+			if (localStorage.getItem('driftwood.nick') !== nick)
+				localStorage.setItem('driftwood.nick', nick);
+		} catch {
+			// no storage
+		}
+	});
 	async function signOut() {
 		await authClient.signOut();
 		await invalidateAll();
@@ -237,18 +314,27 @@
 		} catch {
 			lang = /^(cs|sk)/i.test(navigator.language) ? 'cs' : 'en';
 		}
-		const loaded: Record<string, Stats | null> = {};
-		let best = 0;
-		GAMES.forEach((g, i) => {
-			const s = readStats(g);
-			loaded[g.id] = s;
-			// The last game played is selected.
-			if (s?.lastPlayed && s.lastPlayed > best) {
-				best = s.lastPlayed;
-				sel = i;
+		loadSaved();
+		// Progress pulled from the account (other devices) shows up right away.
+		const onSync = (e: Event) => {
+			const detail = (e as CustomEvent<{ state: string }>).detail;
+			syncState = detail.state;
+			syncedAt = Date.now();
+			loadSaved();
+			try {
+				const l = localStorage.getItem(LANG_KEY);
+				if (l === 'cs' || l === 'en') lang = l;
+			} catch {
+				// no storage
 			}
-		});
-		saved = loaded;
+		};
+		addEventListener('gamecenter:sync', onSync);
+		const api = gcSync();
+		if (api && api.state !== 'unknown') {
+			syncState = api.state;
+			syncedAt = api.lastSync;
+		}
+		if (data.user && !data.user.nickname) openNick();
 
 		const DPR = Math.min(window.devicePixelRatio || 1, 2);
 		const bctx = bg.getContext('2d');
@@ -378,11 +464,51 @@
 	<div class="account" data-testid="account">
 		{#if data.user}
 			{#if data.user.image}<img src={data.user.image} alt="" referrerpolicy="no-referrer" />{/if}
-			<b>{data.user.name}</b>
+			<button class="nick" onclick={openNick} title={L('Změnit přezdívku', 'Change nickname')}
+				><b>{data.user.nickname ?? data.user.name}</b></button
+			>
+			<span
+				class="cloud"
+				class:ok={syncState === 'synced'}
+				class:bad={syncState === 'error'}
+				data-testid="cloud"
+				title={syncState === 'synced'
+					? L(
+							`Postup je uložen v účtu (${ago(syncedAt) ?? ''})`,
+							`Progress saved to your account (${ago(syncedAt) ?? ''})`,
+						)
+					: syncState === 'error'
+						? L(
+								'Ukládání do účtu se nepovedlo, zkusím to znovu',
+								'Could not save to your account, retrying',
+							)
+						: L('Ukládám postup do účtu…', 'Saving progress to your account…')}
+				><svg viewBox="0 0 24 24"
+					><path
+						d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linejoin="round"
+					/>{#if syncState === 'synced'}<path
+							d="M9.5 13.5l2 2 3.5-4"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+						/>{/if}</svg
+				></span
+			>
 			<button onclick={signOut}>{L('Odhlásit', 'Sign out')}</button>
 		{:else if data.googleEnabled}
-			<button class="google" onclick={signIn} disabled={signingIn}
-				>{L('Přihlásit přes Google', 'Sign in with Google')}</button
+			<button
+				class="google"
+				onclick={signIn}
+				disabled={signingIn}
+				title={L(
+					'Postup se uloží do účtu a půjde hrát dál na jiném zařízení',
+					'Your progress is saved to your account and continues on other devices',
+				)}>{L('Přihlásit přes Google', 'Sign in with Google')}</button
 			>
 		{/if}
 	</div>
@@ -529,6 +655,43 @@
 		</section>
 	{/each}
 </main>
+
+{#if nickOpen && data.user}
+	<div class="nick-modal" role="dialog" aria-modal="true" aria-labelledby="nickTitle">
+		<form class="nick-card" onsubmit={saveNick}>
+			<span class="eyebrow">{L('Tvůj účet', 'Your account')}</span>
+			<h2 id="nickTitle">
+				{data.user.nickname
+					? L('Změnit přezdívku', 'Change nickname')
+					: L('Vyber si přezdívku', 'Pick a nickname')}
+			</h2>
+			<p>
+				{L(
+					'Pod přezdívkou tě uvidí ostatní hráči v online hrách a v DRIFTWOODu. Postup ve všech hrách se teď ukládá do účtu a pokračuje na každém zařízení, kde se přihlásíš.',
+					'Other players see your nickname in online games and in DRIFTWOOD. Your progress in every game is now saved to your account and continues on any device you sign in on.',
+				)}
+			</p>
+			<!-- svelte-ignore a11y_autofocus -->
+			<input
+				bind:value={nickInput}
+				maxlength="20"
+				autocomplete="nickname"
+				autofocus
+				data-testid="nick-input"
+				aria-label={L('Přezdívka', 'Nickname')}
+			/>
+			{#if nickError}<small class="err">{nickError}</small>{/if}
+			<div class="row">
+				<button class="primary" disabled={nickBusy || nickInput.trim().length < 3}
+					>{L('Uložit', 'Save')}</button
+				>
+				{#if data.user.nickname}
+					<button type="button" onclick={() => (nickOpen = false)}>{L('Zrušit', 'Cancel')}</button>
+				{/if}
+			</div>
+		</form>
+	</div>
+{/if}
 
 <footer class="foot">
 	<span>{L('Celkem odehráno', 'Total playtime')}: {fmtDur(totalTime)}</span><span

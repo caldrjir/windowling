@@ -183,10 +183,32 @@ Every puzzle can be played online, served by the Worker entry like DRIFTWOOD mul
   `progress()` (0..1) and use the normal `api.solved` / `api.failed`. Results go to
   `<id>.save.v1` (`stats.online`), the room link is `?duel=<code>`.
 
-## Future: cloud saves and multiplayer
+## Cloud saves and nicknames
 
-- **Cloud saves**: a `game_save (user_id, game_id, data jsonb, updated_at)` table and
-  `GET/PUT /api/games/<id>/save`; games keep writing `localStorage`, the hub syncs it.
+Signed-in players keep their progress in their account; anonymous play is unchanged.
+
+- Games keep writing `localStorage` and are not changed. `static/games/sync.js` (first
+  script in every game page's `<head>` and in `app.html`) wraps `Storage.setItem/removeItem`
+  to time-stamp writes of the synced keys (`SYNC_KEY_RE` in `src/lib/cloud.ts`: `gamecenter.lang`,
+  `gamecenter.puzzles`, `gamecenter.stats.<id>`, `<id>.save.v1`, `driftwood.*`; not
+  `gamecenter.pid`). Its bookkeeping is in `gamecenter.sync`.
+- `GET/PUT /api/sync` (401 when signed out): table `game_save (user_id, key, data, t)`, one row
+  per key with the value exactly as stored; `data` null marks a removed key. The server keeps
+  the newest write per key (`t`, capped at server time + 5 min); 1 MB per value, 8 MB and
+  200 keys per account.
+- Merge on every page load, every 90 s and when a tab is shown again; changes are flushed when
+  a tab is hidden or closed. Three-way per key: the account's value wins when it changed since
+  this device last synced and the device did not write the key later. The first sync of a
+  device with an account (progress made before signing in) keeps, per game, the side with more
+  play time. Writes a game makes on start, before the account answered, do not count as new.
+- A game page opened straight from a link reloads once when the account had newer progress
+  (writes are frozen during the reload so the old in-memory state is not saved).
+- `player_profile (user_id, nickname)`: picked in the hub after the first sign-in
+  (`GET/POST /api/profile`, unique regardless of case). The hub copies it into
+  `gamecenter.puzzles` (online puzzles) and `driftwood.nick`.
+
+## Future: multiplayer
+
 - **More multiplayer**: the same pattern as DRIFTWOOD (a Durable Object per room); identity
   from the Better Auth session and results written to Postgres when a game needs them.
 
@@ -206,3 +228,4 @@ Every puzzle can be played online, served by the Worker entry like DRIFTWOOD mul
 | 2026-10-22 | DRIFTWOOD multiplayer in Durable Objects (Worker entry) | WebSockets need a DO; SQLite-backed DOs are on the free plan; no DB needed for world state. |
 | 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |
 | 2026-10-23 | Online puzzles: one generic room DO for turns and races | One server for 13 games; the room enforces turn order and timing, the games keep rules.     |
+| 2026-10-23 | Cloud saves mirror localStorage keys, newest write wins | Games stay untouched; one generic sync script for all games; per-key time stamps.           |

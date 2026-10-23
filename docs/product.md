@@ -44,7 +44,8 @@ against a live opponent, and races of up to 8 players on the same puzzle in ever
 ## Roadmap (high level)
 
 1. **Launch** - hub, VOIDBORN, Google sign-in. (Game Center 1)
-2. **Accounts & cloud saves** - stats and saves stored per account in Postgres. (Game Center 2)
+2. **Accounts & cloud saves** - stats and saves stored per account in Postgres, so progress
+   continues on every device; a nickname after the first sign-in. (Game Center 2, done)
 3. **More games** - fill the shelf.
 4. **Multiplayer** - real-time games through Cloudflare Durable Objects (WebSockets).
    DRIFTWOOD already has shared worlds (up to 8 players, nicknames, chat); every puzzle can be
