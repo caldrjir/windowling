@@ -7,7 +7,8 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 
 **Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
-holds **VOIDBORN**, **STARSPIRE** and **DRIFTWOOD** (with multiplayer worlds). Later games will store progress in Postgres.
+holds two shelves: action games (**VOIDBORN**, **STARSPIRE**, **DRIFTWOOD** with multiplayer worlds) and
+**Puzzles** (Sudoku, Nonograms, Kakuro, Souhvězdí/Hashi) built on a shared puzzle kit. Later games will store progress in Postgres.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
@@ -45,6 +46,7 @@ apps/web/src/lib/hub           Hub stylesheet
 apps/web/src/lib/server        Server-only code: env, auth, DB access (never imported by the client)
 apps/web/src/worker            Worker entry: site gate, DRIFTWOOD multiplayer (Durable Objects)
 apps/web/static/games/<id>     The games themselves (static HTML/CSS/JS)
+apps/web/static/games/puzzle-kit  Shared shell for puzzle games: daily puzzle, streaks, Star Path, quests, themes
 packages/database              Drizzle schema, migrations, client. The ONLY place with SQL.
 docs/                          Product, architecture, iterations, development
 docker/                        Local infrastructure (Postgres init scripts)
@@ -65,6 +67,12 @@ docker/                        Local infrastructure (Postgres init scripts)
    set `desktopOnly: true` and load `js/desktop-only.js`-style redirect (see DRIFTWOOD) - and extend `apps/web/e2e/app.test.ts`
    so it launches without page errors (desktop and mobile projects).
 4. If it loads anything external, update the CSP in `apps/web/svelte.config.js`.
+
+A **puzzle game** loads `../puzzle-kit/kit.js` + `kit.css` and calls `Kit.game({ id, title, diffs,
+generate(seed, diff), create(el, puzzle, saved, api), rules })`; its catalogue entry goes in
+`apps/web/src/lib/games/puzzles.ts` (`group: 'puzzle'`). Generators must be deterministic from the
+seed (daily puzzles and Path levels are the same for everyone) and give a unique solution; test
+them in Node before shipping. Add it to `apps/web/e2e/puzzles.test.ts`.
 
 ## Commands
 

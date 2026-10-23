@@ -4,6 +4,8 @@
  * is the localStorage key the game writes `{ playTime, lastPlayed, progress, stats }` to,
  * labelled by `statLabels`. English texts live in `en`.
  */
+import { PUZZLE_GAMES } from './puzzles';
+
 export interface GameTexts {
 	tagline: string;
 	description: string;
@@ -11,9 +13,18 @@ export interface GameTexts {
 	features?: string[];
 }
 
+/** Shelves in the library, in order. */
+export type GameGroup = 'action' | 'puzzle';
+export const GROUPS: { id: GameGroup; title: [string, string]; slots: number }[] = [
+	{ id: 'action', title: ['Akce a dobrodružství', 'Action & adventure'], slots: 4 },
+	{ id: 'puzzle', title: ['Hlavolamy', 'Puzzles'], slots: 0 },
+];
+
 export interface Game extends GameTexts {
 	id: string;
 	title: string;
+	/** Which shelf the game sits on (default: action). */
+	group?: GameGroup;
 	en: GameTexts;
 	/** Label per stat key: [Czech, English]. */
 	statLabels: Record<string, [string, string]>;
@@ -27,10 +38,10 @@ export interface Game extends GameTexts {
 	cover(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void;
 }
 
-/** Slots on the shelf (the rest show "Coming soon"). */
+/** Slots on the action shelf (the rest show "Coming soon"). */
 export const GAME_SLOTS = 4;
 
-export const GAMES: Game[] = [
+const ACTION_GAMES: Game[] = [
 	{
 		id: 'voidborn',
 		title: 'VOIDBORN',
@@ -486,3 +497,6 @@ export const GAMES: Game[] = [
 		},
 	},
 ];
+
+export const GAMES: Game[] = [...ACTION_GAMES, ...PUZZLE_GAMES];
+export const groupOf = (g: Game): GameGroup => g.group ?? 'action';
