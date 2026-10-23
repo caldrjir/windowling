@@ -568,36 +568,105 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.solitaire',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#ff4f8b', '#ffd166', '#7a2cff'], 9);
-			const cw = Math.min(w, h) * 0.24;
+			const cw = Math.min(w * 0.2, h * 0.24);
 			const ch = cw * 1.4;
-			const cards: [string, string, boolean][] = [
-				['K', '♠', false],
-				['Q', '♥', true],
-				['J', '♣', false],
-				['A', '♦', true],
-				['10', '♥', true],
-			];
-			cards.forEach(([rank, suit, red], i) => {
-				const a = (i - 2) * 0.18 + Math.sin(t * 0.8 + i) * 0.02;
+			// the same muted ivory cards with vector suits as in the game; kind -1 is a card back
+			const SUIT = [
+				'M10 1.2C8 4 2 7.6 2 11.6c0 2.7 2 4.5 4.4 4.5 1.4 0 2.6-.7 3.2-1.6-.3 2-1.2 3.4-2.8 4.3h6.4c-1.6-.9-2.5-2.3-2.8-4.3.6.9 1.8 1.6 3.2 1.6 2.4 0 4.4-1.8 4.4-4.5C18 7.6 12 4 10 1.2z',
+				'M10 18C4.2 13.6 1.2 10.2 1.2 6.6 1.2 3.8 3.3 1.8 5.9 1.8c1.8 0 3.2 1 4.1 2.5.9-1.5 2.3-2.5 4.1-2.5 2.6 0 4.7 2 4.7 4.8 0 3.6-3 7-8.8 11.4z',
+				'M10 .8 17.6 10 10 19.2 2.4 10z',
+				'M10 1.4a4.2 4.2 0 1 1 0 8.4a4.2 4.2 0 1 1 0-8.4zM5 7a4.2 4.2 0 1 1 0 8.4A4.2 4.2 0 1 1 5 7zm10 0a4.2 4.2 0 1 1 0 8.4a4.2 4.2 0 1 1 0-8.4zM9 10.5 7.6 18.8h4.8L11 10.5z',
+			].map((d) => new Path2D(d));
+			const suit = (s: number, x: number, y: number, size: number) => {
+				const p = SUIT[s];
+				if (!p) return;
 				ctx.save();
-				ctx.translate(w / 2 + (i - 2) * cw * 0.32, h * 0.42);
+				ctx.translate(x - size / 2, y - size / 2);
+				ctx.scale(size / 20, size / 20);
+				ctx.fill(p);
+				ctx.restore();
+			};
+			const gold = '#d9b468';
+			const cards: [string, number][] = [
+				['', -1],
+				['K', 0],
+				['Q', 1],
+				['A', 2],
+				['7', 3],
+			];
+			cards.forEach(([rank, s], i) => {
+				const a = (i - 2) * 0.22 + Math.sin(t * 0.8 + i) * 0.02;
+				ctx.save();
+				ctx.translate(w / 2 + (i - 2) * cw * 0.5, h * 0.42 + Math.abs(i - 2) * cw * 0.08);
 				ctx.rotate(a);
-				ctx.fillStyle = '#f7f5ff';
-				ctx.shadowColor = 'rgba(0,0,0,.6)';
-				ctx.shadowBlur = 12;
+				ctx.shadowColor = 'rgba(0,0,0,.55)';
+				ctx.shadowBlur = 14;
+				const g = ctx.createLinearGradient(-cw / 2, -ch / 2, cw / 2, ch / 2);
+				if (s < 0) {
+					g.addColorStop(0, '#4b33b8');
+					g.addColorStop(1, '#130b3c');
+				} else {
+					g.addColorStop(0, '#e6e0d6');
+					g.addColorStop(1, '#cec6ba');
+				}
+				ctx.fillStyle = g;
 				ctx.beginPath();
-				ctx.roundRect(-cw / 2, -ch / 2, cw, ch, cw * 0.1);
+				ctx.roundRect(-cw / 2, -ch / 2, cw, ch, cw * 0.09);
 				ctx.fill();
 				ctx.shadowBlur = 0;
-				ctx.fillStyle = red ? '#d81b60' : '#1d1840';
-				ctx.font = `700 ${cw * 0.26}px Unbounded, sans-serif`;
-				ctx.textAlign = 'left';
-				ctx.textBaseline = 'top';
-				ctx.fillText(rank, -cw * 0.42, -ch * 0.46);
-				ctx.font = `${cw * 0.6}px sans-serif`;
+				if (s < 0) {
+					ctx.strokeStyle = gold;
+					ctx.lineWidth = 1.5;
+					ctx.beginPath();
+					ctx.roundRect(-cw * 0.44, -ch * 0.455, cw * 0.88, ch * 0.91, cw * 0.06);
+					ctx.stroke();
+					ctx.fillStyle = '#140c44';
+					ctx.beginPath();
+					ctx.arc(0, 0, cw * 0.21, 0, TAU);
+					ctx.fill();
+					ctx.stroke();
+					ctx.fillStyle = gold;
+					ctx.beginPath();
+					for (let k = 0; k < 8; k++) {
+						const r = k % 2 ? cw * 0.04 : cw * 0.16;
+						const an = (k * Math.PI) / 4 - Math.PI / 2;
+						ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r);
+					}
+					ctx.fill();
+					ctx.restore();
+					return;
+				}
+				const col = s === 1 || s === 2 ? '#b8405f' : '#3a3466';
+				if (rank === 'K' || rank === 'Q') {
+					ctx.fillStyle = s === 1 ? '#e4cfcf' : '#d3d2e2';
+					ctx.strokeStyle = gold;
+					ctx.lineWidth = 1.5;
+					ctx.beginPath();
+					ctx.roundRect(-cw * 0.28, -ch * 0.38, cw * 0.56, ch * 0.76, cw * 0.05);
+					ctx.fill();
+					ctx.stroke();
+				}
+				ctx.fillStyle = col;
+				ctx.font = `900 ${cw * 0.2}px Unbounded, sans-serif`;
 				ctx.textAlign = 'center';
-				ctx.textBaseline = 'middle';
-				ctx.fillText(suit, 0, ch * 0.08);
+				ctx.textBaseline = 'top';
+				ctx.fillText(rank, -cw * 0.38, -ch * 0.46);
+				suit(s, -cw * 0.38, -ch * 0.24, cw * 0.13);
+				if (rank === 'K' || rank === 'Q') {
+					ctx.font = `900 ${cw * 0.32}px Unbounded, sans-serif`;
+					ctx.textBaseline = 'middle';
+					ctx.fillText(rank, 0, ch * 0.08);
+					suit(s, 0, -ch * 0.18, cw * 0.18);
+				} else if (rank === 'A') {
+					ctx.strokeStyle = gold;
+					ctx.lineWidth = 1.2;
+					ctx.beginPath();
+					ctx.arc(0, ch * 0.02, cw * 0.27, 0, TAU);
+					ctx.stroke();
+					suit(s, 0, ch * 0.02, cw * 0.4);
+				} else {
+					suit(s, 0, ch * 0.05, cw * 0.36);
+				}
 				ctx.restore();
 			});
 		},

@@ -103,11 +103,11 @@ const Solitaire = (() => {
     if (document.getElementById('slDefs')) return;
     const d = document.createElement('div');
     d.innerHTML = `<svg id="slDefs" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-      <linearGradient id="slRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5577"/><stop offset="1" stop-color="#c2124a"/></linearGradient>
-      <linearGradient id="slBlk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3270"/><stop offset="1" stop-color="#110c2e"/></linearGradient>
+      <linearGradient id="slRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9617f"/><stop offset="1" stop-color="#a3304f"/></linearGradient>
+      <linearGradient id="slBlk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4478"/><stop offset="1" stop-color="#262150"/></linearGradient>
       <linearGradient id="slGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".5" stop-color="#e8c574"/><stop offset="1" stop-color="#b8892e"/></linearGradient>
-      <linearGradient id="slFaceR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1f4"/><stop offset="1" stop-color="#ffd2de"/></linearGradient>
-      <linearGradient id="slFaceB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef0ff"/><stop offset="1" stop-color="#cfd4ff"/></linearGradient>
+      <linearGradient id="slFaceR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eadbd8"/><stop offset="1" stop-color="#dcc3c4"/></linearGradient>
+      <linearGradient id="slFaceB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dcdbe6"/><stop offset="1" stop-color="#c6c5da"/></linearGradient>
       <radialGradient id="slBackG" cx=".5" cy=".35" r=".9"><stop offset="0" stop-color="#4b33b8"/><stop offset=".55" stop-color="#241466"/><stop offset="1" stop-color="#0d0830"/></radialGradient>
       <pattern id="slLat" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 5h10M5 0v10" stroke="#e8c574" stroke-width=".6" opacity=".35"/></pattern>
       <symbol id="slS0" viewBox="0 0 20 20"><path d="M10 1.2C8 4 2 7.6 2 11.6c0 2.7 2 4.5 4.4 4.5 1.4 0 2.6-.7 3.2-1.6-.3 2-1.2 3.4-2.8 4.3h6.4c-1.6-.9-2.5-2.3-2.8-4.3.6.9 1.8 1.6 3.2 1.6 2.4 0 4.4-1.8 4.4-4.5C18 7.6 12 4 10 1.2z"/></symbol>
