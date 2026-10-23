@@ -44,18 +44,32 @@
 @keyframes mjShake { 25% { margin-left: -3px; } 75% { margin-left: 3px; } }
 .k-tool.on { box-shadow: inset 0 0 0 2px var(--a), 0 0 18px var(--a); }
 
-/* Odkládací políčka */
-.mj-tray { display: flex; gap: 10px; padding: 10px 12px; border-radius: 18px; background: rgba(0, 0, 0, .28); box-shadow: inset 0 2px 10px rgba(0, 0, 0, .5), inset 0 0 0 1px var(--line); }
+/* Rub kamene */
+.mj-t.down { --face: radial-gradient(120% 90% at 30% 20%, #2b5d9a 0%, #16305e 55%, #0b1a3a 100%); }
+.mj-t.down::before { border-color: rgba(232, 197, 116, .25); }
+.mj-t.down::after { background: linear-gradient(130deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 40%); }
+.mj-t.down:not(.blocked) { animation: mjGlint 2.6s ease-in-out infinite; }
+@keyframes mjGlint { 50% { filter: brightness(1.18); } }
+.mj-t.flip .mj-f { animation: mjFlip .38s ease; }
+@keyframes mjFlip { 0% { transform: scaleX(1); } 45% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+
+/* Přihrádka: kameny do ní letí samy, dva stejné zmizí */
+.mj-tray { display: flex; gap: 10px; padding: 10px 12px; border-radius: 18px; background: linear-gradient(180deg, rgba(0, 0, 0, .35), rgba(0, 0, 0, .18)); box-shadow: inset 0 2px 12px rgba(0, 0, 0, .6), inset 0 0 0 1px var(--line), 0 0 0 0 transparent; transition: box-shadow .3s; }
+.mj-tray.danger { box-shadow: inset 0 2px 12px rgba(0, 0, 0, .6), inset 0 0 0 1px color-mix(in srgb, var(--bad) 60%, transparent), 0 0 24px -6px var(--bad); }
 .mj-slot { position: relative; width: calc(var(--tw, 44px) + 10px); height: calc(var(--tw, 44px) * 1.34 + 10px); border-radius: 12px; display: grid; place-items: center;
-  border: 1.5px dashed rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .03); transition: box-shadow .2s, border-color .2s, background .2s; }
-.mj-slot i { font-style: normal; font-family: var(--f-d); font-size: 13px; color: var(--dim); }
-.mj-slot.ready { border-color: var(--a); background: color-mix(in srgb, var(--a) 10%, transparent); box-shadow: 0 0 18px -4px var(--a); animation: mjReady 1.2s infinite; }
-@keyframes mjReady { 50% { box-shadow: 0 0 26px -2px var(--a); } }
+  border: 1.5px dashed rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .03); }
 .mj-slot.full { border-style: solid; border-color: transparent; }
 .mj-mini { position: relative; display: block; width: var(--tw, 44px); height: calc(var(--tw, 44px) * 1.34); border-radius: calc(var(--tw, 44px) * .16); background: linear-gradient(165deg, #fffdf7, #efe2c6);
-  box-shadow: inset 0 0 0 1px #fff, 2px 3px 0 #1fae94, 3px 4px 0 #0b5f52, 0 8px 14px -6px rgba(0, 0, 0, .7); animation: kPop .25s; }
-.mj-slot.sel .mj-mini { box-shadow: inset 0 0 0 1px #fff, 0 0 0 2.5px var(--a), 0 0 22px var(--a), 2px 3px 0 #1fae94; transform: translateY(-3px); }
-.mj-slot.hint .mj-mini { box-shadow: inset 0 0 0 1px #fff, 0 0 0 2.5px var(--good), 0 0 22px var(--good), 2px 3px 0 #1fae94; }
+  box-shadow: inset 0 0 0 1px #fff, 2px 3px 0 #1fae94, 3px 4px 0 #0b5f52, 0 8px 14px -6px rgba(0, 0, 0, .7); animation: mjLand .3s .2s both; }
+@keyframes mjLand { from { opacity: 0; transform: scale(.85); } }
+.mj-slot.pop .mj-mini { animation: mjPop .38s ease-in forwards; }
+@keyframes mjPop { 30% { transform: scale(1.18); filter: brightness(1.5); box-shadow: 0 0 0 3px var(--good), 0 0 30px var(--good); } 100% { transform: scale(0) rotate(14deg); opacity: 0; } }
+.mj-fly { position: fixed; z-index: 40; pointer-events: none; border-radius: 8px; background: linear-gradient(165deg, #fffdf7, #efe2c6); box-shadow: 3px 4px 0 #1fae94, 0 12px 24px -6px rgba(0, 0, 0, .7);
+  transform-origin: center; transition: transform .26s cubic-bezier(.3, .7, .3, 1); }
+.mj-fly svg { width: 100%; height: 100%; }
 
-.mj-art { position: relative; width: 260px; height: 260px; --tw: 60px; --th: 80px; --dz: 6px; }
+.mj-art { position: relative; width: 260px; height: 200px; --tw: 60px; --th: 80px; --dz: 6px; }
+.mj-art-tray { --tw: 34px; margin: 6px auto 0; width: max-content; }
+.mj-artwrap { width: 260px; height: 270px; }
+@media (max-width: 720px) { .mj-artwrap { transform: scale(.52); margin: -65px -62px; } }
 .mj-art .mj-t { cursor: default; }

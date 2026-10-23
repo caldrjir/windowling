@@ -218,7 +218,7 @@ test('solitaire sends a tapped card to a legal place or draws from the stock', a
 	await expect.poll(() => page.locator('.sl-card.up').count()).toBeGreaterThan(7);
 });
 
-test('mahjong removes a matching pair of free tiles', async ({ page }) => {
+test('mahjong sends tapped tiles to the tray where a matching pair vanishes', async ({ page }) => {
 	await startFree(page, 'mahjong');
 	const left = Number(await page.locator('.mj-left').textContent());
 	await page.locator('[data-t="hint"]').click();
@@ -227,33 +227,37 @@ test('mahjong removes a matching pair of free tiles', async ({ page }) => {
 	);
 	expect(ids).toHaveLength(2);
 	// Tiles overlap: send the click to the tile itself, not to whatever lies on top at its centre.
-	for (const i of ids) await page.locator(`.mj-t[data-i="${i}"]`).dispatchEvent('click');
+	await page.locator(`.mj-t[data-i="${ids[0]}"]`).dispatchEvent('click');
+	await expect(page.locator('.mj-slot .mj-mini')).toHaveCount(1);
+	await expect(page.locator(`.mj-t[data-i="${ids[0]}"]`)).toBeHidden();
+	await page.locator(`.mj-t[data-i="${ids[1]}"]`).dispatchEvent('click');
 	await expect(page.locator('.mj-left')).toHaveText(String(left - 2));
+	await expect(page.locator('.mj-slot .mj-mini')).toHaveCount(0);
+	// Undo brings the pair back: one on the board, one in the tray.
+	await page.locator('[data-t="undo"]').click();
+	await expect(page.locator('.mj-slot .mj-mini')).toHaveCount(1);
+	await expect(page.locator('.mj-left')).toHaveText(String(left));
 });
 
-test('mahjong sets a free tile aside in a holding slot and pairs it later', async ({ page }) => {
-	await startFree(page, 'mahjong');
-	const free = await page.evaluate(() =>
-		[...document.querySelectorAll<HTMLElement>('.mj-t:not(.blocked):not([hidden])')].map(
-			(e) => e.dataset.i,
-		),
-	);
-	await page.locator(`.mj-t[data-i="${free[0]}"]`).dispatchEvent('click');
-	await expect(page.locator('.mj-slot.ready')).toHaveCount(4);
-	await page.locator('.mj-slot[data-s="2"]').click();
-	await expect(page.locator('.mj-slot[data-s="2"] .mj-mini')).toBeVisible();
-	await expect(page.locator(`.mj-t[data-i="${free[0]}"]`)).toBeHidden();
-	expect(await page.evaluate('Kit._test.inst.getState().slots')).toEqual([
-		-1,
-		-1,
-		Number(free[0]),
-		-1,
-	]);
-	// The parked tile still counts as left; undo puts it back on the board.
-	const left = await page.locator('.mj-left').textContent();
-	await page.locator('[data-t="undo"]').click();
-	await expect(page.locator(`.mj-t[data-i="${free[0]}"]`)).toBeVisible();
-	await expect(page.locator('.mj-left')).toHaveText(left ?? '');
+test('mahjong face-down tiles turn over when tapped', async ({ page }) => {
+	await page.goto('/games/mahjong/index.html');
+	await page.locator('[data-k="free"][data-diff="tower"]').click();
+	await expect(page.locator('.mj-t').first()).toBeVisible();
+	const down = page.locator('.mj-t.down:not([hidden])');
+	expect(await down.count()).toBeGreaterThan(0);
+	// Tap face-down tiles until a free one turns over (blocked ones only shake).
+	const flipped = (await page.evaluate(`(() => {
+		const opened = () => Kit._test.inst.getState().open.filter(Boolean).length;
+		const before = opened();
+		for (const el of document.querySelectorAll('.mj-t.down:not([hidden])')) {
+			el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			if (opened() > before) return el.dataset.i;
+		}
+		return null;
+	})()`)) as string | null;
+	expect(flipped).not.toBeNull();
+	await expect(page.locator(`.mj-t[data-i="${flipped}"]`)).not.toHaveClass(/down/);
+	await expect(page.locator(`.mj-t[data-i="${flipped}"]`)).toBeVisible();
 });
 
 test('skladacka snaps a piece dragged to its place', async ({ page }) => {

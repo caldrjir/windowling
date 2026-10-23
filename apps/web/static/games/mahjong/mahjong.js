@@ -3,7 +3,7 @@
 // Mahjong solitaire: odebírej dvojice stejných volných kamenů. Rozdání se staví
 // zpětně (náhodně volné dvojice dostanou stejný kámen), takže jde vždy dohrát.
 // Kameny: Hvězdy, Planety, Komety 1–9, čtyři směry, tři nebeská tělesa, souhvězdí a fáze.
-// Čtyři odkládací políčka: odložený kámen uvolní sousedy a spáruje se později.
+// Klepnutý kámen letí do přihrádky (4 místa), dva stejné v ní zmizí. Některé kameny leží lícem dolů.
 const Mahjong = (() => {
   const L = Kit.L;
   const DIFFS = [
@@ -74,8 +74,9 @@ const Mahjong = (() => {
 
   function generate(seed, diffId, ctx = {}) {
     const r = Kit.rng(seed);
-    let pos, D = diffId;
-    if (ctx.kind === 'level') { const n = ctx.key, ch = Math.floor((n - 1) / 20); pos = n % 10 === 0 ? LAYOUTS[['pyramid', 'fortress', 'turtle', 'turtle', 'tower', 'tower'][ch]]() : randomLayout(r, [36, 56, 72, 96, 120, 144][ch]); D = ['pyramid', 'pyramid', 'fortress', 'fortress', 'turtle', 'tower'][ch]; }
+    let pos, D = diffId, hide = { pyramid: 0, fortress: 0.14, turtle: 0.22, tower: 0.3 }[diffId] || 0;
+    if (ctx.kind === 'daily') hide = 0.18;
+    if (ctx.kind === 'level') { const n = ctx.key, ch = Math.floor((n - 1) / 20); hide = [0, 0.08, 0.14, 0.2, 0.26, 0.34][ch]; pos = n % 10 === 0 ? LAYOUTS[['pyramid', 'fortress', 'turtle', 'turtle', 'tower', 'tower'][ch]]() : randomLayout(r, [36, 56, 72, 96, 120, 144][ch]); D = ['pyramid', 'pyramid', 'fortress', 'fortress', 'turtle', 'tower'][ch]; }
     else pos = LAYOUTS[ctx.kind === 'daily' ? 'turtle' : diffId]();
     if (pos.length % 2) pos = pos.slice(0, pos.length - 1);
     for (let attempt = 0; attempt < 200; attempt++) {
@@ -95,7 +96,10 @@ const Mahjong = (() => {
         const j = fr2[Math.floor(r() * fr2.length)]; alive[j] = false;
         tiles[i].t = a; tiles[j].t = b;
       }
-      if (ok) return { diff: D, tiles: tiles.map(t => [t.p[0], t.p[1], t.p[2], t.t.k, t.t.v]) };
+      if (!ok) continue;
+      // kameny lícem dolů: hlavně ty, které leží pod jinými (ukážou se až po klepnutí)
+      const covered = t => tiles.some(o => o.p[2] === t.p[2] + 1 && Math.abs(o.p[0] - t.p[0]) < 2 && Math.abs(o.p[1] - t.p[1]) < 2);
+      return { diff: D, tiles: tiles.map(t => [t.p[0], t.p[1], t.p[2], t.t.k, t.t.v, hide && r() < hide * (covered(t) ? 1.6 : 0.7) ? 1 : 0]) };
     }
     return null;
   }
@@ -161,87 +165,111 @@ const Mahjong = (() => {
     return `<svg viewBox="0 0 100 134" class="mj-f">${g}</svg>`;
   }
 
+  // rub kamene: noční nebe se zlatou hvězdou
+  const BACK = `<svg viewBox="0 0 100 134" class="mj-f"><rect x="9" y="10" width="82" height="114" rx="12" fill="none" stroke="#e8c574" stroke-width="2" opacity=".75"/>
+    <g transform="translate(50 67)"><path d="M0-26 6-6 26 0 6 6 0 26-6 6-26 0-6-6z" fill="#f4d68a"/><circle r="5" fill="#fff6d8"/></g>
+    <circle cx="24" cy="30" r="1.8" fill="#fff"/><circle cx="76" cy="36" r="1.3" fill="#fff"/><circle cx="30" cy="104" r="1.4" fill="#fff"/><circle cx="72" cy="100" r="2" fill="#fff"/><circle cx="58" cy="24" r="1" fill="#fff"/></svg>`;
+
   function create(el, P, saved, api) {
     defs();
-    const tiles = P.tiles.map(([x, y, z, k, v], i) => ({ i, p: [x, y, z], k, v }));
-    let alive = saved && saved.alive ? saved.alive.slice() : tiles.map(() => true), sel = -1, hist = [], done = false;
-    // 4 odkládací políčka: index kamene nebo -1. Odložený kámen už neblokuje ostatní.
+    const tiles = P.tiles.map(([x, y, z, k, v, h], i) => ({ i, p: [x, y, z], k, v, h: !!h }));
+    let alive = saved && saved.alive ? saved.alive.slice() : tiles.map(() => true), hist = [], done = false;
+    const popping = new Set();
+    // Přihrádka: kámen, na který klepneš, do ní sám odletí; dva stejné v ní zmizí.
     let slots = saved && saved.slots ? saved.slots.slice() : [-1, -1, -1, -1];
+    // Kameny lícem dolů se ukážou po klepnutí (jednou otočený zůstává otočený).
+    const open = saved && saved.open ? saved.open.slice() : tiles.map(t => !t.h);
     if (saved && saved.kinds) saved.kinds.forEach(([k, v], i) => { if (tiles[i]) { tiles[i].k = k; tiles[i].v = v; } });
     const assist = P.diff !== 'tower';
-    el.innerHTML = `<div class="mj-wrap"><div class="mj-head"><div><small>${L('ZBÝVÁ', 'LEFT')}</small><b class="mj-left"></b></div><div><small>${L('MOŽNÉ TAHY', 'MOVES')}</small><b class="mj-moves"></b></div></div>
-      <div class="mj-tray" aria-label="${L('Odkládací políčka', 'Holding slots')}">${slots.map((_, s) => `<button class="mj-slot" data-s="${s}" aria-label="${L('Odkládací políčko', 'Holding slot')} ${s + 1}"></button>`).join('')}</div>
+    el.innerHTML = `<div class="mj-wrap"><div class="mj-head"><div><small>${L('ZBÝVÁ', 'LEFT')}</small><b class="mj-left"></b></div><div><small>${L('MOŽNÉ PÁRY', 'PAIRS')}</small><b class="mj-moves"></b></div></div>
       <div class="mj-scroll"><div class="mj-board"></div></div>
+      <div class="mj-tray" aria-label="${L('Přihrádka', 'Tray')}">${slots.map((_, s) => `<div class="mj-slot" data-s="${s}"></div>`).join('')}</div>
       <div class="k-tools"><button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button><button class="k-tool" data-t="hint">${api.icon('bulb')}<span>${L('Nápověda', 'Hint')}</span></button><button class="k-tool" data-t="shuffle">${api.icon('plus')}<span>${L('Zamíchat', 'Shuffle')}</span></button></div></div>`;
     const board = el.querySelector('.mj-board'), tray = el.querySelector('.mj-tray'), slotEls = [...tray.children];
     const xs = tiles.map(t => t.p[0]), ys = tiles.map(t => t.p[1]), minX = Math.min(...xs), minY = Math.min(...ys), maxZ = Math.max(...tiles.map(t => t.p[2]));
     const spanX = Math.max(...xs) - minX + 2, spanY = Math.max(...ys) - minY + 2;
     let tw = 40, th = 54, dz = 4;
-    const els = tiles.map(t => { const e = document.createElement('button'); e.className = 'mj-t'; e.innerHTML = face(t.k, t.v); e.dataset.i = t.i; board.appendChild(e); return e; });
+    const look = i => (open[i] ? face(tiles[i].k, tiles[i].v) : BACK);
+    const els = tiles.map(t => { const e = document.createElement('button'); e.className = 'mj-t'; e.dataset.i = t.i; board.appendChild(e); return e; });
+    const paint = i => { els[i].innerHTML = look(i); els[i].classList.toggle('down', !open[i]); };
+    tiles.forEach((t, i) => paint(i));
     function fit() {
-      const vw = (document.getElementById('kView') || el).clientWidth - 40, vh = innerHeight - 300;
+      const vw = (document.getElementById('kView') || el).clientWidth - 40, vh = innerHeight - 320;
       tw = Math.max(26, Math.floor(Math.min(vw / (spanX / 2 + 0.4), (vh / (spanY / 2 + 0.4)) * 0.74)));
       th = Math.round(tw * 1.34); dz = Math.max(2, Math.round(tw * 0.1));
       board.style.width = (spanX / 2) * tw + maxZ * dz + 8 + 'px'; board.style.height = (spanY / 2) * th + maxZ * dz + 8 + 'px';
       board.style.setProperty('--tw', tw + 'px'); board.style.setProperty('--th', th + 'px'); board.style.setProperty('--dz', dz + 'px');
-      tray.style.setProperty('--tw', Math.min(52, Math.max(34, tw)) + 'px');
+      tray.style.setProperty('--tw', Math.min(54, Math.max(36, tw)) + 'px');
       tiles.forEach((t, i) => { const [x, y, z] = t.p; els[i].style.transform = `translate(${((x - minX) / 2) * tw + (maxZ - z) * dz}px, ${((y - minY) / 2) * th + (maxZ - z) * dz}px)`; els[i].style.zIndex = z * 1000 + y * 10 + x; });
     }
-    const inSlot = i => slots.indexOf(i);
     const free = i => freeOf(tiles, alive)(i);
-    const usable = i => (alive[i] && free(i)) || inSlot(i) >= 0;
-    const left = () => alive.filter(Boolean).length + slots.filter(s => s >= 0).length;
+    const inTray = () => slots.filter(s => s >= 0);
+    const left = () => alive.filter(Boolean).length + inTray().length;
+    // Páry, které hráč vidí: volné otočené kameny na desce a kameny v přihrádce.
     function pairs() {
-      const f = freeOf(tiles, alive), fr = tiles.filter((t, i) => (alive[i] && f(i)) || inSlot(i) >= 0), out = [];
-      for (let a = 0; a < fr.length; a++) for (let b = a + 1; b < fr.length; b++) if (match(fr[a], fr[b])) out.push([fr[a].i, fr[b].i]);
-      return out;
+      const f = freeOf(tiles, alive), board_ = tiles.filter((t, i) => alive[i] && open[i] && f(i)), held = inTray().map(i => tiles[i]), out = [];
+      for (const h of held) for (const b of board_) if (match(h, b)) out.push([b.i]);
+      for (let a = 0; a < board_.length; a++) for (let b = a + 1; b < board_.length; b++) if (match(board_[a], board_[b])) out.push([board_[a].i, board_[b].i]);
+      return out.filter(p => p.length <= 4 - inTray().length);
     }
     function render() {
       const f = freeOf(tiles, alive);
-      tiles.forEach((t, i) => { els[i].hidden = !alive[i]; els[i].classList.toggle('sel', i === sel); els[i].classList.toggle('blocked', alive[i] && assist && !f(i)); });
-      const parkable = sel >= 0 && alive[sel];
+      tiles.forEach((t, i) => { els[i].hidden = !alive[i]; els[i].classList.toggle('blocked', alive[i] && assist && !f(i)); });
       slotEls.forEach((e, s) => {
-        const t = slots[s];
-        e.classList.toggle('full', t >= 0); e.classList.toggle('sel', t >= 0 && t === sel); e.classList.toggle('ready', t < 0 && parkable);
-        const want = t >= 0 ? `${tiles[t].k}:${tiles[t].v}` : '';
-        if (e.dataset.f !== want) { e.dataset.f = want; e.innerHTML = t >= 0 ? `<span class="mj-mini">${face(tiles[t].k, tiles[t].v)}</span>` : `<i>${s + 1}</i>`; }
+        const t = slots[s], want = t >= 0 ? `${t}:${tiles[t].k}:${tiles[t].v}` : '';
+        if (e.dataset.f === want) return;
+        e.dataset.f = want; e.classList.toggle('full', t >= 0);
+        e.innerHTML = t >= 0 ? `<span class="mj-mini">${face(tiles[t].k, tiles[t].v)}</span>` : '';
       });
       el.querySelector('.mj-left').textContent = left();
       const pc = pairs().length; el.querySelector('.mj-moves').textContent = pc;
-      const stuck = !done && pc === 0 && left() > 0 && (slots.every(s => s >= 0) || !tiles.some((t, i) => alive[i] && f(i)));
-      if (stuck) api.toast(L('Žádný tah – zamíchej kameny', 'No moves – shuffle the tiles'));
-      el.querySelector('[data-t="shuffle"]').classList.toggle('on', stuck);
+      const full = inTray().length >= 4;
+      const hiddenFree = tiles.some((t, i) => alive[i] && !open[i] && f(i));
+      tray.classList.toggle('danger', inTray().length === 3);
+      el.querySelector('[data-t="undo"]').classList.toggle('on', full && !done);
+      el.querySelector('[data-t="shuffle"]').classList.toggle('on', !done && !full && pc === 0 && !hiddenFree && left() > 0);
     }
     const snap = () => hist.push({ alive: alive.slice(), slots: slots.slice() });
-    function remove(a, b) {
-      snap();
-      for (const k of [a, b]) { const s = inSlot(k); if (s >= 0) slots[s] = -1; else { alive[k] = false; els[k].classList.add('gone'); setTimeout(() => els[k].classList.remove('gone'), 300); } }
-      sel = -1; api.sound('line'); api.changed();
-      setTimeout(() => { render(); check(); }, 220);
-    }
-    function pick(i) {
-      if (sel < 0 || sel === i) { sel = sel === i ? -1 : i; api.sound('tap'); render(); return; }
-      if (match(tiles[sel], tiles[i])) remove(sel, i);
-      else { sel = i; api.sound('tap'); render(); }
+    // Kámen letí z desky do přihrádky.
+    function fly(i, s) {
+      const a = els[i].getBoundingClientRect(), b = slotEls[s].getBoundingClientRect(), c = document.createElement('div');
+      c.className = 'mj-fly'; c.innerHTML = face(tiles[i].k, tiles[i].v);
+      Object.assign(c.style, { left: a.left + 'px', top: a.top + 'px', width: a.width + 'px', height: a.height + 'px' });
+      document.body.appendChild(c);
+      const sc = (b.width - 10) / a.width;
+      requestAnimationFrame(() => { c.style.transform = `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${b.top + b.height / 2 - (a.top + a.height / 2)}px) scale(${sc})`; });
+      setTimeout(() => c.remove(), 280);
     }
     function tap(i) {
       if (done || !alive[i]) return;
       if (!free(i)) { api.sound('error'); els[i].classList.add('shake'); setTimeout(() => els[i].classList.remove('shake'), 350); return; }
-      pick(i);
+      if (!open[i]) { open[i] = true; paint(i); els[i].classList.add('flip'); setTimeout(() => els[i].classList.remove('flip'), 400); api.sound('soft'); api.changed(); render(); return; }
+      const s = slots.indexOf(-1);
+      if (s < 0) { api.sound('error'); api.toast(L('Přihrádka je plná – vrať tah zpět', 'The tray is full – undo a move')); return; }
+      snap(); fly(i, s); alive[i] = false; slots[s] = i; api.sound('tap'); api.changed();
+      render();
+      setTimeout(settle, 290);
     }
-    function tapSlot(s) {
+    // Dva stejné kameny v přihrádce zmizí s efektem.
+    function settle() {
       if (done) return;
-      const t = slots[s];
-      if (t >= 0) { pick(t); return; }
-      if (sel >= 0 && alive[sel]) {
-        // odlož vybraný volný kámen
-        snap(); slots[s] = sel; alive[sel] = false; sel = -1; api.sound('soft'); api.changed(); render(); return;
+      const held = inTray().filter(t => !popping.has(t));
+      for (let a = 0; a < held.length; a++) for (let b = a + 1; b < held.length; b++) {
+        if (!match(tiles[held[a]], tiles[held[b]])) continue;
+        const pair = [held[a], held[b]], sl = pair.map(t => slots.indexOf(t));
+        sl.forEach(k => slotEls[k].classList.add('pop'));
+        const r1 = slotEls[sl[0]].getBoundingClientRect(), r2 = slotEls[sl[1]].getBoundingClientRect();
+        api.burst((r1.left + r2.right) / 2, (r1.top + r1.bottom) / 2, 46); api.sound('line');
+        pair.forEach(t => popping.add(t));
+        setTimeout(() => { pair.forEach(t => { popping.delete(t); const k = slots.indexOf(t); if (k >= 0) { slots[k] = -1; slotEls[k].classList.remove('pop'); } }); render(); api.changed(); check(); }, 380);
+        return;
       }
-      api.toast(L('Vyber volný kámen a klepni na políčko – odložíš ho stranou', 'Pick a free tile, then tap a slot to set it aside'));
+      render();
+      if (inTray().length >= 4) { api.sound('error'); api.toast(L('Přihrádka je plná a nemá pár – vrať tah zpět', 'The tray is full with no pair – undo a move')); }
     }
     function check() { if (alive.every(a => !a) && slots.every(s => s < 0)) { done = true; setTimeout(() => api.solved(), 300); } }
     function shuffle() {
-      // odložené kameny se vrátí na svá místa; zbytek se zamíchá tak, aby šlo pokračovat
+      // kameny z přihrádky se vrátí na svá místa; zbytek se zamíchá tak, aby šlo pokračovat
       snap();
       for (const t of slots) if (t >= 0) alive[t] = true;
       slots = [-1, -1, -1, -1];
@@ -251,34 +279,34 @@ const Mahjong = (() => {
         for (const l of byK.values()) for (let a = 0; a + 1 < l.length; a += 2) pairsK.push([l[a], l[a + 1]]);
         Kit.shuffle(pairsK, Math.random); let ok = true; const assign = {};
         for (const [a, b] of pairsK) { const f1 = idx.filter(i => al[i] && fr(i)); if (f1.length < 2) { ok = false; break; } const i = f1[Math.floor(Math.random() * f1.length)]; al[i] = false; const f2 = idx.filter(k => al[k] && fr(k)); if (!f2.length) { ok = false; break; } const j = f2[Math.floor(Math.random() * f2.length)]; al[j] = false; assign[i] = a; assign[j] = b; }
-        if (ok) { for (const i of idx) { tiles[i].k = assign[i].k; tiles[i].v = assign[i].v; els[i].innerHTML = face(tiles[i].k, tiles[i].v); } break; }
+        if (ok) { for (const i of idx) { tiles[i].k = assign[i].k; tiles[i].v = assign[i].v; paint(i); } break; }
       }
-      api.hint(); api.sound('soft'); sel = -1; render(); api.changed();
+      api.hint(); api.sound('soft'); render(); api.changed();
     }
     board.addEventListener('click', e => { const t = e.target.closest('.mj-t'); if (t) tap(+t.dataset.i); });
-    tray.addEventListener('click', e => { const t = e.target.closest('.mj-slot'); if (t) tapSlot(+t.dataset.s); });
     el.querySelector('.k-tools').addEventListener('click', e => {
-      const t = e.target.closest('[data-t]'); if (!t || done) return;
-      if (t.dataset.t === 'undo' && hist.length) { const h = hist.pop(); alive = h.alive; slots = h.slots; sel = -1; api.hint(); api.sound('erase'); render(); api.changed(); }
+      const t = e.target.closest('[data-t]'); if (!t || done || popping.size) return;
+      if (t.dataset.t === 'undo' && hist.length) { const h = hist.pop(); alive = h.alive; slots = h.slots; api.hint(); api.sound('erase'); render(); api.changed(); }
       if (t.dataset.t === 'hint') {
-        const pr = pairs(); if (!pr.length) return; api.hint();
-        pr[0].forEach(k => { const s = inSlot(k), e = s >= 0 ? slotEls[s] : els[k]; e.classList.add('hint'); setTimeout(() => e.classList.remove('hint'), 1500); });
+        const pr = pairs(); if (!pr.length) { api.toast(L('Žádný viditelný pár – otoč skrytý kámen nebo zamíchej', 'No visible pair – flip a hidden tile or shuffle')); return; }
+        api.hint(); pr[0].forEach(k => { els[k].classList.add('hint'); setTimeout(() => els[k].classList.remove('hint'), 1500); });
       }
       if (t.dataset.t === 'shuffle') shuffle();
     });
     fit(); addEventListener('resize', fit); render();
     return {
-      getState: () => (done ? null : { alive, slots, kinds: tiles.map(t => [t.k, t.v]) }),
+      getState: () => (done ? null : { alive, slots, open, kinds: tiles.map(t => [t.k, t.v]) }),
       progress: () => 1 - left() / alive.length,
       destroy() { removeEventListener('resize', fit); },
-      onKey(e) { if (e.key === 'h' || e.key === 'H') el.querySelector('[data-t="hint"]').click(); if ((e.key === 'z' || e.key === 'Z')) el.querySelector('[data-t="undo"]').click(); if (/^[1-4]$/.test(e.key)) tapSlot(+e.key - 1); },
+      onKey(e) { if (e.key === 'h' || e.key === 'H') el.querySelector('[data-t="hint"]').click(); if ((e.key === 'z' || e.key === 'Z')) el.querySelector('[data-t="undo"]').click(); },
       _solve() { alive = alive.map(() => false); slots = [-1, -1, -1, -1]; render(); check(); },
     };
   }
   function art(el) {
     defs();
-    const ks = [[0, 0], [10, 0], [31, 0], [22, 0], [34, 1], [28, 0]];
-    el.innerHTML = `<div class="mj-art">${ks.map(([k, v], i) => `<div class="mj-t" style="transform:translate(${(i % 3) * 66 + (i > 2 ? 33 : 0)}px, ${Math.floor(i / 3) * 80 + 40}px)">${face(k, v)}</div>`).join('')}</div>`;
+    const ks = [[0, 0], [10, 0], [31, 0], [22, 0], [-1, 0], [28, 0]];
+    el.innerHTML = `<div class="mj-artwrap"><div class="mj-art">${ks.map(([k, v], i) => `<div class="mj-t ${k < 0 ? 'down' : ''}" style="transform:translate(${(i % 3) * 66 + (i > 2 ? 33 : 0)}px, ${Math.floor(i / 3) * 80 + 20}px)">${k < 0 ? BACK : face(k, v)}</div>`).join('')}</div>
+      <div class="mj-tray mj-art-tray"><div class="mj-slot full"><span class="mj-mini">${face(32, 0)}</span></div><div class="mj-slot full"><span class="mj-mini">${face(32, 0)}</span></div><div class="mj-slot"></div><div class="mj-slot"></div></div></div>`;
   }
   return { DIFFS, generate, create, art, LAYOUTS, freeOf };
 })();
@@ -290,14 +318,16 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   online: { kind: 'race' },
   dailyDiff: () => 'turtle', levelDiff: n => ['pyramid', 'pyramid', 'fortress', 'fortress', 'turtle', 'tower'][Math.floor((n - 1) / 20)],
   rules: Kit.L(`<p>Odeber všechny kameny po dvojicích stejných.</p>
-    <ul><li>Odebrat jde jen <b>volný</b> kámen: nic na něm neleží a vlevo nebo vpravo od něj je volno. Zablokované kameny jsou ztmavené (kromě Věže).</li>
-    <li><b>Souhvězdí</b> (♈ ♌ ♐ ♒) se párují mezi sebou, stejně tak <b>fáze</b> Měsíce.</li>
-    <li><b>Odkládací políčka:</b> vyber volný kámen a klepni na jedno ze 4 políček nad deskou. Odložený kámen uvolní místo a spárovat ho můžeš později s kterýmkoli volným kamenem (klávesy 1–4).</li>
-    <li>Rozdání jde vždy dohrát. Když uvízneš, <b>Zamíchat</b> vrátí odložené kameny a rozloží zbylé znovu (počítá se jako nápověda).</li></ul>`,
+    <ul><li>Klepni na <b>volný</b> kámen (nic na něm neleží a vlevo nebo vpravo je volno) – sám odletí do <b>přihrádky</b> se 4 místy. Jakmile jsou v přihrádce dva stejné, zmizí.</li>
+    <li>Když se přihrádka zaplní bez páru, uvízneš: vrať tah tlačítkem <b>Zpět</b>. Plánuj, co posíláš do přihrádky.</li>
+    <li>Některé kameny leží <b>lícem dolů</b>, často pod jinými. Až budou volné, klepni na ně – otočí se a ukážou, co jsou. V pozdějších úrovních je jich víc.</li>
+    <li><b>Souhvězdí</b> se párují mezi sebou, stejně tak <b>fáze</b> Měsíce. Zablokované kameny jsou ztmavené (kromě Věže).</li>
+    <li>Rozdání jde vždy dohrát. <b>Zamíchat</b> vrátí kameny z přihrádky a rozloží zbylé znovu (počítá se jako nápověda).</li></ul>`,
     `<p>Remove every tile in matching pairs.</p>
-    <ul><li>Only a <b>free</b> tile can be removed: nothing on top of it and its left or right side is open. Blocked tiles are dimmed (except in the Tower).</li>
-    <li><b>Zodiacs</b> (♈ ♌ ♐ ♒) match each other, and so do Moon <b>phases</b>.</li>
-    <li><b>Holding slots:</b> pick a free tile and tap one of the 4 slots above the board. The tile is set aside, freeing its neighbours, and can be paired later with any free tile (keys 1–4).</li>
-    <li>Every deal can be cleared. If you get stuck, <b>Shuffle</b> returns the set-aside tiles and rearranges the rest (counts as a hint).</li></ul>`),
+    <ul><li>Tap a <b>free</b> tile (nothing on top, left or right side open) and it flies to the 4-place <b>tray</b>. Two matching tiles in the tray vanish.</li>
+    <li>If the tray fills up without a pair you are stuck: take a move back with <b>Undo</b>. Plan what you send to the tray.</li>
+    <li>Some tiles lie <b>face down</b>, often under others. Once free, tap one to flip it and see what it is. Later levels have more of them.</li>
+    <li><b>Zodiacs</b> match each other, and so do Moon <b>phases</b>. Blocked tiles are dimmed (except in the Tower).</li>
+    <li>Every deal can be cleared. <b>Shuffle</b> returns the tray tiles and rearranges the rest (counts as a hint).</li></ul>`),
   achievements: [],
 });

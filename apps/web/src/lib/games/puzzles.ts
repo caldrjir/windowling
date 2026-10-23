@@ -609,15 +609,15 @@ export const PUZZLE_GAMES: Game[] = [
 		group: 'puzzle',
 		tagline: 'Dvojice nebeských kamenů.',
 		description:
-			'Mahjong solitaire: odebírej dvojice stejných volných kamenů s hvězdami, planetami, kometami a souhvězdími. Čtyři odkládací políčka pro kameny, které zrovna překážejí. Želva, Pyramida, Pevnost, Věž a generovaná rozložení, která jdou vždy dohrát.',
+			'Mahjong solitaire: odebírej dvojice stejných volných kamenů s hvězdami, planetami, kometami a souhvězdími. Kámen, na který klepneš, odletí do přihrádky se čtyřmi místy a dva stejné v ní zmizí. Některé kameny leží lícem dolů. Želva, Pyramida, Pevnost, Věž a generovaná rozložení, která jdou vždy dohrát.',
 		genres: ['Hlavolam', 'Kameny', 'Mahjong'],
-		features: ['Denní Želva', 'Cesta: 120 rozložení', '4 odkládací políčka', 'Vždy dohratelné'],
+		features: ['Denní Želva', 'Cesta: 120 rozložení', 'Přihrádka na 4 kameny', 'Skryté kameny'],
 		en: {
 			tagline: 'Pairs of celestial tiles.',
 			description:
-				'Mahjong solitaire: remove pairs of matching free tiles with stars, planets, comets and zodiacs. Four holding slots for tiles that are in the way. Turtle, Pyramid, Fortress, Tower and generated layouts that can always be cleared.',
+				'Mahjong solitaire: remove pairs of matching free tiles with stars, planets, comets and zodiacs. Tapped tiles fly to a four-place tray where two matching tiles vanish. Some tiles lie face down. Turtle, Pyramid, Fortress, Tower and generated layouts that can always be cleared.',
 			genres: ['Puzzle', 'Tiles', 'Mahjong'],
-			features: ['Daily Turtle', 'Path: 120 layouts', '4 holding slots', 'Always solvable'],
+			features: ['Daily Turtle', 'Path: 120 layouts', '4-tile tray', 'Hidden tiles'],
 		},
 		statLabels: labels,
 		path: '/games/mahjong/index.html',
@@ -625,47 +625,131 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.mahjong',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#ffd166', '#18a37a', '#e0446a'], 10);
-			const tw = Math.min(w, h) * 0.17;
+			const tw = Math.min(w / 5.6, h / 5.8);
 			const th = tw * 1.34;
-			const d = tw * 0.09;
-			const glyph = ['★', '☾', '●', '☄', '☀', '♌', '★', '●'];
-			const col = [
-				'#2b8cff',
-				'#5b6cff',
-				'#e0446a',
-				'#18a37a',
-				'#ff9a1f',
-				'#b14cff',
-				'#2b8cff',
-				'#e0446a',
-			];
-			const tiles: [number, number, number][] = [
-				[0, 0, 0],
-				[1, 0, 0],
-				[2, 0, 0],
-				[0, 1, 0],
-				[1, 1, 0],
-				[2, 1, 0],
-				[0.5, 0.5, 1],
-				[1.5, 0.5, 1],
-			];
-			tiles.forEach(([x, y, z], i) => {
-				const px = w / 2 - tw * 1.5 + x * tw - z * d;
-				const py = h * 0.14 + y * th - z * d + (i === Math.floor(t) % 8 ? -4 : 0);
-				ctx.fillStyle = '#7d6f55';
+			const d = tw * 0.1;
+			// ivory face, gold frame, jade body; kind -1 is a face-down tile
+			const tile = (px: number, py: number, s: number, kind: number, glow = 0) => {
+				const ww = tw * s;
+				const hh = th * s;
+				const dd = d * s;
+				ctx.fillStyle = '#0b5f52';
 				ctx.beginPath();
-				ctx.roundRect(px + d, py + d, tw, th, tw * 0.14);
+				ctx.roundRect(px + dd * 1.4, py + dd * 1.4, ww, hh, ww * 0.16);
 				ctx.fill();
-				ctx.fillStyle = '#fbf6e8';
+				ctx.fillStyle = '#1fae94';
 				ctx.beginPath();
-				ctx.roundRect(px, py, tw, th, tw * 0.14);
+				ctx.roundRect(px + dd, py + dd, ww, hh, ww * 0.16);
 				ctx.fill();
-				ctx.fillStyle = col[i] ?? '#222';
-				ctx.font = `700 ${tw * 0.55}px sans-serif`;
-				ctx.textAlign = 'center';
-				ctx.textBaseline = 'middle';
-				ctx.fillText(glyph[i] ?? '★', px + tw / 2, py + th / 2);
+				if (glow) {
+					ctx.shadowColor = '#6dff9e';
+					ctx.shadowBlur = 24 * glow;
+				}
+				const g = ctx.createLinearGradient(px, py, px + ww, py + hh);
+				if (kind < 0) {
+					g.addColorStop(0, '#2b5d9a');
+					g.addColorStop(1, '#0b1a3a');
+				} else {
+					g.addColorStop(0, '#fffdf7');
+					g.addColorStop(1, '#efe2c6');
+				}
+				ctx.fillStyle = g;
+				ctx.beginPath();
+				ctx.roundRect(px, py, ww, hh, ww * 0.16);
+				ctx.fill();
+				ctx.shadowBlur = 0;
+				ctx.strokeStyle = kind < 0 ? 'rgba(232,197,116,.5)' : 'rgba(190,150,80,.45)';
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.roundRect(px + ww * 0.08, py + ww * 0.08, ww * 0.84, hh - ww * 0.16, ww * 0.1);
+				ctx.stroke();
+				const cx = px + ww / 2;
+				const cy = py + hh / 2;
+				if (kind < 0) {
+					ctx.fillStyle = '#f4d68a';
+					ctx.beginPath();
+					for (let k = 0; k < 8; k++) {
+						const r = k % 2 ? ww * 0.07 : ww * 0.26;
+						const a = (k * Math.PI) / 4 - Math.PI / 2;
+						ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+					}
+					ctx.fill();
+					return;
+				}
+				const cols = ['#1f4fd8', '#e0446a', '#14b08a', '#ff9a1f', '#9b3dff'];
+				const col = cols[kind % cols.length] ?? '#1f4fd8';
+				if (kind === 3) {
+					ctx.strokeStyle = '#ff9a1f';
+					ctx.lineWidth = ww * 0.04;
+					for (let k = 0; k < 12; k++) {
+						const a = (k * Math.PI) / 6;
+						ctx.beginPath();
+						ctx.moveTo(cx + Math.cos(a) * ww * 0.26, cy + Math.sin(a) * ww * 0.26);
+						ctx.lineTo(cx + Math.cos(a) * ww * 0.36, cy + Math.sin(a) * ww * 0.36);
+						ctx.stroke();
+					}
+				}
+				const rg = ctx.createRadialGradient(cx - ww * 0.06, cy - ww * 0.06, 0, cx, cy, ww * 0.24);
+				rg.addColorStop(0, '#ffffff');
+				rg.addColorStop(0.35, col);
+				rg.addColorStop(1, '#1b1240');
+				ctx.fillStyle = rg;
+				ctx.beginPath();
+				ctx.arc(cx, cy, ww * 0.2, 0, TAU);
+				ctx.fill();
+				if (kind === 1 || kind === 4) {
+					ctx.strokeStyle = col;
+					ctx.lineWidth = ww * 0.045;
+					ctx.beginPath();
+					ctx.ellipse(cx, cy, ww * 0.36, ww * 0.1, -0.35, 0, TAU);
+					ctx.stroke();
+				}
+			};
+			// a small stack: base row, second layer, one face-down tile on top
+			const x0 = w / 2 - tw * 2.1;
+			const y0 = h * 0.15;
+			const base = [0, 2, 1, 4, 1, 3, 0, 2];
+			base.forEach((k, i) => tile(x0 + (i % 4) * tw, y0 + Math.floor(i / 4) * th, 1, k));
+			tile(x0 + tw * 0.5 - d, y0 + th * 0.5 - d, 1, 3);
+			tile(x0 + tw * 1.5 - d, y0 + th * 0.5 - d, 1, -1);
+			tile(x0 + tw * 2.5 - d, y0 + th * 0.5 - d, 1, 4);
+			// the tray: two matching tiles pop, then the cycle repeats
+			const ts = 0.62;
+			const sw = tw * ts + 8;
+			const trayW = sw * 4 + 18;
+			const tx = w / 2 - trayW / 2;
+			const ty = y0 + th * 2 + tw * 0.35;
+			ctx.fillStyle = 'rgba(0,0,0,.45)';
+			ctx.beginPath();
+			ctx.roundRect(tx, ty, trayW, th * ts + 16, 12);
+			ctx.fill();
+			const phase = (t * 0.6) % 1;
+			const pop = phase > 0.7 ? (phase - 0.7) / 0.3 : 0;
+			[2, 2, 0].forEach((k, i) => {
+				const gone = i < 2 && pop > 0;
+				const s = gone ? ts * (1 - pop) : ts;
+				if (s <= 0.02) return;
+				const sx = tx + 9 + i * sw + (sw - tw * s) / 2;
+				const sy = ty + 8 + (th * ts - th * s) / 2;
+				tile(sx, sy, s, k, gone ? 1 - pop : 0);
 			});
+			if (pop > 0) {
+				for (let k = 0; k < 14; k++) {
+					const a = (k / 14) * TAU;
+					ctx.fillStyle = k % 2 ? '#6dff9e' : '#ffd166';
+					ctx.globalAlpha = 1 - pop;
+					ctx.beginPath();
+					ctx.arc(
+						tx + 9 + sw + Math.cos(a) * pop * tw,
+						ty + th * ts * 0.5 + Math.sin(a) * pop * tw,
+						2.5,
+						0,
+						TAU,
+					);
+					ctx.fill();
+				}
+				ctx.globalAlpha = 1;
+			}
 		},
 	},
 	{
