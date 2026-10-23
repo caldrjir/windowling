@@ -609,15 +609,15 @@ export const PUZZLE_GAMES: Game[] = [
 		group: 'puzzle',
 		tagline: 'Dvojice nebeských kamenů.',
 		description:
-			'Mahjong solitaire: odebírej dvojice stejných volných kamenů s hvězdami, planetami, kometami a souhvězdími. Želva, Pyramida, Pevnost, Věž a generovaná rozložení, která jdou vždy dohrát.',
+			'Mahjong solitaire: odebírej dvojice stejných volných kamenů s hvězdami, planetami, kometami a souhvězdími. Čtyři odkládací políčka pro kameny, které zrovna překážejí. Želva, Pyramida, Pevnost, Věž a generovaná rozložení, která jdou vždy dohrát.',
 		genres: ['Hlavolam', 'Kameny', 'Mahjong'],
-		features: ['Denní Želva', 'Cesta: 120 rozložení', '4 klasická rozložení', 'Vždy dohratelné'],
+		features: ['Denní Želva', 'Cesta: 120 rozložení', '4 odkládací políčka', 'Vždy dohratelné'],
 		en: {
 			tagline: 'Pairs of celestial tiles.',
 			description:
-				'Mahjong solitaire: remove pairs of matching free tiles with stars, planets, comets and zodiacs. Turtle, Pyramid, Fortress, Tower and generated layouts that can always be cleared.',
+				'Mahjong solitaire: remove pairs of matching free tiles with stars, planets, comets and zodiacs. Four holding slots for tiles that are in the way. Turtle, Pyramid, Fortress, Tower and generated layouts that can always be cleared.',
 			genres: ['Puzzle', 'Tiles', 'Mahjong'],
-			features: ['Daily Turtle', 'Path: 120 layouts', '4 classic layouts', 'Always solvable'],
+			features: ['Daily Turtle', 'Path: 120 layouts', '4 holding slots', 'Always solvable'],
 		},
 		statLabels: labels,
 		path: '/games/mahjong/index.html',

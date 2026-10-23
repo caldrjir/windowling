@@ -231,6 +231,31 @@ test('mahjong removes a matching pair of free tiles', async ({ page }) => {
 	await expect(page.locator('.mj-left')).toHaveText(String(left - 2));
 });
 
+test('mahjong sets a free tile aside in a holding slot and pairs it later', async ({ page }) => {
+	await startFree(page, 'mahjong');
+	const free = await page.evaluate(() =>
+		[...document.querySelectorAll<HTMLElement>('.mj-t:not(.blocked):not([hidden])')].map(
+			(e) => e.dataset.i,
+		),
+	);
+	await page.locator(`.mj-t[data-i="${free[0]}"]`).dispatchEvent('click');
+	await expect(page.locator('.mj-slot.ready')).toHaveCount(4);
+	await page.locator('.mj-slot[data-s="2"]').click();
+	await expect(page.locator('.mj-slot[data-s="2"] .mj-mini')).toBeVisible();
+	await expect(page.locator(`.mj-t[data-i="${free[0]}"]`)).toBeHidden();
+	expect(await page.evaluate('Kit._test.inst.getState().slots')).toEqual([
+		-1,
+		-1,
+		Number(free[0]),
+		-1,
+	]);
+	// The parked tile still counts as left; undo puts it back on the board.
+	const left = await page.locator('.mj-left').textContent();
+	await page.locator('[data-t="undo"]').click();
+	await expect(page.locator(`.mj-t[data-i="${free[0]}"]`)).toBeVisible();
+	await expect(page.locator('.mj-left')).toHaveText(left ?? '');
+});
+
 test('skladacka snaps a piece dragged to its place', async ({ page }) => {
 	await startFree(page, 'skladacka');
 	await page.locator('[data-t="hint"]').click();
