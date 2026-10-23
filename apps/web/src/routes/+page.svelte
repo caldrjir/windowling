@@ -2,7 +2,7 @@
 	import '$lib/hub/hub.css';
 	import { invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
-	import { GAME_SLOTS, GAMES, type Game, type GameTexts } from '$lib/games/registry';
+	import { GAMES, GROUPS, groupOf, type Game, type GameTexts } from '$lib/games/registry';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
@@ -18,7 +18,11 @@
 
 	// The language is shared with the games through localStorage.
 	const LANG_KEY = 'gamecenter.lang';
-	const slots = Math.max(GAME_SLOTS, GAMES.length);
+	// Shelves: each group lists its games (global index for selection) and free slots.
+	const shelves = GROUPS.map((grp) => {
+		const games = GAMES.map((g, i) => ({ g, i })).filter(({ g }) => groupOf(g) === grp.id);
+		return { ...grp, games, free: Math.max(0, grp.slots - games.length) };
+	});
 
 	let lang = $state<Lang>('cs');
 	let sel = $state(0);
@@ -111,14 +115,17 @@
 		return L('Dobrý večer', 'Good evening');
 	});
 	const totalTime = $derived(GAMES.reduce((t, g) => t + (saved[g.id]?.playTime ?? 0), 0));
-	const libCount = $derived.by(() => {
-		const n = GAMES.length;
-		const free = slots - n;
-		return L(
-			`${n} ${n === 1 ? 'hra' : n < 5 ? 'hry' : 'her'} · ${free} ${free === 1 ? 'volný slot' : free < 5 ? 'volné sloty' : 'volných slotů'}`,
-			`${n} ${n === 1 ? 'game' : 'games'} · ${free} free ${free === 1 ? 'slot' : 'slots'}`,
+	function shelfCount(n: number, free: number): string {
+		const games = L(
+			`${n} ${n === 1 ? 'hra' : n < 5 ? 'hry' : 'her'}`,
+			`${n} ${n === 1 ? 'game' : 'games'}`,
 		);
-	});
+		if (!free) return games;
+		return L(
+			`${games} · ${free} ${free === 1 ? 'volný slot' : free < 5 ? 'volné sloty' : 'volných slotů'}`,
+			`${games} · ${free} free ${free === 1 ? 'slot' : 'slots'}`,
+		);
+	}
 
 	// --- Interface sounds -----------------------------------------------------------
 	let ac: AudioContext | null = null;
@@ -294,13 +301,25 @@
 				g.cover(hctx, heroCover.width, heroCover.height, t);
 			}
 			cardCanvases.forEach((cv, i) => {
-				const ctx = cv?.getContext('2d');
+				// Only cards on screen are repainted.
+				if (!cv || (drawn.has(cv) && !visible.has(cv))) return;
+				drawn.add(cv);
+				const ctx = cv.getContext('2d');
 				const cardGame = GAMES[i];
 				if (!ctx || !cardGame) return;
 				ctx.setTransform(1, 0, 0, 1, 0, 0);
 				cardGame.cover(ctx, cv.width, cv.height, t + 3);
 			});
 		};
+		const visible = new WeakSet<Element>();
+		const drawn = new WeakSet<Element>();
+		const io = new IntersectionObserver((entries) => {
+			for (const e of entries) {
+				if (e.isIntersecting) visible.add(e.target);
+				else visible.delete(e.target);
+			}
+		});
+		for (const cv of cardCanvases) if (cv) io.observe(cv);
 		resize();
 		raf = requestAnimationFrame(frame);
 		const clock = setInterval(() => (now = new Date()), 10_000);
@@ -314,6 +333,7 @@
 		addEventListener('pageshow', onPageShow);
 		return () => {
 			cancelAnimationFrame(raf);
+			io.disconnect();
 			clearInterval(clock);
 			clearInterval(liveTimer);
 			removeEventListener('resize', resize);
@@ -441,27 +461,28 @@
 		</div>
 	</section>
 
-	<section class="library">
-		<div class="lib-head">
-			<h2>{L('Knihovna', 'Library')}</h2>
-			<span>{libCount}</span>
-			<div class="spacer"></div>
-			<span class="hint"
-				><kbd>←</kbd><kbd>→</kbd>
-				{L('výběr', 'select')} · <kbd>Enter</kbd>
-				{L('spustit', 'launch')}</span
-			>
-		</div>
-		<div class="shelf" data-testid="shelf">
-			{#each { length: slots } as _, i (i)}
-				{@const g = GAMES[i]}
-				{#if g}
+	{#each shelves as shelf, si (shelf.id)}
+		<section class="library" data-group={shelf.id}>
+			<div class="lib-head">
+				<h2>{L(shelf.title[0], shelf.title[1])}</h2>
+				<span>{shelfCount(shelf.games.length, shelf.free)}</span>
+				<div class="spacer"></div>
+				{#if si === 0}
+					<span class="hint"
+						><kbd>←</kbd><kbd>→</kbd>
+						{L('výběr', 'select')} · <kbd>Enter</kbd>
+						{L('spustit', 'launch')}</span
+					>
+				{/if}
+			</div>
+			<div class="shelf" data-testid={si === 0 ? 'shelf' : `shelf-${shelf.id}`}>
+				{#each shelf.games as { g, i } (g.id)}
 					{@const s = saved[g.id]}
 					<button
 						class="gcard"
 						class:sel={i === sel}
 						style:--ca={g.colors[0]}
-						style:animation-delay="{i * 0.07}s"
+						style:animation-delay="{i * 0.05}s"
 						onclick={() => onCard(i)}
 						onpointerenter={() => blip(1600, 0.03, 0.015)}
 					>
@@ -478,21 +499,22 @@
 							<p>{tx(g, 'genres').join(' · ')}</p>
 						</div>
 					</button>
-				{:else}
-					<div class="gcard soon" style:animation-delay="{i * 0.07}s">
+				{/each}
+				{#each { length: shelf.free } as _, k (k)}
+					<div class="gcard soon" style:animation-delay="{(shelf.games.length + k) * 0.07}s">
 						<div class="soon-in">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
 								><path d="M12 2l9 5v10l-9 5-9-5V7z" /><path d="M12 8v5M12 16v.5" /></svg
 							>
-							<b>SLOT {String(i + 1).padStart(2, '0')}</b><small
+							<b>SLOT {String(shelf.games.length + k + 1).padStart(2, '0')}</b><small
 								>{L('Připravujeme', 'Coming soon')}</small
 							>
 						</div>
 					</div>
-				{/if}
-			{/each}
-		</div>
-	</section>
+				{/each}
+			</div>
+		</section>
+	{/each}
 </main>
 
 <footer class="foot">

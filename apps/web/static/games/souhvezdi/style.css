@@ -1,0 +1,23 @@
+/* SOUHVĚZDÍ – hvězdy a čáry */
+.hs-wrap { display: grid; justify-items: center; gap: 14px; width: 100%; }
+.hs { width: 560px; max-width: 100%; height: auto; border-radius: 22px; background: radial-gradient(ellipse at 50% 30%, rgba(30, 24, 70, .55), rgba(6, 4, 18, .85)); box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px -24px var(--a); touch-action: none; user-select: none; -webkit-user-select: none; }
+.hs-dots circle { fill: rgba(255, 255, 255, .12); }
+.hs-l { stroke: var(--a); stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 6px var(--a)); }
+.hs-l.giv { stroke: var(--text); }
+.hs-s { cursor: pointer; }
+.hs-s .halo { fill: var(--a); opacity: 0; transition: opacity .2s; }
+.hs-s .core { fill: #120d2e; stroke: color-mix(in srgb, var(--a) 70%, white); stroke-width: 3.5; transition: fill .2s, stroke .2s; }
+.hs-s text { text-anchor: middle; font-family: var(--f-d); font-weight: 700; font-size: 31px; fill: var(--text); pointer-events: none; }
+.hs-s.sel .halo { opacity: .35; }
+.hs-s.sel .core { fill: color-mix(in srgb, var(--a) 40%, #120d2e); }
+.hs-s.nb .core { stroke: var(--b); stroke-dasharray: 6 5; }
+.hs-s.ok .core { stroke: var(--good); fill: color-mix(in srgb, var(--good) 22%, #120d2e); }
+.hs-s.ok text { fill: var(--good); }
+.hs-s.over .core { stroke: var(--bad); fill: color-mix(in srgb, var(--bad) 22%, #120d2e); }
+.hs.won .hs-s .core { fill: var(--a); stroke: white; transition: fill .6s, stroke .6s; }
+.hs.won .hs-s text { fill: #05030f; }
+.hs.won .hs-s .halo { opacity: .45; animation: hsTw 1.2s ease-in-out infinite alternate; }
+.hs.won .hs-l { stroke: white; }
+@keyframes hsTw { to { opacity: .1; } }
+.hs-sky { display: flex; flex-wrap: wrap; gap: 8px; }
+.hs-sky span { padding: 8px 14px; border-radius: 999px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); font-weight: 600; }

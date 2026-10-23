@@ -112,6 +112,24 @@ and `checkDatabase()`. The only package that talks SQL. Today the schema is just
   connections to Neon. Plain Postgres TCP - any Postgres works.
 - Static assets are revalidated by default (ETag), so a deploy is visible on the next load.
 
+## Puzzle games - `apps/web/static/games/puzzle-kit`
+
+Puzzle games share one static kit (`kit.js`, `kit.css`); a game supplies only a seeded
+generator and its board (`Kit.game({...})`). The kit provides the shell and everything meant to
+keep players coming back for weeks:
+
+- **Daily puzzle**: seeded by date (`hash(id:daily:YYYY-MM-DD)`), same for every player, harder
+  towards the weekend; streaks, a month calendar and a 60-day archive.
+- **Star Path**: 120 seeded levels in six chapters, 1–3 stars (clean solve within par time).
+- **Free play**: endless puzzles per difficulty. Ranks from XP, kit + game achievements, stats.
+- **Weekly quests** shared by all puzzle games and **stardust** for themes
+  (`gamecenter.puzzles` in localStorage).
+- Storage: `<id>.save.v1` (game), `gamecenter.puzzles` (shared), `gamecenter.stats.<id>` (hub).
+
+Generators guarantee a unique solution (Sudoku: digging with a solution counter, graded by a
+logic solver; Nonograms: line solver; Kakuro: combination solver with repair; Souhvězdí: bridge
+solver); where uniqueness would need guessing, they reveal a cell or line up front.
+
 ## DRIFTWOOD multiplayer - `apps/web/src/worker/driftwood`
 
 Shared worlds for up to 8 players, served by the Worker entry (behind the site gate) because
@@ -154,3 +172,4 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
 | 2026-10-22 | One shared site password in the Worker entry            | Invite-only for now; must also cover static games, which bypass SvelteKit hooks.            |
 | 2026-10-22 | Kill-switch service worker instead of a caching one     | Old SW would keep serving the removed app; games have no versioned assets for precaching.   |
 | 2026-10-22 | DRIFTWOOD multiplayer in Durable Objects (Worker entry) | WebSockets need a DO; SQLite-backed DOs are on the free plan; no DB needed for world state. |
+| 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |

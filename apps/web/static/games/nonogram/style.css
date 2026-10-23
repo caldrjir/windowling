@@ -1,0 +1,40 @@
+/* NONOGRAMY – mřížka s čísly */
+.ng-wrap { display: grid; justify-items: center; gap: 14px; width: 100%; }
+.ng-board { --cs: 28px; display: grid; grid-template-columns: calc(var(--dr) * var(--cs) * .62 + 6px) calc(var(--n) * var(--cs)); grid-template-rows: calc(var(--dc) * var(--cs) * .66 + 6px) calc(var(--n) * var(--cs));
+  padding: 10px; border-radius: 18px; background: rgba(8, 6, 24, .78); box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px -24px var(--a); touch-action: none; user-select: none; -webkit-user-select: none; }
+.ng-cols { display: grid; grid-template-columns: repeat(var(--n), var(--cs)); align-items: end; }
+.ng-cl { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; gap: 1px; height: 100%; border-radius: 6px 6px 0 0; }
+.ng-rows { display: grid; grid-template-rows: repeat(var(--n), var(--cs)); }
+.ng-rl { display: flex; align-items: center; justify-content: flex-end; gap: calc(var(--cs) * .22); padding-right: 6px; border-radius: 6px 0 0 6px; }
+.ng-cl i, .ng-rl i { font-style: normal; font-weight: 700; font-size: calc(var(--cs) * .48); line-height: 1.12; color: var(--text); font-variant-numeric: tabular-nums; }
+.ng-cl:nth-child(odd), .ng-rl:nth-child(odd) { background: rgba(255, 255, 255, .035); }
+.ng-cl.ok i, .ng-rl.ok i { color: var(--dim); }
+.ng-cl.b5 { box-shadow: inset -1px 0 0 color-mix(in srgb, var(--a) 40%, transparent); }
+.ng-rl.b5 { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--a) 40%, transparent); }
+.ng-grid { display: grid; grid-template-columns: repeat(var(--n), var(--cs)); grid-template-rows: repeat(var(--n), var(--cs)); border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 55%, transparent); }
+.ng-c { position: relative; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .025); cursor: pointer; transition: background .1s; }
+.ng-c.br5 { border-right: 2px solid color-mix(in srgb, var(--a) 45%, transparent); }
+.ng-c.bb5 { border-bottom: 2px solid color-mix(in srgb, var(--a) 45%, transparent); }
+.ng-c.f { background: linear-gradient(135deg, var(--a), color-mix(in srgb, var(--a) 60%, var(--c))); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); }
+.ng-c.x::before, .ng-c.x::after { content: ''; position: absolute; left: 22%; right: 22%; top: 50%; height: 2px; border-radius: 2px; background: var(--muted); opacity: .6; transform: rotate(45deg); }
+.ng-c.x::after { transform: rotate(-45deg); }
+.ng-c.bad::before, .ng-c.bad::after { background: var(--bad); opacity: 1; }
+.ng-c.giv { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .35); }
+.ng-c.shake { animation: ngShake .35s; background: color-mix(in srgb, var(--bad) 35%, transparent); }
+.ng-c.pulse { animation: ngPulse .8s; }
+@keyframes ngShake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@keyframes ngPulse { 40% { background: var(--b); } }
+.ng-board.done .ng-c { border-color: transparent; cursor: default; }
+.ng-c.win { background: var(--fc) !important; box-shadow: 0 0 12px -2px var(--fc); animation: ngWin .5s both; }
+.ng-c.void { background: transparent !important; }
+.ng-c.void::before, .ng-c.void::after { display: none; }
+.ng-board.done .ng-grid { box-shadow: none; }
+@keyframes ngWin { from { transform: scale(.4); } }
+.ng-sw { width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, var(--a), var(--c)); }
+.ng-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+.ng-gal figure { display: grid; gap: 6px; padding: 10px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.ng-gal canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; }
+.ng-gal figcaption { font-size: 13px; font-weight: 600; display: grid; }
+.ng-gal small { color: var(--muted); font-weight: 400; }
+.k-hero-art canvas { image-rendering: pixelated; }
+.ng-res { width: 140px; height: 140px; image-rendering: pixelated; filter: drop-shadow(0 0 18px color-mix(in srgb, var(--a) 50%, transparent)); }

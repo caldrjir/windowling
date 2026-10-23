@@ -15,19 +15,22 @@ test('the game center opens with its library', async ({ page }) => {
 	// Three games and a free slot on the shelf.
 	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(4);
 	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(1);
+	// The puzzle shelf.
+	await expect(page.getByTestId('shelf-puzzle').locator('.gcard')).toHaveCount(4);
+	await expect(page.getByTestId('shelf-puzzle')).toContainText('SUDOKU');
 	expect(errors).toEqual([]);
 });
 
 test('switches language and keeps it for the games', async ({ page }) => {
 	await page.goto('/');
 	await page.getByRole('button', { name: 'EN', exact: true }).click();
-	await expect(page.locator('.lib-head h2')).toHaveText('Library');
+	await expect(page.locator('.lib-head h2').first()).toHaveText('Action & adventure');
 	await expect(page.getByTestId('play')).toContainText('PLAY');
 	expect(await page.evaluate(() => localStorage.getItem('gamecenter.lang'))).toBe('en');
 	await page.reload();
-	await expect(page.locator('.lib-head h2')).toHaveText('Library');
+	await expect(page.locator('.lib-head h2').first()).toHaveText('Action & adventure');
 	await page.getByRole('button', { name: 'CS', exact: true }).click();
-	await expect(page.locator('.lib-head h2')).toHaveText('Knihovna');
+	await expect(page.locator('.lib-head h2').first()).toHaveText('Akce a dobrodružství');
 });
 
 test('launches VOIDBORN and comes back to the center', async ({ page }) => {
@@ -209,7 +212,15 @@ test('the center shows who is playing a game right now', async ({ context, page,
 	};
 	// Other tests play in parallel, so at least this tab is counted (nobody is signed in in E2E).
 	expect(games.voidborn?.anonymous).toBeGreaterThanOrEqual(1);
-	expect(Object.keys(games).sort()).toEqual(['driftwood', 'starspire', 'voidborn']);
+	expect(Object.keys(games).sort()).toEqual([
+		'driftwood',
+		'kakuro',
+		'nonogram',
+		'souhvezdi',
+		'starspire',
+		'sudoku',
+		'voidborn',
+	]);
 
 	await page.goto('/');
 	await expect(page.getByTestId('live')).toContainText('Právě hraje');

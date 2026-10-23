@@ -1,0 +1,39 @@
+/* SUDOKU – mřížka a číselník */
+.sd-wrap { display: flex; gap: 22px; align-items: center; justify-content: center; width: 100%; }
+.sd-grid { --s: min(92vw, 560px, calc(100vh - 250px)); width: var(--s); height: var(--s); min-width: 280px; min-height: 280px; display: grid; grid-template-columns: repeat(9, 1fr); border-radius: 16px; overflow: hidden;
+  background: rgba(8, 6, 24, .78); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--a) 55%, transparent), 0 24px 60px -24px var(--a); }
+.sd-c { position: relative; display: grid; place-items: center; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-family: var(--f-d); font-size: calc(var(--s) / 17); transition: background .12s; }
+.sd-c.br { border-right: 2px solid color-mix(in srgb, var(--a) 45%, transparent); }
+.sd-c.bb { border-bottom: 2px solid color-mix(in srgb, var(--a) 45%, transparent); }
+.sd-c.given b { color: var(--text); font-weight: 700; }
+.sd-c.user b { color: var(--a); font-weight: 500; }
+.sd-c.wrong b { color: var(--bad); }
+.sd-c.wrong { background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.sd-c.peer { background: rgba(255, 255, 255, .045); }
+.sd-c.same { background: color-mix(in srgb, var(--a) 18%, transparent); }
+.sd-c.sel { background: color-mix(in srgb, var(--a) 30%, transparent); box-shadow: inset 0 0 0 2px var(--a); z-index: 1; }
+.sd-c.flash { animation: sdFlash .5s; }
+.sd-c.win { animation: sdWin .6s both; }
+@keyframes sdFlash { 40% { background: color-mix(in srgb, var(--b) 45%, transparent); } }
+@keyframes sdWin { 50% { background: color-mix(in srgb, var(--a) 50%, transparent); transform: scale(1.06); } 100% { background: color-mix(in srgb, var(--a) 14%, transparent); } }
+.sd-notes { position: absolute; inset: 6%; display: grid; grid-template-columns: repeat(3, 1fr); font-family: var(--f-u); font-size: calc(var(--s) / 38); color: var(--muted); line-height: 1; }
+.sd-notes i { font-style: normal; display: grid; place-items: center; }
+.sd-notes i.hl { color: var(--a); font-weight: 700; }
+.sd-side { display: grid; gap: 14px; justify-items: center; }
+.sd-pad { display: grid; grid-template-columns: repeat(3, 64px); gap: 8px; }
+.sd-n { position: relative; height: 64px; border-radius: 16px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); font-family: var(--f-d); font-size: 26px; transition: transform .1s; }
+.sd-n small { position: absolute; right: 7px; bottom: 4px; font-family: var(--f-u); font-size: 11px; color: var(--muted); }
+.sd-n.hl { box-shadow: inset 0 0 0 2px var(--a); color: var(--a); }
+.sd-n.gone { opacity: .25; }
+.sd-n:active { transform: scale(.94); }
+.sd-side .k-tools { max-width: 210px; }
+@media (max-width: 860px) {
+  .sd-wrap { flex-direction: column; gap: 12px; }
+  .sd-grid { --s: min(96vw, 560px, calc(100vh - 290px)); }
+  .sd-pad { grid-template-columns: repeat(9, 1fr); width: min(96vw, 560px); gap: 5px; }
+  .sd-n { height: 52px; font-size: 22px; border-radius: 12px; }
+  .sd-side .k-tools { max-width: none; }
+  .sd-side .k-tool { min-width: 0; flex: 1 1 0; height: 50px; padding: 0 2px; font-size: 10px; overflow: hidden; }
+  .sd-side { width: min(96vw, 560px); }
+  .sd-side .k-tools { flex-wrap: nowrap; width: 100%; }
+}
