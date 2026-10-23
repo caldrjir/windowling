@@ -15,6 +15,8 @@ const PUZZLES = [
 	'solitaire',
 	'mahjong',
 	'skladacka',
+	'sachy',
+	'piskvorky',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -232,4 +234,32 @@ test('skladacka snaps a piece dragged to its place', async ({ page }) => {
 	await startFree(page, 'skladacka');
 	await page.locator('[data-t="hint"]').click();
 	await expect(page.locator('.jg-count')).toHaveText(/^1 \//);
+});
+
+test('sachy plays a knight move and the computer answers', async ({ page }) => {
+	await startFree(page, 'sachy');
+	const moves = () => page.evaluate('Kit._test.inst.getState().moves.length') as Promise<number>;
+	// The board is flipped when the player has black; then the computer opens.
+	const white = (await page.locator('.ch-sq').first().getAttribute('data-s')) === '21';
+	if (!white) await expect.poll(moves, { timeout: 15_000 }).toBe(1);
+	const [from, to] = white ? [97, 76] : [27, 46];
+	const before = await moves();
+	await page.locator(`.ch-sq[data-s="${from}"]`).dispatchEvent('pointerdown');
+	await page.locator(`.ch-sq[data-s="${to}"]`).dispatchEvent('pointerdown');
+	await expect.poll(moves, { timeout: 15_000 }).toBe(before + 2);
+});
+
+test('piskvorky places a star and the opponent answers', async ({ page }) => {
+	await startFree(page, 'piskvorky');
+	const stones = () => page.evaluate('Kit._test.inst.getState().hist.length') as Promise<number>;
+	// The opponent may open; wait for the player's turn.
+	await expect(page.locator('.gm-status')).toContainText(/Jsi na tahu|Your move/);
+	const before = await stones();
+	const free = await page.evaluate(() =>
+		[...document.querySelectorAll<HTMLElement>('.gm-c')].findIndex(
+			(c, i) => !c.innerHTML && Math.abs((i % 15) - 7) + Math.abs(Math.floor(i / 15) - 7) === 1,
+		),
+	);
+	await page.locator(`.gm-c[data-i="${free}"]`).click();
+	await expect.poll(stones).toBe(before + 2);
 });

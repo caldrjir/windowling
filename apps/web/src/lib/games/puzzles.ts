@@ -706,4 +706,106 @@ export const PUZZLE_GAMES: Game[] = [
 				}
 		},
 	},
+	{
+		id: 'sachy',
+		title: 'ŠACHY',
+		group: 'puzzle',
+		tagline: 'Šachy pod hvězdami.',
+		description:
+			'Šachy proti počítači v šesti silách od nováčka po mistra, denní úloha mat v 1–2 tazích, Cesta hvězd střídající úlohy a partie a hra ve dvou na jednom zařízení.',
+		genres: ['Strategie', 'Šachy', 'Úlohy'],
+		features: [
+			'Denní úloha: mat v 1–2',
+			'Cesta: 120 úloh a partií',
+			'6 sil soupeře',
+			'Hra ve dvou',
+		],
+		en: {
+			tagline: 'Chess under the stars.',
+			description:
+				'Chess against the computer at six strengths from novice to master, a daily mate-in-1–2 puzzle, a Star Path that alternates puzzles and games, and two players on one device.',
+			genres: ['Strategy', 'Chess', 'Puzzles'],
+			features: [
+				'Daily mate-in-1–2',
+				'Path: 120 puzzles & games',
+				'6 opponent strengths',
+				'Two players',
+			],
+		},
+		statLabels: labels,
+		path: '/games/sachy/index.html',
+		colors: ['#ffd166', '#5b6cff', '#b14cff'],
+		statsKey: 'gamecenter.stats.sachy',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ffd166', '#5b6cff', '#b14cff'], 12);
+			const n = 5;
+			const s = Math.min(w * 0.6, h * 0.62) / n;
+			const x0 = w / 2 - (s * n) / 2;
+			const y0 = h * 0.1;
+			for (let y = 0; y < n; y++)
+				for (let x = 0; x < n; x++) {
+					ctx.fillStyle = (x + y) % 2 ? 'rgba(91,108,255,.55)' : 'rgba(255,255,255,.16)';
+					ctx.fillRect(x0 + x * s, y0 + y * s, s, s);
+				}
+			const bob = Math.sin(t * 1.6) * s * 0.06;
+			glowText(ctx, '♞', x0 + s * 1.5, y0 + s * 2.5 + bob, s * 0.95, '#ffd166');
+			glowText(ctx, '♚', x0 + s * 3.5, y0 + s * 0.5, s * 0.85, '#d9b8ff');
+			glowText(ctx, '♛', x0 + s * 3.5, y0 + s * 3.5, s * 0.85, '#ffd166');
+		},
+	},
+	{
+		id: 'piskvorky',
+		title: 'PIŠKVORKY',
+		group: 'puzzle',
+		tagline: 'Pět hvězd v řadě.',
+		description:
+			'Piškvorky na 15×15: hvězdy proti planetám. Soupeř ve čtyřech silách, který hlídá hrozby a počítá vynucené výhry, denní zahájení, Cesta hvězd a hra ve dvou na jednom zařízení.',
+		genres: ['Strategie', 'Piškvorky', 'Gomoku'],
+		features: ['Denní zahájení', 'Cesta: 120 partií', '4 síly soupeře', 'Hra ve dvou'],
+		en: {
+			tagline: 'Five stars in a row.',
+			description:
+				'Gomoku on 15×15: stars against planets. An opponent at four strengths that watches threats and calculates forced wins, a daily opening, the Star Path and two players on one device.',
+			genres: ['Strategy', 'Gomoku', 'Five in a row'],
+			features: ['Daily opening', 'Path: 120 games', '4 opponent strengths', 'Two players'],
+		},
+		statLabels: labels,
+		path: '/games/piskvorky/index.html',
+		colors: ['#3dd6ff', '#ff9a1f', '#e0446a'],
+		statsKey: 'gamecenter.stats.piskvorky',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#3dd6ff', '#ff9a1f', '#e0446a'], 13);
+			const n = 7;
+			const s = Math.min(w * 0.62, h * 0.66) / n;
+			const x0 = w / 2 - (s * n) / 2;
+			const y0 = h * 0.08;
+			ctx.strokeStyle = 'rgba(255,255,255,.18)';
+			ctx.lineWidth = 1;
+			for (let i = 0; i <= n; i++) {
+				ctx.beginPath();
+				ctx.moveTo(x0 + i * s, y0);
+				ctx.lineTo(x0 + i * s, y0 + n * s);
+				ctx.moveTo(x0, y0 + i * s);
+				ctx.lineTo(x0 + n * s, y0 + i * s);
+				ctx.stroke();
+			}
+			const lit = Math.floor(t * 1.2) % 6;
+			for (let i = 0; i < 5; i++) {
+				if (i > lit) break;
+				glowText(ctx, '★', x0 + (i + 1) * s + s / 2, y0 + (i + 1) * s + s / 2, s * 0.8, '#3dd6ff');
+			}
+			const planets: [number, number][] = [
+				[2, 1],
+				[4, 2],
+				[1, 4],
+				[5, 4],
+			];
+			planets.forEach(([x, y]) => {
+				ctx.fillStyle = '#ff9a1f';
+				ctx.beginPath();
+				ctx.arc(x0 + x * s + s / 2, y0 + y * s + s / 2, s * 0.3, 0, TAU);
+				ctx.fill();
+			});
+		},
+	},
 ];
