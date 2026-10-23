@@ -183,3 +183,4 @@ main#kView { position: relative; z-index: 2; padding: 6px max(14px, env(safe-are
   .k-icon { width: 36px; height: 36px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.k-result h2.lose { background: linear-gradient(90deg, var(--bad), var(--b)); -webkit-background-clip: text; background-clip: text; }

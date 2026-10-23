@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { GAMES } from '../src/lib/games/registry';
 import { E2E_SITE_PASSWORD } from './gate';
 
 // The center picks its language from the browser; the tests start in Czech.
@@ -16,7 +17,9 @@ test('the game center opens with its library', async ({ page }) => {
 	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(4);
 	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(1);
 	// The puzzle shelf.
-	await expect(page.getByTestId('shelf-puzzle').locator('.gcard')).toHaveCount(4);
+	await expect(page.getByTestId('shelf-puzzle').locator('.gcard')).toHaveCount(
+		GAMES.filter((g) => g.group === 'puzzle').length,
+	);
 	await expect(page.getByTestId('shelf-puzzle')).toContainText('SUDOKU');
 	expect(errors).toEqual([]);
 });
@@ -212,15 +215,7 @@ test('the center shows who is playing a game right now', async ({ context, page,
 	};
 	// Other tests play in parallel, so at least this tab is counted (nobody is signed in in E2E).
 	expect(games.voidborn?.anonymous).toBeGreaterThanOrEqual(1);
-	expect(Object.keys(games).sort()).toEqual([
-		'driftwood',
-		'kakuro',
-		'nonogram',
-		'souhvezdi',
-		'starspire',
-		'sudoku',
-		'voidborn',
-	]);
+	expect(Object.keys(games).sort()).toEqual(GAMES.map((g) => g.id).sort());
 
 	await page.goto('/');
 	await expect(page.getByTestId('live')).toContainText('Právě hraje');

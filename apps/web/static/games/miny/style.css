@@ -1,0 +1,27 @@
+/* MINY – pole */
+.mn-wrap { display: grid; justify-items: center; gap: 12px; }
+.mn-head { display: flex; gap: 10px; }
+.mn-head div { display: grid; padding: 8px 16px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 100px; }
+.mn-head small { color: var(--muted); font-size: 11px; letter-spacing: .16em; font-weight: 700; }
+.mn-head b { font-family: var(--f-d); font-size: 20px; color: var(--a); }
+.mn-head b i { font-style: normal; color: var(--dim); }
+.mn-board { --cs: 32px; display: grid; grid-template-columns: repeat(var(--w), var(--cs)); grid-template-rows: repeat(var(--h), var(--cs)); gap: 2px; padding: 8px; border-radius: 14px; background: rgba(8,6,24,.82);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--a) 40%, transparent), 0 24px 60px -24px var(--a); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.mn-c { border-radius: calc(var(--cs) * .18); background: linear-gradient(160deg, color-mix(in srgb, var(--a) 26%, #1a1640), color-mix(in srgb, var(--c) 22%, #120e30)); box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+  font-family: var(--f-d); font-weight: 700; font-size: calc(var(--cs) * .5); display: grid; place-items: center; transition: background .1s; -webkit-touch-callout: none; }
+.mn-c:hover:not(.o) { background: color-mix(in srgb, var(--a) 40%, #1a1640); }
+.mn-c.o { background: rgba(255,255,255,.04); box-shadow: none; }
+.mn-c[data-n="1"] { color: #55c8ff; } .mn-c[data-n="2"] { color: #6dff9e; } .mn-c[data-n="3"] { color: #ff7a8a; } .mn-c[data-n="4"] { color: #c77dff; }
+.mn-c[data-n="5"] { color: #ffb347; } .mn-c[data-n="6"] { color: #3dfff0; } .mn-c[data-n="7"] { color: #fff; } .mn-c[data-n="8"] { color: #aaa; }
+.mn-c.f::after { content: '⚑'; color: var(--b); font-family: var(--f-u); text-shadow: 0 0 8px var(--b); }
+.mn-c.boom { background: color-mix(in srgb, var(--bad) 45%, transparent); }
+.mn-c.boom::after, .mn-c.show::after { content: '✸'; color: #fff; font-family: var(--f-u); }
+.mn-c.show { background: rgba(255,90,122,.2); }
+.mn-c.start { box-shadow: inset 0 0 0 2px var(--good), 0 0 14px var(--good); animation: mnStart 1.4s infinite; }
+@keyframes mnStart { 50% { box-shadow: inset 0 0 0 2px var(--good), 0 0 4px var(--good); } }
+.mn-c.pulse { animation: mnPulse .8s; }
+@keyframes mnPulse { 40% { background: var(--good); } }
+.mn-c.shake { animation: mnShake .4s; }
+@keyframes mnShake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.mn-c.win { background: color-mix(in srgb, var(--a) 14%, transparent); transition: background .3s; }
+.mn-fl { font-size: 20px; color: var(--text); line-height: 1; }

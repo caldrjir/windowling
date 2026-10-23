@@ -25,11 +25,11 @@ follow the player; later, some games are played together (multiplayer).
 | DRIFTWOOD | First-person survival, 3D, co-op | Released (computers only) |
 | -         | Free slot (1 shown)              | Planned                   |
 
-**Puzzles** (a second shelf, phones and computers): Sudoku, Nonograms, Kakuro and Souhvězdí
-(Hashi). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
+**Puzzles** (a second shelf, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
+(Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and
+Omalovánky (colour by number). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
 achievements; weekly quests and themes are shared by all puzzles. More puzzles are planned:
-falling blocks, 2048-style merging, minesweeper, colour by number, solitaire, mahjong, jigsaw,
-chess and gomoku.
+solitaire, mahjong, jigsaw, chess and gomoku.
 
 ## What the hub shows
 

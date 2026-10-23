@@ -1,0 +1,18 @@
+/* OMALOVÁNKY – plátno a paleta */
+.om-wrap { display: grid; justify-items: center; gap: 12px; }
+.om-stage { border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 45%, transparent), 0 24px 60px -24px var(--a); }
+.om-cv { display: block; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.om-pal { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 760px; }
+.om-sw { position: relative; width: 52px; height: 52px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 3px rgba(0,0,0,.25), 0 4px 12px -4px rgba(0,0,0,.6); display: grid; place-items: center; transition: transform .12s; }
+.om-sw b { font-family: var(--f-d); font-size: 16px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.om-sw i { position: absolute; inset: -5px; border-radius: 50%; background: conic-gradient(var(--a) var(--p, 0%), transparent 0); -webkit-mask: radial-gradient(circle, transparent 29px, #000 30px); mask: radial-gradient(circle, transparent 29px, #000 30px); }
+.om-sw.on { transform: scale(1.14); box-shadow: inset 0 0 0 3px #fff, 0 0 18px var(--c); }
+.om-sw.done b { opacity: 0; }
+.om-sw.done::after { content: '✓'; position: absolute; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.om-res { width: 160px; height: 160px; image-rendering: pixelated; border-radius: 10px; box-shadow: 0 0 30px -6px var(--a); }
+.om-art { width: min(100%, 250px); aspect-ratio: 1; image-rendering: pixelated; border-radius: 16px; box-shadow: 0 0 40px -10px var(--a); }
+.om-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.om-gal figure { display: grid; gap: 6px; padding: 10px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.om-gal canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 8px; }
+.om-gal figcaption { font-size: 13px; font-weight: 600; }
+@media (max-width: 760px) { .om-sw { width: 42px; height: 42px; } .om-sw i { -webkit-mask: radial-gradient(circle, transparent 24px, #000 25px); mask: radial-gradient(circle, transparent 24px, #000 25px); } .om-pal { gap: 6px; } }

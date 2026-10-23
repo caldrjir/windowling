@@ -3,7 +3,16 @@ import { expect, test, type Page } from '@playwright/test';
 // Puzzle games on the shared puzzle kit (static/games/puzzle-kit).
 test.use({ locale: 'cs-CZ' });
 
-const PUZZLES = ['sudoku', 'nonogram', 'kakuro', 'souhvezdi'] as const;
+const PUZZLES = [
+	'sudoku',
+	'nonogram',
+	'kakuro',
+	'souhvezdi',
+	'pulsar',
+	'fuze',
+	'miny',
+	'omalovanky',
+] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
 const solve = (page: Page) => page.evaluate('Kit._test.inst && Kit._test.inst._solve()');
@@ -120,4 +129,78 @@ test('the daily puzzle builds a streak shared with the calendar', async ({ page 
 			},
 	);
 	expect(quests.quests.list).toHaveLength(3);
+});
+
+test('pulsar drops pieces from the keyboard', async ({ page, isMobile }) => {
+	test.skip(isMobile, 'keyboard input');
+	await startFree(page, 'pulsar');
+	for (let i = 0; i < 3; i++) await page.keyboard.press('Space');
+	const pieces = await page.evaluate('Kit._test.inst.getState().pieces');
+	expect(pieces).toBe(3);
+});
+
+test('pulsar can be played with the touch buttons', async ({ page, isMobile }) => {
+	test.skip(!isMobile, 'touch buttons are for phones');
+	await startFree(page, 'pulsar');
+	await page.locator('[data-b="hard"]').dispatchEvent('pointerdown');
+	await expect.poll(() => page.evaluate('Kit._test.inst.getState().pieces')).toBe(1);
+});
+
+test('fuze slides bodies with a swipe or the arrows', async ({ page, isMobile }) => {
+	await startFree(page, 'fuze');
+	const moves = () => page.evaluate('Kit._test.inst.getState().moves');
+	for (const key of ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown']) {
+		if (isMobile) {
+			const box = await page.locator('.fz-board').boundingBox();
+			if (!box) throw new Error('no board');
+			const [dx, dy] = {
+				ArrowLeft: [-1, 0],
+				ArrowUp: [0, -1],
+				ArrowRight: [1, 0],
+				ArrowDown: [0, 1],
+			}[key] ?? [0, 0];
+			const cx = box.x + box.width / 2;
+			const cy = box.y + box.height / 2;
+			await page
+				.locator('.fz-board')
+				.dispatchEvent('pointerdown', { clientX: cx, clientY: cy, pointerId: 1 });
+			await page
+				.locator('.fz-board')
+				.dispatchEvent('pointerup', { clientX: cx + dx * 80, clientY: cy + dy * 80, pointerId: 1 });
+		} else await page.keyboard.press(key);
+	}
+	await expect.poll(moves).toBeGreaterThan(0);
+});
+
+test('miny starts on the marked cell and opens an area', async ({ page }) => {
+	await startFree(page, 'miny');
+	const start = page.locator('.mn-c.start');
+	await expect(start).toHaveCount(1);
+	await start.dispatchEvent('pointerdown');
+	await start.dispatchEvent('pointerup');
+	await expect.poll(() => page.locator('.mn-c.o').count()).toBeGreaterThan(8);
+});
+
+test('omalovanky paints a cell with the selected colour', async ({ page }) => {
+	await startFree(page, 'omalovanky');
+	// Zoom in, then paint the first cell with its own colour.
+	await page.locator('[data-t="find"]').click();
+	const painted = await page.evaluate(() => {
+		const cv = document.querySelector<HTMLCanvasElement>('.om-cv');
+		if (!cv) return false;
+		const r = cv.getBoundingClientRect();
+		const opts = {
+			clientX: r.left + r.width / 2,
+			clientY: r.top + r.height / 2,
+			pointerId: 1,
+			bubbles: true,
+		};
+		cv.dispatchEvent(new PointerEvent('pointerdown', opts));
+		cv.dispatchEvent(new PointerEvent('pointerup', opts));
+		return true;
+	});
+	expect(painted).toBe(true);
+	await expect
+		.poll(() => page.evaluate('Kit._test.inst.getState().paint.filter((p) => p >= 0).length'))
+		.toBeGreaterThan(0);
 });
