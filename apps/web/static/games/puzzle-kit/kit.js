@@ -53,6 +53,9 @@ const Kit = (() => {
     plus: '<path d="M12 5v14M5 12h14"/>', quest: '<path d="M5 4h14v16l-7-4-7 4z"/>', sound: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 8a5 5 0 010 8"/>', mute: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>',
     undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>', bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z"/>',
     erase: '<path d="M20 20H9L4 15l10-10 7 7-6 6"/>', pencil: '<path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', home: '<path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 010 6.8M18 14.3c2.2.7 3.5 2.8 3.5 5.7"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    dot: '<circle cx="12" cy="12" r="5" fill="currentColor"/>', link: '<path d="M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>',
+    crown: '<path d="M3 18h18M4 15L3 6l5 4 4-6 4 6 5-4-1 9z"/>', chat: '<path d="M4 5h16v11H9l-5 4z"/>', send: '<path d="M4 12l16-8-6 16-2-7z"/>',
   };
   const icon = (n, cls = '') => `<svg class="ki ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n] || ''}</svg>`;
 
@@ -291,7 +294,11 @@ const Kit = (() => {
     document.body.dataset.view = v;
     window.scrollTo(0, 0);
   }
-  function back() { if (view === 'play') { leavePlay(); home(); } else home(); }
+  function back() {
+    if (view === 'play' && isOnline()) { leavePlay(); roomView(); }
+    else if (view === 'room') leaveRoom();
+    else if (view === 'play') { leavePlay(); home(); } else { clearTimeout(lobbyT); home(); }
+  }
 
   function card(cls, inner, attrs = '') { return `<section class="k-card ${cls}" ${attrs}>${inner}</section>`; }
 
@@ -332,6 +339,7 @@ const Kit = (() => {
             <div class="k-card-h">${icon('plus')}<span>${L('Volná hra', 'Free play')}</span></div>
             <span class="k-muted">${L('Nekonečně nových hlavolamů. Vyber obtížnost:', 'Endless new puzzles. Pick a difficulty:')}</span>
             <div class="k-diffs">${DEF.diffs.map(d => `<button class="k-btn" data-k="free" data-diff="${d.id}"><b>${d.name}</b>${d.note ? `<small>${d.note}</small>` : ''}<small>${d.metric === 'score' ? `${L('rekord', 'best')} ${fmtNum((SAVE.stats.by[d.id] || {}).bestScore || 0)}` : `${(SAVE.stats.by[d.id] || {}).n || 0}×${(SAVE.stats.by[d.id] || {}).best ? ' · ' + fmtTime(SAVE.stats.by[d.id].best) : ''}`}</small></button>`).join('')}</div>`)}
+          ${onlineCard()}
           ${card('k-quests', `
             <div class="k-card-h">${icon('quest')}<span>${L('Týdenní úkoly', 'Weekly quests')}</span><em class="k-muted">${L('všechny hlavolamy', 'all puzzles')}</em></div>
             <ul>${q.list.map(it => `<li class="${it.done ? 'done' : ''}"><span>${questText(it)}</span><i><u style="width:${Math.round(it.p / it.n * 100)}%"></u></i><small>${it.done ? icon('check') : `${it.p}/${it.n}`} · +${it.reward} ${icon('gem', 'tiny')}</small></li>`).join('')}</ul>`)}
@@ -363,6 +371,7 @@ const Kit = (() => {
       else if (k === 'themes') themesView();
       else if (k === 'help') helpView();
       else if (k === 'archive') start('daily', b.dataset.day);
+      else if (k === 'online') onlineView();
       else if (k === 'view') { const v = DEF.views[+b.dataset.v]; setView('custom', v.name); $('#kView').innerHTML = '<div class="k-page"></div>'; v.render($('#kView .k-page'), SAVE, api); }
     };
   }
@@ -498,6 +507,7 @@ const Kit = (() => {
       if (timerOn && cur && $('#kModal').hidden) { cur.time += dt; updTimer(); }
       if (playAcc >= 60) { playAcc -= 60; sessionMin++; questProgress({ minutes: 1 }); }
     }
+    raceTick();
   }, 500);
   let saveT = 0;
   const api = {
@@ -510,8 +520,8 @@ const Kit = (() => {
     get data() { return SAVE.data; },
     persist: () => persist(),
     setSetting(k, v) { SAVE.settings[k] = v; persist(); },
-    solved(extra = {}) { if (cur) finish(extra); },
-    failed(extra = {}) { if (cur) fail(extra); },
+    solved(extra = {}) { if (isOnline()) onlineSolved(extra); else if (cur) finish(extra); },
+    failed(extra = {}) { if (isOnline()) onlineFailed(extra); else if (cur) fail(extra); },
     get kind() { return cur && cur.kind; }, get key() { return cur && cur.key; },
     paused: () => !$('#kModal').hidden || document.hidden,
     setTimer(on) { timerOn = !!on; lastTick = performance.now(); },
@@ -598,6 +608,394 @@ const Kit = (() => {
     $('#kRetry').onclick = () => { SOUND.ui(); close(); start(c.kind, c.key, c.diff); };
   }
 
+  // ── Online: tahové partie (šachy, piškvorky) a závody na stejném zadání ──
+  // Server: /api/duel/rooms (Durable Object na místnost). Hra dostane v opts.net spojení
+  // pro tahy; závodní hlavolam nabídne inst.progress() 0..1. Kód místnosti je v adrese (?duel=).
+  const API = '/api/duel/rooms';
+  const ON = { ws: null, code: null, meta: null, me: null, seat: null, players: [], round: null, chat: [], offset: 0, retry: 0, applied: 0, prog: -1, progAt: 0, counted: -1, unread: 0, chatOpen: false, offline: {}, drawFrom: null, rematch: [], countT: 0 };
+  const isOnline = () => !!(cur && cur.kind === 'online');
+  const pid = () => { let p = ''; try { p = localStorage.getItem('gamecenter.pid') || ''; } catch (e) { /* bez úložiště */ } if (!/^[a-zA-Z0-9]{12,40}$/.test(p)) { p = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 56]).join(''); try { localStorage.setItem('gamecenter.pid', p); } catch (e) { /* bez úložiště */ } } return p; };
+  const nick = () => { if (!META.nick) { META.nick = `${L('Hvězdář', 'Stargazer')} ${100 + Math.floor(Math.random() * 900)}`; saveMeta(); } return META.nick; };
+  const onDiffs = () => DEF.diffs.filter(d => !DEF.online.diffs || DEF.online.diffs.includes(d.id));
+  const serverNow = () => Date.now() + ON.offset;
+  const firstSeat = () => (ON.round ? ON.round.n % 2 : 0);
+  const mySide = () => (ON.seat === firstSeat() ? 1 : -1);
+  const opp = () => ON.players.find(p => p.id !== ON.me && p.seat != null);
+  const WHY = {
+    mate: L('Mat', 'Checkmate'), five: L('Pět v řadě', 'Five in a row'), resign: L('Vzdání', 'Resignation'), agreed: L('Remíza dohodou', 'Draw agreed'),
+    left: L('Soupeř odešel', 'The opponent left'), stalemate: L('Pat', 'Stalemate'), draw50: L('Pravidlo 50 tahů', '50-move rule'), rep: L('Trojí opakování', 'Threefold repetition'),
+    material: L('Nedostatek materiálu', 'Insufficient material'), full: L('Plná plocha', 'Board full'),
+  };
+  const onStats = () => (SAVE.stats.online = Object.assign({ w: 0, l: 0, d: 0, races: 0, raceWins: 0 }, SAVE.stats.online));
+
+  function onlineCard() {
+    if (!DEF.online) return '';
+    const o = onStats(), turn = DEF.online.kind === 'turn';
+    return card('k-online', `
+      <div class="k-card-h">${icon('users')}<span>Online</span><em class="k-live">${icon('dot', 'tiny')}${L('živě', 'live')}</em></div>
+      <b class="k-big">${turn ? L('Partie s živým soupeřem', 'Play a live opponent') : L('Závod na stejném zadání', 'Race on the same puzzle')}</b>
+      <span class="k-muted">${turn ? L('Pošli kód kamarádovi, nebo se přidej k otevřené hře.', 'Send a code to a friend or join an open game.') : L('Až 8 hráčů, stejné zadání, kdo dřív vyřeší, vyhrává.', 'Up to 8 players on the same puzzle; first to solve wins.')}</span>
+      ${turn ? (o.w + o.l + o.d ? `<span class="k-muted">${L('Výhry', 'Wins')} ${o.w} · ${L('prohry', 'losses')} ${o.l} · ${L('remízy', 'draws')} ${o.d}</span>` : '') : o.races ? `<span class="k-muted">${L('Závody', 'Races')} ${o.races} · ${L('vítězství', 'wins')} ${o.raceWins}</span>` : ''}
+      <div class="k-row"><button class="k-btn primary" data-k="online">${L('Hrát online', 'Play online')}</button></div>`);
+  }
+
+  // Seznam otevřených her, založení a připojení kódem.
+  let lobbyT = 0;
+  function onlineView(code = '') {
+    setView('online', 'Online');
+    const turn = DEF.online.kind === 'turn', diffs = onDiffs();
+    const sel = diffs.some(d => d.id === META.onDiff) ? META.onDiff : diffs[0].id;
+    $('#kView').innerHTML = `<div class="k-page k-on">
+      <h2>Online</h2>
+      <div class="k-grid">
+        ${card('', `<div class="k-card-h">${icon('user')}<span>${L('Tvoje přezdívka', 'Your nickname')}</span></div>
+          <input class="k-in" id="kNick" maxlength="20" value="${esc(nick())}" autocomplete="nickname">`)}
+        ${card('', `<div class="k-card-h">${icon('plus')}<span>${L('Nová hra', 'New game')}</span></div>
+          ${turn ? `<span class="k-muted">${L('Barvy se po každé partii střídají.', 'Colours swap after every game.')}</span>` : `<div class="k-chips">${diffs.map(d => `<button class="k-chip ${d.id === sel ? 'on' : ''}" data-diff="${d.id}">${d.name}</button>`).join('')}</div>`}
+          <label class="k-check"><input type="checkbox" id="kOpen" checked> ${L('Ukázat v seznamu otevřených her', 'List it among open games')}</label>
+          <div class="k-row"><button class="k-btn primary" id="kCreate">${L('Založit hru', 'Create game')}</button></div>`)}
+        ${card('', `<div class="k-card-h">${icon('link')}<span>${L('Připojit kódem', 'Join with a code')}</span></div>
+          <div class="k-row"><input class="k-in k-codein" id="kCode" maxlength="5" placeholder="ABCDE" value="${esc(code)}" autocomplete="off" autocapitalize="characters"><button class="k-btn" id="kJoin">${L('Připojit', 'Join')}</button></div>`)}
+      </div>
+      <h3>${L('Otevřené hry', 'Open games')}</h3>
+      <div class="k-rooms" id="kRooms"><span class="k-muted">${L('Načítám…', 'Loading…')}</span></div>
+    </div>`;
+    const saveNick = () => { const v = $('#kNick').value.replace(/\s+/g, ' ').trim().slice(0, 20); if (v) { META.nick = v; saveMeta(); } };
+    $('#kNick').onchange = saveNick;
+    for (const c of document.querySelectorAll('.k-chip')) c.onclick = () => { SOUND.ui(); META.onDiff = c.dataset.diff; saveMeta(); for (const x of document.querySelectorAll('.k-chip')) x.classList.toggle('on', x === c); };
+    $('#kCreate').onclick = async () => {
+      SOUND.ui(); saveNick(); $('#kCreate').disabled = true;
+      const diff = turn ? 'online' : (document.querySelector('.k-chip.on') || {}).dataset?.diff || diffs[0].id;
+      try {
+        const res = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ game: DEF.id, kind: DEF.online.kind, diff, nick: nick(), open: $('#kOpen').checked }) });
+        const body = await res.json(); if (!res.ok || !body.code) throw new Error(body.error || res.status);
+        connect(body.code);
+      } catch (e) { toast(L('Hru se nepodařilo založit', 'Could not create the game')); if ($('#kCreate')) $('#kCreate').disabled = false; }
+    };
+    const join = () => { const c = $('#kCode').value.trim().toUpperCase(); if (!/^[A-Z2-9]{5}$/.test(c)) { $('#kCode').classList.add('bad'); return; } SOUND.ui(); saveNick(); connect(c); };
+    $('#kJoin').onclick = join;
+    $('#kCode').onkeydown = e => { if (e.key === 'Enter') join(); };
+    const load = async () => {
+      if (view !== 'online') return;
+      try {
+        const { rooms } = await (await fetch(`${API}?game=${DEF.id}`)).json();
+        if (view !== 'online') return;
+        $('#kRooms').innerHTML = rooms.length ? rooms.map(r => `<button class="k-room" data-code="${r.code}"><b>${esc(r.host)}</b><span>${r.kind === 'race' ? diffName(r.diff) : L('čeká na soupeře', 'waiting for an opponent')}</span><em>${icon('users', 'tiny')} ${r.players}/${r.max}</em></button>`).join('')
+          : `<span class="k-muted">${L('Teď nikdo nečeká. Založ hru a pošli kód.', 'Nobody is waiting right now. Create a game and share the code.')}</span>`;
+        for (const b of document.querySelectorAll('.k-room')) b.onclick = () => { SOUND.ui(); saveNick(); connect(b.dataset.code); };
+      } catch (e) { if ($('#kRooms')) $('#kRooms').innerHTML = `<span class="k-muted">${L('Seznam teď není dostupný.', 'The list is not available right now.')}</span>`; }
+      clearTimeout(lobbyT); lobbyT = setTimeout(load, 5000);
+    };
+    load();
+  }
+
+  // ── Spojení ──
+  function connect(code) {
+    if (ON.ws && ON.code === code) return roomView();
+    disconnect();
+    Object.assign(ON, { code, meta: null, me: null, seat: null, players: [], round: null, chat: [], retry: 0, applied: 0, counted: -1, unread: 0, rematch: [], drawFrom: null });
+    try { history.replaceState(null, '', `?duel=${code}`); } catch (e) { /* bez historie */ }
+    roomView();
+    open_();
+  }
+  function open_() {
+    const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}${API}/${ON.code}/ws`);
+    ON.ws = ws;
+    ws.onopen = () => { ws.send(JSON.stringify({ t: 'hello', pid: pid(), nick: nick() })); };
+    ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (err) { return; } if (ws === ON.ws) onMessage(m); };
+    ws.onclose = ev => {
+      if (ws !== ON.ws) return;
+      ON.ws = null;
+      if (ev.code === 4000 || !ON.code) return;
+      if (!ON.meta && ON.retry >= 2) { toast(L('Hra s tímto kódem neexistuje', 'No game with this code')); leaveRoom(); return; }
+      ON.retry++; bar();
+      setTimeout(() => { if (ON.code && !ON.ws) open_(); }, Math.min(8000, 400 * 2 ** ON.retry));
+    };
+  }
+  function send(m) { if (ON.ws && ON.ws.readyState === 1) { ON.ws.send(JSON.stringify(m)); return true; } return false; }
+  function disconnect() { const ws = ON.ws; ON.ws = null; if (ws) try { ws.close(1000); } catch (e) { /* zavřeno */ } }
+  function leaveRoom() {
+    ON.code = null; disconnect(); clearTimeout(lobbyT);
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* bez historie */ }
+    if (view === 'play') leavePlay();
+    closeModal(); onlineView();
+  }
+
+  function onMessage(m) {
+    switch (m.t) {
+      case 'welcome': {
+        const fresh = !ON.meta || ON.round?.n !== m.round.n;
+        Object.assign(ON, { me: m.you, seat: m.seat, meta: m.meta, round: m.round, players: m.players, chat: m.chat, offset: m.now - Date.now(), retry: 0, rematch: m.round.rematch || [], drawFrom: m.round.drawOffer });
+        if (isOnline() && !fresh && ON.applied !== m.round.moves.length && ON.meta.kind === 'turn') { openOnline(); return; }
+        route(fresh);
+        break;
+      }
+      case 'full': toast(L('Hra je plná', 'The game is full')); leaveRoom(); break;
+      case 'players': {
+        const before = Object.fromEntries(ON.players.map(p => [p.id, p.online]));
+        ON.players = m.players;
+        for (const p of m.players) if (before[p.id] && !p.online) ON.offline[p.id] = Date.now(); else if (p.online) delete ON.offline[p.id];
+        route(false);
+        break;
+      }
+      case 'chat': ON.chat.push(m); ON.chat = ON.chat.slice(-40); if (!m.sys && view === 'play' && !ON.chatOpen) ON.unread++; if (!m.sys) SOUND.soft(); chatUi(); bar(); break;
+      case 'move': {
+        if (!ON.round) return;
+        ON.round.moves[m.n] = m.m;
+        if (m.seat === ON.seat) return;
+        ON.drawFrom = null;
+        if (isOnline() && inst && inst.net && m.n === ON.applied) { ON.applied++; inst.net.onMove && inst.net.onMove(m.m); }
+        else if (isOnline() && m.n > ON.applied) openOnline();
+        bar();
+        break;
+      }
+      case 'draw': ON.drawFrom = m.seat; if (m.seat !== ON.seat) toast(L('Soupeř nabízí remízu', 'Your opponent offers a draw')); bar(); break;
+      case 'rematch': ON.rematch = m.seats; if (!m.seats.includes(ON.seat)) toast(L('Soupeř chce odvetu', 'Your opponent wants a rematch')); resultButtons(); break;
+      case 'over':
+        if (ON.round) ON.round.over = { winner: m.winner, why: m.why };
+        if (ON.meta.kind === 'race') raceOver(); else if (isOnline() && view === 'play') turnOver(); else if (view === 'room') roomView();
+        break;
+      case 'round': {
+        ON.offset = m.now - Date.now(); ON.round = m.round; ON.rematch = []; ON.drawFrom = null;
+        closeModal(); route(true);
+        break;
+      }
+      case 'prog': if (ON.round && ON.round.results[m.id]) { ON.round.results[m.id].p = m.p; raceBar(); if ($('#kStand')) $('#kStand').innerHTML = standingsHtml(); } break;
+      case 'done': if (ON.round) { ON.round.results[m.id] = m.r; raceBar(); standingsUi(); } break;
+    }
+  }
+
+  // Kam patří obrazovka podle stavu místnosti.
+  function route(fresh) {
+    const r = ON.round; if (!r || !ON.meta) return;
+    if (ON.meta.kind === 'turn') {
+      const seated = ON.players.filter(p => p.seat != null).length === 2;
+      if (seated && ON.seat != null && !r.over && (fresh || !isOnline())) openOnline();
+      else if (r.over && fresh && view !== 'play') roomView();
+      else if (view === 'room') roomView(); else bar();
+    } else {
+      const inRace = r.startAt && !r.over && r.results[ON.me] && r.results[ON.me].time == null;
+      if (inRace && (fresh || !isOnline())) openOnline();
+      else if (view === 'room') roomView(); else { raceBar(); standingsUi(); }
+    }
+  }
+
+  // ── Místnost (čekárna) ──
+  function roomView() {
+    if (view === 'play') leavePlay();
+    setView('room', `Online · ${ON.code}`);
+    const m = ON.meta, r = ON.round, turn = DEF.online.kind === 'turn';
+    const host = ON.players.find(p => p.host), iHost = host && host.id === ON.me;
+    const running = r && r.startAt && !r.over;
+    let status = L('Připojuji…', 'Connecting…');
+    if (m && turn) status = ON.seat == null ? L('Hra je obsazená.', 'This game is taken.') : ON.players.filter(p => p.seat != null).length < 2 ? L('Čeká se na soupeře. Pošli mu kód nebo odkaz.', 'Waiting for an opponent. Send them the code or the link.') : r.over ? L('Partie skončila.', 'The game is over.') : '';
+    if (m && !turn) status = running ? L('Probíhá kolo, přidáš se do dalšího.', 'A round is on; you join the next one.') : iHost ? L('Vyber obtížnost a odstartuj, až budou všichni.', 'Pick a difficulty and start when everyone is here.') : L('Čeká se na start od hostitele.', 'Waiting for the host to start.');
+    $('#kView').innerHTML = `<div class="k-page k-on">
+      <div class="k-codebox"><span class="k-eyebrow">${L('Kód hry', 'Game code')}</span><b id="kRoomCode">${ON.code}</b><button class="k-btn" id="kShare">${icon('link')} ${L('Kopírovat odkaz', 'Copy link')}</button></div>
+      <p class="k-muted k-status">${status}</p>
+      <div class="k-grid">
+        ${card('', `<div class="k-card-h">${icon('users')}<span>${L('Hráči', 'Players')}</span><em>${ON.players.filter(p => p.online).length}${turn ? '/2' : '/8'}</em></div>
+          <ul class="k-plist">${ON.players.map(p => `<li class="${p.online ? '' : 'off'}">${turn && p.seat != null && r ? `<i class="k-side ${(p.seat === firstSeat()) ? 'w' : 'b'}"></i>` : icon(p.host ? 'crown' : 'user', 'tiny')}<b>${esc(p.nick)}</b>${p.id === ON.me ? `<small>${L('ty', 'you')}</small>` : ''}${p.online ? '' : `<small>${L('offline', 'offline')}</small>`}</li>`).join('')}</ul>
+          ${!turn && iHost && !running ? `<div class="k-chips">${onDiffs().map(d => `<button class="k-chip ${r && d.id === r.diff ? 'on' : ''}" data-diff="${d.id}">${d.name}</button>`).join('')}</div>
+            <div class="k-row"><button class="k-btn primary" id="kStart">${icon('play')} ${L('Odstartovat', 'Start')}</button></div>` : ''}
+          ${turn && r && r.over && ON.seat != null ? `<div class="k-row"><button class="k-btn primary" id="kRematch" ${ON.rematch.includes(ON.seat) ? 'disabled' : ''}>${ON.rematch.includes(ON.seat) ? L('Čeká se na soupeře…', 'Waiting for the opponent…') : L('Odveta', 'Rematch')}</button></div>` : ''}
+          ${!turn && r && r.startAt ? standingsHtml() : ''}`)}
+        ${card('k-chatcard', chatHtml())}
+      </div>
+      <div class="k-row"><button class="k-btn ghost" id="kLeave">${icon('back')} ${L('Opustit hru', 'Leave the game')}</button></div>
+    </div>`;
+    $('#kShare').onclick = async () => {
+      const url = `${location.origin}${location.pathname}?duel=${ON.code}`;
+      try { if (navigator.share && matchMedia('(pointer: coarse)').matches) await navigator.share({ title: DEF.title, url }); else { await navigator.clipboard.writeText(url); toast(L('Odkaz zkopírován', 'Link copied')); } } catch (e) { toast(url); }
+    };
+    $('#kLeave').onclick = () => { SOUND.ui(); leaveRoom(); };
+    for (const c of document.querySelectorAll('.k-on .k-chip')) c.onclick = () => { SOUND.ui(); for (const x of document.querySelectorAll('.k-on .k-chip')) x.classList.toggle('on', x === c); };
+    if ($('#kStart')) $('#kStart').onclick = () => { SOUND.ui(); const c = document.querySelector('.k-on .k-chip.on'); send({ t: 'start', diff: c ? c.dataset.diff : null }); };
+    if ($('#kRematch')) $('#kRematch').onclick = () => { SOUND.ui(); send({ t: 'rematch' }); };
+    bindChat();
+  }
+
+  // ── Chat ──
+  function chatHtml() {
+    const line = c => c.sys ? `<li class="sys">${esc(c.nick)} ${c.text === 'join' ? L('přišel(a)', 'joined') : L('odešel(a)', 'left')}</li>` : `<li><b>${esc(c.nick)}</b> ${esc(c.text)}</li>`;
+    return `<div class="k-card-h">${icon('chat')}<span>Chat</span></div><ul class="k-chat" id="kChatLog">${ON.chat.map(line).join('')}</ul>
+      <form class="k-chatform" id="kChatForm"><input class="k-in" id="kChatIn" maxlength="200" placeholder="${L('Napiš zprávu…', 'Say something…')}" autocomplete="off"><button class="k-btn" aria-label="${L('Odeslat', 'Send')}">${icon('send')}</button></form>`;
+  }
+  function bindChat() {
+    const f = $('#kChatForm'); if (!f) return;
+    f.onsubmit = e => { e.preventDefault(); const i = $('#kChatIn'), t = i.value.trim(); if (t && send({ t: 'chat', text: t })) i.value = ''; };
+    const log = $('#kChatLog'); if (log) log.scrollTop = log.scrollHeight;
+  }
+  function chatUi() {
+    const box = document.querySelector('.k-chatcard, #kChatDrawer'); if (!box) return;
+    const keep = $('#kChatIn') ? $('#kChatIn').value : '', focus = document.activeElement === $('#kChatIn');
+    box.innerHTML = chatHtml(); bindChat();
+    if ($('#kChatIn')) { $('#kChatIn').value = keep; if (focus) $('#kChatIn').focus(); }
+  }
+
+  // ── Hraní online ──
+  function openOnline() {
+    const r = ON.round, turn = ON.meta.kind === 'turn';
+    if (inst && inst.destroy) inst.destroy(); inst = null;
+    cur = { kind: 'online', key: ON.code, diff: r.diff, seed: r.seed, state: null, time: 0, mistakes: 0, hints: 0 };
+    ON.applied = turn ? r.moves.length : 0; ON.prog = -1; ON.unread = 0; ON.chatOpen = false;
+    closeModal();
+    setView('play', `Online · ${ON.code}${turn ? '' : ' · ' + diffName(r.diff)}`);
+    $('#kView').innerHTML = `<div class="k-play"><div class="k-onbar" id="kOnBar"></div><div id="kChatDrawer" class="k-card" hidden></div><div class="k-board" id="kBoard"><div class="k-gen"><i></i>${L('Připravuji hru…', 'Preparing the game…')}</div></div></div>`;
+    timerOn = false; updTimer(); bar();
+    setTimeout(() => {
+      let puzzle;
+      try { puzzle = DEF.generate(cur.seed, cur.diff, { kind: 'online', key: ON.code }); } catch (e) { console.error(e); toast(L('Hru se nepodařilo připravit', 'Could not prepare the game')); roomView(); return; }
+      if (view !== 'play' || !isOnline()) return;
+      $('#kBoard').innerHTML = '';
+      if (!turn) { countdown(puzzle); return; }
+      const net = {
+        side: mySide(), moves: r.moves.slice(0, ON.applied), me: nick(), opp: (opp() || {}).nick || '?', onMove: null,
+        send(m) { send({ t: 'move', n: ON.applied, m }); ON.applied++; ON.drawFrom = null; bar(); },
+        end(winSide, why) { send({ t: 'end', winner: winSide === 0 ? -1 : winSide === 1 ? firstSeat() : 1 - firstSeat(), why }); },
+        resign() { send({ t: 'resign' }); },
+      };
+      inst = DEF.create($('#kBoard'), puzzle, null, api, { diff: cur.diff, kind: 'online', key: ON.code, settings: SAVE.settings, net });
+      if (inst) inst.net = net;
+      timerOn = true; lastTick = performance.now(); if (r.over) turnOver();
+    }, 30);
+  }
+
+  // Závod: odpočet do společného startu; hlavolam vznikne až po něm, čas běží od startu serveru.
+  function countdown(puzzle) {
+    const r = ON.round, board = $('#kBoard'); if (!board) return;
+    const cover = document.createElement('div'); cover.id = 'kCount'; cover.className = 'k-count'; board.appendChild(cover);
+    clearInterval(ON.countT);
+    const tick = () => {
+      if (!isOnline() || ON.round !== r || !board.isConnected) { clearInterval(ON.countT); return; }
+      const left = (r.startAt - serverNow()) / 1000;
+      if (left <= 0) {
+        clearInterval(ON.countT); board.innerHTML = '';
+        inst = DEF.create(board, puzzle, null, api, { diff: cur.diff, kind: 'online', key: ON.code, settings: SAVE.settings });
+        cur.time = Math.max(0, -left); timerOn = true; lastTick = performance.now(); SOUND.star(); raceBar(); return;
+      }
+      cover.innerHTML = `<b>${Math.ceil(left)}</b><span>${L('Všichni mají stejné zadání', 'Everyone has the same puzzle')}</span>`;
+    };
+    tick(); ON.countT = setInterval(tick, 100);
+  }
+
+  // Lišta nad plochou: hráči, spojení, remíza, chat.
+  function bar() {
+    const el = $('#kOnBar'); if (!el || !ON.meta) return;
+    if (ON.meta.kind === 'race') { raceBar(); return; }
+    const o = opp(), side = mySide(), gone = o && !o.online && ON.offline[o.id];
+    const r = ON.round, toMove = r && !r.over ? (((r.n + ON.applied) % 2) === ON.seat) : false;
+    el.innerHTML = `<div class="k-vs"><span class="${toMove ? 'turn' : ''}"><i class="k-side ${side > 0 ? 'w' : 'b'}"></i><b>${esc(nick())}</b></span><em>vs</em><span class="${!toMove && r && !r.over ? 'turn' : ''} ${o && !o.online ? 'off' : ''}"><i class="k-side ${side > 0 ? 'b' : 'w'}"></i><b>${esc(o ? o.nick : '?')}</b>${o && !o.online ? `<small>${L('offline', 'offline')}</small>` : ''}</span></div>
+      <div class="k-onacts">${ON.ws ? '' : `<span class="k-muted">${L('Připojuji…', 'Reconnecting…')}</span>`}
+        ${r && !r.over ? `<button class="k-btn ${ON.drawFrom != null && ON.drawFrom !== ON.seat ? 'primary' : ''}" id="kDraw" ${ON.drawFrom === ON.seat ? 'disabled' : ''}>${ON.drawFrom != null && ON.drawFrom !== ON.seat ? L('Přijmout remízu', 'Accept draw') : ON.drawFrom === ON.seat ? L('Remíza nabídnuta', 'Draw offered') : L('Remíza?', 'Draw?')}</button>` : ''}
+        ${gone && Date.now() - gone > 60000 && r && !r.over ? `<button class="k-btn primary" id="kClaim">${L('Ukončit · výhra', 'Claim the win')}</button>` : ''}
+        <button class="k-btn" id="kChatBtn">${icon('chat')}${ON.unread ? `<sup>${ON.unread}</sup>` : ''}</button></div>`;
+    if ($('#kDraw')) $('#kDraw').onclick = () => { SOUND.ui(); send({ t: 'draw' }); };
+    if ($('#kClaim')) $('#kClaim').onclick = () => { SOUND.ui(); send({ t: 'claim' }); };
+    $('#kChatBtn').onclick = toggleChat;
+    if (gone && r && !r.over && Date.now() - gone <= 60000) { clearTimeout(ON.claimT); ON.claimT = setTimeout(bar, 60500 - (Date.now() - gone)); }
+  }
+  function toggleChat() {
+    SOUND.ui(); ON.chatOpen = !ON.chatOpen; ON.unread = 0;
+    const d = $('#kChatDrawer'); if (d) { d.hidden = !ON.chatOpen; if (ON.chatOpen) { d.innerHTML = chatHtml(); bindChat(); $('#kChatIn').focus(); } }
+    bar();
+  }
+  function raceBar() {
+    const el = $('#kOnBar'); if (!el || !ON.round || ON.meta.kind !== 'race') return;
+    const res = ON.round.results, names = Object.fromEntries(ON.players.map(p => [p.id, p]));
+    el.innerHTML = `<div class="k-race">${Object.entries(res).map(([id, x]) => `<div class="${id === ON.me ? 'me' : ''} ${x.time != null ? (x.ok ? 'ok' : 'out') : ''}"><b>${esc((names[id] || {}).nick || '?')}</b><i><u style="width:${Math.round(x.p * 100)}%"></u></i><small>${x.time != null ? (x.ok ? fmtTime(x.time / 1000) : L('mimo', 'out')) : Math.round(x.p * 100) + ' %'}</small></div>`).join('')}</div>
+      <div class="k-onacts">${ON.ws ? '' : `<span class="k-muted">${L('Připojuji…', 'Reconnecting…')}</span>`}<button class="k-btn" id="kChatBtn">${icon('chat')}${ON.unread ? `<sup>${ON.unread}</sup>` : ''}</button></div>`;
+    $('#kChatBtn').onclick = toggleChat;
+  }
+  // Průběh závodu posílá kit sám (nejvýš jednou za sekundu, jen při změně).
+  function raceTick() {
+    if (!isOnline() || ON.meta?.kind !== 'race' || !inst || !inst.progress || !timerOn) return;
+    let p = 0; try { p = Math.max(0, Math.min(0.99, +inst.progress() || 0)); } catch (e) { return; }
+    if (Math.abs(p - ON.prog) >= 0.01 && Date.now() - ON.progAt > 900) { ON.prog = p; ON.progAt = Date.now(); send({ t: 'prog', p }); }
+  }
+
+  function onlineSolved(extra) {
+    timerOn = false;
+    if (ON.meta.kind !== 'race') return;
+    const c = cur, dr = diffIndex(c.diff);
+    SAVE.stats.solved++; const xp = [12, 22, 36, 56, 80][dr] || 20; SAVE.xp += xp;
+    questProgress({ solved: true, game: DEF.id, daily: false, diffRank: dr, perfect: !c.mistakes && !c.hints, stars: 0 });
+    checkAch(); persist(); shardsUi();
+    send({ t: 'done', ok: true, mistakes: c.mistakes, score: extra && extra.score != null ? Math.round(extra.score) : undefined });
+    SOUND.win(); burst(innerWidth / 2, innerHeight / 2, 60);
+    standingsModal(extra && extra.title || L('Vyřešeno!', 'Solved!'), `+${xp} XP`);
+  }
+  function onlineFailed(extra) {
+    timerOn = false;
+    if (ON.meta.kind !== 'race') return;
+    send({ t: 'done', ok: false, mistakes: cur.mistakes, score: extra && extra.score != null ? Math.round(extra.score) : undefined });
+    SOUND.error();
+    standingsModal(extra && extra.title || L('Konec', 'Out'), '');
+  }
+  function standingsHtml() {
+    const r = ON.round, names = Object.fromEntries(ON.players.map(p => [p.id, p.nick]));
+    const rank = x => (x.ok ? 0 : x.time != null ? 2 : 1);
+    const order = Object.entries(r.results).sort(([, a], [, b]) => rank(a) - rank(b) || (a.ok && b.ok ? a.time - b.time : b.p - a.p));
+    return `<ol class="k-stand">${order.map(([id, x]) => `<li class="${id === ON.me ? 'me' : ''}"><b>${esc(names[id] || '?')}</b><span>${x.time != null ? (x.ok ? fmtTime(x.time / 1000) : L('mimo', 'out')) : `${Math.round(x.p * 100)} %`}</span></li>`).join('')}</ol>`;
+  }
+  function standingsModal(title, gains) {
+    const r = ON.round, host = ON.players.find(p => p.host), iHost = host && host.id === ON.me;
+    modal(`<div class="k-result"><span class="k-eyebrow">${L('Závod', 'Race')} · ${diffName(r.diff)}</span><h2 class="${r.results[ON.me] && r.results[ON.me].ok === false ? 'lose' : ''}">${title}</h2>
+      ${gains ? `<div class="k-gains"><span>${gains}</span></div>` : ''}
+      <div id="kStand">${standingsHtml()}</div><p class="k-muted" id="kStandNote">${r.over ? '' : L('Čeká se na ostatní…', 'Waiting for the others…')}</p>
+      <div class="k-row">${r.over && iHost ? `<button class="k-btn primary" id="kNextRound">${L('Další kolo', 'Next round')}</button>` : ''}<button class="k-btn ghost" id="kHome">${L('Do místnosti', 'Back to the room')}</button></div></div>`);
+    $('#kHome').onclick = () => { SOUND.ui(); closeModal(); roomView(); };
+    if ($('#kNextRound')) $('#kNextRound').onclick = () => { SOUND.ui(); send({ t: 'start', diff: r.diff }); };
+  }
+  function standingsUi() {
+    if ($('#kStand')) $('#kStand').innerHTML = standingsHtml();
+    if (view === 'room') roomView();
+  }
+  function raceOver() {
+    const r = ON.round, res = r.results, mine = res[ON.me];
+    if (!mine || ON.counted === r.n) { if (view === 'room') roomView(); return; }
+    ON.counted = r.n;
+    const o = onStats(); o.races++;
+    const first = Object.entries(res).filter(([, x]) => x.ok).sort(([, a], [, b]) => a.time - b.time)[0];
+    const won = first && first[0] === ON.me && Object.keys(res).length > 1;
+    if (won) { o.raceWins++; SAVE.xp += 25; META.shards += 10; saveMeta(); }
+    persist(); shardsUi();
+    if (mine.time == null) { timerOn = false; }
+    standingsModal(won ? L('Vítězství!', 'You won!') : mine.ok ? L('Závod skončil', 'Race over') : L('Konec závodu', 'Race over'), won ? `+25 XP · +10 ${icon('gem', 'tiny')}` : '');
+    if (won) { SOUND.win(); burst(innerWidth / 2, innerHeight / 3, 90); }
+  }
+
+  // Konec partie: výsledek z pohledu hráče, odveta.
+  function turnOver() {
+    const r = ON.round; if (!r || !r.over) return;
+    timerOn = false;
+    const res = r.over.winner === -1 ? 'd' : r.over.winner === ON.seat ? 'w' : 'l';
+    if (ON.counted !== r.n && ON.seat != null) {
+      ON.counted = r.n; const o = onStats(); o[res]++;
+      SAVE.xp += { w: 30, d: 15, l: 8 }[res];
+      if (res === 'w') { META.shards += 8; saveMeta(); questProgress({ solved: true, game: DEF.id, daily: false, diffRank: 2, perfect: false, stars: 0 }); }
+      checkAch(); persist(); shardsUi();
+      res === 'w' ? (SOUND.win(), burst(innerWidth / 2, innerHeight / 2, 80)) : res === 'l' ? SOUND.error() : SOUND.star();
+    }
+    const why = r.over.why === 'resign' ? (res === 'w' ? L('Soupeř se vzdal', 'Your opponent resigned') : L('Vzdal(a) ses', 'You resigned')) : WHY[r.over.why] || '';
+    setTimeout(() => {
+      if (!isOnline() || ON.round !== r) return;
+      modal(`<div class="k-result"><span class="k-eyebrow">Online · ${esc(nick())} vs ${esc((opp() || {}).nick || '?')}</span>
+        <h2 class="${res === 'l' ? 'lose' : ''}">${{ w: L('Výhra!', 'You win!'), l: L('Prohra', 'You lost'), d: L('Remíza', 'Draw') }[res]}</h2>
+        <p class="k-muted">${why}</p>
+        <div class="k-gains"><span>+${{ w: 30, d: 15, l: 8 }[res]} XP</span>${res === 'w' ? `<span>+8 ${icon('gem', 'tiny')}</span>` : ''}</div>
+        <div class="k-row" id="kResBtns"></div></div>`);
+      resultButtons();
+    }, 600);
+  }
+  function resultButtons() {
+    const el = $('#kResBtns'); if (!el) { if (view === 'room') roomView(); return; }
+    const mine = ON.rematch.includes(ON.seat), theirs = ON.rematch.length && !mine;
+    el.innerHTML = `<button class="k-btn primary" id="kRematch" ${mine ? 'disabled' : ''}>${mine ? L('Čeká se na soupeře…', 'Waiting for the opponent…') : theirs ? L('Přijmout odvetu', 'Accept the rematch') : L('Odveta', 'Rematch')}</button><button class="k-btn ghost" id="kHome">${L('Do místnosti', 'Back to the room')}</button>`;
+    $('#kRematch').onclick = () => { SOUND.ui(); send({ t: 'rematch' }); };
+    $('#kHome').onclick = () => { SOUND.ui(); closeModal(); roomView(); };
+  }
+
   // ── Modální okno, oznámení, efekty ──
   function modal(html) { const m = $('#kModal'); m.innerHTML = `<div class="k-modal-in">${html}</div>`; m.hidden = false; }
   function closeModal() { $('#kModal').hidden = true; }
@@ -639,7 +1037,9 @@ const Kit = (() => {
     quests();
     persist();
     home();
+    const code = new URLSearchParams(location.search).get('duel');
+    if (DEF.online && code && /^[A-Z2-9]{5}$/.test(code)) connect(code);
   }
 
-  return { game, L, LANG, rng, hash, shuffle, icon, dayKey, fmtTime, fmtNum, esc, api, _test: { dailyDiff: k => dailyDiff(k), levelDiff: n => levelDiff(n), start, get save() { return SAVE; }, get meta() { return META; }, get inst() { return inst; }, get cur() { return cur; } } };
+  return { game, L, LANG, rng, hash, shuffle, icon, dayKey, fmtTime, fmtNum, esc, api, _test: { dailyDiff: k => dailyDiff(k), levelDiff: n => levelDiff(n), start, get save() { return SAVE; }, get meta() { return META; }, get inst() { return inst; }, get cur() { return cur; }, online: ON } };
 })();

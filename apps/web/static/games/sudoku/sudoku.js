@@ -257,6 +257,7 @@ const Sudoku = (() => {
     render();
     return {
       getState: () => ({ val, notes, sel }),
+      progress: () => { let k = 0, n = 0; for (let i = 0; i < 81; i++) if (!giv[i]) { n++; if (val[i] === sol[i]) k++; } return n ? k / n : 1; },
       onKey(e) {
         const k = e.key;
         if (/^[1-9]$/.test(k)) { input(+k); e.preventDefault(); }
@@ -291,6 +292,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'sudoku', title: 'SUDOKU',
   tagline: Kit.L('Devět čísel, devět souhvězdí. Klasické sudoku s denní výzvou, 120 úrovněmi Cesty hvězd a nekonečnem nových mřížek.', 'Nine numbers, nine constellations. Classic sudoku with a daily puzzle, 120 Star Path levels and endless new grids.'),
   diffs: Sudoku.DIFFS, generate: Sudoku.generate, create: Sudoku.create, art: Sudoku.art,
+  online: { kind: 'race' },
   rules: Kit.L(`<p>Doplň čísla 1–9 tak, aby se v každém <b>řádku</b>, <b>sloupci</b> a <b>čtverci 3×3</b> objevilo každé číslo právě jednou.</p>
     <ul><li>Klepni na políčko a pak na číslo. Na počítači stačí psát číslice a pohybovat se šipkami.</li>
     <li><b>Poznámky</b> (klávesa N) zapisují malá čísla – možné kandidáty. <b>Kandidáti</b> je doplní za tebe.</li>

@@ -266,6 +266,7 @@ const Pulsar = (() => {
     raf = requestAnimationFrame(frame);
     return {
       getState: () => (over ? null : { board, hold, lines, score, level, pieces, garbageLeft, elapsed, b2b, combo, queue: [piece && piece.k, ...queue].filter(Boolean), bagCount }),
+      progress: () => (P.type === 'dig' ? 1 - Math.max(0, garbageLeft) / (P.garbage || 1) : P.lines ? lines / P.lines : 0),
       destroy() { cancelAnimationFrame(raf); removeEventListener('keyup', onKeyUp); removeEventListener('resize', fit); },
       pause() { setPause(true); },
       onKey(e) { const b = keys[e.key]; if (!b) return; e.preventDefault(); if (e.repeat && (b === 'left' || b === 'right' || b === 'soft')) return; act(b, true); },
@@ -285,6 +286,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'pulsar', title: 'PULSAR',
   tagline: Kit.L('Padající bloky v rytmu pulsaru. Maraton, Sprint, Ultra, Kopání a denní sprint, ve kterém závodíš se všemi.', 'Falling blocks to the beat of a pulsar. Marathon, Sprint, Ultra, Dig and a daily sprint where you race everyone.'),
   diffs: Pulsar.DIFFS, generate: Pulsar.generate, create: Pulsar.create, art: Pulsar.art,
+  online: { kind: 'race', diffs: ['sprint', 'dig'] },
   dailyDiff: () => 'sprint',
   levelDiff: n => Pulsar.levelSpec(n).type,
   rules: Kit.L(`<p>Skládej padající dílky tak, aby vytvořily plnou řadu. Plná řada zmizí. Hra končí, když dílky dosáhnou stropu.</p>

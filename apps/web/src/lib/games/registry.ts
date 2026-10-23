@@ -35,6 +35,8 @@ export interface Game extends GameTexts {
 	statsKey: string;
 	/** Needs mouse + keyboard: phones and tablets cannot launch it. */
 	desktopOnly?: boolean;
+	/** Online play: live turn-based games, races on the same puzzle, or shared worlds. */
+	online?: 'turn' | 'race' | 'world';
 	cover(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void;
 }
 
@@ -391,6 +393,7 @@ const ACTION_GAMES: Game[] = [
 		colors: ['#ffb35c', '#7fe0d0', '#ff7a4a'],
 		statsKey: 'gamecenter.stats.driftwood',
 		desktopOnly: true,
+		online: 'world',
 		cover(ctx, w, h, t) {
 			const s = Math.min(w, h),
 				hz = h * 0.58;

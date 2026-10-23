@@ -45,6 +45,7 @@ const Sachy = (() => {
   }
   function generate(seed, diffId, ctx = {}) {
     const r = Kit.rng(seed);
+    if (ctx.kind === 'online') return { type: 'online' };
     if (ctx.kind === 'daily') { const wd = (new Date(`${ctx.key}T12:00:00`).getDay() + 6) % 7; return Object.assign({ type: 'puzzle' }, puzzle(seed, wd < 3 ? 1 : 2)); }
     if (ctx.kind === 'level') { const s = levelSpec(ctx.key); return s.type === 'puzzle' ? Object.assign({ type: 'puzzle' }, puzzle(seed, s.mate)) : { type: 'ai', level: s.level, color: r() < 0.5 ? 1 : -1 }; }
     if (diffId === 'puzzle') return Object.assign({ type: 'puzzle' }, puzzle(seed, r() < 0.6 ? 1 : 2));
@@ -63,16 +64,21 @@ const Sachy = (() => {
   };
   const piece = p => `<svg viewBox="0 0 45 45" class="pc ${p > 0 ? 'w' : 'b'}">${SHAPE[Math.abs(p)]}</svg>`;
 
-  function create(el, P, saved, api) {
+  // Online tah: "z-kam-proměna" v číslech polí enginu.
+  const enc = m => `${m.f}-${m.t}-${m.pr || 0}`;
+  const dec = s => { const [f, t, pr] = s.split('-').map(Number); return { f, t, pr }; };
+  function create(el, P, saved, api, opts = {}) {
+    const net = P.type === 'online' ? opts.net : null, online = !!net;
     const isPuzzle = P.type === 'puzzle', duo = P.type === 'duo';
     let pos = new C.Pos(isPuzzle ? P.fen : undefined);
-    const human = isPuzzle ? pos.side : duo ? 0 : P.color;
-    const flip = isPuzzle ? pos.side < 0 : !duo && P.color < 0;
+    const human = online ? net.side : isPuzzle ? pos.side : duo ? 0 : P.color;
+    const flip = online ? net.side < 0 : isPuzzle ? pos.side < 0 : !duo && P.color < 0;
     let sel = 0, lastMove = null, done = false, thinking = false, moves = [], mistakes = 0;
+    if (online) saved = { moves: net.moves.map(dec) };
     if (saved && saved.moves) { for (const u of saved.moves) { const m = pos.legal().find(x => x.f === u.f && x.t === u.t && (x.pr || 0) === (u.pr || 0)); if (m) { moves.push({ ...u, san: pos.san(m) }); pos.make(m); lastMove = m; } } }
     el.innerHTML = `<div class="ch-wrap"><div class="ch-side"><div class="ch-status"></div><div class="ch-moves"></div></div>
       <div class="ch-board"></div>
-      <div class="k-tools"><button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button><button class="k-tool" data-t="hint">${api.icon('bulb')}<span>${L('Nápověda', 'Hint')}</span></button>${isPuzzle ? '' : `<button class="k-tool" data-t="resign">${api.icon('x')}<span>${L('Vzdát', 'Resign')}</span></button>`}</div></div>`;
+      <div class="k-tools">${online ? '' : `<button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button><button class="k-tool" data-t="hint">${api.icon('bulb')}<span>${L('Nápověda', 'Hint')}</span></button>`}${isPuzzle ? '' : `<button class="k-tool" data-t="resign">${api.icon('x')}<span>${L('Vzdát', 'Resign')}</span></button>`}</div></div>`;
     const boardEl = el.querySelector('.ch-board'), statusEl = el.querySelector('.ch-status'), movesEl = el.querySelector('.ch-moves');
     const squares = [];
     for (let row = 0; row < 8; row++) for (let col = 0; col < 8; col++) {
@@ -96,23 +102,26 @@ const Sachy = (() => {
       }
       const turn = pos.side > 0 ? L('Bílý', 'White') : L('Černý', 'Black');
       statusEl.innerHTML = isPuzzle ? `<b>${L(`Mat ${P.mate === 1 ? 'jedním tahem' : 've 2 tazích'}`, `Mate in ${P.mate}`)}</b><span>${L(`Táhne ${turn.toLowerCase()}`, `${turn} to move`)}</span>`
-        : `<b>${duo ? L(`Na tahu: ${turn}`, `${turn} to move`) : pos.side === human ? L('Jsi na tahu', 'Your move') : L('Soupeř přemýšlí…', 'Opponent is thinking…')}</b><span>${duo ? L('Dva hráči', 'Two players') : `${L('Soupeř', 'Opponent')}: ${L('úroveň', 'level')} ${P.level}`}${pos.inCheck() ? ` · ${L('ŠACH', 'CHECK')}` : ''}</span>`;
+        : `<b>${duo ? L(`Na tahu: ${turn}`, `${turn} to move`) : pos.side === human ? L('Jsi na tahu', 'Your move') : online ? L('Táhne soupeř', 'Opponent to move') : L('Soupeř přemýšlí…', 'Opponent is thinking…')}</b><span>${duo ? L('Dva hráči', 'Two players') : online ? `${human > 0 ? L('Hraješ bílými', 'You play white') : L('Hraješ černými', 'You play black')}` : `${L('Soupeř', 'Opponent')}: ${L('úroveň', 'level')} ${P.level}`}${pos.inCheck() ? ` · ${L('ŠACH', 'CHECK')}` : ''}</span>`;
       movesEl.innerHTML = moves.reduce((h, m, i) => h + (i % 2 ? '' : `<i>${Math.floor(i / 2) + 1}.</i>`) + `<span>${m.san}</span>`, '');
       movesEl.scrollTop = movesEl.scrollHeight;
     }
     function play(m, byHuman) {
       const san = pos.san(m); pos.make(m); lastMove = m; sel = 0;
       moves.push({ f: m.f, t: m.t, pr: m.pr || 0, san });
+      if (online && byHuman) net.send(enc(m));
       api.sound(m.c ? 'place' : 'tap'); if (pos.inCheck()) api.sound('line');
       render(); api.changed();
       if (end()) return;
       if (isPuzzle && byHuman) puzzleReply();
-      else if (!duo && !isPuzzle && pos.side !== human) aiMove();
+      else if (!duo && !isPuzzle && !online && pos.side !== human) aiMove();
     }
+    if (online) net.onMove = s => { if (done) return; const u = dec(s), m = pos.legal().find(x => x.f === u.f && x.t === u.t && (x.pr || 0) === u.pr); if (m) play(m, false); };
     function end() {
       const st = pos.status(); if (!st) return false;
       done = true; render();
       const plies = moves.length, mated = st === 'mate', winnerSide = -pos.side;
+      if (online) { net.end(mated ? winnerSide : 0, st); return true; }
       setTimeout(() => {
         if (isPuzzle) { if (mated) api.solved({ title: L('Mat!', 'Checkmate!') }); return; }
         if (duo) { api.solved({ title: mated ? (winnerSide > 0 ? L('Vyhrál bílý', 'White wins') : L('Vyhrál černý', 'Black wins')) : L('Remíza', 'Draw'), html: `<p class="k-muted">${L(`Tahy: ${Math.ceil(plies / 2)}`, `Moves: ${Math.ceil(plies / 2)}`)}</p>` }); return; }
@@ -123,7 +132,7 @@ const Sachy = (() => {
     }
     // ── soupeř ──
     let worker = null, reqId = 0;
-    try { worker = new Worker('ai-worker.js'); worker.onerror = () => { worker = null; }; } catch (e) { worker = null; }
+    if (!online) try { worker = new Worker('ai-worker.js'); worker.onerror = () => { worker = null; }; } catch (e) { worker = null; }
     function aiMove() {
       if (done) return; thinking = true; render();
       const cfg = AI[P.level] || AI[1], id = ++reqId;
@@ -186,11 +195,11 @@ const Sachy = (() => {
         if (!m || m === true) { const res = C.search(pos, { time: 500 }); m = res && res.move; }
         if (m) { api.hint(); squares[m.f].classList.add('hint'); squares[m.t].classList.add('hint'); setTimeout(() => { squares[m.f].classList.remove('hint'); squares[m.t].classList.remove('hint'); }, 1600); }
       }
-      if (t.dataset.t === 'resign') { done = true; api.failed({ title: L('Vzdáno', 'Resigned') }); }
+      if (t.dataset.t === 'resign') { done = true; if (online) net.resign(); else api.failed({ title: L('Vzdáno', 'Resigned') }); }
     });
     function fit() { const vw = (document.getElementById('kView') || el).clientWidth - 28, wide = innerWidth > 860, s = Math.max(260, Math.min(wide ? vw - 300 : vw, innerHeight - (wide ? 130 : 300), 640)); boardEl.style.width = boardEl.style.height = s + 'px'; }
     fit(); addEventListener('resize', fit); render();
-    if (!isPuzzle && !duo && pos.side !== human && !done) setTimeout(aiMove, 400);
+    if (!isPuzzle && !duo && !online && pos.side !== human && !done) setTimeout(aiMove, 400);
     return {
       getState: () => (done ? null : { moves: moves.map(m => ({ f: m.f, t: m.t, pr: m.pr })) }),
       destroy() { removeEventListener('resize', fit); if (worker) worker.terminate(); reqId++; },
@@ -212,16 +221,19 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'sachy', title: 'ŠACHY',
   tagline: Kit.L('Šachy proti počítači v šesti silách, denní úloha mat v 1–2 tazích a partie ve dvou na jednom zařízení.', 'Chess against the computer at six strengths, a daily mate-in-1–2 puzzle and two-player games on one device.'),
   diffs: Sachy.DIFFS, generate: Sachy.generate, create: Sachy.create, art: Sachy.art,
+  online: { kind: 'turn' },
   dailyDiff: () => 'puzzle', levelDiff: n => (Sachy.levelSpec(n).type === 'puzzle' ? 'puzzle' : ['ai1', 'ai1', 'ai3', 'ai3', 'ai5', 'ai5'][Math.floor((n - 1) / 20)]),
   rules: Kit.L(`<p>Klasické šachy se všemi pravidly: rošáda, braní mimochodem, proměna pěšce (automaticky na dámu), pat, trojí opakování a pravidlo 50 tahů.</p>
     <ul><li>Klepni na figurku a pak na cílové pole, nebo figurku přetáhni. Tečky ukazují možné tahy.</li>
     <li><b>Úlohy:</b> najdi mat v 1 nebo 2 tazích. Špatný tah se vrátí a počítá se jako chyba.</li>
     <li><b>Denní úloha</b> je pro všechny stejná: v pondělí až středu mat jedním tahem, od čtvrtka ve dvou.</li>
-    <li>Na <b>Cestě</b> se střídají úlohy a partie proti stále silnějšímu soupeři. Tři hvězdy za výhru do 35 tahů bez vracení.</li></ul>`,
+    <li>Na <b>Cestě</b> se střídají úlohy a partie proti stále silnějšímu soupeři. Tři hvězdy za výhru do 35 tahů bez vracení.</li>
+    <li><b>Online:</b> založ hru a pošli kód nebo odkaz kamarádovi, nebo se přidej k otevřené hře. Barvy se po každé partii střídají, remízu lze nabídnout.</li></ul>`,
     `<p>Classic chess with every rule: castling, en passant, promotion (automatically to a queen), stalemate, threefold repetition and the 50-move rule.</p>
     <ul><li>Tap a piece and then a square, or drag the piece. Dots show the legal moves.</li>
     <li><b>Puzzles:</b> find mate in 1 or 2. A wrong move is taken back and counts as a mistake.</li>
     <li>The <b>daily puzzle</b> is the same for everyone: mate in one Monday to Wednesday, in two from Thursday.</li>
-    <li>The <b>Path</b> alternates puzzles and games against an ever stronger opponent. Three stars for a win within 35 moves without undo.</li></ul>`),
+    <li>The <b>Path</b> alternates puzzles and games against an ever stronger opponent. Three stars for a win within 35 moves without undo.</li>
+    <li><b>Online:</b> create a game and send the code or link to a friend, or join an open game. Colours swap after every game and a draw can be offered.</li></ul>`),
   achievements: [],
 });

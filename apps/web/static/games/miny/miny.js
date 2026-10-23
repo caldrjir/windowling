@@ -176,6 +176,7 @@ const Miny = (() => {
     render();
     return {
       getState: () => (done ? null : { open, flag, boom, lives }),
+      progress: () => { let k = 0, m = 0; for (let i = 0; i < N; i++) if (!mine[i]) { m++; if (open[i]) k++; } return m ? k / m : 1; },
       destroy() { removeEventListener('resize', fit); },
       onKey(e) { if (e.key === 'f' || e.key === 'F') { flagMode = !flagMode; render(); } if (e.key === 'h' || e.key === 'H') hint(); },
       _solve() { open = mine.map(v => (v ? 0 : 1)); check(); },
@@ -200,6 +201,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'miny', title: 'MINY',
   tagline: Kit.L('Hledání min bez hádání. Každé pole jde vyřešit čistou logikou a tři štíty ti odpustí přehmat.', 'Minesweeper without guessing. Every field can be solved by logic, and three shields forgive a slip.'),
   diffs: Miny.DIFFS, generate: Miny.generate, create: Miny.create, art: Miny.art,
+  online: { kind: 'race' },
   levelDiff: n => { const s = Miny.levelSpec(n); return s.w * s.h <= 100 ? 'easy' : s.w * s.h <= 200 ? 'medium' : s.w * s.h <= 260 ? 'hard' : 'expert'; },
   rules: Kit.L(`<p>Odkryj všechna políčka bez min. Číslo říká, kolik min je v osmi okolních políčkách.</p>
     <ul><li>Začni na <b>označeném políčku</b>. Odtud jde celé pole vyřešit logikou, nikdy nemusíš hádat.</li>

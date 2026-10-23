@@ -200,6 +200,7 @@ const Skladacka = (() => {
     addEventListener('resize', fit);
     return {
       getState: () => (done ? null : { pos: pieces.map(p => [Math.round(p.x), Math.round(p.y), p.placed ? 1 : 0]) }),
+      progress: () => pieces.filter(p => p.placed).length / pieces.length,
       destroy() { removeEventListener('resize', fit); },
       onKey(e) { if (e.key === 'h' || e.key === 'H') el.querySelector('[data-t="hint"]').click(); },
       _solve() { pieces.forEach(p => { p.x = p.hx; p.y = p.hy; p.placed = true; }); render(); check(); },
@@ -220,6 +221,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'skladacka', title: 'SKLÁDAČKA',
   tagline: Kit.L('Jigsaw z vesmírných obrazů: mlhoviny, planety s prstenci, galaxie a komety. Každý obraz je nový a skončí v galerii.', 'A jigsaw of cosmic paintings: nebulae, ringed planets, galaxies and comets. Every picture is new and joins your gallery.'),
   diffs: Skladacka.DIFFS, generate: Skladacka.generate, create: Skladacka.create, art: Skladacka.art, views: [Skladacka.gallery],
+  online: { kind: 'race' },
   dailyDiff: () => 'p48', levelDiff: n => ['p24', 'p24', 'p48', 'p48', 'p96', 'p96'][Math.floor((n - 1) / 20)],
   rules: Kit.L(`<p>Poskládej obraz z dílků. Přetáhni dílek k jeho místu na desce a když je dost blízko, sám zapadne.</p>
     <ul><li><b>Náhled</b> ukáže slabý obrys celého obrazu na desce.</li>

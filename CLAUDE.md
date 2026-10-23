@@ -45,7 +45,7 @@ apps/web                       SvelteKit app: hub UI, auth, server routes, PWA s
 apps/web/src/lib/games         Game catalogue (registry.ts) - one entry per game
 apps/web/src/lib/hub           Hub stylesheet
 apps/web/src/lib/server        Server-only code: env, auth, DB access (never imported by the client)
-apps/web/src/worker            Worker entry: site gate, DRIFTWOOD multiplayer (Durable Objects)
+apps/web/src/worker            Worker entry: site gate, DRIFTWOOD multiplayer and online puzzles (Durable Objects)
 apps/web/static/games/<id>     The games themselves (static HTML/CSS/JS)
 apps/web/static/games/puzzle-kit  Shared shell for puzzle games: daily puzzle, streaks, Star Path, quests, themes
 packages/database              Drizzle schema, migrations, client. The ONLY place with SQL.
@@ -73,7 +73,9 @@ A **puzzle game** loads `../puzzle-kit/kit.js` + `kit.css` and calls `Kit.game({
 generate(seed, diff), create(el, puzzle, saved, api), rules })`; its catalogue entry goes in
 `apps/web/src/lib/games/puzzles.ts` (`group: 'puzzle'`). Generators must be deterministic from the
 seed (daily puzzles and Path levels are the same for everyone) and give a unique solution; test
-them in Node before shipping. Add it to `apps/web/e2e/puzzles.test.ts`.
+them in Node before shipping. Add it to `apps/web/e2e/puzzles.test.ts`. For online play add
+`online: { kind: 'race' }` and an instance `progress()` (0..1), or `kind: 'turn'` and play
+through `opts.net` (see `docs/architecture.md`, Online puzzles).
 
 ## Commands
 
@@ -111,7 +113,7 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
 - `/api/auth/*` is routed by path in `hooks.server.ts` (not Better Auth's origin-matching helper).
 - Local scripts must run on Windows too: Node scripts, `fileURLToPath` (never `URL.pathname`),
   no shell-only syntax in package.json scripts.
-- DRIFTWOOD multiplayer (`/api/driftwood/*`) lives in the Worker entry, not SvelteKit; its
+- DRIFTWOOD multiplayer (`/api/driftwood/*`) and online puzzles (`/api/duel/*`) live in the Worker entry, not SvelteKit; their
   Durable Objects exist only in `pnpm preview`/production, not in `pnpm dev`. Changing DO
   classes needs a new `migrations` tag in `wrangler.jsonc`.
 - Env is validated by `parseServerEnv` (`apps/web/src/lib/server/env.ts`). Add new vars there,

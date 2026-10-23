@@ -36,9 +36,15 @@
 		"bindings": [
 			{ "name": "DRIFTWOOD_ROOM", "class_name": "DriftwoodRoom" },
 			{ "name": "DRIFTWOOD_LOBBY", "class_name": "DriftwoodLobby" },
+			// Online puzzle games: one object per game room, one lobby of open rooms.
+			{ "name": "DUEL_ROOM", "class_name": "DuelRoom" },
+			{ "name": "DUEL_LOBBY", "class_name": "DuelLobby" },
 		],
 	},
-	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["DriftwoodRoom", "DriftwoodLobby"] }],
+	"migrations": [
+		{ "tag": "v1", "new_sqlite_classes": ["DriftwoodRoom", "DriftwoodLobby"] },
+		{ "tag": "v2", "new_sqlite_classes": ["DuelRoom", "DuelLobby"] },
+	],
 	// Cloudflare Hyperdrive in front of Neon (pooling, fast connects). Query caching is
 	// disabled on purpose: player data must never be served stale. When bound, it takes
 	// precedence over DATABASE_URL in production. `localConnectionString` is only used by

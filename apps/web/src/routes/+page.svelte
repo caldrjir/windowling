@@ -34,6 +34,12 @@
 	// Phones and tablets (no hover, coarse pointer) cannot play mouse + keyboard games.
 	let touchOnly = $state(false);
 	const blocked = (g: Game) => Boolean(g.desktopOnly) && touchOnly;
+	const onlineText = (kind: NonNullable<Game['online']>) =>
+		({
+			turn: L('Online partie s živým soupeřem', 'Live online games'),
+			race: L('Online závody na stejném zadání', 'Online races on the same puzzle'),
+			world: L('Společné světy pro více hráčů', 'Shared multiplayer worlds'),
+		})[kind];
 	// Who is playing what right now (heartbeats from static/games/presence.js).
 	interface Live {
 		signedIn: number;
@@ -491,8 +497,15 @@
 						{#if playing(g.id)}
 							<span class="gc-live" title={liveText(g.id)}><i></i>{playing(g.id)}</span>
 						{/if}
-						{#if g.desktopOnly}
-							<span class="gc-pc" title={L('Jen na počítači', 'Desktop only')}>PC</span>
+						{#if g.desktopOnly || g.online}
+							<span class="gc-badges">
+								{#if g.desktopOnly}
+									<span title={L('Jen na počítači', 'Desktop only')}>PC</span>
+								{/if}
+								{#if g.online}
+									<span class="on" title={onlineText(g.online)}>ONLINE</span>
+								{/if}
+							</span>
 						{/if}
 						<div class="gc-info">
 							<h3>{g.title}</h3>

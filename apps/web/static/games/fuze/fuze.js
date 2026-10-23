@@ -149,6 +149,7 @@ const Fuze = (() => {
     render();
     return {
       getState: () => (over ? null : { grid: grid.map(c => (c ? c.v : 0)), score, moves, spawns }),
+      progress: () => Math.max(0, best - 1) / Math.max(1, P.goal - 1),
       destroy() { removeEventListener('resize', fit); },
       onKey(e) { const m = { ArrowLeft: 0, a: 0, A: 0, ArrowUp: 1, w: 1, W: 1, ArrowRight: 2, d: 2, D: 2, ArrowDown: 3, s: 3, S: 3 }[e.key]; if (m !== undefined) { e.preventDefault(); slide(m); } if ((e.key === 'z' || e.key === 'Z') && undoStack.length) el.querySelector('[data-t="undo"]').click(); },
       _solve() { const i = grid.findIndex(c => !c || c.v > 0); grid[i] = { v: P.goal, id: id++ }; best = P.goal; won = true; render(); finish(true); },
@@ -167,6 +168,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'fuze', title: 'FÚZE',
   tagline: Kit.L('Slučuj vesmírná tělesa: z prachu planety, z planet hvězdy, ze hvězd supernovu. Každý tah se počítá.', 'Merge cosmic bodies: dust into planets, planets into stars, stars into a supernova. Every move counts.'),
   diffs: Fuze.DIFFS, generate: Fuze.generate, create: Fuze.create, art: Fuze.art,
+  online: { kind: 'race' },
   dailyDiff: () => 'classic', levelDiff: n => { const s = Fuze.levelSpec(n); return s.n === 3 ? 'small' : s.rocks ? 'belt' : s.n === 5 ? 'big' : 'classic'; },
   rules: Kit.L(`<p>Posouvej všechna tělesa najednou (šipky, WASD nebo tah prstem). Dvě stejná tělesa, která do sebe narazí, se sloučí ve vyšší: 2 → 4 → 8 … Po každém tahu se objeví nový prach.</p>
     <ul><li>Dosáhni cílového tělesa: v klasice <b>Supernovy (2048)</b>, na Cestě podle úkolu, v denní výzvě <b>Neutronové hvězdy (1024)</b>.</li>

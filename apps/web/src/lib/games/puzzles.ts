@@ -99,6 +99,7 @@ const common = {
 export const PUZZLE_GAMES: Game[] = [
 	{
 		id: 'sudoku',
+		online: 'race',
 		title: 'SUDOKU',
 		group: 'puzzle',
 		tagline: 'Devět čísel, devět souhvězdí.',
@@ -148,6 +149,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'nonogram',
+		online: 'race',
 		title: 'NONOGRAMY',
 		group: 'puzzle',
 		tagline: 'Malované křížovky, ze kterých se líhnou hvězdné bytosti.',
@@ -191,6 +193,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'kakuro',
+		online: 'race',
 		title: 'KAKURO',
 		group: 'puzzle',
 		tagline: 'Číselná křížovka pro ty, kdo rádi počítají.',
@@ -257,6 +260,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'souhvezdi',
+		online: 'race',
 		title: 'SOUHVĚZDÍ',
 		group: 'puzzle',
 		tagline: 'Spoj hvězdy v souhvězdí.',
@@ -328,6 +332,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'pulsar',
+		online: 'race',
 		title: 'PULSAR',
 		group: 'puzzle',
 		tagline: 'Padající bloky v rytmu pulsaru.',
@@ -399,6 +404,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'fuze',
+		online: 'race',
 		title: 'FÚZE',
 		group: 'puzzle',
 		tagline: 'Z prachu planety, z planet hvězdy.',
@@ -445,6 +451,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'miny',
+		online: 'race',
 		title: 'MINY',
 		group: 'puzzle',
 		tagline: 'Hledání min bez hádání.',
@@ -489,6 +496,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'omalovanky',
+		online: 'race',
 		title: 'OMALOVÁNKY',
 		group: 'puzzle',
 		tagline: 'Malování podle čísel pro chvíle klidu.',
@@ -539,6 +547,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'solitaire',
+		online: 'race',
 		title: 'SOLITAIRE',
 		group: 'puzzle',
 		tagline: 'Klondike, FreeCell a Pavouk pod hvězdami.',
@@ -595,6 +604,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'mahjong',
+		online: 'race',
 		title: 'MAHJONG',
 		group: 'puzzle',
 		tagline: 'Dvojice nebeských kamenů.',
@@ -660,6 +670,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'skladacka',
+		online: 'race',
 		title: 'SKLÁDAČKA',
 		group: 'puzzle',
 		tagline: 'Jigsaw z vesmírných obrazů.',
@@ -708,6 +719,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'sachy',
+		online: 'turn',
 		title: 'ŠACHY',
 		group: 'puzzle',
 		tagline: 'Šachy pod hvězdami.',
@@ -755,6 +767,7 @@ export const PUZZLE_GAMES: Game[] = [
 	},
 	{
 		id: 'piskvorky',
+		online: 'turn',
 		title: 'PIŠKVORKY',
 		group: 'puzzle',
 		tagline: 'Pět hvězd v řadě.',

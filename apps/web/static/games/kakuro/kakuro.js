@@ -226,7 +226,8 @@ const Kakuro = (() => {
     fit(); addEventListener('resize', fit);
     render();
     return {
-      getState: () => ({ val, notes, sel }), destroy() { removeEventListener('resize', fit); },
+      getState: () => ({ val, notes, sel }),
+      progress: () => { let k = 0, m = 0; for (let i = 0; i < n * n; i++) if (isCell(i) && !given.has(i)) { m++; if (val[i] === sol[i]) k++; } return m ? k / m : 1; }, destroy() { removeEventListener('resize', fit); },
       onKey(e) {
         const k = e.key;
         if (/^[1-9]$/.test(k)) { input(+k); e.preventDefault(); }
@@ -263,6 +264,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'kakuro', title: 'KAKURO',
   tagline: Kit.L('Číselná křížovka pro ty, kdo rádi počítají. Součty, kombinace a jediné správné řešení.', 'The number crossword for people who love sums. Totals, combinations and one true solution.'),
   diffs: Kakuro.DIFFS, generate: Kakuro.generate, create: Kakuro.create, art: Kakuro.art,
+  online: { kind: 'race' },
   rules: Kit.L(`<p>Doplň do bílých políček číslice 1–9. Číslo v tmavém políčku udává součet úseku <b>vpravo</b> (horní číslo) nebo <b>dole</b> (spodní číslo).</p>
     <ul><li>V jednom úseku se žádná číslice nesmí opakovat.</li>
     <li>Pod mřížkou vidíš <b>kombinace</b> číslic, které dávají součet vybraného úseku. Například 3 ve dvou políčkách je vždy 1+2.</li>

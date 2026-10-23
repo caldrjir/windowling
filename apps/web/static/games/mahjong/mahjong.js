@@ -177,6 +177,7 @@ const Mahjong = (() => {
     fit(); addEventListener('resize', fit); render();
     return {
       getState: () => (done ? null : { alive, kinds: tiles.map(t => [t.k, t.v]) }),
+      progress: () => alive.filter(a => !a).length / alive.length,
       destroy() { removeEventListener('resize', fit); },
       onKey(e) { if (e.key === 'h' || e.key === 'H') el.querySelector('[data-t="hint"]').click(); if ((e.key === 'z' || e.key === 'Z')) el.querySelector('[data-t="undo"]').click(); },
       _solve() { alive = alive.map(() => false); render(); check(); },
@@ -193,6 +194,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'mahjong', title: 'MAHJONG',
   tagline: Kit.L('Odebírej dvojice nebeských kamenů. Hvězdy, planety, komety a souhvězdí, každé rozložení jde dohrát.', 'Remove pairs of celestial tiles. Stars, planets, comets and zodiacs; every layout can be cleared.'),
   diffs: Mahjong.DIFFS, generate: Mahjong.generate, create: Mahjong.create, art: Mahjong.art,
+  online: { kind: 'race' },
   dailyDiff: () => 'turtle', levelDiff: n => ['pyramid', 'pyramid', 'fortress', 'fortress', 'turtle', 'tower'][Math.floor((n - 1) / 20)],
   rules: Kit.L(`<p>Odeber všechny kameny po dvojicích stejných.</p>
     <ul><li>Odebrat jde jen <b>volný</b> kámen: nic na něm neleží a vlevo nebo vpravo od něj je volno. Zablokované kameny jsou ztmavené (kromě Věže).</li>

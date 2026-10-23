@@ -226,6 +226,7 @@ const Omalovanky = (() => {
     fitView(); renderPal(); addEventListener('resize', fitView);
     return {
       getState: () => (done ? null : { paint, col }),
+      progress: () => paint.reduce((a, p, i) => a + (p === map[i] ? 1 : 0), 0) / (n * n),
       destroy() { removeEventListener('resize', fitView); },
       onKey(e) { const d = parseInt(e.key, 10); if (d >= 1 && d <= pal.length) { col = d - 1; renderPal(); draw(); } if (e.key === '0' && pal.length >= 10) { col = 9; renderPal(); draw(); } },
       _solve() { paint = map.slice(); renderPal(); draw(); check(); },
@@ -250,6 +251,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'omalovanky', title: 'OMALOVÁNKY',
   tagline: Kit.L('Malování podle čísel pro chvíle klidu. Planety, mlhoviny, bytosti a lodě, každý obraz nový a tvůj.', 'Colour by number for quiet moments. Planets, nebulae, creatures and ships, every picture new and yours.'),
   diffs: Omalovanky.DIFFS, generate: Omalovanky.generate, create: Omalovanky.create, art: Omalovanky.art, views: [Omalovanky.gallery],
+  online: { kind: 'race' },
   dailyDiff: () => 'medium',
   rules: Kit.L(`<p>Každé políčko má číslo barvy. Vyber barvu dole a vybarvi všechna políčka s jejím číslem. Políčka vybrané barvy jsou zvýrazněná.</p>
     <ul><li>Maluj klepnutím nebo tahem. <b>Přibližuj</b> kolečkem myši nebo dvěma prsty, posouvej pravým tlačítkem nebo dvěma prsty.</li>
