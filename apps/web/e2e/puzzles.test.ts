@@ -226,7 +226,8 @@ test('mahjong removes a matching pair of free tiles', async ({ page }) => {
 		[...document.querySelectorAll<HTMLElement>('.mj-t.hint:not([hidden])')].map((e) => e.dataset.i),
 	);
 	expect(ids).toHaveLength(2);
-	for (const i of ids) await page.locator(`.mj-t[data-i="${i}"]`).click({ force: true });
+	// Tiles overlap: send the click to the tile itself, not to whatever lies on top at its centre.
+	for (const i of ids) await page.locator(`.mj-t[data-i="${i}"]`).dispatchEvent('click');
 	await expect(page.locator('.mj-left')).toHaveText(String(left - 2));
 });
 

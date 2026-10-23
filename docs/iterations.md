@@ -31,6 +31,9 @@ Auth, CI/CD, release-please) carries on.
   Piškvorky (15×15 gomoku, four strengths with VCF, daily opening, two players).
 - DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
   players see each other, in-game chat.
+- Online puzzles: live chess and gomoku games (open games list, code or link, chat, draw
+  offers, rematch with swapped colours) and races of up to 8 players on the same puzzle for
+  every other puzzle (live progress, standings).
 
 ## Game Center 2 – Accounts & Cloud Saves
 

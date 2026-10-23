@@ -233,6 +233,7 @@ const Nonogram = (() => {
     render();
     return {
       getState: () => ({ st }),
+      progress: () => { let k = 0, n = 0; for (let i = 0; i < sol.length; i++) if (sol[i]) { n++; if (st[i] === 1) k++; } else if (st[i] === 1) k--; return n ? Math.max(0, k) / n : 1; },
       destroy() { removeEventListener('pointermove', onMove); removeEventListener('pointerup', end); removeEventListener('pointercancel', end); removeEventListener('resize', fit); },
       onKey(e) { if (e.key === 'x' || e.key === 'X') { mode = mode === 1 ? 2 : 1; render(); } if ((e.key === 'z' || e.key === 'Z') && undo.length) { st = undo.pop(); render(); api.changed(); } if (e.key === 'h' || e.key === 'H') hint(); },
       _solve() { st = sol.map(v => (v ? 1 : 2)); render(); check(); },
@@ -268,6 +269,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'nonogram', title: 'NONOGRAMY',
   tagline: Kit.L('Malované křížovky, ze kterých se líhnou hvězdné bytosti. Každý obrázek je nový a skončí ve tvé sbírce.', 'Picture logic puzzles that hatch star creatures. Every picture is new and joins your collection.'),
   diffs: Nonogram.DIFFS, generate: Nonogram.generate, create: Nonogram.create, art: Nonogram.art, views: [Nonogram.gallery],
+  online: { kind: 'race' },
   rules: Kit.L(`<p>Čísla u řádku (a sloupce) udávají délky souvislých úseků vybarvených políček v tom pořadí, v jakém jdou za sebou. Mezi úseky je vždy aspoň jedno prázdné políčko.</p>
     <ul><li>Klepni nebo táhni pro vybarvení. Režim <b>Křížek</b> (klávesa X, na počítači pravé tlačítko) označí políčko, které zůstane prázdné.</li>
     <li>Splněný řádek se ztlumí a zbytek se sám zakřížkuje.</li>

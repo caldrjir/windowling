@@ -9,7 +9,7 @@
 │  catalogue · stats · language · account   │◄──────►│  hooks: env → db → Better Auth       │
 │                                           │        │  /api/auth/*  (Google OAuth)         │
 │ Game /games/<id>/ (static HTML/CSS/JS)    │        │  /api/health                         │
-│  own logic + localStorage save            │        │  /api/driftwood/* → Durable Objects  │
+│  own logic + localStorage save            │        │  /api/driftwood/*, /api/duel/* → DOs │
 └───────────────────────────────────────────┘        └──────────────────┬───────────────────┘
           localStorage: gamecenter.lang,                                │ TCP (postgres.js)
           gamecenter.stats.<id>, <game save>                 ┌──────────▼──────────┐
@@ -157,6 +157,32 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
 - Per player (not shared): inventory, health, animals. Time is shared (sleeping moves it
   for everybody). `pnpm dev` has no Durable Objects - use `pnpm preview`.
 
+## Online puzzles - `apps/web/src/worker/duel`
+
+Every puzzle can be played online, served by the Worker entry like DRIFTWOOD multiplayer.
+
+- `DuelRoom` (SQLite-backed Durable Object, one per room, 5-letter code). Two kinds:
+  - **turn** (Šachy, Piškvorky): two seats, the room keeps the move list and accepts a move
+    only from the seat to move (`seatToMove`: colours swap every round). It also records the
+    result (game end reported by the clients, resignation, draw by agreement, or a win claimed
+    when the opponent has been gone 60 s) and handles rematches. The clients check the rules
+    of the game; the room checks whose turn it is.
+  - **race** (all other puzzles): up to 8 players. The host starts a round, the room hands
+    out a fresh seed and a start time (3.5 s countdown) and records progress and finish times
+    by its own clock.
+    A player is identified by a private per-browser id (`gamecenter.pid`), so a reload or a
+    dropped connection rejoins the same seat. Chat keeps the last 30 lines. An empty room
+    deletes itself after a day (alarm).
+- `DuelLobby` (one instance): open rooms waiting for players, per game.
+- `api.ts`: `GET /api/duel/rooms?game=<id>`, `POST /api/duel/rooms`,
+  `GET /api/duel/rooms/:code`, `GET /api/duel/rooms/:code/ws` (same-origin only).
+- `protocol.ts`: parses and bounds every client message; unit-tested.
+- Client: the puzzle kit (online card, room with code/link and chat, play bar). A game opts in
+  with `online: { kind: 'turn' | 'race', diffs? }` in `Kit.game`. Turn games get
+  `opts.net` (`side`, `moves`, `send`, `onMove`, `end`, `resign`); race games implement
+  `progress()` (0..1) and use the normal `api.solved` / `api.failed`. Results go to
+  `<id>.save.v1` (`stats.online`), the room link is `?duel=<code>`.
+
 ## Future: cloud saves and multiplayer
 
 - **Cloud saves**: a `game_save (user_id, game_id, data jsonb, updated_at)` table and
@@ -179,3 +205,4 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
 | 2026-10-22 | Kill-switch service worker instead of a caching one     | Old SW would keep serving the removed app; games have no versioned assets for precaching.   |
 | 2026-10-22 | DRIFTWOOD multiplayer in Durable Objects (Worker entry) | WebSockets need a DO; SQLite-backed DOs are on the free plan; no DB needed for world state. |
 | 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |
+| 2026-10-23 | Online puzzles: one generic room DO for turns and races | One server for 13 games; the room enforces turn order and timing, the games keep rules.     |

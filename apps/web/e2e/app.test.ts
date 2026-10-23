@@ -240,7 +240,7 @@ test('DRIFTWOOD runs on computers and is blocked on phones', async ({
 	const card = page.getByTestId('shelf').locator('.gcard').nth(2);
 	await card.click();
 	await expect(page.locator('.hero-title')).toHaveText('DRIFTWOOD');
-	await expect(card.locator('.gc-pc')).toHaveText('PC');
+	await expect(card.locator('.gc-badges span').first()).toHaveText('PC');
 
 	if (isMobile) {
 		await expect(page.getByTestId('play')).toBeDisabled();

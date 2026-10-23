@@ -29,7 +29,9 @@ follow the player; later, some games are played together (multiplayer).
 (Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and
 Omalovánky (colour by number), Solitaire (Klondike, FreeCell, Spider), Mahjong, Skládačka
 (jigsaw), Šachy (chess) and Piškvorky (gomoku). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
-achievements; weekly quests and themes are shared by all puzzles.
+achievements; weekly quests and themes are shared by all puzzles. **Online**: chess and gomoku
+against a live opponent, and races of up to 8 players on the same puzzle in every other game
+(join by a code, a link or the list of open games).
 
 ## What the hub shows
 
@@ -45,6 +47,7 @@ achievements; weekly quests and themes are shared by all puzzles.
 2. **Accounts & cloud saves** - stats and saves stored per account in Postgres. (Game Center 2)
 3. **More games** - fill the shelf.
 4. **Multiplayer** - real-time games through Cloudflare Durable Objects (WebSockets).
-   DRIFTWOOD already has shared worlds (up to 8 players, nicknames, chat).
+   DRIFTWOOD already has shared worlds (up to 8 players, nicknames, chat); every puzzle can be
+   played online (live games or races).
 
 See [`iterations.md`](iterations.md).

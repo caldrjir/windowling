@@ -205,7 +205,7 @@ const Souhvezdi = (() => {
     function fit() { const vw = (document.getElementById('kView') || el).clientWidth - 28, hh = innerHeight - 200; const s = Math.max(260, Math.min(vw, hh * W / H, 720)); svg.style.width = s + 'px'; }
     fit(); addEventListener('resize', fit);
     render();
-    return { getState: () => ({ val }), destroy() { removeEventListener('resize', fit); }, onKey(e) { if ((e.key === 'z' || e.key === 'Z') && undo.length) { val = undo.pop(); render(); api.changed(); } if (e.key === 'h' || e.key === 'H') hint(); }, _solve() { val = P.sol.slice(); render(); check(); } };
+    return { getState: () => ({ val }), progress: () => { let k = 0, m = 0; P.sol.forEach((v, e) => { m += v; k += Math.min(v, val[e] || 0); }); return m ? k / m : 1; }, destroy() { removeEventListener('resize', fit); }, onKey(e) { if ((e.key === 'z' || e.key === 'Z') && undo.length) { val = undo.pop(); render(); api.changed(); } if (e.key === 'h' || e.key === 'H') hint(); }, _solve() { val = P.sol.slice(); render(); check(); } };
   }
 
   function art(el) {
@@ -225,6 +225,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'souhvezdi', title: 'SOUHVĚZDÍ',
   tagline: Kit.L('Spoj hvězdy v souhvězdí. Číslo ve hvězdě říká, kolik čar z ní vede. Jednoduchá pravidla, hluboká logika.', 'Connect the stars into constellations. The number in a star is how many lines leave it. Simple rules, deep logic.'),
   diffs: Souhvezdi.DIFFS, generate: Souhvezdi.generate, create: Souhvezdi.create, art: Souhvezdi.art, views: Souhvezdi.views,
+  online: { kind: 'race' },
   rules: Kit.L(`<p>Spoj všechny hvězdy čarami (Hashiwokakero):</p>
     <ul><li>Z každé hvězdy vede přesně tolik čar, kolik ukazuje její číslo.</li>
     <li>Čáry vedou jen vodorovně nebo svisle k nejbližší hvězdě a <b>nesmí se křížit</b>.</li>

@@ -310,6 +310,7 @@ const Solitaire = (() => {
     layout(); autoFoundation();
     return {
       getState: () => (done ? null : { S, hist: hist.slice(-60), moves }),
+      progress: () => S.f.reduce((a, f) => a + f.length, 0) / (S.f.length * 13),
       destroy() { removeEventListener('resize', layout); },
       onKey(e) { if ((e.key === 'z' || e.key === 'Z') && hist.length) el.querySelector('[data-t="undo"]').click(); if (e.key === 'h' || e.key === 'H') hint(); if (e.key === ' ' ) { e.preventDefault(); drawStock(); } },
       _solve() { if (spider) { S.f = [...Array(8)].map(() => []); } else S.f = S.f.map((_, i) => [...Array(13)].map((__, k) => ({ id: 900 + i * 13 + k, s: i, r: k + 1, up: true }))); S.t = S.t.map(() => []); S.stock = []; S.waste = []; S.cells = S.cells.map(() => null); layout(); check(); },
@@ -328,6 +329,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'solitaire', title: 'SOLITAIRE',
   tagline: Kit.L('Klondike, FreeCell a Pavouk pod hvězdami. Rozdání Klondike, která jdou vždy dohrát, a denní partie pro všechny.', 'Klondike, FreeCell and Spider under the stars. Klondike deals that can always be won, and a daily deal for everyone.'),
   diffs: Solitaire.DIFFS, generate: Solitaire.generate, create: Solitaire.create, art: Solitaire.art,
+  online: { kind: 'race' },
   dailyDiff: () => 'klondike1', levelDiff: n => Solitaire.levelMode(n),
   rules: Kit.L(`<p>Přesuň všechny karty na <b>základny</b> podle barev od esa po krále.</p>
     <ul><li><b>Klondike:</b> v sloupcích skládej sestupně se střídáním červené a černé. Na prázdný sloupec jen král. Klepnutím na balíček otočíš další kartu (nebo tři).</li>
