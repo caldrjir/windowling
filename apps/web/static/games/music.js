@@ -68,20 +68,23 @@
       const div = document.createElement('div'); el.appendChild(div);
       const vars = { playsinline: 1, rel: 0, modestbranding: 1, origin: location.origin };
       if (t.list) Object.assign(vars, { listType: 'playlist', list: t.list });
-      p = new window.YT.Player(div, {
-        host: 'https://www.youtube-nocookie.com', width: 200, height: 200, videoId: t.id || undefined, playerVars: vars,
+      const opts = {
+        host: 'https://www.youtube-nocookie.com', width: 200, height: 200, playerVars: vars,
         events: {
           onReady: () => {
             ready = true; p.setVolume(state.vol);
             if (t.list && saved.i) p.cuePlaylist({ list: t.list, listType: 'playlist', index: saved.i, startSeconds: saved.t || 0 });
-            else if (saved.t) p.cueVideoById({ videoId: t.id, startSeconds: saved.t });
+            else if (saved.t && t.id) p.cueVideoById({ videoId: t.id, startSeconds: saved.t });
             if (want) p.playVideo();
           },
           onStateChange: e => { if (e.data === 1) want = true; ui(); if (e.data === 0 && !t.list) p.playVideo(); },
           // a video that can't be embedded: try the next one
           onError: () => { if (t.list) p.nextVideo(); },
         },
-      });
+      };
+      // A playlist link has no video id: the API refuses an empty one.
+      if (t.id) opts.videoId = t.id;
+      p = new window.YT.Player(div, opts);
     });
     setInterval(() => { if (ready && p.getCurrentTime) remember({ i: t.list ? p.getPlaylistIndex() : 0, t: Math.floor(p.getCurrentTime() || 0) }); }, 2000);
     return {
