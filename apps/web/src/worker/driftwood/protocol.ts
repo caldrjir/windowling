@@ -9,6 +9,8 @@
  *   node  { k, i, r }                    harvested node k#i, respawns in r seconds
  *   build { type, x, z, rot }            placed structure
  *   time  { hour, day }                  shared clock (the host sends it; sleeping too)
+ *   drop  { item, x, z }                 an item put on the ground
+ *   take  { id }                         pick a ground item up (first one wins)
  */
 
 export const MAX_PLAYERS = 8;
@@ -16,6 +18,7 @@ export const MAX_CHAT = 200;
 export const MAX_NICK = 20;
 export const CHAT_HISTORY = 40;
 export const MAX_STRUCTURES = 400;
+export const MAX_DROPS = 150;
 const WORLD = 1000;
 
 export interface Look {
@@ -45,13 +48,28 @@ export interface Structure {
 	z: number;
 	rot: number;
 }
+/** An inventory stack: item id, count, tool durability / waterskin charges. */
+export interface Item {
+	id: string;
+	n: number;
+	dur?: number;
+	ch?: number;
+}
+export interface Drop {
+	id: string;
+	item: Item;
+	x: number;
+	z: number;
+}
 export type ClientMessage =
 	| { t: 'hello'; nick: string; look: Look }
 	| ({ t: 's' } & PlayerState)
 	| { t: 'chat'; text: string }
 	| { t: 'node'; k: string; i: number; r: number }
 	| ({ t: 'build' } & Structure)
-	| { t: 'time'; hour: number; day: number };
+	| { t: 'time'; hour: number; day: number }
+	| { t: 'drop'; item: Item; x: number; z: number }
+	| { t: 'take'; id: string };
 
 export interface RoomMeta {
 	code: string;
@@ -97,6 +115,19 @@ function parseLook(v: unknown): Look {
 	const o = (v ?? {}) as Record<string, unknown>;
 	const part = (k: string) => int(o[k], 0, 15) ?? 0;
 	return { skin: part('skin'), hair: part('hair'), shirt: part('shirt'), pants: part('pants') };
+}
+
+function parseItem(v: unknown): Item | null {
+	const o = (v ?? {}) as Record<string, unknown>;
+	const itemId = id(o.id),
+		n = int(o.n, 1, 999);
+	if (!itemId || n === null) return null;
+	const item: Item = { id: itemId, n };
+	const dur = num(o.dur, 0, 1e5),
+		ch = int(o.ch, 0, 100);
+	if (dur !== null) item.dur = dur;
+	if (ch !== null) item.ch = ch;
+	return item;
 }
 
 export function parseClientMessage(raw: unknown): ClientMessage | null {
@@ -157,6 +188,16 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
 			const hour = num(m.hour, 0, 24),
 				day = int(m.day, 1, 1e6);
 			return hour !== null && day !== null ? { t: 'time', hour, day } : null;
+		}
+		case 'drop': {
+			const item = parseItem(m.item),
+				x = num(m.x, -WORLD, WORLD),
+				z = num(m.z, -WORLD, WORLD);
+			return item && x !== null && z !== null ? { t: 'drop', item, x, z } : null;
+		}
+		case 'take': {
+			const dropId = typeof m.id === 'string' && /^[a-z0-9]{1,16}$/.test(m.id) ? m.id : null;
+			return dropId ? { t: 'take', id: dropId } : null;
 		}
 		default:
 			return null;

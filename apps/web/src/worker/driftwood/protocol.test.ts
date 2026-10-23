@@ -63,6 +63,13 @@ describe('driftwood protocol', () => {
 			rot: 1,
 		});
 		expect(msg({ t: 'time', hour: 13.5, day: 3 })).toEqual({ t: 'time', hour: 13.5, day: 3 });
+		expect(msg({ t: 'drop', item: { id: 'stoneAxe', n: 1, dur: 42, x: 1 }, x: 2, z: -3 })).toEqual({
+			t: 'drop',
+			item: { id: 'stoneAxe', n: 1, dur: 42 },
+			x: 2,
+			z: -3,
+		});
+		expect(msg({ t: 'take', id: 'a1b2c3' })).toEqual({ t: 'take', id: 'a1b2c3' });
 	});
 
 	it('rejects malformed and hostile messages', () => {
@@ -76,6 +83,10 @@ describe('driftwood protocol', () => {
 		expect(msg({ t: 'node', k: 'tree', i: 1.5, r: 1 })).toBeNull();
 		expect(msg({ t: 'build', type: 'a b', x: 0, z: 0, rot: 0 })).toBeNull();
 		expect(msg({ t: 'time', hour: 30, day: 1 })).toBeNull();
+		expect(msg({ t: 'drop', item: { id: 'wood', n: 0 }, x: 0, z: 0 })).toBeNull();
+		expect(msg({ t: 'drop', item: { id: 'wood', n: 5000 }, x: 0, z: 0 })).toBeNull();
+		expect(msg({ t: 'drop', item: { id: '<b>', n: 1 }, x: 0, z: 0 })).toBeNull();
+		expect(msg({ t: 'take', id: '../x' })).toBeNull();
 		// An unknown held item is dropped, not trusted.
 		expect(msg({ t: 's', x: 0, y: 0, z: 0, yaw: 0, pitch: 0, it: '"><img>' })).toMatchObject({
 			it: null,

@@ -119,7 +119,7 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
 
 - `DriftwoodRoom` (SQLite-backed Durable Object, one per world, named by its 6-letter code):
   hibernatable WebSockets; keeps seed, mode, clock, harvested nodes (with regrow time),
-  structures and the last 40 chat lines, so a world can be re-joined later. Relays player
+  structures, items lying on the ground (taken first-come, first-served) and the last 40 chat lines, so a world can be re-joined later. Relays player
   states (~10/s) and chat. The longest-connected player is the host and keeps the clock.
 - `DriftwoodLobby` (one instance): worlds somebody is playing in right now.
 - `api.ts`: `GET/POST /api/driftwood/rooms`, `GET /api/driftwood/rooms/:code`,

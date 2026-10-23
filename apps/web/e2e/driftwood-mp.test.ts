@@ -61,6 +61,10 @@ test('two players share a DRIFTWOOD world', async ({ browser, request }, info) =
 	await send(ann, { t: 'node', k: 'tree', i: 7, r: 300 });
 	await send(ann, { t: 'build', type: 'campfire', x: 2, z: 3, rot: 0 });
 	await send(ann, { t: 's', x: 10, y: 1, z: 20, yaw: 0, pitch: 0, m: true });
+	// ...and drops an axe and some wood on the ground.
+	await send(ann, { t: 'drop', item: { id: 'stoneAxe', n: 1, dur: 40 }, x: 4, z: 5 });
+	await send(ann, { t: 'drop', item: { id: 'wood', n: 6 }, x: 4.5, z: 5 });
+	await expect.poll(async () => (await received(ann, 'drop')).length).toBe(2);
 
 	await connect(bob, code, 'Bob');
 	await expect.poll(async () => (await received(bob, 'welcome')).length).toBe(1);
@@ -71,6 +75,24 @@ test('two players share a DRIFTWOOD world', async ({ browser, request }, info) =
 		players: [{ nick: 'Ann', state: { x: 10, z: 20, m: true } }],
 	});
 	expect((bobWelcome?.nodes as [string, number][])[0]?.[0]).toBe('tree:7');
+	const drops = bobWelcome?.drops as { id: string; item: { id: string } }[];
+	expect(drops.map((d) => d.item)).toEqual([
+		{ id: 'stoneAxe', n: 1, dur: 40 },
+		{ id: 'wood', n: 6 },
+	]);
+
+	// Bob picks the axe up; Ann sees it gone and can no longer take it.
+	const axe = drops[0]?.id;
+	await send(bob, { t: 'take', id: axe });
+	await expect
+		.poll(async () => (await received(bob, 'took'))[0])
+		.toMatchObject({ d: { id: axe, item: { id: 'stoneAxe', dur: 40 } } });
+	await expect.poll(async () => (await received(ann, 'gone')).map((m) => m.id)).toContain(axe);
+	await send(ann, { t: 'take', id: axe });
+	await expect.poll(async () => (await received(ann, 'took')).length).toBe(0);
+	await expect
+		.poll(async () => (await received(ann, 'gone')).filter((m) => m.id === axe).length)
+		.toBe(2);
 
 	// Ann sees Bob join, then his moves and his chat.
 	await expect.poll(async () => (await received(ann, 'join')).length).toBe(1);

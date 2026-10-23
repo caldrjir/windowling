@@ -116,6 +116,9 @@ const MP = (() => {
       case 'chat': return chatLine(m);
       case 'node': return applyNode(m.k, m.i, m.r, true);
       case 'build': return applyBuild(m, true);
+      case 'drop': if (st.active) Drops.spawn(m.d.item, m.d.x, m.d.z, m.d.id); return;
+      case 'gone': Drops.remove(m.id); return;
+      case 'took': if (st.active) { Drops.remove(m.d.id); Drops.give(m.d.item, m.d.x, m.d.z); } return;
       case 'time': if (st.active) { if (G.day !== m.day || Math.abs(G.hour - m.hour) > 0.05) { G.day = m.day; G.hour = m.hour; } } return;
     }
   }
@@ -126,6 +129,7 @@ const MP = (() => {
       // znovu připojeno: jen obnovit spoluhráče
       for (const id of [...st.players.keys()]) removePlayer(id);
       for (const p of m.players) addPlayer(p);
+      syncDrops(m.drops);
       return;
     }
     const meta = m.meta;
@@ -148,6 +152,8 @@ const MP = (() => {
     for (const [key, left] of m.nodes) { const [k, i] = key.split(':'); applyNode(k, +i, left, false); }
     st.applying = false;
     st.active = true;
+    Drops.net = net;
+    syncDrops(m.drops);
     for (const p of m.players) addPlayer(p);
     $('#mpChat').hidden = false;
     $('#mpChatLog').innerHTML = '';
@@ -173,6 +179,16 @@ const MP = (() => {
     const o = World.addStructure(s.type, s.x, s.z, s.rot, true);
     st.applying = false;
     if (fx && o) Particles.burst(o.x, o.y + 0.3, o.z, '#c9a77a', 12, 3, 3);
+  }
+
+  // Předměty na zemi: vyhodit i sebrat rozhoduje server (sebrat je smí jen jeden hráč).
+  const net = {
+    drop: (item, x, z) => send({ t: 'drop', item, x, z }),
+    take: d => send({ t: 'take', id: d.id }),
+  };
+  function syncDrops(list) {
+    Drops.clear();
+    for (const d of list || []) Drops.spawn(d.item, d.x, d.z, d.id);
   }
 
   // ── Spoluhráči ──
@@ -307,6 +323,7 @@ const MP = (() => {
     if (st.ws) { try { st.ws.close(1000); } catch (e) { /* */ } }
     st.ws = null;
     for (const id of [...st.players.keys()]) removePlayer(id);
+    Drops.net = null;
     st.active = false; st.chatOpen = false; st.code = null; st.meta = null;
     chatEl.hidden = true; chatEl.classList.remove('open'); bar.hidden = true;
     // svět z multiplayeru nesmí zůstat v menu: postavit znovu čistý
