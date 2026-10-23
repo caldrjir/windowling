@@ -12,6 +12,9 @@ const PUZZLES = [
 	'fuze',
 	'miny',
 	'omalovanky',
+	'solitaire',
+	'mahjong',
+	'skladacka',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -203,4 +206,30 @@ test('omalovanky paints a cell with the selected colour', async ({ page }) => {
 	await expect
 		.poll(() => page.evaluate('Kit._test.inst.getState().paint.filter((p) => p >= 0).length'))
 		.toBeGreaterThan(0);
+});
+
+test('solitaire sends a tapped card to a legal place or draws from the stock', async ({ page }) => {
+	await startFree(page, 'solitaire');
+	const moves = () => page.evaluate('Kit._test.inst.getState().moves');
+	await page.locator('.sl-slot.s').dispatchEvent('pointerdown');
+	await expect.poll(moves).toBe(1);
+	await expect.poll(() => page.locator('.sl-card.up').count()).toBeGreaterThan(7);
+});
+
+test('mahjong removes a matching pair of free tiles', async ({ page }) => {
+	await startFree(page, 'mahjong');
+	const left = Number(await page.locator('.mj-left').textContent());
+	await page.locator('[data-t="hint"]').click();
+	const ids = await page.evaluate(() =>
+		[...document.querySelectorAll<HTMLElement>('.mj-t.hint:not([hidden])')].map((e) => e.dataset.i),
+	);
+	expect(ids).toHaveLength(2);
+	for (const i of ids) await page.locator(`.mj-t[data-i="${i}"]`).click({ force: true });
+	await expect(page.locator('.mj-left')).toHaveText(String(left - 2));
+});
+
+test('skladacka snaps a piece dragged to its place', async ({ page }) => {
+	await startFree(page, 'skladacka');
+	await page.locator('[data-t="hint"]').click();
+	await expect(page.locator('.jg-count')).toHaveText(/^1 \//);
 });
