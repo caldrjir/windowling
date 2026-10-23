@@ -1,0 +1,19 @@
+/* SKLÁDAČKA – deska a dílky */
+.jg-wrap { display: grid; justify-items: center; gap: 10px; width: 100%; }
+.jg-head div { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.jg-head small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.jg-head b { font-family: var(--f-d); font-size: 18px; }
+.jg-area { position: relative; overflow: hidden; border-radius: 16px; background: radial-gradient(ellipse at 50% 40%, rgba(40,30,90,.35), rgba(8,6,24,.6)); box-shadow: inset 0 0 0 1px var(--line); touch-action: none; user-select: none; -webkit-user-select: none; }
+.jg-board { position: absolute; border-radius: 6px; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--a) 45%, transparent), 0 0 40px -10px var(--a); }
+.jg-ghost { width: 100%; height: 100%; opacity: 0; transition: opacity .3s; border-radius: 6px; }
+.jg-board.show .jg-ghost { opacity: .22; }
+.jg-p { position: absolute; left: 0; top: 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,.55)); cursor: grab; transition: opacity .3s; }
+.jg-p.drag { filter: drop-shadow(0 14px 18px rgba(0,0,0,.7)); cursor: grabbing; }
+.jg-p.placed { filter: none; cursor: default; pointer-events: none; }
+.jg-p.snap { animation: jgSnap .4s; }
+@keyframes jgSnap { 40% { filter: brightness(1.6) drop-shadow(0 0 10px var(--a)); } }
+.jg-area.done .jg-board { box-shadow: 0 0 60px -6px var(--a); }
+.jg-art { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; }
+.k-hero-art .jg-art { max-height: 240px; aspect-ratio: 3 / 2; width: auto; }
+.jg-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.jg-gal canvas { width: 100%; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--line); }

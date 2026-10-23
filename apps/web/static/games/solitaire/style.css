@@ -1,0 +1,25 @@
+/* SOLITAIRE – karty */
+.sl-wrap { display: grid; justify-items: center; gap: 10px; width: 100%; }
+.sl-head { display: flex; gap: 10px; align-items: center; }
+.sl-head div:first-child { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.sl-head small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.sl-head b { font-family: var(--f-d); font-size: 18px; }
+.sl-mode { font-family: var(--f-d); font-size: 14px; color: var(--a); }
+.sl-table { position: relative; min-height: 300px; border-radius: 18px; background: radial-gradient(ellipse at 50% 0%, rgba(40,30,90,.5), rgba(8,6,24,.82)); box-shadow: inset 0 0 0 1px var(--line-2); touch-action: none; user-select: none; -webkit-user-select: none; }
+.sl-slot { position: absolute; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .1); box-shadow: inset 0 0 0 2px rgba(255,255,255,.1); display: grid; place-items: center; color: rgba(255,255,255,.18); font-size: calc(var(--cw) * .4); font-family: var(--f-d); }
+.sl-slot.s { cursor: pointer; }
+.sl-slot.hint { box-shadow: inset 0 0 0 3px var(--a), 0 0 20px var(--a); }
+.sl-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .1); transition: transform .16s ease-out; cursor: pointer;
+  background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--a) 55%, #1b1250), #120c33 70%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.18), 0 3px 8px -3px rgba(0,0,0,.7); overflow: hidden; }
+.sl-card:not(.up)::before { content: ''; position: absolute; inset: 12%; border-radius: 8%; background: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 70%, #fff, transparent), radial-gradient(1px 1px at 80% 80%, #fff, transparent); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.sl-card.up { background: linear-gradient(160deg, #fbfaff, #e6e2f7); color: #1d1840; box-shadow: 0 2px 6px -2px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.08); }
+.sl-card.up.red { color: #d81b60; }
+.sl-card b { position: absolute; left: 7%; top: 3%; font-family: var(--f-d); font-weight: 700; font-size: calc(var(--cw) * .27); line-height: 1; letter-spacing: -.04em; }
+.sl-card i { position: absolute; right: 7%; top: 3%; font-style: normal; font-size: calc(var(--cw) * .27); line-height: 1; }
+.sl-card em { position: absolute; left: 50%; top: 58%; transform: translate(-50%, -50%); font-style: normal; font-size: calc(var(--cw) * .62); opacity: .85; }
+.sl-card.drag { transition: none; box-shadow: 0 16px 30px -10px rgba(0,0,0,.8); }
+.sl-card.hint { box-shadow: 0 0 0 3px var(--a), 0 0 22px var(--a); }
+.sl-card.fly { transition: transform 1s cubic-bezier(.5,0,.5,1); transform: translate(calc(50vw - 50%), -120vh) rotate(40deg) !important; }
+.sl-art { position: relative; width: 260px; height: 260px; --cw: 92px; --ch: 129px; }
+.sl-art .sl-card { transition: none; }
+@media (max-width: 500px) { .sl-card b, .sl-card i { font-size: calc(var(--cw) * .34); } .sl-card em { font-size: calc(var(--cw) * .55); top: 64%; } }

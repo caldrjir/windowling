@@ -1,0 +1,24 @@
+/* MAHJONG – kameny */
+.mj-wrap { display: grid; justify-items: center; gap: 12px; width: 100%; }
+.mj-head { display: flex; gap: 10px; }
+.mj-head div { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 96px; }
+.mj-head small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.mj-head b { font-family: var(--f-d); font-size: 18px; }
+.mj-scroll { max-width: 100%; overflow-x: auto; padding: 8px; }
+.mj-board { position: relative; margin: 0 auto; }
+.mj-t { position: absolute; left: 0; top: 0; width: var(--tw); height: var(--th); border-radius: calc(var(--tw) * .14); display: grid; place-items: center; align-content: center; gap: 0; padding: 0;
+  background: linear-gradient(160deg, #fffdf6, #ece6d6); color: #222;
+  box-shadow: var(--dz) var(--dz) 0 #b9ad92, calc(var(--dz) + 1px) calc(var(--dz) + 1px) 0 #7d6f55, 0 6px 14px -4px rgba(0,0,0,.6), inset 0 0 0 1px rgba(0,0,0,.12);
+  transition: transform .15s, opacity .25s, filter .2s; cursor: pointer; overflow: hidden; }
+.mj-t .mj-n { position: absolute; left: 8%; top: 4%; font-family: var(--f-d); font-weight: 700; font-size: calc(var(--tw) * .26); line-height: 1; }
+.mj-t .mj-s { font-size: calc(var(--tw) * .2); line-height: 1.05; text-align: center; letter-spacing: -.08em; margin-top: 18%; }
+.mj-t .mj-big { font-size: calc(var(--tw) * .56); line-height: 1; font-weight: 700; font-family: var(--f-d); }
+.mj-t .mj-cap { font-size: calc(var(--tw) * .13); color: #6b5f46; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+.mj-t.blocked { filter: brightness(.72) saturate(.7); }
+.mj-t.sel { background: linear-gradient(160deg, #fff, color-mix(in srgb, var(--a) 40%, #fff)); box-shadow: var(--dz) var(--dz) 0 #b9ad92, 0 0 0 3px var(--a), 0 0 22px var(--a); }
+.mj-t.hint { box-shadow: var(--dz) var(--dz) 0 #b9ad92, 0 0 0 3px var(--good), 0 0 22px var(--good); }
+.mj-t.gone { opacity: 0; filter: brightness(2); }
+.mj-t.shake { animation: mjShake .3s; }
+@keyframes mjShake { 25% { margin-left: -3px; } 75% { margin-left: 3px; } }
+.k-tool.on { box-shadow: inset 0 0 0 2px var(--a), 0 0 18px var(--a); }
+.mj-art { position: relative; width: 260px; height: 260px; --tw: 60px; --th: 80px; --dz: 5px; }

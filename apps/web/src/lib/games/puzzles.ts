@@ -537,4 +537,173 @@ export const PUZZLE_GAMES: Game[] = [
 				}
 		},
 	},
+	{
+		id: 'solitaire',
+		title: 'SOLITAIRE',
+		group: 'puzzle',
+		tagline: 'Klondike, FreeCell a Pavouk pod hvězdami.',
+		description:
+			'Klasické karetní pasiánsy: Klondike po jedné i po třech kartách, FreeCell a Pavouk v jedné nebo dvou barvách. Rozdání Klondike na denní výzvě a na Cestě jde vždy dohrát.',
+		genres: ['Karty', 'Pasiáns', 'Klondike'],
+		features: ['Denní partie pro všechny', 'Cesta: 120 rozdání', '5 variant', 'Dohratelná rozdání'],
+		en: {
+			tagline: 'Klondike, FreeCell and Spider under the stars.',
+			description:
+				'Classic patience games: Klondike draw one and draw three, FreeCell, and Spider with one or two suits. Klondike deals in the daily and on the Path can always be won.',
+			genres: ['Cards', 'Patience', 'Klondike'],
+			features: ['Daily deal for everyone', 'Path: 120 deals', '5 variants', 'Winnable deals'],
+		},
+		statLabels: labels,
+		path: '/games/solitaire/index.html',
+		colors: ['#ff4f8b', '#ffd166', '#7a2cff'],
+		statsKey: 'gamecenter.stats.solitaire',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ff4f8b', '#ffd166', '#7a2cff'], 9);
+			const cw = Math.min(w, h) * 0.24;
+			const ch = cw * 1.4;
+			const cards: [string, string, boolean][] = [
+				['K', '♠', false],
+				['Q', '♥', true],
+				['J', '♣', false],
+				['A', '♦', true],
+				['10', '♥', true],
+			];
+			cards.forEach(([rank, suit, red], i) => {
+				const a = (i - 2) * 0.18 + Math.sin(t * 0.8 + i) * 0.02;
+				ctx.save();
+				ctx.translate(w / 2 + (i - 2) * cw * 0.32, h * 0.42);
+				ctx.rotate(a);
+				ctx.fillStyle = '#f7f5ff';
+				ctx.shadowColor = 'rgba(0,0,0,.6)';
+				ctx.shadowBlur = 12;
+				ctx.beginPath();
+				ctx.roundRect(-cw / 2, -ch / 2, cw, ch, cw * 0.1);
+				ctx.fill();
+				ctx.shadowBlur = 0;
+				ctx.fillStyle = red ? '#d81b60' : '#1d1840';
+				ctx.font = `700 ${cw * 0.26}px Unbounded, sans-serif`;
+				ctx.textAlign = 'left';
+				ctx.textBaseline = 'top';
+				ctx.fillText(rank, -cw * 0.42, -ch * 0.46);
+				ctx.font = `${cw * 0.6}px sans-serif`;
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(suit, 0, ch * 0.08);
+				ctx.restore();
+			});
+		},
+	},
+	{
+		id: 'mahjong',
+		title: 'MAHJONG',
+		group: 'puzzle',
+		tagline: 'Dvojice nebeských kamenů.',
+		description:
+			'Mahjong solitaire: odebírej dvojice stejných volných kamenů s hvězdami, planetami, kometami a souhvězdími. Želva, Pyramida, Pevnost, Věž a generovaná rozložení, která jdou vždy dohrát.',
+		genres: ['Hlavolam', 'Kameny', 'Mahjong'],
+		features: ['Denní Želva', 'Cesta: 120 rozložení', '4 klasická rozložení', 'Vždy dohratelné'],
+		en: {
+			tagline: 'Pairs of celestial tiles.',
+			description:
+				'Mahjong solitaire: remove pairs of matching free tiles with stars, planets, comets and zodiacs. Turtle, Pyramid, Fortress, Tower and generated layouts that can always be cleared.',
+			genres: ['Puzzle', 'Tiles', 'Mahjong'],
+			features: ['Daily Turtle', 'Path: 120 layouts', '4 classic layouts', 'Always solvable'],
+		},
+		statLabels: labels,
+		path: '/games/mahjong/index.html',
+		colors: ['#ffd166', '#18a37a', '#e0446a'],
+		statsKey: 'gamecenter.stats.mahjong',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ffd166', '#18a37a', '#e0446a'], 10);
+			const tw = Math.min(w, h) * 0.17;
+			const th = tw * 1.34;
+			const d = tw * 0.09;
+			const glyph = ['★', '☾', '●', '☄', '☀', '♌', '★', '●'];
+			const col = [
+				'#2b8cff',
+				'#5b6cff',
+				'#e0446a',
+				'#18a37a',
+				'#ff9a1f',
+				'#b14cff',
+				'#2b8cff',
+				'#e0446a',
+			];
+			const tiles: [number, number, number][] = [
+				[0, 0, 0],
+				[1, 0, 0],
+				[2, 0, 0],
+				[0, 1, 0],
+				[1, 1, 0],
+				[2, 1, 0],
+				[0.5, 0.5, 1],
+				[1.5, 0.5, 1],
+			];
+			tiles.forEach(([x, y, z], i) => {
+				const px = w / 2 - tw * 1.5 + x * tw - z * d;
+				const py = h * 0.14 + y * th - z * d + (i === Math.floor(t) % 8 ? -4 : 0);
+				ctx.fillStyle = '#7d6f55';
+				ctx.beginPath();
+				ctx.roundRect(px + d, py + d, tw, th, tw * 0.14);
+				ctx.fill();
+				ctx.fillStyle = '#fbf6e8';
+				ctx.beginPath();
+				ctx.roundRect(px, py, tw, th, tw * 0.14);
+				ctx.fill();
+				ctx.fillStyle = col[i] ?? '#222';
+				ctx.font = `700 ${tw * 0.55}px sans-serif`;
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(glyph[i] ?? '★', px + tw / 2, py + th / 2);
+			});
+		},
+	},
+	{
+		id: 'skladacka',
+		title: 'SKLÁDAČKA',
+		group: 'puzzle',
+		tagline: 'Jigsaw z vesmírných obrazů.',
+		description:
+			'Skládej generované vesmírné obrazy: mlhoviny, planety s prstenci, galaxie, komety a mimozemské krajiny. Od 24 do 150 dílků, náhled, třídění okrajů a galerie složených obrazů.',
+		genres: ['Relax', 'Skládačka', 'Jigsaw'],
+		features: ['Denní obraz', 'Cesta: 120 obrazů', '24–150 dílků', 'Galerie'],
+		en: {
+			tagline: 'A jigsaw of cosmic paintings.',
+			description:
+				'Assemble generated cosmic paintings: nebulae, ringed planets, galaxies, comets and alien landscapes. From 24 to 150 pieces, with preview, edge sorting and a gallery of finished pictures.',
+			genres: ['Relax', 'Jigsaw', 'Puzzle'],
+			features: ['Daily picture', 'Path: 120 pictures', '24–150 pieces', 'Gallery'],
+		},
+		statLabels: labels,
+		path: '/games/skladacka/index.html',
+		colors: ['#3dd6ff', '#ff8ae0', '#7a2cff'],
+		statsKey: 'gamecenter.stats.skladacka',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#3dd6ff', '#ff8ae0', '#7a2cff'], 11);
+			const s = Math.min(w, h) * 0.2;
+			const x0 = w / 2 - s * 1.5;
+			const y0 = h * 0.12;
+			for (let y = 0; y < 3; y++)
+				for (let x = 0; x < 3; x++) {
+					const gap = x === 2 && y === 1 ? s * 0.25 + Math.sin(t * 1.5) * s * 0.12 : 0;
+					const px = x0 + x * s + gap;
+					const py = y0 + y * s - gap * 0.6;
+					const g = ctx.createLinearGradient(px, py, px + s, py + s);
+					g.addColorStop(0, `hsl(${200 + x * 30 + y * 20} 80% 55%)`);
+					g.addColorStop(1, `hsl(${300 + x * 20} 70% 35%)`);
+					ctx.fillStyle = g;
+					ctx.strokeStyle = 'rgba(255,255,255,.4)';
+					ctx.lineWidth = 2;
+					ctx.beginPath();
+					ctx.rect(px + 2, py + 2, s - 4, s - 4);
+					ctx.fill();
+					ctx.stroke();
+					if (x < 2) {
+						ctx.beginPath();
+						ctx.arc(px + s, py + s / 2, s * 0.14, 0, TAU);
+						ctx.fill();
+					}
+				}
+		},
+	},
 ];

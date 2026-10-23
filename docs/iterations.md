@@ -24,7 +24,10 @@ Auth, CI/CD, release-please) carries on.
 - Puzzle shelf, stage 1: puzzle kit (daily puzzle, streaks, Star Path, weekly quests, themes) with
   Sudoku, Nonograms, Kakuro and Souhvězdí (Hashi).
 - Puzzle shelf, stage 2: Pulsar (falling blocks), Fúze (2048), Miny (no-guess minesweeper),
-  Omalovánky (colour by number). Next: solitaire, mahjong, jigsaw; chess and gomoku.
+  Omalovánky (colour by number).
+- Puzzle shelf, stage 3: Solitaire (Klondike 1/3, FreeCell, Spider; winnable Klondike deals),
+  Mahjong (always solvable layouts), Skládačka (jigsaw of generated cosmic paintings). Next: chess
+  and gomoku.
 - DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
   players see each other, in-game chat.
 

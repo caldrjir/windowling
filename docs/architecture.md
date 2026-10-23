@@ -128,7 +128,8 @@ keep players coming back for weeks:
 
 Generators guarantee a unique solution (Sudoku: digging with a solution counter, graded by a
 logic solver; Nonograms: line solver; Kakuro: combination solver with repair; Souhvězdí: bridge
-solver; Miny: no-guess fields checked by a constraint solver); where uniqueness would need
+solver; Miny: no-guess fields checked by a constraint solver; Solitaire: Klondike deals proven
+winnable by a search; Mahjong: deals built by removing random free pairs in reverse); where uniqueness would need
 guessing, they reveal a cell or line up front. Arcade puzzles (Pulsar, Fúze) end with
 `api.failed({ score })` or `api.solved({ score, stars })`; the kit keeps best scores and lets a
 game pause its timer.
