@@ -5,7 +5,9 @@ const HUB_KEY = 'gamecenter.stats.starspire';
 function defaultSave() {
   return {
     v: 1, achievements: {}, seen: {}, heroWins: {}, eclipse: { knight: 0, mage: 0, rogue: 0 }, run: null,
-    stats: { runs: 0, wins: 0, kills: 0, elites: 0, act1: 0, act2: 0, victories: 0, maxEclipseWin: 0, maxHit: 0, maxCardsTurn: 0, maxPoison: 0,
+    // hvězdný prach a koupená vylepšení Hvězdného atlasu ({ id: úroveň })
+    dust: 0, atlas: {},
+    stats: { runs: 0, wins: 0, kills: 0, elites: 0, act1: 0, act2: 0, act3: 0, victories: 0, bestLoop: 0, dustTotal: 0, maxEclipseWin: 0, maxHit: 0, maxCardsTurn: 0, maxPoison: 0,
       maxBurn: 0, maxBlock: 0, maxStr: 0, maxGold: 0, maxRelics: 0, thinBoss: 0, maxDeck: 0, flawlessBoss: 0, time: 0, bestFloor: 0 },
     settings: { sfx: 0.7, music: 0.45, fast: false },
     lastHero: 'knight',
@@ -17,6 +19,8 @@ function loadSave() {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
     if (s) for (const k of Object.keys(s)) d[k] = d[k] && typeof d[k] === 'object' && !Array.isArray(d[k]) && s[k] ? Object.assign(d[k], s[k]) : s[k];
   } catch (e) { /* poškozený save */ }
+  // Dřív byl Král souhvězdí posledním bossem: kdo vyhrál, ten ho porazil.
+  if (d.stats.victories && !d.stats.act3) d.stats.act3 = 1;
   return d;
 }
 let SAVE = loadSave();
@@ -26,11 +30,20 @@ function persist() {
     localStorage.setItem(HUB_KEY, JSON.stringify({
       playTime: SAVE.stats.time, lastPlayed: Date.now(),
       progress: Object.keys(SAVE.achievements).length / ACHIEVEMENTS.length,
-      stats: { victories: SAVE.stats.victories, best: SAVE.stats.bestFloor, eclipse: SAVE.stats.maxEclipseWin, achievements: `${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}` },
+      stats: { victories: SAVE.stats.victories, best: SAVE.stats.bestFloor, eclipse: SAVE.stats.maxEclipseWin, loop: SAVE.stats.bestLoop, atlas: `${atlasCount(SAVE)} / ${ATLAS_MAX}`, achievements: `${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}` },
     }));
   } catch (e) { /* bez úložiště */ }
 }
 const heroUnlocked = id => !HEROES[id].unlock || !!SAVE.achievements[HEROES[id].unlock];
+const perk = id => SAVE.atlas[id] || 0;
+const omen = id => !!(R && R.omens && R.omens.includes(id));
+// patro od začátku výstupu (13 na akt: 12 řad mapy + boss), přes všechny okruhy
+const floorOf = r => ((r.loop || 0) * ACTS.length + r.act) * 13 + Math.max(0, Math.min(r.row + 1, 13));
+// hvězdný prach za výstup
+function dustFor(r, victory) {
+  const base = floorOf(r) + r.stats.elites * 4 + r.stats.bosses * 12 + (victory || r.won ? 40 : 0);
+  return Math.round(base * (1 + 0.1 * r.eclipse) * (1 + 0.1 * perk('dust')));
+}
 
 // ── Události pro UI a čekání ────────────────────────────────────────────────
 const Bus = { fns: [], on(f) { this.fns.push(f); }, emit(t, d) { for (const f of this.fns) f(t, d || {}); } };
@@ -56,18 +69,26 @@ const Run = {
     R = {
       hero, eclipse, maxHp: H.hp, hp: H.hp, gold: H.gold, deck: [], relics: [], counters: {}, potions: [null, null, null],
       act: 0, row: -1, col: -1, map: null, removeCost: 75, rarityOffset: -5, potionChance: 40, time: 0,
-      stats: { kills: 0, floors: 0, dmg: 0, elites: 0, bosses: 0 }, node: null, over: false,
+      stats: { kills: 0, floors: 0, dmg: 0, elites: 0, bosses: 0 }, node: null, over: false, loop: 0, won: false, omens: [],
     };
+    // Hvězdný atlas
+    R.maxHp += perk('vit') * 5; R.hp = R.maxHp;
+    R.gold += perk('gold') * 20;
+    R.removeCost -= perk('purge') * 25;
+    if (perk('belt')) R.potions.push(null);
     if (eclipse >= 6) R.hp = Math.round(R.hp * 0.9);
     for (const id of H.deck) Run.addCard(id, false, true);
     if (eclipse >= 10) Run.addCard('wound', false, true);
     Run.addRelic(H.relic, true);
+    for (let i = 0; i < perk('potion'); i++) Run.addPotion(pick(Object.keys(POTIONS)));
+    Run.upgradeRandom(perk('forge'));
+    if (perk('relic')) { const id = Run.rollRelic('common'); if (id) Run.addRelic(id, true); }
     R.map = Run.genMap(0);
     SAVE.lastHero = hero;
     Run.save();
   },
   save() { SAVE.run = R; persist(); },
-  resume() { R = SAVE.run; return R; },
+  resume() { R = SAVE.run; if (R) { R.loop = R.loop || 0; R.omens = R.omens || []; } return R; },
   clear() { SAVE.run = null; R = null; persist(); },
 
   addCard(id, up = false, silent = false) {
@@ -116,6 +137,7 @@ const Run = {
     let g = n;
     if (Run.has('goldenIdol')) g = Math.round(g * 1.25);
     if (R.eclipse >= 9) g = Math.round(g * 0.8);
+    if (omen('gold')) g = Math.round(g * 1.5);
     R.gold += g;
     bump('maxGold', R.gold);
   },
@@ -134,7 +156,7 @@ const Run = {
   rollRarity(kind) {
     if (kind === 'boss') return 'rare';
     const r = Math.random() * 100 + R.rarityOffset;
-    const rare = kind === 'elite' ? 10 : 3;
+    const rare = (kind === 'elite' ? 10 : 3) + perk('rare') * 2;
     if (r > 100 - rare) { R.rarityOffset = -5; return 'rare'; }
     R.rarityOffset = Math.min(40, R.rarityOffset + 1);
     return r > 63 ? 'uncommon' : 'common';
@@ -146,7 +168,8 @@ const Run = {
       const id = Run.randomCard(Run.rollRarity(kind));
       if (!out.includes(id)) out.push(id);
     }
-    return out.map(id => ({ id, up: R.act >= 1 && Math.random() < 0.08 * R.act }));
+    const depth = R.act + (R.loop || 0) * ACTS.length;
+    return out.map(id => ({ id, up: omen('bounty') || (depth >= 1 && Math.random() < Math.min(0.6, 0.08 * depth)) }));
   },
 
   // ── Mapa ──
@@ -165,7 +188,7 @@ const Run = {
       B.forEach((n, j) => link(B.length === 1 ? 0 : Math.round(j * (A.length - 1) / (B.length - 1)), j));
       A.forEach((n, i) => { const j = n.next[0]; if (j + 1 < B.length && Math.random() < 0.3) { const ok = A.every((m, k) => k <= i || m.next.every(t => t >= j + 1)); if (ok) link(i, j + 1); } });
     }
-    const eliteW = R.eclipse >= 1 ? 16 : 11;
+    const eliteW = (R.eclipse >= 1 ? 16 : 11) + (omen('comet') ? 6 : 0);
     let battles = 0;
     for (const row of rows) for (const n of row) {
       const r = n.r;
@@ -194,7 +217,7 @@ const Run = {
     node.visited = true;
     R.node = node.type;
     R.stats.floors++;
-    bump('bestFloor', R.act * 13 + R.row + 1);
+    bump('bestFloor', floorOf(R));
     Run.save();
   },
   nextAct() {
@@ -205,21 +228,64 @@ const Run = {
     R.node = null;
     Run.save();
   },
+  isLastAct: () => R.act === ACTS.length - 1,
+  // Vrchol dobyt (poprvé v tomto výstupu): vítězství se započítá hned, výstup může pokračovat.
+  recordVictory() {
+    if (R.won) return;
+    R.won = true;
+    SAVE.stats.victories++;
+    SAVE.heroWins[R.hero] = (SAVE.heroWins[R.hero] || 0) + 1;
+    bump('maxEclipseWin', R.eclipse);
+    SAVE.eclipse[R.hero] = Math.max(SAVE.eclipse[R.hero] || 0, Math.min(MAX_ECLIPSE, R.eclipse + 1));
+    checkAchievements();
+    Run.save();
+  },
+  // Nekonečná věž: další okruh všech aktů se zvoleným znamením
+  omenChoices() { return sample(OMENS.filter(o => !R.omens.includes(o.id)), 3).map(o => o.id); },
+  nextLoop(omenId) {
+    R.loop = (R.loop || 0) + 1;
+    R.act = -1;
+    if (omenId) {
+      R.omens.push(omenId);
+      if (omenId === 'bounty') { R.maxHp = Math.max(1, R.maxHp - 8); R.hp = Math.min(R.hp, R.maxHp); }
+      if (omenId === 'phoenix') R.hp = R.maxHp;
+      if (omenId === 'hoard') { R.gold = 0; Run.giveRandomRelic(); }
+    }
+    Run.nextAct();
+  },
+  // násobitele síly nepřátel v Nekonečné věži
+  loopScale() {
+    const l = R.loop || 0;
+    if (!l) return { hp: 1, dmg: 1 };
+    return { hp: LOOP_TIER.hp[R.act] * (1 + 0.4 * (l - 1)), dmg: LOOP_TIER.dmg[R.act] * (1 + 0.15 * (l - 1)) };
+  },
+  restAmount() {
+    const pct = (R.eclipse >= 5 ? 0.25 : 0.3) + perk('rest') * 0.05 - (omen('aegis') ? 0.1 : 0);
+    return Math.round(R.maxHp * pct);
+  },
   endRun(victory) {
     SAVE.stats.runs++;
     SAVE.stats.time += R.time;
-    if (victory) {
-      SAVE.stats.victories++;
-      SAVE.heroWins[R.hero] = (SAVE.heroWins[R.hero] || 0) + 1;
-      bump('maxEclipseWin', R.eclipse);
-      SAVE.eclipse[R.hero] = Math.max(SAVE.eclipse[R.hero] || 0, Math.min(MAX_ECLIPSE, R.eclipse + 1));
-    }
+    if (victory) Run.recordVictory();
     R.over = true;
     const r = R;
+    r.dust = dustFor(r, victory);
+    SAVE.dust = (SAVE.dust || 0) + r.dust;
+    SAVE.stats.dustTotal += r.dust;
     SAVE.run = null;
     checkAchievements();
     persist();
     return r;
+  },
+  // Hvězdný atlas: koupě další úrovně vylepšení
+  buyPerk(id) {
+    const p = ATLAS.find(x => x.id === id), lv = perk(id);
+    if (!p || lv >= p.cost.length || SAVE.dust < p.cost[lv]) return false;
+    SAVE.dust -= p.cost[lv];
+    SAVE.atlas[id] = lv + 1;
+    checkAchievements();
+    persist();
+    return true;
   },
 };
 function weightedKey(w) {
@@ -294,7 +360,13 @@ const Battle = {
     if (Run.has('vajra')) Battle.addStatus(p, 'str', 1);
     if (Run.has('smoothStone')) Battle.addStatus(p, 'dex', 1);
     if (Run.has('bloodVial')) Run.heal(2);
+    if (omen('might')) Battle.addStatus(p, 'str', 2);
+    if (omen('aegis')) p.block += 12;
+    if (omen('thorns')) Battle.addStatus(p, 'thorns', 3);
+    if (omen('thorns')) B.draw.splice((Math.random() * (B.draw.length + 1)) | 0, 0, { id: 'dazed', up: false, uid: UID++ });
     for (const e of B.enemies) {
+      if (omen('fire')) Battle.addStatus(e, 'burn', 5);
+      if (omen('might')) Battle.addStatus(e, 'str', 2);
       if (Run.has('marbles')) Battle.addStatus(e, 'vuln', 1);
       if (Run.has('emberCore')) Battle.addStatus(e, 'burn', 3);
       if (Run.has('philStone')) Battle.addStatus(e, 'str', 1);
@@ -310,6 +382,9 @@ const Battle = {
     if (ecl >= 7) hp = Math.round(hp * 1.08);
     if (d.elite && ecl >= 3) hp = Math.round(hp * 1.1);
     if (d.boss && ecl >= 8) hp = Math.round(hp * 1.1);
+    if (omen('fire')) hp = Math.round(hp * 1.1);
+    if (d.boss && omen('phoenix')) hp = Math.round(hp * 1.15);
+    hp = Math.round(hp * Run.loopScale().hp);
     const e = { id, d, uid: UID++, idx, name: d.name, hp, maxHp: hp, block: 0, s: {}, turn: 0, last: null, move: null, dead: false, phase: 1 };
     if (d.init) d.init(e);
     B.enemies.push(e);
@@ -321,6 +396,7 @@ const Battle = {
     let mult = 1;
     if (!e.d.elite && !e.d.boss && R.eclipse >= 2) mult = 1.1;
     if (e.d.boss && R.eclipse >= 4) mult = 1.12;
+    mult *= Run.loopScale().dmg * (omen('tide') ? 1.1 : 1);
     if (m.dmg) m.dmg = Math.round(m.dmg * mult);
     e.move = m;
   },
@@ -364,8 +440,8 @@ const Battle = {
     Bus.emit('hit', { t: e, amount: a, blocked: absorbed });
     if (attack && a > 0 && B.p.s.envenom) Battle.addStatus(e, 'poison', B.p.s.envenom);
     if (attack && e.s.thorns) Battle.hurtPlayer(e.s.thorns, false, e);
-    if (e.d.boss && e.id === 'king' && e.phase === 1 && e.hp < e.maxHp / 2 && e.hp > 0) {
-      e.phase = 2; e.turn = 0; Battle.addStatus(e, 'artifact', 2); Battle.addStatus(e, 'ritual', 2);
+    if (e.d.phase2 && e.phase === 1 && e.hp < e.maxHp / 2 && e.hp > 0) {
+      e.phase = 2; e.turn = 0; e.d.phase2(e);
       Bus.emit('phase', { t: e });
       Battle.planMove(e);
     }
@@ -430,6 +506,7 @@ const Battle = {
     delete p.s.nextEnergy;
     if (Run.has('iceCream') && B.turn > 1) e += B.energy;
     if (B.turn === 1 && Run.has('lantern')) e += 1;
+    if (B.turn === 1 && omen('comet')) e += 1;
     if (Run.has('happyFlower')) { R.counters.happyFlower = (R.counters.happyFlower || 0) + 1; if (R.counters.happyFlower % 3 === 0) e += 1; }
     if (p.s.astral) e += p.s.astral;
     B.energy = e;
@@ -443,6 +520,7 @@ const Battle = {
     if (B.turn === 1 && Run.has('serpentRing')) n += 2;
     if (B.turn === 1 && Run.has('snakeSkull')) n += 1;
     if (Run.has('starChart')) n += 1;
+    if (omen('tide')) n += 1;
     Battle.drawCards(n);
     if (p.s.blades) Battle.addToHand('shiv', false, p.s.blades);
     B.busy = false;
@@ -628,6 +706,8 @@ const Battle = {
       R.stats.bosses++;
       if (R.act === 0) SAVE.stats.act1 = 1;
       if (R.act === 1) SAVE.stats.act2 = 1;
+      if (R.act === 2) SAVE.stats.act3 = 1;
+      if (Run.isLastAct()) bump('bestLoop', (R.loop || 0) + 1);
       if (R.deck.length <= 10) SAVE.stats.thinBoss = 1;
       if (B.lostHp === 0) SAVE.stats.flawlessBoss = 1;
     }
@@ -642,17 +722,18 @@ function makeRewards(kind) {
   const rw = { gold: 0, cards: null, potion: null, relic: null, bossRelics: null };
   const g = kind === 'boss' ? randi(95, 105) : kind === 'elite' ? randi(25, 35) : randi(10, 20);
   rw.gold = g;
-  rw.cards = Run.rollCards(Run.has('questionCard') ? 4 : 3, kind);
+  rw.cards = Run.rollCards((Run.has('questionCard') ? 4 : 3) + (perk('vision') ? 1 : 0), kind);
   if (!Run.has('sozu') && Math.random() * 100 < R.potionChance) { rw.potion = pick(Object.keys(POTIONS)); R.potionChance = Math.max(10, R.potionChance - 10); }
   else R.potionChance = Math.min(90, R.potionChance + 10);
   if (kind === 'elite') rw.relic = '?';
-  if (kind === 'boss' && R.act < 2) rw.bossRelics = sample(RELIC_LIST.filter(r => r.rarity === 'boss' && !R.relics.includes(r.id)).map(r => r.id), 3);
+  if (kind === 'boss') rw.bossRelics = sample(RELIC_LIST.filter(r => r.rarity === 'boss' && !R.relics.includes(r.id)).map(r => r.id), 3);
   return rw;
 }
 
 // ── Obchod ──────────────────────────────────────────────────────────────────
 function makeShop() {
-  const price = r => ({ common: randi(45, 55), uncommon: randi(68, 82), rare: randi(135, 160) }[r]);
+  const markup = omen('gold') ? 1.25 : 1;
+  const price = r => Math.round(({ common: randi(45, 55), uncommon: randi(68, 82), rare: randi(135, 160) }[r]) * markup);
   const cards = [];
   for (const r of ['common', 'common', 'uncommon', 'uncommon', 'rare']) {
     let id, guard = 0;
@@ -662,7 +743,7 @@ function makeShop() {
   const sale = pick(cards); sale.price = Math.round(sale.price / 2); sale.sale = true;
   for (const id of sample(CARD_LIST.filter(c => c.cls === 'neutral').map(c => c.id), 2)) cards.push({ id, price: Math.round(price(CARDS[id].rarity) * 1.2), neutral: true });
   const rp = { common: 150, uncommon: 240, rare: 300 };
-  const relics = sample(Run.relicPool(), 3).map(id => ({ id, price: rp[RELICS[id].rarity] + randi(-10, 10) }));
-  const potions = sample(Object.keys(POTIONS), 3).map(id => ({ id, price: randi(48, 75) }));
+  const relics = sample(Run.relicPool(), 3).map(id => ({ id, price: Math.round((rp[RELICS[id].rarity] + randi(-10, 10)) * markup) }));
+  const potions = sample(Object.keys(POTIONS), 3).map(id => ({ id, price: Math.round(randi(48, 75) * markup) }));
   return { cards, relics, potions, removed: false };
 }

@@ -334,6 +334,33 @@ kbd { font-family: var(--f-u); border: 1px solid var(--line-2); border-radius: 4
 .toast small { display: block; font-size: 10px; letter-spacing: .25em; color: var(--gold); } .toast b { display: block; font-family: var(--f-d); } .toast span { font-size: 12px; color: var(--muted); }
 @keyframes toastIn { 0% { opacity: 0; transform: translateX(40px); } 8%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 
+/* Nekonečná věž, znamení a Hvězdný atlas */
+.tb-floor .loop { color: #d9b8ff; font-weight: 700; cursor: help; }
+.summit { max-width: 560px; text-align: center; }
+.summit-ico .ico { font-size: 60px; color: var(--gold); filter: drop-shadow(0 0 18px var(--gold)); margin-bottom: 8px; }
+.summit p { line-height: 1.6; margin-bottom: 22px; } .summit p b { color: #d9b8ff; }
+.omens > p { max-width: 640px; margin: -8px auto 18px; text-align: center; line-height: 1.5; }
+.br.omen span { text-align: center; }
+.br.omen .good { color: var(--green); } .br.omen .bad { color: #ff8a9a; }
+.br.omen .good::before { content: '+ '; font-weight: 800; } .br.omen .bad::before { content: '− '; font-weight: 800; }
+.dust-gain { margin-top: 16px; color: #d9b8ff; font-family: var(--f-d); font-size: 20px; }
+.dust-gain .ico { filter: drop-shadow(0 0 8px var(--violet)); }
+.dust-gain small { display: block; font-family: var(--f-u); font-size: 12px; color: var(--muted); letter-spacing: .05em; margin-top: 2px; }
+.atlas-intro { max-width: 760px; color: var(--muted); line-height: 1.6; margin: -4px 0 16px; } .atlas-intro b { color: #d9b8ff; }
+.dust-bank { display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(185,155,255,.45); background: linear-gradient(90deg, rgba(185,155,255,.16), rgba(185,155,255,.03)); margin-bottom: 20px; }
+.dust-bank .ico { font-size: 22px; color: var(--violet); filter: drop-shadow(0 0 8px var(--violet)); }
+.dust-bank b { font-family: var(--f-d); font-size: 24px; color: #fff; } .dust-bank span { color: var(--muted); font-size: 13px; }
+.atlas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding-bottom: 30px; }
+.perk { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); }
+.perk.has { border-color: color-mix(in srgb, var(--pc) 45%, transparent); }
+.perk.max { background: linear-gradient(120deg, color-mix(in srgb, var(--pc) 14%, transparent), var(--panel) 60%); }
+.perk-ico .ico { font-size: 30px; color: var(--pc); filter: drop-shadow(0 0 8px var(--pc)); }
+.perk:not(.has) .perk-ico .ico { opacity: .55; filter: none; }
+.perk-body { flex: 1; min-width: 0; } .perk-body b { display: block; font-family: var(--f-d); } .perk-body span { font-size: 13px; color: var(--muted); }
+.pips { display: flex; gap: 4px; margin-top: 8px; } .pips u { width: 18px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); } .pips u.on { background: var(--pc); box-shadow: 0 0 6px var(--pc); }
+.perk .btn { padding: 8px 12px; white-space: nowrap; } .perk .btn:disabled { opacity: .45; cursor: not-allowed; }
+.perk-max { font-style: normal; color: var(--pc); font-weight: 700; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+
 @media (max-width: 900px) {
   .menu { grid-template-columns: 1fr; overflow-y: auto; }
   .hero-cards { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }

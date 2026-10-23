@@ -99,6 +99,59 @@ test('launches STARSPIRE from the center and plays a card', async ({ page, isMob
 	expect(errors).toEqual([]);
 });
 
+test('STARSPIRE: Star Atlas, the Act IV summit and the Endless Spire', async ({
+	page,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	const tap = (selector: string) =>
+		isMobile
+			? page.locator(selector).first().tap({ force: true })
+			: page.locator(selector).first().click({ force: true });
+	await page.goto('/games/starspire/index.html');
+	await page.evaluate('SAVE.dust = 100; persist()');
+	await page.locator('#s-title').click();
+
+	// Stardust buys permanent upgrades.
+	await tap('[data-go="atlas"]');
+	await tap('[data-perk="vit"]');
+	await expect(page.locator('.dust-bank b')).toHaveText('60');
+	await tap('[data-go="menu"]');
+	await tap('[data-go="heroes"]');
+	await tap('[data-act="startRun"]');
+	expect(await page.evaluate('R.maxHp')).toBe(85);
+
+	// Straight to the boss of the fourth act.
+	await page.evaluate(
+		'R.act = 3; R.map = Run.genMap(3); R.row = 11; R.col = 0; Run.save(); UI.go("menu")',
+	);
+	await tap('[data-act="continue"]');
+	await expect(page.locator('.map-head p')).toContainText('4 / 4');
+	await tap('.node.boss');
+	await expect(page.locator('.enemy')).toHaveCount(1);
+	await page.evaluate(
+		'B.enemies[0].block = 0; Battle.hitEnemy(B.enemies[0], 99999); Battle.finish()',
+	);
+	await tap('[data-act="rwDone"]');
+	if (await page.locator('[data-act="skipBossRelic"]').count())
+		await tap('[data-act="skipBossRelic"]');
+
+	// The summit counts as a victory; the climb goes on into the Endless Spire.
+	await expect(page.locator('.summit')).toBeVisible();
+	expect(await page.evaluate('SAVE.stats.victories')).toBe(1);
+	await tap('[data-act="summitGo"]');
+	await tap('[data-omen]');
+	expect(await page.evaluate('[R.loop, R.act, R.omens.length]')).toEqual([1, 0, 1]);
+	await expect(page.locator('.tb-floor')).toContainText('52');
+
+	await tap('[data-act="pause"]');
+	await tap('[data-act="abandon"]');
+	await expect(page.locator('.dust-gain')).toContainText('+');
+	expect(await page.evaluate('SAVE.dust')).toBeGreaterThan(60);
+	expect(errors).toEqual([]);
+});
+
 test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
 	test.skip(!isMobile, 'touch controls are for phones');
 	const errors: string[] = [];
