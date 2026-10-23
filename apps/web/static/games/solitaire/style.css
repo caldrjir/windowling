@@ -13,7 +13,7 @@
     radial-gradient(1.5px 1.5px at 44% 72%, rgba(255, 255, 255, .35), transparent), radial-gradient(1px 1px at 88% 64%, rgba(255, 255, 255, .45), transparent),
     radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--c) 32%, transparent), transparent 70%),
     radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--a) 14%, transparent), transparent 60%),
-    linear-gradient(180deg, #120c35, #07051a);
+    linear-gradient(180deg, #221a58, #140f3a);
   box-shadow: inset 0 0 0 1px rgba(232, 197, 116, .28), inset 0 0 60px rgba(0, 0, 0, .55), 0 30px 60px -30px rgba(0, 0, 0, .8); }
 .sl-table.auto { box-shadow: inset 0 0 0 1px rgba(232, 197, 116, .6), inset 0 0 60px rgba(0, 0, 0, .55), 0 0 40px -10px rgba(232, 197, 116, .45); }
 .sl-slot { position: absolute; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .1); display: grid; place-items: center;
@@ -26,9 +26,9 @@
 
 /* karty */
 .sl-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); border-radius: calc(var(--cw) * .09); cursor: pointer; overflow: hidden;
-  transition: transform .2s cubic-bezier(.25, .8, .3, 1), box-shadow .15s; background: #1a1050;
+  transition: transform .2s cubic-bezier(.25, .8, .3, 1), box-shadow .15s; background: #2a1d6a;
   box-shadow: 0 1px 0 rgba(255, 255, 255, .08), 0 4px 10px -4px rgba(0, 0, 0, .8); }
-.sl-card.up { background: linear-gradient(165deg, #ffffff 0%, #f7f4ff 55%, #ece6fb 100%); box-shadow: inset 0 0 0 1px rgba(40, 30, 90, .14), 0 4px 10px -4px rgba(0, 0, 0, .75); }
+.sl-card.up { background: linear-gradient(165deg, #e6e0d6 0%, #dcd5ca 55%, #cec6ba 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35), inset 0 0 0 2px rgba(60, 45, 30, .08), 0 4px 10px -4px rgba(0, 0, 0, .6); }
 .sl-f { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .sl-rk { font-family: var(--f-d); font-weight: 900; font-size: 21px; letter-spacing: -1.5px; }
 .sl-fc { font-family: var(--f-d); font-weight: 900; font-size: 34px; }
@@ -36,7 +36,7 @@
 .sl-table.small .sl-pips { display: none; }
 .sl-table.small .sl-big { display: inline; }
 .sl-table.small .sl-rk { font-size: 25px; }
-@media (hover: hover) { .sl-card.up:hover { box-shadow: inset 0 0 0 1px rgba(40, 30, 90, .14), 0 0 0 1.5px color-mix(in srgb, var(--a) 70%, transparent), 0 8px 16px -6px rgba(0, 0, 0, .8); } }
+@media (hover: hover) { .sl-card.up:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35), 0 0 0 1.5px color-mix(in srgb, var(--a) 70%, transparent), 0 8px 16px -6px rgba(0, 0, 0, .8); } }
 .sl-card.turn .sl-f { animation: slTurn .32s ease; }
 @keyframes slTurn { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
 .sl-card.drag { transition: none; box-shadow: inset 0 0 0 1px rgba(40, 30, 90, .14), 0 22px 36px -12px rgba(0, 0, 0, .9); }
