@@ -27,9 +27,9 @@ follow the player; later, some games are played together (multiplayer).
 
 **Puzzles** (a second shelf, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
 (Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and
-Omalovánky (colour by number), Solitaire (Klondike, FreeCell, Spider), Mahjong and Skládačka
-(jigsaw). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
-achievements; weekly quests and themes are shared by all puzzles. Chess and gomoku are planned next.
+Omalovánky (colour by number), Solitaire (Klondike, FreeCell, Spider), Mahjong, Skládačka
+(jigsaw), Šachy (chess) and Piškvorky (gomoku). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
+achievements; weekly quests and themes are shared by all puzzles.
 
 ## What the hub shows
 

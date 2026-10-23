@@ -1,0 +1,35 @@
+/* ŠACHY – šachovnice */
+.ch-wrap { display: grid; grid-template-columns: 240px auto; gap: 18px; align-items: start; justify-content: center; }
+.ch-wrap .k-tools { grid-column: 1 / -1; }
+.ch-side { display: grid; gap: 10px; }
+.ch-status { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.ch-status b { font-family: var(--f-d); font-size: 15px; }
+.ch-status span { color: var(--muted); font-size: 13px; }
+.ch-moves { max-height: 360px; overflow: auto; display: grid; grid-template-columns: 30px 1fr 1fr; gap: 2px 8px; padding: 10px 12px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; font-variant-numeric: tabular-nums; align-content: start; }
+.ch-moves i { color: var(--dim); font-style: normal; }
+.ch-board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 3px color-mix(in srgb, var(--a) 50%, transparent), 0 24px 60px -24px var(--a); touch-action: none; user-select: none; -webkit-user-select: none; }
+.ch-sq { position: relative; display: grid; place-items: center; padding: 0; }
+.ch-sq.l { background: #c9c2f0; }
+.ch-sq.d { background: #6d5fb5; }
+.ch-sq[data-rank]::before { content: attr(data-rank); position: absolute; left: 3px; top: 2px; font-size: 10px; font-weight: 700; color: rgba(20,12,60,.55); }
+.ch-sq[data-file]::after { content: attr(data-file); position: absolute; right: 3px; bottom: 1px; font-size: 10px; font-weight: 700; color: rgba(20,12,60,.55); }
+.ch-sq.last { box-shadow: inset 0 0 0 100px rgba(255, 220, 90, .32); }
+.ch-sq.sel { box-shadow: inset 0 0 0 100px color-mix(in srgb, var(--a) 45%, transparent); }
+.ch-sq.chk { background: radial-gradient(circle, #ff5a7a 0%, rgba(255,90,122,.4) 55%, transparent 75%), #6d5fb5; }
+.ch-sq.dot::after { content: ''; position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(20,12,60,.35); right: auto; bottom: auto; }
+.ch-sq.cap::after { content: ''; position: absolute; inset: 4%; border-radius: 50%; box-shadow: inset 0 0 0 4px rgba(20,12,60,.38); right: auto; bottom: auto; }
+.ch-sq.hint { box-shadow: inset 0 0 0 100px rgba(109,255,158,.45); }
+.pc { width: 88%; height: 88%; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+.pc path, .pc circle { stroke-width: 1.5; stroke-linejoin: round; }
+.pc.w path, .pc.w circle { fill: #fbf9ff; stroke: #1b1440; }
+.pc.b path, .pc.b circle { fill: #241a4d; stroke: #e6e0ff; }
+.pc .eye { fill: currentColor; }
+.pc.w .eye { fill: #1b1440; } .pc.b .eye { fill: #e6e0ff; }
+.pc .cut, .pc .cross { fill: none !important; stroke-width: 2.2; stroke-linecap: round; }
+.ch-art { display: grid; grid-template-columns: repeat(8, 1fr); width: min(100%, 250px); aspect-ratio: 1; border-radius: 10px; overflow: hidden; box-shadow: 0 0 40px -10px var(--a); }
+@media (max-width: 860px) {
+  .ch-wrap { grid-template-columns: 1fr; justify-items: center; gap: 10px; }
+  .ch-side { grid-row: 2; width: 100%; max-width: 560px; grid-template-columns: 1fr 1fr; }
+  .ch-moves { max-height: 70px; }
+  .ch-board { grid-row: 1; }
+}
