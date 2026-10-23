@@ -8,9 +8,9 @@ const Pulsar = (() => {
   const W = 10, H = 22, VIS = 20;
   const DIFFS = [
     { id: 'marathon', name: L('Maraton', 'Marathon'), note: L('150 řad, rychlost roste', '150 lines, speeding up'), metric: 'score' },
-    { id: 'sprint', name: L('Sprint 40', 'Sprint 40'), note: L('40 řad na čas', '40 lines against the clock'), par: 120 },
+    { id: 'sprint', name: L('Sprint 40', 'Sprint 40'), note: L('40 řad na čas', '40 lines against the clock'), par: 120, ranked: true },
     { id: 'ultra', name: L('Ultra 2:00', 'Ultra 2:00'), note: L('nejvíc bodů za 2 minuty', 'most points in 2 minutes'), metric: 'score' },
-    { id: 'dig', name: L('Kopání', 'Dig'), note: L('prokopej 10 řad odpadu', 'dig out 10 garbage rows'), par: 150 },
+    { id: 'dig', name: L('Kopání', 'Dig'), note: L('prokopej 10 řad odpadu', 'dig out 10 garbage rows'), par: 150, ranked: true },
   ];
   // Dílky (SRS) a barvy
   const SHAPES = {

@@ -88,6 +88,68 @@
 	}
 	const stats = $derived(game ? saved[game.id] : null);
 
+	// --- Leaderboards (/api/scores): the selected game's record board or play time ----------
+	interface Board {
+		entries: { rank: number; nickname: string; value: number; me: boolean }[];
+		me: { rank: number; value: number } | null;
+		total: number;
+		signedIn: boolean;
+	}
+	let lbTab = $state<'record' | 'played'>('record');
+	let lb = $state<Board | null>(null);
+	const today = () => {
+		const d = new Date();
+		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	};
+	const recordOf = (g: Game) =>
+		g.record ??
+		(groupOf(g) === 'puzzle'
+			? {
+					board: `daily:${today()}:time`,
+					label: ['Dnešní výzva', "Today's puzzle"] as [string, string],
+				}
+			: null);
+	function fmtScore(board: string, v: number): string {
+		const unit = board.split(':').pop();
+		if (unit === 'time') {
+			const s = v / 1000;
+			return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}.${Math.floor((s * 10) % 10)}`;
+		}
+		if (unit === 'survive') {
+			const s = Math.floor(v / 1000);
+			return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+		}
+		if (unit === 'played') return fmtDur(v);
+		if (unit === 'days') return L(`${v} dní`, `${v} days`);
+		if (unit === 'floor') return L(`${v}. patro`, `floor ${v}`);
+		return v.toLocaleString(locale);
+	}
+	const lbBoard = $derived.by(() => {
+		if (!game) return null;
+		const rec = recordOf(game);
+		return lbTab === 'record' && rec ? rec.board : 'total:played';
+	});
+	let lbTimer = 0;
+	$effect(() => {
+		const g = game;
+		const board = lbBoard;
+		if (!g || !board) return;
+		clearTimeout(lbTimer);
+		lbTimer = window.setTimeout(async () => {
+			try {
+				const res = await fetch(
+					`/api/scores?game=${g.id}&board=${encodeURIComponent(board)}&limit=5`,
+					{
+						cache: 'no-store',
+					},
+				);
+				if (res.ok && game === g && lbBoard === board) lb = (await res.json()) as Board;
+			} catch {
+				// offline: keep the last board
+			}
+		}, 250);
+	});
+
 	function readStats(g: Game): Stats | null {
 		try {
 			return JSON.parse(localStorage.getItem(g.statsKey) ?? 'null') as Stats | null;
@@ -578,6 +640,54 @@
 						{#each lines as [k, v] (k)}<div class="stat"><small>{k}</small><b>{v}</b></div>{/each}
 					</div>
 				{/if}
+				<div class="lb" data-testid="leaderboard">
+					<div class="lb-head">
+						<svg viewBox="0 0 24 24"
+							><path
+								d="M3 20h18M9 20V9h6v11M3 20v-6h6M15 20v-4h6v4"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linejoin="round"
+							/></svg
+						>
+						<span>{L('Žebříček', 'Leaderboard')}</span>
+						{#if recordOf(game)}
+							{@const rec = recordOf(game)}
+							<button class:on={lbTab === 'record'} onclick={() => (lbTab = 'record')}
+								>{rec ? L(rec.label[0], rec.label[1]) : ''}</button
+							>
+						{/if}
+						<button
+							class:on={lbTab === 'played' || !recordOf(game)}
+							onclick={() => (lbTab = 'played')}>{L('Nejvíc nahráno', 'Most played')}</button
+						>
+					</div>
+					{#if lb && lb.entries.length}
+						<ol>
+							{#each lb.entries as e (e.rank + e.nickname)}
+								<li class:me={e.me}>
+									<i>{e.rank}.</i><b>{e.nickname}</b><span>{fmtScore(lbBoard ?? '', e.value)}</span>
+								</li>
+							{/each}
+						</ol>
+						{#if lb.me && !lb.entries.some((e) => e.me)}
+							<p class="lb-me">
+								{L('Tvé místo', 'Your place')}: {lb.me.rank}. · {fmtScore(
+									lbBoard ?? '',
+									lb.me.value,
+								)}
+							</p>
+						{/if}
+					{:else}
+						<p class="lb-empty">{L('Zatím tu nikdo není.', 'Nobody here yet.')}</p>
+					{/if}
+					{#if lb && !lb.signedIn}
+						<p class="lb-empty">
+							{L('Přihlas se a soupeř s ostatními.', 'Sign in to compete with others.')}
+						</p>
+					{/if}
+				</div>
 				{#if stats?.progress !== undefined}
 					{@const pct = Math.round(stats.progress * 100)}
 					<div class="prog">

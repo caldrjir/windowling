@@ -41,7 +41,9 @@ Auth, CI/CD, release-please) carries on.
   follows the player to other devices; the first sign-in on a device merges its local progress
   per game (more play time wins).
 - Done: nickname chosen after the first sign-in, used by online puzzles and DRIFTWOOD.
-- Next: account-wide stats and leaderboards from the stored progress.
+- Done: leaderboards for signed-in players on comparable boards (daily puzzle, Path level,
+  fixed-rule free modes, online wins, action-game records) and play time per game.
+- Next: account-wide stats.
 
 ## Later
 

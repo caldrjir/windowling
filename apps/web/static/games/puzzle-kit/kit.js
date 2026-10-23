@@ -55,7 +55,7 @@ const Kit = (() => {
     erase: '<path d="M20 20H9L4 15l10-10 7 7-6 6"/>', pencil: '<path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', home: '<path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/>',
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.6a3.5 3.5 0 010 6.8M18 14.3c2.2.7 3.5 2.8 3.5 5.7"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
     dot: '<circle cx="12" cy="12" r="5" fill="currentColor"/>', link: '<path d="M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>',
-    crown: '<path d="M3 18h18M4 15L3 6l5 4 4-6 4 6 5-4-1 9z"/>', chat: '<path d="M4 5h16v11H9l-5 4z"/>', send: '<path d="M4 12l16-8-6 16-2-7z"/>',
+    crown: '<path d="M3 18h18M4 15L3 6l5 4 4-6 4 6 5-4-1 9z"/>', podium: '<path d="M3 20h18M9 20V9h6v11M3 20v-6h6M15 20v-4h6v4"/><path d="M12 3.5l.9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z"/>', chat: '<path d="M4 5h16v11H9l-5 4z"/>', send: '<path d="M4 12l16-8-6 16-2-7z"/>',
   };
   const icon = (n, cls = '') => `<svg class="ki ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n] || ''}</svg>`;
 
@@ -163,8 +163,27 @@ const Kit = (() => {
   function loadSave() {
     const s = Object.assign({ v: 1, stats: {}, daily: {}, streak: { cur: 0, best: 0, last: null }, levels: {}, cur: null, ach: {}, time: 0, xp: 0, settings: {}, data: {} }, read(SAVE_KEY(), {}));
     s.stats = Object.assign({ solved: 0, perfect: 0, hints: 0, mistakes: 0, by: {} }, s.stats);
+    // Žebříčky: nejlepší výsledek na každé desce (static/games/sync.js ho pošle do účtu).
+    // Porovnávají se jen stejná zadání: denní výzva, úroveň Cesty, volná hra se stejnými pravidly.
+    if (!s.lb) {
+      s.lb = {};
+      for (const [k, d] of Object.entries(s.daily)) if (d && d.time) s.lb[`daily:${k}:time`] = Math.round(d.time * 1000);
+      for (const d of DEF.diffs) {
+        const by = s.stats.by[d.id]; if (!by) continue;
+        if (d.metric === 'score' && by.bestScore) s.lb[`free:${d.id}:score`] = by.bestScore;
+        else if (d.ranked && by.best) s.lb[`free:${d.id}:time`] = Math.round(by.best * 1000);
+      }
+    }
     return s;
   }
+  // Uloží výsledek, když je lepší (čas nižší, ostatní vyšší).
+  function lbSet(board, value) {
+    value = Math.round(value); if (!(value > 0)) return;
+    const old = SAVE.lb[board], lower = board.endsWith(':time');
+    if (old == null || (lower ? value < old : value > old)) SAVE.lb[board] = value;
+  }
+  // Desky, na kterých se dá soutěžit ve volné hře: skóre, nebo stejná pravidla (ranked).
+  const rankedFree = d => d.metric === 'score' || d.ranked;
   function persist() {
     write(SAVE_KEY(), SAVE);
     const levelsDone = Object.keys(SAVE.levels).length;
@@ -346,6 +365,7 @@ const Kit = (() => {
         </div>
         <nav class="k-links">
           <button data-k="ach">${icon('trophy')}<span>${L('Úspěchy', 'Achievements')}</span><small>${Object.keys(SAVE.ach).length}/${allAchievements().length}</small></button>
+          <button data-k="lb">${icon('podium')}<span>${L('Žebříčky', 'Leaderboards')}</span></button>
           <button data-k="stats">${icon('chart')}<span>${L('Statistiky', 'Statistics')}</span></button>
           <button data-k="themes">${icon('brush')}<span>${L('Vzhled', 'Themes')}</span><small>${META.owned.length}/${THEMES.length}</small></button>
           <button data-k="help">${icon('help')}<span>${L('Jak hrát', 'How to play')}</span></button>
@@ -368,6 +388,7 @@ const Kit = (() => {
       else if (k === 'calendar') calendar();
       else if (k === 'ach') achView();
       else if (k === 'stats') statsView();
+      else if (k === 'lb') lbView();
       else if (k === 'themes') themesView();
       else if (k === 'help') helpView();
       else if (k === 'archive') start('daily', b.dataset.day);
@@ -428,6 +449,66 @@ const Kit = (() => {
       return `<div class="${got ? 'got' : ''}">${icon(got ? 'trophy' : 'lock')}<div><b>${a.name}</b><span>${a.desc}</span><i><u style="width:${Math.min(100, (v / m) * 100)}%"></u></i></div></div>`;
     }).join('')}</div></div>`;
   }
+  // ── Žebříčky: jen stejná zadání (denní výzva, úroveň Cesty, volná hra se stejnými pravidly) ──
+  const fmtMs = ms => { const s = ms / 1000; return s < 600 ? `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}.${Math.floor((s * 10) % 10)}` : fmtTime(s); };
+  function fmtBoard(board, v) {
+    const unit = board.split(':').pop();
+    if (unit === 'time') return fmtMs(v);
+    if (unit === 'played') { const h = Math.floor(v / 3600), m = Math.floor((v % 3600) / 60); return h ? `${h} h ${m} min` : `${m} min`; }
+    if (unit === 'wins') return `${fmtNum(v)} ${L('výher', 'wins')}`;
+    return fmtNum(v);
+  }
+  let lbSel = null;
+  function lbView(sel) {
+    const free = DEF.diffs.filter(rankedFree);
+    const lastLevel = Math.max(1, ...Object.keys(SAVE.levels).map(Number));
+    lbSel = sel || lbSel || { kind: 'daily', key: dayKey() };
+    setView('lb', L('Žebříčky', 'Leaderboards'));
+    const tabs = [['daily', L('Denní výzva', 'Daily')], ['level', L('Cesta hvězd', 'Star Path')]];
+    if (free.length) tabs.push(['free', L('Volná hra', 'Free play')]);
+    if (DEF.online) tabs.push(['online', 'Online']);
+    tabs.push(['played', L('Nejvíc nahráno', 'Most played')]);
+    const t = lbSel;
+    if (t.kind === 'level' && !t.key) t.key = lastLevel;
+    if (t.kind === 'free' && !free.some(d => d.id === t.key)) t.key = free[0] && free[0].id;
+    const board = t.kind === 'daily' ? `daily:${t.key}:time` : t.kind === 'level' ? `level:${t.key}:time` : t.kind === 'free' ? `free:${t.key}:${(free.find(d => d.id === t.key) || {}).metric === 'score' ? 'score' : 'time'}` : t.kind === 'online' ? 'online:wins' : 'total:played';
+    const stepper = t.kind === 'daily'
+      ? `<div class="k-cal-h"><button class="k-icon" data-lb="prev">${icon('back')}</button><b>${fromKey(t.key).toLocaleDateString(LANG === 'en' ? 'en-US' : 'cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</b><button class="k-icon flip" data-lb="next" ${t.key >= dayKey() ? 'disabled' : ''}>${icon('back')}</button></div>`
+      : t.kind === 'level' ? `<div class="k-cal-h"><button class="k-icon" data-lb="prev" ${t.key <= 1 ? 'disabled' : ''}>${icon('back')}</button><b>${L(`Úroveň ${t.key}`, `Level ${t.key}`)} · ${diffName(levelDiff(t.key))}</b><button class="k-icon flip" data-lb="next" ${t.key >= LEVELS ? 'disabled' : ''}>${icon('back')}</button></div>`
+      : t.kind === 'free' ? `<div class="k-chips">${free.map(d => `<button class="k-chip ${d.id === t.key ? 'on' : ''}" data-lb-diff="${d.id}">${d.name}</button>`).join('')}</div>` : '';
+    $('#kView').innerHTML = `<div class="k-page k-lb">
+      <h2>${L('Žebříčky', 'Leaderboards')}</h2>
+      <p class="k-muted">${L('Soutěží se jen na stejném zadání: denní výzva a úrovně Cesty jsou pro všechny stejné, ve volné hře se počítají jen režimy se stejnými pravidly.', 'Only identical challenges compete: the daily puzzle and Path levels are the same for everyone; in free play only modes with fixed rules count.')}</p>
+      <div class="k-chips k-tabs">${tabs.map(([k, n]) => `<button class="k-chip ${k === t.kind ? 'on' : ''}" data-lb-tab="${k}">${n}</button>`).join('')}</div>
+      ${stepper}
+      <div class="k-table" id="kLbTable"><div class="k-gen" style="min-height:120px"><i></i></div></div>
+      <p class="k-muted" id="kLbNote"></p></div>`;
+    for (const b of document.querySelectorAll('[data-lb-tab]')) b.onclick = () => { SOUND.ui(); const k = b.dataset.lbTab; lbView({ kind: k, key: k === 'daily' ? dayKey() : k === 'level' ? lastLevel : k === 'free' ? free[0] && free[0].id : null }); };
+    for (const b of document.querySelectorAll('[data-lb-diff]')) b.onclick = () => { SOUND.ui(); lbView({ kind: 'free', key: b.dataset.lbDiff }); };
+    for (const b of document.querySelectorAll('[data-lb]')) b.onclick = () => {
+      SOUND.ui(); const dir = b.dataset.lb === 'next' ? 1 : -1;
+      lbView(t.kind === 'daily' ? { kind: 'daily', key: addDays(t.key, dir) } : { kind: 'level', key: Math.min(LEVELS, Math.max(1, t.key + dir)) });
+    };
+    loadBoard(board);
+  }
+  async function loadBoard(board) {
+    // nejdřív pošli vlastní výsledky, ať je hráč vidět hned
+    try { if (window.GCSync && window.GCSync.state === 'synced') await window.GCSync.sync(); } catch (e) { /* offline */ }
+    let lb;
+    try { const res = await fetch(`/api/scores?game=${DEF.id}&board=${encodeURIComponent(board)}&limit=25`, { cache: 'no-store' }); if (!res.ok) throw new Error(res.status); lb = await res.json(); }
+    catch (e) { if ($('#kLbTable')) $('#kLbTable').innerHTML = `<p class="k-muted" style="padding:14px">${L('Žebříček teď není dostupný.', 'The leaderboard is not available right now.')}</p>`; return; }
+    if (view !== 'lb' || !$('#kLbTable')) return;
+    const row = e => `<tr class="${e.me ? 'me' : ''}"><td>${e.rank}.</td><td>${esc(e.nickname)}</td><td>${fmtBoard(board, e.value)}</td></tr>`;
+    const meRow = lb.me && !lb.entries.some(e => e.me) ? `<tr class="gap"><td colspan="3">…</td></tr>${row({ rank: lb.me.rank, nickname: L('ty', 'you'), value: lb.me.value, me: true })}` : '';
+    $('#kLbTable').innerHTML = lb.entries.length
+      ? `<table><thead><tr><th>#</th><th>${L('Hráč', 'Player')}</th><th>${board.endsWith(':time') ? L('čas', 'time') : board.endsWith(':played') ? L('nahráno', 'played') : L('výsledek', 'result')}</th></tr></thead><tbody>${lb.entries.map(row).join('')}${meRow}</tbody></table>`
+      : `<p class="k-muted" style="padding:14px">${L('Zatím tu nikdo není. Buď první!', 'Nobody here yet. Be the first!')}</p>`;
+    const local = SAVE.lb[board];
+    $('#kLbNote').innerHTML = !lb.signedIn
+      ? L('Přihlas se v herním centru (Google) a tvoje výsledky se tu objeví.', 'Sign in on the game center (Google) and your results show up here.')
+      : `${lb.total} ${L('hráčů', 'players')}${lb.me ? ` · ${L('tvé místo', 'your place')}: ${lb.me.rank}.` : local ? '' : ` · ${L('tady zatím nemáš výsledek', 'no result of yours here yet')}`}`;
+  }
+
   function statsView() {
     setView('stats', L('Statistiky', 'Statistics'));
     const S = SAVE.stats, r = rankOf(SAVE.xp);
@@ -543,7 +624,7 @@ const Kit = (() => {
     let shards = 2 + dr * 2, starGain = 0, streakUp = false, newBest = false;
     if (c.kind === 'daily') {
       const first = !SAVE.daily[c.key];
-      if (first) SAVE.daily[c.key] = { time: Math.round(c.time), mistakes: c.mistakes, hints: c.hints };
+      if (first) { SAVE.daily[c.key] = { time: Math.round(c.time), mistakes: c.mistakes, hints: c.hints }; lbSet(`daily:${c.key}:time`, c.time * 1000); }
       if (c.key === dayKey() && first) {
         const s = SAVE.streak; s.cur = s.last === addDays(c.key, -1) ? s.cur + 1 : 1; s.last = c.key; s.best = Math.max(s.best, s.cur); streakUp = true;
         shards += 10 + Math.min(10, s.cur); xp += 20;
@@ -552,7 +633,9 @@ const Kit = (() => {
     if (c.kind === 'level') {
       const before = SAVE.levels[c.key] || 0;
       if (stars > before) { starGain = stars - before; SAVE.levels[c.key] = stars; shards += starGain * 3; }
+      lbSet(`level:${c.key}:time`, c.time * 1000);
     }
+    if (c.kind === 'free' && rankedFree(d)) lbSet(d.metric === 'score' ? `free:${d.id}:score` : `free:${d.id}:time`, d.metric === 'score' ? extra.score || 0 : c.time * 1000);
     newBest = extra.score != null ? extra.score > oldScore && by.n > 1 : by.best === c.time && by.n > 1;
     SAVE.xp += xp; META.shards += shards;
     const quest = questProgress({ solved: true, game: DEF.id, daily: c.kind === 'daily', diffRank: dr, perfect, stars: starGain });
@@ -574,11 +657,12 @@ const Kit = (() => {
       ${extra.html || ''}
       ${quest.map(q => `<p class="k-q">${icon('quest', 'tiny')} ${L('Úkol splněn', 'Quest complete')}: ${questText(q)} (+${q.reward})</p>`).join('')}
       ${ach.map(a => `<p class="k-q">${icon('trophy', 'tiny')} ${a.name}</p>`).join('')}
-      <div class="k-row">${next}<button class="k-btn ghost" id="kHome">${L('Hotovo', 'Done')}</button></div></div>`);
+      <div class="k-row">${next}${c.kind !== 'free' || rankedFree(d) ? `<button class="k-btn" id="kLb">${icon('podium')} ${L('Žebříček', 'Leaderboard')}</button>` : ''}<button class="k-btn ghost" id="kHome">${L('Hotovo', 'Done')}</button></div></div>`);
     if (ach.length) setTimeout(() => SOUND.star(), 600);
     const close = () => { closeModal(); leavePlay(); };
     $('#kHome').onclick = () => { SOUND.ui(); close(); home(); };
     if ($('#kNextLv')) $('#kNextLv').onclick = () => { SOUND.ui(); close(); start('level', c.key + 1); };
+    if ($('#kLb')) $('#kLb').onclick = () => { SOUND.ui(); close(); lbView(c.kind === 'daily' ? { kind: 'daily', key: c.key } : c.kind === 'level' ? { kind: 'level', key: c.key } : { kind: 'free', key: c.diff }); };
     if ($('#kAgain')) $('#kAgain').onclick = () => { SOUND.ui(); close(); start('free', null, c.diff); };
   }
 
@@ -590,6 +674,7 @@ const Kit = (() => {
     S.games = (S.games || 0) + 1; by.games = (by.games || 0) + 1;
     const old = by.bestScore || 0, sc = extra.score || 0;
     if (extra.score != null && c.kind === 'free') by.bestScore = Math.max(old, sc);
+    if (extra.score != null && c.kind === 'free' && d.metric === 'score') lbSet(`free:${d.id}:score`, sc);
     const xp = Math.min(40, extra.xp != null ? extra.xp : 4); SAVE.xp += xp;
     SAVE.cur = null;
     const ach = checkAch();
@@ -958,7 +1043,7 @@ const Kit = (() => {
     const o = onStats(); o.races++;
     const first = Object.entries(res).filter(([, x]) => x.ok).sort(([, a], [, b]) => a.time - b.time)[0];
     const won = first && first[0] === ON.me && Object.keys(res).length > 1;
-    if (won) { o.raceWins++; SAVE.xp += 25; META.shards += 10; saveMeta(); }
+    if (won) { o.raceWins++; lbSet('online:wins', o.raceWins); SAVE.xp += 25; META.shards += 10; saveMeta(); }
     persist(); shardsUi();
     if (mine.time == null) { timerOn = false; }
     standingsModal(won ? L('Vítězství!', 'You won!') : mine.ok ? L('Závod skončil', 'Race over') : L('Konec závodu', 'Race over'), won ? `+25 XP · +10 ${icon('gem', 'tiny')}` : '');
@@ -971,7 +1056,7 @@ const Kit = (() => {
     timerOn = false;
     const res = r.over.winner === -1 ? 'd' : r.over.winner === ON.seat ? 'w' : 'l';
     if (ON.counted !== r.n && ON.seat != null) {
-      ON.counted = r.n; const o = onStats(); o[res]++;
+      ON.counted = r.n; const o = onStats(); o[res]++; if (res === 'w') lbSet('online:wins', o.w);
       SAVE.xp += { w: 30, d: 15, l: 8 }[res];
       if (res === 'w') { META.shards += 8; saveMeta(); questProgress({ solved: true, game: DEF.id, daily: false, diffRank: 2, perfect: false, stars: 0 }); }
       checkAch(); persist(); shardsUi();

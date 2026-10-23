@@ -89,7 +89,7 @@
         const body = await res.json();
         const server = new Map(body.saves.map(s => [s.key, s]));
         const first = meta.user !== body.user;
-        if (first) { meta.user = body.user; meta.v = {}; }
+        if (first) { meta.user = body.user; meta.v = {}; meta.sc = {}; }
         const serverRead = k => (server.has(k) ? server.get(k).data : null);
         const localRead = k => get.call(ls, k);
         const applied = [], out = [], now = Date.now();
@@ -113,6 +113,7 @@
         for (const e of out) meta.t[e.key] = e.t;
         settle(applied);
         await push(out.filter(fits));
+        await pushScores().catch(() => {});
         state = 'synced'; lastSync = Date.now(); meta.last = lastSync; saveMeta();
         const result = { state, applied, pushed: out.length, user: body.user };
         emit(result);
@@ -124,6 +125,46 @@
       } finally { running = null; }
     })();
     return running;
+  }
+
+  // ── Leaderboards: the best results this device knows, sent when they changed ──
+  // The same rule as BOARD_RE in apps/web/src/lib/cloud.ts.
+  const BOARD = /^(daily:\d{4}-\d{2}-\d{2}|level:\d{1,3}|free:[a-z0-9]{1,16}|best|online|total):(time|score|survive|floor|days|wins|played)$/;
+  // Action games keep their records in their own saves.
+  const RECORDS = {
+    voidborn: s => ({ 'best:survive': Math.round((s.stats && s.stats.bestTime || 0) * 1000) }),
+    starspire: s => ({ 'best:floor': s.stats && s.stats.bestFloor }),
+    driftwood: s => ({ 'best:days': s.stats && s.stats.bestDays }),
+  };
+  function collectScores() {
+    const out = [];
+    const add = (game, board, value) => { value = Math.round(+value || 0); if (value > 0 && value < 1e10 && BOARD.test(board)) out.push({ game, board, value }); };
+    for (const key of localKeys()) {
+      let o; try { o = JSON.parse(get.call(ls, key)); } catch (e) { continue; }
+      if (!o || typeof o !== 'object') continue;
+      const save = /^([a-z0-9-]+)\.save\.v1$/.exec(key), stats = /^gamecenter\.stats\.([a-z0-9-]+)$/.exec(key);
+      if (save) {
+        const game = save[1];
+        // puzzle kit: o.lb holds the best result per board
+        if (o.lb) for (const [board, value] of Object.entries(o.lb)) add(game, board, value);
+        if (RECORDS[game]) for (const [board, value] of Object.entries(RECORDS[game](o))) add(game, board, value);
+      }
+      // play time of every game (whole minutes count)
+      if (stats && o.playTime >= 60) add(stats[1], 'total:played', o.playTime);
+    }
+    return out;
+  }
+  async function pushScores() {
+    meta.sc = meta.sc || {};
+    // Only what changed since it was last sent (the account keeps each player's best anyway).
+    const out = collectScores().filter(e => meta.sc[`${e.game}/${e.board}`] !== e.value);
+    for (let i = 0; i < out.length; i += 100) {
+      const batch = out.slice(i, i + 100);
+      const res = await fetch('/api/scores', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scores: batch }) });
+      if (!res.ok) return;
+      for (const e of batch) meta.sc[`${e.game}/${e.board}`] = e.value;
+    }
+    if (out.length) saveMeta();
   }
 
   /** Sends what changed here since the last sync (tab hidden or closing). */

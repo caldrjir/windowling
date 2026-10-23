@@ -13,3 +13,11 @@ export function cleanNickname(value: unknown): string | null {
 	const nick = value.normalize('NFC').replace(/\s+/g, ' ').trim();
 	return NICK_RE.test(nick) ? nick : null;
 }
+
+/**
+ * Leaderboard boards: `<scope>:<unit>`. Only comparable results share a board: the same daily
+ * puzzle, the same Path level, a free-play mode with fixed rules, a game's all-time best, or
+ * play time. The same rule is used by static/games/sync.js and the puzzle kit.
+ */
+export const BOARD_RE =
+	/^(daily:\d{4}-\d{2}-\d{2}|level:\d{1,3}|free:[a-z0-9]{1,16}|best|online|total):(time|score|survive|floor|days|wins|played)$/;
