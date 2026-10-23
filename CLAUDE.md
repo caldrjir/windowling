@@ -24,7 +24,8 @@ Its history is in git and `CHANGELOG.md`.)
    Never rename these keys or a game's own save key (`voidborn.save.v1`, `starspire.save.v1`, `driftwood.save.v1`).
 4. **Secrets never reach the browser.** DB credentials and OAuth secrets live only in
    `$lib/server` and Worker env. Anything a game needs from the DB goes through a server route.
-5. **Signing in is optional.** Everything works anonymously; Google sign-in adds an account.
+5. **Signing in is optional.** Everything works anonymously; Google sign-in adds an account,
+   a nickname and cloud saves (the games' localStorage keys, synced by `static/games/sync.js`).
 
 ## Engineering principles
 
@@ -61,7 +62,9 @@ docker/                        Local infrastructure (Postgres init scripts)
 
 1. Put the game in `apps/web/static/games/<id>/` (it may link back with `../../index.html`,
    which redirects to `/`).
-   Load `<script src="../presence.js"></script>` so the hub can count its players.
+   Load `<script src="../presence.js"></script>` so the hub can count its players, and
+   `<script src="../sync.js"></script>` as the first script in `<head>` (cloud saves). Save to
+   `<id>.save.v1` / `gamecenter.stats.<id>` so the progress follows a signed-in player.
 2. Add an entry to `GAMES` in `apps/web/src/lib/games/registry.ts` (texts in cs + en, `path`,
    `statsKey`, cover colours).
 3. Make it playable on phones (touch input, small screens) - or, for mouse + keyboard games,

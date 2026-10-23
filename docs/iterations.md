@@ -37,9 +37,11 @@ Auth, CI/CD, release-please) carries on.
 
 ## Game Center 2 – Accounts & Cloud Saves
 
-- Table for per-user game stats/saves; server routes `GET/PUT /api/games/<id>/save`.
-- On first sign-in, import the browser's local stats and saves.
-- Hub shows account-wide stats when signed in.
+- Done: every game's progress is kept in the account (`/api/sync`, `static/games/sync.js`) and
+  follows the player to other devices; the first sign-in on a device merges its local progress
+  per game (more play time wins).
+- Done: nickname chosen after the first sign-in, used by online puzzles and DRIFTWOOD.
+- Next: account-wide stats and leaderboards from the stored progress.
 
 ## Later
 
