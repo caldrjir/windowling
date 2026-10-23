@@ -105,11 +105,14 @@ const UI = (() => {
       <div class="tb-potions">${R.potions.map((p, i) => potionHTML(p, i)).join('')}</div>
       <div class="tb-relics">${R.relics.map(r => relicHTML(r)).join('')}</div>
       <div class="spacer"></div>
-      <div class="tb-floor">${L('Akt', 'Act')} ${R.act + 1} · ${L('Patro', 'Floor')} ${Math.max(0, R.row + 1)}${R.eclipse ? ` · ${icon('moon')} ${R.eclipse}` : ''}</div>
+      <div class="tb-floor">${R.loop ? `<span class="loop" data-tip-title="${L('Nekonečná věž', 'Endless Spire')}" data-tip="${omenTip()}">${icon('spiral')} ${R.loop}</span> · ` : ''}${L('Akt', 'Act')} ${R.act + 1} · ${L('Patro', 'Floor')} ${floorOf(R)}${R.eclipse ? ` · ${icon('moon')} ${R.eclipse}` : ''}</div>
       <button class="tb-btn" data-act="deck" data-tip="${L('Balíček', 'Deck')}">${icon('cards')}<b>${R.deck.length}</b></button>
       <button class="tb-btn" data-act="map" data-tip="${L('Mapa', 'Map')}">${icon('map')}</button>
       <button class="tb-btn" data-act="pause" data-tip="${L('Menu (Esc)', 'Menu (Esc)')}">${icon('gear')}</button>`;
   }
+
+  const omenTip = () => (R.omens || []).map(id => { const o = OMENS.find(x => x.id === id); return `${o.name}: ${o.good} ${o.bad}`; }).join('<br>') || L('Okruh za vrcholem věže.', 'A loop beyond the top of the spire.');
+  const actLabel = () => (R.loop ? `${L('Nekonečná věž', 'Endless Spire')} ${R.loop} · ` : '') + `${L('Akt', 'Act')} ${R.act + 1} / ${ACTS.length}`;
 
   // ── Mapa ──────────────────────────────────────────────────────────────────
   function renderMap(peek = false) {
@@ -139,7 +142,7 @@ const UI = (() => {
     const bossDef = ENEMIES[R.map.boss.enc[0]];
     nodes += `<button class="node boss ${bossAvail ? 'avail' : ''}" style="left:50%;top:${Y(rows.length) - 20}px;--nc:#ff4d6d" data-node="boss" data-tip-title="${bossDef.name}" data-tip="Boss">${icon('boss')}</button>`;
     $('#s-map').innerHTML = `
-      <div class="map-head"><h2>${A.name}</h2><p>${L('Akt', 'Act')} ${R.act + 1} / 3 · ${peek ? L('Prohlížíš mapu', 'Viewing the map') : L('Vyber další hvězdu', 'Choose your next star')}</p>${peek ? `<button class="btn" data-act="closeMap">${L('Zpět', 'Back')}</button>` : ''}</div>
+      <div class="map-head"><h2>${A.name}</h2><p>${actLabel()} · ${peek ? L('Prohlížíš mapu', 'Viewing the map') : L('Vyber další hvězdu', 'Choose your next star')}</p>${peek ? `<button class="btn" data-act="closeMap">${L('Zpět', 'Back')}</button>` : ''}</div>
       <div class="map-scroll"><div class="map" style="height:${Hh}px"><svg class="map-lines" width="100%" height="${Hh}">${lines}</svg>${nodes}</div></div>
       <div class="map-legend">${['battle', 'elite', 'event', 'rest', 'shop', 'treasure'].map(k => `<span style="--nc:${NODE[k].col}">${icon(NODE[k].icon)} ${NODE[k].name}</span>`).join('')}</div>`;
     const sc = $('.map-scroll');
@@ -399,7 +402,6 @@ const UI = (() => {
   // ── Odměny ────────────────────────────────────────────────────────────────
   function afterVictory(kind) {
     Sound.play.victory();
-    if (kind === 'boss' && R.act === 2) { gameOver(true); return; }
     rewards = makeRewards(kind);
     if (rewards.relic === '?') rewards.relic = Run.rollRelic();
     rewards.kind = kind;
@@ -437,8 +439,49 @@ const UI = (() => {
     const rw = rewards;
     closeModal();
     if (rw.bossRelics && rw.bossRelics.length) { bossRelicChoice(rw.bossRelics); return; }
-    if (rw.kind === 'boss') { Run.nextAct(); banner(ACTS[R.act].name, L(`Akt ${R.act + 1}`, `Act ${R.act + 1}`), 'turn'); }
     rewards = null;
+    if (rw.kind === 'boss') { advance(); return; }
+    leaveNode();
+  }
+  // Po bossovi: další akt, nebo vrchol věže a Nekonečná věž
+  function advance() {
+    if (!Run.isLastAct()) {
+      Run.nextAct();
+      banner(ACTS[R.act].name, L(`Akt ${R.act + 1}`, `Act ${R.act + 1}`), 'turn');
+      leaveNode();
+      return;
+    }
+    R.node = 'summit';
+    if (!R.won) Run.recordVictory(); else Run.save();
+    summit();
+  }
+  function summit() {
+    renderMap(true);
+    $('.map-head button') && $('.map-head button').remove();
+    if (!R.loop && !R.summitSeen) {
+      modal(`<div class="panel summit"><div class="summit-ico">${icon('crown')}</div>
+        <h2>${L('Vrchol věže je tvůj', 'The Top of the Spire Is Yours')}</h2>
+        <p class="muted">${L('Prázdnota padla a výstup se počítá jako vítězství. Nad vrcholem se ale věž točí dál: <b>Nekonečná věž</b> opakuje všechny akty, nepřátelé sílí s každým okruhem a každý okruh přinese hvězdné znamení. Čím výš vystoupáš, tím víc hvězdného prachu získáš.', 'The Void has fallen and this climb counts as a victory. Above the top, though, the spire keeps turning: the <b>Endless Spire</b> repeats every act, enemies grow stronger with each loop and each loop brings a star omen. The higher you climb, the more Stardust you earn.')}</p>
+        <div class="row-btns"><button class="btn primary" data-act="summitGo">${icon('spiral')} ${L('Stoupat dál', 'Climb On')}</button><button class="btn" data-act="summitEnd">${icon('trophy')} ${L('Ukončit vítězně', 'End in Victory')}</button></div></div>`, 'm-summit');
+      return;
+    }
+    omenChoice();
+  }
+  function omenChoice() {
+    const list = R.omenOffer || (R.omenOffer = Run.omenChoices());
+    Run.save();
+    if (!list.length) { takeOmen(null); return; }
+    modal(`<div class="panel omens"><h2>${L('Hvězdné znamení', 'Star Omen')}</h2>
+      <p class="muted">${L(`Okruh ${(R.loop || 0) + 1} Nekonečné věže. Vyber znamení: platí do konce výstupu, i se svou kletbou.`, `Loop ${(R.loop || 0) + 1} of the Endless Spire. Choose an omen: it lasts for the rest of the climb, curse included.`)}</p>
+      <div class="br-row">${list.map(id => { const o = OMENS.find(x => x.id === id); return `<button class="br omen" data-omen="${id}" style="--rc:${o.color}">${icon(o.icon)}<b>${o.name}</b><span class="good">${o.good}</span><span class="bad">${o.bad}</span></button>`; }).join('')}</div>
+      <button class="btn ghost" data-act="summitEnd">${L('Raději skončit (vítězně)', 'End the climb (victory)')}</button></div>`, 'm-pick');
+  }
+  function takeOmen(id) {
+    closeModal();
+    R.omenOffer = null; R.summitSeen = true;
+    Run.nextLoop(id);
+    Sound.play.relic();
+    banner(L(`Nekonečná věž ${R.loop}`, `Endless Spire ${R.loop}`), ACTS[0].name, 'boss');
     leaveNode();
   }
   function bossRelicChoice(list) {
@@ -449,9 +492,7 @@ const UI = (() => {
     if (id) { Run.addRelic(id); Sound.play.relic(); }
     closeModal();
     rewards = null;
-    Run.nextAct();
-    banner(ACTS[R.act].name, L(`Akt ${R.act + 1}`, `Act ${R.act + 1}`), 'turn');
-    leaveNode();
+    advance();
   }
 
   // ── Výběr karty z balíčku ─────────────────────────────────────────────────
@@ -470,7 +511,7 @@ const UI = (() => {
   // ── Odpočívadlo ───────────────────────────────────────────────────────────
   function renderRest(done) {
     show('rest'); renderTop(); Sound.music('map');
-    const heal = Math.round(R.maxHp * (R.eclipse >= 5 ? 0.25 : 0.3));
+    const heal = Run.restAmount();
     const canRest = !Run.has('coffee');
     $('#s-rest').innerHTML = `<div class="place">
       <div class="campfire">${icon('rest')}</div>
@@ -568,10 +609,10 @@ const UI = (() => {
     if (victory) Sound.play.victory();
     const H = HEROES[run.hero];
     $('#s-over').innerHTML = `<div class="over">
-      <h1 class="${victory ? 'win' : 'lose'}">${victory ? L('Vystoupal jsi na vrchol', 'You Reached the Summit') : L('Tvá hvězda zhasla', 'Your Star Has Faded')}</h1>
-      <p class="muted">${H.name} · ${ACTS[run.act].name} · ${L('Zatmění', 'Eclipse')} ${run.eclipse}</p>
+      <h1 class="${victory || run.won ? 'win' : 'lose'}">${victory ? L('Vystoupal jsi na vrchol', 'You Reached the Summit') : run.won ? L('Nekonečná věž tě pohltila', 'The Endless Spire Claims You') : L('Tvá hvězda zhasla', 'Your Star Has Faded')}</h1>
+      <p class="muted">${H.name} · ${run.loop ? `${L('Nekonečná věž', 'Endless Spire')} ${run.loop} · ` : ''}${ACTS[Math.max(0, run.act)].name} · ${L('Zatmění', 'Eclipse')} ${run.eclipse}</p>
       <div class="over-stats">
-        <div><small>${L('Patro', 'Floor')}</small><b>${run.act * 13 + Math.max(0, Math.min(run.row + 1, 13))}</b></div>
+        <div><small>${L('Patro', 'Floor')}</small><b>${floorOf(run)}</b></div>
         <div><small>${L('Poraženo', 'Defeated')}</small><b>${run.stats.kills}</b></div>
         <div><small>${L('Elity', 'Elites')}</small><b>${run.stats.elites}</b></div>
         <div><small>${L('Poškození', 'Damage')}</small><b>${fmtNum(run.stats.dmg)}</b></div>
@@ -579,9 +620,10 @@ const UI = (() => {
         <div><small>${L('Čas', 'Time')}</small><b>${fmtTime(run.time)}</b></div>
       </div>
       <div class="over-relics">${run.relics.map(r => relicHTML(r)).join('')}</div>
-      ${victory && run.eclipse < MAX_ECLIPSE ? `<p class="unlock">${icon('moon')} ${L(`Odemčeno Zatmění ${run.eclipse + 1} pro hrdinu ${H.name}`, `Unlocked Eclipse ${run.eclipse + 1} for ${H.name}`)}</p>` : ''}
+      <p class="dust-gain">${icon('sparkle')} ${L(`+${run.dust} hvězdného prachu`, `+${run.dust} Stardust`)} <small>${L('utrať ho v Hvězdném atlasu', 'spend it in the Star Atlas')}</small></p>
+      ${(victory || run.won) && run.eclipse < MAX_ECLIPSE ? `<p class="unlock">${icon('moon')} ${L(`Odemčeno Zatmění ${run.eclipse + 1} pro hrdinu ${H.name}`, `Unlocked Eclipse ${run.eclipse + 1} for ${H.name}`)}</p>` : ''}
       ${newAch.length ? `<div class="over-ach">${newAch.map(a => `<span>${icon(a.icon)} ${a.name}</span>`).join('')}</div>` : ''}
-      <div class="row-btns"><button class="btn primary" data-go="heroes">${L('Nový výstup', 'New Climb')}</button><button class="btn" data-go="menu">Menu</button></div>
+      <div class="row-btns"><button class="btn primary" data-go="heroes">${L('Nový výstup', 'New Climb')}</button><button class="btn" data-go="atlas">${icon('sparkle')} ${L('Hvězdný atlas', 'Star Atlas')}</button><button class="btn" data-go="menu">Menu</button></div>
     </div>`;
   }
 
@@ -598,8 +640,9 @@ const UI = (() => {
         <div class="menu-left">
           <div class="logo">STARSPIRE</div><div class="sub">${L('Věž souhvězdí', 'The Constellation Tower')}</div>
           <nav>
-            ${hasRun ? `<button class="mi primary" data-act="continue">${icon('play')} ${L('Pokračovat ve výstupu', 'Continue Climb')}<small>${HEROES[SAVE.run.hero].name} · ${L('Akt', 'Act')} ${SAVE.run.act + 1}</small></button>` : ''}
+            ${hasRun ? `<button class="mi primary" data-act="continue">${icon('play')} ${L('Pokračovat ve výstupu', 'Continue Climb')}<small>${HEROES[SAVE.run.hero].name} · ${SAVE.run.loop ? `${icon('spiral')} ${SAVE.run.loop} · ` : ''}${L('Akt', 'Act')} ${Math.max(0, SAVE.run.act) + 1}</small></button>` : ''}
             <button class="mi ${hasRun ? '' : 'primary'}" data-go="heroes">${icon('star')} ${L('Nový výstup', 'New Climb')}</button>
+            <button class="mi" data-go="atlas">${icon('sparkle')} ${L('Hvězdný atlas', 'Star Atlas')}<small>${icon('sparkle')} ${fmtNum(SAVE.dust || 0)}${ATLAS.some(p => perk(p.id) < p.cost.length && SAVE.dust >= p.cost[perk(p.id)]) ? ` · ${L('můžeš vylepšit', 'upgrade ready')}` : ''}</small></button>
             <button class="mi" data-go="codex">${icon('book')} ${L('Kodex', 'Codex')}</button>
             <button class="mi" data-go="ach">${icon('trophy')} ${L('Úspěchy', 'Achievements')}<small>${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}</small></button>
             <button class="mi" data-go="settings">${icon('gear')} ${L('Nastavení', 'Settings')}</button>
@@ -613,6 +656,7 @@ const UI = (() => {
             <span>${L('Výstupy', 'Climbs')}</span><b>${S.runs}</b>
             <span>${L('Nejvyšší patro', 'Highest floor')}</span><b>${S.bestFloor}</b>
             <span>${L('Nejvyšší zatmění', 'Highest Eclipse')}</span><b>${S.maxEclipseWin}</b>
+            ${S.bestLoop > 1 ? `<span>${L('Okruhy Nekonečné věže', 'Endless Spire loops')}</span><b>${S.bestLoop - 1}</b>` : ''}
             <span>${L('Poražení nepřátelé', 'Enemies defeated')}</span><b>${fmtNum(S.kills)}</b>
             <span>${L('Objevené karty', 'Cards discovered')}</span><b>${Object.keys(SAVE.seen).length} / ${CARD_LIST.filter(c => c.cls !== 'status' && c.cls !== 'token').length}</b>
           </div>
@@ -650,6 +694,22 @@ const UI = (() => {
         </div>
       </div>`;
       $$('[data-heroart]').forEach(c => { const k = c.dataset.heroart; FX.miniArt(c, HERO_ART[k][0], HERO_ART[k][1], heroUnlocked(k) ? HEROES[k].color : '#3a3550'); });
+    },
+    atlas() {
+      FX.setTheme(['#140c2a', '#05030c'], '#b99bff');
+      const n = atlasCount(SAVE);
+      $('#s-atlas').innerHTML = `<div class="meta"><div class="top-row"><button class="back" data-go="menu">←</button><h2>${L('Hvězdný atlas', 'Star Atlas')} <small>${n} / ${ATLAS_MAX}</small></h2></div>
+        <p class="atlas-intro">${L('Každý výstup ti vynese <b>hvězdný prach</b>: za patra, elity, bosse a vítězství, víc na vyšším Zatmění. Vylepšení platí pro všechny hrdiny a všechny další výstupy.', 'Every climb earns you <b>Stardust</b>: for floors, elites, bosses and victory, more on higher Eclipse. Upgrades apply to every hero and every future climb.')}</p>
+        <div class="dust-bank">${icon('sparkle')} <b>${fmtNum(SAVE.dust || 0)}</b> <span>${L('hvězdného prachu', 'Stardust')}</span></div>
+        <div class="atlas-grid">${ATLAS.map(p => {
+          const lv = perk(p.id), max = p.cost.length, next = lv < max ? p.cost[lv] : 0, can = lv < max && SAVE.dust >= next;
+          return `<div class="perk ${lv ? 'has' : ''} ${lv >= max ? 'max' : ''}" style="--pc:${p.color}">
+            <div class="perk-ico">${icon(p.icon)}</div>
+            <div class="perk-body"><b>${p.name}</b><span>${p.desc(Math.max(1, lv))}</span>
+              <i class="pips">${p.cost.map((_, i) => `<u class="${i < lv ? 'on' : ''}"></u>`).join('')}</i></div>
+            ${lv >= max ? `<em class="perk-max">${L('Hotovo', 'Done')}</em>` : `<button class="btn ${can ? 'primary' : ''}" data-perk="${p.id}" ${can ? '' : 'disabled'}>${icon('sparkle')} ${next}</button>`}
+          </div>`;
+        }).join('')}</div></div>`;
     },
     codex() {
       UI.cxTab = UI.cxTab || 'knight';
@@ -700,7 +760,9 @@ const UI = (() => {
     rwDone: () => rewardsDone(),
     skipCard: () => { const m = $('#modal'); if (m._skip) m._skip(); },
     skipBossRelic: () => takeBossRelic(null),
-    restHeal: () => { const heal = Math.round(R.maxHp * (R.eclipse >= 5 ? 0.25 : 0.3)); Run.heal(heal); renderRest(L(`Odpočinul sis a vyléčil ${heal} životů.`, `You rest and heal ${heal} HP.`)); },
+    summitGo: () => { closeModal(); R.summitSeen = true; Run.save(); omenChoice(); },
+    summitEnd: () => { closeModal(); gameOver(true); },
+    restHeal: () => { const heal = Run.restAmount(); Run.heal(heal); renderRest(L(`Odpočinul sis a vyléčil ${heal} životů.`, `You rest and heal ${heal} HP.`)); },
     restSmith: () => pickCard(R.deck.filter(c => !c.up && CARDS[c.id].up), L('Vylepšit kartu', 'Upgrade a card'), (i, list) => { Run.upgradeCard(list[i]); Sound.play.upgrade(); renderRest(L(`Vykoval jsi ${CARDS[list[i].id].name}+.`, `You forged ${CARDS[list[i].id].name}+.`)); }, true),
     leave: () => leaveNode(),
     openChest: () => openChest(),
@@ -719,7 +781,8 @@ const UI = (() => {
   }
   function resumeRun() {
     Sound.init();
-    if (R.node && R.node !== 'treasure') {
+    if (R.node === 'summit') summit();
+    else if (R.node && R.node !== 'treasure') {
       const node = R.row >= R.map.rows.length ? R.map.boss : R.map.rows[R.row][R.col];
       enterNode(node);
     } else if (R.node === 'treasure') renderTreasure();
@@ -732,7 +795,7 @@ const UI = (() => {
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('click', e => {
-      const t = e.target.closest('[data-go],[data-act],[data-node],[data-hero],[data-ecl],[data-cx],[data-lang],[data-rw],[data-pickreward],[data-pickdeck],[data-bossrelic],[data-buy],[data-evopt],[data-potion],.enemy');
+      const t = e.target.closest('[data-go],[data-act],[data-node],[data-hero],[data-ecl],[data-cx],[data-lang],[data-rw],[data-pickreward],[data-pickdeck],[data-bossrelic],[data-omen],[data-perk],[data-buy],[data-evopt],[data-potion],.enemy');
       if (!t) {
         if (screen === 'battle' && sel && !e.target.closest('#hand') && B.hand[sel.i] && CARDS[B.hand[sel.i].id].target !== 'enemy' && e.target.closest('#stage')) playSel();
         return;
@@ -749,6 +812,8 @@ const UI = (() => {
       else if (ds.pickreward !== undefined) $('#modal')._pick(+ds.pickreward);
       else if (ds.pickdeck !== undefined) $('#modal')._pickDeck(+ds.pickdeck);
       else if (ds.bossrelic) takeBossRelic(ds.bossrelic);
+      else if (ds.omen) takeOmen(ds.omen);
+      else if (ds.perk) { if (Run.buyPerk(ds.perk)) { Sound.play.relic(); go('atlas'); } else Sound.play.error(); }
       else if (ds.buy) buy(ds.buy);
       else if (ds.evopt !== undefined) eventChoice(+ds.evopt);
       else if (ds.potion !== undefined) usePotionUI(+ds.potion);
@@ -797,7 +862,7 @@ const UI = (() => {
   function onKey(e) {
     if (screen === 'title') { enterMenu(); return; }
     if (e.key === 'Escape') {
-      if (!$('#modal').hidden) { const m = $('#modal'); if (m.classList.contains('m-pick') || m.classList.contains('m-rewards')) return; closeModal(); return; }
+      if (!$('#modal').hidden) { const m = $('#modal'); if (m.classList.contains('m-pick') || m.classList.contains('m-rewards') || m.classList.contains('m-summit')) return; closeModal(); return; }
       if (sel) { sel = null; FX.setArrow(null); renderHand(); return; }
       if (['map', 'battle', 'rest', 'shop', 'event', 'treasure'].includes(screen)) { pauseMenu(); return; }
       if (screen !== 'menu') go('menu');

@@ -331,9 +331,22 @@ const ENEMIES = {
   hydra: { name: L('Hlava hydry', 'Hydra Head'), hp: [40, 45], art: ['serpent', '#7cf0b6', 1], ai: e => cycle(e, [mv({ k: 'atk', dmg: 8 }), mv({ k: 'atk', dmg: 3, n: 3 }), mv({ k: 'buff', self: [['str', 1]] })]) },
   nemesis: { name: L('Nemesis', 'Nemesis'), hp: [190, 196], elite: true, art: ['wraith', '#ff4d6d', 1.6], ai: e => cycle(e, [mv({ k: 'atk', dmg: 6, n: 3 }), mv({ k: 'debuff', cards: ['scorch', 3] }), mv({ k: 'atk', dmg: 30 })]) },
   titan: { name: L('Titán', 'Titan'), hp: [250, 260], elite: true, art: ['golem', '#ffb547', 1.7], init: e => { e.s.artifact = 2; }, ai: e => e.turn === 0 ? mv({ k: 'buff', self: [['str', 5]] }) : cycle(e, [mv({ k: 'atk', dmg: 22 }), mv({ k: 'atk', dmg: 9, n: 2 }), mv({ k: 'def', block: 25 })]) },
-  king: { name: L('Král souhvězdí', 'King of Constellations'), hp: [330, 330], boss: true, art: ['humanoid', '#ffe08a', 2.1, { crown: 1, staff: 1, wings: 1 }], ai: e => {
+  king: { name: L('Král souhvězdí', 'King of Constellations'), hp: [330, 330], boss: true, art: ['humanoid', '#ffe08a', 2.1, { crown: 1, staff: 1, wings: 1 }], phase2: e => { Battle.addStatus(e, 'artifact', 2); Battle.addStatus(e, 'ritual', 2); }, ai: e => {
     if (e.phase === 2) return cycle(e, [mv({ k: 'atk', dmg: 7, n: 4 }), mv({ k: 'atkDebuff', dmg: 16, debuff: [['vuln', 1]] }), mv({ k: 'def', block: 25, self: [['str', 2]] }), mv({ k: 'atk', dmg: 38 })]);
     return cycle(e, [mv({ k: 'debuff', debuff: [['weak', 2], ['vuln', 2]], cards: ['dazed', 3] }), mv({ k: 'atk', dmg: 6, n: 4 }), mv({ k: 'def', block: 30, self: [['str', 3]] }), mv({ k: 'atk', dmg: 34 })]);
+  } },
+  // ── Akt IV ──
+  voidling: { name: L('Prázdnotník', 'Voidling'), hp: [34, 38], art: ['orb', '#b14cff', 0.85], ai: e => e.turn % 2 ? mv({ k: 'atkDebuff', dmg: 8, debuff: [['vuln', 1]] }) : mv({ k: 'atk', dmg: 12 }) },
+  eater: { name: L('Požírač hvězd', 'Star Eater'), hp: [84, 90], art: ['blob', '#7a5cff', 1.3], ai: e => cycle(e, [mv({ k: 'atk', dmg: 17 }), mv({ k: 'buff', self: [['str', 3]], block: 12 }), mv({ k: 'atkDebuff', dmg: 11, cards: ['wound', 1] })]) },
+  mirror: { name: L('Zrcadlo nebe', 'Sky Mirror'), hp: [62, 68], art: ['diamond', '#e0e8ff', 1.05], init: e => { e.s.thorns = 4; }, ai: e => cycle(e, [mv({ k: 'def', block: 16 }), mv({ k: 'atk', dmg: 7, n: 2 }), mv({ k: 'debuff', debuff: [['weak', 2]], cards: ['dazed', 2] })]) },
+  pulsar: { name: L('Pulsar', 'Pulsar'), hp: [52, 56], art: ['orb', '#7fd8ff', 1.1, { spikes: 1 }], ai: e => cycle(e, [mv({ k: 'buff', self: [['str', 2]], block: 6 }), mv({ k: 'buff', self: [['str', 2]], block: 6 }), mv({ k: 'atk', dmg: 8, n: 3 })]) },
+  umbra: { name: L('Stín hvězdy', 'Umbra'), hp: [66, 72], art: ['wraith', '#6a4cff', 1.15], ai: e => cycle(e, [mv({ k: 'atk', dmg: 14 }), mv({ k: 'atkDebuff', dmg: 7, debuff: [['poison', 4]] }), mv({ k: 'atk', dmg: 4, n: 4 })]) },
+  devourer: { name: L('Hltač světel', 'Light Devourer'), hp: [290, 300], elite: true, art: ['dragon', '#b14cff', 1.6], init: e => { e.s.artifact = 1; }, ai: e => cycle(e, [mv({ k: 'atk', dmg: 27 }), mv({ k: 'atkDebuff', dmg: 8, n: 2, debuff: [['vuln', 2]] }), mv({ k: 'def', block: 22, self: [['str', 4]] })]) },
+  binary: { name: L('Dvojhvězda', 'Binary Star'), hp: [128, 134], elite: true, art: ['humanoid', '#ffb547', 1.15, { twin: 1, crown: 1 }], ai: e => (e.turn + e.idx) % 2 === 0 ? mv({ k: 'atk', dmg: 16 }) : mv({ k: 'def', allBlock: 12, allStr: 1 }) },
+  herald: { name: L('Hlasatel konce', 'Herald of the End'), hp: [310, 320], elite: true, art: ['golem', '#ff4dd2', 1.65], ai: e => e.turn === 0 ? mv({ k: 'buff', self: [['ritual', 2]], block: 20 }) : cycle(e, [mv({ k: 'atk', dmg: 19 }), mv({ k: 'def', block: 20 }), mv({ k: 'atk', dmg: 7, n: 3 })]) },
+  void: { name: L('Prázdnota, Matka temnoty', 'The Void, Mother of Darkness'), hp: [470, 470], boss: true, art: ['wraith', '#b14cff', 2.3], phase2: e => { Battle.addStatus(e, 'artifact', 3); Battle.addStatus(e, 'ritual', 3); e.block += 40; }, ai: e => {
+    if (e.phase === 2) return cycle(e, [mv({ k: 'atk', dmg: 8, n: 5 }), mv({ k: 'atkDebuff', dmg: 20, cards: ['wound', 2] }), mv({ k: 'def', block: 30, self: [['str', 2]] }), mv({ k: 'atk', dmg: 44 })]);
+    return cycle(e, [mv({ k: 'debuff', debuff: [['weak', 2], ['vuln', 2]], cards: ['dazed', 3] }), mv({ k: 'atk', dmg: 7, n: 5 }), mv({ k: 'def', block: 35, self: [['str', 3]] }), mv({ k: 'atk', dmg: 40 })]);
   } },
 };
 
@@ -350,7 +363,45 @@ const ACTS = [
     easy: [['wraith'], ['obelisk'], ['hydra', 'hydra'], ['spiker', 'spiker']],
     hard: [['hydra', 'hydra', 'hydra'], ['spiker', 'hydra'], ['wraith', 'hydra'], ['obelisk', 'wraith'], ['lich', 'obelisk']],
     elites: [['nemesis'], ['titan']], boss: ['king'] },
+  { name: L('Srdce prázdnoty', 'Heart of the Void'), color: '#c77dff', bg: ['#12061f', '#030106'],
+    easy: [['eater'], ['umbra'], ['voidling', 'voidling'], ['mirror', 'voidling']],
+    hard: [['pulsar', 'pulsar'], ['eater', 'voidling'], ['mirror', 'umbra'], ['pulsar', 'voidling', 'voidling'], ['umbra', 'pulsar'], ['mirror', 'mirror']],
+    elites: [['devourer'], ['binary', 'binary'], ['herald']], boss: ['void'] },
 ];
+// Nekonečná věž: za vrcholem se akty opakují, silnější s každým okruhem
+// (dřívější akty se dotáhnou na sílu posledního).
+const LOOP_TIER = { hp: [2.4, 1.8, 1.35, 1.1], dmg: [1.9, 1.5, 1.2, 1.08] };
+
+// ── Hvězdná znamení (Nekonečná věž: požehnání i kletba) ─────────────────────
+const OMENS = [
+  { id: 'fire', icon: 'flame', color: '#ffb03b', name: L('Žhnoucí nebe', 'Burning Sky'), good: L('Na začátku boje uvalí 5 hoření na všechny nepřátele.', 'At the start of combat, apply 5 Burn to ALL enemies.'), bad: L('Nepřátelé mají o 10 % více životů.', 'Enemies have 10% more HP.') },
+  { id: 'might', icon: 'fist', color: '#ff8a5c', name: L('Válečná hvězda', 'War Star'), good: L('Začni každý boj s 2 síly.', 'Start each combat with 2 Strength.'), bad: L('Nepřátelé začínají boj s 2 síly.', 'Enemies start combat with 2 Strength.') },
+  { id: 'gold', icon: 'coin', color: '#ffd166', name: L('Zlatý déšť', 'Golden Rain'), good: L('Získáváš o 50 % více zlata.', 'Gain 50% more Gold.'), bad: L('Obchody jsou o 25 % dražší.', 'Shops cost 25% more.') },
+  { id: 'aegis', icon: 'shield', color: '#9fb4ff', name: L('Hvězdný štít', 'Star Aegis'), good: L('Začni každý boj s 12 bloku.', 'Start each combat with 12 Block.'), bad: L('Odpočinek léčí o 10 % méně.', 'Resting heals 10% less.') },
+  { id: 'tide', icon: 'wave', color: '#7fd8ff', name: L('Příliv', 'High Tide'), good: L('Každé kolo lízneš o 1 kartu víc.', 'Draw 1 extra card each turn.'), bad: L('Nepřátelé způsobují o 10 % více poškození.', 'Enemies deal 10% more damage.') },
+  { id: 'comet', icon: 'comet', color: '#c0a8ff', name: L('Kometa', 'Comet'), good: L('V prvním kole získáš 1 energii navíc.', 'Gain 1 extra Energy on your first turn.'), bad: L('Elitní nepřátelé jsou častější.', 'Elites appear more often.') },
+  { id: 'bounty', icon: 'cards', color: '#7cf0b6', name: L('Hojnost', 'Bounty'), good: L('Karty v odměnách jsou vylepšené.', 'Card rewards are upgraded.'), bad: L('Ihned ztratíš 8 max. životů.', 'Lose 8 Max HP now.') },
+  { id: 'phoenix', icon: 'sun', color: '#ff7a3d', name: L('Fénix', 'Phoenix'), good: L('Ihned se plně vyléčíš.', 'Heal to full now.'), bad: L('Bossové mají o 15 % více životů.', 'Bosses have 15% more HP.') },
+  { id: 'thorns', icon: 'thorn', color: '#d0a0ff', name: L('Trnová koruna', 'Crown of Thorns'), good: L('Začni každý boj se 3 trny.', 'Start each combat with 3 Thorns.'), bad: L('Na začátku boje dostaneš do balíčku Omámení.', 'At the start of combat, shuffle a Dazed into your deck.') },
+  { id: 'hoard', icon: 'gem', color: '#ff5fa2', name: L('Dračí poklad', "Dragon's Hoard"), good: L('Ihned získáš náhodnou relikvii.', 'Gain a random relic now.'), bad: L('Přijdeš o všechno zlato.', 'Lose all your Gold.') },
+];
+
+// ── Hvězdný atlas (trvalá vylepšení za hvězdný prach) ───────────────────────
+const ATLAS = [
+  { id: 'vit', icon: 'heart', color: '#ff7a5c', name: L('Hvězdné srdce', 'Star Heart'), desc: v => L(`Začínáš s +${v * 5} max. životy.`, `Start with +${v * 5} Max HP.`), cost: [40, 80, 130, 190, 260] },
+  { id: 'gold', icon: 'coin', color: '#ffd166', name: L('Zlatý prach', 'Gold Dust'), desc: v => L(`Začínáš s +${v * 20} zlata.`, `Start with +${v * 20} Gold.`), cost: [30, 60, 100] },
+  { id: 'potion', icon: 'potion', color: '#7fd8ff', name: L('Lektvarník', 'Apothecary'), desc: v => L(`Začínáš s ${v} ${plural(v, 'náhodným lektvarem', 'náhodnými lektvary', 'náhodnými lektvary')}.`, `Start with ${v} random potion${v > 1 ? 's' : ''}.`), cost: [50, 120] },
+  { id: 'belt', icon: 'bag', color: '#9fb4ff', name: L('Brašna', 'Satchel'), desc: () => L('Máš o 1 místo na lektvar víc.', 'Gain 1 extra potion slot.'), cost: [150] },
+  { id: 'rest', icon: 'rest', color: '#ffb547', name: L('Klidný spánek', 'Deep Sleep'), desc: v => L(`Odpočinek léčí o ${v * 5} % více.`, `Resting heals ${v * 5}% more.`), cost: [60, 110, 170] },
+  { id: 'forge', icon: 'anvil', color: '#ffe08a', name: L('Kovárna hvězd', 'Star Forge'), desc: v => L(`Začínáš s ${v} ${plural(v, 'vylepšenou kartou', 'vylepšenými kartami', 'vylepšenými kartami')}.`, `Start with ${v} upgraded card${v > 1 ? 's' : ''}.`), cost: [70, 150] },
+  { id: 'rare', icon: 'star', color: '#ffd166', name: L('Šťastná hvězda', 'Lucky Star'), desc: v => L(`Vzácné karty padají o ${v * 2} % častěji.`, `Rare cards are ${v * 2}% more common.`), cost: [90, 180] },
+  { id: 'vision', icon: 'eye', color: '#c0a8ff', name: L('Vize', 'Vision'), desc: () => L('Odměny nabízejí o 1 kartu víc.', 'Card rewards offer 1 more card.'), cost: [250] },
+  { id: 'purge', icon: 'x', color: '#ff5fa2', name: L('Očista', 'Purge'), desc: () => L('Odstranění karty v obchodě je o 25 zlata levnější.', 'Removing a card in shops costs 25 less Gold.'), cost: [120] },
+  { id: 'relic', icon: 'gem', color: '#7cf0b6', name: L('Dar souhvězdí', 'Gift of the Stars'), desc: () => L('Začínáš s náhodnou běžnou relikvií.', 'Start with a random common relic.'), cost: [300] },
+  { id: 'dust', icon: 'sparkle', color: '#b99bff', name: L('Sběratel prachu', 'Dust Collector'), desc: v => L(`Získáváš o ${v * 10} % více hvězdného prachu.`, `Gain ${v * 10}% more Stardust.`), cost: [100, 200, 300] },
+];
+const ATLAS_MAX = ATLAS.reduce((a, p) => a + p.cost.length, 0);
+
 
 // ── Události ────────────────────────────────────────────────────────────────
 // opt: { t: text, ok: (run) => bool, do: (run, ui) => výsledný text }
@@ -419,7 +470,13 @@ const ACHIEVEMENTS = [
   { id: 'first', name: L('První krok', 'First Step'), desc: L('Vyhraj první boj.', 'Win your first combat.'), icon: 'sword', prog: S => [S.stats.wins, 1] },
   { id: 'act1', name: L('Lev padl', 'The Lion Falls'), desc: L('Poraz Oriona (odemyká Astromantku).', 'Defeat Orion (unlocks the Astromancer).'), icon: 'crown', prog: S => [S.stats.act1, 1] },
   { id: 'act2', name: L('Proti proudu', 'Against the Current'), desc: L('Poraz Draca (odemyká Stína).', 'Defeat Draco (unlocks the Shade).'), icon: 'crown', prog: S => [S.stats.act2, 1] },
-  { id: 'win', name: L('Vládce nebes', 'Ruler of the Heavens'), desc: L('Poraz Krále souhvězdí.', 'Defeat the King of Constellations.'), icon: 'trophy', prog: S => [S.stats.victories, 1] },
+  { id: 'act3', name: L('Koruna padla', 'The Crown Falls'), desc: L('Poraz Krále souhvězdí.', 'Defeat the King of Constellations.'), icon: 'crown', prog: S => [S.stats.act3, 1] },
+  { id: 'win', name: L('Vládce nebes', 'Ruler of the Heavens'), desc: L('Poraz Prázdnotu na vrcholu věže.', 'Defeat the Void at the top of the spire.'), icon: 'trophy', prog: S => [S.stats.victories, 1] },
+  { id: 'loop2', name: L('Za hranou nebe', 'Beyond the Sky'), desc: L('Dokonči okruh Nekonečné věže.', 'Complete a loop of the Endless Spire.'), icon: 'spiral', prog: S => [S.stats.bestLoop, 2] },
+  { id: 'loop4', name: L('Nekonečno', 'Infinity'), desc: L('Dokonči tři okruhy Nekonečné věže v jednom výstupu.', 'Complete three loops of the Endless Spire in one climb.'), icon: 'spiral', prog: S => [S.stats.bestLoop, 4] },
+  { id: 'floor100', name: L('Sté patro', 'Floor 100'), desc: L('Dosáhni 100. patra.', 'Reach floor 100.'), icon: 'up', prog: S => [S.stats.bestFloor, 100] },
+  { id: 'atlas10', name: L('Kartograf nebes', 'Sky Cartographer'), desc: L('Kup 10 vylepšení Hvězdného atlasu.', 'Buy 10 Star Atlas upgrades.'), icon: 'map', prog: S => [atlasCount(S), 10] },
+  { id: 'atlasAll', name: L('Celé nebe', 'The Whole Sky'), desc: L('Dokonči Hvězdný atlas.', 'Complete the Star Atlas.'), icon: 'sparkle', prog: S => [atlasCount(S), ATLAS_MAX] },
   { id: 'winAll', name: L('Tři hvězdy', 'Three Stars'), desc: L('Vyhraj se všemi třemi hrdiny.', 'Win with all three heroes.'), icon: 'star', prog: S => [Object.keys(S.heroWins).length, 3] },
   { id: 'ecl5', name: L('Polostín', 'Penumbra'), desc: L('Vyhraj na Zatmění 5.', 'Win on Eclipse 5.'), icon: 'moon', prog: S => [S.stats.maxEclipseWin, 5] },
   { id: 'ecl10', name: L('Úplné zatmění', 'Total Eclipse'), desc: L('Vyhraj na Zatmění 10.', 'Win on Eclipse 10.'), icon: 'moon', prog: S => [S.stats.maxEclipseWin, 10] },
@@ -442,3 +499,4 @@ const ACHIEVEMENTS = [
   { id: 'runs50', name: L('Věčný poutník', 'Eternal Pilgrim'), desc: L('Odehraj 50 výstupů.', 'Complete 50 climbs.'), icon: 'rocket', prog: S => [S.stats.runs, 50] },
 ];
 ICONS.rocket = ICONS.comet;
+const atlasCount = S => Object.values(S.atlas || {}).reduce((a, v) => a + v, 0);
