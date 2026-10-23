@@ -230,13 +230,13 @@ const ACTION_GAMES: Game[] = [
 		title: 'STARSPIRE',
 		tagline: 'Vystoupej po věži souhvězdí.',
 		description:
-			'Taktický roguelike s balíčkem karet. Skládej si balíček během výstupu, sbírej relikvie, čti záměry nepřátel a porážej živá souhvězdí. Tři hrdinové, čtyři akty, Nekonečná věž za vrcholem a Hvězdný atlas trvalých vylepšení.',
+			'Taktický roguelike s balíčkem karet. Skládej si balíček během výstupu, sbírej relikvie, čti záměry nepřátel a porážej živá souhvězdí. Tři hrdinové, čtyři akty, Nekonečná věž za vrcholem, Sága s jedním balíčkem přes všechna Zatmění a Hvězdný atlas trvalých vylepšení.',
 		genres: ['Deckbuilder', 'Roguelike', 'Strategie'],
 		features: ['76 karet', '4 akty', 'Nekonečná věž', '10 stupňů Zatmění'],
 		en: {
 			tagline: 'Climb the tower of constellations.',
 			description:
-				'A tactical deck-building roguelike. Build your deck as you climb, collect relics, read enemy intents and defeat living constellations. Three heroes, four acts, the Endless Spire beyond the summit and a Star Atlas of permanent upgrades.',
+				'A tactical deck-building roguelike. Build your deck as you climb, collect relics, read enemy intents and defeat living constellations. Three heroes, four acts, the Endless Spire beyond the summit, a Saga with one deck through every Eclipse and a Star Atlas of permanent upgrades.',
 			genres: ['Deckbuilder', 'Roguelike', 'Strategy'],
 			features: ['76 cards', '4 acts', 'Endless Spire', '10 Eclipse levels'],
 		},
@@ -245,6 +245,7 @@ const ACTION_GAMES: Game[] = [
 			best: ['Nejvyšší patro', 'Highest floor'],
 			eclipse: ['Nejvyšší Zatmění', 'Highest Eclipse'],
 			loop: ['Okruhy Nekonečné věže', 'Endless Spire loops'],
+			saga: ['Úrovně Ságy', 'Saga levels'],
 			atlas: ['Hvězdný atlas', 'Star Atlas'],
 			achievements: ['Úspěchy', 'Achievements'],
 		},

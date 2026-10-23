@@ -7,7 +7,9 @@ function defaultSave() {
     v: 1, achievements: {}, seen: {}, heroWins: {}, eclipse: { knight: 0, mage: 0, rogue: 0 }, run: null,
     // hvězdný prach a koupená vylepšení Hvězdného atlasu ({ id: úroveň })
     dust: 0, atlas: {},
-    stats: { runs: 0, wins: 0, kills: 0, elites: 0, act1: 0, act2: 0, act3: 0, victories: 0, bestLoop: 0, dustTotal: 0, maxEclipseWin: 0, maxHit: 0, maxCardsTurn: 0, maxPoison: 0,
+    // Sága: rozehraná sága má vlastní místo, výstup ji nepřepíše
+    saga: null,
+    stats: { runs: 0, wins: 0, kills: 0, elites: 0, act1: 0, act2: 0, act3: 0, victories: 0, bestLoop: 0, dustTotal: 0, sagaBest: 0, maxEclipseWin: 0, maxHit: 0, maxCardsTurn: 0, maxPoison: 0,
       maxBurn: 0, maxBlock: 0, maxStr: 0, maxGold: 0, maxRelics: 0, thinBoss: 0, maxDeck: 0, flawlessBoss: 0, time: 0, bestFloor: 0 },
     settings: { sfx: 0.7, music: 0.45, fast: false },
     lastHero: 'knight',
@@ -30,7 +32,7 @@ function persist() {
     localStorage.setItem(HUB_KEY, JSON.stringify({
       playTime: SAVE.stats.time, lastPlayed: Date.now(),
       progress: Object.keys(SAVE.achievements).length / ACHIEVEMENTS.length,
-      stats: { victories: SAVE.stats.victories, best: SAVE.stats.bestFloor, eclipse: SAVE.stats.maxEclipseWin, loop: SAVE.stats.bestLoop, atlas: `${atlasCount(SAVE)} / ${ATLAS_MAX}`, achievements: `${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}` },
+      stats: { victories: SAVE.stats.victories, best: SAVE.stats.bestFloor, eclipse: SAVE.stats.maxEclipseWin, loop: SAVE.stats.bestLoop, saga: SAVE.stats.sagaBest, atlas: `${atlasCount(SAVE)} / ${ATLAS_MAX}`, achievements: `${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}` },
     }));
   } catch (e) { /* bez úložiště */ }
 }
@@ -38,7 +40,10 @@ const heroUnlocked = id => !HEROES[id].unlock || !!SAVE.achievements[HEROES[id].
 const perk = id => SAVE.atlas[id] || 0;
 const omen = id => !!(R && R.omens && R.omens.includes(id));
 // patro od začátku výstupu (13 na akt: 12 řad mapy + boss), přes všechny okruhy
-const floorOf = r => ((r.loop || 0) * ACTS.length + r.act) * 13 + Math.max(0, Math.min(r.row + 1, 13));
+const floorOf = r => (((r.loop || 0) + (r.level || 0)) * ACTS.length + r.act) * 13 + Math.max(0, Math.min(r.row + 1, 13));
+// Sága: úroveň N se hraje na Zatmění N (nad 10 nepřátelé dál sílí jako v Nekonečné věži)
+const SAGA_ECL = level => Math.min(MAX_ECLIPSE, level);
+const sagaDust = level => Math.round((90 + 20 * level) * (1 + 0.1 * perk('dust')));
 // hvězdný prach za výstup
 function dustFor(r, victory) {
   const base = floorOf(r) + r.stats.elites * 4 + r.stats.bosses * 12 + (victory || r.won ? 40 : 0);
@@ -64,12 +69,15 @@ const bump = (k, v) => { if (v > SAVE.stats[k]) SAVE.stats[k] = v; };
 let R = null;
 const Run = {
   has: r => R && R.relics.includes(r),
-  start(hero, eclipse) {
+  start(hero, eclipse, mode) {
     const H = HEROES[hero];
+    const saga = mode === 'saga';
+    if (saga) eclipse = 0;
     R = {
       hero, eclipse, maxHp: H.hp, hp: H.hp, gold: H.gold, deck: [], relics: [], counters: {}, potions: [null, null, null],
       act: 0, row: -1, col: -1, map: null, removeCost: 75, rarityOffset: -5, potionChance: 40, time: 0,
       stats: { kills: 0, floors: 0, dmg: 0, elites: 0, bosses: 0 }, node: null, over: false, loop: 0, won: false, omens: [],
+      mode: saga ? 'saga' : 'climb', level: 0, sagaDust: 0,
     };
     // Hvězdný atlas
     R.maxHp += perk('vit') * 5; R.hp = R.maxHp;
@@ -85,11 +93,49 @@ const Run = {
     if (perk('relic')) { const id = Run.rollRelic('common'); if (id) Run.addRelic(id, true); }
     R.map = Run.genMap(0);
     SAVE.lastHero = hero;
+    if (saga) Run.checkpoint();
     Run.save();
   },
-  save() { SAVE.run = R; persist(); },
-  resume() { R = SAVE.run; if (R) { R.loop = R.loop || 0; R.omens = R.omens || []; } return R; },
-  clear() { SAVE.run = null; R = null; persist(); },
+  isSaga: () => !!R && R.mode === 'saga',
+  save() { if (Run.isSaga()) SAVE.saga = R; else SAVE.run = R; persist(); },
+  resume(mode) {
+    R = mode === 'saga' ? SAVE.saga : SAVE.run;
+    if (R) { R.loop = R.loop || 0; R.omens = R.omens || []; R.level = R.level || 0; }
+    return R;
+  },
+  clear() { if (Run.isSaga()) SAVE.saga = null; else SAVE.run = null; R = null; persist(); },
+  // Sága: stav na začátku úrovně, k němu se po pádu dá vrátit
+  checkpoint() {
+    const { deck, relics, counters, potions, maxHp, gold, removeCost, rarityOffset, potionChance } = R;
+    R.cp = JSON.parse(JSON.stringify({ deck, relics, counters, potions, maxHp, hp: R.hp, gold, removeCost, rarityOffset, potionChance }));
+  },
+  // Sága: úroveň dokončena, další na vyšším Zatmění se stejným balíčkem
+  nextLevel() {
+    const dust = sagaDust(R.level);
+    SAVE.dust = (SAVE.dust || 0) + dust; SAVE.stats.dustTotal += dust; R.sagaDust += dust;
+    R.level++;
+    bump('sagaBest', R.level);
+    const before = R.eclipse;
+    R.eclipse = SAGA_ECL(R.level);
+    if (R.eclipse >= 10 && before < 10) Run.addCard('wound', false, true);
+    R.hp = R.maxHp;
+    Run.enterLevel();
+    Run.checkpoint();
+    checkAchievements();
+    Run.save();
+    return dust;
+  },
+  retryLevel() {
+    Object.assign(R, JSON.parse(JSON.stringify(R.cp)));
+    R.retries = (R.retries || 0) + 1;
+    R.over = false;
+    Run.enterLevel();
+    Run.save();
+  },
+  enterLevel() {
+    R.act = 0; R.row = -1; R.col = -1; R.node = null; R.shopState = null; R.eventId = null;
+    R.map = Run.genMap(0);
+  },
 
   addCard(id, up = false, silent = false) {
     R.deck.push({ id, up: !!up, uid: UID++ });
@@ -217,7 +263,8 @@ const Run = {
     node.visited = true;
     R.node = node.type;
     R.stats.floors++;
-    bump('bestFloor', floorOf(R));
+    // Sága se dá opakovat od úrovně, do žebříčku pater se proto nepočítá.
+    if (!Run.isSaga()) bump('bestFloor', floorOf(R));
     Run.save();
   },
   nextAct() {
@@ -255,7 +302,7 @@ const Run = {
   },
   // násobitele síly nepřátel v Nekonečné věži
   loopScale() {
-    const l = R.loop || 0;
+    const l = Run.isSaga() ? Math.max(0, R.level - MAX_ECLIPSE) : R.loop || 0;
     if (!l) return { hp: 1, dmg: 1 };
     return { hp: LOOP_TIER.hp[R.act] * (1 + 0.4 * (l - 1)), dmg: LOOP_TIER.dmg[R.act] * (1 + 0.15 * (l - 1)) };
   },
@@ -266,13 +313,14 @@ const Run = {
   endRun(victory) {
     SAVE.stats.runs++;
     SAVE.stats.time += R.time;
-    if (victory) Run.recordVictory();
+    const saga = Run.isSaga();
+    if (victory && !saga) Run.recordVictory();
     R.over = true;
     const r = R;
-    r.dust = dustFor(r, victory);
-    SAVE.dust = (SAVE.dust || 0) + r.dust;
-    SAVE.stats.dustTotal += r.dust;
-    SAVE.run = null;
+    // Sága platí prach za každou dokončenou úroveň (už připsaný).
+    r.dust = saga ? r.sagaDust : dustFor(r, victory);
+    if (!saga) { SAVE.dust = (SAVE.dust || 0) + r.dust; SAVE.stats.dustTotal += r.dust; }
+    if (saga) SAVE.saga = null; else SAVE.run = null;
     checkAchievements();
     persist();
     return r;

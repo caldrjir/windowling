@@ -361,6 +361,16 @@ kbd { font-family: var(--f-u); border: 1px solid var(--line-2); border-radius: 4
 .perk .btn { padding: 8px 12px; white-space: nowrap; } .perk .btn:disabled { opacity: .45; cursor: not-allowed; }
 .perk-max { font-style: normal; color: var(--pc); font-weight: 700; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
 
+/* Sága */
+.modes { display: inline-flex; gap: 4px; padding: 4px; border-radius: 30px; border: 1px solid var(--line); background: rgba(0,0,0,.25); margin: 4px 0 14px; }
+.modes button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 24px; color: var(--muted); font-weight: 700; font-size: 14px; letter-spacing: .04em; transition: .18s; }
+.modes button.on { background: linear-gradient(180deg, rgba(255,217,138,.22), rgba(255,217,138,.08)); color: var(--gold); box-shadow: inset 0 0 0 1px var(--line-2); }
+.saga-info { max-width: 560px; margin: 0 auto 14px; color: var(--muted); line-height: 1.55; font-size: 14px; } .saga-info b { color: var(--gold); }
+.saga-info small { display: block; margin-top: 6px; color: #d9b8ff; font-size: 13px; }
+.over .saga-info { margin-top: 18px; font-size: 16px; }
+.saga-next { display: grid; gap: 4px; padding: 12px 16px; margin: 4px auto 20px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.03); max-width: 420px; }
+.saga-next b { font-family: var(--f-d); color: var(--gold); } .saga-next span { color: #ff8a9a; font-size: 14px; }
+
 @media (max-width: 900px) {
   .menu { grid-template-columns: 1fr; overflow-y: auto; }
   .hero-cards { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }

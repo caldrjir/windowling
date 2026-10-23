@@ -105,14 +105,14 @@ const UI = (() => {
       <div class="tb-potions">${R.potions.map((p, i) => potionHTML(p, i)).join('')}</div>
       <div class="tb-relics">${R.relics.map(r => relicHTML(r)).join('')}</div>
       <div class="spacer"></div>
-      <div class="tb-floor">${R.loop ? `<span class="loop" data-tip-title="${L('Nekonečná věž', 'Endless Spire')}" data-tip="${omenTip()}">${icon('spiral')} ${R.loop}</span> · ` : ''}${L('Akt', 'Act')} ${R.act + 1} · ${L('Patro', 'Floor')} ${floorOf(R)}${R.eclipse ? ` · ${icon('moon')} ${R.eclipse}` : ''}</div>
+      <div class="tb-floor">${Run.isSaga() ? `<span class="loop">${icon('book')} ${L('Úroveň', 'Level')} ${R.level + 1}</span> · ` : ''}${R.loop ? `<span class="loop" data-tip-title="${L('Nekonečná věž', 'Endless Spire')}" data-tip="${omenTip()}">${icon('spiral')} ${R.loop}</span> · ` : ''}${L('Akt', 'Act')} ${R.act + 1} · ${L('Patro', 'Floor')} ${floorOf(R)}${R.eclipse ? ` · ${icon('moon')} ${R.eclipse}` : ''}</div>
       <button class="tb-btn" data-act="deck" data-tip="${L('Balíček', 'Deck')}">${icon('cards')}<b>${R.deck.length}</b></button>
       <button class="tb-btn" data-act="map" data-tip="${L('Mapa', 'Map')}">${icon('map')}</button>
       <button class="tb-btn" data-act="pause" data-tip="${L('Menu (Esc)', 'Menu (Esc)')}">${icon('gear')}</button>`;
   }
 
   const omenTip = () => (R.omens || []).map(id => { const o = OMENS.find(x => x.id === id); return `${o.name}: ${o.good} ${o.bad}`; }).join('<br>') || L('Okruh za vrcholem věže.', 'A loop beyond the top of the spire.');
-  const actLabel = () => (R.loop ? `${L('Nekonečná věž', 'Endless Spire')} ${R.loop} · ` : '') + `${L('Akt', 'Act')} ${R.act + 1} / ${ACTS.length}`;
+  const actLabel = () => (Run.isSaga() ? `${L('Sága', 'Saga')} · ${L('Úroveň', 'Level')} ${R.level + 1} · ` : '') + (R.loop ? `${L('Nekonečná věž', 'Endless Spire')} ${R.loop} · ` : '') + `${L('Akt', 'Act')} ${R.act + 1} / ${ACTS.length}`;
 
   // ── Mapa ──────────────────────────────────────────────────────────────────
   function renderMap(peek = false) {
@@ -445,6 +445,7 @@ const UI = (() => {
   }
   // Po bossovi: další akt, nebo vrchol věže a Nekonečná věž
   function advance() {
+    if (Run.isLastAct() && Run.isSaga()) { sagaLevelDone(); return; }
     if (!Run.isLastAct()) {
       Run.nextAct();
       banner(ACTS[R.act].name, L(`Akt ${R.act + 1}`, `Act ${R.act + 1}`), 'turn');
@@ -466,6 +467,33 @@ const UI = (() => {
       return;
     }
     omenChoice();
+  }
+  // ── Sága ──
+  const eclText = e => (e > 0 && e <= MAX_ECLIPSE ? ECLIPSE[e - 1] : L('Nepřátelé jsou silnější.', 'Enemies are stronger.'));
+  function sagaLevelDone() {
+    const done = R.level + 1, dust = Run.nextLevel();
+    Sound.play.victory();
+    renderMap(true);
+    $('.map-head button') && $('.map-head button').remove();
+    modal(`<div class="panel summit"><div class="summit-ico">${icon('book')}</div>
+      <h2>${L(`Úroveň ${done} dokončena`, `Level ${done} complete`)}</h2>
+      <p class="muted">${L('Tvůj balíček, relikvie i lektvary jdou s tebou dál. Věž se staví znovu, tentokrát těžší.', 'Your deck, relics and potions come with you. The spire rebuilds itself, harder this time.')}</p>
+      <p class="dust-gain">${icon('sparkle')} ${L(`+${dust} hvězdného prachu`, `+${dust} Stardust`)}</p>
+      <div class="saga-next"><b>${L(`Úroveň ${R.level + 1}`, `Level ${R.level + 1}`)} · ${icon('moon')} ${L('Zatmění', 'Eclipse')} ${R.eclipse}</b><span>${L('Nově', 'New')}: ${eclText(R.level)}</span></div>
+      <div class="row-btns"><button class="btn primary" data-act="sagaGo">${icon('play')} ${L('Pokračovat', 'Continue')}</button></div></div>`, 'm-summit');
+  }
+  function sagaFall() {
+    R.node = 'fallen'; Run.save();
+    show('over');
+    FX.setTheme(['#1a0510', '#050105'], '#ff4d6d');
+    Sound.music('menu');
+    const H = HEROES[R.hero];
+    $('#s-over').innerHTML = `<div class="over">
+      <h1 class="lose">${L('Tvá hvězda pohasla', 'Your Star Flickers')}</h1>
+      <p class="muted">${H.name} · ${L('Sága', 'Saga')} · ${L('Úroveň', 'Level')} ${R.level + 1} · ${ACTS[R.act].name}</p>
+      <p class="saga-info">${L(`Sága ale nekončí: úroveň ${R.level + 1} můžeš zkusit znovu s balíčkem, se kterým jsi do ní vstoupil.`, `The saga isn't over: you can retry level ${R.level + 1} with the deck you entered it with.`)}</p>
+      <div class="row-btns"><button class="btn primary" data-act="sagaRetry">${icon('play')} ${L(`Zkusit úroveň ${R.level + 1} znovu`, `Retry level ${R.level + 1}`)}</button><button class="btn" data-act="sagaEnd">${L('Ukončit ságu', 'End the Saga')}</button></div>
+    </div>`;
   }
   function omenChoice() {
     const list = R.omenOffer || (R.omenOffer = Run.omenChoices());
@@ -598,7 +626,8 @@ const UI = (() => {
   }
 
   // ── Konec běhu ────────────────────────────────────────────────────────────
-  function gameOver(victory) {
+  function gameOver(victory, end) {
+    if (!victory && !end && Run.isSaga()) { sagaFall(); return; }
     const run = R;
     const before = new Set(Object.keys(SAVE.achievements));
     Run.endRun(victory);
@@ -609,8 +638,8 @@ const UI = (() => {
     if (victory) Sound.play.victory();
     const H = HEROES[run.hero];
     $('#s-over').innerHTML = `<div class="over">
-      <h1 class="${victory || run.won ? 'win' : 'lose'}">${victory ? L('Vystoupal jsi na vrchol', 'You Reached the Summit') : run.won ? L('Nekonečná věž tě pohltila', 'The Endless Spire Claims You') : L('Tvá hvězda zhasla', 'Your Star Has Faded')}</h1>
-      <p class="muted">${H.name} · ${run.loop ? `${L('Nekonečná věž', 'Endless Spire')} ${run.loop} · ` : ''}${ACTS[Math.max(0, run.act)].name} · ${L('Zatmění', 'Eclipse')} ${run.eclipse}</p>
+      <h1 class="${victory || run.won || run.level ? 'win' : 'lose'}">${run.mode === 'saga' ? L(`Sága končí v úrovni ${run.level + 1}`, `The Saga Ends at Level ${run.level + 1}`) : victory ? L('Vystoupal jsi na vrchol', 'You Reached the Summit') : run.won ? L('Nekonečná věž tě pohltila', 'The Endless Spire Claims You') : L('Tvá hvězda zhasla', 'Your Star Has Faded')}</h1>
+      <p class="muted">${H.name} · ${run.mode === 'saga' ? `${L('Sága', 'Saga')} · ` : ''}${run.loop ? `${L('Nekonečná věž', 'Endless Spire')} ${run.loop} · ` : ''}${ACTS[Math.max(0, run.act)].name} · ${L('Zatmění', 'Eclipse')} ${run.eclipse}</p>
       <div class="over-stats">
         <div><small>${L('Patro', 'Floor')}</small><b>${floorOf(run)}</b></div>
         <div><small>${L('Poraženo', 'Defeated')}</small><b>${run.stats.kills}</b></div>
@@ -635,13 +664,14 @@ const UI = (() => {
     menu() {
       FX.setTheme(['#140c2a', '#05030c'], '#b99bff');
       Sound.music('menu');
-      const S = SAVE.stats, hasRun = !!SAVE.run;
+      const S = SAVE.stats, hasRun = !!SAVE.run, G = SAVE.saga;
       $('#s-menu').innerHTML = `<div class="menu-art" id="menuArt"></div><div class="menu">
         <div class="menu-left">
           <div class="logo">STARSPIRE</div><div class="sub">${L('Věž souhvězdí', 'The Constellation Tower')}</div>
           <nav>
             ${hasRun ? `<button class="mi primary" data-act="continue">${icon('play')} ${L('Pokračovat ve výstupu', 'Continue Climb')}<small>${HEROES[SAVE.run.hero].name} · ${SAVE.run.loop ? `${icon('spiral')} ${SAVE.run.loop} · ` : ''}${L('Akt', 'Act')} ${Math.max(0, SAVE.run.act) + 1}</small></button>` : ''}
-            <button class="mi ${hasRun ? '' : 'primary'}" data-go="heroes">${icon('star')} ${L('Nový výstup', 'New Climb')}</button>
+            ${G ? `<button class="mi ${hasRun ? '' : 'primary'}" data-act="continueSaga">${icon('book')} ${L('Pokračovat v sáze', 'Continue Saga')}<small>${HEROES[G.hero].name} · ${L('Úroveň', 'Level')} ${(G.level || 0) + 1} · ${L('Akt', 'Act')} ${Math.max(0, G.act) + 1}</small></button>` : ''}
+            <button class="mi ${hasRun || G ? '' : 'primary'}" data-go="heroes">${icon('star')} ${L('Nový výstup', 'New Climb')}</button>
             <button class="mi" data-go="atlas">${icon('sparkle')} ${L('Hvězdný atlas', 'Star Atlas')}<small>${icon('sparkle')} ${fmtNum(SAVE.dust || 0)}${ATLAS.some(p => perk(p.id) < p.cost.length && SAVE.dust >= p.cost[perk(p.id)]) ? ` · ${L('můžeš vylepšit', 'upgrade ready')}` : ''}</small></button>
             <button class="mi" data-go="codex">${icon('book')} ${L('Kodex', 'Codex')}</button>
             <button class="mi" data-go="ach">${icon('trophy')} ${L('Úspěchy', 'Achievements')}<small>${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}</small></button>
@@ -656,6 +686,7 @@ const UI = (() => {
             <span>${L('Výstupy', 'Climbs')}</span><b>${S.runs}</b>
             <span>${L('Nejvyšší patro', 'Highest floor')}</span><b>${S.bestFloor}</b>
             <span>${L('Nejvyšší zatmění', 'Highest Eclipse')}</span><b>${S.maxEclipseWin}</b>
+            ${S.sagaBest ? `<span>${L('Úrovně Ságy', 'Saga levels')}</span><b>${S.sagaBest}</b>` : ''}
             ${S.bestLoop > 1 ? `<span>${L('Okruhy Nekonečné věže', 'Endless Spire loops')}</span><b>${S.bestLoop - 1}</b>` : ''}
             <span>${L('Poražení nepřátelé', 'Enemies defeated')}</span><b>${fmtNum(S.kills)}</b>
             <span>${L('Objevené karty', 'Cards discovered')}</span><b>${Object.keys(SAVE.seen).length} / ${CARD_LIST.filter(c => c.cls !== 'status' && c.cls !== 'token').length}</b>
@@ -684,13 +715,15 @@ const UI = (() => {
         <div class="hero-info" style="--hc:${H.color}">
           <p>${H.desc}</p>
           <div class="hi-row"><span>${icon('heart')} ${H.hp} ${L('životů', 'HP')}</span><span>${icon('coin')} ${H.gold} ${L('zlata', 'Gold')}</span><span>${relicHTML(H.relic)} ${RELICS[H.relic].name}</span></div>
+          <div class="modes"><button class="${UI.mode !== 'saga' ? 'on' : ''}" data-mode="climb">${icon('star')} ${L('Výstup', 'Climb')}</button><button class="${UI.mode === 'saga' ? 'on' : ''}" data-mode="saga">${icon('book')} ${L('Sága', 'Saga')}</button></div>
+          ${UI.mode === 'saga' ? `<div class="saga-info">${L('Projdi úrovně Zatmění 0 až 10 (a dál) <b>jedním balíčkem</b>. Po každé úrovni si necháš karty, relikvie, lektvary i zlato a věž se postaví znovu, těžší. Když padneš, můžeš úroveň zkusit znovu.', 'Climb Eclipse levels 0 to 10 (and beyond) with <b>one deck</b>. After each level you keep your cards, relics, potions and gold, and the spire rebuilds itself, harder. If you fall, you can retry the level.')}${SAVE.stats.sagaBest ? `<small>${L('Nejvíc dokončených úrovní', 'Most levels completed')}: ${SAVE.stats.sagaBest}</small>` : ''}</div>` : `
           <div class="eclipse">
             <button data-ecl="-1" ${UI.ecl <= 0 ? 'disabled' : ''}>−</button>
             <div><b>${icon('moon')} ${L('Zatmění', 'Eclipse')} ${UI.ecl}</b><small>${UI.ecl ? ECLIPSE.slice(0, UI.ecl).map((t, i) => `${i + 1}. ${t}`).join('<br>') : maxE ? L('Bez modifikátorů', 'No modifiers') : L('Vyhraj s tímto hrdinou k odemčení', 'Win with this hero to unlock')}</small></div>
             <button data-ecl="1" ${UI.ecl >= maxE ? 'disabled' : ''}>+</button>
-          </div>
-          ${SAVE.run ? `<p class="warn">${L('Rozehraný výstup bude přepsán.', 'Your current climb will be abandoned.')}</p>` : ''}
-          <button class="btn primary big" data-act="startRun">${icon('star')} ${L('Začít výstup', 'Begin the Climb')}</button>
+          </div>`}
+          ${(UI.mode === 'saga' ? SAVE.saga : SAVE.run) ? `<p class="warn">${UI.mode === 'saga' ? L('Rozehraná sága bude přepsána.', 'Your current saga will be abandoned.') : L('Rozehraný výstup bude přepsán.', 'Your current climb will be abandoned.')}</p>` : ''}
+          <button class="btn primary big" data-act="startRun">${icon(UI.mode === 'saga' ? 'book' : 'star')} ${UI.mode === 'saga' ? L('Začít ságu', 'Begin the Saga') : L('Začít výstup', 'Begin the Climb')}</button>
         </div>
       </div>`;
       $$('[data-heroart]').forEach(c => { const k = c.dataset.heroart; FX.miniArt(c, HERO_ART[k][0], HERO_ART[k][1], heroUnlocked(k) ? HEROES[k].color : '#3a3550'); });
@@ -744,7 +777,7 @@ const UI = (() => {
       <div class="set-row"><label>${L('Efekty', 'Effects')}</label><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.sfx}" data-vol="sfx"></div>
       <div class="set-row"><label>${L('Hudba', 'Music')}</label><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.music}" data-vol="music"></div>
       <p class="muted">${screen === 'battle' ? L('Výstup se uloží. Rozehraný souboj začne po návratu znovu.', 'Your climb is saved. The current fight will restart when you return.') : L('Výstup se uloží.', 'Your climb is saved.')}</p>
-      <div class="row-btns"><button class="btn primary" data-act="closeModal">${L('Pokračovat', 'Resume')}</button><button class="btn" data-act="saveQuit">${L('Uložit a odejít', 'Save & Quit')}</button><button class="btn danger" data-act="abandon">${L('Vzdát výstup', 'Abandon Climb')}</button></div></div>`);
+      <div class="row-btns"><button class="btn primary" data-act="closeModal">${L('Pokračovat', 'Resume')}</button><button class="btn" data-act="saveQuit">${L('Uložit a odejít', 'Save & Quit')}</button><button class="btn danger" data-act="abandon">${Run.isSaga() ? L('Ukončit ságu', 'End the Saga') : L('Vzdát výstup', 'Abandon Climb')}</button></div></div>`);
   }
 
   // ── Události myši/kláves ──────────────────────────────────────────────────
@@ -766,14 +799,18 @@ const UI = (() => {
     restSmith: () => pickCard(R.deck.filter(c => !c.up && CARDS[c.id].up), L('Vylepšit kartu', 'Upgrade a card'), (i, list) => { Run.upgradeCard(list[i]); Sound.play.upgrade(); renderRest(L(`Vykoval jsi ${CARDS[list[i].id].name}+.`, `You forged ${CARDS[list[i].id].name}+.`)); }, true),
     leave: () => leaveNode(),
     openChest: () => openChest(),
-    continue: () => { Run.resume(); resumeRun(); },
-    startRun: () => { Sound.init(); Run.start(UI.heroSel, UI.ecl); Sound.play.start(); renderMap(); banner(ACTS[0].name, L('Akt 1', 'Act 1'), 'turn'); },
+    continue: () => { Run.resume('climb'); resumeRun(); },
+    continueSaga: () => { Run.resume('saga'); resumeRun(); },
+    startRun: () => { Sound.init(); Run.start(UI.heroSel, UI.ecl, UI.mode); Sound.play.start(); renderMap(); banner(ACTS[0].name, Run.isSaga() ? L('Sága · Úroveň 1', 'Saga · Level 1') : L('Akt 1', 'Act 1'), 'turn'); },
+    sagaGo: () => { closeModal(); banner(L(`Úroveň ${R.level + 1}`, `Level ${R.level + 1}`), `${L('Zatmění', 'Eclipse')} ${R.eclipse}`, 'boss'); renderMap(); },
+    sagaRetry: () => { Run.retryLevel(); Sound.play.start(); renderMap(); banner(L(`Úroveň ${R.level + 1}`, `Level ${R.level + 1}`), L('Nový pokus', 'Another try'), 'turn'); },
+    sagaEnd: () => gameOver(false, true),
     hub: () => { persist(); location.href = '../../index.html'; },
     toggleFast: () => { SAVE.settings.fast = !SAVE.settings.fast; persist(); go('settings'); },
     wipe: () => modal(`<div class="panel"><h2>${L('Smazat veškerý postup?', 'Erase all progress?')}</h2><p class="muted">${L('Tohle nejde vrátit.', 'This cannot be undone.')}</p><div class="row-btns"><button class="btn danger" data-act="wipeYes">${L('Smazat', 'Erase')}</button><button class="btn" data-act="closeModal">${L('Zrušit', 'Cancel')}</button></div></div>`),
     wipeYes: () => { const st = SAVE.settings; SAVE = defaultSave(); SAVE.settings = st; persist(); closeModal(); go('menu'); },
     saveQuit: () => { closeModal(); Run.save(); R = null; B = null; go('menu'); },
-    abandon: () => { closeModal(); if (B) B.over = true; gameOver(false); },
+    abandon: () => { closeModal(); if (B) B.over = true; gameOver(false, true); },
   };
   function startBattleView() {
     renderEnemies(); renderHand();
@@ -781,7 +818,8 @@ const UI = (() => {
   }
   function resumeRun() {
     Sound.init();
-    if (R.node === 'summit') summit();
+    if (R.node === 'fallen') sagaFall();
+    else if (R.node === 'summit') summit();
     else if (R.node && R.node !== 'treasure') {
       const node = R.row >= R.map.rows.length ? R.map.boss : R.map.rows[R.row][R.col];
       enterNode(node);
@@ -795,7 +833,7 @@ const UI = (() => {
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('click', e => {
-      const t = e.target.closest('[data-go],[data-act],[data-node],[data-hero],[data-ecl],[data-cx],[data-lang],[data-rw],[data-pickreward],[data-pickdeck],[data-bossrelic],[data-omen],[data-perk],[data-buy],[data-evopt],[data-potion],.enemy');
+      const t = e.target.closest('[data-go],[data-act],[data-node],[data-hero],[data-mode],[data-ecl],[data-cx],[data-lang],[data-rw],[data-pickreward],[data-pickdeck],[data-bossrelic],[data-omen],[data-perk],[data-buy],[data-evopt],[data-potion],.enemy');
       if (!t) {
         if (screen === 'battle' && sel && !e.target.closest('#hand') && B.hand[sel.i] && CARDS[B.hand[sel.i].id].target !== 'enemy' && e.target.closest('#stage')) playSel();
         return;
@@ -805,6 +843,7 @@ const UI = (() => {
       else if (ds.act) { if (acts[ds.act]) { Sound.play.click(); acts[ds.act](); } }
       else if (ds.node) chooseNode(ds.node);
       else if (ds.hero) { if (!heroUnlocked(ds.hero)) { Sound.play.error(); return; } UI.heroSel = ds.hero; UI.ecl = undefined; Sound.play.click(); go('heroes'); }
+      else if (ds.mode) { UI.mode = ds.mode; Sound.play.click(); go('heroes'); }
       else if (ds.ecl) { UI.ecl += +ds.ecl; Sound.play.click(); go('heroes'); }
       else if (ds.cx) { UI.cxTab = ds.cx; Sound.play.click(); go('codex'); }
       else if (ds.lang) { persist(); setLang(ds.lang); }
@@ -882,5 +921,5 @@ const UI = (() => {
   }
   function enterMenu() { Sound.init(); Sound.setVolume('sfx', SAVE.settings.sfx); Sound.setVolume('music', SAVE.settings.music); Sound.play.start(); go('menu'); }
 
-  return { init, go, enterMenu, pickCard, cardReward, renderTop, get screen() { return screen; }, heroSel: null, ecl: undefined, cxTab: null };
+  return { init, go, enterMenu, pickCard, cardReward, renderTop, get screen() { return screen; }, heroSel: null, ecl: undefined, mode: 'climb', cxTab: null };
 })();

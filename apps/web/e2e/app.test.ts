@@ -152,6 +152,48 @@ test('STARSPIRE: Star Atlas, the Act IV summit and the Endless Spire', async ({
 	expect(errors).toEqual([]);
 });
 
+test('STARSPIRE Saga: one deck through the levels, retry after a fall', async ({
+	page,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	const tap = (selector: string) =>
+		isMobile
+			? page.locator(selector).first().tap({ force: true })
+			: page.locator(selector).first().click({ force: true });
+	await page.goto('/games/starspire/index.html');
+	await page.locator('#s-title').click();
+	await tap('[data-go="heroes"]');
+	await tap('[data-mode="saga"]');
+	await tap('[data-act="startRun"]');
+	await expect(page.locator('.map-head p')).toContainText('1');
+
+	// Win the level with a bigger deck: the next level keeps it, on Eclipse 1.
+	await page.evaluate(
+		'Run.addCard("bash", true); Run.checkpoint(); R.act = 3; R.map = Run.genMap(3); R.row = 11; R.col = 0; Run.save(); UI.go("menu")',
+	);
+	await tap('[data-act="continueSaga"]');
+	await tap('.node.boss');
+	await expect(page.locator('.enemy')).toHaveCount(1);
+	await page.evaluate(
+		'B.enemies[0].block = 0; Battle.hitEnemy(B.enemies[0], 99999); Battle.finish()',
+	);
+	await tap('[data-act="rwDone"]');
+	if (await page.locator('[data-act="skipBossRelic"]').count())
+		await tap('[data-act="skipBossRelic"]');
+	await tap('[data-act="sagaGo"]');
+	expect(await page.evaluate('[R.level, R.eclipse, R.act, R.deck.length]')).toEqual([1, 1, 0, 11]);
+
+	// A fall is not the end: the level starts again with the same deck.
+	await tap('.node.avail');
+	await expect(page.locator('.enemy').first()).toBeVisible();
+	await page.evaluate('Battle.hurtPlayer(9999, false); Battle.finish()');
+	await tap('[data-act="sagaRetry"]');
+	expect(await page.evaluate('[R.level, R.hp === R.maxHp, R.deck.length]')).toEqual([1, true, 11]);
+	expect(errors).toEqual([]);
+});
+
 test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
 	test.skip(!isMobile, 'touch controls are for phones');
 	const errors: string[] = [];
