@@ -37,6 +37,7 @@ const Kit = (() => {
     return `${y}-W${pad(w)}`;
   }
   const fmtTime = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`; };
+  const fmtNum = n => Math.round(n).toLocaleString(LANG === 'en' ? 'en-US' : 'cs-CZ');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -330,7 +331,7 @@ const Kit = (() => {
           ${card('k-free', `
             <div class="k-card-h">${icon('plus')}<span>${L('Volná hra', 'Free play')}</span></div>
             <span class="k-muted">${L('Nekonečně nových hlavolamů. Vyber obtížnost:', 'Endless new puzzles. Pick a difficulty:')}</span>
-            <div class="k-diffs">${DEF.diffs.map(d => `<button class="k-btn" data-k="free" data-diff="${d.id}"><b>${d.name}</b>${d.note ? `<small>${d.note}</small>` : ''}<small>${(SAVE.stats.by[d.id] || {}).n || 0}×${(SAVE.stats.by[d.id] || {}).best ? ' · ' + fmtTime(SAVE.stats.by[d.id].best) : ''}</small></button>`).join('')}</div>`)}
+            <div class="k-diffs">${DEF.diffs.map(d => `<button class="k-btn" data-k="free" data-diff="${d.id}"><b>${d.name}</b>${d.note ? `<small>${d.note}</small>` : ''}<small>${d.metric === 'score' ? `${L('rekord', 'best')} ${fmtNum((SAVE.stats.by[d.id] || {}).bestScore || 0)}` : `${(SAVE.stats.by[d.id] || {}).n || 0}×${(SAVE.stats.by[d.id] || {}).best ? ' · ' + fmtTime(SAVE.stats.by[d.id].best) : ''}`}</small></button>`).join('')}</div>`)}
           ${card('k-quests', `
             <div class="k-card-h">${icon('quest')}<span>${L('Týdenní úkoly', 'Weekly quests')}</span><em class="k-muted">${L('všechny hlavolamy', 'all puzzles')}</em></div>
             <ul>${q.list.map(it => `<li class="${it.done ? 'done' : ''}"><span>${questText(it)}</span><i><u style="width:${Math.round(it.p / it.n * 100)}%"></u></i><small>${it.done ? icon('check') : `${it.p}/${it.n}`} · +${it.reward} ${icon('gem', 'tiny')}</small></li>`).join('')}</ul>`)}
@@ -421,7 +422,7 @@ const Kit = (() => {
   function statsView() {
     setView('stats', L('Statistiky', 'Statistics'));
     const S = SAVE.stats, r = rankOf(SAVE.xp);
-    const rows = DEF.diffs.map(d => { const b = S.by[d.id] || {}; return `<tr><td>${d.name}</td><td>${b.n || 0}</td><td>${b.best ? fmtTime(b.best) : '–'}</td><td>${b.n ? fmtTime(b.sum / b.n) : '–'}</td><td>${b.perfect || 0}</td></tr>`; }).join('');
+    const rows = DEF.diffs.map(d => { const b = S.by[d.id] || {}; return `<tr><td>${d.name}</td><td>${b.n || 0}${b.games ? ` / ${b.n + b.games}` : ''}</td><td>${d.metric === 'score' ? (b.bestScore ? fmtNum(b.bestScore) : '–') : b.best ? fmtTime(b.best) : '–'}</td><td>${b.n ? fmtTime(b.sum / b.n) : '–'}</td><td>${b.perfect || 0}</td></tr>`; }).join('');
     const extra = DEF.statsExtra ? DEF.statsExtra(SAVE) : [];
     $('#kView').innerHTML = `<div class="k-page"><h2>${L('Statistiky', 'Statistics')}</h2>
       <div class="k-statrow"><div><b>${S.solved}</b><span>${L('vyřešeno', 'solved')}</span></div><div><b>${fmtTime(SAVE.time)}</b><span>${L('odehráno', 'played')}</span></div><div><b>${S.perfect}</b><span>${L('bez chyby', 'perfect')}</span></div><div><b>${SAVE.streak.best}</b><span>${L('nejdelší série', 'best streak')}</span></div>${extra.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
@@ -476,10 +477,10 @@ const Kit = (() => {
     timerOn = false; updTimer();
     setTimeout(() => {
       let puzzle;
-      try { puzzle = DEF.generate(cur.seed, cur.diff); } catch (e) { console.error(e); toast(L('Hlavolam se nepodařilo vytvořit', 'Could not create the puzzle')); home(); return; }
+      try { puzzle = DEF.generate(cur.seed, cur.diff, { kind: cur.kind, key: cur.key }); } catch (e) { console.error(e); toast(L('Hlavolam se nepodařilo vytvořit', 'Could not create the puzzle')); home(); return; }
       if (view !== 'play') return;
       $('#kBoard').innerHTML = '';
-      inst = DEF.create($('#kBoard'), puzzle, cur.state, api, { diff: cur.diff, kind: cur.kind, settings: SAVE.settings });
+      inst = DEF.create($('#kBoard'), puzzle, cur.state, api, { diff: cur.diff, kind: cur.kind, key: cur.key, settings: SAVE.settings });
       timerOn = true; lastTick = performance.now();
     }, 30);
   }
@@ -510,6 +511,11 @@ const Kit = (() => {
     persist: () => persist(),
     setSetting(k, v) { SAVE.settings[k] = v; persist(); },
     solved(extra = {}) { if (cur) finish(extra); },
+    failed(extra = {}) { if (cur) fail(extra); },
+    get kind() { return cur && cur.kind; }, get key() { return cur && cur.key; },
+    paused: () => !$('#kModal').hidden || document.hidden,
+    setTimer(on) { timerOn = !!on; lastTick = performance.now(); },
+    get time() { return cur ? cur.time : 0; },
     burst: (x, y, n) => burst(x, y, n),
   };
 
@@ -518,9 +524,11 @@ const Kit = (() => {
     const c = cur, d = DEF.diffs.find(x => x.id === c.diff) || DEF.diffs[0], dr = diffIndex(c.diff);
     const perfect = c.mistakes === 0 && c.hints === 0;
     const par = d.par || 600;
-    const stars = perfect && c.time <= par ? 3 : c.mistakes + c.hints <= 2 ? 2 : 1;
+    const stars = extra.stars != null ? extra.stars : perfect && c.time <= par ? 3 : c.mistakes + c.hints <= 2 ? 2 : 1;
     const S = SAVE.stats, by = S.by[c.diff] = S.by[c.diff] || { n: 0, sum: 0, best: 0, perfect: 0 };
+    const oldScore = by.bestScore || 0;
     S.solved++; by.n++; by.sum += c.time; if (!by.best || c.time < by.best) by.best = c.time; if (perfect) { S.perfect++; by.perfect++; }
+    if (extra.score != null) by.bestScore = Math.max(by.bestScore || 0, extra.score);
     let xp = [12, 22, 36, 56, 80][dr] || 20; if (perfect) xp = Math.round(xp * 1.5);
     let shards = 2 + dr * 2, starGain = 0, streakUp = false, newBest = false;
     if (c.kind === 'daily') {
@@ -535,7 +543,7 @@ const Kit = (() => {
       const before = SAVE.levels[c.key] || 0;
       if (stars > before) { starGain = stars - before; SAVE.levels[c.key] = stars; shards += starGain * 3; }
     }
-    newBest = by.best === c.time && by.n > 1;
+    newBest = extra.score != null ? extra.score > oldScore && by.n > 1 : by.best === c.time && by.n > 1;
     SAVE.xp += xp; META.shards += shards;
     const quest = questProgress({ solved: true, game: DEF.id, daily: c.kind === 'daily', diffRank: dr, perfect, stars: starGain });
     SAVE.cur = null;
@@ -549,7 +557,9 @@ const Kit = (() => {
       <span class="k-eyebrow">${c.kind === 'daily' ? L('Denní výzva', 'Daily puzzle') : c.kind === 'level' ? L(`Úroveň ${c.key}`, `Level ${c.key}`) : d.name}</span>
       <h2>${extra.title || L('Vyřešeno!', 'Solved!')}</h2>
       ${c.kind === 'level' ? `<div class="k-stars">${[1, 2, 3].map(i => icon('star', i <= stars ? 'on' : '')).join('')}</div>` : ''}
-      <div class="k-statrow"><div><b>${fmtTime(c.time)}</b><span>${newBest ? L('nový rekord!', 'new best!') : L('čas', 'time')}</span></div><div><b>${c.mistakes}</b><span>${L('chyby', 'mistakes')}</span></div><div><b>${c.hints}</b><span>${L('nápovědy', 'hints')}</span></div></div>
+      ${extra.score != null
+        ? `<div class="k-statrow"><div><b>${fmtNum(extra.score)}</b><span>${newBest ? L('nový rekord!', 'new best!') : extra.scoreLabel || L('skóre', 'score')}</span></div><div><b>${fmtTime(c.time)}</b><span>${L('čas', 'time')}</span></div><div><b>${fmtNum(Math.max(oldScore, extra.score))}</b><span>${L('rekord', 'best')}</span></div></div>`
+        : `<div class="k-statrow"><div><b>${fmtTime(c.time)}</b><span>${newBest ? L('nový rekord!', 'new best!') : L('čas', 'time')}</span></div><div><b>${c.mistakes}</b><span>${L('chyby', 'mistakes')}</span></div><div><b>${c.hints}</b><span>${L('nápovědy', 'hints')}</span></div></div>`}
       <div class="k-gains"><span>+${xp} XP</span><span>+${shards} ${icon('gem', 'tiny')}</span>${streakUp ? `<span class="hot">${icon('flame', 'tiny')} ${L('série', 'streak')} ${SAVE.streak.cur}</span>` : ''}</div>
       ${extra.html || ''}
       ${quest.map(q => `<p class="k-q">${icon('quest', 'tiny')} ${L('Úkol splněn', 'Quest complete')}: ${questText(q)} (+${q.reward})</p>`).join('')}
@@ -560,6 +570,32 @@ const Kit = (() => {
     $('#kHome').onclick = () => { SOUND.ui(); close(); home(); };
     if ($('#kNextLv')) $('#kNextLv').onclick = () => { SOUND.ui(); close(); start('level', c.key + 1); };
     if ($('#kAgain')) $('#kAgain').onclick = () => { SOUND.ui(); close(); start('free', null, c.diff); };
+  }
+
+  // Konec hry bez splnění cíle (arkádové hlavolamy): skóre, rekord, zkusit znovu.
+  function fail(extra = {}) {
+    timerOn = false;
+    const c = cur, d = DEF.diffs.find(x => x.id === c.diff) || DEF.diffs[0];
+    const S = SAVE.stats, by = S.by[c.diff] = S.by[c.diff] || { n: 0, sum: 0, best: 0, perfect: 0 };
+    S.games = (S.games || 0) + 1; by.games = (by.games || 0) + 1;
+    const old = by.bestScore || 0, sc = extra.score || 0;
+    if (extra.score != null && c.kind === 'free') by.bestScore = Math.max(old, sc);
+    const xp = Math.min(40, extra.xp != null ? extra.xp : 4); SAVE.xp += xp;
+    SAVE.cur = null;
+    const ach = checkAch();
+    persist(); shardsUi();
+    SOUND.error();
+    modal(`<div class="k-result">
+      <span class="k-eyebrow">${c.kind === 'daily' ? L('Denní výzva', 'Daily puzzle') : c.kind === 'level' ? L(`Úroveň ${c.key}`, `Level ${c.key}`) : d.name}</span>
+      <h2 class="lose">${extra.title || L('Konec hry', 'Game over')}</h2>
+      ${extra.score != null ? `<div class="k-statrow"><div><b>${fmtNum(sc)}</b><span>${sc > old && c.kind === 'free' ? L('nový rekord!', 'new best!') : extra.scoreLabel || L('skóre', 'score')}</span></div><div><b>${fmtTime(c.time)}</b><span>${L('čas', 'time')}</span></div><div><b>${fmtNum(Math.max(old, c.kind === 'free' ? sc : 0))}</b><span>${L('rekord', 'best')}</span></div></div>` : ''}
+      ${extra.html || ''}
+      <div class="k-gains"><span>+${xp} XP</span></div>
+      ${ach.map(a => `<p class="k-q">${icon('trophy', 'tiny')} ${a.name}</p>`).join('')}
+      <div class="k-row"><button class="k-btn primary" id="kRetry">${L('Zkusit znovu', 'Try again')}</button><button class="k-btn ghost" id="kHome">${L('Hotovo', 'Done')}</button></div></div>`);
+    const close = () => { closeModal(); leavePlay(); };
+    $('#kHome').onclick = () => { SOUND.ui(); close(); home(); };
+    $('#kRetry').onclick = () => { SOUND.ui(); close(); start(c.kind, c.key, c.diff); };
   }
 
   // ── Modální okno, oznámení, efekty ──
@@ -590,7 +626,7 @@ const Kit = (() => {
     if (e.key === 'Escape' && view !== 'home') { back(); return; }
     if (view === 'play' && inst && inst.onKey) inst.onKey(e);
   });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (view === 'play' && inst && cur && SAVE.cur === cur) { cur.state = inst.getState(); } persist(); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (inst && inst.pause) inst.pause(); if (view === 'play' && inst && cur && SAVE.cur === cur) { cur.state = inst.getState(); } persist(); } });
   addEventListener('pagehide', () => { if (view === 'play' && inst && cur && SAVE.cur === cur) cur.state = inst.getState(); if (DEF) persist(); });
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.k-board')) e.preventDefault(); });
 
@@ -605,5 +641,5 @@ const Kit = (() => {
     home();
   }
 
-  return { game, L, LANG, rng, hash, shuffle, icon, dayKey, fmtTime, esc, api, _test: { dailyDiff: k => dailyDiff(k), levelDiff: n => levelDiff(n), start, get save() { return SAVE; }, get meta() { return META; }, get inst() { return inst; }, get cur() { return cur; } } };
+  return { game, L, LANG, rng, hash, shuffle, icon, dayKey, fmtTime, fmtNum, esc, api, _test: { dailyDiff: k => dailyDiff(k), levelDiff: n => levelDiff(n), start, get save() { return SAVE; }, get meta() { return META; }, get inst() { return inst; }, get cur() { return cur; } } };
 })();

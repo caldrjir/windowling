@@ -1,0 +1,37 @@
+/* PULSAR – padající bloky */
+.pl-wrap { position: relative; display: grid; grid-template-columns: 140px auto 140px; gap: 18px; align-items: start; justify-content: center; }
+.pl-board { border-radius: 10px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 55%, transparent), 0 24px 60px -20px var(--a); touch-action: none; user-select: none; -webkit-user-select: none; }
+.pl-side { display: grid; gap: 12px; }
+.pl-box { padding: 10px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: 6px; justify-items: center; }
+.pl-box small, .pl-stats small { color: var(--muted); font-size: 11px; letter-spacing: .18em; font-weight: 700; }
+.pl-box canvas { width: 120px; }
+.pl-next { height: 330px; }
+.pl-hold { height: 80px; }
+.pl-stats { display: grid; gap: 8px; }
+.pl-stats div { display: grid; padding: 10px 12px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.pl-stats b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.pl-goal { color: var(--muted); font-size: 13px; line-height: 1.4; padding: 0 4px; }
+.pl-touch { display: none; }
+.pl-pause { position: absolute; right: 0; bottom: 0; }
+.pl-over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(3,2,10,.55); backdrop-filter: blur(4px); border-radius: 12px; z-index: 3; }
+.pl-over div { display: grid; gap: 14px; justify-items: center; }
+.pl-over b { font-family: var(--f-d); font-size: 26px; }
+.pl-wrap.phone { grid-template-columns: 76px auto; gap: 8px; }
+.pl-wrap.phone .pl-left { grid-row: 1; grid-column: 1; }
+.pl-wrap.phone .pl-board { grid-row: 1; grid-column: 2; }
+.pl-wrap.phone .pl-right { grid-row: 1; grid-column: 1; margin-top: 230px; }
+.pl-wrap.phone .pl-box { padding: 6px; }
+.pl-wrap.phone .pl-box canvas { width: 64px; }
+.pl-wrap.phone .pl-hold { height: 43px; }
+.pl-wrap.phone .pl-next { height: 176px; }
+.pl-wrap.phone .pl-stats div { padding: 6px 8px; }
+.pl-wrap.phone .pl-stats b { font-size: 13px; }
+.pl-wrap.phone .pl-stats small { font-size: 9px; letter-spacing: .08em; }
+.pl-wrap.phone .pl-goal { display: none; }
+.pl-wrap.phone .pl-touch { display: grid; grid-column: 1 / -1; grid-template-columns: 1.3fr repeat(6, 1fr); gap: 6px; }
+.pl-touch button { height: 54px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 20px; font-weight: 700; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pl-touch button[data-b="hold"] { font-size: 11px; }
+.pl-touch button:active { background: color-mix(in srgb, var(--a) 30%, transparent); }
+.pl-wrap.phone .pl-pause { position: absolute; top: 0; right: -4px; bottom: auto; min-width: 0; width: 40px; height: 40px; }
+.pl-wrap.phone .pl-pause span { display: none; }
+.pl-wrap.phone .pl-box small { font-size: 8.5px; letter-spacing: .08em; }

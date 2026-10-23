@@ -326,4 +326,215 @@ export const PUZZLE_GAMES: Game[] = [
 			});
 		},
 	},
+	{
+		id: 'pulsar',
+		title: 'PULSAR',
+		group: 'puzzle',
+		tagline: 'Padající bloky v rytmu pulsaru.',
+		description:
+			'Skládej padající dílky do plných řad. Maraton, Sprint 40, Ultra 2:00 a Kopání, T-spiny, kombo, odkládání dílků. Denní sprint má pro všechny stejné pořadí dílků.',
+		genres: ['Hlavolam', 'Arkáda', 'Padající bloky'],
+		features: [
+			'Denní sprint pro všechny',
+			'Cesta: 120 úkolů',
+			'4 herní režimy',
+			'Gesta i klávesnice',
+		],
+		en: {
+			tagline: 'Falling blocks to the beat of a pulsar.',
+			description:
+				'Stack falling pieces into full rows. Marathon, Sprint 40, Ultra 2:00 and Dig, with T-spins, combos and hold. The daily sprint has the same piece order for everyone.',
+			genres: ['Puzzle', 'Arcade', 'Falling blocks'],
+			features: [
+				'Daily sprint for everyone',
+				'Path: 120 challenges',
+				'4 game modes',
+				'Gestures and keyboard',
+			],
+		},
+		statLabels: labels,
+		path: '/games/pulsar/index.html',
+		colors: ['#c77dff', '#55f6ff', '#ff5a7a'],
+		statsKey: 'gamecenter.stats.pulsar',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#c77dff', '#55f6ff', '#ff5a7a'], 5);
+			const c = Math.min(w / 12, h / 16);
+			const x0 = (w - 10 * c) / 2;
+			const y0 = h * 0.08;
+			const stack = [
+				'..........',
+				'..........',
+				'Z.........',
+				'ZZ...OO..L',
+				'JZ.TTOO.LL',
+				'JJJ.T.SS.L',
+				'IIIIGGSS.G',
+			];
+			const col: Record<string, string> = {
+				I: '#55f6ff',
+				O: '#ffe066',
+				T: '#c77dff',
+				S: '#6dff9e',
+				Z: '#ff5a7a',
+				J: '#5a8cff',
+				L: '#ffa94d',
+				G: '#5d5878',
+			};
+			const block = (x: number, y: number, k: string) => {
+				ctx.fillStyle = col[k] ?? '#fff';
+				ctx.shadowColor = col[k] ?? '#fff';
+				ctx.shadowBlur = c * 0.4;
+				ctx.fillRect(x0 + x * c + 1, y0 + y * c + 1, c - 2, c - 2);
+				ctx.shadowBlur = 0;
+			};
+			stack.forEach((row, y) => [...row].forEach((k, x) => k !== '.' && block(x, y + 8, k)));
+			const fall = ((t * 2) % 9) + 0;
+			[
+				[1, 0],
+				[1, 1],
+				[1, 2],
+				[2, 2],
+			].forEach(([x = 0, y = 0]) => block(x + 6, y + Math.floor(fall), 'L'));
+		},
+	},
+	{
+		id: 'fuze',
+		title: 'FÚZE',
+		group: 'puzzle',
+		tagline: 'Z prachu planety, z planet hvězdy.',
+		description:
+			'Princip 2048 s vesmírnými tělesy: posouvej a slučuj prach, asteroidy, planety a hvězdy až k supernově a černé díře. Desky 3×3 až 5×5 a pás asteroidů jako překážky.',
+		genres: ['Hlavolam', 'Slučování', '2048'],
+		features: ['Denní výzva + série', 'Cesta: 120 úkolů', '4 desky', '16 vesmírných těles'],
+		en: {
+			tagline: 'Dust into planets, planets into stars.',
+			description:
+				'2048 with cosmic bodies: slide and merge dust, asteroids, planets and stars up to a supernova and a black hole. Boards from 3×3 to 5×5 and an asteroid belt of obstacles.',
+			genres: ['Puzzle', 'Merge', '2048'],
+			features: ['Daily puzzle + streaks', 'Path: 120 challenges', '4 boards', '16 cosmic bodies'],
+		},
+		statLabels: labels,
+		path: '/games/fuze/index.html',
+		colors: ['#ffb347', '#ff4fd8', '#7a2cff'],
+		statsKey: 'gamecenter.stats.fuze',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ffb347', '#ff4fd8', '#7a2cff'], 6);
+			const s = Math.min(w, h) * 0.17;
+			const vals = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4, 8, 2, 16, 4];
+			const hues = [210, 190, 170, 140, 100, 60, 40, 20, 0, 330, 300, 190, 170, 210, 140, 190];
+			const x0 = (w - 4 * s - 3 * 6) / 2;
+			const y0 = h * 0.1;
+			vals.forEach((v, i) => {
+				const x = x0 + (i % 4) * (s + 6);
+				const y = y0 + Math.floor(i / 4) * (s + 6);
+				const pulse = i === Math.floor(t) % 16 ? 1.08 : 1;
+				ctx.save();
+				ctx.translate(x + s / 2, y + s / 2);
+				ctx.scale(pulse, pulse);
+				const g = ctx.createRadialGradient(-s * 0.15, -s * 0.2, 1, 0, 0, s * 0.7);
+				g.addColorStop(0, `hsl(${hues[i]} 95% 72%)`);
+				g.addColorStop(1, `hsl(${hues[i]} 80% 38%)`);
+				ctx.fillStyle = g;
+				ctx.beginPath();
+				ctx.roundRect(-s / 2, -s / 2, s, s, s * 0.18);
+				ctx.fill();
+				ctx.restore();
+				glowText(ctx, String(v), x + s / 2, y + s / 2, s * (v > 999 ? 0.24 : 0.32), '#ffffff');
+			});
+		},
+	},
+	{
+		id: 'miny',
+		title: 'MINY',
+		group: 'puzzle',
+		tagline: 'Hledání min bez hádání.',
+		description:
+			'Klasické hledání min, ale každé pole jde vyřešit čistou logikou z označeného startu. Tři štíty odpustí přehmat. Od 9×9 po 16×30 s 99 minami.',
+		genres: ['Hlavolam', 'Logika', 'Miny'],
+		features: [...common.cs.slice(0, 3), 'Žádné hádání'],
+		en: {
+			tagline: 'Minesweeper without guessing.',
+			description:
+				'Classic minesweeper, but every field can be solved by pure logic from the marked start. Three shields forgive a slip. From 9×9 up to 16×30 with 99 mines.',
+			genres: ['Puzzle', 'Logic', 'Mines'],
+			features: [...common.en.slice(0, 3), 'No guessing'],
+		},
+		statLabels: labels,
+		path: '/games/miny/index.html',
+		colors: ['#55c8ff', '#6dff9e', '#ff7a8a'],
+		statsKey: 'gamecenter.stats.miny',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#55c8ff', '#6dff9e', '#ff7a8a'], 7);
+			const n = 7;
+			const c = Math.min(w, h) * 0.105;
+			const x0 = (w - n * c) / 2;
+			const y0 = h * 0.08;
+			const nums = '1110000F2100001F21111223F1F1F2213111110000000';
+			const colors = ['', '#55c8ff', '#6dff9e', '#ff7a8a', '#c77dff'];
+			const opened = Math.floor(t * 4) % 60;
+			for (let i = 0; i < n * n; i++) {
+				const x = x0 + (i % n) * c;
+				const y = y0 + Math.floor(i / n) * c;
+				const ch = nums[i] ?? '0';
+				const open = i < opened && ch !== 'F';
+				ctx.fillStyle = open ? 'rgba(255,255,255,.05)' : 'rgba(85,200,255,.22)';
+				ctx.beginPath();
+				ctx.roundRect(x + 1.5, y + 1.5, c - 3, c - 3, c * 0.18);
+				ctx.fill();
+				if (open && ch !== '0')
+					glowText(ctx, ch, x + c / 2, y + c / 2, c * 0.48, colors[Number(ch)] ?? '#fff');
+				if (ch === 'F' && i < opened) glowText(ctx, '⚑', x + c / 2, y + c / 2, c * 0.5, '#ff4fd8');
+			}
+		},
+	},
+	{
+		id: 'omalovanky',
+		title: 'OMALOVÁNKY',
+		group: 'puzzle',
+		tagline: 'Malování podle čísel pro chvíle klidu.',
+		description:
+			'Vybarvuj generované pixelové obrazy podle čísel: planety, mimozemské krajiny, bytosti, lodě a mlhoviny. Přibližování dvěma prsty, hotové obrazy se ukládají do galerie.',
+		genres: ['Relax', 'Malování', 'Podle čísel'],
+		features: ['Denní obraz', 'Cesta: 120 obrazů', '5 druhů motivů', 'Galerie'],
+		en: {
+			tagline: 'Colour by number for quiet moments.',
+			description:
+				'Paint generated pixel pictures by number: planets, alien landscapes, creatures, ships and nebulae. Pinch to zoom; finished pictures go to your gallery.',
+			genres: ['Relax', 'Painting', 'By number'],
+			features: ['Daily picture', 'Path: 120 pictures', '5 kinds of motifs', 'Gallery'],
+		},
+		statLabels: labels,
+		path: '/games/omalovanky/index.html',
+		colors: ['#ff8ae0', '#7dff9b', '#4fd1ff'],
+		statsKey: 'gamecenter.stats.omalovanky',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ff8ae0', '#7dff9b', '#4fd1ff'], 8);
+			const n = 16;
+			const c = (Math.min(w, h) * 0.75) / n;
+			const x0 = (w - n * c) / 2;
+			const y0 = h * 0.06;
+			const done = (t * 24) % (n * n + 60);
+			for (let y = 0; y < n; y++)
+				for (let x = 0; x < n; x++) {
+					const d = Math.hypot(x - 7.5, y - 7.5);
+					const ring =
+						Math.abs((x - 7.5) * 0.9 - (y - 7.5) * 0.4) < 7.5 &&
+						Math.abs(y - 7.5 + (x - 7.5) * 0.25) < 1.3;
+					const k = d < 5 ? (y + x * 0.3 < 9 ? 0 : 1) : ring ? 2 : 3;
+					const pal = ['#ff8ae0', '#b14cff', '#7dff9b', '#0d0a22'];
+					if (y * n + x < done) {
+						ctx.fillStyle = pal[k] ?? '#000';
+						ctx.fillRect(x0 + x * c, y0 + y * c, c + 0.5, c + 0.5);
+					} else {
+						ctx.fillStyle = 'rgba(235,235,245,.85)';
+						ctx.fillRect(x0 + x * c + 0.5, y0 + y * c + 0.5, c - 1, c - 1);
+						ctx.fillStyle = '#3a2f6b';
+						ctx.font = `600 ${c * 0.55}px "Space Grotesk", sans-serif`;
+						ctx.textAlign = 'center';
+						ctx.textBaseline = 'middle';
+						ctx.fillText(String(k + 1), x0 + x * c + c / 2, y0 + y * c + c / 2);
+					}
+				}
+		},
+	},
 ];

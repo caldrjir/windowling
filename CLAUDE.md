@@ -8,7 +8,8 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 **Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
 holds two shelves: action games (**VOIDBORN**, **STARSPIRE**, **DRIFTWOOD** with multiplayer worlds) and
-**Puzzles** (Sudoku, Nonograms, Kakuro, Souhvězdí/Hashi) built on a shared puzzle kit. Later games will store progress in Postgres.
+**Puzzles** (Sudoku, Nonograms, Kakuro, Souhvězdí/Hashi, Pulsar falling blocks, Fúze/2048, Miny,
+Omalovánky colour by number) built on a shared puzzle kit. Later games will store progress in Postgres.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
