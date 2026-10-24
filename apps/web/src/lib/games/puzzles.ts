@@ -102,6 +102,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'SUDOKU',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Devět čísel, devět souhvězdí.',
 		description:
 			'Klasické sudoku ve čtyřech obtížnostech. Každá mřížka má jediné řešení, poznámky, kandidáty a nápovědu. Denní výzva je stejná pro všechny hráče.',
@@ -152,6 +153,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'NONOGRAMY',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Malované křížovky, ze kterých se líhnou hvězdné bytosti.',
 		description:
 			'Vybarvuj políčka podle čísel u řádků a sloupců a odhal obrázek. Každý vyřešený nonogram přidá do tvé sbírky novou hvězdnou bytost. Od 8×8 po 20×20.',
@@ -196,6 +198,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'KAKURO',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Číselná křížovka pro ty, kdo rádi počítají.',
 		description:
 			'Doplň číslice 1–9 tak, aby úseky dávaly zadané součty a nic se neopakovalo. Hra ti ukáže možné kombinace součtů. Mřížky od 6×6 po 11×11.',
@@ -263,6 +266,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'SOUHVĚZDÍ',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Spoj hvězdy v souhvězdí.',
 		description:
 			'Hashi pod hvězdnou oblohou: číslo ve hvězdě říká, kolik čar z ní vede. Čáry se nesmí křížit a vše musí tvořit jedno souhvězdí. Jednoduchá pravidla, hluboká logika.',
@@ -335,6 +339,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'PULSAR',
 		group: 'puzzle',
+		category: 'arcade',
 		tagline: 'Padající bloky v rytmu pulsaru.',
 		description:
 			'Skládej padající dílky do plných řad. Maraton, Sprint 40, Ultra 2:00 a Kopání, T-spiny, kombo, odkládání dílků. Denní sprint má pro všechny stejné pořadí dílků.',
@@ -407,6 +412,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'FÚZE',
 		group: 'puzzle',
+		category: 'arcade',
 		tagline: 'Z prachu planety, z planet hvězdy.',
 		description:
 			'Princip 2048 s vesmírnými tělesy: posouvej a slučuj prach, asteroidy, planety a hvězdy až k supernově a černé díře. Desky 3×3 až 5×5 a pás asteroidů jako překážky.',
@@ -454,6 +460,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'MINY',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Hledání min bez hádání.',
 		description:
 			'Klasické hledání min, ale každé pole jde vyřešit čistou logikou z označeného startu. Tři štíty odpustí přehmat. Od 9×9 po 16×30 s 99 minami.',
@@ -499,6 +506,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'OMALOVÁNKY',
 		group: 'puzzle',
+		category: 'relax',
 		tagline: 'Malování podle čísel pro chvíle klidu.',
 		description:
 			'Vybarvuj generované pixelové obrazy podle čísel: planety, mimozemské krajiny, bytosti, lodě a mlhoviny. Přibližování dvěma prsty, hotové obrazy se ukládají do galerie.',
@@ -550,6 +558,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'SOLITAIRE',
 		group: 'puzzle',
+		category: 'board',
 		tagline: 'Klondike, FreeCell a Pavouk pod hvězdami.',
 		description:
 			'Klasické karetní pasiánsy: Klondike po jedné i po třech kartách, FreeCell a Pavouk v jedné nebo dvou barvách. Rozdání Klondike na denní výzvě a na Cestě jde vždy dohrát.',
@@ -676,6 +685,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'MAHJONG',
 		group: 'puzzle',
+		category: 'board',
 		tagline: 'Dvojice nebeských kamenů.',
 		description:
 			'Mahjong solitaire: odebírej dvojice stejných volných kamenů s hvězdami, planetami, kometami a souhvězdími. Kámen, na který klepneš, odletí do přihrádky se čtyřmi místy a dva stejné v ní zmizí. Některé kameny leží lícem dolů. Želva, Pyramida, Pevnost, Věž a generovaná rozložení, která jdou vždy dohrát.',
@@ -826,6 +836,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'SKLÁDAČKA',
 		group: 'puzzle',
+		category: 'relax',
 		tagline: 'Jigsaw z vesmírných obrazů.',
 		description:
 			'Skládej generované vesmírné obrazy: mlhoviny, planety s prstenci, galaxie, komety a mimozemské krajiny. Od 24 do 150 dílků, náhled, třídění okrajů a galerie složených obrazů.',
@@ -875,6 +886,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'turn',
 		title: 'ŠACHY',
 		group: 'puzzle',
+		category: 'board',
 		tagline: 'Šachy pod hvězdami.',
 		description:
 			'Šachy proti počítači v šesti silách od nováčka po mistra, denní úloha mat v 1–2 tazích, Cesta hvězd střídající úlohy a partie a hra ve dvou na jednom zařízení.',
@@ -923,6 +935,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'turn',
 		title: 'PIŠKVORKY',
 		group: 'puzzle',
+		category: 'board',
 		tagline: 'Pět hvězd v řadě.',
 		description:
 			'Piškvorky na 15×15: hvězdy proti planetám. Soupeř ve čtyřech silách, který hlídá hrozby a počítá vynucené výhry, denní zahájení, Cesta hvězd a hra ve dvou na jednom zařízení.',
@@ -979,6 +992,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'SOKOBAN',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Skladník ve vesmírném skladu.',
 		description:
 			'Klasický Sokoban: dotlač všechny bedny na zářící cíle a nezasekni se v rohu. Každý sklad je vygenerovaný a zaručeně řešitelný, s limitem posunů na tři hvězdy, neomezeným vracením tahů a nápovědou.',
@@ -1062,6 +1076,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'CLICKOMANIA',
 		group: 'puzzle',
+		category: 'arcade',
 		tagline: 'Nech prasknout skupiny krystalů.',
 		description:
 			'Klasická Clickomania: klepni na skupinu aspoň dvou stejných krystalů, zbytek spadne dolů a prázdné sloupce se přisunou. Vyčisti celou plochu. Každá deska je ověřená řešitelem, takže jde vždy vyčistit.',
@@ -1117,6 +1132,7 @@ export const PUZZLE_GAMES: Game[] = [
 		online: 'race',
 		title: 'RYBKY',
 		group: 'puzzle',
+		category: 'logic',
 		tagline: 'Dvě rybky, jedna cesta ven.',
 		description:
 			'Logická hra pod vodou na motivy Fish Fillets: malá a velká rybka musí uplavat z jeskyně. Malá pohne jen lehkými věcmi, velká i ocelí, předměty padají a na rybku nesmí nic spadnout. Stovky ověřených jeskyní od mělčiny po propast.',

@@ -3,7 +3,7 @@
  * The same rule lives in static/games/sync.js (plain JS for the games) - keep them equal.
  */
 export const SYNC_KEY_RE =
-	/^(gamecenter\.(lang|puzzles|music|stats\.[a-z0-9-]{1,32})|[a-z0-9-]{2,32}\.save\.v1|driftwood\.[A-Za-z0-9._:-]{1,64})$/;
+	/^(gamecenter\.(lang|puzzles|music|favorites|stats\.[a-z0-9-]{1,32})|[a-z0-9-]{2,32}\.save\.v1|driftwood\.[A-Za-z0-9._:-]{1,64})$/;
 
 /** Nicknames: 3-20 visible characters, letters, digits, spaces and a few marks. */
 export const NICK_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,18}[\p{L}\p{N}]$/u;

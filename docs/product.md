@@ -23,9 +23,8 @@ follow the player; later, some games are played together (multiplayer).
 | VOIDBORN  | Roguelite, bullet heaven         | Released                  |
 | STARSPIRE | Deckbuilder, roguelike, strategy | Released                  |
 | DRIFTWOOD | First-person survival, 3D, co-op | Released (computers only) |
-| -         | Free slot (1 shown)              | Planned                   |
 
-**Puzzles** (a second shelf, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
+**Puzzles** (the library below them, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
 (Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and
 Omalovánky (colour by number), Solitaire (Klondike, FreeCell, Spider), Mahjong, Skládačka
 (jigsaw), Šachy (chess), Piškvorky (gomoku), Sokoban, Clickomania and Rybky (in the spirit of Fish Fillets). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
@@ -36,7 +35,15 @@ against a live opponent, and races of up to 8 players on the same puzzle in ever
 ## What the hub shows
 
 - Hero with the selected game: cover, description, tags, play / continue button.
-- Library shelf with game cards and free slots.
+- Featured shelf: the big games (VOIDBORN, STARSPIRE, DRIFTWOOD), always on top.
+- Library: every other game in genre shelves (`CATEGORIES` in `registry.ts`: logic, arcade,
+  cards & board, relax; a new genre is one entry there), with genre chips, search (ignores
+  diacritics) and sorting (recently played, most played, playing now, by name). The view is
+  remembered in `gamecenter.libview`.
+- Favourites: a star on every card and next to the hero title. Favourites get their own shelf
+  on top of the library and a filter chip; `gamecenter.favorites` syncs with the account.
+- Site pulse: people online now, players in the last 30 days and in total, accounts, and the
+  games most played right now.
 - Per-game stats from this browser: play time, last played, progress and game-specific numbers.
 - Who is playing right now: per game, signed-in players and anonymous players (live, ~15 s).
 - Account: Google sign-in button, or the player's name and avatar with sign-out.

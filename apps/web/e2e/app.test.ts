@@ -13,27 +13,30 @@ test('the game center opens with its library', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 	await expect(page.locator('.brand')).toContainText('WINDOWLING');
 	await expect(page.locator('.hero-title')).toHaveText('VOIDBORN');
-	// Three games and a free slot on the shelf.
-	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(4);
-	await expect(page.getByTestId('shelf').locator('.gcard.soon')).toHaveCount(1);
-	// The puzzle shelf.
-	await expect(page.getByTestId('shelf-puzzle').locator('.gcard')).toHaveCount(
+	// The three big games on top, no empty slots.
+	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(3);
+	// The rest of the library, sorted into genre shelves.
+	const library = page.getByTestId('library');
+	await expect(library.locator('.gcard')).toHaveCount(
 		GAMES.filter((g) => g.group === 'puzzle').length,
 	);
-	await expect(page.getByTestId('shelf-puzzle')).toContainText('SUDOKU');
+	await expect(page.getByTestId('shelf-logic')).toContainText('SUDOKU');
+	await expect(page.getByTestId('shelf-board')).toContainText('ŠACHY');
+	// How many people use the site.
+	await expect(page.getByTestId('online')).toHaveText(/^\d+$/);
 	expect(errors).toEqual([]);
 });
 
 test('switches language and keeps it for the games', async ({ page }) => {
 	await page.goto('/');
 	await page.getByRole('button', { name: 'EN', exact: true }).click();
-	await expect(page.locator('.lib-head h2').first()).toHaveText('Action & adventure');
+	await expect(page.locator('.lib-head h2').first()).toHaveText('Featured games');
 	await expect(page.getByTestId('play')).toContainText('PLAY');
 	expect(await page.evaluate(() => localStorage.getItem('gamecenter.lang'))).toBe('en');
 	await page.reload();
-	await expect(page.locator('.lib-head h2').first()).toHaveText('Action & adventure');
+	await expect(page.locator('.lib-head h2').first()).toHaveText('Featured games');
 	await page.getByRole('button', { name: 'CS', exact: true }).click();
-	await expect(page.locator('.lib-head h2').first()).toHaveText('Akce a dobrodružství');
+	await expect(page.locator('.lib-head h2').first()).toHaveText('Hlavní hry');
 });
 
 test('launches VOIDBORN and comes back to the center', async ({ page }) => {
@@ -349,17 +352,24 @@ test('the center shows who is playing a game right now', async ({ context, page,
 
 	const res = await request.get('/api/presence');
 	expect(res.ok()).toBe(true);
-	const { games } = (await res.json()) as {
+	const { games, site } = (await res.json()) as {
 		games: Record<string, { signedIn: number; anonymous: number }>;
+		site: { online: number; visitors: { month: number; total: number }; accounts: number };
 	};
 	// Other tests play in parallel, so at least this tab is counted (nobody is signed in in E2E).
 	expect(games.voidborn?.anonymous).toBeGreaterThanOrEqual(1);
 	expect(Object.keys(games).sort()).toEqual(GAMES.map((g) => g.id).sort());
+	// The site counts people, not tabs: this visitor is online and has been here.
+	expect(site.online).toBeGreaterThanOrEqual(1);
+	expect(site.visitors.total).toBeGreaterThanOrEqual(site.visitors.month);
+	expect(site.visitors.month).toBeGreaterThanOrEqual(1);
 
 	await page.goto('/');
 	await expect(page.getByTestId('live')).toContainText('Právě hraje');
 	await expect(page.getByTestId('live')).toContainText('anonymní');
 	await expect(page.getByTestId('shelf').locator('.gc-live').first()).toBeVisible();
+	// VOIDBORN is among the games played right now.
+	await expect(page.getByTestId('hot')).toContainText('VOIDBORN');
 
 	// Unknown games and malformed heartbeats are rejected.
 	const bad = await request.post('/api/presence', {
@@ -410,4 +420,49 @@ test('/favicon.ico points browsers at the SVG icon', async ({ request }) => {
 	const res = await request.get('/favicon.ico', { maxRedirects: 0 });
 	expect(res.status()).toBe(308);
 	expect(res.headers().location).toBe('/favicon.svg');
+});
+
+test('the library filters by genre, finds games and keeps favourites', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	const library = page.getByTestId('library');
+	await expect(library.locator('.gcard').first()).toBeVisible();
+
+	// A genre chip shows just that genre.
+	await library.locator('[data-filter="board"]').click();
+	await expect(library.locator('.sub')).toHaveCount(1);
+	await expect(page.getByTestId('shelf-board')).toContainText('MAHJONG');
+	await expect(library).not.toContainText('SUDOKU');
+	await library.getByRole('tab', { name: 'Vše' }).click();
+
+	// Search ignores case and diacritics.
+	await page.getByTestId('search').fill('sachy');
+	await expect(page.getByTestId('shelf-search').locator('.gcard')).toHaveCount(1);
+	await expect(page.getByTestId('shelf-search')).toContainText('ŠACHY');
+	await page.getByTestId('search').fill('');
+
+	// Favourites: the star on a card, its own shelf on top and the filter; kept after reload.
+	await library.locator('.gslot[data-game="sokoban"] .gc-fav').click();
+	await expect(page.getByTestId('shelf-fav')).toContainText('SOKOBAN');
+	await expect(library.locator('.sub').first()).toHaveAttribute('data-group', 'fav');
+	expect(await page.evaluate(() => localStorage.getItem('gamecenter.favorites'))).toBe(
+		'["sokoban"]',
+	);
+	// The big games can be favourites too, from the hero.
+	await page.getByTestId('fav').click();
+	await expect(page.getByTestId('fav')).toHaveAttribute('aria-pressed', 'true');
+	await library.locator('[data-filter="fav"]').click();
+	await expect(page.getByTestId('shelf-fav').locator('.gcard')).toHaveCount(2);
+	await page.reload();
+	await expect(library.locator('[data-filter="fav"]')).toHaveAttribute('aria-selected', 'true');
+	await expect(page.getByTestId('shelf-fav').locator('.gcard')).toHaveCount(2);
+	await library.locator('.gslot[data-game="sokoban"] .gc-fav').click();
+	await expect(page.getByTestId('shelf-fav').locator('.gcard')).toHaveCount(1);
+
+	// Sorting by name.
+	await library.getByRole('tab', { name: 'Vše' }).click();
+	await page.getByTestId('sort').selectOption('name');
+	await expect(page.getByTestId('shelf-arcade').locator('h3').first()).toHaveText('CLICKOMANIA');
+	expect(errors).toEqual([]);
 });

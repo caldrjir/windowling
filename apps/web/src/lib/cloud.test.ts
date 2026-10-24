@@ -6,6 +6,7 @@ describe('cloud saves', () => {
 		for (const key of [
 			'gamecenter.lang',
 			'gamecenter.music',
+			'gamecenter.favorites',
 			'gamecenter.puzzles',
 			'gamecenter.stats.voidborn',
 			'sudoku.save.v1',

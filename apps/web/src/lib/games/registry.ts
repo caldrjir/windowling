@@ -13,11 +13,19 @@ export interface GameTexts {
 	features?: string[];
 }
 
-/** Shelves in the library, in order. */
+/** `action`: the big featured games on top of the hub; `puzzle`: the puzzle-kit library. */
 export type GameGroup = 'action' | 'puzzle';
-export const GROUPS: { id: GameGroup; title: [string, string]; slots: number }[] = [
-	{ id: 'action', title: ['Akce a dobrodružství', 'Action & adventure'], slots: 4 },
-	{ id: 'puzzle', title: ['Hlavolamy', 'Puzzles'], slots: 0 },
+
+/**
+ * Genres in the library under the featured games, in order. A game names its category;
+ * new genres get an entry here.
+ */
+export type GameCategory = 'logic' | 'arcade' | 'board' | 'relax';
+export const CATEGORIES: { id: GameCategory; title: [string, string] }[] = [
+	{ id: 'logic', title: ['Logické hlavolamy', 'Logic puzzles'] },
+	{ id: 'arcade', title: ['Arkádové', 'Arcade'] },
+	{ id: 'board', title: ['Karty a deskové', 'Cards & board'] },
+	{ id: 'relax', title: ['Relax', 'Relax'] },
 ];
 
 export interface Game extends GameTexts {
@@ -25,6 +33,8 @@ export interface Game extends GameTexts {
 	title: string;
 	/** Which shelf the game sits on (default: action). */
 	group?: GameGroup;
+	/** Genre in the library (games outside the featured shelf). */
+	category?: GameCategory;
 	en: GameTexts;
 	/** Label per stat key: [Czech, English]. */
 	statLabels: Record<string, [string, string]>;
@@ -41,9 +51,6 @@ export interface Game extends GameTexts {
 	record?: { board: string; label: [string, string] };
 	cover(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void;
 }
-
-/** Slots on the action shelf (the rest show "Coming soon"). */
-export const GAME_SLOTS = 4;
 
 const ACTION_GAMES: Game[] = [
 	{

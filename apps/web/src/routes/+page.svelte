@@ -2,7 +2,14 @@
 	import '$lib/hub/hub.css';
 	import { invalidateAll } from '$app/navigation';
 	import { authClient } from '$lib/auth-client';
-	import { GAMES, GROUPS, groupOf, type Game, type GameTexts } from '$lib/games/registry';
+	import {
+		CATEGORIES,
+		GAMES,
+		groupOf,
+		type Game,
+		type GameCategory,
+		type GameTexts,
+	} from '$lib/games/registry';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
@@ -18,11 +25,21 @@
 
 	// The language is shared with the games through localStorage.
 	const LANG_KEY = 'gamecenter.lang';
-	// Shelves: each group lists its games (global index for selection) and free slots.
-	const shelves = GROUPS.map((grp) => {
-		const games = GAMES.map((g, i) => ({ g, i })).filter(({ g }) => groupOf(g) === grp.id);
-		return { ...grp, games, free: Math.max(0, grp.slots - games.length) };
-	});
+	// The library: the big games always on top, the rest sorted into genres below
+	// (global index `i` for selection).
+	type Entry = { g: Game; i: number };
+	const ALL: Entry[] = GAMES.map((g, i) => ({ g, i }));
+	const featured = ALL.filter(({ g }) => groupOf(g) === 'action');
+	const others = ALL.filter(({ g }) => groupOf(g) !== 'action');
+	type Filter = 'all' | 'fav' | GameCategory;
+	type Sort = 'default' | 'recent' | 'played' | 'online' | 'name';
+	let filter = $state<Filter>('all');
+	let sortBy = $state<Sort>('default');
+	let query = $state('');
+	// Favourites (gamecenter.favorites, synced with the account like the saves).
+	const FAV_KEY = 'gamecenter.favorites';
+	const VIEW_KEY = 'gamecenter.libview';
+	let favs = $state<string[]>([]);
 
 	let lang = $state<Lang>('cs');
 	let sel = $state(0);
@@ -80,10 +97,102 @@
 		if (l.anonymous) parts.push(L(`${l.anonymous} anonymní`, `${l.anonymous} anonymous`));
 		return `${L('Právě hraje', 'Playing now')}: ${parts.join(' · ')}`;
 	}
+	const isFav = (id: string) => favs.includes(id);
+	function toggleFav(id: string) {
+		favs = isFav(id) ? favs.filter((f) => f !== id) : [...favs, id];
+		try {
+			localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+		} catch {
+			// No storage - favourites last this visit.
+		}
+		blip(isFav(id) ? 1320 : 520, 0.08, 0.04, 'triangle');
+	}
+	function loadFavs() {
+		try {
+			const v = JSON.parse(localStorage.getItem(FAV_KEY) ?? '[]') as unknown;
+			favs = Array.isArray(v)
+				? v.filter((x): x is string => typeof x === 'string' && GAMES.some((g) => g.id === x))
+				: [];
+		} catch {
+			favs = [];
+		}
+	}
+	function saveView() {
+		try {
+			localStorage.setItem(VIEW_KEY, JSON.stringify({ filter, sortBy }));
+		} catch {
+			// No storage.
+		}
+	}
+	const norm = (t: string) =>
+		t
+			.toLowerCase()
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '');
+	function matches(g: Game): boolean {
+		const q = norm(query.trim());
+		if (!q) return true;
+		return [g.title, g.tagline, g.en.tagline, ...g.genres, ...g.en.genres].some((t) =>
+			norm(t).includes(q),
+		);
+	}
+	function sorted(list: Entry[]): Entry[] {
+		const out = list.slice();
+		const by = sortBy;
+		if (by === 'recent')
+			out.sort((a, b) => (saved[b.g.id]?.lastPlayed ?? 0) - (saved[a.g.id]?.lastPlayed ?? 0));
+		else if (by === 'played')
+			out.sort((a, b) => (saved[b.g.id]?.playTime ?? 0) - (saved[a.g.id]?.playTime ?? 0));
+		else if (by === 'online') out.sort((a, b) => playing(b.g.id) - playing(a.g.id));
+		else if (by === 'name') out.sort((a, b) => a.g.title.localeCompare(b.g.title, locale));
+		return out;
+	}
+	interface Shelf {
+		id: string;
+		title: string;
+		games: Entry[];
+	}
+	const shelves = $derived.by((): Shelf[] => {
+		const pick = (list: Entry[]) => sorted(list.filter(({ g }) => matches(g)));
+		const favEntries = ALL.filter(({ g }) => isFav(g.id));
+		if (filter === 'fav')
+			return [{ id: 'fav', title: L('Oblíbené', 'Favourites'), games: pick(favEntries) }];
+		if (query.trim())
+			return [{ id: 'search', title: L('Výsledky hledání', 'Search results'), games: pick(ALL) }];
+		const out: Shelf[] = [];
+		if (filter === 'all' && favEntries.length)
+			out.push({ id: 'fav', title: L('Oblíbené', 'Favourites'), games: sorted(favEntries) });
+		for (const c of CATEGORIES) {
+			if (filter !== 'all' && filter !== c.id) continue;
+			const games = pick(others.filter(({ g }) => g.category === c.id));
+			if (games.length) out.push({ id: c.id, title: L(c.title[0], c.title[1]), games });
+		}
+		const rest = filter === 'all' ? pick(others.filter(({ g }) => !g.category)) : [];
+		if (rest.length) out.push({ id: 'other', title: L('Ostatní', 'Other'), games: rest });
+		return out;
+	});
+	const catCount = (id: GameCategory) => others.filter(({ g }) => g.category === id).length;
+	// What people play right now, most played first.
+	const hot = $derived(
+		ALL.map((e) => ({ ...e, n: playing(e.g.id) }))
+			.filter((e) => e.n > 0)
+			.sort((a, b) => b.n - a.n)
+			.slice(0, 6),
+	);
+	interface SiteStats {
+		online: number;
+		visitors: { month: number; total: number };
+		accounts: number;
+	}
+	let site = $state<SiteStats | null>(null);
 	async function refreshLive() {
 		try {
 			const res = await fetch('/api/presence', { cache: 'no-store' });
-			if (res.ok) live = ((await res.json()) as { games: Record<string, Live> }).games;
+			if (res.ok) {
+				const body = (await res.json()) as { games: Record<string, Live>; site?: SiteStats };
+				live = body.games;
+				site = body.site ?? null;
+			}
 		} catch {
 			// Offline or locked: keep the last numbers.
 		}
@@ -198,17 +307,13 @@
 		return L('Dobrý večer', 'Good evening');
 	});
 	const totalTime = $derived(GAMES.reduce((t, g) => t + (saved[g.id]?.playTime ?? 0), 0));
-	function shelfCount(n: number, free: number): string {
-		const games = L(
-			`${n} ${n === 1 ? 'hra' : n < 5 ? 'hry' : 'her'}`,
+	function gamesCount(n: number): string {
+		return L(
+			`${n} ${n === 1 ? 'hra' : n > 1 && n < 5 ? 'hry' : 'her'}`,
 			`${n} ${n === 1 ? 'game' : 'games'}`,
 		);
-		if (!free) return games;
-		return L(
-			`${games} · ${free} ${free === 1 ? 'volný slot' : free < 5 ? 'volné sloty' : 'volných slotů'}`,
-			`${games} · ${free} free ${free === 1 ? 'slot' : 'slots'}`,
-		);
 	}
+	const fmtNum = (n: number) => n.toLocaleString(locale);
 
 	// --- Interface sounds -----------------------------------------------------------
 	let ac: AudioContext | null = null;
@@ -368,7 +473,30 @@
 	// --- Animation: background aurora, hero cover, cards --------------------------------
 	let bg: HTMLCanvasElement;
 	let heroCover: HTMLCanvasElement;
-	const cardCanvases: HTMLCanvasElement[] = $state([]);
+	// Card covers: every card canvas registers itself (cards appear in several shelves).
+	const covers: { cv: HTMLCanvasElement; i: number }[] = [];
+	let coverIO: IntersectionObserver | null = null;
+	let coverDPR = 1;
+	function sizeCover(cv: HTMLCanvasElement) {
+		const b = cv.getBoundingClientRect();
+		cv.width = Math.max(1, b.width * coverDPR);
+		cv.height = Math.max(1, b.height * coverDPR);
+	}
+	function cover(node: HTMLCanvasElement, i: number) {
+		const entry = { cv: node, i };
+		covers.push(entry);
+		sizeCover(node);
+		coverIO?.observe(node);
+		return {
+			update(n: number) {
+				entry.i = n;
+			},
+			destroy() {
+				covers.splice(covers.indexOf(entry), 1);
+				coverIO?.unobserve(node);
+			},
+		};
+	}
 
 	onMount(() => {
 		try {
@@ -379,12 +507,26 @@
 			lang = /^(cs|sk)/i.test(navigator.language) ? 'cs' : 'en';
 		}
 		loadSaved();
+		loadFavs();
+		try {
+			const v = JSON.parse(localStorage.getItem(VIEW_KEY) ?? '{}') as {
+				filter?: Filter;
+				sortBy?: Sort;
+			};
+			if (v.filter === 'all' || v.filter === 'fav' || CATEGORIES.some((c) => c.id === v.filter))
+				filter = v.filter ?? 'all';
+			if (v.sortBy && ['default', 'recent', 'played', 'online', 'name'].includes(v.sortBy))
+				sortBy = v.sortBy;
+		} catch {
+			// No storage.
+		}
 		// Progress pulled from the account (other devices) shows up right away.
 		const onSync = (e: Event) => {
 			const detail = (e as CustomEvent<{ state: string }>).detail;
 			syncState = detail.state;
 			syncedAt = Date.now();
 			loadSaved();
+			loadFavs();
 			try {
 				const l = localStorage.getItem(LANG_KEY);
 				if (l === 'cs' || l === 'en') lang = l;
@@ -401,6 +543,7 @@
 		if (data.user && !data.user.nickname) openNick();
 
 		const DPR = Math.min(window.devicePixelRatio || 1, 2);
+		coverDPR = DPR;
 		const bctx = bg.getContext('2d');
 		const hctx = heroCover.getContext('2d');
 		const resize = () => {
@@ -409,12 +552,9 @@
 			const r = heroCover.getBoundingClientRect();
 			heroCover.width = Math.max(1, r.width * DPR);
 			heroCover.height = Math.max(1, r.height * DPR);
-			for (const cv of cardCanvases) {
-				if (!cv) continue;
-				const b = cv.getBoundingClientRect();
-				cv.width = Math.max(1, b.width * DPR);
-				cv.height = Math.max(1, b.height * DPR);
-			}
+			for (const { cv } of covers) sizeCover(cv);
+			// Resizing clears the canvases: every card is painted again once.
+			drawn = new WeakSet();
 		};
 		const hexRgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 		let cur = [
@@ -456,9 +596,9 @@
 				hctx.setTransform(1, 0, 0, 1, 0, 0);
 				g.cover(hctx, heroCover.width, heroCover.height, t);
 			}
-			cardCanvases.forEach((cv, i) => {
+			covers.forEach(({ cv, i }) => {
 				// Only cards on screen are repainted.
-				if (!cv || (drawn.has(cv) && !visible.has(cv))) return;
+				if (drawn.has(cv) && !visible.has(cv)) return;
 				drawn.add(cv);
 				const ctx = cv.getContext('2d');
 				const cardGame = GAMES[i];
@@ -468,14 +608,15 @@
 			});
 		};
 		const visible = new WeakSet<Element>();
-		const drawn = new WeakSet<Element>();
+		let drawn = new WeakSet<Element>();
 		const io = new IntersectionObserver((entries) => {
 			for (const e of entries) {
 				if (e.isIntersecting) visible.add(e.target);
 				else visible.delete(e.target);
 			}
 		});
-		for (const cv of cardCanvases) if (cv) io.observe(cv);
+		coverIO = io;
+		for (const { cv } of covers) io.observe(cv);
 		resize();
 		raf = requestAnimationFrame(frame);
 		const clock = setInterval(() => (now = new Date()), 10_000);
@@ -603,6 +744,59 @@
 	</div>
 </header>
 
+{#snippet star()}
+	<svg viewBox="0 0 24 24" aria-hidden="true"
+		><path
+			d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"
+			stroke="currentColor"
+			stroke-width="1.8"
+			stroke-linejoin="round"
+		/></svg
+	>
+{/snippet}
+
+{#snippet card(g: Game, i: number)}
+	{@const s = saved[g.id]}
+	<div class="gslot" data-game={g.id}>
+		<button
+			class="gcard"
+			class:sel={i === sel}
+			style:--ca={g.colors[0]}
+			onclick={() => onCard(i)}
+			onpointerenter={() => blip(1600, 0.03, 0.015)}
+		>
+			<canvas use:cover={i}></canvas>
+			<span class="gc-tag">{s ? fmtDur(s.playTime) : L('NOVÉ', 'NEW')}</span>
+			{#if playing(g.id)}
+				<span class="gc-live" title={liveText(g.id)}><i></i>{playing(g.id)}</span>
+			{/if}
+			{#if g.desktopOnly || g.online}
+				<span class="gc-badges">
+					{#if g.desktopOnly}
+						<span title={L('Jen na počítači', 'Desktop only')}>PC</span>
+					{/if}
+					{#if g.online}
+						<span class="on" title={onlineText(g.online)}>ONLINE</span>
+					{/if}
+				</span>
+			{/if}
+			<div class="gc-info">
+				<h3>{g.title}</h3>
+				<p>{tx(g, 'genres').join(' · ')}</p>
+			</div>
+		</button>
+		<button
+			class="gc-fav"
+			class:on={isFav(g.id)}
+			onclick={() => toggleFav(g.id)}
+			aria-pressed={isFav(g.id)}
+			title={isFav(g.id)
+				? L('Odebrat z oblíbených', 'Remove from favourites')
+				: L('Přidat do oblíbených', 'Add to favourites')}>{@render star()}</button
+		>
+	</div>
+{/snippet}
+
 <main>
 	<section class="hero">
 		<div class="hero-art"><canvas bind:this={heroCover}></canvas></div>
@@ -616,7 +810,18 @@
 						? L('Pokračuj ve hře', 'Continue playing')
 						: L('Novinka v knihovně', 'New in your library')}
 				</div>
-				<h1 class="hero-title">{game.title}</h1>
+				<h1 class="hero-title">
+					{game.title}<button
+						class="fav-hero"
+						class:on={isFav(game.id)}
+						data-testid="fav"
+						onclick={() => toggleFav(game.id)}
+						title={isFav(game.id)
+							? L('Odebrat z oblíbených', 'Remove from favourites')
+							: L('Přidat do oblíbených', 'Add to favourites')}
+						aria-pressed={isFav(game.id)}>{@render star()}</button
+					>
+				</h1>
 				<div class="tagline">{tx(game, 'tagline')}</div>
 				<div class="chips">
 					{#each tx(game, 'genres') as genre (genre)}<span>{genre}</span>{/each}
@@ -723,67 +928,142 @@
 		</div>
 	</section>
 
-	{#each shelves as shelf, si (shelf.id)}
-		<section class="library" data-group={shelf.id}>
-			<div class="lib-head">
-				<h2>{L(shelf.title[0], shelf.title[1])}</h2>
-				<span>{shelfCount(shelf.games.length, shelf.free)}</span>
-				<div class="spacer"></div>
-				{#if si === 0}
-					<span class="hint"
-						><kbd>←</kbd><kbd>→</kbd>
-						{L('výběr', 'select')} · <kbd>Enter</kbd>
-						{L('spustit', 'launch')}</span
-					>
-				{/if}
+	<section class="pulse" data-testid="pulse">
+		<div class="pulse-stats">
+			<div class="ps live-dot">
+				<b data-testid="online">{site ? fmtNum(site.online) : '–'}</b><small
+					>{L('právě online', 'online now')}</small
+				>
 			</div>
-			<div class="shelf" data-testid={si === 0 ? 'shelf' : `shelf-${shelf.id}`}>
-				{#each shelf.games as { g, i } (g.id)}
-					{@const s = saved[g.id]}
-					<button
-						class="gcard"
-						class:sel={i === sel}
-						style:--ca={g.colors[0]}
-						style:animation-delay="{i * 0.05}s"
-						onclick={() => onCard(i)}
-						onpointerenter={() => blip(1600, 0.03, 0.015)}
-					>
-						<canvas bind:this={cardCanvases[i]}></canvas>
-						<span class="gc-tag">{s ? fmtDur(s.playTime) : L('NOVÉ', 'NEW')}</span>
-						{#if playing(g.id)}
-							<span class="gc-live" title={liveText(g.id)}><i></i>{playing(g.id)}</span>
-						{/if}
-						{#if g.desktopOnly || g.online}
-							<span class="gc-badges">
-								{#if g.desktopOnly}
-									<span title={L('Jen na počítači', 'Desktop only')}>PC</span>
-								{/if}
-								{#if g.online}
-									<span class="on" title={onlineText(g.online)}>ONLINE</span>
-								{/if}
-							</span>
-						{/if}
-						<div class="gc-info">
-							<h3>{g.title}</h3>
-							<p>{tx(g, 'genres').join(' · ')}</p>
-						</div>
-					</button>
-				{/each}
-				{#each { length: shelf.free } as _, k (k)}
-					<div class="gcard soon" style:animation-delay="{(shelf.games.length + k) * 0.07}s">
-						<div class="soon-in">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-								><path d="M12 2l9 5v10l-9 5-9-5V7z" /><path d="M12 8v5M12 16v.5" /></svg
-							>
-							<b>SLOT {String(shelf.games.length + k + 1).padStart(2, '0')}</b><small
-								>{L('Připravujeme', 'Coming soon')}</small
-							>
-						</div>
-					</div>
+			<div class="ps">
+				<b>{site ? fmtNum(site.visitors.month) : '–'}</b><small
+					>{L('hráčů za 30 dní', 'players in 30 days')}</small
+				>
+			</div>
+			<div class="ps">
+				<b>{site ? fmtNum(site.visitors.total) : '–'}</b><small
+					>{L('hráčů celkem', 'players in total')}</small
+				>
+			</div>
+			<div class="ps">
+				<b>{site ? fmtNum(site.accounts) : '–'}</b><small>{L('účtů', 'accounts')}</small>
+			</div>
+		</div>
+		<div class="pulse-hot" data-testid="hot">
+			<span class="ph"
+				><svg viewBox="0 0 24 24"
+					><path
+						d="M12 22c4.4 0 7-3 7-7 0-5-5-7-5-12-3 2-4 5-4 7-1-1-2-2-2-4-2 2-3 5-3 9 0 4 2.6 7 7 7z"
+						fill="currentColor"
+					/></svg
+				>{L('Teď se hraje', 'Popular right now')}</span
+			>
+			{#each hot as h, k (h.g.id)}
+				<button class="hot" onclick={() => select(h.i)} style:--ca={h.g.colors[0]}
+					><i>{k + 1}</i><b>{h.g.title}</b><span>{h.n}</span></button
+				>
+			{:else}
+				<span class="hot-none"
+					>{L(
+						'Zrovna nikdo nehraje, buď první.',
+						'Nobody is playing right now, be the first.',
+					)}</span
+				>
+			{/each}
+		</div>
+	</section>
+
+	<section class="library featured" data-group="action">
+		<div class="lib-head">
+			<h2>{L('Hlavní hry', 'Featured games')}</h2>
+			<span>{gamesCount(featured.length)}</span>
+			<div class="spacer"></div>
+			<span class="hint"
+				><kbd>←</kbd><kbd>→</kbd>
+				{L('výběr', 'select')} · <kbd>Enter</kbd>
+				{L('spustit', 'launch')}</span
+			>
+		</div>
+		<div class="shelf" data-testid="shelf">
+			{#each featured as { g, i } (g.id)}{@render card(g, i)}{/each}
+		</div>
+	</section>
+
+	<section class="library lib-all" data-testid="library">
+		<div class="lib-head">
+			<h2>{L('Knihovna', 'Library')}</h2>
+			<span>{gamesCount(others.length)}</span>
+		</div>
+		<div class="lib-bar">
+			<div class="filters" role="tablist" aria-label={L('Žánry', 'Genres')}>
+				<button
+					role="tab"
+					class:on={filter === 'all'}
+					aria-selected={filter === 'all'}
+					onclick={() => ((filter = 'all'), saveView())}>{L('Vše', 'All')}</button
+				>
+				<button
+					role="tab"
+					class="f-fav"
+					data-filter="fav"
+					class:on={filter === 'fav'}
+					aria-selected={filter === 'fav'}
+					onclick={() => ((filter = 'fav'), saveView())}
+					>{@render star()}{L('Oblíbené', 'Favourites')}<small>{favs.length}</small></button
+				>
+				{#each CATEGORIES as c (c.id)}
+					{#if catCount(c.id)}
+						<button
+							role="tab"
+							data-filter={c.id}
+							class:on={filter === c.id}
+							aria-selected={filter === c.id}
+							onclick={() => ((filter = c.id), saveView())}
+							>{L(c.title[0], c.title[1])}<small>{catCount(c.id)}</small></button
+						>
+					{/if}
 				{/each}
 			</div>
-		</section>
-	{/each}
+			<div class="lib-tools">
+				<input
+					type="search"
+					bind:value={query}
+					placeholder={L('Hledat hru…', 'Search games…')}
+					aria-label={L('Hledat hru', 'Search games')}
+					data-testid="search"
+				/>
+				<select
+					bind:value={sortBy}
+					onchange={saveView}
+					aria-label={L('Řadit', 'Sort')}
+					data-testid="sort"
+				>
+					<option value="default">{L('Výchozí pořadí', 'Default order')}</option>
+					<option value="recent">{L('Naposledy hrané', 'Recently played')}</option>
+					<option value="played">{L('Nejvíc nahrané', 'Most played')}</option>
+					<option value="online">{L('Kdo teď hraje', 'Playing now')}</option>
+					<option value="name">{L('Podle názvu', 'By name')}</option>
+				</select>
+			</div>
+		</div>
+		{#each shelves as shelf (shelf.id)}
+			<div class="sub" data-group={shelf.id}>
+				<h3>{shelf.title}<span>{gamesCount(shelf.games.length)}</span></h3>
+				<div class="shelf small" data-testid="shelf-{shelf.id}">
+					{#each shelf.games as { g, i } (g.id)}{@render card(g, i)}{/each}
+				</div>
+			</div>
+		{:else}
+			<p class="lib-empty">
+				{filter === 'fav' && !query.trim()
+					? L(
+							'Zatím nemáš oblíbené hry. Přidej je hvězdičkou na kartě hry.',
+							'No favourites yet. Add games with the star on their card.',
+						)
+					: L('Nic takového jsme nenašli.', 'Nothing found.')}
+			</p>
+		{/each}
+	</section>
 </main>
 
 {#if nickOpen && data.user}

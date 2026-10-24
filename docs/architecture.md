@@ -28,7 +28,7 @@
   launches a game by navigating to its `path`.
 - `src/routes/+page.server.ts` - passes only `{ user: { name, image } | null, googleEnabled }`
   to the page. Nothing secret is serialised.
-- `src/lib/games/registry.ts` - typed catalogue (`GAMES`, `GAME_SLOTS`, `cover()`).
+- `src/lib/games/registry.ts` - typed catalogue (`GAMES`, `CATEGORIES`, `cover()`).
 - `src/lib/auth-client.ts` - Better Auth browser client (`signIn.social`, `signOut`).
 - `src/routes/index.html/+server.ts` - 308 to `/`, because games link back via
   `../../index.html`.
@@ -60,12 +60,16 @@ signed with the password hash.
 
 ### Live players - `presence`
 
-Every game page loads `static/games/presence.js`. While the tab is visible it POSTs
-`/api/presence` (`{ client, game }`, a random per-tab id) every 25 s and says goodbye on
+Every game page and the hub (as game `hub`) load `static/games/presence.js`. While the tab is
+visible it POSTs `/api/presence` (`{ client, game, visitor }`: a random per-tab id and a random
+per-browser id kept in `gamecenter.visitor`) every 25 s and says goodbye on
 `pagehide` / when hidden (`sendBeacon`). The server records the tab in the `presence` table,
 with `user_id` taken from the Better Auth session (null = anonymous), and prunes rows older than
 60 s. `GET /api/presence` returns, per game, distinct signed-in players and anonymous tabs; the
-hub polls it every 15 s. No personal data beyond the user link; rows live for a minute.
+hub polls it every 15 s. The visitor id is upserted into the `visitor` table (first / last seen,
+the account once signed in), so the response also carries `site`: people online now (distinct
+account, else browser), visitors in the last 30 days and in total, and the number of accounts.
+No personal data beyond the user link; presence rows live for a minute.
 
 ### Background music - `static/games/music.js`
 

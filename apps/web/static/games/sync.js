@@ -9,7 +9,7 @@
   let ls;
   try { ls = window.localStorage; ls.getItem('x'); } catch (e) { return; }
   // The same rule as SYNC_KEY_RE in apps/web/src/lib/cloud.ts.
-  const RE = /^(gamecenter\.(lang|puzzles|music|stats\.[a-z0-9-]{1,32})|[a-z0-9-]{2,32}\.save\.v1|driftwood\.[A-Za-z0-9._:-]{1,64})$/;
+  const RE = /^(gamecenter\.(lang|puzzles|music|favorites|stats\.[a-z0-9-]{1,32})|[a-z0-9-]{2,32}\.save\.v1|driftwood\.[A-Za-z0-9._:-]{1,64})$/;
   const META = 'gamecenter.sync';
   const S = Storage.prototype, get = S.getItem, set = S.setItem, remove = S.removeItem;
   // meta.t: when this device last wrote a key; meta.v: the account's version at the last sync;
