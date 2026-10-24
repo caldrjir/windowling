@@ -27,7 +27,7 @@ follow the player; later, some games are played together (multiplayer).
 **Puzzles** (the library below them, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
 (Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and
 Omalovánky (colour by number), Solitaire (Klondike, FreeCell, Spider), Mahjong, Skládačka
-(jigsaw), Šachy (chess), Piškvorky (gomoku), Sokoban, Clickomania, Rybky (in the spirit of Fish Fillets) Mlsoun (a maze chase in the spirit of Pac-Man) and Had (snake). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
+(jigsaw), Šachy (chess), Piškvorky (gomoku), Sokoban, Clickomania, Rybky (in the spirit of Fish Fillets) Mlsoun (a maze chase in the spirit of Pac-Man) Had (snake) and Impakt (a space shooter in the spirit of Space Impact). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
 achievements; weekly quests and themes are shared by all puzzles. **Online**: chess and gomoku
 against a live opponent, and races of up to 8 players on the same puzzle in every other game
 (join by a code, a link or the list of open games).

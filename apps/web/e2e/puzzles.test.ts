@@ -22,6 +22,7 @@ const PUZZLES = [
 	'rybky',
 	'mlsoun',
 	'had',
+	'impakt',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -469,5 +470,60 @@ test('had: the snake waits for a direction, eats a fruit, grows and pauses', asy
 	expect((await state()).head).toEqual(frozen);
 	await page.locator('.hd-over [data-b="resume"]').click();
 	await expect(page.locator('.hd-over')).toBeHidden();
+	expect(errors).toEqual([]);
+});
+
+test('impakt: the ship moves and fires, enemies come, a special weapon and the boss work', async ({
+	page,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'impakt');
+	type IpState = {
+		ship: { x: number; y: number };
+		shots: number;
+		foes: number;
+		boss: { hp: number } | null;
+		special: string | null;
+		charges: number;
+		retro: boolean;
+	};
+	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<IpState>;
+	// (Enemies must not end the run while the test looks at the controls.)
+	await page.evaluate('Kit._test.inst._god()');
+	// The ship fires on its own and enemy waves arrive.
+	await expect.poll(async () => (await state()).shots, { timeout: 5000 }).toBeGreaterThan(0);
+	await expect.poll(async () => (await state()).foes, { timeout: 8000 }).toBeGreaterThan(0);
+	// Moving: keys on computers, dragging on phones.
+	const y0 = (await state()).ship.y;
+	if (isMobile) {
+		const box = await page.locator('.ip-board').boundingBox();
+		if (!box) throw new Error('no board');
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 40, { steps: 5 });
+		await page.mouse.up();
+	} else {
+		await page.keyboard.down('ArrowUp');
+		await page.waitForTimeout(400);
+		await page.keyboard.up('ArrowUp');
+	}
+	expect((await state()).ship.y).toBeLessThan(y0);
+	// A carrier's bonus gives the special weapon; Space (or the button) fires it.
+	await page.evaluate("Kit._test.inst._give('missile')");
+	await expect.poll(async () => (await state()).special).toBe('missile');
+	if (isMobile) await page.locator('.ip-fire').tap();
+	else await page.keyboard.press(' ');
+	await expect.poll(async () => (await state()).charges).toBe(2);
+	// The boss comes at the end of the sector.
+	await page.evaluate('Kit._test.inst._boss()');
+	await expect
+		.poll(async () => (await state()).boss?.hp ?? 0, { timeout: 5000 })
+		.toBeGreaterThan(0);
+	// The retro screen switch.
+	await page.locator('.ip-retro').click();
+	await expect(page.locator('.ip-wrap')).toHaveClass(/retro/);
+	expect((await state()).retro).toBe(true);
 	expect(errors).toEqual([]);
 });
