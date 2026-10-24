@@ -7,6 +7,136 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// ČERVÍCI cover sprites (a port of the game's static/games/cervici/art.js worm, simplified)
+function coverWorm(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	s: number,
+	face: number,
+	col: string,
+	t: number,
+	look: number,
+	bazooka: boolean,
+): void {
+	ctx.save();
+	ctx.translate(x, y);
+	ctx.scale(s * face, s);
+	const bob = Math.sin(t * 2.2) * 0.45;
+	const bz = (a: number, b: number, c: number, d: number, k: number) =>
+		(1 - k) ** 3 * a + 3 * (1 - k) ** 2 * k * b + 3 * (1 - k) * k * k * c + k ** 3 * d;
+	const pts: [number, number, number][] = [];
+	for (let i = 0; i <= 14; i++) {
+		const k = i / 14;
+		pts.push([
+			bz(-11, -2, 5.5, 2.6, k),
+			bz(-2.3, -1.4, -5.5, -15.5 + bob, k),
+			2.1 + 2.7 * k ** 0.8,
+		]);
+	}
+	const hx = 2.6,
+		hy = -17.1 + bob;
+	for (const [fill, grow] of [
+		['#5e1834', 1.15],
+		['#ff9cc3', 0],
+	] as const) {
+		ctx.fillStyle = fill;
+		ctx.beginPath();
+		for (const [px, py, r] of pts) {
+			ctx.moveTo(px + r + grow, py);
+			ctx.arc(px, py, r + grow, 0, TAU);
+		}
+		ctx.moveTo(hx + 5.3 + grow, hy);
+		ctx.arc(hx, hy, 5.3 + grow, 0, TAU);
+		ctx.fill();
+	}
+	ctx.fillStyle = '#ffd3e4';
+	for (const [px, py, r] of pts.filter((_, i) => i >= 4 && i % 3 === 1)) {
+		ctx.beginPath();
+		ctx.arc(px - r * 0.35, py - r * 0.3, r * 0.32, 0, TAU);
+		ctx.fill();
+	}
+	ctx.strokeStyle = col;
+	ctx.lineCap = 'round';
+	ctx.lineWidth = 2.3;
+	ctx.beginPath();
+	ctx.moveTo(hx - 5.1, hy + 0.6);
+	ctx.quadraticCurveTo(hx, hy - 1.2, hx + 5.1, hy - 0.2);
+	ctx.stroke();
+	ctx.lineWidth = 1.7;
+	ctx.beginPath();
+	ctx.moveTo(hx - 5, hy + 0.5);
+	ctx.quadraticCurveTo(hx - 8, hy - 1 + Math.sin(t * 9), hx - 10.5, hy + 0.5);
+	ctx.stroke();
+	ctx.lineCap = 'butt';
+	const la = (look * Math.PI) / 180;
+	for (const [ex, ey] of [
+		[hx - 0.6, hy - 4.3],
+		[hx + 3.4, hy - 4],
+	] as const) {
+		ctx.fillStyle = '#fff';
+		ctx.strokeStyle = '#5e1834';
+		ctx.lineWidth = 0.9;
+		ctx.beginPath();
+		ctx.ellipse(ex, ey, 2.45, 3.2, 0, 0, TAU);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#0d0f1e';
+		ctx.beginPath();
+		ctx.arc(ex + Math.cos(la) * 1.05, ey - Math.sin(la) * 1.5 + 0.3, 1.2, 0, TAU);
+		ctx.fill();
+	}
+	ctx.strokeStyle = '#5e1834';
+	ctx.beginPath();
+	ctx.arc(hx + 2.8, hy + 1.4, 1.6, 0.3, 2.2);
+	ctx.stroke();
+	if (bazooka) {
+		ctx.translate(4.5, -8.5);
+		ctx.rotate((-look * Math.PI) / 180);
+		ctx.fillStyle = '#6d8043';
+		ctx.strokeStyle = '#1b2014';
+		ctx.beginPath();
+		ctx.roundRect(-8, -2.7, 20, 5.4, 1.2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#2e3820';
+		ctx.fillRect(-4.5, -2.7, 1.6, 5.4);
+		ctx.fillRect(6, -2.7, 1.6, 5.4);
+		ctx.fillStyle = '#272c22';
+		ctx.fillRect(11.5, -3.4, 3.2, 6.8);
+	}
+	ctx.restore();
+}
+
+function coverPalm(ctx: CanvasRenderingContext2D, x: number, y: number, s: number): void {
+	ctx.save();
+	ctx.translate(x, y);
+	ctx.scale(s, s);
+	ctx.strokeStyle = '#6b4a2a';
+	ctx.lineWidth = 4;
+	ctx.lineCap = 'round';
+	ctx.beginPath();
+	ctx.moveTo(0, 2);
+	ctx.quadraticCurveTo(1, -22, 5, -40);
+	ctx.stroke();
+	for (let i = 0; i < 7; i++) {
+		const a = -Math.PI / 2 + (i - 3) * 0.55,
+			l = 20;
+		ctx.fillStyle = i % 2 ? '#3fae4a' : '#2f8a3c';
+		ctx.beginPath();
+		ctx.moveTo(5, -40);
+		ctx.quadraticCurveTo(
+			5 + Math.cos(a) * l * 0.6,
+			-44 + Math.sin(a) * l * 0.6,
+			5 + Math.cos(a) * l,
+			-30 + Math.sin(a) * l * 0.55,
+		);
+		ctx.quadraticCurveTo(5 + Math.cos(a) * l * 0.5, -38 + Math.sin(a) * l * 0.5, 5, -38);
+		ctx.fill();
+	}
+	ctx.restore();
+}
+
 /** Night sky with slow aurora blobs and twinkling stars - the common puzzle backdrop. */
 function sky(
 	ctx: CanvasRenderingContext2D,
@@ -1516,74 +1646,120 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.cervici',
 		cover(ctx, w, h, t) {
 			const sky = ctx.createLinearGradient(0, 0, 0, h);
-			sky.addColorStop(0, '#0d1440');
-			sky.addColorStop(0.6, '#3a2a7a');
-			sky.addColorStop(1, '#f08a6a');
+			sky.addColorStop(0, '#1b1550');
+			sky.addColorStop(0.6, '#6a3a8a');
+			sky.addColorStop(1, '#ff9a6a');
 			ctx.fillStyle = sky;
 			ctx.fillRect(0, 0, w, h);
-			const ground = (x: number) =>
-				h * 0.6 - Math.sin((x / w) * 6) * h * 0.06 - Math.sin((x / w) * 2.3 + 1) * h * 0.07;
-			ctx.fillStyle = '#78543a';
+			const glow = ctx.createRadialGradient(w * 0.7, h * 0.55, 0, w * 0.7, h * 0.55, h * 0.5);
+			glow.addColorStop(0, 'rgba(255,230,160,.5)');
+			glow.addColorStop(1, 'rgba(255,230,160,0)');
+			ctx.fillStyle = glow;
+			ctx.fillRect(0, 0, w, h);
+			ctx.fillStyle = '#ffd27a';
 			ctx.beginPath();
-			ctx.moveTo(w * 0.04, h);
-			for (let x = w * 0.04; x <= w * 0.96; x += 4) ctx.lineTo(x, ground(x));
-			ctx.lineTo(w * 0.96, h);
+			ctx.arc(w * 0.7, h * 0.55, h * 0.12, 0, TAU);
 			ctx.fill();
-			ctx.strokeStyle = '#7ad97a';
-			ctx.lineWidth = Math.max(2, w * 0.014);
+			ctx.fillStyle = '#5a3a86';
 			ctx.beginPath();
-			for (let x = w * 0.04; x <= w * 0.96; x += 4) ctx.lineTo(x, ground(x));
+			ctx.moveTo(0, h);
+			for (let x = 0; x <= w; x += 6)
+				ctx.lineTo(x, h * 0.62 - Math.abs(Math.sin((x / w) * 5 + 0.5)) * h * 0.14);
+			ctx.lineTo(w, h);
+			ctx.fill();
+			// the island with grass, a palm and the sea
+			const ground = (x: number) =>
+				h * 0.6 - Math.sin((x / w) * 6.2 + 0.4) * h * 0.04 - Math.sin((x / w) * 2.4 + 1) * h * 0.05;
+			const soil = ctx.createLinearGradient(0, h * 0.5, 0, h);
+			soil.addColorStop(0, '#96643e');
+			soil.addColorStop(1, '#4a2c1c');
+			ctx.fillStyle = soil;
+			ctx.beginPath();
+			ctx.moveTo(w * 0.03, h);
+			for (let x = w * 0.03; x <= w * 0.97; x += 3) ctx.lineTo(x, ground(x));
+			ctx.lineTo(w * 0.97, h);
+			ctx.fill();
+			ctx.strokeStyle = '#76d656';
+			ctx.lineWidth = Math.max(3, h * 0.035);
+			ctx.beginPath();
+			for (let x = w * 0.03; x <= w * 0.97; x += 3) ctx.lineTo(x, ground(x) + h * 0.012);
 			ctx.stroke();
-			ctx.fillStyle = '#1a5a8a';
-			ctx.fillRect(0, h * 0.86, w, h * 0.14);
-			const s = Math.min(w, h) / 120;
-			const worm = (x: number, col: string, face: number) => {
-				const y = ground(x);
+			const s = Math.min(w, h * 0.8) / 84;
+			coverPalm(ctx, w * 0.5, ground(w * 0.5) + 2, s * 0.9);
+			ctx.fillStyle = '#1e5a92';
+			ctx.beginPath();
+			ctx.moveTo(0, h);
+			for (let x = 0; x <= w; x += 6)
+				ctx.lineTo(x, h * 0.9 + Math.sin(x * 0.05 + t * 2) * h * 0.012);
+			ctx.lineTo(w, h);
+			ctx.fill();
+			// a bazooka shot arcs over the palm and hits the pink worm
+			const ax = w * 0.24,
+				bx = w * 0.76,
+				cyc = (t * 0.45) % 1,
+				fly = Math.min(1, cyc / 0.62),
+				boom = cyc > 0.62 ? (cyc - 0.62) / 0.38 : -1;
+			const arc = (k: number) => ({
+				x: ax + w * 0.06 + (bx - ax - w * 0.06) * k,
+				y:
+					ground(ax) -
+					h * 0.2 +
+					(ground(bx) - h * 0.1 - ground(ax) + h * 0.2) * k -
+					Math.sin(k * Math.PI) * h * 0.38,
+			});
+			const hop = boom >= 0 ? Math.sin(Math.min(1, boom * 1.6) * Math.PI) * h * 0.12 : 0;
+			coverWorm(ctx, ax, ground(ax) + 1, s, 1, '#55f6ff', t, 40, true);
+			coverWorm(ctx, bx, ground(bx) + 1 - hop, s, -1, '#ff6fb5', t + 1, boom >= 0 ? 60 : 0, false);
+			if (boom < 0) {
+				for (let i = 1; i < 6; i++) {
+					const p = arc(Math.max(0, fly - i * 0.05));
+					ctx.fillStyle = `rgba(235,235,245,${0.45 - i * 0.07})`;
+					ctx.beginPath();
+					ctx.arc(p.x, p.y, s * (1.2 + i * 0.5), 0, TAU);
+					ctx.fill();
+				}
+				const p = arc(fly),
+					q = arc(Math.min(1, fly + 0.01));
 				ctx.save();
-				ctx.translate(x, y);
-				ctx.scale(s * face, s);
-				ctx.fillStyle = '#ff9db8';
-				ctx.strokeStyle = '#7a2a48';
-				ctx.lineWidth = 1.3;
+				ctx.translate(p.x, p.y);
+				ctx.rotate(Math.atan2(q.y - p.y, q.x - p.x));
+				ctx.scale(s, s);
+				ctx.fillStyle = '#ffb02e';
 				ctx.beginPath();
-				ctx.ellipse(-3, -3, 7, 3.6, 0, 0, TAU);
+				ctx.moveTo(-6, -1.6);
+				ctx.lineTo(-11 - Math.sin(t * 40) * 2, 0);
+				ctx.lineTo(-6, 1.6);
 				ctx.fill();
-				ctx.stroke();
+				ctx.fillStyle = '#dfe3f0';
+				ctx.fillRect(-6, -2.2, 10, 4.4);
+				ctx.fillStyle = '#e8344a';
 				ctx.beginPath();
-				ctx.ellipse(1, -9 + Math.sin(t * 5) * 0.8, 5, 8, 0.15, 0, TAU);
-				ctx.fill();
-				ctx.stroke();
-				ctx.strokeStyle = col;
-				ctx.lineWidth = 2.2;
-				ctx.beginPath();
-				ctx.arc(1, -13, 5, Math.PI * 1.1, Math.PI * 1.9);
-				ctx.stroke();
-				ctx.fillStyle = '#fff';
-				ctx.beginPath();
-				ctx.arc(1.4, -12, 2, 0, TAU);
-				ctx.arc(4.8, -12, 2, 0, TAU);
+				ctx.moveTo(4, -2.2);
+				ctx.quadraticCurveTo(9, 0, 4, 2.2);
 				ctx.fill();
 				ctx.restore();
-			};
-			worm(w * 0.25, '#55f6ff', 1);
-			worm(w * 0.75, '#ff6fb5', -1);
-			// a grenade arcs over the hill and pops
-			const ph = (t * 0.4) % 1;
-			const x = w * 0.28 + w * 0.45 * ph;
-			const y = ground(w * 0.25) - h * 0.12 - Math.sin(ph * Math.PI) * h * 0.32;
-			if (ph < 0.92) {
-				ctx.fillStyle = '#4a7a3a';
-				ctx.beginPath();
-				ctx.arc(x, y, Math.max(2.5, w * 0.014), 0, TAU);
-				ctx.fill();
 			} else {
-				const g = ctx.createRadialGradient(x, y, 0, x, y, w * 0.08);
-				g.addColorStop(0, 'rgba(255,240,200,.95)');
-				g.addColorStop(1, 'rgba(255,120,40,0)');
+				const e = arc(1),
+					r = h * (0.1 + boom * 0.14),
+					a = Math.max(0, 1 - boom * 1.3);
+				const g = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, r);
+				g.addColorStop(0, `rgba(255,255,230,${a})`);
+				g.addColorStop(0.4, `rgba(255,210,90,${a})`);
+				g.addColorStop(0.75, `rgba(255,110,40,${a * 0.8})`);
+				g.addColorStop(1, 'rgba(200,40,30,0)');
 				ctx.fillStyle = g;
 				ctx.beginPath();
-				ctx.arc(x, y, w * 0.08, 0, TAU);
+				ctx.arc(e.x, e.y, r, 0, TAU);
 				ctx.fill();
+				ctx.globalAlpha = Math.min(1, a * 2);
+				ctx.font = `900 ${Math.round(h * 0.11)}px Unbounded, sans-serif`;
+				ctx.textAlign = 'center';
+				ctx.lineWidth = Math.max(2, h * 0.02);
+				ctx.strokeStyle = 'rgba(20,8,30,.8)';
+				ctx.strokeText('-48', bx, ground(bx) - h * 0.3 - boom * h * 0.08);
+				ctx.fillStyle = '#ff6fb5';
+				ctx.fillText('-48', bx, ground(bx) - h * 0.3 - boom * h * 0.08);
+				ctx.globalAlpha = 1;
 			}
 		},
 	},

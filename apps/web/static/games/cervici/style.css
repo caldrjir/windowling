@@ -15,7 +15,7 @@
 .cv-timer.low { color: #ff5a7a; animation: cvBlink .5s infinite alternate; }
 @keyframes cvBlink { to { opacity: .4; } }
 .cv-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
-.cv-board { display: block; border-radius: 14px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 35%, transparent), 0 24px 60px -24px var(--a); cursor: crosshair; }
+.cv-board { display: block; border-radius: 14px; background: #1b1550; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 35%, transparent), 0 24px 60px -24px var(--a); cursor: crosshair; }
 .cv-zoom { position: absolute; right: 8px; bottom: 8px; width: 38px; height: 38px; border-radius: 10px; background: rgba(6, 4, 20, .6); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 18px; }
 .cv-banner { position: absolute; left: 50%; top: 10%; transform: translateX(-50%); padding: 10px 22px; border-radius: 999px; background: rgba(6, 4, 20, .78); box-shadow: inset 0 0 0 1px var(--line-2); font-family: var(--f-d); font-size: 16px; white-space: nowrap; pointer-events: none; animation: cvIn .3s ease-out; }
 .cv-banner[hidden] { display: none; }
@@ -45,3 +45,10 @@
 .cv-wrap.phone .cv-t { padding: 6px 8px; }
 .cv-wrap.phone .cv-t b { font-size: 11px; }
 .cv-wrap.phone .cv-mid { min-width: 0; padding: 4px 8px; }
+.cv-wbar { position: relative; display: block; width: 74px; height: 6px; margin-top: 3px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.cv-wbar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, .5); }
+.cv-wbar u { position: absolute; top: 0; bottom: 0; transition: .4s; }
+.cv-wbar u.r { background: linear-gradient(90deg, #ffe066, #ff5a3a); }
+.cv-wbar u.l { background: linear-gradient(270deg, #ffe066, #ff5a3a); }
+.cv-weap button svg { width: 20px; height: 20px; flex: none; }
+.cv-weap button.on svg { filter: drop-shadow(0 0 1px rgba(0, 0, 0, .6)); }
