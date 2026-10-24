@@ -21,6 +21,7 @@ const PUZZLES = [
 	'clickomania',
 	'rybky',
 	'mlsoun',
+	'had',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -430,5 +431,43 @@ test('mlsoun: the muncher eats dots, pauses, and ghosts leave their house', asyn
 	expect((await state()).eaten).toBe(frozen);
 	await page.locator('.ml-over [data-b="resume"]').click();
 	await expect(page.locator('.ml-over')).toBeHidden();
+	expect(errors).toEqual([]);
+});
+
+test('had: the snake waits for a direction, eats a fruit, grows and pauses', async ({
+	page,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'had');
+	type HadState = {
+		started: boolean;
+		eaten: number;
+		score: number;
+		len: number;
+		head: [number, number];
+	};
+	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<HadState>;
+	await expect(page.locator('.hd-hint')).toBeVisible();
+	expect((await state()).started).toBe(false);
+	// A fruit right in front of the head; the first direction starts the snake.
+	const [x, y] = (await state()).head;
+	await page.evaluate(`Kit._test.inst._food(${x + 1}, ${y})`);
+	if (isMobile) await page.locator('.hd-pad [data-d="r"]').tap();
+	else await page.keyboard.press('ArrowRight');
+	await expect(page.locator('.hd-hint')).toBeHidden();
+	await expect.poll(async () => (await state()).eaten, { timeout: 5000 }).toBe(1);
+	await expect.poll(async () => (await state()).len).toBe(5);
+	expect((await state()).score).toBeGreaterThan(0);
+	await expect(page.locator('.hd-goal')).toHaveText('1 / 25');
+	// Pause while still in the free start row: the snake stops.
+	await page.locator('.hd-pause').click();
+	await expect(page.locator('.hd-over')).toBeVisible();
+	const frozen = (await state()).head;
+	await page.waitForTimeout(500);
+	expect((await state()).head).toEqual(frozen);
+	await page.locator('.hd-over [data-b="resume"]').click();
+	await expect(page.locator('.hd-over')).toBeHidden();
 	expect(errors).toEqual([]);
 });

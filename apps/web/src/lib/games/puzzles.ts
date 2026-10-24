@@ -1210,6 +1210,64 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'had',
+		online: 'race',
+		title: 'HAD',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Sbírej plody, rosti, nenaraz.',
+		description:
+			'Klasický had v neonu: veď ho pro plody, každý ho prodlouží a zrychlí, a nesmíš narazit do zdi ani do vlastního ocasu. Sprint na mapě s překážkami, nekonečná Klasika a režim bez stěn, kde okrajem projdeš na druhou stranu.',
+		genres: ['Arkáda', 'Had', 'Postřeh'],
+		features: ['Denní sprint', 'Cesta: 120 map', 'Skóre i bez stěn', 'Tah prstem i šipky'],
+		en: {
+			tagline: 'Eat the fruit, grow, don’t crash.',
+			description:
+				'The classic snake in neon: guide it to the fruit, every one makes it longer and faster, and don’t hit a wall or your own tail. A sprint on a map with obstacles, endless Classic and a no-walls mode where you pass through the edges.',
+			genres: ['Arcade', 'Snake', 'Reflexes'],
+			features: ['Daily sprint', 'Path: 120 maps', 'Score and no walls', 'Swipe or arrows'],
+		},
+		statLabels: labels,
+		path: '/games/had/index.html',
+		colors: ['#6dff9e', '#55f6ff', '#ff5a7a'],
+		statsKey: 'gamecenter.stats.had',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#6dff9e', '#55f6ff', '#ff5a7a'], 29);
+			const s = Math.min(w / 10, h / 13);
+			const cols = Math.floor(w / s);
+			const rows = Math.floor((h * 0.62) / s);
+			const ox = (w - cols * s) / 2;
+			const oy = h * 0.06;
+			// the snake runs around a loop of cells; its length is 7
+			const loop: [number, number][] = [];
+			for (let x = 1; x < cols - 1; x++) loop.push([x, 1]);
+			for (let y = 2; y < rows - 1; y++) loop.push([cols - 2, y]);
+			for (let x = cols - 3; x > 0; x--) loop.push([x, rows - 2]);
+			for (let y = rows - 3; y > 1; y--) loop.push([1, y]);
+			const head = Math.floor(t * 6) % loop.length;
+			const fruit = loop[(head + 9) % loop.length] ?? [1, 1];
+			ctx.fillStyle = '#ff5a7a';
+			ctx.shadowColor = '#ff5a7a';
+			ctx.shadowBlur = s * 0.6;
+			ctx.beginPath();
+			ctx.arc(ox + (fruit[0] + 0.5) * s, oy + (fruit[1] + 0.5) * s, s * 0.3, 0, TAU);
+			ctx.fill();
+			ctx.lineCap = 'round';
+			for (let k = 6; k >= 0; k--) {
+				const a = loop[(head - k + loop.length) % loop.length] ?? [1, 1];
+				const b = loop[(head - k + 1 + loop.length) % loop.length] ?? [1, 1];
+				ctx.strokeStyle = `hsl(${110 + k * 6}, 100%, ${70 - k * 4}%)`;
+				ctx.shadowColor = ctx.strokeStyle;
+				ctx.lineWidth = s * (0.72 - k * 0.04);
+				ctx.beginPath();
+				ctx.moveTo(ox + (a[0] + 0.5) * s, oy + (a[1] + 0.5) * s);
+				ctx.lineTo(ox + (b[0] + 0.5) * s, oy + (b[1] + 0.5) * s);
+				ctx.stroke();
+			}
+			ctx.shadowBlur = 0;
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',
