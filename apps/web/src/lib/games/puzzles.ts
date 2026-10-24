@@ -1588,6 +1588,59 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'bubliny',
+		online: 'race',
+		title: 'BUBLINY',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Tři stejné prasknou, zbytek spadne.',
+		description:
+			'Klasický Bubble Shooter: střílej barevné bubliny do plástve, tři stejné prasknou a co zůstane viset bez spojení, spadne. Odrážej se od stěn, prohazuj bubliny a nenech strop sjet až dolů. Denní plocha je pro všechny stejná, v Nekonečnu hraješ na skóre.',
+		genres: ['Arkáda', 'Bubble Shooter', 'Postřeh'],
+		features: ['Denní plocha', 'Cesta: 120 ploch', 'Nekonečno na skóre', 'Online závody'],
+		en: {
+			tagline: 'Three alike pop, the rest falls.',
+			description:
+				'The classic Bubble Shooter: shoot coloured bubbles into the cluster, three alike pop and whatever hangs free falls down. Bank off the walls, swap bubbles and keep the ceiling from reaching the bottom. The daily board is the same for everyone; Endless plays for score.',
+			genres: ['Arcade', 'Bubble Shooter', 'Reflexes'],
+			features: ['Daily board', 'Path: 120 boards', 'Endless for score', 'Online races'],
+		},
+		statLabels: labels,
+		path: '/games/bubliny/index.html',
+		colors: ['#5d9bff', '#ff5a7a', '#ffc04d'],
+		statsKey: 'gamecenter.stats.bubliny',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#5d9bff', '#ff5a7a', '#ffc04d'], 41);
+			const cols = ['#ff5a7a', '#ffc04d', '#3ddc97', '#5d9bff', '#c06bff'];
+			const r = Math.min(w / 16, h / 18);
+			const ball = (x: number, y: number, c: string) => {
+				const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r);
+				g.addColorStop(0, '#fff');
+				g.addColorStop(0.2, c);
+				g.addColorStop(1, c);
+				ctx.fillStyle = g;
+				ctx.beginPath();
+				ctx.arc(x, y, r * 0.95, 0, TAU);
+				ctx.fill();
+			};
+			const n = Math.floor(w / (2 * r));
+			for (let row = 0; row < 4; row++)
+				for (let i = 0; i < n - (row % 2); i++)
+					ball(
+						r + i * 2 * r + (row % 2) * r + (w - n * 2 * r) / 2,
+						h * 0.06 + r + row * r * 1.73,
+						cols[(i * 3 + row * 2 + ((i * row) % 3)) % cols.length] ?? '#fff',
+					);
+			// a bubble flies up from the cannon in a loop
+			const ph = (t * 0.5) % 1;
+			ball(w / 2 + Math.sin(ph * 3) * w * 0.12, h * 0.86 - ph * h * 0.4, '#3ddc97');
+			ctx.fillStyle = '#3a3070';
+			ctx.beginPath();
+			ctx.arc(w / 2, h * 0.9, r * 1.3, 0, TAU);
+			ctx.fill();
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',

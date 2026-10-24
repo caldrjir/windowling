@@ -463,6 +463,6 @@ test('the library filters by genre, finds games and keeps favourites', async ({ 
 	// Sorting by name.
 	await library.getByRole('tab', { name: 'Vše' }).click();
 	await page.getByTestId('sort').selectOption('name');
-	await expect(page.getByTestId('shelf-arcade').locator('h3').first()).toHaveText('CLICKOMANIA');
+	await expect(page.getByTestId('shelf-arcade').locator('h3').first()).toHaveText('BUBLINY');
 	expect(errors).toEqual([]);
 });

@@ -1,0 +1,16 @@
+/* BUBLINY – bubble shooter */
+.bb-wrap { position: relative; display: grid; justify-items: center; gap: 10px; width: 100%; }
+.bb-hud { display: flex; align-items: center; gap: 10px; }
+.bb-hud > div { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 86px; }
+.bb-hud small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.bb-hud b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.bb-press i { display: flex; gap: 4px; padding-top: 6px; }
+.bb-press u { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .12); }
+.bb-press u.on { background: #ff5a7a; box-shadow: 0 0 8px #ff5a7a; }
+.bb-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.bb-board { display: block; border-radius: 16px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 35%, transparent), 0 24px 60px -24px var(--a); cursor: crosshair; }
+.bb-over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(3, 2, 10, .55); backdrop-filter: blur(4px); border-radius: 16px; z-index: 3; }
+.bb-over[hidden] { display: none; }
+.bb-over div { display: grid; gap: 14px; justify-items: center; }
+.bb-over b { font-family: var(--f-d); font-size: 26px; }
+.bb-wrap .k-tools { justify-content: center; }
