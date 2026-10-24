@@ -18,6 +18,7 @@ const PUZZLES = [
 	'sachy',
 	'piskvorky',
 	'sokoban',
+	'clickomania',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -332,5 +333,26 @@ test('sokoban: the keeper pushes crates, undo takes a push back, a hint plays th
 	expect((await state()).length).toBeGreaterThan(before);
 	await page.locator('[data-t="restart"]').click();
 	expect(await state()).toBe('');
+	expect(errors).toEqual([]);
+});
+
+test('clickomania: a group bursts, undo brings it back, a hint follows the solution', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'clickomania');
+	await expect(page.locator('.cm-b')).toHaveCount(64);
+	const left = () => page.locator('#cmLeft').textContent();
+
+	// The hint lights the next group of the stored solution; clicking it removes the group.
+	await page.locator('[data-t="hint"]').click();
+	const group = page.locator('.cm-b.hint');
+	expect(await group.count()).toBeGreaterThanOrEqual(2);
+	const size = await group.count();
+	await group.first().click();
+	await expect.poll(left).toBe(String(64 - size));
+	await page.locator('[data-t="undo"]').click();
+	await expect.poll(left).toBe('64');
 	expect(errors).toEqual([]);
 });

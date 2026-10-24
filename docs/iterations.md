@@ -31,6 +31,8 @@ Auth, CI/CD, release-please) carries on.
   Piškvorky (15×15 gomoku, four strengths with VCF, daily opening, two players).
 - Puzzle shelf: Sokoban (generated depots built backwards from the solved state, so every one is
   solvable; push par for three stars, unlimited undo, hints from the stored solution).
+- Puzzle shelf: Clickomania (SameGame; every board checked by a beam-search solver that clears it,
+  the clearing kept for hints; 3-5 colours, undo, three stars without undo or hints).
 - DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
   players see each other, in-game chat.
 - Online puzzles: live chess and gomoku games (open games list, code or link, chat, draw
