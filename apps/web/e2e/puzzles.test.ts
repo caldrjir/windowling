@@ -23,6 +23,7 @@ const PUZZLES = [
 	'mlsoun',
 	'had',
 	'impakt',
+	'skladnik',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -525,5 +526,41 @@ test('impakt: the ship moves and fires, enemies come, a special weapon and the b
 	await page.locator('.ip-retro').click();
 	await expect(page.locator('.ip-wrap')).toHaveClass(/retro/);
 	expect((await state()).retro).toBe(true);
+	expect(errors).toEqual([]);
+});
+
+test('skladnik: the worker pushes a crate, jumps onto it, and a full row disappears', async ({
+	page,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'skladnik');
+	type SkState = { worker: { c: number; r: number }; rows: number; score: number };
+	const I = 'Kit._test.inst';
+	const state = () => page.evaluate(`${I}._state()`) as Promise<SkState>;
+	const row = (y: number) => page.evaluate(`${I}._row(${y})`) as Promise<string>;
+	const right = () =>
+		isMobile ? page.locator('.sk-pad [data-m="1"]').tap() : page.keyboard.press('ArrowRight');
+	const jump = () =>
+		isMobile ? page.locator('.sk-pad [data-j]').tap() : page.keyboard.press('ArrowUp');
+	// An empty warehouse with no cranes, the worker on the floor and a crate next to him.
+	await page.evaluate(`${I}._calm(); ${I}._clear(5, 10); ${I}._place(6, 10)`);
+	await right();
+	await expect.poll(() => row(10)).toBe('.......b....');
+	await expect.poll(async () => (await state()).worker.c).toBe(6);
+	// Jump and step onto the crate.
+	await jump();
+	await page.waitForTimeout(60);
+	await right();
+	await expect.poll(async () => (await state()).worker).toEqual({ c: 7, r: 9, dead: 0 });
+	// A full row disappears and scores.
+	await page.evaluate(
+		`${I}._clear(5, 9); for (let x = 0; x < 12; x++) ${I}._place(x, 10); ${I}._check()`,
+	);
+	await expect.poll(async () => (await state()).rows).toBe(1);
+	expect(await row(10)).toBe('............');
+	expect((await state()).score).toBeGreaterThan(0);
+	await expect(page.locator('.sk-rows')).toHaveText('1 / 8');
 	expect(errors).toEqual([]);
 });
