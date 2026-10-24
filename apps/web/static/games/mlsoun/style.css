@@ -1,0 +1,27 @@
+/* MLSOUN – honička v neonovém bludišti */
+.ml-wrap { position: relative; display: grid; justify-items: center; gap: 10px; width: 100%; }
+.ml-hud { display: flex; align-items: center; gap: 10px; }
+.ml-hud > div:not(.ml-lives) { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 92px; }
+.ml-hud small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.ml-hud b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.ml-lives { display: flex; gap: 6px; min-width: 70px; justify-content: center; }
+.ml-lives i { width: 18px; height: 18px; border-radius: 50%; background: conic-gradient(from 115deg, transparent 0 70deg, #ffe066 70deg); box-shadow: 0 0 10px -2px #ffe066; }
+.ml-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.ml-board { display: block; border-radius: 12px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 40%, transparent), 0 24px 60px -20px var(--a); }
+.ml-over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(3, 2, 10, .55); backdrop-filter: blur(4px); border-radius: 12px; z-index: 3; }
+.ml-over[hidden] { display: none; }
+.ml-over div { display: grid; gap: 14px; justify-items: center; }
+.ml-over b { font-family: var(--f-d); font-size: 26px; }
+.ml-pad { display: none; }
+.ml-pause { position: absolute; right: 0; top: 0; }
+.ml-wrap.phone .ml-pause { width: 40px; height: 40px; min-width: 0; }
+.ml-wrap.phone .ml-pause span { display: none; }
+.ml-wrap.phone .ml-hud > div:not(.ml-lives) { min-width: 0; padding: 5px 10px; }
+.ml-wrap.phone .ml-hud b { font-size: 15px; }
+.ml-wrap.phone .ml-pad { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 52px); gap: 6px; }
+.ml-pad button { border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 20px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.ml-pad button:active { background: color-mix(in srgb, var(--a) 30%, transparent); }
+.ml-pad [data-d="u"] { grid-column: 2; grid-row: 1; }
+.ml-pad [data-d="l"] { grid-column: 1; grid-row: 2; }
+.ml-pad [data-d="d"] { grid-column: 2; grid-row: 2; }
+.ml-pad [data-d="r"] { grid-column: 3; grid-row: 2; }

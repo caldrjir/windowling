@@ -1128,6 +1128,88 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'mlsoun',
+		online: 'race',
+		title: 'MLSOUN',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Spořádej tečky, utíkej přízrakům.',
+		description:
+			'Honička v neonovém bludišti na motivy Pac-Mana: sněz všechny tečky a nenech se chytit čtyřmi přízraky, z nichž každý honí jinak. Velká tečka je vyleká a pak je můžeš sníst. Každé bludiště je nové, denní je pro všechny stejné.',
+		genres: ['Arkáda', 'Bludiště', 'Honička'],
+		features: ['Denní bludiště', 'Cesta: 120 bludišť', 'Arkáda na skóre', 'Tah prstem i šipky'],
+		en: {
+			tagline: 'Eat the dots, run from the ghosts.',
+			description:
+				"A chase through a neon maze in the spirit of Pac-Man: eat every dot and don't get caught by four ghosts that each hunt differently. A big dot scares them and then you can eat them. Every maze is new; the daily one is the same for everyone.",
+			genres: ['Arcade', 'Maze', 'Chase'],
+			features: ['Daily maze', 'Path: 120 mazes', 'Arcade for score', 'Swipe or arrows'],
+		},
+		statLabels: labels,
+		path: '/games/mlsoun/index.html',
+		colors: ['#ffe066', '#5d7bff', '#ff5a7a'],
+		statsKey: 'gamecenter.stats.mlsoun',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ffe066', '#5d7bff', '#ff5a7a'], 23);
+			const s = Math.min(w / 9, h / 12);
+			const y = h * 0.36;
+			// maze walls above and below the corridor
+			ctx.strokeStyle = '#5d7bff';
+			ctx.lineWidth = Math.max(2, s * 0.12);
+			ctx.shadowColor = '#5d7bff';
+			ctx.shadowBlur = s * 0.5;
+			ctx.beginPath();
+			ctx.roundRect(w * 0.06, y - s * 1.1, w * 0.88, s * 0.5, s * 0.25);
+			ctx.roundRect(w * 0.06, y + s * 0.6, w * 0.88, s * 0.5, s * 0.25);
+			ctx.stroke();
+			ctx.shadowBlur = 0;
+			// the muncher runs right, eating dots; a ghost follows
+			const span = w * 0.88;
+			const px = w * 0.06 + ((t * s * 2.2) % (span + s * 3)) - s;
+			ctx.fillStyle = '#ffd9a8';
+			for (let x = w * 0.1; x < w * 0.94; x += s * 0.8)
+				if (x > px + s * 0.2) ctx.fillRect(x - s * 0.07, y - s * 0.07, s * 0.14, s * 0.14);
+			const open = 0.1 + 0.5 * Math.abs(Math.sin(t * 9));
+			ctx.fillStyle = '#ffe066';
+			ctx.shadowColor = '#ffe066';
+			ctx.shadowBlur = s * 0.6;
+			ctx.beginPath();
+			ctx.moveTo(px, y);
+			ctx.arc(px, y, s * 0.42, open, TAU - open);
+			ctx.closePath();
+			ctx.fill();
+			const gx = px - s * 1.8;
+			const r = s * 0.42;
+			ctx.fillStyle = '#ff5a7a';
+			ctx.shadowColor = '#ff5a7a';
+			ctx.beginPath();
+			ctx.arc(gx, y - r * 0.1, r, Math.PI, 0);
+			ctx.lineTo(gx + r, y + r * 0.85);
+			for (let k = 0; k < 3; k++)
+				ctx.quadraticCurveTo(
+					gx + r - (k + 0.5) * ((2 * r) / 3),
+					y + r * 0.55,
+					gx + r - (k + 1) * ((2 * r) / 3),
+					y + r * 0.85,
+				);
+			ctx.closePath();
+			ctx.fill();
+			ctx.shadowBlur = 0;
+			ctx.fillStyle = '#fff';
+			ctx.beginPath();
+			ctx.arc(gx - r * 0.35, y - r * 0.2, r * 0.24, 0, TAU);
+			ctx.moveTo(gx + r * 0.59, y - r * 0.2);
+			ctx.arc(gx + r * 0.35, y - r * 0.2, r * 0.24, 0, TAU);
+			ctx.fill();
+			ctx.fillStyle = '#1b1a52';
+			ctx.beginPath();
+			ctx.arc(gx - r * 0.25, y - r * 0.2, r * 0.12, 0, TAU);
+			ctx.moveTo(gx + r * 0.57, y - r * 0.2);
+			ctx.arc(gx + r * 0.45, y - r * 0.2, r * 0.12, 0, TAU);
+			ctx.fill();
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',

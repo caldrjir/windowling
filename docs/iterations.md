@@ -36,6 +36,10 @@ Auth, CI/CD, release-please) carries on.
 - Puzzle shelf: Rybky (two fish escape a cave, Fish Fillets style: pushing, gravity, light and
   steel objects). Caves are generated offline and verified by a BFS solver (`levels.js`, sorted by
   difficulty, with solutions for hints); the Path walks the pool from easy to hard.
+- Puzzle shelf: Mlsoun (maze chase in the spirit of Pac-Man: four ghosts with their own chase
+  rules, power dots, tunnels, a bonus comet). Symmetric mazes are generated from the seed (DFS
+  tree mirrored, dead ends braided, ghost house in the middle), so the daily maze is shared;
+  Calm, Maze and a 10-maze Arcade for score, a 120-maze Path and online races.
 - Hub library: the big games featured on top, the rest in genre shelves with filters, search,
   sorting and synced favourites; site stats (online now, players in 30 days / total, accounts)
   and the games most played right now.
