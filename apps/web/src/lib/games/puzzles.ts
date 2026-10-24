@@ -1268,6 +1268,67 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'impakt',
+		online: 'race',
+		title: 'IMPAKT',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Sestřel vlny, poraz bosse.',
+		description:
+			'Vesmírná střílečka na motivy Space Impact: loď střílí sama, ty uhýbáš a sbíráš rakety, laser a štít. Vlny nepřátel přilétají zprava a na konci každého sektoru čeká boss. Kampaň je pro všechny stejná, s přepínačem do zeleného retro displeje.',
+		genres: ['Arkáda', 'Střílečka', 'Retro'],
+		features: ['Denní sektor', 'Cesta: 120 sektorů', 'Kampaň a Nekonečno', 'Retro displej'],
+		en: {
+			tagline: 'Shoot the waves, beat the boss.',
+			description:
+				'A space shooter in the spirit of Space Impact: the ship fires on its own while you dodge and grab missiles, a laser and a shield. Enemy waves come from the right and a boss waits at the end of every sector. The campaign is the same for everyone, with a switch to a green retro screen.',
+			genres: ['Arcade', 'Shooter', 'Retro'],
+			features: ['Daily sector', 'Path: 120 sectors', 'Campaign and Endless', 'Retro screen'],
+		},
+		statLabels: labels,
+		path: '/games/impakt/index.html',
+		colors: ['#55f6ff', '#ff5a7a', '#ffe066'],
+		statsKey: 'gamecenter.stats.impakt',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#55f6ff', '#ff5a7a', '#ffe066'], 31);
+			const p = Math.max(2, Math.floor(Math.min(w, h) / 46));
+			const sprite = (rows: string[], x: number, y: number, col: string) => {
+				ctx.fillStyle = col;
+				ctx.shadowColor = col;
+				ctx.shadowBlur = p * 3;
+				rows.forEach((row, ry) =>
+					[...row].forEach((ch, rx) => {
+						if (ch === '#') ctx.fillRect(x + rx * p, y + ry * p, p, p);
+					}),
+				);
+				ctx.shadowBlur = 0;
+			};
+			const ship = [
+				'##..........',
+				'####........',
+				'.######.....',
+				'.##########.',
+				'.######.....',
+				'####........',
+				'##..........',
+			];
+			const drone = ['..####..', '.######.', '##.##.##', '########', '.#.##.#.', '#......#'];
+			const sy = h * 0.32 + Math.sin(t * 1.6) * h * 0.06;
+			sprite(ship, w * 0.1, sy, '#55f6ff');
+			// shots fly right; drones drift left in a loop
+			ctx.fillStyle = '#ffe066';
+			for (let i = 0; i < 4; i++) {
+				const x = w * 0.1 + 12 * p + ((t * w * 0.5 + i * w * 0.22) % (w * 0.85));
+				ctx.fillRect(x, sy + 3 * p, 3 * p, p);
+			}
+			for (let i = 0; i < 3; i++) {
+				const x = w - ((t * w * 0.12 + i * w * 0.3) % (w * 0.75)) - 8 * p;
+				const y = h * (0.16 + i * 0.16) + Math.sin(t * 2 + i) * p * 3;
+				sprite(drone, x, y, '#ff5a7a');
+			}
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',

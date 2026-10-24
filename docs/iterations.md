@@ -43,6 +43,10 @@ Auth, CI/CD, release-please) carries on.
 - Puzzle shelf: Had (snake: Sprint 25 on a seeded obstacle map, endless Classic and No walls for
   score, golden bonus stars). Obstacle maps are point-symmetric and checked so free cells stay
   connected with no dead-end pockets; the daily sprint shares map and fruit order.
+- Puzzle shelf: Impakt (side-scrolling space shooter in the spirit of Space Impact: auto-fire,
+  enemy waves and a boss per sector, missiles, laser, shield and double shot from carriers, a
+  green retro-screen look). Sectors are generated from the seed; the 5-sector Campaign uses fixed
+  seeds so its score board is fair; Endless, a daily sector, a 120-sector Path and online races.
 - Hub library: the big games featured on top, the rest in genre shelves with filters, search,
   sorting and synced favourites; site stats (online now, players in 30 days / total, accounts)
   and the games most played right now.

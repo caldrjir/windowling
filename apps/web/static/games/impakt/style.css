@@ -1,0 +1,25 @@
+/* IMPAKT – vesmírná střílečka */
+.ip-wrap { position: relative; display: grid; justify-items: center; gap: 10px; width: 100%; }
+.ip-hud { display: flex; align-items: center; gap: 10px; }
+.ip-hud > div:not(.ip-lives) { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 92px; }
+.ip-hud small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.ip-hud b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.ip-hud .ip-spec b { font-size: 13px; padding-top: 4px; }
+.ip-lives { display: flex; gap: 6px; min-width: 60px; justify-content: center; }
+.ip-lives i { width: 20px; height: 12px; background: #55f6ff; clip-path: polygon(0 0, 35% 0, 100% 50%, 35% 100%, 0 100%, 15% 50%); filter: drop-shadow(0 0 4px #55f6ff); }
+.ip-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.ip-board { display: block; border-radius: 10px; image-rendering: pixelated; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 40%, transparent), 0 24px 60px -20px var(--a); }
+.ip-wrap.retro .ip-board { box-shadow: 0 0 0 6px #2b3527, 0 0 0 8px #5d6e55, 0 24px 60px -20px #000; border-radius: 4px; }
+.ip-over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(3, 2, 10, .55); backdrop-filter: blur(4px); border-radius: 10px; z-index: 3; }
+.ip-over[hidden] { display: none; }
+.ip-over div { display: grid; gap: 14px; justify-items: center; }
+.ip-over b { font-family: var(--f-d); font-size: 26px; }
+.ip-touch { display: none; }
+.ip-tools { display: flex; gap: 8px; }
+.ip-retro[aria-pressed="true"] { background: #c7f0d8; color: #43523d; }
+.ip-wrap.phone .ip-touch { display: flex; width: 100%; justify-content: center; }
+.ip-fire { width: min(260px, 70%); height: 58px; border-radius: 16px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; background: color-mix(in srgb, var(--a) 22%, var(--glass)); box-shadow: inset 0 0 0 1px var(--line-2); touch-action: none; user-select: none; -webkit-user-select: none; }
+.ip-fire:active { background: color-mix(in srgb, var(--a) 45%, transparent); }
+.ip-wrap.phone .ip-hud > div:not(.ip-lives) { min-width: 0; padding: 5px 10px; }
+.ip-wrap.phone .ip-hud b { font-size: 15px; }
+.ip-wrap.phone .ip-hud .ip-spec b { font-size: 12px; }
