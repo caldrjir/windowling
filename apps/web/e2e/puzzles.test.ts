@@ -17,6 +17,7 @@ const PUZZLES = [
 	'skladacka',
 	'sachy',
 	'piskvorky',
+	'sokoban',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -306,4 +307,30 @@ test('piskvorky places a star and the opponent answers', async ({ page }) => {
 	);
 	await page.locator(`.gm-c[data-i="${free}"]`).click();
 	await expect.poll(stones).toBe(before + 2);
+});
+
+test('sokoban: the keeper pushes crates, undo takes a push back, a hint plays the next push', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'sokoban');
+	await expect(page.locator('.sk-box')).toHaveCount(2);
+	const state = () => page.evaluate('Kit._test.inst.getState().m') as Promise<string>;
+
+	// A hint walks to the next push of the solution and pushes.
+	await page.locator('[data-t="hint"]').click();
+	await expect.poll(() => state()).toMatch(/[UDLR]$/);
+	const after = await state();
+	await page.locator('[data-t="undo"]').click();
+	expect(await state()).toBe(after.slice(0, -1));
+
+	// Arrow keys move the keeper (or bump into a wall without a move).
+	const before = (await state()).length;
+	for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
+		await page.keyboard.press(key);
+	expect((await state()).length).toBeGreaterThan(before);
+	await page.locator('[data-t="restart"]').click();
+	expect(await state()).toBe('');
+	expect(errors).toEqual([]);
 });

@@ -974,4 +974,87 @@ export const PUZZLE_GAMES: Game[] = [
 			});
 		},
 	},
+	{
+		id: 'sokoban',
+		online: 'race',
+		title: 'SOKOBAN',
+		group: 'puzzle',
+		tagline: 'Skladník ve vesmírném skladu.',
+		description:
+			'Klasický Sokoban: dotlač všechny bedny na zářící cíle a nezasekni se v rohu. Každý sklad je vygenerovaný a zaručeně řešitelný, s limitem posunů na tři hvězdy, neomezeným vracením tahů a nápovědou.',
+		genres: ['Logika', 'Sokoban', 'Hlavolam'],
+		features: ['Denní sklad', 'Cesta: 120 skladů', '2–5 beden', 'Limit posunů'],
+		en: {
+			tagline: 'A warehouse keeper in a space depot.',
+			description:
+				'Classic Sokoban: push every crate onto a glowing goal without getting stuck in a corner. Every depot is generated and guaranteed solvable, with a push par for three stars, unlimited undo and hints.',
+			genres: ['Logic', 'Sokoban', 'Puzzle'],
+			features: ['Daily depot', 'Path: 120 depots', '2–5 crates', 'Push par'],
+		},
+		statLabels: labels,
+		path: '/games/sokoban/index.html',
+		colors: ['#ffb547', '#7fd8ff', '#6b4cff'],
+		statsKey: 'gamecenter.stats.sokoban',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ffb547', '#7fd8ff', '#6b4cff'], 17);
+			const map = ['#######', '#  .  #', '#  #  #', '#     #', '#######'];
+			const s = Math.min((w * 0.66) / 7, (h * 0.62) / 5);
+			const x0 = w / 2 - s * 3.5;
+			const y0 = h * 0.12;
+			const tile = (x: number, y: number, inset: number, r: number) => {
+				ctx.beginPath();
+				ctx.roundRect(x0 + x * s + inset, y0 + y * s + inset, s - inset * 2, s - inset * 2, r);
+			};
+			map.forEach((row, y) =>
+				[...row].forEach((c, x) => {
+					tile(x, y, 2, s * 0.14);
+					ctx.fillStyle = c === '#' ? '#2a2360' : 'rgba(255,255,255,.05)';
+					ctx.fill();
+					if (c === '#') {
+						ctx.strokeStyle = 'rgba(255,255,255,.12)';
+						ctx.lineWidth = 1.5;
+						ctx.stroke();
+					}
+				}),
+			);
+			// the crate slides onto the goal, the keeper follows
+			const p = (Math.sin(t * 1.1) + 1) / 2;
+			ctx.save();
+			ctx.shadowColor = '#ffb547';
+			ctx.shadowBlur = s * 0.5;
+			ctx.strokeStyle = '#ffb547';
+			ctx.lineWidth = s * 0.07;
+			ctx.beginPath();
+			ctx.arc(x0 + 3.5 * s, y0 + 1.5 * s, s * 0.3, 0, TAU);
+			ctx.stroke();
+			ctx.restore();
+			const by = 3 - p * 2;
+			const on = p > 0.97;
+			ctx.save();
+			ctx.shadowColor = on ? '#7cf0b6' : 'rgba(0,0,0,0)';
+			ctx.shadowBlur = on ? s * 0.6 : 0;
+			ctx.fillStyle = on ? '#3fbf8a' : '#c98a3c';
+			ctx.strokeStyle = on ? '#c9ffe6' : '#ffd38a';
+			ctx.lineWidth = s * 0.05;
+			ctx.beginPath();
+			ctx.roundRect(x0 + 3 * s + s * 0.14, y0 + by * s + s * 0.14, s * 0.72, s * 0.72, s * 0.12);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+			ctx.fillStyle = '#e9edff';
+			ctx.beginPath();
+			ctx.arc(x0 + 3.5 * s, y0 + (by + 1.5) * s, s * 0.3, 0, TAU);
+			ctx.fill();
+			ctx.fillStyle = '#12204a';
+			ctx.beginPath();
+			ctx.roundRect(
+				x0 + 3.5 * s - s * 0.18,
+				y0 + (by + 1.5) * s - s * 0.2,
+				s * 0.36,
+				s * 0.17,
+				s * 0.08,
+			);
+			ctx.fill();
+		},
+	},
 ];

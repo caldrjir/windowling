@@ -28,7 +28,7 @@ follow the player; later, some games are played together (multiplayer).
 **Puzzles** (a second shelf, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
 (Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and
 Omalovánky (colour by number), Solitaire (Klondike, FreeCell, Spider), Mahjong, Skládačka
-(jigsaw), Šachy (chess) and Piškvorky (gomoku). Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
+(jigsaw), Šachy (chess), Piškvorky (gomoku) and Sokoban. Each has a daily puzzle with streaks, a 120-level Star Path, endless free play, ranks and
 achievements; weekly quests and themes are shared by all puzzles. **Online**: chess and gomoku
 against a live opponent, and races of up to 8 players on the same puzzle in every other game
 (join by a code, a link or the list of open games).
