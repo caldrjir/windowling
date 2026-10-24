@@ -810,7 +810,7 @@
 						? L('Pokračuj ve hře', 'Continue playing')
 						: L('Novinka v knihovně', 'New in your library')}
 				</div>
-				<h1 class="hero-title">
+				<h1 class="hero-title" style:--len={game.title.length}>
 					{game.title}<button
 						class="fav-hero"
 						class:on={isFav(game.id)}

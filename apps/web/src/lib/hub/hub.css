@@ -169,6 +169,7 @@ main {
 .hero-info {
 	padding: clamp(28px, 4vw, 56px);
 	max-width: 760px;
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -207,7 +208,11 @@ main {
 .hero-title {
 	font-family: var(--f-d);
 	font-weight: 900;
-	font-size: clamp(40px, 6vw, 88px);
+	/* Long names shrink to fit one line (--len: letters in the title, + the favourite star). */
+	font-size: min(
+		clamp(40px, 6vw, 88px),
+		calc((min(100vw - 64px, 760px) - 2 * clamp(28px, 4vw, 56px)) / (var(--len, 8) * 0.98 + 0.9))
+	);
 	white-space: nowrap;
 	line-height: 0.9;
 	letter-spacing: 0.02em;
@@ -685,7 +690,7 @@ kbd {
 		letter-spacing: 0.22em;
 	}
 	.hero-title {
-		font-size: clamp(34px, 11vw, 48px);
+		font-size: min(48px, calc((100vw - 72px) / (var(--len, 8) * 0.98 + 0.9)));
 	}
 	.tagline {
 		font-size: 17px;
