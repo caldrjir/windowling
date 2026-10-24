@@ -63,7 +63,7 @@ const Tanky = (() => {
       vx += ax * dt; vy += G * dt; x += vx * dt; y += vy * dt;
       if (i % 3 === 0) path.push([x, y]);
       if (x < -300 || x > FW + 300 || y > FH + 40) return { path, hit: null };
-      for (let k = 0; k < 2; k++) { const t = st.tanks[k]; if ((k !== shooter || i > 30) && t.hp > 0 && Math.abs(x - t.x) < 14 && y > t.y - 20 && y < t.y + 2) { path.push([x, y]); return { path, hit: [Math.round(x), Math.round(y)] }; } }
+      for (let k = 0; k < 2; k++) { const t = st.tanks[k]; if ((k !== shooter || i > 30) && t.hp > 0 && Math.abs(x - t.x) < 20 && y > t.y - 25 && y < t.y + 2) { path.push([x, y]); return { path, hit: [Math.round(x), Math.round(y)] }; } }
       if (x >= 0 && x < FW && y >= st.h[Math.floor(x)]) { path.push([x, y]); return { path, hit: [Math.round(x), Math.round(st.h[Math.floor(x)])] }; }
     }
     return { path, hit: null };
@@ -159,6 +159,9 @@ const Tanky = (() => {
       moves.push(mv);
       if (online && !fromNet) net.send(mv);
       phase = 'fly'; shot = { flights, hits, w, t: 0, k: active }; api.sound('place'); shake = Math.max(shake, 0.08);
+      t.recoil = 1; t.flash = 1;
+      const m = tankScale(), ar = a * Math.PI / 180, mx = t.x + Math.cos(ar) * 28 * m, my = t.y - 15 * m - Math.sin(ar) * 28 * m;
+      for (let i = 0; i < 7; i++) { const life = 0.6 + Math.random() * 0.6; parts.push({ x: mx, y: my, vx: Math.cos(ar) * (30 + Math.random() * 60) + (Math.random() - 0.5) * 30, vy: -Math.sin(ar) * (30 + Math.random() * 60) - 10, t: life, life, puff: 3 + Math.random() * 3, col: '200,200,210' }); }
       syncUI(); api.changed();
     }
     // bez animace (obnovení rozehrané hry)
@@ -176,7 +179,10 @@ const Tanky = (() => {
         if (!p) continue;
         const d = blast(st, p, w); total = total.map((v, k) => v + d[k]);
         booms.push({ x: p[0], y: p[1], r: w.r, t: 0, kind: w.kind });
-        for (let i = 0; i < (w.kind === 'dirt' ? 18 : 26); i++) { const a = Math.random() * 6.28, v = 60 + Math.random() * 220; parts.push({ x: p[0], y: p[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, t: 0.6 + Math.random() * 0.7, col: w.kind === 'dirt' ? '#8a6a44' : Math.random() < 0.5 ? '#ffe066' : '#ff8a3d', g: true }); }
+        if (w.kind !== 'dirt') burns.push([p[0], p[1], w.r]);
+        const soil = `rgb(${TH.soil[0].join(',')})`;
+        for (let i = 0; i < (w.kind === 'dirt' ? 18 : 30); i++) { const a = Math.random() * 6.28, v = 60 + Math.random() * 240; parts.push({ x: p[0], y: p[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, t: 0.6 + Math.random() * 0.8, col: w.kind === 'dirt' || i % 3 ? soil : Math.random() < 0.5 ? '#ffe066' : '#ff8a3d', z: 2 + Math.random() * 3.5, g: true }); }
+        for (let i = 0; i < (w.kind === 'dirt' ? 4 : 9); i++) { const a = Math.random() * 6.28, d = Math.random() * w.r * 0.6, life = 1 + Math.random() * 0.8; parts.push({ x: p[0] + Math.cos(a) * d, y: p[1] + Math.sin(a) * d, vx: (Math.random() - 0.5) * 20, vy: -16 - Math.random() * 24, t: life, life, puff: w.r * 0.2 + Math.random() * 5, col: w.kind === 'dirt' ? '140,110,80' : i % 3 ? '70,64,72' : '120,110,110' }); }
       }
       const fall = settle(st);
       st.tanks.forEach((tk, k) => { const dd = total[k] + fall[k]; if (dd > 0) { tk.hp = Math.max(0, tk.hp - dd); tk.hurt = { v: dd, t: 1.4 }; } });
@@ -205,15 +211,15 @@ const Tanky = (() => {
       for (let i = 0; i < px && fuel > 0; i++) {
         const nx = t.x + dir; if (nx < 6 || nx > FW - 7) break;
         if (st.h[nx] < t.y - 5) break; // příliš strmé
-        t.x = nx; t.y = st.h[nx]; fuel--;
-        if (Math.abs(st.tanks[1 - active].x - t.x) < 26) { t.x -= dir; t.y = st.h[t.x]; break; }
+        t.x = nx; t.y = st.h[nx]; fuel--; t.wheel = (t.wheel || 0) + dir;
+        if (Math.abs(st.tanks[1 - active].x - t.x) < 44) { t.x -= dir; t.y = st.h[t.x]; break; }
       }
       syncUI();
     }
 
     // ── Vykreslení ──
     el.innerHTML = `<div class="tk-wrap">
-      <div class="tk-top"><div class="tk-p tk-p0"><b></b><i><s></s></i></div><div class="tk-wind"><small>${L('VÍTR', 'WIND')}</small><b></b></div><div class="tk-p tk-p1"><b></b><i><s></s></i></div></div>
+      <div class="tk-top"><div class="tk-p tk-p0"><b></b><i><s></s></i></div><div class="tk-wind"><small>${L('VÍTR', 'WIND')}</small><b></b><span class="tk-wbar"><u></u></span></div><div class="tk-p tk-p1"><b></b><i><s></s></i></div></div>
       <div class="tk-stage"><canvas class="tk-board"></canvas><div class="tk-banner" hidden></div></div>
       <div class="tk-ctrl">
         <div class="tk-row"><span>${L('Úhel', 'Angle')}</span><button data-c="a-">−</button><input type="range" class="tk-ang" min="0" max="180" step="1" aria-label="${L('Úhel', 'Angle')}"><button data-c="a+">+</button><b class="tk-angv"></b></div>
@@ -231,14 +237,25 @@ const Tanky = (() => {
       sc = Math.max(0.3, Math.min(vw / FW, hAvail / FH, 1.1));
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = Math.round(FW * sc * dpr); cv.height = Math.round(FH * sc * dpr); cv.style.width = Math.round(FW * sc) + 'px'; cv.style.height = Math.round(FH * sc) + 'px';
-      wrapEl.classList.toggle('phone', phone); bgCv = null; terrainDirty = true;
+      wrapEl.classList.toggle('phone', phone); bgCv = null; texCv = null; terrainDirty = true;
     }
     const THEMES = [
-      { sky: ['#1a1240', '#5a2a6e', '#ff8a5c'], sun: '#ffd27a', far: '#3a2458', near: '#2a1a46', top: '#7ad97a', dirt: ['#5b3a2a', '#2c1c18'] },
-      { sky: ['#050818', '#0f1a44', '#2a3a7a'], sun: '#e8f0ff', far: '#16224a', near: '#101838', top: '#5ac8a0', dirt: ['#3e3550', '#1a1528'] },
-      { sky: ['#2a3a8a', '#9a6ab8', '#ffb8c8'], sun: '#fff0c0', far: '#5a4a8a', near: '#44386e', top: '#9ae07a', dirt: ['#6a4a34', '#33221c'] },
+      { sky: ['#1a1240', '#5a2a6e', '#ff8a5c'], sun: '#ffd27a', far: '#4a2c68', near: '#2e1c4a', cloud: 'rgba(255,190,200,.3)', grass: ['#8ae06a', '#3f8a3a'], soil: [[140, 96, 62], [62, 38, 30]], stone: '#c49a6a', decos: ['pine', 'pine', 'rock', 'bush', 'sandbags', 'barrel', 'flower'] },
+      { sky: ['#050818', '#0f1a44', '#2a3a7a'], sun: '#e8f0ff', moon: true, far: '#1a2450', near: '#10183a', cloud: 'rgba(140,160,220,.14)', grass: ['#5ac8a0', '#2a7a6a'], soil: [[92, 80, 112], [36, 28, 52]], stone: '#9a8cb8', decos: ['dead', 'dead', 'ruin', 'rock', 'sandbags', 'barrel'] },
+      { sky: ['#3a5aa8', '#b07ab8', '#ffc8b0'], sun: '#fff0c0', far: '#7a6aa8', near: '#5a6a8a', cloud: 'rgba(255,240,245,.7)', grass: ['#a8e070', '#5a9a40'], soil: [[176, 128, 80], [92, 60, 40]], stone: '#d8b88a', decos: ['oak', 'pine', 'cactus', 'rock', 'bush', 'flower', 'flower', 'barrel'] },
     ];
     const TH = THEMES[T.theme];
+    const origH = Int16Array.from(st.h), burns = [];
+    // ozdoby: náhodně na povrchu mimo tanky; zmizí, jakmile se pod nimi změní zem
+    const decos = (() => {
+      const r = rngOf(P.seed ^ 0xdec0), out = [];
+      for (let tries = 0; tries < 400 && out.length < 16; tries++) {
+        const x = 12 + Math.floor(r() * (FW - 24));
+        if (T.spots.some(s => Math.abs(s - x) < 56) || out.some(o => Math.abs(o.x - x) < 50) || Math.abs(st.h[x - 6] - st.h[x + 6]) > 7) continue;
+        out.push({ x, kind: TH.decos[Math.floor(r() * TH.decos.length)], s: 0.85 + r() * 0.4, seed: Math.floor(r() * 1e9) });
+      }
+      return out;
+    })();
     function layer() { const c = document.createElement('canvas'); c.width = cv.width; c.height = cv.height; const g = c.getContext('2d'); g.setTransform(sc * dpr, 0, 0, sc * dpr, 0, 0); return [c, g]; }
     function background() {
       if (bgCv) return bgCv;
@@ -246,95 +263,147 @@ const Tanky = (() => {
       const sky = g.createLinearGradient(0, 0, 0, FH); sky.addColorStop(0, TH.sky[0]); sky.addColorStop(0.55, TH.sky[1]); sky.addColorStop(1, TH.sky[2]);
       g.fillStyle = sky; g.fillRect(0, 0, FW, FH);
       const r = rngOf(P.seed ^ 0x5ca1);
-      if (T.theme === 1) for (let i = 0; i < 120; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + r() * 0.6})`; g.fillRect(r() * FW, r() * FH * 0.6, 1.5, 1.5); }
+      if (T.theme === 1) for (let i = 0; i < 140; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + r() * 0.7})`; const z = r() < 0.1 ? 2.2 : 1.3; g.fillRect(r() * FW, r() * FH * 0.6, z, z); }
       const sx = FW * (0.3 + r() * 0.4), sy = FH * (0.18 + r() * 0.12);
-      const glow = g.createRadialGradient(sx, sy, 0, sx, sy, 140); glow.addColorStop(0, TH.sun + 'aa'); glow.addColorStop(1, TH.sun + '00');
-      g.fillStyle = glow; g.fillRect(sx - 140, sy - 140, 280, 280);
+      const glow = g.createRadialGradient(sx, sy, 0, sx, sy, 150); glow.addColorStop(0, TH.sun + 'aa'); glow.addColorStop(1, TH.sun + '00');
+      g.fillStyle = glow; g.fillRect(sx - 150, sy - 150, 300, 300);
       g.fillStyle = TH.sun; g.beginPath(); g.arc(sx, sy, 34, 0, 7); g.fill();
-      for (const [col, base, amp, f] of [[TH.far, 0.5, 70, 0.006], [TH.near, 0.6, 50, 0.011]]) {
+      if (TH.moon) { g.fillStyle = 'rgba(150,160,200,.35)'; for (const [dx, dy, rr] of [[-10, -6, 8], [9, 10, 5], [4, -14, 3.5]]) { g.beginPath(); g.arc(sx + dx, sy + dy, rr, 0, 7); g.fill(); } }
+      for (const [col, base, amp, f, trees] of [[TH.far, 0.5, 70, 0.006, false], [TH.near, 0.6, 50, 0.011, true]]) {
         g.fillStyle = col; g.beginPath(); g.moveTo(0, FH);
-        const ph = r() * 6;
-        for (let x = 0; x <= FW; x += 8) g.lineTo(x, FH * base + Math.sin(x * f + ph) * amp + Math.sin(x * f * 2.7 + ph * 2) * amp * 0.35);
+        const ph = r() * 6, y = x => FH * base + Math.sin(x * f + ph) * amp + Math.sin(x * f * 2.7 + ph * 2) * amp * 0.35;
+        for (let x = 0; x <= FW; x += 8) g.lineTo(x, y(x));
         g.lineTo(FW, FH); g.fill();
+        // siluety stromů na bližších kopcích
+        if (trees) for (let x = 6; x < FW; x += 9 + r() * 22) { if (r() < 0.35) continue; const h = 8 + r() * 12, yy = y(x) + 2; g.beginPath(); g.moveTo(x - h * 0.35, yy); g.lineTo(x, yy - h); g.lineTo(x + h * 0.35, yy); g.fill(); }
       }
       return bgCv;
+    }
+    // textura hlíny (šum, vrstvy, kamínky) jednou na velikost plátna; terén ji jen ořízne
+    let texCv = null;
+    function texture() {
+      if (texCv) return texCv;
+      const k = sc * dpr, W = Math.round(FW * k), H = Math.round(FH * k);
+      texCv = document.createElement('canvas'); texCv.width = W; texCv.height = H;
+      const g = texCv.getContext('2d'), img = g.createImageData(W, H), d = img.data, [c0, c1] = TH.soil;
+      const hash = (x, y) => { let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + P.seed | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+      const sm = t => t * t * (3 - 2 * t);
+      const vn = (x, y, c) => { const i = Math.floor(x / c), j = Math.floor(y / c), fx = sm(x / c - i), fy = sm(y / c - j), a = hash(i, j), b = hash(i + 1, j), e = hash(i, j + 1), f = hash(i + 1, j + 1); return a + (b - a) * fx + (e - a) * fy + (a - b - e + f) * fx * fy; };
+      for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+        const x = px / k, y = py / k, q = Math.min(1, Math.max(0, (y - FH * 0.3) / (FH * 0.7))), n1 = vn(x, y, 16), n2 = vn(x + 50, y, 4);
+        const band = Math.sin((y + n1 * 36) / 8) > 0.6 ? -16 : 0, f = 0.8 + n1 * 0.3 + n2 * 0.12, i = (py * W + px) * 4;
+        d[i] = (c0[0] + (c1[0] - c0[0]) * q) * f + band; d[i + 1] = (c0[1] + (c1[1] - c0[1]) * q) * f + band; d[i + 2] = (c0[2] + (c1[2] - c0[2]) * q) * f + band; d[i + 3] = 255;
+      }
+      g.putImageData(img, 0, 0);
+      g.setTransform(k, 0, 0, k, 0, 0);
+      const r = rngOf(P.seed ^ 0x57);
+      for (let i = 0; i < 220; i++) {
+        const x = r() * FW, y = FH * 0.3 + r() * FH * 0.7, s = 1.5 + r() * 4;
+        g.globalAlpha = 0.5; g.fillStyle = r() < 0.5 ? TH.stone : 'rgba(20,10,10,.8)'; g.beginPath(); g.ellipse(x, y, s, s * 0.7, r() * 3, 0, 7); g.fill();
+        g.globalAlpha = 0.3; g.fillStyle = '#fff'; g.beginPath(); g.ellipse(x - s * 0.3, y - s * 0.25, s * 0.35, s * 0.2, 0, 0, 7); g.fill();
+      }
+      g.globalAlpha = 1;
+      return texCv;
     }
     function terrainLayer() {
       if (terCv && !terrainDirty) return terCv;
       const [c, g] = layer(); terCv = c; terrainDirty = false;
+      for (let i = decos.length - 1; i >= 0; i--) { const o = decos[i]; if (Math.abs(st.h[o.x] - origH[o.x]) > 2) decos.splice(i, 1); }
+      for (const o of decos) TkArt.deco(g, o.kind, o.x, st.h[o.x] + 2, o.s * 1.6, rngOf(o.seed));
       const path = () => { g.beginPath(); g.moveTo(0, FH); for (let x = 0; x < FW; x++) g.lineTo(x, st.h[x]); g.lineTo(FW, FH); g.closePath(); };
-      const dirt = g.createLinearGradient(0, FH * 0.3, 0, FH); dirt.addColorStop(0, TH.dirt[0]); dirt.addColorStop(1, TH.dirt[1]);
-      path(); g.fillStyle = dirt; g.fill();
-      // vrstvy horniny
-      g.save(); path(); g.clip(); g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 2;
-      for (let k = 1; k < 7; k++) { g.beginPath(); for (let x = 0; x < FW; x += 6) g.lineTo(x, FH * 0.45 + k * 42 + Math.sin(x * 0.02 + k) * 8); g.stroke(); }
+      g.save(); path(); g.clip();
+      g.save(); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.drawImage(texture(), 0, 0); g.restore();
+      // spálená místa po výbuších
+      for (const [x, y, R] of burns) { const gr = g.createRadialGradient(x, y, R * 0.4, x, y, R + 10); gr.addColorStop(0, 'rgba(20,10,8,.55)'); gr.addColorStop(1, 'rgba(20,10,8,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, R + 10, 0, 7); g.fill(); }
+      // stín pod drnem
+      g.strokeStyle = 'rgba(0,0,0,.28)'; g.lineWidth = 12; g.beginPath(); for (let x = 0; x < FW; x += 2) g.lineTo(x, st.h[x] + 9); g.stroke();
       g.restore();
-      // tráva na hraně
-      g.strokeStyle = TH.top; g.lineWidth = 5; g.lineJoin = 'round'; g.beginPath(); for (let x = 0; x < FW; x++) g.lineTo(x, st.h[x] + 1); g.stroke();
-      g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = 1.5; g.beginPath(); for (let x = 0; x < FW; x++) g.lineTo(x, st.h[x] - 1); g.stroke();
+      // drn a stébla
+      const gg = g.createLinearGradient(0, FH * 0.25, 0, FH); gg.addColorStop(0, TH.grass[0]); gg.addColorStop(1, TH.grass[1]);
+      g.strokeStyle = gg; g.lineWidth = 6; g.lineJoin = 'round'; g.beginPath(); for (let x = 0; x < FW; x++) g.lineTo(x, st.h[x] + 2); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 1.2; g.beginPath(); for (let x = 0; x < FW; x++) g.lineTo(x, st.h[x] - 0.5); g.stroke();
+      g.strokeStyle = TH.grass[0]; g.lineWidth = 1.1;
+      for (let x = 1; x < FW - 1; x += 2) {
+        if (Math.abs(st.h[x + 1] - st.h[x - 1]) > 5) continue; // ne na srázu
+        const n = Math.sin(x * 12.9898) * 43758.5453, h = 2 + (n - Math.floor(n)) * 4;
+        g.beginPath(); g.moveTo(x, st.h[x] + 1); g.lineTo(x + (n % 2) - 0.5, st.h[x] - h); g.stroke();
+      }
       return terCv;
     }
+    const clouds = Array.from({ length: 6 }, (_, i) => { const r = rngOf(P.seed ^ (0xc1 + i)); return { x: r() * FW * 1.4, y: 30 + r() * FH * 0.3, s: 0.6 + r() * 0.9, v: 3 + r() * 6 }; });
+    function drawClouds() {
+      ctx.fillStyle = TH.cloud;
+      for (const c of clouds) {
+        const x = ((c.x + clock * c.v * (wind >= 0 ? 1 : -1) * (0.5 + Math.abs(wind) / 8)) % (FW + 200) + FW + 200) % (FW + 200) - 100;
+        ctx.beginPath(); for (const [dx, dy, rr] of [[0, 0, 20], [22, -7, 16], [42, 2, 14], [-20, 4, 12], [14, 7, 16]]) { ctx.moveTo(x + dx * c.s + rr * c.s, c.y + dy * c.s); ctx.arc(x + dx * c.s, c.y + dy * c.s, rr * c.s, 0, 7); } ctx.fill();
+      }
+    }
+    const tankScale = () => Math.max(1.3, Math.min(2.2, 0.82 / sc)); // na malé ploše větší tanky
+    function pill(text, x, y, col, m) {
+      ctx.font = `700 ${11 * m}px Space Grotesk, sans-serif`; ctx.textAlign = 'center';
+      const w = ctx.measureText(text).width + 12 * m;
+      ctx.fillStyle = 'rgba(8,8,26,.72)'; ctx.beginPath(); ctx.roundRect(x - w / 2, y - 8 * m, w, 15 * m, 4 * m); ctx.fill();
+      ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.fillText(text, x, y + 3.5 * m);
+    }
     function drawTank(t, k) {
-      const col = COLORS[k], x = t.x, y = t.y, m = Math.max(1, Math.min(1.9, 0.62 / sc)); // na malé ploše větší tanky
-      // sklon podle terénu
-      const tilt = Math.atan2((st.h[Math.min(FW - 1, x + 10)] - st.h[Math.max(0, x - 10)]), 20) * 0.8;
-      ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.scale(m, m);
-      if (t.hp <= 0) ctx.globalAlpha = 0.55;
-      // hlaveň
-      ctx.save(); ctx.translate(0, -14); ctx.rotate(-t.ang * Math.PI / 180 - tilt);
-      ctx.fillStyle = '#2a2f45'; ctx.fillRect(0, -2.6, BARREL, 5.2); ctx.fillStyle = col; ctx.fillRect(BARREL - 4, -3.2, 4, 6.4);
+      const col = COLORS[k], x = t.x, y = t.y, m = tankScale();
+      const tilt = Math.atan2((st.h[Math.min(FW - 1, x + 12)] - st.h[Math.max(0, x - 12)]), 24) * 0.8;
+      ctx.save(); ctx.translate(x, y + 1); ctx.rotate(tilt); ctx.scale(m, m);
+      TkArt.tank(ctx, { col, ang: t.ang, t: clock + k, wheel: t.wheel || 0, recoil: t.recoil || 0, flash: t.flash || 0, dead: t.hp <= 0, wind });
       ctx.restore();
-      // věž
-      ctx.fillStyle = col; ctx.strokeStyle = '#10142a'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(0, -12, 8, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
-      // korba
-      ctx.beginPath(); ctx.moveTo(-16, -6); ctx.lineTo(16, -6); ctx.lineTo(13, -12); ctx.lineTo(-13, -12); ctx.closePath(); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-12, -11, 24, 1.5);
-      // pásy
-      ctx.fillStyle = '#20253a'; ctx.beginPath(); ctx.roundRect(-18, -7, 36, 8, 4); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#596080'; for (let i = -13; i <= 13; i += 6.5) { ctx.beginPath(); ctx.arc(i, -3, 2.3, 0, 7); ctx.fill(); }
-      ctx.restore();
-      if (t.hp <= 0) { ctx.fillStyle = 'rgba(60,60,60,.5)'; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(x + Math.sin(clock * 2 + i) * 6, y - 26 - i * 12 - (clock * 20 % 12), 6 + i * 2, 0, 7); ctx.fill(); } }
+      if (t.hp <= 0) {
+        for (let i = 0; i < 3; i++) { const f = (clock * 1.6 + i / 3) % 1; ctx.fillStyle = `rgba(50,48,56,${0.6 * (1 - f)})`; ctx.beginPath(); ctx.arc(x + Math.sin(clock * 2 + i) * 6, y - 22 * m - f * 40, (5 + f * 10) * m * 0.6, 0, 7); ctx.fill(); }
+        ctx.fillStyle = `rgba(255,${140 + Math.random() * 80},40,.85)`; ctx.beginPath(); ctx.moveTo(x - 6, y - 14 * m); ctx.quadraticCurveTo(x, y - (24 + Math.random() * 6) * m, x + 6, y - 14 * m); ctx.fill();
+      }
       // jméno a zdraví
-      ctx.font = `700 ${13 * m}px Space Grotesk, sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 3 * m;
-      ctx.strokeText(names[k], x, y - 44 * m); ctx.fillText(names[k], x, y - 44 * m);
-      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x - 22 * m, y - 38 * m, 44 * m, 5 * m); ctx.fillStyle = t.hp > 50 ? '#6dff9e' : t.hp > 25 ? '#ffe066' : '#ff5a7a'; ctx.fillRect(x - 22 * m, y - 38 * m, 44 * m * t.hp / 100, 5 * m);
-      if (t.hurt && t.hurt.t > 0) { ctx.globalAlpha = Math.min(1, t.hurt.t); ctx.font = `800 ${18 * m}px Unbounded, sans-serif`; ctx.fillStyle = '#ff5a7a'; const hy = y - (58 + (1.4 - t.hurt.t) * 30) * m; ctx.strokeText(`−${t.hurt.v}`, x, hy); ctx.fillText(`−${t.hurt.v}`, x, hy); ctx.globalAlpha = 1; }
-      if (k === active && phase === 'aim' && !done) { ctx.fillStyle = col; ctx.beginPath(); const by = y - (70 + Math.sin(clock * 5) * 3) * m; ctx.moveTo(x - 6 * m, by); ctx.lineTo(x + 6 * m, by); ctx.lineTo(x, by + 8 * m); ctx.fill(); }
+      const ny = y - 50 * m;
+      pill(names[k], x, ny, col, m);
+      const bw = 44 * m, by = ny + 10 * m;
+      ctx.fillStyle = 'rgba(8,8,26,.72)'; ctx.beginPath(); ctx.roundRect(x - bw / 2 - 1, by - 1, bw + 2, 6 * m + 2, 3 * m); ctx.fill();
+      ctx.fillStyle = t.hp > 50 ? '#6dff9e' : t.hp > 25 ? '#ffe066' : '#ff5a7a'; ctx.beginPath(); ctx.roundRect(x - bw / 2, by, Math.max(0.1, bw * t.hp / 100), 6 * m, 3 * m); ctx.fill();
+      if (t.hurt && t.hurt.t > 0) { ctx.globalAlpha = Math.min(1, t.hurt.t); ctx.font = `900 ${18 * m}px Unbounded, sans-serif`; ctx.fillStyle = '#ff5a7a'; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 4 * m; const hy = y - (70 + (1.4 - t.hurt.t) * 30) * m; ctx.strokeText(`−${t.hurt.v}`, x, hy); ctx.fillText(`−${t.hurt.v}`, x, hy); ctx.globalAlpha = 1; }
+      if (k === active && phase === 'aim' && !done) { ctx.fillStyle = col; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1; ctx.beginPath(); const by2 = y - (74 + Math.sin(clock * 5) * 3) * m; ctx.moveTo(x - 6 * m, by2); ctx.lineTo(x + 6 * m, by2); ctx.lineTo(x, by2 + 8 * m); ctx.closePath(); ctx.fill(); ctx.stroke(); }
     }
     function draw() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, cv.width, cv.height);
       if (shake > 0) ctx.translate((Math.random() - 0.5) * shake * 30 * dpr, (Math.random() - 0.5) * shake * 30 * dpr);
       ctx.drawImage(background(), 0, 0);
+      const ox = ctx.getTransform().e, oy = ctx.getTransform().f;
+      ctx.setTransform(sc * dpr, 0, 0, sc * dpr, ox, oy);
+      drawClouds();
+      ctx.setTransform(1, 0, 0, 1, ox, oy);
       ctx.drawImage(terrainLayer(), 0, 0);
-      ctx.setTransform(sc * dpr, 0, 0, sc * dpr, ctx.getTransform().e, ctx.getTransform().f);
+      ctx.setTransform(sc * dpr, 0, 0, sc * dpr, ox, oy);
       st.tanks.forEach(drawTank);
-      // míření: čára od hlavně, délka podle síly
+      // míření: šipka od hlavně, délka podle síly
       if (phase === 'aim' && isHuman(active) && !done) {
-        const t = st.tanks[active], a = t.ang * Math.PI / 180, x0 = t.x + Math.cos(a) * BARREL, y0 = t.y - 14 - Math.sin(a) * BARREL, len = 20 + t.pw * 0.9;
-        ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + Math.cos(a) * len, y0 - Math.sin(a) * len); ctx.stroke(); ctx.setLineDash([]);
+        const t = st.tanks[active], a = t.ang * Math.PI / 180, m = tankScale(), x0 = t.x + Math.cos(a) * 26 * m, y0 = t.y - 15 * m - Math.sin(a) * 26 * m, len = 16 + t.pw * 0.9;
+        for (let i = 0; i < 8; i++) {
+          const d = (i / 8) * len, f = (i / 8 + clock * 0.8) % 1, px = x0 + Math.cos(a) * d, py = y0 - Math.sin(a) * d;
+          ctx.fillStyle = `hsla(${60 - (d / 106) * 60},100%,62%,${0.35 + 0.6 * (1 - f)})`; ctx.beginPath(); ctx.arc(px, py, 1.6 + d / 40, 0, 7); ctx.fill();
+        }
       }
       if (shot) {
         const n = Math.floor(shot.t * 40);
         for (const f of shot.flights) {
-          const upto = Math.min(f.path.length - 1, n);
-          ctx.strokeStyle = 'rgba(255,230,160,.35)'; ctx.lineWidth = 2; ctx.beginPath();
-          for (let i = Math.max(0, upto - 14); i <= upto; i++) ctx.lineTo(f.path[i][0], f.path[i][1]);
-          ctx.stroke();
-          const p = f.path[upto]; if (p) { ctx.fillStyle = '#fff6c8'; ctx.shadowColor = '#ffb84d'; ctx.shadowBlur = 12; ctx.beginPath(); ctx.arc(p[0], p[1], shot.w.r > 40 ? 5 : 3.5, 0, 7); ctx.fill(); ctx.shadowBlur = 0; }
+          const upto = Math.min(f.path.length - 1, n), p = f.path[upto], q = f.path[Math.max(0, upto - 1)];
+          if (p && upto < f.path.length - 1) TkArt.shell(ctx, shot.w.id, p[0], p[1], Math.atan2(p[1] - q[1], p[0] - q[0]), clock);
         }
       }
       for (const b of booms) {
-        const k = Math.min(1, b.t / 0.35), fade = Math.max(0, 1 - (b.t - 0.2) / 0.6);
+        const k = Math.min(1, b.t / 0.3), fade = Math.max(0, 1 - (b.t - 0.15) / 0.6);
         if (fade <= 0) continue;
-        const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * (0.4 + k * 0.9));
+        if (b.kind !== 'dirt' && b.t < 0.3) { ctx.strokeStyle = `rgba(255,255,255,${(0.3 - b.t) * 3})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (0.6 + b.t * 4), 0, 7); ctx.stroke(); }
+        const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * (0.5 + k * 0.7));
         if (b.kind === 'dirt') { g.addColorStop(0, `rgba(170,130,80,${fade})`); g.addColorStop(1, 'rgba(120,90,60,0)'); }
-        else { g.addColorStop(0, `rgba(255,255,220,${fade})`); g.addColorStop(0.4, `rgba(255,170,60,${fade * 0.9})`); g.addColorStop(1, 'rgba(255,60,40,0)'); }
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (0.4 + k * 0.9), 0, 7); ctx.fill();
+        else { g.addColorStop(0, `rgba(255,255,230,${fade})`); g.addColorStop(0.35, `rgba(255,214,90,${fade})`); g.addColorStop(0.7, `rgba(255,110,40,${fade * 0.85})`); g.addColorStop(1, 'rgba(200,40,30,0)'); }
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (0.5 + k * 0.7), 0, 7); ctx.fill();
       }
-      for (const p of parts) { ctx.globalAlpha = Math.min(1, p.t * 2); ctx.fillStyle = p.col; ctx.fillRect(p.x - 2, p.y - 2, 4, 4); }
+      for (const p of parts) {
+        if (p.puff) { const k = 1 - p.t / p.life; ctx.fillStyle = `rgba(${p.col},${Math.min(0.55, p.t / p.life * 0.8)})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.puff * (1 + k * 2.2), 0, 7); ctx.fill(); continue; }
+        ctx.globalAlpha = Math.min(1, p.t * 2); ctx.fillStyle = p.col; const z = p.z || 4; ctx.fillRect(p.x - z / 2, p.y - z / 2, z, z);
+      }
       ctx.globalAlpha = 1;
     }
     // ── Ovládání a panel ──
@@ -344,13 +413,15 @@ const Tanky = (() => {
       angIn.value = t.ang; pwIn.value = t.pw;
       el.querySelector('.tk-angv').textContent = `${t.ang}°`; el.querySelector('.tk-pwv').textContent = t.pw;
       el.querySelector('.tk-fuel').textContent = `${L('Palivo', 'Fuel')} ${Math.round(fuel / FUEL * 100)} %`;
-      el.querySelector('.tk-weap').innerHTML = WEAPONS.map((w, i) => { const n = st.ammo[active][i]; return `<button data-w="${i}" class="${i === weapon ? 'on' : ''}" ${n > 0 && mine ? '' : 'disabled'}>${w.name}<small>${n === Infinity ? '∞' : n}</small></button>`; }).join('');
+      el.querySelector('.tk-weap').innerHTML = WEAPONS.map((w, i) => { const n = st.ammo[active][i]; return `<button data-w="${i}" class="${i === weapon ? 'on' : ''}" ${n > 0 && mine ? '' : 'disabled'}>${TkArt.ICON[w.id]}${w.name}<small>${n === Infinity ? '∞' : n}</small></button>`; }).join('');
       for (let k = 0; k < 2; k++) {
         const p = el.querySelector(`.tk-p${k}`); p.classList.toggle('on', k === active && !done);
         p.querySelector('b').textContent = names[k]; p.querySelector('s').style.width = st.tanks[k].hp + '%';
       }
       const wb = el.querySelector('.tk-wind b');
       wb.textContent = wind === 0 ? L('bezvětří', 'calm') : `${wind > 0 ? '→' : '←'} ${Math.abs(wind)}`;
+      const wu = el.querySelector('.tk-wbar u'), wk = Math.min(1, Math.abs(wind) / 10) * 50;
+      wu.style.left = (wind < 0 ? 50 - wk : 50) + '%'; wu.style.width = wk + '%'; wu.className = wind < 0 ? 'l' : 'r';
       wrapEl.classList.toggle('waiting', !mine);
     }
     const setAng = v => { if (!isHuman(active) || phase !== 'aim') return; st.tanks[active].ang = Math.max(0, Math.min(180, Math.round(v))); syncUI(); };
@@ -394,7 +465,8 @@ const Tanky = (() => {
       const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
       shake = Math.max(0, shake - dt);
       parts = parts.filter(p => { p.x += p.vx * dt; p.y += p.vy * dt; if (p.g) p.vy += 500 * dt; return (p.t -= dt) > 0; });
-      for (const t of st.tanks) if (t.hurt) t.hurt.t -= dt;
+      for (const t of st.tanks) { if (t.hurt) t.hurt.t -= dt; t.recoil = Math.max(0, (t.recoil || 0) - dt * 4); t.flash = Math.max(0, (t.flash || 0) - dt * 6); }
+      if (shot && phase === 'fly') for (const f of shot.flights) { const p = f.path[Math.min(f.path.length - 1, Math.floor(shot.t * 40))]; if (p && Math.random() < 0.6) parts.push({ x: p[0], y: p[1], vx: (Math.random() - 0.5) * 8, vy: -8, t: 0.6, life: 0.6, puff: shot.w.kind === 'dirt' ? 2 : 2.5, col: shot.w.kind === 'dirt' ? '160,130,90' : '225,225,235' }); }
       if (banner) { banner.t -= dt; bannerEl.hidden = banner.t <= 0; bannerEl.textContent = banner.text; if (banner.t <= 0) banner = null; }
       if (phase === 'fly' && shot) {
         shot.t += dt * 1.6;
@@ -442,13 +514,34 @@ const Tanky = (() => {
     };
   }
 
+  // obrázek na úvodní stránce: dva tanky, letící střela a výbuch při západu slunce
   function art(el) {
-    el.innerHTML = `<svg viewBox="0 0 260 260"><defs><linearGradient id="tkSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1240"/><stop offset=".6" stop-color="#5a2a6e"/><stop offset="1" stop-color="#ff8a5c"/></linearGradient></defs>
-      <rect x="10" y="20" width="240" height="210" rx="18" fill="url(#tkSky)"/><circle cx="150" cy="80" r="18" fill="#ffd27a"/>
-      <path d="M10 175 Q60 140 95 160 T170 150 T250 165 V230 H10Z" fill="#5b3a2a"/><path d="M10 175 Q60 140 95 160 T170 150 T250 165" fill="none" stroke="#7ad97a" stroke-width="5"/>
-      <path d="M95 112 Q140 40 190 130" fill="none" stroke="#ffe6a0" stroke-width="2.5" stroke-dasharray="4 5"/><circle cx="190" cy="130" r="5" fill="#fff6c8"/>
-      <g transform="translate(70 152)"><rect x="-16" y="-7" width="32" height="8" rx="4" fill="#20253a"/><path d="M-14 -6H14L11 -12H-11Z" fill="#55f6ff"/><path d="M-7 -12A7 7 0 0 1 7 -12Z" fill="#55f6ff"/><rect x="0" y="-16" width="20" height="4" fill="#2a2f45" transform="rotate(-50 0 -14)"/></g>
-      <g transform="translate(205 148)"><rect x="-16" y="-7" width="32" height="8" rx="4" fill="#20253a"/><path d="M-14 -6H14L11 -12H-11Z" fill="#ff6fb5"/><path d="M-7 -12A7 7 0 0 1 7 -12Z" fill="#ff6fb5"/><rect x="-20" y="-16" width="20" height="4" fill="#2a2f45" transform="rotate(40 0 -14)"/></g></svg>`;
+    el.innerHTML = '<canvas width="520" height="520" style="object-fit:contain"></canvas>';
+    const g = el.querySelector('canvas').getContext('2d'), TAU = Math.PI * 2;
+    g.beginPath(); g.roundRect(20, 40, 480, 420, 36); g.clip();
+    const sky = g.createLinearGradient(0, 40, 0, 460); sky.addColorStop(0, '#1a1240'); sky.addColorStop(0.55, '#5a2a6e'); sky.addColorStop(1, '#ff8a5c');
+    g.fillStyle = sky; g.fillRect(0, 0, 520, 520);
+    const glow = g.createRadialGradient(270, 190, 10, 270, 190, 160); glow.addColorStop(0, 'rgba(255,210,122,.6)'); glow.addColorStop(1, 'rgba(255,210,122,0)');
+    g.fillStyle = glow; g.fillRect(0, 0, 520, 520); g.fillStyle = '#ffd27a'; g.beginPath(); g.arc(270, 190, 42, 0, TAU); g.fill();
+    g.fillStyle = '#4a2c68'; g.beginPath(); g.moveTo(0, 520); for (let x = 0; x <= 520; x += 8) g.lineTo(x, 290 + Math.sin(x / 60) * 30); g.lineTo(520, 520); g.fill();
+    g.fillStyle = '#2e1c4a'; g.beginPath(); g.moveTo(0, 520); for (let x = 0; x <= 520; x += 8) g.lineTo(x, 330 + Math.sin(x / 40 + 2) * 18); g.lineTo(520, 520); g.fill();
+    for (let x = 30; x < 500; x += 26) { const y = 330 + Math.sin(x / 40 + 2) * 18 + 2, h = 14 + (x % 3) * 5; g.beginPath(); g.moveTo(x - h * 0.35, y); g.lineTo(x, y - h); g.lineTo(x + h * 0.35, y); g.fill(); }
+    const ground = x => 380 - Math.sin(x / 520 * 5 + 0.6) * 30 - Math.sin(x / 520 * 1.8) * 20;
+    const soil = g.createLinearGradient(0, 330, 0, 470); soil.addColorStop(0, '#8c603e'); soil.addColorStop(1, '#3e261e');
+    g.fillStyle = soil; g.beginPath(); g.moveTo(0, 520); for (let x = 0; x <= 520; x += 4) g.lineTo(x, ground(x)); g.lineTo(520, 520); g.fill();
+    g.fillStyle = 'rgba(20,10,8,.5)'; g.beginPath(); g.arc(400, ground(400) + 6, 34, 0, TAU); g.fill();
+    g.strokeStyle = '#8ae06a'; g.lineWidth = 9; g.beginPath(); for (let x = 0; x <= 520; x += 4) g.lineTo(x, ground(x) + 3); g.stroke();
+    TkArt.deco(g, 'pine', 250, ground(250) + 3, 2, rngOf(3)); TkArt.deco(g, 'sandbags', 170, ground(170) + 3, 1.8, rngOf(4));
+    g.setLineDash([6, 8]); g.strokeStyle = 'rgba(255,240,200,.75)'; g.lineWidth = 3; g.beginPath(); g.moveTo(140, 290); g.quadraticCurveTo(250, 40, 360, 200); g.stroke(); g.setLineDash([]);
+    for (const [x, y, r] of [[160, 255, 7], [185, 215, 9], [212, 182, 10]]) { g.fillStyle = 'rgba(230,230,240,.4)'; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
+    g.save(); g.scale(2.6, 2.6); TkArt.shell(g, 'big', 362 / 2.6, 205 / 2.6, 1.0, 0); g.restore();
+    const bx = 420, by = ground(420) - 20, bg = g.createRadialGradient(bx, by, 0, bx, by, 64);
+    bg.addColorStop(0, 'rgba(255,255,230,.95)'); bg.addColorStop(0.4, 'rgba(255,210,90,.9)'); bg.addColorStop(0.75, 'rgba(255,110,40,.7)'); bg.addColorStop(1, 'rgba(200,40,30,0)');
+    g.fillStyle = bg; g.beginPath(); g.arc(bx, by, 64, 0, TAU); g.fill();
+    for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; g.fillStyle = i % 2 ? '#ffd34d' : '#6a4a2a'; g.fillRect(bx + Math.cos(a) * 70, by + Math.sin(a) * 52, 7, 7); }
+    g.save(); g.translate(110, ground(110) + 2); g.rotate(-0.08); g.scale(3.3, 3.3); TkArt.tank(g, { col: '#55f6ff', ang: 52, t: 0, recoil: 0.5, flash: 0.35, wind: 4 }); g.restore();
+    g.save(); g.translate(430, ground(430) + 2); g.rotate(0.12); g.scale(2.6, 2.6); TkArt.tank(g, { col: '#ff6fb5', ang: 140, t: 1, wind: 4 }); g.restore();
+    g.font = '900 32px Unbounded, sans-serif'; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = 'rgba(20,8,30,.8)'; g.strokeText('−52', 430, 250); g.fillStyle = '#ff5a7a'; g.fillText('−52', 430, 250);
   }
   return { DIFFS, WEAPONS, generate, create, art, terrain, fly, blast, settle, windFor, levelSpec, FW, FH };
 })();

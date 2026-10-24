@@ -46,3 +46,12 @@
 .tk-wrap.phone .tk-weap { margin-left: 0; }
 .tk-ctrl > *, .tk-row > * { min-width: 0; }
 .tk-wrap .k-tools { justify-content: center; }
+.tk-wbar { position: relative; display: block; width: 74px; height: 6px; margin-top: 3px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.tk-wbar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255, 255, 255, .5); }
+.tk-wbar u { position: absolute; top: 0; bottom: 0; transition: .4s; }
+.tk-wbar u.r { background: linear-gradient(90deg, #ffe066, #ff5a3a); }
+.tk-wbar u.l { background: linear-gradient(270deg, #ffe066, #ff5a3a); }
+.tk-weap button svg { width: 20px; height: 20px; flex: none; }
+.tk-ctrl > .tk-fire { grid-row: 1 / 4; min-width: 150px; }
+.tk-wrap.phone .tk-ctrl > .tk-fire { grid-row: auto; min-width: 0; }
+.tk-board { background: #1a1240; }

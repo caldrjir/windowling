@@ -7,6 +7,89 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// TANKY cover sprite (a simplified port of static/games/tanky/art.js)
+function coverTank(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	s: number,
+	col: string,
+	ang: number,
+	kick: number,
+	t: number,
+): void {
+	const face = ang <= 90 ? 1 : -1,
+		la = ((face > 0 ? ang : 180 - ang) * Math.PI) / 180;
+	ctx.save();
+	ctx.translate(x, y);
+	ctx.scale(s * face, s);
+	ctx.lineJoin = 'round';
+	ctx.lineWidth = 1.1;
+	ctx.strokeStyle = '#0c0f1e';
+	ctx.beginPath();
+	ctx.moveTo(-8, -20);
+	ctx.lineTo(-10, -36);
+	ctx.stroke();
+	ctx.fillStyle = col;
+	ctx.beginPath();
+	ctx.moveTo(-10, -36);
+	ctx.quadraticCurveTo(-6, -35 + Math.sin(t * 8), -3, -34);
+	ctx.lineTo(-10, -31.6);
+	ctx.fill();
+	ctx.save();
+	ctx.translate(1, -15);
+	ctx.rotate(-la);
+	ctx.translate(-kick * 4, 0);
+	ctx.fillStyle = '#3a4058';
+	ctx.fillRect(3, -1.8, 17, 3.6);
+	ctx.fillRect(19, -2.7, 4, 5.4);
+	if (kick > 0) {
+		ctx.globalAlpha = kick;
+		ctx.fillStyle = '#ffd34d';
+		ctx.beginPath();
+		ctx.arc(28, 0, 7, 0, TAU);
+		ctx.fill();
+		ctx.globalAlpha = 1;
+	}
+	ctx.restore();
+	ctx.fillStyle = col;
+	ctx.beginPath();
+	ctx.moveTo(-10, -13);
+	ctx.lineTo(-9, -19);
+	ctx.quadraticCurveTo(-7, -22.5, -1, -22.5);
+	ctx.lineTo(4, -22.5);
+	ctx.quadraticCurveTo(9, -22, 10, -16);
+	ctx.lineTo(9, -13);
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.moveTo(-18, -7.5);
+	ctx.lineTo(19, -7.5);
+	ctx.lineTo(22, -10.5);
+	ctx.lineTo(16, -14);
+	ctx.lineTo(-15, -14);
+	ctx.lineTo(-19, -11);
+	ctx.closePath();
+	ctx.fill();
+	ctx.stroke();
+	ctx.fillStyle = 'rgba(255,255,255,.35)';
+	ctx.fillRect(-14, -13, 28, 1.4);
+	ctx.fillRect(-6, -21, 8, 1.2);
+	ctx.fillStyle = '#20253a';
+	ctx.beginPath();
+	ctx.roundRect(-20, -8, 40, 8, 4);
+	ctx.fill();
+	ctx.stroke();
+	ctx.fillStyle = '#6a7090';
+	for (const wx of [-14.5, -7.2, 0, 7.2, 14.5]) {
+		ctx.beginPath();
+		ctx.arc(wx, -4, 2.9, 0, TAU);
+		ctx.fill();
+	}
+	ctx.restore();
+}
+
 // ČERVÍCI cover sprites (a port of the game's static/games/cervici/art.js worm, simplified)
 function coverWorm(
 	ctx: CanvasRenderingContext2D,
@@ -1556,70 +1639,121 @@ export const PUZZLE_GAMES: Game[] = [
 		cover(ctx, w, h, t) {
 			const sky = ctx.createLinearGradient(0, 0, 0, h);
 			sky.addColorStop(0, '#1a1240');
-			sky.addColorStop(0.6, '#5a2a6e');
+			sky.addColorStop(0.55, '#5a2a6e');
 			sky.addColorStop(1, '#ff8a5c');
 			ctx.fillStyle = sky;
 			ctx.fillRect(0, 0, w, h);
+			const sx = w * 0.55,
+				sy = h * 0.4,
+				sr = Math.min(w, h) * 0.1;
+			const glow = ctx.createRadialGradient(sx, sy, sr * 0.5, sx, sy, sr * 4);
+			glow.addColorStop(0, 'rgba(255,210,122,.55)');
+			glow.addColorStop(1, 'rgba(255,210,122,0)');
+			ctx.fillStyle = glow;
+			ctx.fillRect(0, 0, w, h);
 			ctx.fillStyle = '#ffd27a';
 			ctx.beginPath();
-			ctx.arc(w * 0.62, h * 0.22, Math.min(w, h) * 0.07, 0, TAU);
+			ctx.arc(sx, sy, sr, 0, TAU);
 			ctx.fill();
+			// hills with a row of pine silhouettes
+			const hill = (x: number) => h * 0.52 + Math.sin((x / w) * 7 + 2) * h * 0.035;
+			ctx.fillStyle = '#2e1c4a';
+			ctx.beginPath();
+			ctx.moveTo(0, h);
+			for (let x = 0; x <= w; x += 6) ctx.lineTo(x, hill(x));
+			ctx.lineTo(w, h);
+			ctx.fill();
+			for (let x = 4; x < w; x += w * 0.06) {
+				const th = h * (0.04 + ((x * 7) % 3) * 0.012);
+				ctx.beginPath();
+				ctx.moveTo(x - th * 0.35, hill(x) + 2);
+				ctx.lineTo(x, hill(x) - th);
+				ctx.lineTo(x + th * 0.35, hill(x) + 2);
+				ctx.fill();
+			}
 			const ground = (x: number) =>
-				h * 0.6 + Math.sin((x / w) * 5 + 1) * h * 0.06 - Math.sin((x / w) * 3.1) * h * 0.08;
-			ctx.fillStyle = '#5b3a2a';
+				h * 0.64 + Math.sin((x / w) * 5 + 1) * h * 0.04 - Math.sin((x / w) * 3.1) * h * 0.05;
+			const soil = ctx.createLinearGradient(0, h * 0.55, 0, h);
+			soil.addColorStop(0, '#8c603e');
+			soil.addColorStop(1, '#3e261e');
+			ctx.fillStyle = soil;
 			ctx.beginPath();
 			ctx.moveTo(0, h);
 			for (let x = 0; x <= w; x += 4) ctx.lineTo(x, ground(x));
 			ctx.lineTo(w, h);
 			ctx.fill();
-			ctx.strokeStyle = '#7ad97a';
-			ctx.lineWidth = Math.max(2, w * 0.012);
+			ctx.strokeStyle = '#8ae06a';
+			ctx.lineWidth = Math.max(3, h * 0.025);
 			ctx.beginPath();
-			for (let x = 0; x <= w; x += 4) ctx.lineTo(x, ground(x));
+			for (let x = 0; x <= w; x += 4) ctx.lineTo(x, ground(x) + h * 0.008);
 			ctx.stroke();
-			const s = Math.min(w, h) / 160;
-			const tank = (x: number, col: string, ang: number) => {
-				const y = ground(x);
+			// the blue tank fires, the shell arcs over and hits the pink one
+			const s = Math.min(w, h * 0.85) / 140,
+				ax = w * 0.22,
+				bx = w * 0.78,
+				cyc = (t * 0.42) % 1,
+				fly = Math.min(1, cyc / 0.6),
+				boom = cyc > 0.6 ? (cyc - 0.6) / 0.4 : -1;
+			const start = { x: ax + 14 * s, y: ground(ax) - 26 * s },
+				end = { x: bx, y: ground(bx) - 10 * s };
+			const arc = (k: number) => ({
+				x: start.x + (end.x - start.x) * k,
+				y: start.y + (end.y - start.y) * k - Math.sin(k * Math.PI) * h * 0.36,
+			});
+			const kick = Math.max(0, 1 - cyc * 8);
+			coverTank(ctx, ax, ground(ax), s, '#55f6ff', 50, kick, t);
+			coverTank(ctx, bx, ground(bx), s, '#ff6fb5', 135, 0, t + 1);
+			if (boom < 0) {
+				for (let i = 1; i < 6; i++) {
+					const p = arc(Math.max(0, fly - i * 0.045));
+					ctx.fillStyle = `rgba(235,235,245,${0.45 - i * 0.07})`;
+					ctx.beginPath();
+					ctx.arc(p.x, p.y, s * (1 + i * 0.45), 0, TAU);
+					ctx.fill();
+				}
+				const p = arc(fly),
+					q = arc(Math.min(1, fly + 0.01));
 				ctx.save();
-				ctx.translate(x, y);
-				ctx.scale(s, s);
-				ctx.fillStyle = '#2a2f45';
-				ctx.save();
-				ctx.translate(0, -14);
-				ctx.rotate(-ang);
-				ctx.fillRect(0, -2.5, 20, 5);
-				ctx.restore();
-				ctx.fillStyle = col;
+				ctx.translate(p.x, p.y);
+				ctx.rotate(Math.atan2(q.y - p.y, q.x - p.x));
+				ctx.scale(s * 1.2, s * 1.2);
+				ctx.fillStyle = '#ffb02e';
 				ctx.beginPath();
-				ctx.arc(0, -12, 8, Math.PI, 0);
+				ctx.moveTo(-5, -1.6);
+				ctx.lineTo(-10 - Math.sin(t * 40) * 2, 0);
+				ctx.lineTo(-5, 1.6);
 				ctx.fill();
+				ctx.fillStyle = '#d8bc72';
 				ctx.beginPath();
-				ctx.moveTo(-16, -6);
-				ctx.lineTo(16, -6);
-				ctx.lineTo(13, -12);
-				ctx.lineTo(-13, -12);
-				ctx.fill();
-				ctx.fillStyle = '#20253a';
-				ctx.beginPath();
-				ctx.roundRect(-18, -7, 36, 8, 4);
+				ctx.moveTo(-5, -2.4);
+				ctx.lineTo(2, -2.4);
+				ctx.quadraticCurveTo(8, 0, 2, 2.4);
+				ctx.lineTo(-5, 2.4);
 				ctx.fill();
 				ctx.restore();
-			};
-			tank(w * 0.18, '#55f6ff', 0.85);
-			tank(w * 0.82, '#ff6fb5', Math.PI - 0.8);
-			// a shell arcs from left to right in a loop
-			const ph = (t * 0.45) % 1;
-			const x0 = w * 0.2;
-			const x1 = w * 0.8;
-			const x = x0 + (x1 - x0) * ph;
-			const y = ground(x0) - h * 0.1 - Math.sin(ph * Math.PI) * h * 0.38;
-			ctx.fillStyle = '#fff6c8';
-			ctx.shadowColor = '#ffb84d';
-			ctx.shadowBlur = 12;
-			ctx.beginPath();
-			ctx.arc(x, y, Math.max(2.5, w * 0.012), 0, TAU);
-			ctx.fill();
-			ctx.shadowBlur = 0;
+			} else {
+				const r = h * (0.1 + boom * 0.14),
+					a = Math.max(0, 1 - boom * 1.3);
+				const g = ctx.createRadialGradient(end.x, end.y, 0, end.x, end.y, r);
+				g.addColorStop(0, `rgba(255,255,230,${a})`);
+				g.addColorStop(0.4, `rgba(255,210,90,${a})`);
+				g.addColorStop(0.75, `rgba(255,110,40,${a * 0.8})`);
+				g.addColorStop(1, 'rgba(200,40,30,0)');
+				ctx.fillStyle = g;
+				ctx.beginPath();
+				ctx.arc(end.x, end.y, r, 0, TAU);
+				ctx.fill();
+				ctx.globalAlpha = Math.min(1, a * 2);
+				ctx.font = `900 ${Math.round(h * 0.1)}px Unbounded, sans-serif`;
+				ctx.textAlign = 'center';
+				ctx.lineWidth = Math.max(2, h * 0.02);
+				ctx.strokeStyle = 'rgba(20,8,30,.8)';
+				const ty = ground(bx) - h * 0.28 - boom * h * 0.08;
+				ctx.strokeText('-34', bx, ty);
+				ctx.fillStyle = '#ff5a7a';
+				ctx.fillText('-34', bx, ty);
+				ctx.globalAlpha = 1;
+			}
 		},
 	},
 	{
