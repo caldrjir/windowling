@@ -40,6 +40,9 @@ Auth, CI/CD, release-please) carries on.
   rules, power dots, tunnels, a bonus comet). Symmetric mazes are generated from the seed (DFS
   tree mirrored, dead ends braided, ghost house in the middle), so the daily maze is shared;
   Calm, Maze and a 10-maze Arcade for score, a 120-maze Path and online races.
+- Puzzle shelf: Had (snake: Sprint 25 on a seeded obstacle map, endless Classic and No walls for
+  score, golden bonus stars). Obstacle maps are point-symmetric and checked so free cells stay
+  connected with no dead-end pockets; the daily sprint shares map and fruit order.
 - Hub library: the big games featured on top, the rest in genre shelves with filters, search,
   sorting and synced favourites; site stats (online now, players in 30 days / total, accounts)
   and the games most played right now.
