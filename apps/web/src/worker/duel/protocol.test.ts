@@ -31,6 +31,10 @@ describe('duel protocol', () => {
 			nick: 'Ann',
 		});
 		expect(msg({ t: 'move', n: 3, m: '85-65-0' })).toEqual({ t: 'move', n: 3, m: '85-65-0' });
+		// Tanks: position, aim and up to three impact points.
+		const shot = '120:45,80,2:600,310;610,300;-';
+		expect(msg({ t: 'move', n: 0, m: shot })).toEqual({ t: 'move', n: 0, m: shot });
+		expect(msg({ t: 'move', n: 0, m: 'x'.repeat(49) })).toBeNull();
 		expect(msg({ t: 'end', winner: -1, why: 'stalemate' })).toEqual({
 			t: 'end',
 			winner: -1,

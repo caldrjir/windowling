@@ -81,8 +81,8 @@ const GAME_RE = /^[a-z][a-z0-9-]{1,23}$/;
 const DIFF_RE = /^[a-z][a-z0-9]{0,15}$/;
 const PID_RE = /^[a-zA-Z0-9]{12,40}$/;
 const WHY_RE = /^[a-z][a-z0-9]{0,15}$/;
-/** A move as the game encodes it (chess "52-36-0", gomoku "112"). */
-const MOVE_RE = /^[a-zA-Z0-9=+#.,:_-]{1,24}$/;
+/** A move as the game encodes it (chess "52-36-0", gomoku "112", tanks "120:45,80,2:600,310;610,300"). */
+const MOVE_RE = /^[a-zA-Z0-9=+#.,:;_-]{1,48}$/;
 
 const num = (v: unknown, min: number, max: number): number | null =>
 	typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max ? v : null;

@@ -1402,6 +1402,97 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'tanky',
+		online: 'turn',
+		title: 'TANKY',
+		group: 'puzzle',
+		category: 'duo',
+		tagline: 'Úhel, síla, vítr. Pal!',
+		description:
+			'Dělostřelecký souboj dvou tanků na tahy: nastav úhel a sílu, počítej s větrem a trefuj soupeře přes kopec. Výbuchy hloubí terén, k dispozici je těžká a trojitá střela, kopáč i hlína. Proti počítači, ve dvou na jednom zařízení i online.',
+		genres: ['Pro dva', 'Dělostřelectvo', 'Tahy'],
+		features: ['Online souboje', 'Dva hráči na jednom zařízení', '3 síly počítače', '5 zbraní'],
+		en: {
+			tagline: 'Angle, power, wind. Fire!',
+			description:
+				'A turn-based artillery duel of two tanks: set the angle and power, mind the wind and hit the opponent over the hill. Explosions dig into the terrain; heavy and triple shells, a digger and dirt are at hand. Against the computer, two players on one device or online.',
+			genres: ['Two players', 'Artillery', 'Turn-based'],
+			features: ['Online duels', 'Two players, one device', '3 computer strengths', '5 weapons'],
+		},
+		statLabels: labels,
+		path: '/games/tanky/index.html',
+		colors: ['#55f6ff', '#ff6fb5', '#ff8a3d'],
+		statsKey: 'gamecenter.stats.tanky',
+		cover(ctx, w, h, t) {
+			const sky = ctx.createLinearGradient(0, 0, 0, h);
+			sky.addColorStop(0, '#1a1240');
+			sky.addColorStop(0.6, '#5a2a6e');
+			sky.addColorStop(1, '#ff8a5c');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, h);
+			ctx.fillStyle = '#ffd27a';
+			ctx.beginPath();
+			ctx.arc(w * 0.62, h * 0.22, Math.min(w, h) * 0.07, 0, TAU);
+			ctx.fill();
+			const ground = (x: number) =>
+				h * 0.6 + Math.sin((x / w) * 5 + 1) * h * 0.06 - Math.sin((x / w) * 3.1) * h * 0.08;
+			ctx.fillStyle = '#5b3a2a';
+			ctx.beginPath();
+			ctx.moveTo(0, h);
+			for (let x = 0; x <= w; x += 4) ctx.lineTo(x, ground(x));
+			ctx.lineTo(w, h);
+			ctx.fill();
+			ctx.strokeStyle = '#7ad97a';
+			ctx.lineWidth = Math.max(2, w * 0.012);
+			ctx.beginPath();
+			for (let x = 0; x <= w; x += 4) ctx.lineTo(x, ground(x));
+			ctx.stroke();
+			const s = Math.min(w, h) / 160;
+			const tank = (x: number, col: string, ang: number) => {
+				const y = ground(x);
+				ctx.save();
+				ctx.translate(x, y);
+				ctx.scale(s, s);
+				ctx.fillStyle = '#2a2f45';
+				ctx.save();
+				ctx.translate(0, -14);
+				ctx.rotate(-ang);
+				ctx.fillRect(0, -2.5, 20, 5);
+				ctx.restore();
+				ctx.fillStyle = col;
+				ctx.beginPath();
+				ctx.arc(0, -12, 8, Math.PI, 0);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.moveTo(-16, -6);
+				ctx.lineTo(16, -6);
+				ctx.lineTo(13, -12);
+				ctx.lineTo(-13, -12);
+				ctx.fill();
+				ctx.fillStyle = '#20253a';
+				ctx.beginPath();
+				ctx.roundRect(-18, -7, 36, 8, 4);
+				ctx.fill();
+				ctx.restore();
+			};
+			tank(w * 0.18, '#55f6ff', 0.85);
+			tank(w * 0.82, '#ff6fb5', Math.PI - 0.8);
+			// a shell arcs from left to right in a loop
+			const ph = (t * 0.45) % 1;
+			const x0 = w * 0.2;
+			const x1 = w * 0.8;
+			const x = x0 + (x1 - x0) * ph;
+			const y = ground(x0) - h * 0.1 - Math.sin(ph * Math.PI) * h * 0.38;
+			ctx.fillStyle = '#fff6c8';
+			ctx.shadowColor = '#ffb84d';
+			ctx.shadowBlur = 12;
+			ctx.beginPath();
+			ctx.arc(x, y, Math.max(2.5, w * 0.012), 0, TAU);
+			ctx.fill();
+			ctx.shadowBlur = 0;
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',
