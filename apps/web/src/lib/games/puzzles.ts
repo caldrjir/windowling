@@ -7,6 +7,127 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// SKLÁDAČKA cover: a jigsaw piece outline (fixed tab pattern) and a cached cosmic picture
+const JIG_RIGHT = [
+	[1, -1, 1],
+	[-1, 1, -1],
+	[1, 1, -1],
+];
+const JIG_DOWN = [
+	[-1, 1, -1, 1],
+	[1, -1, 1, -1],
+];
+function jigsawPath(
+	x: number,
+	y: number,
+	cols: number,
+	rows: number,
+	px: number,
+	py: number,
+	cw: number,
+	ch: number,
+): Path2D {
+	const p = new Path2D(),
+		s = Math.min(cw, ch);
+	const side = (ax: number, ay: number, bx: number, by: number, dir: number) => {
+		const dx = bx - ax,
+			dy = by - ay,
+			l = Math.hypot(dx, dy),
+			nx = dy / l,
+			ny = -dx / l;
+		const P = (u: number, v: number): [number, number] => [
+			ax + dx * u + nx * v * s * dir,
+			ay + dy * u + ny * v * s * dir,
+		];
+		if (!dir) {
+			p.lineTo(bx, by);
+			return;
+		}
+		p.lineTo(...P(0.35, 0));
+		p.bezierCurveTo(...P(0.45, 0), ...P(0.38, 0.12), ...P(0.42, 0.14));
+		p.bezierCurveTo(...P(0.34, 0.24), ...P(0.4, 0.31), ...P(0.5, 0.31));
+		p.bezierCurveTo(...P(0.6, 0.31), ...P(0.66, 0.24), ...P(0.58, 0.14));
+		p.bezierCurveTo(...P(0.62, 0.12), ...P(0.55, 0), ...P(0.65, 0));
+		p.lineTo(bx, by);
+	};
+	const top = y ? -(JIG_DOWN[y - 1]?.[x] ?? 0) : 0,
+		right = x < cols - 1 ? (JIG_RIGHT[y]?.[x] ?? 0) : 0,
+		bottom = y < rows - 1 ? (JIG_DOWN[y]?.[x] ?? 0) : 0,
+		left = x ? -(JIG_RIGHT[y]?.[x - 1] ?? 0) : 0;
+	p.moveTo(px, py);
+	side(px, py, px + cw, py, top);
+	side(px + cw, py, px + cw, py + ch, right);
+	side(px + cw, py + ch, px, py + ch, bottom);
+	side(px, py + ch, px, py, left);
+	p.closePath();
+	return p;
+}
+let jigsawPic: HTMLCanvasElement | null = null;
+function jigsawPicture(w: number, h: number): HTMLCanvasElement {
+	if (jigsawPic && jigsawPic.width === w && jigsawPic.height === h) return jigsawPic;
+	const c = document.createElement('canvas');
+	c.width = Math.max(1, w);
+	c.height = Math.max(1, h);
+	const g = c.getContext('2d');
+	if (!g) return c;
+	const bg = g.createLinearGradient(0, 0, w * 0.4, h);
+	bg.addColorStop(0, '#1a0f3a');
+	bg.addColorStop(1, '#07051a');
+	g.fillStyle = bg;
+	g.fillRect(0, 0, w, h);
+	g.globalCompositeOperation = 'lighter';
+	for (const [x, y, r, col] of [
+		[0.25, 0.3, 0.55, '255,90,200'],
+		[0.75, 0.65, 0.6, '80,200,255'],
+		[0.5, 0.15, 0.4, '150,90,255'],
+	] as const) {
+		const rg = g.createRadialGradient(x * w, y * h, 0, x * w, y * h, r * w);
+		rg.addColorStop(0, `rgba(${col},.45)`);
+		rg.addColorStop(1, `rgba(${col},0)`);
+		g.fillStyle = rg;
+		g.fillRect(0, 0, w, h);
+	}
+	for (let i = 0; i < 140; i++) {
+		const n = Math.sin(i * 91.7) * 43758.5453,
+			m = Math.sin(i * 12.3) * 9341.17,
+			fx = n - Math.floor(n),
+			fy = m - Math.floor(m);
+		g.fillStyle = `rgba(255,255,255,${0.4 + (i % 5) * 0.12})`;
+		g.beginPath();
+		g.arc(fx * w, fy * h, i % 17 === 0 ? 1.8 : 0.8, 0, TAU);
+		g.fill();
+	}
+	g.globalCompositeOperation = 'source-over';
+	// a ringed planet
+	const px = w * 0.62,
+		py = h * 0.5,
+		R = h * 0.26;
+	const ring = (front: boolean) => {
+		g.save();
+		g.translate(px, py);
+		g.rotate(-0.35);
+		g.scale(1, 0.3);
+		g.lineWidth = R * 0.18;
+		g.strokeStyle = 'rgba(255,200,140,.7)';
+		g.beginPath();
+		g.arc(0, 0, R * 1.6, front ? 0 : Math.PI, front ? Math.PI : TAU);
+		g.stroke();
+		g.restore();
+	};
+	ring(false);
+	const pg = g.createRadialGradient(px - R * 0.35, py - R * 0.4, R * 0.1, px, py, R);
+	pg.addColorStop(0, '#ffd0a0');
+	pg.addColorStop(0.6, '#e0608a');
+	pg.addColorStop(1, '#3a1040');
+	g.fillStyle = pg;
+	g.beginPath();
+	g.arc(px, py, R, 0, TAU);
+	g.fill();
+	ring(true);
+	jigsawPic = c;
+	return c;
+}
+
 // TANKY cover sprite (a simplified port of static/games/tanky/art.js)
 function coverTank(
 	ctx: CanvasRenderingContext2D,
@@ -1068,30 +1189,80 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.skladacka',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#3dd6ff', '#ff8ae0', '#7a2cff'], 11);
-			const s = Math.min(w, h) * 0.2;
-			const x0 = w / 2 - s * 1.5;
-			const y0 = h * 0.12;
-			for (let y = 0; y < 3; y++)
-				for (let x = 0; x < 3; x++) {
-					const gap = x === 2 && y === 1 ? s * 0.25 + Math.sin(t * 1.5) * s * 0.12 : 0;
-					const px = x0 + x * s + gap;
-					const py = y0 + y * s - gap * 0.6;
-					const g = ctx.createLinearGradient(px, py, px + s, py + s);
-					g.addColorStop(0, `hsl(${200 + x * 30 + y * 20} 80% 55%)`);
-					g.addColorStop(1, `hsl(${300 + x * 20} 70% 35%)`);
-					ctx.fillStyle = g;
-					ctx.strokeStyle = 'rgba(255,255,255,.4)';
-					ctx.lineWidth = 2;
-					ctx.beginPath();
-					ctx.rect(px + 2, py + 2, s - 4, s - 4);
-					ctx.fill();
-					ctx.stroke();
-					if (x < 2) {
-						ctx.beginPath();
-						ctx.arc(px + s, py + s / 2, s * 0.14, 0, TAU);
-						ctx.fill();
-					}
+			// a cosmic picture cut into 4 × 3 real jigsaw pieces; a joined pair flies in and snaps home
+			const cols = 4,
+				rows = 3,
+				pw = Math.min(w * 0.82, (h * 0.62 * 4) / 3),
+				ph = (pw * 3) / 4,
+				cw = pw / cols,
+				ch = ph / rows,
+				x0 = (w - pw) / 2,
+				y0 = h * 0.1;
+			const pic = jigsawPicture(Math.round(pw), Math.round(ph));
+			ctx.fillStyle = 'rgba(0,0,0,.35)';
+			ctx.fillRect(x0, y0, pw, ph);
+			ctx.strokeStyle = 'rgba(255,255,255,.25)';
+			ctx.lineWidth = 1.5;
+			ctx.strokeRect(x0, y0, pw, ph);
+			const cyc = (t / 3.4) % 1,
+				k = Math.min(1, cyc / 0.5),
+				ease = 1 - (1 - k) ** 3,
+				snap = cyc > 0.5 && cyc < 0.68 ? 1 - (cyc - 0.5) / 0.18 : 0,
+				fade = cyc > 0.92 ? 1 - (cyc - 0.92) / 0.08 : 1;
+			const moving = (x: number, y: number) => y === 1 && (x === 2 || x === 3);
+			const piece = (x: number, y: number, dx: number, dy: number, rot: number, lift: number) => {
+				const px = x0 + x * cw,
+					py = y0 + y * ch;
+				ctx.save();
+				ctx.translate(px + cw / 2 + dx, py + ch / 2 + dy);
+				ctx.rotate(rot);
+				ctx.translate(-px - cw / 2, -py - ch / 2);
+				const path = jigsawPath(x, y, cols, rows, px, py, cw, ch);
+				if (lift) {
+					ctx.shadowColor = 'rgba(0,0,0,.6)';
+					ctx.shadowBlur = 14 * lift;
+					ctx.shadowOffsetY = 8 * lift;
+					ctx.fillStyle = '#000';
+					ctx.fill(path);
+					ctx.shadowColor = 'transparent';
 				}
+				ctx.save();
+				ctx.clip(path);
+				ctx.drawImage(pic, x0, y0, pw, ph);
+				ctx.restore();
+				ctx.strokeStyle = 'rgba(0,0,0,.5)';
+				ctx.lineWidth = 2.2;
+				ctx.stroke(path);
+				ctx.strokeStyle = 'rgba(255,255,255,.35)';
+				ctx.lineWidth = 1;
+				ctx.stroke(path);
+				ctx.restore();
+			};
+			for (let y = 0; y < rows; y++)
+				for (let x = 0; x < cols; x++)
+					if (!moving(x, y) && !(x === 0 && y === 2)) piece(x, y, 0, 0, 0, 0);
+			// one loose piece waits beside the board
+			piece(0, 2, -cw * 0.25, ch * 0.75, -0.25, 0.6);
+			ctx.globalAlpha = fade;
+			const ox = (1 - ease) * cw * 0.9,
+				oy = (1 - ease) * ch * 1.7,
+				rot = (1 - ease) * 0.3;
+			// the joined pair rotates as one around its shared seam
+			const sx = Math.cos(rot) * cw * 0.5,
+				sy = Math.sin(rot) * cw * 0.5;
+			piece(2, 1, ox + cw * 0.5 - sx, oy - sy, rot, 1 - ease);
+			piece(3, 1, ox - cw * 0.5 + sx, oy + sy, rot, 1 - ease);
+			ctx.globalAlpha = 1;
+			if (snap > 0) {
+				ctx.strokeStyle = `rgba(255,255,255,${snap * 0.9})`;
+				ctx.lineWidth = 3;
+				ctx.shadowColor = '#ff8ae0';
+				ctx.shadowBlur = 16 * snap;
+				ctx.stroke(jigsawPath(2, 1, cols, rows, x0 + 2 * cw, y0 + ch, cw, ch));
+				ctx.stroke(jigsawPath(3, 1, cols, rows, x0 + 3 * cw, y0 + ch, cw, ch));
+				ctx.shadowBlur = 0;
+				ctx.shadowColor = 'transparent';
+			}
 		},
 	},
 	{
