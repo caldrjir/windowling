@@ -7,6 +7,41 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// OMALOVÁNKY cover: a 16 × 16 hot-air balloon and the order in which it gets painted
+const BALLOON_PAL = ['#8fd3ff', '#ffffff', '#ff5a7a', '#ffd34d', '#8a5a34', '#5ccf6a'];
+let balloon: { map: number[]; order: number[]; rank: number[] } | null = null;
+function balloonCells(): { map: number[]; order: number[]; rank: number[] } {
+	if (balloon) return balloon;
+	const n = 16,
+		map: number[] = [];
+	for (let y = 0; y < n; y++)
+		for (let x = 0; x < n; x++) {
+			const dx = x + 0.5 - 8,
+				dy = y + 0.5 - 6;
+			let k = 0;
+			if ((Math.hypot(x - 2.5, y - 3) < 1.8 || Math.hypot(x - 4, y - 2.6) < 1.5) && y < 4) k = 1;
+			if (Math.hypot(x - 13, y - 9.2) < 1.4 || Math.hypot(x - 11.8, y - 9.6) < 1.1) k = 1;
+			if (y >= 14) k = 5;
+			const inBalloon =
+				Math.hypot(dx, dy) < 5 || (dy >= 0 && dy < 6 && Math.abs(dx) < 5 - dy * 0.62);
+			if (inBalloon) k = Math.floor((dx + 5) / 2) % 2 ? 3 : 2;
+			if (y === 12 && Math.abs(dx) < 1.5) k = 4;
+			if (y === 13 && Math.abs(dx) < 1.5) k = 4;
+			map.push(k);
+		}
+	const order = map
+		.map((_, i) => i)
+		.sort(
+			(a, b) =>
+				(map[a] ?? 0) - (map[b] ?? 0) ||
+				(a % n) + Math.floor(a / n) - ((b % n) + Math.floor(b / n)),
+		);
+	const rank: number[] = [];
+	order.forEach((i, k) => (rank[i] = k));
+	balloon = { map, order, rank };
+	return balloon;
+}
+
 // SKLÁDAČKA cover: a jigsaw piece outline (fixed tab pattern) and a cached cosmic picture
 const JIG_RIGHT = [
 	[1, -1, 1],
@@ -843,15 +878,21 @@ export const PUZZLE_GAMES: Game[] = [
 		category: 'relax',
 		tagline: 'Malování podle čísel pro chvíle klidu.',
 		description:
-			'Vybarvuj generované pixelové obrazy podle čísel: planety, mimozemské krajiny, bytosti, lodě a mlhoviny. Přibližování dvěma prsty, hotové obrazy se ukládají do galerie.',
+			'Vybarvuj generované pixelové obrazy podle čísel: kytice, kočky, rybky, domky, houby, motýly, balóny, plachetnice, rakety, planety i mlhoviny. Štětec i kyblík na celé plochy, přibližování dvěma prsty, hotové obrazy se ukládají do galerie.',
 		genres: ['Relax', 'Malování', 'Podle čísel'],
-		features: ['Denní obraz', 'Cesta: 120 obrazů', '5 druhů motivů', 'Galerie'],
+		features: ['Denní obraz', 'Cesta: 120 obrazů', '13 druhů motivů', 'Kyblík', 'Galerie'],
 		en: {
 			tagline: 'Colour by number for quiet moments.',
 			description:
-				'Paint generated pixel pictures by number: planets, alien landscapes, creatures, ships and nebulae. Pinch to zoom; finished pictures go to your gallery.',
+				'Paint generated pixel pictures by number: bouquets, cats, fish, cottages, mushrooms, butterflies, balloons, sailboats, rockets, planets and nebulae. A brush and a bucket for whole areas, pinch to zoom; finished pictures go to your gallery.',
 			genres: ['Relax', 'Painting', 'By number'],
-			features: ['Daily picture', 'Path: 120 pictures', '5 kinds of motifs', 'Gallery'],
+			features: [
+				'Daily picture',
+				'Path: 120 pictures',
+				'13 kinds of motifs',
+				'Bucket fill',
+				'Gallery',
+			],
 		},
 		statLabels: labels,
 		path: '/games/omalovanky/index.html',
@@ -859,32 +900,61 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.omalovanky',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#ff8ae0', '#7dff9b', '#4fd1ff'], 8);
-			const n = 16;
-			const c = (Math.min(w, h) * 0.75) / n;
-			const x0 = (w - n * c) / 2;
-			const y0 = h * 0.06;
-			const done = (t * 24) % (n * n + 60);
-			for (let y = 0; y < n; y++)
-				for (let x = 0; x < n; x++) {
-					const d = Math.hypot(x - 7.5, y - 7.5);
-					const ring =
-						Math.abs((x - 7.5) * 0.9 - (y - 7.5) * 0.4) < 7.5 &&
-						Math.abs(y - 7.5 + (x - 7.5) * 0.25) < 1.3;
-					const k = d < 5 ? (y + x * 0.3 < 9 ? 0 : 1) : ring ? 2 : 3;
-					const pal = ['#ff8ae0', '#b14cff', '#7dff9b', '#0d0a22'];
-					if (y * n + x < done) {
-						ctx.fillStyle = pal[k] ?? '#000';
-						ctx.fillRect(x0 + x * c, y0 + y * c, c + 0.5, c + 0.5);
-					} else {
-						ctx.fillStyle = 'rgba(235,235,245,.85)';
-						ctx.fillRect(x0 + x * c + 0.5, y0 + y * c + 0.5, c - 1, c - 1);
-						ctx.fillStyle = '#3a2f6b';
-						ctx.font = `600 ${c * 0.55}px "Space Grotesk", sans-serif`;
-						ctx.textAlign = 'center';
-						ctx.textBaseline = 'middle';
-						ctx.fillText(String(k + 1), x0 + x * c + c / 2, y0 + y * c + c / 2);
-					}
+			// a hot-air balloon painted colour by colour, numbers on the cells still to paint
+			const n = 16,
+				c = Math.min(w * 0.8, h * 0.62) / n,
+				x0 = (w - n * c) / 2,
+				y0 = h * 0.06,
+				cells = balloonCells(),
+				cyc = (t / 9) % 1,
+				shown = Math.min(1, cyc / 0.8) * cells.order.length,
+				cur = cells.map[cells.order[Math.min(cells.order.length - 1, Math.floor(shown))] ?? 0] ?? 0;
+			ctx.fillStyle = 'rgba(0,0,0,.35)';
+			ctx.fillRect(x0 - 3, y0 - 3, n * c + 6, n * c + 6);
+			ctx.font = `600 ${c * 0.55}px "Space Grotesk", sans-serif`;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			for (let i = 0; i < n * n; i++) {
+				const k = cells.map[i] ?? 0,
+					x = x0 + (i % n) * c,
+					y = y0 + Math.floor(i / n) * c,
+					rank = cells.rank[i] ?? 0;
+				if (rank < shown) {
+					ctx.fillStyle = BALLOON_PAL[k] ?? '#000';
+					ctx.fillRect(x, y, c + 0.5, c + 0.5);
+					continue;
 				}
+				ctx.fillStyle = k === cur ? '#d9d2ff' : '#f2f0f8';
+				ctx.fillRect(x + 0.5, y + 0.5, c - 1, c - 1);
+				ctx.fillStyle = k === cur ? '#1b1048' : 'rgba(60,56,90,.6)';
+				ctx.fillText(String(k + 1), x + c / 2, y + c / 2 + 0.5);
+			}
+			if (cyc > 0.8) {
+				const k = (cyc - 0.8) / 0.2,
+					gx = x0 - n * c * 0.3 + k * n * c * 1.6,
+					g = ctx.createLinearGradient(gx - c * 3, y0, gx + c * 3, y0 + n * c);
+				g.addColorStop(0, 'rgba(255,255,255,0)');
+				g.addColorStop(0.5, 'rgba(255,255,255,.5)');
+				g.addColorStop(1, 'rgba(255,255,255,0)');
+				ctx.fillStyle = g;
+				ctx.fillRect(x0, y0, n * c, n * c);
+			}
+			// the palette under the picture, current colour raised
+			const r = c * 0.62,
+				py = y0 + n * c + r * 2;
+			BALLOON_PAL.forEach((col, k) => {
+				const px = w / 2 + (k - (BALLOON_PAL.length - 1) / 2) * r * 2.5,
+					on = k === cur && cyc <= 0.8;
+				ctx.fillStyle = col;
+				ctx.beginPath();
+				ctx.arc(px, py - (on ? r * 0.3 : 0), on ? r * 1.15 : r, 0, TAU);
+				ctx.fill();
+				if (on) {
+					ctx.strokeStyle = '#fff';
+					ctx.lineWidth = 2;
+					ctx.stroke();
+				}
+			});
 		},
 	},
 	{

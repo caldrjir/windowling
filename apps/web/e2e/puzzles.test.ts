@@ -219,6 +219,22 @@ test('omalovanky paints a cell with the selected colour', async ({ page }) => {
 		.toBeGreaterThan(0);
 });
 
+test('omalovanky bucket fills a whole region and moves on to the next colour', async ({ page }) => {
+	await startFree(page, 'omalovanky');
+	await page.locator('[data-t="bucket"]').click();
+	await expect(page.locator('[data-t="bucket"]')).toHaveClass(/on/);
+	// Fill every region of the rarest colour with the bucket; the palette then moves on.
+	const res = (await page.evaluate(`(() => {
+		const inst = Kit._test.inst, map = inst._info().map, last = Math.max(...map);
+		for (let i = 0; i < map.length; i++) if (map[i] === last && inst.getState().paint[i] !== last) inst._tap(i, last, 'bucket');
+		const info = inst._info();
+		return { col: info.col, last, painted: info.painted, count: map.filter((c) => c === last).length };
+	})()`)) as { col: number; last: number; painted: number; count: number };
+	expect(res.painted).toBe(res.count);
+	expect(res.col).not.toBe(res.last);
+	await expect(page.locator('.om-sw.done')).toHaveCount(1);
+});
+
 test('solitaire sends a tapped card to a legal place or draws from the stock', async ({ page }) => {
 	await startFree(page, 'solitaire');
 	const moves = () => page.evaluate('Kit._test.inst.getState().moves');

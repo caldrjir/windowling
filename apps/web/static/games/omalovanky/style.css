@@ -10,9 +10,10 @@
 .om-sw.done b { opacity: 0; }
 .om-sw.done::after { content: '✓'; position: absolute; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 .om-res { width: 160px; height: 160px; image-rendering: pixelated; border-radius: 10px; box-shadow: 0 0 30px -6px var(--a); }
-.om-art { width: min(100%, 250px); aspect-ratio: 1; image-rendering: pixelated; border-radius: 16px; box-shadow: 0 0 40px -10px var(--a); }
+.om-art { width: min(100%, 250px); aspect-ratio: 1; border-radius: 16px; box-shadow: 0 0 40px -10px var(--a); }
 .om-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 .om-gal figure { display: grid; gap: 6px; padding: 10px; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
 .om-gal canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 8px; }
 .om-gal figcaption { font-size: 13px; font-weight: 600; }
 @media (max-width: 760px) { .om-sw { width: 42px; height: 42px; } .om-sw i { -webkit-mask: radial-gradient(circle, transparent 24px, #000 25px); mask: radial-gradient(circle, transparent 24px, #000 25px); } .om-pal { gap: 6px; } }
+.k-hero-art .om-art { width: auto; height: 100%; max-width: 100%; aspect-ratio: 1; object-fit: contain; }
