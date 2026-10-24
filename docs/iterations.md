@@ -36,6 +36,9 @@ Auth, CI/CD, release-please) carries on.
 - Puzzle shelf: Rybky (two fish escape a cave, Fish Fillets style: pushing, gravity, light and
   steel objects). Caves are generated offline and verified by a BFS solver (`levels.js`, sorted by
   difficulty, with solutions for hints); the Path walks the pool from easy to hard.
+- Hub library: the big games featured on top, the rest in genre shelves with filters, search,
+  sorting and synced favourites; site stats (online now, players in 30 days / total, accounts)
+  and the games most played right now.
 - DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
   players see each other, in-game chat.
 - Online puzzles: live chess and gomoku games (open games list, code or link, chat, draw

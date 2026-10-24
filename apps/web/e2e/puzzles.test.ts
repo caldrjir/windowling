@@ -56,8 +56,7 @@ for (const id of PUZZLES) {
 
 		// The center shows the stats the puzzle wrote.
 		await page.goto('/');
-		await page.getByTestId('shelf-puzzle').locator('.gcard', { hasText: /./ }).first().waitFor();
-		const card = page.getByTestId('shelf-puzzle').locator('.gcard').nth(PUZZLES.indexOf(id));
+		const card = page.locator(`.gslot[data-game="${id}"] .gcard`).first();
 		await card.click();
 		await expect(page.locator('.stats')).toContainText('Vyřešeno');
 		expect(errors).toEqual([]);

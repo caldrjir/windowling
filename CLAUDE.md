@@ -76,7 +76,7 @@ docker/                        Local infrastructure (Postgres init scripts)
 
 A **puzzle game** loads `../puzzle-kit/kit.js` + `kit.css` and calls `Kit.game({ id, title, diffs,
 generate(seed, diff), create(el, puzzle, saved, api), rules })`; its catalogue entry goes in
-`apps/web/src/lib/games/puzzles.ts` (`group: 'puzzle'`). Generators must be deterministic from the
+`apps/web/src/lib/games/puzzles.ts` (`group: 'puzzle'` and a library `category`). Generators must be deterministic from the
 seed (daily puzzles and Path levels are the same for everyone) and give a unique solution; test
 them in Node before shipping. Add it to `apps/web/e2e/puzzles.test.ts`. For online play add
 `online: { kind: 'race' }` and an instance `progress()` (0..1), or `kind: 'turn'` and play
