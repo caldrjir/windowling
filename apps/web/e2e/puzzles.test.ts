@@ -554,6 +554,21 @@ test('skladnik: the worker pushes a crate, jumps onto it, and a full row disappe
 	await page.waitForTimeout(60);
 	await right();
 	await expect.poll(async () => (await state()).worker).toEqual({ c: 7, r: 9, dead: 0 });
+	// Jumping while holding a direction lands again (no walking on air).
+	await page.evaluate(`${I}._clear(2, 10)`);
+	if (isMobile) {
+		await page.locator('.sk-pad [data-j]').tap();
+		await page.locator('.sk-pad [data-m="1"]').dispatchEvent('pointerdown');
+		await page.waitForTimeout(900);
+		await page.locator('.sk-pad [data-m="1"]').dispatchEvent('pointerup');
+	} else {
+		await page.keyboard.press('ArrowUp');
+		await page.keyboard.down('ArrowRight');
+		await page.waitForTimeout(900);
+		await page.keyboard.up('ArrowRight');
+	}
+	await expect.poll(async () => (await state()).worker.r).toBe(10);
+	expect((await state()).worker.c).toBeGreaterThan(3);
 	// A full row disappears and scores.
 	await page.evaluate(
 		`${I}._clear(5, 9); for (let x = 0; x < 12; x++) ${I}._place(x, 10); ${I}._check()`,
