@@ -1057,4 +1057,59 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.fill();
 		},
 	},
+	{
+		id: 'clickomania',
+		online: 'race',
+		title: 'CLICKOMANIA',
+		group: 'puzzle',
+		tagline: 'Nech prasknout skupiny krystalů.',
+		description:
+			'Klasická Clickomania: klepni na skupinu aspoň dvou stejných krystalů, zbytek spadne dolů a prázdné sloupce se přisunou. Vyčisti celou plochu. Každá deska je ověřená řešitelem, takže jde vždy vyčistit.',
+		genres: ['Logika', 'Clickomania', 'Hlavolam'],
+		features: ['Denní deska', 'Cesta: 120 desek', '3–5 barev', 'Vždy řešitelná'],
+		en: {
+			tagline: 'Let groups of crystals burst.',
+			description:
+				'Classic Clickomania: tap a group of two or more matching crystals, the rest falls down and empty columns slide in. Clear the whole board. Every board is checked by a solver, so it can always be cleared.',
+			genres: ['Logic', 'Clickomania', 'Puzzle'],
+			features: ['Daily board', 'Path: 120 boards', '3–5 colours', 'Always solvable'],
+		},
+		statLabels: labels,
+		path: '/games/clickomania/index.html',
+		colors: ['#ff5f7e', '#ffc04d', '#5d9bff'],
+		statsKey: 'gamecenter.stats.clickomania',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ff5f7e', '#ffc04d', '#5d9bff'], 19);
+			const cols = 7;
+			const rows = 5;
+			const s = Math.min((w * 0.66) / cols, (h * 0.6) / rows);
+			const x0 = w / 2 - (s * cols) / 2;
+			const y0 = h * 0.1;
+			const colors = ['#ff5f7e', '#ffc04d', '#3ddc97', '#5d9bff', '#c06bff'];
+			// a group of three bursts and rebuilds in a loop
+			const phase = (t * 0.6) % 1;
+			for (let x = 0; x < cols; x++)
+				for (let y = 0; y < rows; y++) {
+					const c = (x * 7 + y * 3 + ((x * y) % 4)) % colors.length;
+					const burst = y === rows - 1 && x >= 2 && x <= 4;
+					const k = burst ? Math.max(0, 1 - Math.max(0, phase - 0.5) * 4) : 1;
+					if (k <= 0) continue;
+					const cx = x0 + x * s + s / 2;
+					const cy = y0 + y * s + s / 2;
+					const r = (s / 2 - 3) * k;
+					ctx.save();
+					ctx.fillStyle = burst ? '#3ddc97' : (colors[c] ?? '#fff');
+					if (burst) {
+						ctx.shadowColor = '#3ddc97';
+						ctx.shadowBlur = s * 0.6 * (0.5 + 0.5 * Math.sin(t * 6));
+					}
+					ctx.beginPath();
+					ctx.roundRect(cx - r, cy - r, r * 2, r * 2, r * 0.45);
+					ctx.fill();
+					ctx.restore();
+					ctx.fillStyle = 'rgba(255,255,255,.35)';
+					ctx.fillRect(cx - r * 0.5, cy - r * 0.75, r, r * 0.22);
+				}
+		},
+	},
 ];
