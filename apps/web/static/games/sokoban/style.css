@@ -1,0 +1,48 @@
+/* SOKOBAN – vesmírný sklad: kovové stěny, zářící cíle, bedny a malý skladník */
+.sk-wrap { display: grid; justify-items: center; gap: 12px; width: 100%; }
+.sk-head { display: flex; gap: 10px; }
+.sk-head div { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 86px; }
+.sk-head small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.sk-head b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.sk-head b.over { color: var(--bad); }
+.sk-head .sk-par { background: linear-gradient(135deg, color-mix(in srgb, var(--a) 18%, transparent), transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--a) 45%, transparent); }
+
+.sk { width: 560px; max-width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; overflow: visible; }
+.sk-floor { fill: rgba(255, 255, 255, .045); stroke: rgba(255, 255, 255, .05); stroke-width: 1.5; }
+.sk-wall rect:first-child { fill: color-mix(in srgb, var(--a) 14%, #1d1846); stroke: color-mix(in srgb, var(--a) 30%, rgba(255, 255, 255, .14)); stroke-width: 2; }
+.sk-wall .hi { fill: rgba(255, 255, 255, .07); }
+.sk-goal circle { fill: color-mix(in srgb, var(--a) 14%, transparent); stroke: var(--a); stroke-width: 4; stroke-dasharray: 10 7; filter: drop-shadow(0 0 8px var(--a)); animation: skSpin 9s linear infinite; transform-box: fill-box; transform-origin: center; }
+.sk-goal path { fill: var(--a); opacity: .7; }
+@keyframes skSpin { to { transform: rotate(360deg); } }
+
+.sk-box, .sk-player { transition: transform .11s ease-out; }
+.sk-box rect:first-child { fill: #c98a3c; stroke: #ffd38a; stroke-width: 3; }
+.sk-box .rim { fill: none; stroke: rgba(80, 40, 10, .45); stroke-width: 3; }
+.sk-box .x { stroke: rgba(80, 40, 10, .45); stroke-width: 5; stroke-linecap: round; }
+.sk-box.on rect:first-child { fill: color-mix(in srgb, var(--good) 70%, #1a4a3a); stroke: #c9ffe6; filter: drop-shadow(0 0 12px var(--good)); }
+.sk-box.on .x, .sk-box.on .rim { stroke: rgba(10, 60, 40, .5); }
+.sk-box.dead rect:first-child { fill: #7a2b3a; stroke: var(--bad); }
+
+.sk-hero .sh { fill: rgba(0, 0, 0, .35); }
+.sk-hero .body { fill: #e9edff; stroke: #9fb4ff; stroke-width: 3; }
+.sk-hero .visor { fill: #12204a; stroke: #7fd8ff; stroke-width: 2.5; transition: transform .11s; transform-box: view-box; }
+.sk-hero .ant { fill: var(--a); filter: drop-shadow(0 0 6px var(--a)); }
+.sk-hero .antl { stroke: #9fb4ff; stroke-width: 3; stroke-linecap: round; }
+.sk-hero.f-l .visor { transform: translateX(-7px); }
+.sk-hero.f-r .visor { transform: translateX(7px); }
+.sk-hero.f-u .visor { transform: translateY(-9px) scaleY(.6); opacity: .55; }
+.sk-hint { fill: none; stroke: var(--a); stroke-width: 5; stroke-dasharray: 14 9; animation: skPulse .8s ease-in-out infinite alternate; }
+@keyframes skPulse { to { opacity: .35; } }
+.sk.won .sk-box rect:first-child { animation: skWin .9s ease-in-out infinite alternate; }
+@keyframes skWin { to { filter: drop-shadow(0 0 22px var(--good)) brightness(1.25); } }
+
+/* šipky pro dotykové ovládání */
+.sk-pad { display: none; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 48px); gap: 6px; }
+.sk-pad button { display: grid; place-items: center; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); }
+.sk-pad button:active { background: color-mix(in srgb, var(--a) 30%, transparent); }
+.sk-pad svg { width: 24px; height: 24px; }
+.sk-pad [data-dir="u"] { grid-column: 2; grid-row: 1; }
+.sk-pad [data-dir="l"] { grid-column: 1; grid-row: 2; }
+.sk-pad [data-dir="d"] { grid-column: 2; grid-row: 2; }
+.sk-pad [data-dir="r"] { grid-column: 3; grid-row: 2; }
+@media (pointer: coarse) { .sk-pad { display: grid; } }

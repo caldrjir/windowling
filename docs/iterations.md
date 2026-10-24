@@ -29,6 +29,8 @@ Auth, CI/CD, release-please) carries on.
   Mahjong (always solvable layouts), Skládačka (jigsaw of generated cosmic paintings).
 - Puzzle shelf, stage 4: Šachy (computer at six strengths, daily mate in 1–2, two players) and
   Piškvorky (15×15 gomoku, four strengths with VCF, daily opening, two players).
+- Puzzle shelf: Sokoban (generated depots built backwards from the solved state, so every one is
+  solvable; push par for three stars, unlimited undo, hints from the stored solution).
 - DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
   players see each other, in-game chat.
 - Online puzzles: live chess and gomoku games (open games list, code or link, chat, draw
