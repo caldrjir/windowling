@@ -25,6 +25,7 @@ const PUZZLES = [
 	'impakt',
 	'skladnik',
 	'tanky',
+	'cervici',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -610,5 +611,32 @@ test('tanky: two players on one device take turns, and a resignation names the w
 	await expect(page.locator('.tk-fire')).toBeEnabled();
 	await page.locator('[data-c="resign"]').click();
 	await expect(page.locator('.k-result')).toContainText('Vyhrál Hráč 1');
+	expect(errors).toEqual([]);
+});
+
+test('cervici: two teams take turns on one device; a shot changes the island', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/cervici/index.html');
+	await page.locator('[data-k="free"][data-diff="duo"]').click();
+	await expect(page.locator('.cv-board')).toBeVisible();
+	type CvState = { team: number; phase: string; turn: number; cur: number; moves: number };
+	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<CvState>;
+	await expect.poll(async () => (await state()).phase).toBe('move');
+	expect((await state()).team).toBe(0);
+	// Walk a bit, then a bazooka shot; after the retreat time the other team plays.
+	await page.locator('.cv-pad [data-c="r"]').dispatchEvent('pointerdown');
+	await page.waitForTimeout(300);
+	await page.locator('.cv-pad [data-c="r"]').dispatchEvent('pointerup');
+	await page.evaluate('Kit._test.inst._aim(35, 0.6); Kit._test.inst._fire()');
+	await expect.poll(async () => (await state()).phase).not.toBe('move');
+	await expect.poll(async () => (await state()).team, { timeout: 20_000 }).toBe(1);
+	await expect.poll(async () => (await state()).phase).toBe('move');
+	expect((await state()).moves).toBe(1);
+	// Ending a turn without firing passes it on as well.
+	await page.locator('[data-c="skip"]').click();
+	await expect.poll(async () => (await state()).turn, { timeout: 15_000 }).toBe(2);
+	await page.locator('[data-c="resign"]').click();
+	await expect(page.locator('.k-result')).toContainText('Vyhrál Hráč 2');
 	expect(errors).toEqual([]);
 });

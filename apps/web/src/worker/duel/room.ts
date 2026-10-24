@@ -9,6 +9,7 @@ import {
 	CLAIM_AFTER,
 	COUNTDOWN,
 	MAX_MOVES,
+	MAX_MOVES_SIZE,
 	MAX_RACERS,
 	parseClientMessage,
 	seatToMove,
@@ -174,7 +175,8 @@ export class DuelRoom extends DurableObject<DuelEnv> {
 					round.over ||
 					!seated ||
 					msg.n !== round.moves.length ||
-					round.moves.length >= MAX_MOVES
+					round.moves.length >= MAX_MOVES ||
+					round.moves.reduce((n, m) => n + m.length, msg.m.length) > MAX_MOVES_SIZE
 				)
 					return false;
 				if (seatToMove(round.n, msg.n) !== seat) return false;

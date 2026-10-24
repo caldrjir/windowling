@@ -187,7 +187,7 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
 Every puzzle can be played online, served by the Worker entry like DRIFTWOOD multiplayer.
 
 - `DuelRoom` (SQLite-backed Durable Object, one per room, 5-letter code). Two kinds:
-  - **turn** (Šachy, Piškvorky, Tanky): two seats, the room keeps the move list and accepts a move
+  - **turn** (Šachy, Piškvorky, Tanky, Červíci): two seats, the room keeps the move list and accepts a move
     only from the seat to move (`seatToMove`: colours swap every round). It also records the
     result (game end reported by the clients, resignation, draw by agreement, or a win claimed
     when the opponent has been gone 60 s) and handles rematches. The clients check the rules
@@ -204,8 +204,9 @@ Every puzzle can be played online, served by the Worker entry like DRIFTWOOD mul
 - `protocol.ts`: parses and bounds every client message; unit-tested.
 - Client: the puzzle kit (online card, room with code/link and chat, play bar). A game opts in
   with `online: { kind: 'turn' | 'race', diffs? }` in `Kit.game`. Turn games get
-  `opts.net` (`side`, `moves`, `send`, `onMove`, `end`, `resign`; a move is up to 48 characters,
-  Tanky sends the tank position, the aim and the impact points so both terrains stay identical); race games implement
+  `opts.net` (`side`, `moves`, `send`, `onMove`, `end`, `resign`; a move is up to 320 characters and a
+  game's moves up to 100 kB; Tanky sends the aim and the impact points, Červíci the whole turn result
+  (explosions and every worm's position and health), so both terrains stay identical); race games implement
   `progress()` (0..1) and use the normal `api.solved` / `api.failed`. Results go to
   `<id>.save.v1` (`stats.online`), the room link is `?duel=<code>`.
 

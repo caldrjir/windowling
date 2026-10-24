@@ -1493,6 +1493,101 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'cervici',
+		online: 'turn',
+		title: 'ČERVÍCI',
+		group: 'puzzle',
+		category: 'duo',
+		tagline: 'Bazuka, granát, nálet. Tvůj tah!',
+		description:
+			'Tahová válka dvou týmů červů na zničitelném ostrově na motivy Worms: chodíš, skáčeš, míříš a pálíš z bazuky, granátu, brokovnice, dynamitu nebo náletu. Výbuchy hloubí jeskyně a odhazují červy, voda je smrtelná. Proti počítači, ve dvou na jednom zařízení i online.',
+		genres: ['Pro dva', 'Válka červů', 'Tahy'],
+		features: ['Online souboje', 'Dva hráči na jednom zařízení', 'Zničitelný ostrov', '5 zbraní'],
+		en: {
+			tagline: 'Bazooka, grenade, air strike. Your turn!',
+			description:
+				'A turn-based war of two worm teams on a destructible island in the spirit of Worms: walk, jump, aim and fire a bazooka, grenade, shotgun, dynamite or an air strike. Explosions dig caves and throw worms around; the water is deadly. Against the computer, two players on one device or online.',
+			genres: ['Two players', 'Worm war', 'Turn-based'],
+			features: ['Online duels', 'Two players, one device', 'Destructible island', '5 weapons'],
+		},
+		statLabels: labels,
+		path: '/games/cervici/index.html',
+		colors: ['#ff9db8', '#55f6ff', '#ff8a3d'],
+		statsKey: 'gamecenter.stats.cervici',
+		cover(ctx, w, h, t) {
+			const sky = ctx.createLinearGradient(0, 0, 0, h);
+			sky.addColorStop(0, '#0d1440');
+			sky.addColorStop(0.6, '#3a2a7a');
+			sky.addColorStop(1, '#f08a6a');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, h);
+			const ground = (x: number) =>
+				h * 0.6 - Math.sin((x / w) * 6) * h * 0.06 - Math.sin((x / w) * 2.3 + 1) * h * 0.07;
+			ctx.fillStyle = '#78543a';
+			ctx.beginPath();
+			ctx.moveTo(w * 0.04, h);
+			for (let x = w * 0.04; x <= w * 0.96; x += 4) ctx.lineTo(x, ground(x));
+			ctx.lineTo(w * 0.96, h);
+			ctx.fill();
+			ctx.strokeStyle = '#7ad97a';
+			ctx.lineWidth = Math.max(2, w * 0.014);
+			ctx.beginPath();
+			for (let x = w * 0.04; x <= w * 0.96; x += 4) ctx.lineTo(x, ground(x));
+			ctx.stroke();
+			ctx.fillStyle = '#1a5a8a';
+			ctx.fillRect(0, h * 0.86, w, h * 0.14);
+			const s = Math.min(w, h) / 120;
+			const worm = (x: number, col: string, face: number) => {
+				const y = ground(x);
+				ctx.save();
+				ctx.translate(x, y);
+				ctx.scale(s * face, s);
+				ctx.fillStyle = '#ff9db8';
+				ctx.strokeStyle = '#7a2a48';
+				ctx.lineWidth = 1.3;
+				ctx.beginPath();
+				ctx.ellipse(-3, -3, 7, 3.6, 0, 0, TAU);
+				ctx.fill();
+				ctx.stroke();
+				ctx.beginPath();
+				ctx.ellipse(1, -9 + Math.sin(t * 5) * 0.8, 5, 8, 0.15, 0, TAU);
+				ctx.fill();
+				ctx.stroke();
+				ctx.strokeStyle = col;
+				ctx.lineWidth = 2.2;
+				ctx.beginPath();
+				ctx.arc(1, -13, 5, Math.PI * 1.1, Math.PI * 1.9);
+				ctx.stroke();
+				ctx.fillStyle = '#fff';
+				ctx.beginPath();
+				ctx.arc(1.4, -12, 2, 0, TAU);
+				ctx.arc(4.8, -12, 2, 0, TAU);
+				ctx.fill();
+				ctx.restore();
+			};
+			worm(w * 0.25, '#55f6ff', 1);
+			worm(w * 0.75, '#ff6fb5', -1);
+			// a grenade arcs over the hill and pops
+			const ph = (t * 0.4) % 1;
+			const x = w * 0.28 + w * 0.45 * ph;
+			const y = ground(w * 0.25) - h * 0.12 - Math.sin(ph * Math.PI) * h * 0.32;
+			if (ph < 0.92) {
+				ctx.fillStyle = '#4a7a3a';
+				ctx.beginPath();
+				ctx.arc(x, y, Math.max(2.5, w * 0.014), 0, TAU);
+				ctx.fill();
+			} else {
+				const g = ctx.createRadialGradient(x, y, 0, x, y, w * 0.08);
+				g.addColorStop(0, 'rgba(255,240,200,.95)');
+				g.addColorStop(1, 'rgba(255,120,40,0)');
+				ctx.fillStyle = g;
+				ctx.beginPath();
+				ctx.arc(x, y, w * 0.08, 0, TAU);
+				ctx.fill();
+			}
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',
