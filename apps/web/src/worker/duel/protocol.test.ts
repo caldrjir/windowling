@@ -34,7 +34,8 @@ describe('duel protocol', () => {
 		// Tanks: position, aim and up to three impact points.
 		const shot = '120:45,80,2:600,310;610,300;-';
 		expect(msg({ t: 'move', n: 0, m: shot })).toEqual({ t: 'move', n: 0, m: shot });
-		expect(msg({ t: 'move', n: 0, m: 'x'.repeat(49) })).toBeNull();
+		expect(msg({ t: 'move', n: 0, m: 'x'.repeat(320) })).not.toBeNull();
+		expect(msg({ t: 'move', n: 0, m: 'x'.repeat(321) })).toBeNull();
 		expect(msg({ t: 'end', winner: -1, why: 'stalemate' })).toEqual({
 			t: 'end',
 			winner: -1,

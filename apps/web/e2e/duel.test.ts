@@ -162,6 +162,45 @@ test('tanks online: both see the same shots, terrain and damage; a resignation e
 	await bob.close();
 });
 
+test('worms online: the turn is replayed for the other player and both islands agree', async ({
+	browser,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'cervici');
+	await bob.page.goto(`/games/cervici/index.html?duel=${code}`);
+	await expect(ann.page.locator('.cv-board')).toBeVisible();
+	await expect(bob.page.locator('.cv-board')).toBeVisible();
+	type CvState = {
+		team: number;
+		phase: string;
+		moves: number;
+		worms: { x: number; y: number; hp: number; dead: boolean }[];
+	};
+	const state = (page: Page) =>
+		page.evaluate('Kit._test.inst ? Kit._test.inst._state() : null') as Promise<CvState | null>;
+	const shoot = async (page: Page) => {
+		await expect.poll(async () => (await state(page))?.phase, { timeout: 20_000 }).toBe('move');
+		await page.evaluate('Kit._test.inst._aim(40, 0.55); Kit._test.inst._fire()');
+	};
+	// Ann plays first (blue team); Bob waits.
+	await expect.poll(async () => (await state(bob.page))?.phase).toBe('remote');
+	await shoot(ann.page);
+	await expect.poll(async () => (await state(bob.page))?.moves, { timeout: 30_000 }).toBe(1);
+	await shoot(bob.page);
+	await expect.poll(async () => (await state(ann.page))?.moves, { timeout: 30_000 }).toBe(2);
+	// After both turns every worm is in the same place with the same health on both screens.
+	await expect.poll(async () => (await state(ann.page))?.phase, { timeout: 20_000 }).toBe('move');
+	expect((await state(ann.page))?.worms).toEqual((await state(bob.page))?.worms);
+	await ann.page.locator('[data-c="resign"]').click();
+	await expect(result(bob.page)).toHaveText('Výhra!');
+	await expect(result(ann.page)).toHaveText('Prohra');
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('a sudoku race: same puzzle for both, live progress and standings', async ({
 	browser,
 }, info) => {

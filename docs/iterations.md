@@ -53,7 +53,9 @@ Auth, CI/CD, release-please) carries on.
   Endless for score, a 120-shift Path and online races.
 - Two-player shelf (`category: 'duo'`, „Pro dva hráče“): Tanky, a turn-based artillery duel
   (angle, power, wind, destructible terrain, five weapons) against the computer at three
-  strengths, two players on one device, or online through the turn rooms.
+  strengths, two players on one device, or online through the turn rooms. Červíci, a worms war on a
+  seeded destructible island (caves, water, knock-back, five weapons, 45 s turns, follow camera on
+  phones); online the player on turn sends the result and the other client replays it.
 - Hub library: the big games featured on top, the rest in genre shelves with filters, search,
   sorting and synced favourites; site stats (online now, players in 30 days / total, accounts)
   and the games most played right now.

@@ -26,6 +26,8 @@ export const MAX_CHAT = 200;
 export const MAX_NICK = 20;
 export const CHAT_HISTORY = 30;
 export const MAX_MOVES = 1000;
+/** All moves of one game together (the round is one storage value, capped at 128 KiB). */
+export const MAX_MOVES_SIZE = 100_000;
 export const CLAIM_AFTER = 60_000;
 export const COUNTDOWN = 3500;
 
@@ -81,8 +83,12 @@ const GAME_RE = /^[a-z][a-z0-9-]{1,23}$/;
 const DIFF_RE = /^[a-z][a-z0-9]{0,15}$/;
 const PID_RE = /^[a-zA-Z0-9]{12,40}$/;
 const WHY_RE = /^[a-z][a-z0-9]{0,15}$/;
-/** A move as the game encodes it (chess "52-36-0", gomoku "112", tanks "120:45,80,2:600,310;610,300"). */
-const MOVE_RE = /^[a-zA-Z0-9=+#.,:;_-]{1,48}$/;
+/**
+ * A move as the game encodes it (chess "52-36-0", gomoku "112", tanks "120:45,80,2:600,310;610,300",
+ * worms: a whole turn with its explosions and where every worm ended up).
+ */
+export const MAX_MOVE = 320;
+const MOVE_RE = new RegExp(`^[a-zA-Z0-9=+#.,:;_-]{1,${MAX_MOVE}}$`);
 
 const num = (v: unknown, min: number, max: number): number | null =>
 	typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max ? v : null;
