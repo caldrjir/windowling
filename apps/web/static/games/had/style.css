@@ -4,7 +4,7 @@
 .hd-hud small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
 .hd-hud b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
 .hd-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
-.hd-board { display: block; border-radius: 12px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 40%, transparent), 0 24px 60px -20px var(--a); }
+.hd-board { display: block; border-radius: 12px; background: #13301f; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 40%, transparent), 0 24px 60px -20px var(--a); }
 .hd-over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(3, 2, 10, .55); backdrop-filter: blur(4px); border-radius: 12px; z-index: 3; }
 .hd-over[hidden] { display: none; }
 .hd-over div { display: grid; gap: 14px; justify-items: center; }

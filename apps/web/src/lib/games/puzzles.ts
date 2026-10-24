@@ -7,6 +7,33 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// HAD cover: a shiny apple with a leaf
+function coverApple(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
+	ctx.fillStyle = 'rgba(0,0,0,.3)';
+	ctx.beginPath();
+	ctx.ellipse(x, y + r * 0.95, r * 0.8, r * 0.25, 0, 0, TAU);
+	ctx.fill();
+	ctx.fillStyle = '#ff4a5a';
+	ctx.beginPath();
+	ctx.arc(x - r * 0.32, y, r * 0.68, 0, TAU);
+	ctx.arc(x + r * 0.32, y, r * 0.68, 0, TAU);
+	ctx.fill();
+	ctx.strokeStyle = '#6a4a2a';
+	ctx.lineWidth = Math.max(1.5, r * 0.14);
+	ctx.beginPath();
+	ctx.moveTo(x, y - r * 0.5);
+	ctx.lineTo(x + r * 0.1, y - r * 1.05);
+	ctx.stroke();
+	ctx.fillStyle = '#4fc85a';
+	ctx.beginPath();
+	ctx.ellipse(x + r * 0.38, y - r * 0.85, r * 0.38, r * 0.17, -0.5, 0, TAU);
+	ctx.fill();
+	ctx.fillStyle = 'rgba(255,255,255,.55)';
+	ctx.beginPath();
+	ctx.ellipse(x - r * 0.4, y - r * 0.25, r * 0.2, r * 0.14, -0.6, 0, TAU);
+	ctx.fill();
+}
+
 // SOKOBAN cover sprites: a wooden crate and the robot keeper (one tile of size s at x, y)
 function sokobanCrate(
 	ctx: CanvasRenderingContext2D,
@@ -1811,39 +1838,69 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#6dff9e', '#55f6ff', '#ff5a7a'],
 		statsKey: 'gamecenter.stats.had',
 		cover(ctx, w, h, t) {
-			sky(ctx, w, h, t, ['#6dff9e', '#55f6ff', '#ff5a7a'], 29);
-			const s = Math.min(w / 10, h / 13);
-			const cols = Math.floor(w / s);
-			const rows = Math.floor((h * 0.62) / s);
-			const ox = (w - cols * s) / 2;
-			const oy = h * 0.06;
-			// the snake runs around a loop of cells; its length is 7
-			const loop: [number, number][] = [];
-			for (let x = 1; x < cols - 1; x++) loop.push([x, 1]);
-			for (let y = 2; y < rows - 1; y++) loop.push([cols - 2, y]);
-			for (let x = cols - 3; x > 0; x--) loop.push([x, rows - 2]);
-			for (let y = rows - 3; y > 1; y--) loop.push([1, y]);
-			const head = Math.floor(t * 6) % loop.length;
-			const fruit = loop[(head + 9) % loop.length] ?? [1, 1];
-			ctx.fillStyle = '#ff5a7a';
-			ctx.shadowColor = '#ff5a7a';
-			ctx.shadowBlur = s * 0.6;
-			ctx.beginPath();
-			ctx.arc(ox + (fruit[0] + 0.5) * s, oy + (fruit[1] + 0.5) * s, s * 0.3, 0, TAU);
-			ctx.fill();
-			ctx.lineCap = 'round';
-			for (let k = 6; k >= 0; k--) {
-				const a = loop[(head - k + loop.length) % loop.length] ?? [1, 1];
-				const b = loop[(head - k + 1 + loop.length) % loop.length] ?? [1, 1];
-				ctx.strokeStyle = `hsl(${110 + k * 6}, 100%, ${70 - k * 4}%)`;
-				ctx.shadowColor = ctx.strokeStyle;
-				ctx.lineWidth = s * (0.72 - k * 0.04);
+			// a night garden: the striped snake slithers along a wave and snaps up an apple
+			const c = Math.min(w, h) / 9;
+			for (let y = 0; y * c < h; y++)
+				for (let x = 0; x * c < w; x++) {
+					ctx.fillStyle = (x + y) % 2 ? '#13301f' : '#16372a';
+					ctx.fillRect(x * c, y * c, c + 0.5, c + 0.5);
+				}
+			const cyc = (t / 5) % 1,
+				headX = -w * 0.1 + cyc * w * 1.3,
+				path = (x: number) => h * 0.42 + Math.sin(x / (w * 0.22) - t * 1.5) * h * 0.12,
+				len = w * 0.75,
+				appleX = w * 0.78,
+				eaten = headX > appleX - c * 0.4;
+			if (!eaten) coverApple(ctx, appleX, path(appleX) + Math.sin(t * 4) * c * 0.05, c * 0.42);
+			for (let pass = 0; pass < 2; pass++)
+				for (let d = len; d >= 0; d -= c * 0.15) {
+					const x = headX - d,
+						k = d / len,
+						bulge = eaten && Math.abs(d - (headX - appleX) * 1.1) < c * 0.6 ? c * 0.12 : 0,
+						r = c * (0.4 - 0.22 * k ** 1.4) + bulge;
+					ctx.fillStyle = pass
+						? `hsl(${(d / c) % 1 < 0.5 ? 110 : 135} 70% ${(d / c) % 1 < 0.5 ? 40 : 60}%)`
+						: '#14401f';
+					ctx.beginPath();
+					ctx.arc(x, path(x), r + (pass ? 0 : 1.5), 0, TAU);
+					ctx.fill();
+				}
+			const hy = path(headX),
+				ang = Math.atan2(path(headX + 1) - hy, 1);
+			ctx.save();
+			ctx.translate(headX, hy);
+			ctx.rotate(ang);
+			if (t % 1.6 < 0.4) {
+				ctx.strokeStyle = '#ff3a5a';
+				ctx.lineWidth = Math.max(1.5, c * 0.06);
+				ctx.lineCap = 'round';
 				ctx.beginPath();
-				ctx.moveTo(ox + (a[0] + 0.5) * s, oy + (a[1] + 0.5) * s);
-				ctx.lineTo(ox + (b[0] + 0.5) * s, oy + (b[1] + 0.5) * s);
+				ctx.moveTo(c * 0.4, 0);
+				ctx.lineTo(c * 0.85, 0);
+				ctx.lineTo(c * 0.97, -c * 0.09);
+				ctx.moveTo(c * 0.85, 0);
+				ctx.lineTo(c * 0.97, c * 0.09);
 				ctx.stroke();
 			}
-			ctx.shadowBlur = 0;
+			ctx.fillStyle = '#14401f';
+			ctx.beginPath();
+			ctx.ellipse(c * 0.05, 0, c * 0.5, c * 0.42, 0, 0, TAU);
+			ctx.fill();
+			ctx.fillStyle = 'hsl(120 70% 56%)';
+			ctx.beginPath();
+			ctx.ellipse(c * 0.05, 0, c * 0.45, c * 0.37, 0, 0, TAU);
+			ctx.fill();
+			for (const sd of [-1, 1]) {
+				ctx.fillStyle = '#fff';
+				ctx.beginPath();
+				ctx.arc(c * 0.12, sd * c * 0.19, c * 0.13, 0, TAU);
+				ctx.fill();
+				ctx.fillStyle = '#10102e';
+				ctx.beginPath();
+				ctx.arc(c * 0.17, sd * c * 0.19, c * 0.065, 0, TAU);
+				ctx.fill();
+			}
+			ctx.restore();
 		},
 	},
 	{
