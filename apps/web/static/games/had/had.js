@@ -30,7 +30,7 @@ const Had = (() => {
     let draws = 0;
     const roll = () => { draws++; return fr(); };
     let body, dir, queue = [], grow = 0, food = null, bonus = null, eaten = 0, score = 0, elapsed = 0, started = false;
-    let over = false, paused = false, dead = 0, acc = 0, lastTail = null, clock = 0, pops = [];
+    let over = false, paused = false, dead = 0, acc = 0, lastTail = null, clock = 0, pops = [], gulps = [];
     const speed = () => Math.min(16, P.speed + eaten * 0.2);
     const key = (x, y) => y * W + x;
     const wrap = (x, y) => [(x + W) % W, (y + H) % H];
@@ -64,7 +64,7 @@ const Had = (() => {
       body.unshift([x, y]);
       if (grow > 0) { grow--; lastTail = null; } else lastTail = body.pop();
       if (food && food.x === x && food.y === y) {
-        eaten++; grow += 1; const pts = 10 + Math.floor(speed()); score += pts;
+        eaten++; grow += 1; gulps.push(0); const pts = 10 + Math.floor(speed()); score += pts;
         pops.push({ x, y, t: 0.9, text: `+${pts}` }); api.sound('place'); api.burst && burstAt(x, y);
         placeFood(); maybeBonus(); api.changed();
         if (P.type === 'goal' && eaten >= P.goal) { end(true); return; }
@@ -102,60 +102,108 @@ const Had = (() => {
     hint.textContent = innerWidth < 760 ? L('Přejeď prstem nebo klepni na šipku', 'Swipe or tap an arrow') : L('Stiskni šipku a jeď', 'Press an arrow to start');
     const lerp = (a, b, t) => a + (b - a) * t;
     function seg(p, q, t) { return Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1 ? q : [lerp(p[0], q[0], t), lerp(p[1], q[1], t)]; }
-    function draw() {
-      const w = W * cs, h = H * cs, accent = getComputedStyle(document.documentElement).getPropertyValue('--a').trim() || '#6dff9e';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = 'rgba(6,4,20,.88)'; ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = 'rgba(255,255,255,.035)';
-      for (let y = 0; y < H; y++) for (let x = (y % 2); x < W; x += 2) ctx.fillRect(x * cs, y * cs, cs, cs);
-      // zdi
-      ctx.fillStyle = 'rgba(40,32,100,.9)'; ctx.strokeStyle = accent; ctx.lineWidth = Math.max(1, cs * 0.08); ctx.shadowColor = accent; ctx.shadowBlur = cs * 0.4;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (walls[key(x, y)]) { ctx.beginPath(); ctx.roundRect(x * cs + 1.5, y * cs + 1.5, cs - 3, cs - 3, cs * 0.2); ctx.fill(); ctx.stroke(); }
-      ctx.shadowBlur = 0;
-      // plod a bonus
-      if (food) {
-        const cx = (food.x + 0.5) * cs, cy = (food.y + 0.5) * cs, r = cs * (0.32 + 0.03 * Math.sin(clock * 5));
-        ctx.fillStyle = '#ff5a7a'; ctx.shadowColor = '#ff5a7a'; ctx.shadowBlur = cs * 0.7;
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(cx - r * 0.35, cy - r * 0.35, r * 0.28, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#6dff9e'; ctx.lineWidth = Math.max(1.5, cs * 0.08); ctx.beginPath(); ctx.moveTo(cx, cy - r); ctx.quadraticCurveTo(cx + r * 0.4, cy - r * 1.5, cx + r * 0.8, cy - r * 1.3); ctx.stroke();
+    // ── Kresba: noční zahrada, kamenné zdi s mechem, ovoce a had s pruhy, jazykem a polknutými plody ──
+    const deco = (() => { const r = E.rng(P.seed ^ 0x6a7d), out = []; for (let i = 0; i < 70; i++) out.push([r() * W, r() * H, r()]); return out; })();
+    let bgCv = null, bgKey = '';
+    function background() {
+      const k = `${cs}x${dpr}`; if (bgCv && bgKey === k) return bgCv;
+      bgKey = k; bgCv = document.createElement('canvas'); bgCv.width = W * cs * dpr; bgCv.height = H * cs * dpr;
+      const g = bgCv.getContext('2d'); g.scale(dpr, dpr);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { g.fillStyle = (x + y) % 2 ? '#13301f' : '#16372a'; g.fillRect(x * cs, y * cs, cs, cs); }
+      for (const [x, y, v] of deco) {
+        if (walls[key(Math.floor(x), Math.floor(y))]) continue;
+        const px = x * cs, py = y * cs;
+        if (v < 0.6) { g.strokeStyle = 'rgba(120,220,140,.22)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(px, py); g.lineTo(px - 2, py - cs * 0.22); g.moveTo(px + 2, py); g.lineTo(px + 3, py - cs * 0.2); g.stroke(); }
+        else { g.fillStyle = v < 0.8 ? 'rgba(255,240,150,.35)' : 'rgba(255,150,210,.35)'; g.beginPath(); g.arc(px, py, cs * 0.06, 0, 7); g.fill(); }
       }
+      // zdi: kameny s mechem, hrany jen tam, kde sousedí s trávou
+      const isW = (x, y) => x < 0 || y < 0 || x >= W || y >= H || walls[key(x, y)];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        if (!walls[key(x, y)]) continue;
+        const X = x * cs, Y = y * cs, n = (x * 7 + y * 13) % 5;
+        g.fillStyle = ['#59607e', '#535a78', '#5d6584', '#4f5673', '#585f7d'][n]; g.fillRect(X, Y, cs, cs);
+        g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.roundRect(X + cs * 0.1, Y + cs * 0.1, cs * 0.5, cs * 0.35, cs * 0.12); g.fill();
+        g.strokeStyle = 'rgba(20,20,40,.35)'; g.lineWidth = 1; g.beginPath(); g.moveTo(X, Y + cs * 0.55); g.lineTo(X + cs * 0.6, Y + cs * 0.55); g.lineTo(X + cs * 0.6, Y + cs); g.stroke();
+        if (!isW(x, y - 1)) { g.fillStyle = '#3f9a4a'; g.beginPath(); g.moveTo(X, Y); for (let i = 0; i <= 4; i++) g.lineTo(X + (i / 4) * cs, Y + cs * (i % 2 ? 0.22 : 0.12)); g.lineTo(X + cs, Y); g.closePath(); g.fill(); }
+        g.lineWidth = Math.max(1.5, cs * 0.06); g.strokeStyle = 'rgba(10,14,30,.6)';
+        g.beginPath();
+        if (!isW(x, y + 1)) { g.moveTo(X, Y + cs); g.lineTo(X + cs, Y + cs); }
+        if (!isW(x - 1, y)) { g.moveTo(X, Y); g.lineTo(X, Y + cs); }
+        if (!isW(x + 1, y)) { g.moveTo(X + cs, Y); g.lineTo(X + cs, Y + cs); }
+        g.stroke();
+        if (!isW(x, y + 1)) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(X, Y + cs, cs, cs * 0.18); }
+      }
+      return bgCv;
+    }
+    const FRUIT = ['apple', 'cherry', 'orange', 'grapes', 'pear'];
+    function fruit(kind, cx, cy, r) {
+      ctx.save(); ctx.translate(cx, cy);
+      ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, r * 0.95, r * 0.8, r * 0.25, 0, 0, 7); ctx.fill();
+      const shine = (x, y, s) => { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(x, y, s, s * 0.7, -0.6, 0, 7); ctx.fill(); };
+      const leaf = (x, y, a) => { ctx.fillStyle = '#4fc85a'; ctx.beginPath(); ctx.ellipse(x, y, r * 0.38, r * 0.17, a, 0, 7); ctx.fill(); };
+      const stem = (x0, y0, x1, y1) => { ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = Math.max(1.5, r * 0.14); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo((x0 + x1) / 2 + r * 0.2, (y0 + y1) / 2, x1, y1); ctx.stroke(); };
+      if (kind === 'apple') { ctx.fillStyle = '#ff4a5a'; ctx.beginPath(); ctx.arc(-r * 0.32, 0, r * 0.68, 0, 7); ctx.arc(r * 0.32, 0, r * 0.68, 0, 7); ctx.fill(); stem(0, -r * 0.5, r * 0.1, -r * 1.05); leaf(r * 0.38, -r * 0.85, -0.5); shine(-r * 0.4, -r * 0.25, r * 0.2); }
+      else if (kind === 'cherry') { stem(-r * 0.4, 0, r * 0.15, -r * 1.05); stem(r * 0.45, r * 0.1, r * 0.15, -r * 1.05); leaf(r * 0.45, -r * 0.95, -0.3); ctx.fillStyle = '#e8203a'; for (const [x, y] of [[-r * 0.42, r * 0.15], [r * 0.45, r * 0.25]]) { ctx.beginPath(); ctx.arc(x, y, r * 0.48, 0, 7); ctx.fill(); shine(x - r * 0.15, y - r * 0.15, r * 0.12); } }
+      else if (kind === 'orange') { ctx.fillStyle = '#ff9a2a'; ctx.beginPath(); ctx.arc(0, 0, r * 0.85, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(200,100,0,.35)'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(Math.cos(i) * r * 0.45, Math.sin(i * 2) * r * 0.4, r * 0.06, 0, 7); ctx.fill(); } leaf(r * 0.3, -r * 0.85, -0.4); shine(-r * 0.35, -r * 0.3, r * 0.2); }
+      else if (kind === 'grapes') { ctx.fillStyle = '#9a4cff'; for (const [x, y] of [[-0.35, -0.35], [0.35, -0.35], [0, -0.35], [-0.18, 0.05], [0.18, 0.05], [0, 0.45]]) { ctx.beginPath(); ctx.arc(x * r * 1.2, y * r * 1.2, r * 0.32, 0, 7); ctx.fill(); } ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(-r * 0.5, -r * 0.5, r * 0.1, 0, 7); ctx.fill(); stem(0, -r * 0.7, r * 0.1, -r * 1.05); leaf(r * 0.4, -r * 0.9, -0.4); }
+      else { ctx.fillStyle = '#c8e04a'; ctx.beginPath(); ctx.arc(0, r * 0.25, r * 0.7, 0, 7); ctx.arc(0, -r * 0.3, r * 0.45, 0, 7); ctx.fill(); stem(0, -r * 0.7, r * 0.15, -r * 1.05); leaf(r * 0.4, -r * 0.9, -0.5); shine(-r * 0.3, r * 0.05, r * 0.18); }
+      ctx.restore();
+    }
+    function draw() {
+      const w = W * cs, h = H * cs;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(background(), 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // plod a bonus
+      if (food) fruit(FRUIT[eaten % FRUIT.length], (food.x + 0.5) * cs, (food.y + 0.5) * cs + Math.sin(clock * 4) * cs * 0.04, cs * 0.42);
       if (bonus) {
         const cx = (bonus.x + 0.5) * cs, cy = (bonus.y + 0.5) * cs, R = cs * 0.42, blink = bonus.t < 2 && Math.floor(clock * 8) % 2;
+        ctx.strokeStyle = 'rgba(255,224,102,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, cs * 0.5, -Math.PI / 2, -Math.PI / 2 + (bonus.t / 6) * Math.PI * 2); ctx.stroke();
         if (!blink) {
           ctx.fillStyle = '#ffe066'; ctx.shadowColor = '#ffe066'; ctx.shadowBlur = cs * 0.8; ctx.beginPath();
           for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R * 0.45 : R; ctx.lineTo(cx + Math.cos(a + clock) * rr, cy + Math.sin(a + clock) * rr); }
           ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
         }
       }
-      // had: hlava a ocas se plynule posouvají mezi poli
+      // had: hlava a ocas se plynule posouvají mezi poli; tělo z kroužků s pruhy, ubývá k ocasu
       const t = started && !dead && !paused && !over ? Math.min(1, acc * speed()) : 1;
       const pts = body.map(p => [p[0], p[1]]);
       if (pts.length > 1) pts[0] = seg(body[1], body[0], t);
       if (lastTail && pts.length) pts.push(seg(body[body.length - 1], lastTail, 1 - t));
-      const n = pts.length;
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      for (let i = n - 1; i > 0; i--) {
-        const a = pts[i], b = pts[i - 1];
-        if (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) > 1.01) continue;
-        const k = i / Math.max(1, n - 1);
-        ctx.strokeStyle = dead ? '#ff5a7a' : `hsl(${150 - k * 40}, 100%, ${68 - k * 18}%)`;
-        ctx.lineWidth = cs * (0.74 - k * 0.22);
-        ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = i < 3 ? cs * 0.6 : 0;
-        ctx.beginPath(); ctx.moveTo((a[0] + 0.5) * cs, (a[1] + 0.5) * cs); ctx.lineTo((b[0] + 0.5) * cs, (b[1] + 0.5) * cs); ctx.stroke();
+      const samples = []; let dist = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[i + 1];
+        if (!b || Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) > 1.01) { samples.push([a[0], a[1], dist]); continue; }
+        const L = Math.hypot(b[0] - a[0], b[1] - a[1]), k = Math.max(1, Math.ceil(L / 0.18));
+        for (let j = 0; j < k; j++) samples.push([a[0] + (b[0] - a[0]) * j / k, a[1] + (b[1] - a[1]) * j / k, dist + L * j / k]);
+        dist += L;
       }
-      ctx.shadowBlur = 0;
-      const hx = (pts[0][0] + 0.5) * cs, hy = (pts[0][1] + 0.5) * cs, [dx, dy] = DIRS[dir];
-      ctx.fillStyle = dead ? '#ff5a7a' : '#a8ffd0'; ctx.beginPath(); ctx.arc(hx, hy, cs * 0.42, 0, Math.PI * 2); ctx.fill();
+      const total = Math.max(1, dist), hue = dead ? 0 : 110, sat = dead ? 10 : 70;
+      const rad = d => { let r = cs * (0.4 - 0.2 * Math.pow(d / total, 1.4)); for (const g of gulps) { const q = Math.abs(d - g); if (q < 0.7) r += cs * 0.12 * (1 - q / 0.7); } return r; };
+      for (let pass = 0; pass < 3; pass++) for (let i = samples.length - 1; i >= 0; i--) {
+        const [x, y, d] = samples[i], r = rad(d), px = (x + 0.5) * cs, py = (y + 0.5) * cs;
+        if (pass === 0) { ctx.fillStyle = dead ? '#3a2a30' : '#14401f'; ctx.beginPath(); ctx.arc(px, py, r + Math.max(1.2, cs * 0.05), 0, 7); ctx.fill(); }
+        else if (pass === 1) { const band = (d % 1) < 0.5; ctx.fillStyle = `hsl(${hue + (band ? 0 : 25)} ${sat}% ${band ? 40 : 60}%)`; ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fill(); }
+        else if (i % 3 === 0) { ctx.fillStyle = 'rgba(255,255,220,.22)'; ctx.beginPath(); ctx.arc(px - r * 0.25, py - r * 0.3, r * 0.35, 0, 7); ctx.fill(); }
+      }
+      // hlava
+      const [dx, dy] = DIRS[dir], hx = (pts[0][0] + 0.5) * cs, hy = (pts[0][1] + 0.5) * cs, ang = Math.atan2(dy, dx);
+      ctx.save(); ctx.translate(hx, hy); ctx.rotate(ang);
+      if (!dead && (clock % 1.8) < 0.35) { ctx.strokeStyle = '#ff3a5a'; ctx.lineWidth = Math.max(1.5, cs * 0.06); ctx.lineCap = 'round'; const L = cs * (0.45 + 0.15 * Math.sin(clock * 40)); ctx.beginPath(); ctx.moveTo(cs * 0.4, 0); ctx.lineTo(cs * 0.4 + L, 0); ctx.moveTo(cs * 0.4 + L, 0); ctx.lineTo(cs * 0.4 + L + cs * 0.12, -cs * 0.09); ctx.moveTo(cs * 0.4 + L, 0); ctx.lineTo(cs * 0.4 + L + cs * 0.12, cs * 0.09); ctx.stroke(); }
+      ctx.fillStyle = dead ? '#3a2a30' : '#14401f'; ctx.beginPath(); ctx.ellipse(cs * 0.05, 0, cs * 0.5, cs * 0.42, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = `hsl(${hue + 10} ${sat}% 56%)`; ctx.beginPath(); ctx.ellipse(cs * 0.05, 0, cs * 0.45, cs * 0.37, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,220,.25)'; ctx.beginPath(); ctx.ellipse(-cs * 0.02, -cs * 0.12, cs * 0.22, cs * 0.1, 0, 0, 7); ctx.fill();
       for (const s of [-1, 1]) {
-        const ex = hx + dx * cs * 0.12 + -dy * s * cs * 0.2, ey = hy + dy * cs * 0.12 + dx * s * cs * 0.2;
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex, ey, cs * 0.12, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#10102e'; ctx.beginPath(); ctx.arc(ex + dx * cs * 0.04, ey + dy * cs * 0.04, cs * 0.06, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cs * 0.12, s * cs * 0.19, cs * 0.13, 0, 7); ctx.fill();
+        if (dead) { ctx.strokeStyle = '#10102e'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cs * 0.06, s * cs * 0.19 - 3); ctx.lineTo(cs * 0.18, s * cs * 0.19 + 3); ctx.moveTo(cs * 0.18, s * cs * 0.19 - 3); ctx.lineTo(cs * 0.06, s * cs * 0.19 + 3); ctx.stroke(); }
+        else { ctx.fillStyle = '#10102e'; ctx.beginPath(); ctx.arc(cs * 0.17, s * cs * 0.19, cs * 0.065, 0, 7); ctx.fill(); }
+        ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.arc(cs * 0.44, s * cs * 0.07, cs * 0.03, 0, 7); ctx.fill();
       }
+      ctx.restore();
       ctx.font = `700 ${Math.max(10, cs * 0.5)}px Unbounded, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      for (const p of pops) { ctx.globalAlpha = Math.min(1, p.t * 2); ctx.fillStyle = '#ffe066'; ctx.fillText(p.text, (p.x + 0.5) * cs, (p.y + 0.5) * cs - (1 - p.t) * cs); }
+      for (const p of pops) { ctx.globalAlpha = Math.min(1, p.t * 2); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(p.text, (p.x + 0.5) * cs, (p.y + 0.5) * cs - (1 - p.t) * cs); ctx.fillStyle = '#ffe066'; ctx.fillText(p.text, (p.x + 0.5) * cs, (p.y + 0.5) * cs - (1 - p.t) * cs); }
       ctx.globalAlpha = 1;
+      void w; void h;
       scoreEl.textContent = Kit.fmtNum(score);
       goalEl.textContent = P.type === 'goal' ? `${eaten} / ${P.goal}` : body.length;
       speedEl.textContent = speed().toFixed(1);
@@ -171,6 +219,7 @@ const Had = (() => {
       if (api.paused() && !paused && started) setPause(true);
       if (!paused && !over && !dead) {
         pops = pops.filter(p => (p.t -= dt) > 0);
+        if (started) gulps = gulps.map(g => g + dt * speed() * 1.4).filter(g => g < body.length + 1);
         if (bonus) { bonus.t -= dt; if (bonus.t <= 0) bonus = null; }
         if (started) {
           elapsed += dt; acc += dt;
@@ -235,15 +284,25 @@ const Had = (() => {
     };
   }
 
+  // úvodní obrázek: had s pruhy na zahradě, před ním jablko
   function art(el) {
-    const cells = [[3, 7], [4, 7], [5, 7], [6, 7], [6, 6], [6, 5], [7, 5], [8, 5], [9, 5], [9, 6]];
-    const S = 24;
-    const path = cells.map(([x, y], i) => `${i ? 'L' : 'M'}${x * S + 12} ${y * S + 12}`).join(' ');
-    el.innerHTML = `<svg viewBox="40 60 240 180"><defs><linearGradient id="hdG" x1="0" x2="1"><stop offset="0" stop-color="#2fbf8a"/><stop offset="1" stop-color="#a8ffd0"/></linearGradient>
-      <filter id="hdGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-      <path d="${path}" fill="none" stroke="url(#hdG)" stroke-width="17" stroke-linecap="round" stroke-linejoin="round" filter="url(#hdGlow)"/>
-      <circle cx="${9 * S + 12}" cy="${6 * S + 14}" r="10" fill="#a8ffd0"/><circle cx="${9 * S + 7}" cy="${6 * S + 17}" r="3" fill="#10102e"/><circle cx="${9 * S + 17}" cy="${6 * S + 17}" r="3" fill="#10102e"/>
-      <circle cx="${9 * S + 12}" cy="${9 * S + 6}" r="9" fill="#ff5a7a" filter="url(#hdGlow)"/></svg>`;
+    el.innerHTML = '<canvas width="520" height="360" style="object-fit:contain"></canvas>';
+    const g = el.querySelector('canvas').getContext('2d'), c = 40;
+    g.beginPath(); g.roundRect(0, 0, 520, 360, 28); g.clip();
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 13; x++) { g.fillStyle = (x + y) % 2 ? '#13301f' : '#16372a'; g.fillRect(x * c, y * c, c, c); }
+    const cells = [[1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [5, 5], [5, 4], [5, 3], [6, 3], [7, 3], [8, 3], [8, 4], [8, 5], [9, 5]];
+    const pts = []; for (let i = 0; i < cells.length - 1; i++) for (let k = 0; k < 6; k++) pts.push([cells[i][0] + (cells[i + 1][0] - cells[i][0]) * k / 6, cells[i][1] + (cells[i + 1][1] - cells[i][1]) * k / 6]);
+    pts.push(cells[cells.length - 1]);
+    for (let pass = 0; pass < 2; pass++) pts.forEach(([x, y], i) => { const k = 1 - i / pts.length, r = c * (0.4 - 0.2 * k ** 1.4), band = Math.floor(i / 3) % 2 === 0; g.fillStyle = pass ? `hsl(${band ? 110 : 135} 70% ${band ? 40 : 60}%)` : '#14401f'; g.beginPath(); g.arc((x + 0.5) * c, (y + 0.5) * c, r + (pass ? 0 : 1.5), 0, 7); g.fill(); });
+    const hx = 9.5 * c + 4, hy = 5.5 * c;
+    g.strokeStyle = '#ff3a5a'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(hx + 16, hy); g.lineTo(hx + 34, hy); g.lineTo(hx + 39, hy - 4); g.moveTo(hx + 34, hy); g.lineTo(hx + 39, hy + 4); g.stroke();
+    g.fillStyle = '#14401f'; g.beginPath(); g.ellipse(hx, hy, 21, 17, 0, 0, 7); g.fill(); g.fillStyle = 'hsl(120 70% 56%)'; g.beginPath(); g.ellipse(hx, hy, 19, 15, 0, 0, 7); g.fill();
+    for (const s of [-1, 1]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(hx + 3, hy + s * 8, 5.5, 0, 7); g.fill(); g.fillStyle = '#10102e'; g.beginPath(); g.arc(hx + 5, hy + s * 8, 2.8, 0, 7); g.fill(); }
+    const ax = 11.5 * c, ay = 5.5 * c, r = 17;
+    g.fillStyle = '#ff4a5a'; g.beginPath(); g.arc(ax - r * 0.32, ay, r * 0.68, 0, 7); g.arc(ax + r * 0.32, ay, r * 0.68, 0, 7); g.fill();
+    g.strokeStyle = '#6a4a2a'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(ax, ay - r * 0.5); g.lineTo(ax + 2, ay - r * 1.05); g.stroke();
+    g.fillStyle = '#4fc85a'; g.beginPath(); g.ellipse(ax + r * 0.38, ay - r * 0.85, r * 0.38, r * 0.17, -0.5, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(ax - r * 0.4, ay - r * 0.25, r * 0.2, r * 0.14, -0.6, 0, 7); g.fill();
   }
   return { DIFFS, generate, create, art, levelSpec };
 })();
