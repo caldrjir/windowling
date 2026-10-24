@@ -1329,6 +1329,79 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 	},
 	{
+		id: 'skladnik',
+		online: 'race',
+		title: 'SKLADNÍK',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Tlač bedny, skládej řady, kryj si hlavu.',
+		description:
+			'Skladová honička na motivy Stack Attack: jeřáby shazují bedny, ty je tlačíš a vyskakuješ na ně a skládáš plné řady, které zmizí. Bacha na hlavu a na bomby; srdce přidá život a pírko vyšší skok. Pořadí beden je ze semínka, denní směna je pro všechny stejná.',
+		genres: ['Arkáda', 'Bedny', 'Postřeh'],
+		features: ['Denní směna', 'Cesta: 120 směn', 'Bomby a bonusy', 'Tlačítka i klávesnice'],
+		en: {
+			tagline: 'Push crates, clear rows, mind your head.',
+			description:
+				'A warehouse scramble in the spirit of Stack Attack: cranes drop crates, you push them, jump onto them and stack full rows that disappear. Mind your head and the bombs; a heart gives a life and a feather a higher jump. The crate order comes from the seed, so the daily shift is the same for everyone.',
+			genres: ['Arcade', 'Crates', 'Reflexes'],
+			features: ['Daily shift', 'Path: 120 shifts', 'Bombs and bonuses', 'Buttons or keyboard'],
+		},
+		statLabels: labels,
+		path: '/games/skladnik/index.html',
+		colors: ['#ffa94d', '#ffe066', '#c77dff'],
+		statsKey: 'gamecenter.stats.skladnik',
+		cover(ctx, w, h, t) {
+			sky(ctx, w, h, t, ['#ffa94d', '#ffe066', '#c77dff'], 37);
+			const s = Math.min(w / 8, h / 11);
+			const floor = h * 0.72;
+			const x0 = (w - 7 * s) / 2;
+			const crate = (cx: number, cy: number, col: string) => {
+				ctx.strokeStyle = col;
+				ctx.lineWidth = Math.max(2, s * 0.08);
+				ctx.shadowColor = col;
+				ctx.shadowBlur = s * 0.3;
+				ctx.strokeRect(cx + s * 0.1, cy + s * 0.1, s * 0.8, s * 0.8);
+				ctx.shadowBlur = 0;
+				ctx.globalAlpha = 0.5;
+				ctx.beginPath();
+				ctx.moveTo(cx + s * 0.18, cy + s * 0.18);
+				ctx.lineTo(cx + s * 0.82, cy + s * 0.82);
+				ctx.moveTo(cx + s * 0.82, cy + s * 0.18);
+				ctx.lineTo(cx + s * 0.18, cy + s * 0.82);
+				ctx.stroke();
+				ctx.globalAlpha = 1;
+			};
+			const cols = ['#ffa94d', '#c77dff', '#55f6ff', '#6dff9e', '#ff9de6'];
+			[0, 1, 3, 4, 6].forEach((x, i) => crate(x0 + x * s, floor - s, cols[i] ?? '#fff'));
+			crate(x0 + 4 * s, floor - 2 * s, '#ffe066');
+			// a crane carries a crate along the rail and drops it
+			const ph = (t * 0.35) % 1;
+			ctx.fillStyle = 'rgba(255,255,255,.18)';
+			ctx.fillRect(0, h * 0.08, w, s * 0.12);
+			const cx = x0 - s + ph * 9 * s;
+			ctx.fillStyle = '#ffa94d';
+			ctx.fillRect(cx, h * 0.06, s, s * 0.3);
+			crate(cx, h * 0.08 + s * 0.6, '#55f6ff');
+			// the worker with a yellow hard hat
+			const wx = x0 + 2 * s + s * 0.5;
+			const wy = floor - s * 1.9;
+			ctx.fillStyle = '#5d7bff';
+			ctx.fillRect(wx - s * 0.3, wy + s * 0.9, s * 0.6, s * 0.65);
+			ctx.fillStyle = '#3a4bff';
+			ctx.fillRect(wx - s * 0.22, wy + s * 1.5, s * 0.16, s * 0.4);
+			ctx.fillRect(wx + s * 0.06, wy + s * 1.5, s * 0.16, s * 0.4);
+			ctx.fillStyle = '#ffd9a8';
+			ctx.beginPath();
+			ctx.arc(wx, wy + s * 0.66, s * 0.27, 0, TAU);
+			ctx.fill();
+			ctx.fillStyle = '#ffe066';
+			ctx.beginPath();
+			ctx.arc(wx, wy + s * 0.56, s * 0.3, Math.PI, 0);
+			ctx.fill();
+			ctx.fillRect(wx - s * 0.36, wy + s * 0.53, s * 0.72, s * 0.08);
+		},
+	},
+	{
 		id: 'rybky',
 		online: 'race',
 		title: 'RYBKY',
