@@ -289,6 +289,34 @@ test('skladacka snaps a piece dragged to its place', async ({ page }) => {
 	await expect(page.locator('.jg-count')).toHaveText(/^1 \//);
 });
 
+test('skladacka joins matching loose pieces and picks a piece under another', async ({ page }) => {
+	await startFree(page, 'skladacka');
+	const I = <T>(s: string) => page.evaluate(`Kit._test.inst.${s}`) as Promise<T>;
+	const drag = async (from: number[], to: number[]) => {
+		await page.mouse.move(from[0], from[1]);
+		await page.mouse.down();
+		await page.mouse.move((from[0] + to[0]) / 2, (from[1] + to[1]) / 2, { steps: 4 });
+		await page.mouse.move(to[0], to[1], { steps: 4 });
+		await page.mouse.up();
+	};
+	// piece 1 dropped next to piece 0 joins it; the pair then moves together
+	await drag(await I<number[]>('_center(1)'), await I<number[]>('_target(1, 0)'));
+	expect(await I<number>('_group(0)')).toBeGreaterThanOrEqual(2);
+	const before = await I<number[]>('_center(1)');
+	const c0 = await I<number[]>('_center(0)');
+	await drag(c0, [c0[0] + 30, c0[1] + 20]);
+	const after = await I<number[]>('_center(1)');
+	expect(Math.hypot(after[0] - before[0], after[1] - before[1])).toBeGreaterThan(10);
+	// a piece whose transparent corner covers another one does not steal the click
+	// 24 pieces: 160 px bodies, 54 px canvas margin. Piece 3 lies over the empty board, away from its
+	// home; the transparent corner of piece 5 (drawn above it) covers the centre of piece 3.
+	await page.evaluate('Kit._test.inst._put(3, 700, 300); Kit._test.inst._put(5, 818, 418)');
+	const c3 = await I<number[]>('_center(3)');
+	await drag(c3, [c3[0] + 25, c3[1] + 25]);
+	const c3b = await I<number[]>('_center(3)');
+	expect(c3b[0] - c3[0]).toBeGreaterThan(10);
+});
+
 test('sachy plays a knight move and the computer answers', async ({ page }) => {
 	await startFree(page, 'sachy');
 	const moves = () => page.evaluate('Kit._test.inst.getState().moves.length') as Promise<number>;
