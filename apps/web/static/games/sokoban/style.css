@@ -7,34 +7,60 @@
 .sk-head b.over { color: var(--bad); }
 .sk-head .sk-par { background: linear-gradient(135deg, color-mix(in srgb, var(--a) 18%, transparent), transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--a) 45%, transparent); }
 
-.sk { width: 560px; max-width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; overflow: visible; }
-.sk-floor { fill: rgba(255, 255, 255, .045); stroke: rgba(255, 255, 255, .05); stroke-width: 1.5; }
-.sk-wall rect:first-child { fill: color-mix(in srgb, var(--a) 14%, #1d1846); stroke: color-mix(in srgb, var(--a) 30%, rgba(255, 255, 255, .14)); stroke-width: 2; }
-.sk-wall .hi { fill: rgba(255, 255, 255, .07); }
-.sk-goal circle { fill: color-mix(in srgb, var(--a) 14%, transparent); stroke: var(--a); stroke-width: 4; stroke-dasharray: 10 7; filter: drop-shadow(0 0 8px var(--a)); animation: skSpin 9s linear infinite; transform-box: fill-box; transform-origin: center; }
-.sk-goal path { fill: var(--a); opacity: .7; }
-@keyframes skSpin { to { transform: rotate(360deg); } }
+.sk { width: 560px; max-width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; overflow: visible; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .45)); }
+.sk-fl { fill: url(#skFloorG); }
+.sk-fl2 { fill: none; stroke: rgba(255, 255, 255, .05); stroke-width: 2; }
+.sk-rv { fill: rgba(255, 255, 255, .1); }
+.sk-seam { stroke: rgba(10, 10, 40, .35); stroke-width: 2.5; fill: none; }
+.sk-stripe { stroke: color-mix(in srgb, var(--a) 55%, transparent); stroke-width: 4; stroke-linecap: round; opacity: .55; }
+.sk-edge { stroke: rgba(190, 200, 255, .35); stroke-width: 3; fill: none; }
+.sk-edge.dk { stroke: rgba(0, 0, 0, .3); }
+.sk-goal .pad { fill: color-mix(in srgb, var(--a) 16%, transparent); stroke: var(--a); stroke-width: 4; stroke-dasharray: 12 8; animation: skDash 1.6s linear infinite; }
+.sk-goal .mk { stroke: var(--a); stroke-width: 4; stroke-linecap: round; opacity: .75; }
+@keyframes skDash { to { stroke-dashoffset: -40; } }
 
 .sk-box, .sk-player { transition: transform .11s ease-out; }
-.sk-box rect:first-child { fill: #c98a3c; stroke: #ffd38a; stroke-width: 3; }
-.sk-box .rim { fill: none; stroke: rgba(80, 40, 10, .45); stroke-width: 3; }
-.sk-box .x { stroke: rgba(80, 40, 10, .45); stroke-width: 5; stroke-linecap: round; }
-.sk-box.on rect:first-child { fill: color-mix(in srgb, var(--good) 70%, #1a4a3a); stroke: #c9ffe6; filter: drop-shadow(0 0 12px var(--good)); }
-.sk-box.on .x, .sk-box.on .rim { stroke: rgba(10, 60, 40, .5); }
-.sk-box.dead rect:first-child { fill: #7a2b3a; stroke: var(--bad); }
+.sk-box .sh { fill: rgba(0, 0, 0, .35); }
+.sk-box .body { fill: url(#skWood); }
+.sk-box .pl { stroke: rgba(90, 45, 10, .45); stroke-width: 3; }
+.sk-box .br { stroke: #9a5f24; stroke-width: 9; stroke-linecap: round; }
+.sk-box .fr { fill: none; stroke: #7a4518; stroke-width: 5; }
+.sk-box .cn rect { fill: #9aa4c0; stroke: #4a5068; stroke-width: 2; }
+.sk-box .ok { fill: none; stroke: #fff; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transition: opacity .2s; }
+.sk-box.on .body { fill: url(#skWoodOn); }
+.sk-box.on .br { stroke: #1f8a5a; }
+.sk-box.on .fr { stroke: #126a44; }
+.sk-box.on .ok { opacity: .95; }
+.sk-box.on .crate { filter: drop-shadow(0 0 12px var(--good)); }
+.sk-box.dead .body { fill: #8a3a48; }
+.sk-box.dead .fr { stroke: var(--bad); }
 
 .sk-hero .sh { fill: rgba(0, 0, 0, .35); }
-.sk-hero .body { fill: #e9edff; stroke: #9fb4ff; stroke-width: 3; }
-.sk-hero .visor { fill: #12204a; stroke: #7fd8ff; stroke-width: 2.5; transition: transform .11s; transform-box: view-box; }
+.sk-hero .bot { transition: transform .11s; transform-box: view-box; transform-origin: 50px 86px; }
+.sk-hero .body { fill: url(#skBot); stroke: #7f94e8; stroke-width: 3; }
+.sk-hero .scr { fill: #10183a; stroke: #7fd8ff; stroke-width: 2.5; }
+.sk-hero .eyes circle { fill: #7fffe0; filter: drop-shadow(0 0 4px #7fffe0); transition: transform .11s; }
+.sk-hero .leg { fill: #6a76a8; }
+.sk-hero .arm { fill: #c7d2ff; stroke: #7f94e8; stroke-width: 2; transition: transform .11s; }
 .sk-hero .ant { fill: var(--a); filter: drop-shadow(0 0 6px var(--a)); }
 .sk-hero .antl { stroke: #9fb4ff; stroke-width: 3; stroke-linecap: round; }
-.sk-hero.f-l .visor { transform: translateX(-7px); }
-.sk-hero.f-r .visor { transform: translateX(7px); }
-.sk-hero.f-u .visor { transform: translateY(-9px) scaleY(.6); opacity: .55; }
+.sk-hero.f-l .eyes circle { transform: translateX(-5px); }
+.sk-hero.f-r .eyes circle { transform: translateX(5px); }
+.sk-hero.f-u .eyes circle { transform: translateY(-5px); }
+.sk-hero.f-d .eyes circle { transform: translateY(3px); }
+.sk-hero.s1 .bot { transform: translateY(-3px); }
+.sk-hero.push.f-r .bot { transform: rotate(8deg); } .sk-hero.push.f-l .bot { transform: rotate(-8deg); }
+.sk-hero.push.f-u .bot { transform: translateY(-4px) scaleY(1.04); } .sk-hero.push.f-d .bot { transform: translateY(3px) scaleY(.96); }
+.sk-hero.push.f-r .arm { transform: translateX(6px); } .sk-hero.push.f-l .arm { transform: translateX(-6px); }
 .sk-hint { fill: none; stroke: var(--a); stroke-width: 5; stroke-dasharray: 14 9; animation: skPulse .8s ease-in-out infinite alternate; }
 @keyframes skPulse { to { opacity: .35; } }
-.sk.won .sk-box rect:first-child { animation: skWin .9s ease-in-out infinite alternate; }
-@keyframes skWin { to { filter: drop-shadow(0 0 22px var(--good)) brightness(1.25); } }
+.sk-spark circle { fill: #c9ffe6; animation: skSpark .65s ease-out forwards; }
+.sk-spark .ring { fill: none; stroke: var(--good); stroke-width: 4; animation: skRing .6s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes skSpark { to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+@keyframes skRing { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+.sk.won .sk-box .crate { animation: skWin .9s ease-in-out infinite alternate; }
+@keyframes skWin { to { filter: drop-shadow(0 0 22px var(--good)) brightness(1.2); } }
+.sk-art { width: 100%; height: 100%; max-height: 260px; overflow: hidden; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .45)); }
 
 /* šipky pro dotykové ovládání */
 .sk-pad { display: none; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 48px); gap: 6px; }

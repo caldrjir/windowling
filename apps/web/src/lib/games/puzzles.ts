@@ -7,6 +7,132 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// SOKOBAN cover sprites: a wooden crate and the robot keeper (one tile of size s at x, y)
+function sokobanCrate(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	s: number,
+	on: boolean,
+	t: number,
+): void {
+	const p = s * 0.12,
+		q = s - p * 2;
+	ctx.save();
+	if (on) {
+		ctx.shadowColor = '#7cf0b6';
+		ctx.shadowBlur = s * (0.45 + Math.sin(t * 6) * 0.15);
+	}
+	const g = ctx.createLinearGradient(0, y + p, 0, y + p + q);
+	g.addColorStop(0, on ? '#7ff0b8' : '#e2a55a');
+	g.addColorStop(1, on ? '#2fb37a' : '#b8752f');
+	ctx.fillStyle = g;
+	ctx.beginPath();
+	ctx.roundRect(x + p, y + p, q, q, s * 0.09);
+	ctx.fill();
+	ctx.restore();
+	ctx.strokeStyle = on ? '#1f8a5a' : '#9a5f24';
+	ctx.lineWidth = s * 0.09;
+	ctx.lineCap = 'round';
+	ctx.beginPath();
+	ctx.moveTo(x + p + q * 0.12, y + p + q * 0.88);
+	ctx.lineTo(x + p + q * 0.88, y + p + q * 0.12);
+	ctx.stroke();
+	ctx.strokeStyle = on ? '#126a44' : '#7a4518';
+	ctx.lineWidth = s * 0.05;
+	ctx.beginPath();
+	ctx.roundRect(x + p, y + p, q, q, s * 0.09);
+	ctx.stroke();
+	ctx.fillStyle = '#9aa4c0';
+	for (const [cx, cy] of [
+		[0, 0],
+		[1, 0],
+		[0, 1],
+		[1, 1],
+	] as const) {
+		ctx.beginPath();
+		ctx.roundRect(
+			x + p + cx * (q - s * 0.14),
+			y + p + cy * (q - s * 0.14),
+			s * 0.14,
+			s * 0.14,
+			s * 0.04,
+		);
+		ctx.fill();
+	}
+	if (on) {
+		ctx.strokeStyle = '#fff';
+		ctx.lineWidth = s * 0.07;
+		ctx.lineJoin = 'round';
+		ctx.beginPath();
+		ctx.moveTo(x + s * 0.34, y + s * 0.5);
+		ctx.lineTo(x + s * 0.45, y + s * 0.61);
+		ctx.lineTo(x + s * 0.67, y + s * 0.38);
+		ctx.stroke();
+	}
+	ctx.lineCap = 'butt';
+}
+function sokobanBot(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	s: number,
+	t: number,
+	pushing: boolean,
+): void {
+	const u = s / 100;
+	ctx.save();
+	ctx.translate(x, y);
+	if (pushing) {
+		ctx.translate(50 * u, 86 * u);
+		ctx.rotate(0.14);
+		ctx.translate(-50 * u, -86 * u);
+	}
+	ctx.scale(u, u);
+	ctx.fillStyle = 'rgba(0,0,0,.35)';
+	ctx.beginPath();
+	ctx.ellipse(50, 88, 24, 6, 0, 0, TAU);
+	ctx.fill();
+	ctx.fillStyle = '#6a76a8';
+	const bob = pushing ? Math.abs(Math.sin(t * 10)) * 3 : 0;
+	ctx.fillRect(30, 70 - bob, 14, 16);
+	ctx.fillRect(56, 70, 14, 16);
+	ctx.strokeStyle = '#9fb4ff';
+	ctx.lineWidth = 3;
+	ctx.beginPath();
+	ctx.moveTo(50, 22);
+	ctx.lineTo(50, 12);
+	ctx.stroke();
+	ctx.fillStyle = '#7fd8ff';
+	ctx.beginPath();
+	ctx.arc(50, 11, 5, 0, TAU);
+	ctx.fill();
+	const g = ctx.createLinearGradient(24, 22, 76, 76);
+	g.addColorStop(0, '#ffffff');
+	g.addColorStop(1, '#b9c6ff');
+	ctx.fillStyle = g;
+	ctx.strokeStyle = '#7f94e8';
+	ctx.beginPath();
+	ctx.roundRect(24, 22, 52, 54, 20);
+	ctx.fill();
+	ctx.stroke();
+	ctx.fillStyle = '#10183a';
+	ctx.beginPath();
+	ctx.roundRect(32, 32, 36, 24, 10);
+	ctx.fill();
+	ctx.fillStyle = '#7fffe0';
+	for (const ex of [48, 62]) {
+		ctx.beginPath();
+		ctx.arc(ex, 44, 4, 0, TAU);
+		ctx.fill();
+	}
+	ctx.fillStyle = '#c7d2ff';
+	ctx.beginPath();
+	ctx.roundRect(pushing ? 80 : 74, 44, 12, 18, 6);
+	ctx.fill();
+	ctx.restore();
+}
+
 // OMALOVÁNKY cover: a 16 × 16 hot-air balloon and the order in which it gets painted
 const BALLOON_PAL = ['#8fd3ff', '#ffffff', '#ff5a7a', '#ffd34d', '#8a5a34', '#5ccf6a'];
 let balloon: { map: number[]; order: number[]; rank: number[] } | null = null;
@@ -1465,64 +1591,63 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.sokoban',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#ffb547', '#7fd8ff', '#6b4cff'], 17);
-			const map = ['#######', '#  .  #', '#  #  #', '#     #', '#######'];
-			const s = Math.min((w * 0.66) / 7, (h * 0.62) / 5);
-			const x0 = w / 2 - s * 3.5;
-			const y0 = h * 0.12;
-			const tile = (x: number, y: number, inset: number, r: number) => {
-				ctx.beginPath();
-				ctx.roundRect(x0 + x * s + inset, y0 + y * s + inset, s - inset * 2, s - inset * 2, r);
-			};
+			// a little depot: the robot keeper pushes a crate along the row onto the glowing pad
+			const map = ['#######', '#  #  #', '#     #', '#    .#', '#######'];
+			const s = Math.min((w * 0.84) / 7, (h * 0.6) / 5),
+				x0 = w / 2 - s * 3.5,
+				y0 = h * 0.08;
 			map.forEach((row, y) =>
 				[...row].forEach((c, x) => {
-					tile(x, y, 2, s * 0.14);
-					ctx.fillStyle = c === '#' ? '#2a2360' : 'rgba(255,255,255,.05)';
-					ctx.fill();
+					const X = x0 + x * s,
+						Y = y0 + y * s;
 					if (c === '#') {
-						ctx.strokeStyle = 'rgba(255,255,255,.12)';
-						ctx.lineWidth = 1.5;
+						ctx.fillStyle = '#41467c';
+						ctx.fillRect(X - 0.5, Y - 0.5, s + 1, s + 1);
+						ctx.strokeStyle = 'rgba(10,10,40,.35)';
+						ctx.lineWidth = Math.max(1, s * 0.025);
+						ctx.beginPath();
+						ctx.moveTo(X, Y + s / 2);
+						ctx.lineTo(X + s, Y + s / 2);
+						ctx.moveTo(X + (y % 2 ? s / 2 : 0), Y);
+						ctx.lineTo(X + (y % 2 ? s / 2 : 0), Y + s / 2);
 						ctx.stroke();
+						if (map[y + 1]?.[x] && map[y + 1]?.[x] !== '#') {
+							ctx.fillStyle = '#1d2046';
+							ctx.fillRect(X - 0.5, Y + s * 0.72, s + 1, s * 0.28 + 0.5);
+							ctx.fillStyle = 'rgba(127,216,255,.5)';
+							ctx.fillRect(X + s * 0.1, Y + s * 0.84, s * 0.8, Math.max(1, s * 0.04));
+						}
+						return;
+					}
+					ctx.fillStyle = '#26244a';
+					ctx.fillRect(X, Y, s, s);
+					ctx.strokeStyle = 'rgba(255,255,255,.06)';
+					ctx.lineWidth = 1;
+					ctx.strokeRect(X + s * 0.07, Y + s * 0.07, s * 0.86, s * 0.86);
+					if (c === '.') {
+						ctx.save();
+						ctx.shadowColor = '#7fd8ff';
+						ctx.shadowBlur = s * 0.4;
+						ctx.strokeStyle = '#7fd8ff';
+						ctx.lineWidth = s * 0.05;
+						ctx.setLineDash([s * 0.12, s * 0.08]);
+						ctx.lineDashOffset = -t * s * 0.4;
+						ctx.strokeRect(X + s * 0.18, Y + s * 0.18, s * 0.64, s * 0.64);
+						ctx.restore();
 					}
 				}),
 			);
-			// the crate slides onto the goal, the keeper follows
-			const p = (Math.sin(t * 1.1) + 1) / 2;
-			ctx.save();
-			ctx.shadowColor = '#ffb547';
-			ctx.shadowBlur = s * 0.5;
-			ctx.strokeStyle = '#ffb547';
-			ctx.lineWidth = s * 0.07;
-			ctx.beginPath();
-			ctx.arc(x0 + 3.5 * s, y0 + 1.5 * s, s * 0.3, 0, TAU);
-			ctx.stroke();
-			ctx.restore();
-			const by = 3 - p * 2;
-			const on = p > 0.97;
-			ctx.save();
-			ctx.shadowColor = on ? '#7cf0b6' : 'rgba(0,0,0,0)';
-			ctx.shadowBlur = on ? s * 0.6 : 0;
-			ctx.fillStyle = on ? '#3fbf8a' : '#c98a3c';
-			ctx.strokeStyle = on ? '#c9ffe6' : '#ffd38a';
-			ctx.lineWidth = s * 0.05;
-			ctx.beginPath();
-			ctx.roundRect(x0 + 3 * s + s * 0.14, y0 + by * s + s * 0.14, s * 0.72, s * 0.72, s * 0.12);
-			ctx.fill();
-			ctx.stroke();
-			ctx.restore();
-			ctx.fillStyle = '#e9edff';
-			ctx.beginPath();
-			ctx.arc(x0 + 3.5 * s, y0 + (by + 1.5) * s, s * 0.3, 0, TAU);
-			ctx.fill();
-			ctx.fillStyle = '#12204a';
-			ctx.beginPath();
-			ctx.roundRect(
-				x0 + 3.5 * s - s * 0.18,
-				y0 + (by + 1.5) * s - s * 0.2,
-				s * 0.36,
-				s * 0.17,
-				s * 0.08,
-			);
-			ctx.fill();
+			// three pushes, one tile each, then the crate glows on the pad
+			const cyc = (t / 4.5) % 1,
+				k = Math.max(0, Math.min(3, (cyc - 0.1) / 0.18)),
+				stepK = Math.floor(k) + Math.min(1, ((k % 1) * 1.6) ** 2),
+				cx = 2 + Math.min(3, stepK),
+				on = cyc > 0.66,
+				fade = cyc > 0.94 ? 1 - (cyc - 0.94) / 0.06 : 1;
+			ctx.globalAlpha = fade;
+			sokobanCrate(ctx, x0 + cx * s, y0 + 3 * s, s, on, t);
+			sokobanBot(ctx, x0 + (cx - 1) * s, y0 + 3 * s, s, t, k < 3 && cyc > 0.1);
+			ctx.globalAlpha = 1;
 		},
 	},
 	{

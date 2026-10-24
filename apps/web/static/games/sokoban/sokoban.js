@@ -196,6 +196,46 @@ const Sokoban = (() => {
   const cz = (n, one, few, many) => (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
 
   // ── Hrací plocha ──
+  // ── Kresba skladu (SVG): souvislé stěny s přední stěnou do hloubky, kovová podlaha se stínem
+  // pod zdí, svítící cílové plošiny, dřevěné bedny a robot skladník. Sdílí ji hra i úvodní obrázek. ──
+  const DEFS = `<defs>
+    <linearGradient id="skWallTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4f86"/><stop offset="1" stop-color="#363a6c"/></linearGradient>
+    <linearGradient id="skWallFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262a52"/><stop offset="1" stop-color="#171936"/></linearGradient>
+    <linearGradient id="skFloorG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2850"/><stop offset="1" stop-color="#211f42"/></linearGradient>
+    <linearGradient id="skShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(0,0,0,.45)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></linearGradient>
+    <linearGradient id="skWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2a55a"/><stop offset="1" stop-color="#b8752f"/></linearGradient>
+    <linearGradient id="skWoodOn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ff0b8"/><stop offset="1" stop-color="#2fb37a"/></linearGradient>
+    <linearGradient id="skBot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9c6ff"/></linearGradient>
+    <radialGradient id="skPad"><stop offset="0" stop-color="var(--a)" stop-opacity=".45"/><stop offset="1" stop-color="var(--a)" stop-opacity="0"/></radialGradient>
+  </defs>`;
+  // mapa: podlaha, stěny (horní plocha + přední stěna tam, kde pod nimi je podlaha), stíny a cíle
+  function mapSVG(P, wall, S) {
+    const W = P.w, H = P.h, isWall = (x, y) => x < 0 || y < 0 || x >= W || y >= H || wall[y * W + x];
+    const near = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!isWall(x + dx, y + dy)) return true; return false; };
+    let floor = '', walls = '', fronts = '', edges = '';
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const X = x * S, Y = y * S;
+      if (!wall[y * W + x]) {
+        floor += `<rect class="sk-fl" x="${X}" y="${Y}" width="${S}" height="${S}"/><rect class="sk-fl2" x="${X + 6}" y="${Y + 6}" width="${S - 12}" height="${S - 12}" rx="6"/>`;
+        for (const [cx, cy] of [[14, 14], [S - 14, 14], [14, S - 14], [S - 14, S - 14]]) floor += `<circle class="sk-rv" cx="${X + cx}" cy="${Y + cy}" r="2.6"/>`;
+        if (isWall(x, y - 1)) floor += `<rect x="${X}" y="${Y}" width="${S}" height="${S * 0.3}" fill="url(#skShade)"/>`;
+        if (isWall(x - 1, y)) floor += `<rect x="${X}" y="${Y}" width="${S * 0.12}" height="${S}" fill="rgba(0,0,0,.18)"/>`;
+        continue;
+      }
+      if (!near(x, y)) continue;
+      walls += `<rect x="${X - 0.5}" y="${Y - 0.5}" width="${S + 1}" height="${S + 1}" fill="url(#skWallTop)"/>`;
+      // nýty a spáry v horní ploše
+      walls += `<path class="sk-seam" d="M${X} ${Y + S / 2}h${S}M${X + (y % 2 ? S / 2 : 0)} ${Y}v${S / 2}M${X + (y % 2 ? 0 : S / 2)} ${Y + S / 2}v${S / 2}"/>`;
+      if (!isWall(x, y + 1)) fronts += `<rect x="${X - 0.5}" y="${Y + S * 0.72}" width="${S + 1}" height="${S * 0.28 + 0.5}" fill="url(#skWallFront)"/><path class="sk-stripe" d="M${X + 8} ${Y + S * 0.86}h${S - 16}"/>`;
+      if (!isWall(x, y - 1)) edges += `<path class="sk-edge" d="M${X} ${Y + 1.5}h${S}"/>`;
+      if (!isWall(x - 1, y)) edges += `<path class="sk-edge" d="M${X + 1.5} ${Y}v${S}"/>`;
+      if (!isWall(x + 1, y)) edges += `<path class="sk-edge dk" d="M${X + S - 1.5} ${Y}v${S}"/>`;
+    }
+    const goals = P.goals.map(g => { const X = (g % W) * S + S / 2, Y = ((g / W) | 0) * S + S / 2; return `<g class="sk-goal" transform="translate(${X} ${Y})"><circle r="${S * 0.48}" fill="url(#skPad)"/><rect class="pad" x="${-S * 0.33}" y="${-S * 0.33}" width="${S * 0.66}" height="${S * 0.66}" rx="12"/><path class="mk" d="M-12 0h24M0-12v24"/></g>`; }).join('');
+    return `<g class="sk-floor">${floor}</g><g class="sk-goals">${goals}</g><g class="sk-walls">${walls}${fronts}${edges}</g>`;
+  }
+  const CRATE = '<g class="crate"><rect class="sh" x="14" y="80" width="72" height="10" rx="5"/><rect class="body" x="12" y="10" width="76" height="76" rx="9"/><path class="pl" d="M12 35h76M12 61h76"/><path class="br" d="M20 80L80 16"/><rect class="fr" x="12" y="10" width="76" height="76" rx="9"/><g class="cn"><rect x="12" y="10" width="14" height="14" rx="4"/><rect x="74" y="10" width="14" height="14" rx="4"/><rect x="12" y="72" width="14" height="14" rx="4"/><rect x="74" y="72" width="14" height="14" rx="4"/></g><path class="ok" d="M36 49l10 10 20-22"/></g>';
+  const HERO = '<g class="sk-hero"><ellipse class="sh" cx="50" cy="88" rx="24" ry="6"/><g class="bot"><rect class="leg" x="30" y="70" width="14" height="16" rx="5"/><rect class="leg" x="56" y="70" width="14" height="16" rx="5"/><path class="antl" d="M50 22v-10"/><circle class="ant" cx="50" cy="11" r="5"/><rect class="body" x="24" y="22" width="52" height="54" rx="20"/><rect class="scr" x="32" y="32" width="36" height="24" rx="10"/><g class="eyes"><circle cx="43" cy="44" r="4"/><circle cx="57" cy="44" r="4"/></g><rect class="arm" x="14" y="44" width="12" height="18" rx="6"/><rect class="arm" x="74" y="44" width="12" height="18" rx="6"/></g></g>';
   function create(el, P, saved, api) {
     const Wd = world(P), { W, wall } = Wd, S = 100;
     const goals = new Set(P.goals);
@@ -214,22 +254,9 @@ const Sokoban = (() => {
     reset();
     if (saved && typeof saved.m === 'string') for (const c of saved.m) step(c.toLowerCase());
 
-    const tilesOf = () => {
-      let s = '';
-      for (let y = 0; y < P.h; y++) for (let x = 0; x < W; x++) {
-        const i = y * W + x;
-        if (wall[i]) {
-          // stěna jen tam, kde sousedí s podlahou (vnější prázdno zůstane hvězdné)
-          let near = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < W && yy < P.h && !wall[yy * W + xx]) near = true; }
-          if (near) s += `<g class="sk-wall" transform="translate(${x * S} ${y * S})"><rect x="3" y="3" width="94" height="94" rx="14"/><rect class="hi" x="12" y="10" width="76" height="16" rx="8"/></g>`;
-        } else s += `<rect class="sk-floor" x="${x * S + 2}" y="${y * S + 2}" width="96" height="96" rx="10"/>`;
-      }
-      P.goals.forEach(g => { s += `<g class="sk-goal" transform="translate(${(g % W) * S + 50} ${((g / W) | 0) * S + 50})"><circle r="30"/><path d="M0-17l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z"/></g>`; });
-      return s;
-    };
     el.innerHTML = `<div class="sk-wrap">
       <div class="sk-head"><div><small>${L('TAHY', 'MOVES')}</small><b id="skMoves">0</b></div><div><small>${L('POSUNY', 'PUSHES')}</small><b id="skPushes">0</b></div><div class="sk-par" title="${L('Vyřeš nejvýš tolika posuny pro tři hvězdy', 'Solve within this many pushes for three stars')}"><small>${L('LIMIT', 'PAR')}</small><b>${P.par}</b></div></div>
-      <svg class="sk" viewBox="-10 -10 ${W * S + 20} ${P.h * S + 20}"><g class="sk-map">${tilesOf()}</g><g class="sk-hl"></g><g class="sk-boxes"></g><g class="sk-player"></g></svg>
+      <svg class="sk" viewBox="-10 -10 ${W * S + 20} ${P.h * S + 20}">${DEFS}<g class="sk-map">${mapSVG(P, wall, S)}</g><g class="sk-hl"></g><g class="sk-fx"></g><g class="sk-boxes"></g><g class="sk-player"></g></svg>
       <div class="sk-pad" aria-label="${L('Ovládání', 'Controls')}"><button data-dir="u">${arrow(0)}</button><button data-dir="l">${arrow(270)}</button><button data-dir="d">${arrow(180)}</button><button data-dir="r">${arrow(90)}</button></div>
       <div class="k-tools">
         <button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button>
@@ -239,8 +266,17 @@ const Sokoban = (() => {
     const svg = el.querySelector('svg.sk'), gB = el.querySelector('.sk-boxes'), gP = el.querySelector('.sk-player'), gH = el.querySelector('.sk-hl');
     const xy = i => [(i % W) * S, ((i / W) | 0) * S];
     // bedny mají stálé uzly (plynulý pohyb přes CSS transform)
-    const boxEls = P.boxes.map(() => { const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'sk-box'); g.innerHTML = '<rect x="12" y="12" width="76" height="76" rx="12"/><path class="x" d="M28 28l44 44M72 28L28 72"/><rect class="rim" x="20" y="20" width="60" height="60" rx="7"/>'; gB.appendChild(g); return g; });
-    gP.innerHTML = `<g class="sk-hero"><ellipse class="sh" cx="50" cy="86" rx="24" ry="7"/><circle class="body" cx="50" cy="54" r="27"/><rect class="visor" x="33" y="42" width="34" height="17" rx="8.5"/><circle class="ant" cx="50" cy="20" r="5"/><path class="antl" d="M50 25v8"/></g>`;
+    const boxEls = P.boxes.map(() => { const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'sk-box'); g.innerHTML = CRATE; gB.appendChild(g); return g; });
+    gP.innerHTML = HERO;
+    const gFx = el.querySelector('.sk-fx');
+    // jiskry, když bedna dojede na cíl
+    function sparkle(i) {
+      const [x, y] = xy(i), g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'sk-spark'); g.setAttribute('transform', `translate(${x + S / 2} ${y + S / 2})`);
+      g.innerHTML = [...Array(10)].map((_, k) => { const a = (k / 10) * Math.PI * 2; return `<circle r="5" style="--dx:${Math.cos(a) * 70}px;--dy:${Math.sin(a) * 70}px"/>`; }).join('') + `<circle class="ring" r="40"/>`;
+      gFx.appendChild(g); setTimeout(() => g.remove(), 700);
+    }
+    let pushing = false, stepT = 0;
     const hero = gP.querySelector('.sk-hero');
     function render() {
       boxes.forEach((b, i) => {
@@ -251,7 +287,7 @@ const Sokoban = (() => {
       });
       const [px, py] = xy(player);
       gP.style.transform = `translate(${px}px, ${py}px)`;
-      hero.setAttribute('class', `sk-hero f-${facing}`);
+      hero.setAttribute('class', `sk-hero f-${facing}${pushing ? ' push' : ''}${stepT % 2 ? ' s1' : ''}`);
       el.querySelector('#skMoves').textContent = moves.length;
       const pe = el.querySelector('#skPushes'); pe.textContent = pushes; pe.classList.toggle('over', pushes > P.par);
     }
@@ -260,6 +296,8 @@ const Sokoban = (() => {
       if (!res) { api.sound('error'); return; }
       const b = player + Wd.DIR[facing];
       api.sound(res === 'p' ? (goals.has(b) ? 'line' : 'place') : 'soft');
+      pushing = res === 'p'; stepT++;
+      if (res === 'p' && goals.has(b)) sparkle(b);
       render(); api.changed(); gH.innerHTML = '';
       if (res === 'p') {
         if (!goals.has(b) && !Wd.live[b]) api.toast(L('Tahle bedna už se na cíl nedostane. Vrať tah (Z).', "This crate can't reach a goal any more. Undo (Z)."));
@@ -273,7 +311,7 @@ const Sokoban = (() => {
       queue = path.split(''); busy = true;
       const tick = () => {
         if (!queue.length || done) { busy = false; if (then) then(); return; }
-        const r = step(queue.shift()); render();
+        const r = step(queue.shift()); pushing = r === 'p'; stepT++; render();
         if (r) api.sound(r === 'p' ? 'place' : 'soft');
         setTimeout(tick, 70);
       };
@@ -356,19 +394,11 @@ const Sokoban = (() => {
     };
   }
 
+  // úvodní obrázek: hotový sklad v nové kresbě, jedna bedna už na cíli
   function art(el) {
-    const p = generate(Kit.hash('sokoban-art'), 'medium'), S = 30, W = p.w, gs = new Set(p.goals), bs = new Set(p.boxes);
-    let s = `<svg viewBox="-4 -4 ${W * S + 8} ${p.h * S + 8}">`;
-    p.rows.forEach((row, y) => [...row].forEach((c, x) => {
-      const i = y * W + x;
-      const nearFloor = () => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const r2 = p.rows[y + dy]; if (r2 && r2[x + dx] === ' ') return true; } return false; };
-      if (c === '#') { if (nearFloor()) s += `<rect x="${x * S + 1}" y="${y * S + 1}" width="${S - 2}" height="${S - 2}" rx="5" fill="#2a2360" stroke="rgba(255,255,255,.12)"/>`; }
-      else s += `<rect x="${x * S + 1}" y="${y * S + 1}" width="${S - 2}" height="${S - 2}" rx="4" fill="rgba(255,255,255,.05)"/>`;
-      if (gs.has(i)) s += `<circle cx="${x * S + S / 2}" cy="${y * S + S / 2}" r="${S * 0.3}" fill="none" stroke="var(--a)" stroke-width="2.5" opacity=".9"/>`;
-      if (bs.has(i)) s += `<rect x="${x * S + 4}" y="${y * S + 4}" width="${S - 8}" height="${S - 8}" rx="4" fill="#e8a54a" stroke="#ffd58a" stroke-width="1.5"/>`;
-      if (i === p.player) s += `<circle cx="${x * S + S / 2}" cy="${y * S + S / 2}" r="${S * 0.32}" fill="#7fd8ff"/>`;
-    }));
-    el.innerHTML = s + '</svg>';
+    const p = generate(Kit.hash('sokoban-art'), 'medium'), S = 100, W = p.w, wd = world(p), gs = new Set(p.goals);
+    const crates = p.boxes.map((b, k) => { const at = k === 0 ? p.goals.find(g => !p.boxes.includes(g)) ?? b : b; return `<g class="sk-box${gs.has(at) ? ' on' : ''}" transform="translate(${(at % W) * S} ${((at / W) | 0) * S})">${CRATE}</g>`; }).join('');
+    el.innerHTML = `<svg class="sk-art" viewBox="-10 -10 ${W * S + 20} ${p.h * S + 20}">${DEFS}${mapSVG(p, wd.wall, S)}${crates}<g transform="translate(${(p.player % W) * S} ${((p.player / W) | 0) * S})">${HERO.replace('sk-hero', 'sk-hero f-r')}</g></svg>`;
   }
 
   return { DIFFS, generate, create, art, world, solveNext, walkPath };
