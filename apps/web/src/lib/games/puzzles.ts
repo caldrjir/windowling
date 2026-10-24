@@ -1112,4 +1112,87 @@ export const PUZZLE_GAMES: Game[] = [
 				}
 		},
 	},
+	{
+		id: 'rybky',
+		online: 'race',
+		title: 'RYBKY',
+		group: 'puzzle',
+		tagline: 'Dvě rybky, jedna cesta ven.',
+		description:
+			'Logická hra pod vodou na motivy Fish Fillets: malá a velká rybka musí uplavat z jeskyně. Malá pohne jen lehkými věcmi, velká i ocelí, předměty padají a na rybku nesmí nic spadnout. Stovky ověřených jeskyní od mělčiny po propast.',
+		genres: ['Logika', 'Fyzika', 'Hlavolam'],
+		features: ['Denní jeskyně', 'Cesta: 120 jeskyní', '2 rybky', 'Vrácení tahů'],
+		en: {
+			tagline: 'Two fish, one way out.',
+			description:
+				'An underwater logic game in the spirit of Fish Fillets: a small and a big fish must swim out of a cave. The small one moves only light things, the big one steel too, objects fall and nothing may land on a fish. Hundreds of verified caves from shallows to the abyss.',
+			genres: ['Logic', 'Physics', 'Puzzle'],
+			features: ['Daily cave', 'Path: 120 caves', '2 fish', 'Undo'],
+		},
+		statLabels: labels,
+		path: '/games/rybky/index.html',
+		colors: ['#4d8bff', '#ffb547', '#2ad6c4'],
+		statsKey: 'gamecenter.stats.rybky',
+		cover(ctx, w, h, t) {
+			const g = ctx.createLinearGradient(0, 0, 0, h);
+			g.addColorStop(0, '#0d4d6e');
+			g.addColorStop(1, '#03101f');
+			ctx.fillStyle = g;
+			ctx.fillRect(0, 0, w, h);
+			ctx.fillStyle = 'rgba(170,230,255,.06)';
+			for (let i = 0; i < 3; i++) {
+				const x = w * (0.15 + i * 0.3) + Math.sin(t * 0.3 + i) * 20;
+				ctx.beginPath();
+				ctx.moveTo(x, 0);
+				ctx.lineTo(x + w * 0.08, 0);
+				ctx.lineTo(x - w * 0.1, h);
+				ctx.lineTo(x - w * 0.18, h);
+				ctx.fill();
+			}
+			// bubbles
+			for (let i = 0; i < 14; i++) {
+				const bx = ((i * 73) % 100) / 100;
+				const by = 1 - ((t * 0.08 + i * 0.13) % 1);
+				ctx.strokeStyle = 'rgba(200,240,255,.35)';
+				ctx.lineWidth = 1.2;
+				ctx.beginPath();
+				ctx.arc(w * bx, h * by, 2 + (i % 3), 0, TAU);
+				ctx.stroke();
+			}
+			const fish = (x: number, y: number, s: number, body: string, fin: string, dir: number) => {
+				ctx.save();
+				ctx.translate(x, y);
+				ctx.scale(dir, 1);
+				ctx.fillStyle = fin;
+				ctx.beginPath();
+				ctx.moveTo(-s * 0.55, 0);
+				ctx.lineTo(-s, -s * 0.35);
+				ctx.lineTo(-s, s * 0.35);
+				ctx.fill();
+				ctx.fillStyle = body;
+				ctx.beginPath();
+				ctx.ellipse(0, 0, s * 0.62, s * 0.38, 0, 0, TAU);
+				ctx.fill();
+				ctx.fillStyle = '#fff';
+				ctx.beginPath();
+				ctx.arc(s * 0.3, -s * 0.08, s * 0.1, 0, TAU);
+				ctx.fill();
+				ctx.fillStyle = '#0b1630';
+				ctx.beginPath();
+				ctx.arc(s * 0.33, -s * 0.08, s * 0.05, 0, TAU);
+				ctx.fill();
+				ctx.restore();
+			};
+			const m = Math.min(w, h);
+			// a steel block and a crate on rock, the fish swim by
+			ctx.fillStyle = '#24434f';
+			ctx.fillRect(0, h * 0.82, w, h * 0.18);
+			ctx.fillStyle = '#8e9aab';
+			ctx.fillRect(w * 0.62, h * 0.64, m * 0.18, m * 0.18);
+			ctx.fillStyle = '#d98f4a';
+			ctx.fillRect(w * 0.3, h * 0.7, m * 0.12, m * 0.12);
+			fish(w * 0.35 + Math.sin(t * 0.7) * w * 0.08, h * 0.35, m * 0.22, '#4d8bff', '#2f62c9', 1);
+			fish(w * 0.7 - Math.sin(t * 0.9) * w * 0.06, h * 0.5, m * 0.13, '#ffb547', '#e8862a', -1);
+		},
+	},
 ];

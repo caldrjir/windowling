@@ -1,0 +1,46 @@
+/* RYBKY – podmořská jeskyně, lehké a ocelové předměty, dvě rybky */
+.rb-wrap { display: grid; justify-items: center; gap: 12px; width: 100%; }
+.rb-head { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; justify-content: center; }
+.rb-head > div { display: grid; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 86px; }
+.rb-head small { color: var(--muted); font-size: 10.5px; letter-spacing: .16em; font-weight: 700; }
+.rb-head b { font-family: var(--f-d); font-size: 18px; font-variant-numeric: tabular-nums; }
+.rb-head .rb-par { background: linear-gradient(135deg, color-mix(in srgb, var(--a) 16%, transparent), transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--a) 45%, transparent); }
+.rb-swap { display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); font-weight: 700; font-size: 13px; }
+.rb-swap svg { width: 20px; height: 20px; }
+.rb-swap:hover { background: color-mix(in srgb, var(--a) 18%, transparent); }
+
+.rb-tank { position: relative; }
+.rb { width: 640px; max-width: 100%; height: auto; display: block; border-radius: 18px; box-shadow: 0 0 0 1px rgba(127, 216, 255, .25), 0 24px 60px -24px #2a9fd6; touch-action: none; user-select: none; -webkit-user-select: none; }
+.rb-rays path { fill: rgba(170, 230, 255, .05); }
+.rb-rock { fill: #24434f; stroke: #3d6b77; stroke-width: 2; }
+.rb-deep { fill: #10232d; }
+.rb-exit rect { fill: rgba(124, 240, 182, .12); }
+.rb-exit path { fill: #7cf0b6; opacity: .75; animation: rbExit 1.2s ease-in-out infinite alternate; }
+@keyframes rbExit { to { opacity: .25; transform: translateY(-6px); } }
+.rb-obj, .rb-f { transition: transform .13s ease-out; }
+.rb-obj .body { fill: var(--oc); stroke: color-mix(in srgb, var(--oc) 55%, white); stroke-width: 2; }
+.rb-obj .deco { stroke: rgba(0, 0, 0, .22); stroke-width: 3; stroke-linecap: round; fill: none; }
+.rb-obj.heavy .body { fill: #8e9aab; stroke: #d5dde8; }
+.rb-obj.heavy .deco { fill: #5b6676; stroke: none; }
+.rb-f .flip { transition: transform .13s; }
+.rb-f.active .rb-fish-art { filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 16px var(--a)); }
+.rb-f:not(.active) .rb-fish-art { opacity: .88; }
+.rb-f.out { opacity: 0; transition: opacity .4s; }
+.rb-f.dead .rb-fish-art { filter: grayscale(1) brightness(.6); transform: rotate(180deg); transform-box: fill-box; transform-origin: center; }
+.rb-f .tail { animation: rbTail 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: right center; }
+@keyframes rbTail { to { transform: scaleY(.7); } }
+.rb.won .rb-rays path { fill: rgba(124, 240, 182, .12); }
+.rb-dead { position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; text-align: center; border-radius: 18px; background: rgba(40, 6, 20, .5); backdrop-filter: blur(2px); pointer-events: none; }
+.rb-dead[hidden] { display: none; }
+.rb-dead b { font-family: var(--f-d); font-size: 20px; color: #ff8a9a; }
+.rb-dead span { color: var(--muted); font-size: 13px; }
+
+.rb-pad { display: none; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 48px); gap: 6px; }
+.rb-pad button { display: grid; place-items: center; border-radius: 14px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); color: var(--text); }
+.rb-pad button:active { background: color-mix(in srgb, var(--a) 30%, transparent); }
+.rb-pad svg { width: 24px; height: 24px; }
+.rb-pad [data-dir="u"] { grid-column: 2; grid-row: 1; }
+.rb-pad [data-dir="l"] { grid-column: 1; grid-row: 2; }
+.rb-pad [data-dir="d"] { grid-column: 2; grid-row: 2; }
+.rb-pad [data-dir="r"] { grid-column: 3; grid-row: 2; }
+@media (pointer: coarse) { .rb-pad { display: grid; } }

@@ -33,6 +33,9 @@ Auth, CI/CD, release-please) carries on.
   solvable; push par for three stars, unlimited undo, hints from the stored solution).
 - Puzzle shelf: Clickomania (SameGame; every board checked by a beam-search solver that clears it,
   the clearing kept for hints; 3-5 colours, undo, three stars without undo or hints).
+- Puzzle shelf: Rybky (two fish escape a cave, Fish Fillets style: pushing, gravity, light and
+  steel objects). Caves are generated offline and verified by a BFS solver (`levels.js`, sorted by
+  difficulty, with solutions for hints); the Path walks the pool from easy to hard.
 - DRIFTWOOD multiplayer: create or join a shared world by code (Durable Objects), nicknames,
   players see each other, in-game chat.
 - Online puzzles: live chess and gomoku games (open games list, code or link, chat, draw

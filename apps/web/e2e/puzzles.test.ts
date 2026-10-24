@@ -19,6 +19,7 @@ const PUZZLES = [
 	'piskvorky',
 	'sokoban',
 	'clickomania',
+	'rybky',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -354,5 +355,30 @@ test('clickomania: a group bursts, undo brings it back, a hint follows the solut
 	await expect.poll(left).toBe(String(64 - size));
 	await page.locator('[data-t="undo"]').click();
 	await expect.poll(left).toBe('64');
+	expect(errors).toEqual([]);
+});
+
+test('rybky: the fish follow the hint, switch, undo and get out', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'rybky');
+	await expect(page.locator('.rb-f')).toHaveCount(2);
+	const moves = () => page.evaluate('Kit._test.inst.getState().m.length') as Promise<number>;
+
+	// A hint plays one move of the stored solution; undo takes it back.
+	await page.locator('[data-t="hint"]').click();
+	expect(await moves()).toBe(1);
+	await page.locator('[data-t="undo"]').click();
+	expect(await moves()).toBe(0);
+	// The button switches to the other fish.
+	const active = page.locator('.rb-f.active');
+	const before = await active.getAttribute('data-f');
+	await page.locator('[data-t="swap"]').click();
+	await expect(active).toHaveAttribute('data-f', before === '1' ? '0' : '1');
+	// Hints alone lead both fish out of the cave.
+	for (let i = 0; i < 200 && !(await page.locator('.k-result').isVisible()); i++) {
+		await page.evaluate('Kit._test.inst._hint()');
+	}
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 10_000 });
 	expect(errors).toEqual([]);
 });
