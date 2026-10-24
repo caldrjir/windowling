@@ -120,6 +120,48 @@ test('gomoku online: five in a row wins for one player and loses for the other',
 	await bob.close();
 });
 
+test('tanks online: both see the same shots, terrain and damage; a resignation ends it', async ({
+	browser,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'tanky');
+	await bob.page.goto(`/games/tanky/index.html?duel=${code}`);
+	await expect(ann.page.locator('.tk-board')).toBeVisible();
+	await expect(bob.page.locator('.tk-board')).toBeVisible();
+	type TkState = {
+		active: number;
+		phase: string;
+		moves: number;
+		tanks: { x: number; y: number; hp: number }[];
+	};
+	const state = (page: Page) =>
+		page.evaluate('Kit._test.inst ? Kit._test.inst._state() : null') as Promise<TkState | null>;
+	const shoot = async (page: Page, a: number, pw: number) => {
+		await expect.poll(async () => (await state(page))?.phase).toBe('aim');
+		await page.evaluate(`Kit._test.inst._aim(${a}, ${pw})`);
+		await page.locator('.tk-fire').click();
+	};
+	// Ann created the game: she plays first with the left tank; Bob can't fire yet.
+	await expect(bob.page.locator('.tk-fire')).toBeDisabled();
+	await shoot(ann.page, 45, 72);
+	await expect.poll(async () => (await state(bob.page))?.moves).toBe(1);
+	await expect.poll(async () => (await state(bob.page))?.active).toBe(1);
+	await shoot(bob.page, 135, 72);
+	await expect.poll(async () => (await state(ann.page))?.moves).toBe(2);
+	// After both shots the battlefield is the same on both screens.
+	await expect.poll(async () => (await state(ann.page))?.phase).toBe('aim');
+	await expect.poll(async () => (await state(bob.page))?.phase).toBe('aim');
+	expect((await state(ann.page))?.tanks).toEqual((await state(bob.page))?.tanks);
+	await ann.page.locator('[data-c="resign"]').click();
+	await expect(result(bob.page)).toHaveText('Výhra!');
+	await expect(result(ann.page)).toHaveText('Prohra');
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('a sudoku race: same puzzle for both, live progress and standings', async ({
 	browser,
 }, info) => {

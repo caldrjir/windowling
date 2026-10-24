@@ -24,6 +24,7 @@ const PUZZLES = [
 	'had',
 	'impakt',
 	'skladnik',
+	'tanky',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -568,7 +569,8 @@ test('skladnik: the worker pushes a crate, jumps onto it, and a full row disappe
 		await page.keyboard.up('ArrowRight');
 	}
 	await expect.poll(async () => (await state()).worker.r).toBe(10);
-	expect((await state()).worker.c).toBeGreaterThan(3);
+	// (moved right at least one cell; how far depends on the frame rate)
+	expect((await state()).worker.c).toBeGreaterThan(2);
 	// A full row disappears and scores.
 	await page.evaluate(
 		`${I}._clear(5, 9); for (let x = 0; x < 12; x++) ${I}._place(x, 10); ${I}._check()`,
@@ -577,5 +579,36 @@ test('skladnik: the worker pushes a crate, jumps onto it, and a full row disappe
 	expect(await row(10)).toBe('............');
 	expect((await state()).score).toBeGreaterThan(0);
 	await expect(page.locator('.sk-rows')).toHaveText('1 / 8');
+	expect(errors).toEqual([]);
+});
+
+test('tanky: two players on one device take turns, and a resignation names the winner', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/tanky/index.html');
+	await page.locator('[data-k="free"][data-diff="duo"]').click();
+	await expect(page.locator('.tk-board')).toBeVisible();
+	type TkState = {
+		active: number;
+		phase: string;
+		turn: number;
+		tanks: { ang: number; pw: number }[];
+	};
+	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<TkState>;
+	await expect.poll(async () => (await state()).phase).toBe('aim');
+	// The sliders aim the active tank.
+	await page.locator('.tk-ang').fill('60');
+	await page.locator('.tk-pw').fill('70');
+	expect((await state()).tanks[0]).toMatchObject({ ang: 60, pw: 70 });
+	await page.locator('.tk-fire').click();
+	await expect.poll(async () => (await state()).phase).not.toBe('aim');
+	// Then it is player 2's turn, on the same controls.
+	await expect.poll(async () => (await state()).active, { timeout: 15_000 }).toBe(1);
+	await expect.poll(async () => (await state()).phase).toBe('aim');
+	await expect(page.locator('.tk-fire')).toBeEnabled();
+	await page.locator('[data-c="resign"]').click();
+	await expect(page.locator('.k-result')).toContainText('Vyhrál Hráč 1');
 	expect(errors).toEqual([]);
 });

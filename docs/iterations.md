@@ -51,6 +51,9 @@ Auth, CI/CD, release-please) carries on.
   the worker pushes and jumps onto them, full rows disappear; bombs, hearts and a high-jump
   feather). Crate order comes from the seed, so the daily shift is shared; Shift, Calm shift,
   Endless for score, a 120-shift Path and online races.
+- Two-player shelf (`category: 'duo'`, „Pro dva hráče“): Tanky, a turn-based artillery duel
+  (angle, power, wind, destructible terrain, five weapons) against the computer at three
+  strengths, two players on one device, or online through the turn rooms.
 - Hub library: the big games featured on top, the rest in genre shelves with filters, search,
   sorting and synced favourites; site stats (online now, players in 30 days / total, accounts)
   and the games most played right now.

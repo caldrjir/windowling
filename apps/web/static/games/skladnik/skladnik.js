@@ -160,9 +160,10 @@ const Skladnik = (() => {
       if (w.vx !== w.c) w.walk += dt * 14;
       if (w.dead) { w.dead -= dt; if (w.dead <= 0) { if (lives <= 0) { end(false); return; } spawnWorker(); } return; }
       w.inv = Math.max(0, w.inv - dt);
-      jumpBuf = Math.max(0, jumpBuf - dt); if (jumpReq) { jumpReq = false; jumpBuf = 0.18; }
+      if (jumpReq) { jumpReq = false; jumpBuf = 0.18; }
       w.air = Math.max(0, w.air - dt); // čas ve vzduchu běží vždycky
       if (w.busy > 0) { w.busy -= dt; return; }
+      jumpBuf = Math.max(0, jumpBuf - dt); // skok stisknutý během kroku počká, až krok doběhne
       const supported = solid(w.c, w.r + 1);
       if (supported) { if (w.fallN > 1) w.land = 0.12; w.fallN = 0; w.airSteps = 0; w.air = 0; }
       if (jumpBuf > 0 && supported) { jumpBuf = 0; if (tryJump()) return; }

@@ -20,8 +20,9 @@ export type GameGroup = 'action' | 'puzzle';
  * Genres in the library under the featured games, in order. A game names its category;
  * new genres get an entry here.
  */
-export type GameCategory = 'logic' | 'arcade' | 'board' | 'relax';
+export type GameCategory = 'duo' | 'logic' | 'arcade' | 'board' | 'relax';
 export const CATEGORIES: { id: GameCategory; title: [string, string] }[] = [
+	{ id: 'duo', title: ['Pro dva hráče', 'Two players'] },
 	{ id: 'logic', title: ['Logické hlavolamy', 'Logic puzzles'] },
 	{ id: 'arcade', title: ['Arkádové', 'Arcade'] },
 	{ id: 'board', title: ['Karty a deskové', 'Cards & board'] },

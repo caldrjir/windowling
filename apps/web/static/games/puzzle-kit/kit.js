@@ -712,7 +712,7 @@ const Kit = (() => {
   const WHY = {
     mate: L('Mat', 'Checkmate'), five: L('Pět v řadě', 'Five in a row'), resign: L('Vzdání', 'Resignation'), agreed: L('Remíza dohodou', 'Draw agreed'),
     left: L('Soupeř odešel', 'The opponent left'), stalemate: L('Pat', 'Stalemate'), draw50: L('Pravidlo 50 tahů', '50-move rule'), rep: L('Trojí opakování', 'Threefold repetition'),
-    material: L('Nedostatek materiálu', 'Insufficient material'), full: L('Plná plocha', 'Board full'),
+    material: L('Nedostatek materiálu', 'Insufficient material'), full: L('Plná plocha', 'Board full'), tank: L('Tank zničen', 'Tank destroyed'),
   };
   const onStats = () => (SAVE.stats.online = Object.assign({ w: 0, l: 0, d: 0, races: 0, raceWins: 0 }, SAVE.stats.online));
 

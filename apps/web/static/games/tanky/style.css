@@ -1,0 +1,48 @@
+/* TANKY – dělostřelecký souboj */
+.tk-wrap { position: relative; display: grid; justify-items: center; gap: 10px; width: 100%; }
+.tk-top { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; width: min(960px, 100%); }
+.tk-p { display: grid; gap: 4px; padding: 8px 12px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); transition: .2s; }
+.tk-p b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-p i { display: block; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.tk-p s { display: block; height: 100%; text-decoration: none; transition: width .4s; }
+.tk-p0 s { background: #55f6ff; } .tk-p1 s { background: #ff6fb5; }
+.tk-p1 { text-align: right; }
+.tk-p0.on { box-shadow: inset 0 0 0 2px #55f6ff, 0 0 18px -6px #55f6ff; }
+.tk-p1.on { box-shadow: inset 0 0 0 2px #ff6fb5, 0 0 18px -6px #ff6fb5; }
+.tk-wind { display: grid; justify-items: center; padding: 6px 14px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); min-width: 92px; }
+.tk-wind small { color: var(--muted); font-size: 10px; letter-spacing: .16em; font-weight: 700; }
+.tk-wind b { font-family: var(--f-d); font-size: 16px; }
+.tk-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tk-board { display: block; border-radius: 14px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--a) 35%, transparent), 0 24px 60px -24px var(--a); cursor: crosshair; }
+.tk-banner { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); padding: 10px 22px; border-radius: 999px; background: rgba(6, 4, 20, .78); box-shadow: inset 0 0 0 1px var(--line-2); font-family: var(--f-d); font-size: 18px; white-space: nowrap; pointer-events: none; animation: tkIn .3s ease-out; }
+.tk-banner[hidden] { display: none; }
+@keyframes tkIn { from { opacity: 0; transform: translate(-50%, -8px); } }
+.tk-ctrl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px 14px; width: min(960px, 100%); align-items: center; }
+.tk-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); }
+.tk-row > span { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .08em; min-width: 38px; }
+.tk-row b { font-family: var(--f-d); font-size: 15px; min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; }
+.tk-row input { flex: 1; min-width: 60px; accent-color: var(--a); }
+.tk-row button, .tk-weap button { min-width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px var(--line-2); font-weight: 700; touch-action: manipulation; }
+.tk-row button:disabled, .tk-weap button:disabled { opacity: .4; }
+.tk-row3 { grid-column: 1 / 3; flex-wrap: wrap; }
+.tk-fuel { font-size: 12px; color: var(--muted); min-width: 92px; text-align: center; }
+.tk-weap { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.tk-weap button { padding: 0 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+.tk-weap button small { opacity: .7; }
+.tk-weap button.on { background: var(--a); color: #0a0420; }
+.tk-fire { grid-column: 3; grid-row: 1 / 3; align-self: stretch; min-width: 130px; border-radius: 16px; font-family: var(--f-d); font-size: 20px; letter-spacing: .12em; color: #0a0420; background: linear-gradient(135deg, #ffe066, #ff8a3d); box-shadow: 0 10px 30px -10px #ff8a3d; }
+.tk-fire:disabled { background: rgba(255, 255, 255, .08); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line-2); }
+.tk-wrap.waiting .tk-ctrl { opacity: .7; }
+.tk-wrap.phone .tk-top { gap: 6px; }
+.tk-wrap.phone .tk-wind { min-width: 0; padding: 4px 8px; }
+.tk-wrap.phone .tk-wind b { font-size: 13px; }
+.tk-wrap.phone .tk-p { padding: 6px 8px; }
+.tk-wrap.phone .tk-p b { font-size: 12px; }
+.tk-wrap.phone .tk-ctrl { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.tk-wrap.phone .tk-row { padding: 4px 8px; }
+.tk-wrap.phone .tk-row b { min-width: 34px; font-size: 13px; }
+.tk-wrap.phone .tk-row3 { grid-column: auto; }
+.tk-wrap.phone .tk-fire { grid-column: auto; grid-row: auto; min-height: 54px; }
+.tk-wrap.phone .tk-weap { margin-left: 0; }
+.tk-ctrl > *, .tk-row > * { min-width: 0; }
+.tk-wrap .k-tools { justify-content: center; }
