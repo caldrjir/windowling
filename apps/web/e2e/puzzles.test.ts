@@ -26,6 +26,7 @@ const PUZZLES = [
 	'skladnik',
 	'tanky',
 	'cervici',
+	'bubliny',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -638,5 +639,27 @@ test('cervici: two teams take turns on one device; a shot changes the island', a
 	await expect.poll(async () => (await state()).turn, { timeout: 15_000 }).toBe(2);
 	await page.locator('[data-c="resign"]').click();
 	await expect(page.locator('.k-result')).toContainText('Vyhrál Hráč 2');
+	expect(errors).toEqual([]);
+});
+
+test('bubliny: a shot sticks to the cluster, swap and pause work', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'bubliny');
+	type BbState = { shots: number; left: number; flying: boolean; ammo: number[] };
+	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<BbState>;
+	const before = await state();
+	// Swap exchanges the cannon bubble with the next one.
+	await page.locator('[data-b="swap"]').click();
+	expect((await state()).ammo).toEqual([before.ammo[1], before.ammo[0]]);
+	// A shot straight up flies and lands in the cluster (it sticks or pops a group).
+	await page.evaluate('Kit._test.inst._aim(90); Kit._test.inst._shoot()');
+	await expect.poll(async () => (await state()).shots).toBe(1);
+	await expect.poll(async () => (await state()).flying).toBe(false);
+	expect((await state()).left).not.toBe(before.left);
+	await page.locator('[data-b="pause"]').click();
+	await expect(page.locator('.bb-over')).toBeVisible();
+	await page.locator('.bb-over [data-b="resume"]').click();
+	await expect(page.locator('.bb-over')).toBeHidden();
 	expect(errors).toEqual([]);
 });
