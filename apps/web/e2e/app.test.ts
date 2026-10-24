@@ -214,7 +214,7 @@ test('background music: a default playlist per game, your own playlist, or none'
 	await link.fill('https://example.com/song');
 	await expect(page.locator('.gcm-hint')).toHaveClass(/bad/);
 	await link.fill('https://www.youtube.com/playlist?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG');
-	await expect(page.locator('.gcm-hint')).toHaveText('YouTube');
+	await expect(page.locator('.gcm-svc i.on')).toHaveText('YouTube');
 	await page.locator('[data-a="save"]').click();
 	await expect(page.getByTestId('music')).toBeVisible();
 	expect(await page.evaluate('[GCGen.playing, GCMusic.gameMusic]')).toEqual([false, false]);
@@ -222,7 +222,7 @@ test('background music: a default playlist per game, your own playlist, or none'
 	// The setting follows to the other games: the action games keep only their sounds.
 	await page.goto('/games/voidborn/index.html');
 	await expect(page.getByTestId('music')).toBeVisible();
-	expect(await page.evaluate('GCMusic.gameMusic')).toBe(false);
+	expect(await page.evaluate('[GCMusic.gameMusic, GCMusic.level]')).toEqual([false, 1]);
 
 	// No music at all, set from the hub.
 	await page.goto('/');

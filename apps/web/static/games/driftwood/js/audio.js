@@ -37,7 +37,8 @@ const Sound = (() => {
     setInterval(tickAmbient, 120);
   }
   // Hudba Game Center (music.js): vlastní playlist nebo ticho ztlumí jen hudbu hry, zvuky zůstanou.
-  const gm = () => (window.GCMusic && !window.GCMusic.gameMusic ? 0 : 1);
+  // Společná hlasitost hudby (GCMusic.level) a vyrovnání na stejnou hlasitost jako ostatní hry (1.41×).
+  const gm = () => (!window.GCMusic ? 1 : window.GCMusic.gameMusic ? window.GCMusic.level * 1.41 : 0);
   if (window.GCMusic) window.GCMusic.on(() => apply());
   function apply() { if (ctx) { sfx.gain.value = vol.sfx * 0.9; amb.gain.value = vol.sfx * 0.6; mus.gain.value = vol.music * 0.5 * gm(); } }
   function setVolume(k, v) { vol[k] = v; apply(); }

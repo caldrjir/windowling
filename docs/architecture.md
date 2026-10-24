@@ -81,7 +81,10 @@ The hub and every game page load `music.js` (after `sync.js`). The synced key
 - `off`: only the games' sound effects.
 
 Games mute only their music bus while `GCMusic.gameMusic` is false (`GCMusic.on` tells them
-when it changes), so sound effects always play over the music. Browsers start sound only after
+when it changes), so sound effects always play over the music. One music volume (`vol`, shown
+as `GCMusic.level`, 1 at the default 70 %) applies to every game, and all music is matched to
+the same loudness (about -48 dBFS RMS at the default, measured; below the games' effects): the
+generated styles have per-style gains, the action games a factor on their music bus. Browsers start sound only after
 a click, so a page continues the playlist with the first touch; the place in the playlist is
 kept per tab (`sessionStorage`).
 

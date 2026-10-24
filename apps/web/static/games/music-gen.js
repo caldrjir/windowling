@@ -11,13 +11,15 @@
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
   const MODES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], lydian: [0, 2, 4, 6, 7, 9, 11], mixo: [0, 2, 4, 5, 7, 9, 10] };
   const PROGS = [[0, 5, 3, 4], [1, 4, 0, 5], [0, 3, 5, 4], [5, 3, 0, 4], [0, 2, 3, 4], [3, 4, 2, 5], [0, 4, 5, 3], [1, 4, 0, 0]];
+  // gain: every style at the same loudness (measured), as quiet as the action games' music,
+  // below the games' sound effects
   const STYLES = {
-    lofi: { bpm: [68, 84], modes: ['dorian', 'major', 'minor'], swing: 0.18, sev: true },
-    ambient: { bpm: [56, 66], modes: ['lydian', 'major', 'minor'], swing: 0 },
-    piano: { bpm: [78, 96], modes: ['major', 'minor', 'mixo'], swing: 0.08, sev: true },
-    garden: { bpm: [96, 112], modes: ['major', 'mixo', 'lydian'], swing: 0.1 },
-    space: { bpm: [60, 72], modes: ['minor', 'lydian', 'dorian'], swing: 0 },
-    chip: { bpm: [104, 120], modes: ['major', 'minor', 'mixo'], swing: 0 },
+    lofi: { bpm: [68, 84], modes: ['dorian', 'major', 'minor'], swing: 0.18, sev: true, gain: 0.048 },
+    ambient: { bpm: [56, 66], modes: ['lydian', 'major', 'minor'], swing: 0, gain: 0.065 },
+    piano: { bpm: [78, 96], modes: ['major', 'minor', 'mixo'], swing: 0.08, sev: true, gain: 0.053 },
+    garden: { bpm: [96, 112], modes: ['major', 'mixo', 'lydian'], swing: 0.1, gain: 0.072 },
+    space: { bpm: [60, 72], modes: ['minor', 'lydian', 'dorian'], swing: 0, gain: 0.058 },
+    chip: { bpm: [104, 120], modes: ['major', 'minor', 'mixo'], swing: 0, gain: 0.084 },
   };
   // Which styles fit which game best (the rest of the playlist is drawn from all styles).
   const TASTE = {
@@ -143,7 +145,7 @@
   let list = [], idx = 0, barNo = 0, comp = null, next = 0, timer = 0, playing = false, vol = 0.7;
   const fns = [];
   const emit = () => { for (const f of fns) f(); };
-  function load(i, startBar) { idx = ((i % list.length) + list.length) % list.length; comp = compose(list[idx]); barNo = startBar || 0; emit(); }
+  function load(i, startBar) { idx = ((i % list.length) + list.length) % list.length; comp = compose(list[idx]); barNo = startBar || 0; if (ctx && playing) out.gain.setTargetAtTime(level(), ctx.currentTime, 0.3); emit(); }
   function tick() {
     while (next < ctx.currentTime + 0.6) {
       const tr = list[idx];
@@ -152,7 +154,7 @@
       next += (60 / tr.bpm) * 4; barNo++;
     }
   }
-  const level = () => (playing ? vol * 0.9 : 0);
+  const level = () => (playing ? vol * 0.86 * STYLES[list[idx].style].gain : 0);
   window.GCGen = {
     setup(game, pos) { list = playlist(game); load(pos && pos.i || 0, pos && pos.t || 0); },
     play() {
@@ -177,6 +179,8 @@
     get tracks() { return list.map(t => t.names[lang()]); },
     on(fn) { fns.push(fn); },
     _playlist: playlist,
+    // tests: play one track of a style
+    _style(style) { const t = playlist('x')[0]; Object.assign(t, { style, bpm: STYLES[style].bpm[0], bars: 64 }); list = [t]; load(0, 0); },
   };
   // A hidden tab stays quiet (and costs nothing).
   document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (playing) ctx.resume(); });
