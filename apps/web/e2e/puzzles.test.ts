@@ -20,6 +20,7 @@ const PUZZLES = [
 	'sokoban',
 	'clickomania',
 	'rybky',
+	'mlsoun',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -379,5 +380,55 @@ test('rybky: the fish follow the hint, switch, undo and get out', async ({ page 
 		await page.evaluate('Kit._test.inst._hint()');
 	}
 	await expect(page.locator('.k-result')).toBeVisible({ timeout: 10_000 });
+	expect(errors).toEqual([]);
+});
+
+test('mlsoun: the muncher eats dots, pauses, and ghosts leave their house', async ({
+	page,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'mlsoun');
+	type MlState = {
+		state: string;
+		eaten: number;
+		score: number;
+		lives: number;
+		ghosts: { st: string }[];
+	};
+	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<MlState>;
+	// "Ready!" first, then play.
+	await expect.poll(async () => (await state()).state, { timeout: 5000 }).toBe('play');
+	// Steer with the arrows (or the pad on phones): the muncher eats dots along the corridor.
+	// (The maze is random: try the four ways out of the start until one is open.)
+	for (const [d, key] of [
+		['l', 'ArrowLeft'],
+		['r', 'ArrowRight'],
+		['u', 'ArrowUp'],
+		['d', 'ArrowDown'],
+	]) {
+		if (isMobile) await page.locator(`.ml-pad [data-d="${d}"]`).tap();
+		else await page.keyboard.press(key ?? '');
+		await page.waitForTimeout(700);
+		if ((await state()).eaten > 1) break;
+	}
+	expect((await state()).eaten).toBeGreaterThan(1);
+	expect((await state()).score).toBeGreaterThanOrEqual(20);
+	await expect(page.locator('.ml-score')).not.toHaveText('0');
+	// Ghosts come out of the house one by one.
+	await expect
+		.poll(async () => (await state()).ghosts.filter((g) => g.st !== 'house').length, {
+			timeout: 8000,
+		})
+		.toBeGreaterThanOrEqual(2);
+	// Pause stops the game.
+	await page.locator('.ml-pause').click();
+	await expect(page.locator('.ml-over')).toBeVisible();
+	const frozen = (await state()).eaten;
+	await page.waitForTimeout(600);
+	expect((await state()).eaten).toBe(frozen);
+	await page.locator('.ml-over [data-b="resume"]').click();
+	await expect(page.locator('.ml-over')).toBeHidden();
 	expect(errors).toEqual([]);
 });
