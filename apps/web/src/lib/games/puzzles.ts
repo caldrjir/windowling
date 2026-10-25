@@ -3363,4 +3363,173 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.restore();
 		},
 	},
+	{
+		id: 'smik',
+		title: 'ŠMIK!',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Krájej ovoce, nesekej bomby!',
+		description:
+			'Na motivy Fruit Ninji: ovoce vylétá do vzduchu a ty ho krájíš tahem prstu nebo myši. Kombo za víc kusů jedním tahem, šťáva po celém dřevěném dojo a bomby, do kterých se nesmí seknout. Klasika se třemi životy, minutová Arkáda s kouzelnými banány a klidný Zen.',
+		genres: ['Arkáda', 'Krájení', 'Reflexy'],
+		features: ['Klasika, Arkáda, Zen', 'Komba a banány', 'Denní krájení', 'Žebříčky bodů'],
+		en: {
+			tagline: 'Slice the fruit, spare the bombs!',
+			description:
+				'In the spirit of Fruit Ninja: fruit flies into the air and you slice it with a swipe of a finger or the mouse. Combos for several in one swipe, juice all over the wooden dojo and bombs you must never cut. Classic with three lives, a one-minute Arcade with magic bananas and a calm Zen.',
+			genres: ['Arcade', 'Slicing', 'Reflexes'],
+			features: [
+				'Classic, Arcade, Zen',
+				'Combos and bananas',
+				'Daily slicing',
+				'Points leaderboards',
+			],
+		},
+		statLabels: labels,
+		path: '/games/smik/index.html',
+		colors: ['#ff4d5a', '#7bd24a', '#ffa53a'],
+		statsKey: 'gamecenter.stats.smik',
+		cover(ctx, w, h, t) {
+			// a wooden dojo: fruit arcs up, a glowing blade swipes through and the watermelon splits
+			const OL = '#2a1408',
+				pw = w / 5;
+			for (let i = 0; i < 6; i++) {
+				const gr = ctx.createLinearGradient(i * pw, 0, (i + 1) * pw, 0);
+				const base = ['#7a4a2a', '#6b3f22', '#865534'][i % 3] ?? '#7a4a2a';
+				gr.addColorStop(0, base);
+				gr.addColorStop(0.5, '#8f5c38');
+				gr.addColorStop(1, base);
+				ctx.fillStyle = gr;
+				ctx.fillRect(i * pw, 0, pw, h);
+				ctx.fillStyle = 'rgba(20,10,4,.7)';
+				ctx.fillRect(i * pw, 0, 2, h);
+				ctx.strokeStyle = 'rgba(40,20,8,.3)';
+				ctx.lineWidth = 1;
+				for (let k = 0; k < 4; k++) {
+					ctx.beginPath();
+					for (let y = 0; y <= h; y += 30)
+						ctx.lineTo(i * pw + 8 + k * (pw / 4) + Math.sin(y * 0.03 + k + i) * 3, y);
+					ctx.stroke();
+				}
+			}
+			const m = Math.min(w, h),
+				cyc = (t % 3) / 3;
+			const ball = (x: number, y: number, r: number, c1: string, c2: string) => {
+				const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r * 1.2);
+				gr.addColorStop(0, c1);
+				gr.addColorStop(1, c2);
+				ctx.fillStyle = gr;
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.arc(x, y, r, 0, TAU);
+				ctx.fill();
+				ctx.stroke();
+				ctx.fillStyle = 'rgba(255,255,255,.55)';
+				ctx.beginPath();
+				ctx.ellipse(x - r * 0.38, y - r * 0.4, r * 0.24, r * 0.13, -0.6, 0, TAU);
+				ctx.fill();
+			};
+			// juice splat left by the cut
+			if (cyc > 0.3) {
+				ctx.globalAlpha = Math.min(0.5, (cyc - 0.3) * 2);
+				ctx.fillStyle = '#ff3b4a';
+				ctx.beginPath();
+				for (let i = 0; i <= 12; i++) {
+					const a = (i / 12) * TAU,
+						q = m * 0.16 * (0.7 + 0.35 * Math.abs(Math.sin(i * 1.7)));
+					ctx.lineTo(w * 0.5 + Math.cos(a) * q, h * 0.32 + Math.sin(a) * q);
+				}
+				ctx.fill();
+				ctx.globalAlpha = 1;
+			}
+			// two fruits on arcs
+			const arc = (ph: number, x0: number, x1: number) => {
+				const k = (cyc + ph) % 1;
+				return [x0 + (x1 - x0) * k, h * 0.95 - Math.sin(k * Math.PI) * h * 0.75] as const;
+			};
+			const [ox, oy] = arc(0.3, w * 0.1, w * 0.45);
+			ball(ox, oy, m * 0.08, '#ffc46a', '#ff8a1a');
+			const [ax, ay] = arc(0.65, w * 0.95, w * 0.6);
+			ball(ax, ay, m * 0.075, '#ff7a6a', '#c81e2a');
+			// the watermelon: whole until the blade passes, then two halves fly apart
+			const mr = m * 0.15,
+				mx = w * 0.5,
+				my = h * 0.32;
+			if (cyc < 0.3) {
+				ball(mx, my - (0.3 - cyc) * h * 0.4, mr, '#7bd24a', '#2e7d1e');
+				ctx.save();
+				ctx.beginPath();
+				ctx.arc(mx, my - (0.3 - cyc) * h * 0.4, mr, 0, TAU);
+				ctx.clip();
+				ctx.strokeStyle = '#1f5a14';
+				ctx.lineWidth = 4;
+				for (let i = -3; i <= 3; i++) {
+					ctx.beginPath();
+					ctx.moveTo(mx + i * mr * 0.3, my - (0.3 - cyc) * h * 0.4 - mr);
+					ctx.quadraticCurveTo(
+						mx + i * mr * 0.4,
+						my - (0.3 - cyc) * h * 0.4,
+						mx + i * mr * 0.3,
+						my - (0.3 - cyc) * h * 0.4 + mr,
+					);
+					ctx.stroke();
+				}
+				ctx.restore();
+			} else {
+				const k = (cyc - 0.3) * 0.7;
+				for (const s of [-1, 1]) {
+					ctx.save();
+					ctx.translate(mx + s * k * w * 0.4, my + k * k * h * 1.6);
+					ctx.rotate(-0.6 + s * k * 3);
+					ctx.beginPath();
+					ctx.rect(s > 0 ? 0 : -mr, -mr, mr, mr * 2);
+					ctx.clip();
+					for (const [rr, c] of [
+						[1, '#2e7d1e'],
+						[0.9, '#e8f5c8'],
+						[0.8, '#ff4d5a'],
+					] as const) {
+						ctx.fillStyle = c;
+						ctx.beginPath();
+						ctx.arc(0, 0, mr * rr, 0, TAU);
+						ctx.fill();
+					}
+					ctx.strokeStyle = OL;
+					ctx.lineWidth = 2;
+					ctx.beginPath();
+					ctx.arc(0, 0, mr, 0, TAU);
+					ctx.stroke();
+					ctx.fillStyle = '#1a1010';
+					for (let i = 0; i < 6; i++) {
+						const a = i * 1.05 + 0.3;
+						ctx.beginPath();
+						ctx.ellipse(Math.cos(a) * mr * 0.45, Math.sin(a) * mr * 0.5, 1.5, 3, a, 0, TAU);
+						ctx.fill();
+					}
+					ctx.restore();
+				}
+			}
+			// blade swipe
+			if (cyc > 0.2 && cyc < 0.42) {
+				const k = (cyc - 0.2) / 0.22;
+				ctx.save();
+				ctx.lineCap = 'round';
+				ctx.shadowColor = '#7ad8ff';
+				for (const [lw, col, blur] of [
+					[10, 'rgba(120,220,255,.4)', 12],
+					[3, '#ffffff', 0],
+				] as const) {
+					ctx.shadowBlur = blur;
+					ctx.strokeStyle = col;
+					ctx.lineWidth = lw * (1 - k * 0.5);
+					ctx.beginPath();
+					ctx.moveTo(w * (0.15 + k * 0.4), h * (0.5 - k * 0.15));
+					ctx.lineTo(w * (0.25 + k * 0.6), h * (0.42 - k * 0.3));
+					ctx.stroke();
+				}
+				ctx.restore();
+			}
+		},
+	},
 ];
