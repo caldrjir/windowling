@@ -7,6 +7,68 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// LETNÍ HRY cover: a stick-figure sprinter in full stride (x, y are the feet, s is pixels per metre)
+function coverRunner(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	s: number,
+	ph: number,
+	shirt: string,
+): void {
+	ctx.save();
+	ctx.translate(x, y);
+	ctx.scale(s, s);
+	ctx.lineCap = 'round';
+	const limb = (
+		fx: number,
+		fy: number,
+		a1: number,
+		a2: number,
+		l: number,
+		wdt: number,
+		col: string,
+	) => {
+		const kx = fx + Math.sin(a1) * l,
+			ky = fy + Math.cos(a1) * l;
+		ctx.strokeStyle = col;
+		ctx.lineWidth = wdt;
+		ctx.beginPath();
+		ctx.moveTo(fx, fy);
+		ctx.lineTo(kx, ky);
+		ctx.lineTo(kx + Math.sin(a2) * l, ky + Math.cos(a2) * l);
+		ctx.stroke();
+	};
+	const t1 = Math.sin(ph) * 0.9,
+		k1 = Math.max(0, -Math.cos(ph)) * 1.6 + 0.2,
+		k2 = Math.max(0, Math.cos(ph)) * 1.6 + 0.2;
+	limb(0, -0.95, -t1, -t1 - k2, 0.49, 0.13, '#c79a7a');
+	limb(0.06, -1.33, t1 * 0.9, t1 * 0.9 + 1.6, 0.31, 0.1, '#c79a7a');
+	ctx.strokeStyle = '#1b2a6b';
+	ctx.lineWidth = 0.24;
+	ctx.beginPath();
+	ctx.moveTo(0, -0.95);
+	ctx.lineTo(0.02, -1.07);
+	ctx.stroke();
+	ctx.strokeStyle = shirt;
+	ctx.lineWidth = 0.26;
+	ctx.beginPath();
+	ctx.moveTo(0.02, -1.05);
+	ctx.lineTo(0.1, -1.44);
+	ctx.stroke();
+	limb(0, -0.95, t1, t1 - k1, 0.49, 0.14, '#ffd9b3');
+	ctx.fillStyle = '#ffd9b3';
+	ctx.beginPath();
+	ctx.arc(0.13, -1.6, 0.15, 0, TAU);
+	ctx.fill();
+	ctx.fillStyle = '#3a2a1a';
+	ctx.beginPath();
+	ctx.arc(0.11, -1.64, 0.15, Math.PI * 1.05, Math.PI * 1.95);
+	ctx.fill();
+	limb(0.06, -1.33, -t1 * 0.9, -t1 * 0.9 + 1.6, 0.31, 0.11, '#ffd9b3');
+	ctx.restore();
+}
+
 // ŠACHY cover: the game's Staunton pieces (static/games/sachy/sachy.js) as canvas paths
 const CHESS_BODY: Record<number, string[]> = {
 	1: [
@@ -2566,6 +2628,72 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.fillRect(w * 0.3, h * 0.7, m * 0.12, m * 0.12);
 			fish(w * 0.35 + Math.sin(t * 0.7) * w * 0.08, h * 0.35, m * 0.22, '#4d8bff', '#2f62c9', 1);
 			fish(w * 0.7 - Math.sin(t * 0.9) * w * 0.06, h * 0.5, m * 0.13, '#ffb547', '#e8862a', -1);
+		},
+	},
+	{
+		id: 'letni',
+		title: 'LETNÍ HRY',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Mačkej, běž, skoč, hoď!',
+		description:
+			'Atletický víceboj na motivy mobilních Playman Summer Games: 100 m, skok daleký, 110 m překážek a hod oštěpem. Běžíš střídavým mačkáním dvou tlačítek, skáčeš a házíš načasovaným podržením. Body podle desetibojařských tabulek, soupeři v drahách a denní víceboj pro všechny stejný.',
+		genres: ['Arkáda', 'Sport', 'Atletika'],
+		features: ['4 disciplíny', 'Denní víceboj', 'Cesta: 120 kol', 'Žebříčky bodů'],
+		en: {
+			tagline: 'Tap, run, jump, throw!',
+			description:
+				'An athletics multi-event in the spirit of the mobile Playman Summer Games: 100 m, long jump, 110 m hurdles and javelin. You run by alternating two buttons and jump or throw with a timed hold. Points from the decathlon tables, rivals in the other lanes and a daily multi-event that is the same for everyone.',
+			genres: ['Arcade', 'Sports', 'Athletics'],
+			features: ['4 events', 'Daily multi-event', 'Path: 120 rounds', 'Points leaderboards'],
+		},
+		statLabels: labels,
+		path: '/games/letni/index.html',
+		colors: ['#ff5a7a', '#ffd34d', '#55f6ff'],
+		statsKey: 'gamecenter.stats.letni',
+		cover(ctx, w, h, t) {
+			// a stadium: the crowd waves, two sprinters race to the finish line
+			const sky = ctx.createLinearGradient(0, 0, 0, h * 0.4);
+			sky.addColorStop(0, '#3a8ee0');
+			sky.addColorStop(1, '#b8e2ff');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, h);
+			ctx.fillStyle = '#3a4060';
+			ctx.fillRect(0, h * 0.18, w, h * 0.3);
+			for (let i = 0; i < 90; i++) {
+				const x = (i * 37.7) % w,
+					row = i % 5,
+					y = h * 0.22 + row * h * 0.05 + Math.sin(t * 6 + i) * 1.2;
+				ctx.fillStyle = ['#ff5a7a', '#55f6ff', '#ffd34d', '#6dff9e', '#ffffff'][i % 5] ?? '#fff';
+				ctx.fillRect(x - 2.5, y - 3, 5, 6);
+				ctx.fillStyle = '#ffd9b3';
+				ctx.beginPath();
+				ctx.arc(x, y - 5.5, 2.2, 0, TAU);
+				ctx.fill();
+			}
+			ctx.fillStyle = '#1b6bd6';
+			ctx.fillRect(0, h * 0.48, w, h * 0.04);
+			ctx.fillStyle = '#4fae4a';
+			ctx.fillRect(0, h * 0.52, w, h * 0.04);
+			ctx.fillStyle = '#c94e34';
+			ctx.fillRect(0, h * 0.56, w, h * 0.44);
+			ctx.strokeStyle = 'rgba(255,255,255,.85)';
+			ctx.lineWidth = 2;
+			for (const y of [0.56, 0.66, 0.76]) {
+				ctx.beginPath();
+				ctx.moveTo(0, h * y);
+				ctx.lineTo(w, h * y);
+				ctx.stroke();
+			}
+			const fin = w * 0.84;
+			for (let i = 0; i < 8; i++) {
+				ctx.fillStyle = i % 2 ? '#111' : '#fff';
+				ctx.fillRect(fin, h * 0.56 + i * h * 0.025, w * 0.025, h * 0.025);
+			}
+			const cyc = (t / 3) % 1,
+				s = h / 6;
+			coverRunner(ctx, -w * 0.15 + cyc * w * 1.1, h * 0.65, s * 0.8, t * 14 + 1, '#55f6ff');
+			coverRunner(ctx, -w * 0.05 + cyc * w * 1.2, h * 0.75, s, t * 15, '#ff5a7a');
 		},
 	},
 ];

@@ -27,6 +27,7 @@ const PUZZLES = [
 	'tanky',
 	'cervici',
 	'bubliny',
+	'letni',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -334,6 +335,22 @@ test('skladacka joins matching loose pieces and picks a piece under another', as
 	await drag(c3, [c3[0] + 25, c3[1] + 25]);
 	const c3b = await I<number[]>('_center(3)');
 	expect(c3b[0] - c3[0]).toBeGreaterThan(10);
+});
+
+test('letni runs the 100 m by alternating feet and scores points', async ({ page }) => {
+	await startFree(page, 'letni', 'sprint');
+	await expect(page.locator('.lh-cv')).toBeVisible();
+	// The same foot twice does not count, alternating does.
+	await page.waitForTimeout(2600);
+	await page.keyboard.press('ArrowLeft');
+	await page.keyboard.press('ArrowLeft');
+	const one = (await page.evaluate('Kit._test.inst._state()')) as { v: number };
+	await page.keyboard.press('ArrowRight');
+	const two = (await page.evaluate('Kit._test.inst._state()')) as { v: number };
+	expect(two.v).toBeGreaterThan(one.v);
+	await page.evaluate('Kit._test.inst._auto(true)');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 30_000 });
+	await expect(page.locator('.k-result')).toContainText(/bod/);
 });
 
 test('sachy lets the player pick the promotion piece', async ({ page }) => {

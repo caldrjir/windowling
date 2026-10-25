@@ -78,6 +78,43 @@ Auth, CI/CD, release-please) carries on.
   fixed-rule free modes, online wins, action-game records) and play time per game.
 - Next: account-wide stats.
 
+## Game backlog
+
+Games the owner wants next, in the spirit of the originals (own names, art and code; the
+originals are only the inspiration). Ticked when the game is in the library.
+
+- [x] Letní hry (Playman Summer Games: sprint, long jump, hurdles, javelin)
+- [ ] Rally Master Pro – top-down / behind-the-car rally on stages
+- [ ] Asphalt (series) – arcade street racing with nitro
+- [ ] Townsmen – medieval town builder
+- [ ] Prince of Persia (Sands of Time / Warrior Within) – acrobatic platformer with traps and sword fights
+- [ ] Diamond Rush – maze adventure, collect diamonds, push boulders
+- [ ] Bounce / Bounce Tales – rolling red ball platformer
+- [ ] Splinter Cell – stealth in shadows
+- [ ] Tower Bloxx – stack swinging floors into a tower
+- [ ] Angry Birds – slingshot physics against structures
+- [ ] Flappy Bird – tap to fly through gaps
+- [ ] Fruit Ninja – swipe to slice fruit, avoid bombs
+- [ ] Temple Run / Subway Surfers – endless runner with lanes, jump and slide
+- [ ] Doodle Jump – endless vertical jumping on platforms
+- [ ] Plants vs. Zombies – lane defence with plants
+- [ ] Tower defence – build towers along a path
+- [ ] OpenTTD – transport tycoon (trains, roads, economy)
+- [ ] Gone Fishing – fishing game
+- [ ] Sonic – fast loop-and-ring platformer
+- [ ] Jazz Jackrabbit – run-and-gun platformer
+- [ ] Mario Kart – kart racing with items
+- [ ] The Right Mix – bartending / cocktail mixing
+- [ ] Happy Wheels – ragdoll physics obstacle courses
+- [ ] Heli Attack – helicopter shooter
+- [ ] Age of War – lane war through the ages, with its iconic-style music
+- [ ] Burger Tycoon – burger chain business sim
+- [ ] Gold Miner – swinging claw grabbing gold
+- [ ] Hobo – brawler as a homeless guy
+- [ ] Earn to Die – drive through zombies, upgrade the car between runs
+- [ ] Defend Your Castle – drag and fling attackers away from the castle
+- [ ] Rural Racer – rural road racing
+
 ## Later
 
 - More games in the library.
