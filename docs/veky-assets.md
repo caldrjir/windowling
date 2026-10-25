@@ -21,7 +21,12 @@ nahradí; co chybí, kreslí se dál jako dosud. Takže se dá měnit postupně,
   světlo zleva shora, sytě modrá obloha a zelená krajina. Postavy proporčně „chibi“ až
   poloreálné (hlava cca 1/5 výšky), čitelné i v malé velikosti. Všechny věky ve stejném stylu.
   Referenční obrázek: `veky-style.png` (návrh obrazovky).
-- **Animace:** stačí jeden obrázek na jednotku. Chůzi (houpání) a útok (výpad) přidá hra.
+- **Animace (pózy):** základní obrázek `unit-…` je krok s levou nohou vpředu. Volitelně ke
+  každé jednotce: `…-walk` (druhý krok, pravá noha vpředu; hra je střídá), `…-atk` (úder nebo
+  výstřel) a `…-dead` (padlý na zemi). Stejná velikost plátna a stejná poloha postavy jako u
+  základního obrázku. Chybějící pózu nahradí hra pohybem (houpání, výpad, překlopení).
+- **Barva soupeře:** červenou verzi hra dopočítá sama z modré (modré odstíny přebarví na
+  karmínové). Ruční `-red` verze je potřeba jen tehdy, když automatika nevypadá dobře.
 - **Jména souborů** přesně podle tabulek níže. Soubory mi pošli, já je dám do
   `static/games/veky/assets/` a zapíšu do `assets/manifest.json`.
 

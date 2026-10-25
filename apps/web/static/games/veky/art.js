@@ -23,6 +23,24 @@ const VkArt = (() => {
     }).catch(() => { manifest = []; });
   } catch (e) { manifest = []; }
   const img = n => IMG[n] || null;
+  // barva soupeře: z modrého obrázku se dopočítá červená verze (modré odstíny → karmínové)
+  const RED = {};
+  function redOf(n) {
+    if (IMG[n + '-red']) return IMG[n + '-red'];
+    if (RED[n] !== undefined) return RED[n];
+    const im = IMG[n]; if (!im) return null;
+    try {
+      const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d');
+      g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+      for (let i = 0; i < p.length; i += 4) {
+        const r = p[i], gg = p[i + 1], b = p[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+        if (b === mx && mx - mn > 40 && b > gg * 1.15) { const k = (mx - mn) / mx; p[i] = Math.min(255, b * 0.95 + 20); p[i + 1] = Math.round(gg * (1 - k) + mn * k * 0.6); p[i + 2] = Math.round(r * (1 - k) + mn * k * 0.7); }
+      }
+      g.putImageData(d, 0, 0); RED[n] = c;
+    } catch (e) { RED[n] = IMG[n]; }
+    return RED[n];
+  }
+  const pick = (n, red) => (img(n) ? (red ? redOf(n) : img(n)) : null);
   // obrázek s kotvou: ax, ay jsou poměry (0–1) bodu, který leží na (x, y); h = výška v herních px
   function sprite(g, im, x, y, h, ax = 0.5, ay = 1, flip = false) {
     const w = im.width * h / im.height;
@@ -94,17 +112,25 @@ const VkArt = (() => {
     g.save(); g.translate(u.x, u.y);
     g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(0, 1, u.kind === 2 ? 34 : 14, 3.5, 0, 0, TAU); g.fill();
     g.scale(u.side ? -UNIT_SCALE : UNIT_SCALE, UNIT_SCALE); g.lineCap = 'round'; g.lineJoin = 'round';
-    if (u.dead) { g.globalAlpha = Math.max(0, 1 - u.dead * 1.3); g.rotate(-Math.min(1.4, u.dead * 3)); }
-    if (u.hit > 0) g.filter = 'brightness(1.9)';
-    const K = u.age * 3 + u.kind;
-    const pic = (u.side && img(`unit-${u.age}-${u.kind}-red`)) || img(`unit-${u.age}-${u.kind}`);
-    if (pic) {
-      // dodaný obrázek: houpání při chůzi a výpad při útoku; soupeři bez vlastní verze dostanou červený praporek
-      const h = u.kind === 2 ? TOP[2][u.age] : TOP[u.kind], bob = Math.abs(Math.sin(walk)) * 2, lunge = Math.sin(a * Math.PI) * 6;
-      g.save(); g.translate(lunge, -bob); g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, h); g.restore();
-      if (u.side && !img(`unit-${u.age}-${u.kind}-red`)) { g.fillStyle = tc; g.strokeStyle = OL; g.lineWidth = 1.2; g.beginPath(); g.moveTo(-6, -h - 4); g.lineTo(-6, -h - 18); g.lineTo(6, -h - 14); g.lineTo(-6, -h - 10); g.stroke(); g.fill(); }
+    const K = u.age * 3 + u.kind, base = `unit-${u.age}-${u.kind}`;
+    if (img(base)) {
+      // dodané obrázky: póza chůze (střídá se se základní), útoku a padlého; chybějící pózu nahradí pohyb
+      const h = u.kind === 2 ? TOP[2][u.age] : TOP[u.kind], red = !!u.side;
+      const deadPic = u.dead && pick(`${base}-dead`, red), atkPic = !u.dead && a > 0.45 && pick(`${base}-atk`, red);
+      const walkPic = !u.dead && !atkPic && Math.floor(walk / Math.PI) % 2 === 1 && pick(`${base}-walk`, red);
+      const pic = deadPic || atkPic || walkPic || pick(base, red);
+      if (u.dead) g.globalAlpha = Math.max(0, 1 - u.dead * 1.3);
+      if (u.hit > 0) g.filter = 'brightness(1.9)';
+      if (deadPic) sprite(g, pic, 0, 0, h);
+      else {
+        if (u.dead) g.rotate(-Math.min(1.4, u.dead * 3));
+        const bob = img(`${base}-walk`) ? 0 : Math.abs(Math.sin(walk)) * 2, lunge = atkPic ? 0 : Math.sin(a * Math.PI) * 6;
+        g.save(); g.translate(lunge, -bob); if (!img(`${base}-walk`)) g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, h); g.restore();
+      }
       g.filter = 'none'; g.restore(); return;
     }
+    if (u.dead) { g.globalAlpha = Math.max(0, 1 - u.dead * 1.3); g.rotate(-Math.min(1.4, u.dead * 3)); }
+    if (u.hit > 0) g.filter = 'brightness(1.9)';
     const skin = u.age === 4 ? '#e8c8a8' : u.age === 0 ? '#d89a68' : '#f0c49a';
     switch (K) {
       case 0: person(g, { walk, atk: a, skin, pants: skin, legsBare: true, boots: '#6a4428', shirt: '#9a6a3a',
@@ -303,7 +329,7 @@ const VkArt = (() => {
 
   // ── Základny ── (x, y) je střed paty, side 0 = hráč (vlevo), 1 = soupeř
   function base(g, x, y, age, side, t) {
-    const pic = (side && img(`base-${age}-red`)) || img(`base-${age}`);
+    const pic = pick(`base-${age}`, !!side);
     if (pic) { sprite(g, pic, x, y, 190 * (age === 4 ? 1.25 : age === 2 ? 1.2 : 1), 0.5, 1, !!side); return; }
     g.save(); g.translate(x, y); g.scale(side ? -BASE_SCALE : BASE_SCALE, BASE_SCALE); g.lineJoin = 'round'; g.lineCap = 'round';
     const tc = TEAM[side], td = TEAM_D[side];
