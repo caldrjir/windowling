@@ -44,49 +44,7 @@ const Letni = (() => {
     return { seed, mode: 'free', events: [diffId], wind, rivalLevel };
   }
 
-  // ── Kresba ──
-  const SKIN = '#ffd9b3', HAIR = '#3a2a1a';
-  // panáček: (x, y) jsou chodidla, s = pixely na metr, pose a fáze kroku
-  function athlete(g, x, y, s, o) {
-    const ph = o.phase || 0, pose = o.pose || 'run', shirt = o.shirt || '#ff5a7a', shorts = o.shorts || '#1b2a6b', a = o.alpha ?? 1;
-    g.save(); g.translate(x, y); g.scale(s, s); g.globalAlpha = a;
-    g.lineCap = 'round'; g.lineJoin = 'round';
-    const lean = pose === 'run' || pose === 'hurdle' ? 0.12 + Math.min(0.15, (o.speed || 0) * 0.012) : pose === 'throw' ? -0.18 : 0;
-    const hip = [0, -0.95], neck = [Math.sin(lean) * 0.5, -0.95 - Math.cos(lean) * 0.5];
-    const limb = (from, a1, l1, a2, l2, w, col) => { const k = [from[0] + Math.sin(a1) * l1, from[1] + Math.cos(a1) * l1], e = [k[0] + Math.sin(a2) * l2, k[1] + Math.cos(a2) * l2]; g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(from[0], from[1]); g.lineTo(k[0], k[1]); g.lineTo(e[0], e[1]); g.stroke(); return e; };
-    let legs, arms;
-    if (pose === 'run') {
-      const t1 = Math.sin(ph) * 0.9, t2 = -t1, k1 = Math.max(0, -Math.cos(ph)) * 1.6 + 0.2, k2 = Math.max(0, Math.cos(ph)) * 1.6 + 0.2;
-      legs = [[t1, t1 - k1], [t2, t2 - k2]]; arms = [[-t1 * 0.9, -t1 * 0.9 + 1.6], [-t2 * 0.9, -t2 * 0.9 + 1.6]];
-    } else if (pose === 'stand') { legs = [[0.12, 0.12], [-0.12, -0.12]]; arms = [[0.25, 0.1], [-0.25, -0.1]]; }
-    else if (pose === 'set') { legs = [[0.9, -0.9], [-0.3, -1.6]]; arms = [[1.4, 1.4], [1.2, 1.2]]; }
-    else if (pose === 'jump') { legs = [[1.4, -0.2], [1.1, -0.6]]; arms = [[2.6, 2.4], [2.2, 2.2]]; }
-    else if (pose === 'hurdle') { legs = [[1.5, 1.5], [-1.2, -2.6]]; arms = [[1.8, 1.8], [-0.8, 0.6]]; }
-    else if (pose === 'land') { legs = [[1.5, 0.1], [1.4, 0.2]]; arms = [[1.6, 1.4], [1.3, 1.2]]; }
-    else if (pose === 'throw') { legs = [[0.5, 0.4], [-0.5, -0.4]]; arms = [[-2.2, -2.6], [1.0, 1.3]]; }
-    else if (pose === 'release') { legs = [[0.6, 0.5], [-0.6, -0.3]]; arms = [[2.4, 2.8], [-0.6, -0.4]]; }
-    else if (pose === 'fall') { legs = [[1.6, 1.6], [1.4, 1.4]]; arms = [[2.8, 2.8], [2.6, 2.6]]; }
-    else { legs = [[0, 0], [0, 0]]; arms = [[0, 0], [0, 0]]; }
-    // zadní noha a ruka tmavší
-    limb(hip, legs[1][0], 0.48, legs[1][1], 0.5, 0.13, '#c79a7a');
-    const sh = [neck[0] - 0.02, neck[1] + 0.12];
-    limb(sh, arms[1][0], 0.32, arms[1][1], 0.3, 0.1, '#c79a7a');
-    // trup: dres a trenky
-    g.strokeStyle = shorts; g.lineWidth = 0.24; g.beginPath(); g.moveTo(hip[0], hip[1]); g.lineTo(hip[0] + Math.sin(lean) * 0.12, hip[1] - 0.12); g.stroke();
-    g.strokeStyle = shirt; g.lineWidth = 0.26; g.beginPath(); g.moveTo(hip[0] + Math.sin(lean) * 0.1, hip[1] - 0.1); g.lineTo(neck[0], neck[1]); g.stroke();
-    if (o.num) { g.fillStyle = '#fff'; g.save(); g.translate((hip[0] + neck[0]) / 2, (hip[1] + neck[1]) / 2 - 0.02); g.rotate(lean); g.fillRect(-0.07, -0.08, 0.14, 0.12); g.restore(); }
-    const f1 = limb(hip, legs[0][0], 0.48, legs[0][1], 0.5, 0.14, SKIN);
-    g.fillStyle = '#fff'; g.beginPath(); g.ellipse(f1[0] + 0.05, f1[1], 0.1, 0.05, 0, 0, 7); g.fill();
-    // hlava s čelenkou
-    const hx = neck[0] + Math.sin(lean) * 0.14, hy = neck[1] - 0.16;
-    g.fillStyle = SKIN; g.beginPath(); g.arc(hx, hy, 0.15, 0, 7); g.fill();
-    g.fillStyle = HAIR; g.beginPath(); g.arc(hx - 0.02, hy - 0.04, 0.15, Math.PI * 1.05, Math.PI * 1.95); g.fill();
-    g.strokeStyle = shirt; g.lineWidth = 0.05; g.beginPath(); g.moveTo(hx - 0.15, hy - 0.04); g.lineTo(hx + 0.15, hy - 0.06); g.stroke();
-    g.fillStyle = '#1a1020'; g.beginPath(); g.arc(hx + 0.08, hy, 0.022, 0, 7); g.fill();
-    limb(sh, arms[0][0], 0.32, arms[0][1], 0.3, 0.11, SKIN);
-    g.restore();
-    return { hand: [x + (sh[0] + Math.sin(arms[0][0]) * 0.32 + Math.sin(arms[0][1]) * 0.3) * s, y + (sh[1] + Math.cos(arms[0][0]) * 0.32 + Math.cos(arms[0][1]) * 0.3) * s] };
-  }
+  const athlete = LhArt.athlete;
 
   function create(el, P, saved, api) {
     const evs = P.events, multi = evs.length > 1;
@@ -175,20 +133,24 @@ const Letni = (() => {
     function mark(val) {
       st.marks.push(val);
       if (val != null && (st.best == null || val > st.best)) st.best = val;
+      if (val != null) st.ex = 0.8;
       st.next = 1.8;
     }
     function finishEvent(val) {
       const pts = val == null ? 0 : POINTS[ev](val);
       results[evI] = { ev, val, pts }; syncHUD(); api.changed();
       st.phase = 'done'; st.next = 2.6;
-      say(val == null ? L('Bez platného pokusu · 0 bodů', 'No valid mark · 0 points') : `${fmtVal(ev, val)} · ${pts} ${L('bodů', 'points')}`, 2.6);
+      const md = medal(pts);
+      say(val == null ? L('Bez platného pokusu · 0 bodů', 'No valid mark · 0 points') : `${md ? md + ' ' : ''}${fmtVal(ev, val)} · ${pts} ${L('bodů', 'points')}`, 2.6);
+      cheer(pts >= 750 ? 90 : pts >= 600 ? 40 : 0, VW / 2, 150);
       api.sound(pts >= 800 ? 'star' : 'line');
     }
+    const medal = pts => (pts >= 900 ? '🥇' : pts >= 750 ? '🥈' : pts >= 600 ? '🥉' : '');
     const fmtVal = (e, v) => (EV[e].unit === 's' ? `${v.toFixed(2)} s` : `${v.toFixed(2)} m`);
     function endGame() {
       over = true; api.setTimer(false);
       const sum = total();
-      const rows = results.map(r => `<tr><td>${EV[r.ev].long}</td><td>${r.val == null ? '–' : fmtVal(r.ev, r.val)}</td><td><b>${r.pts}</b></td></tr>`).join('');
+      const rows = results.map(r => `<tr><td>${medal(r.pts)} ${EV[r.ev].long}</td><td>${r.val == null ? '–' : fmtVal(r.ev, r.val)}</td><td><b>${r.pts}</b></td></tr>`).join('');
       const html = `<table class="lh-table">${rows}<tr><td colspan="2">${L('Celkem', 'Total')}</td><td><b>${sum}</b></td></tr></table>`;
       if (P.mode === 'level') {
         const s = sum >= P.target + 140 ? 3 : sum >= P.target + 70 ? 2 : 1;
@@ -241,7 +203,7 @@ const Letni = (() => {
       if (st.phase === 'aim') {
         // odraz: krátce se drží rychlost, úhel roste; na 80° se pustí sám
         st.v = Math.max(0, st.v - 0.6 * dt); st.angle = Math.min(80, st.angle + 110 * dt);
-        st.pose = ev === 'javelin' ? 'throw' : 'set';
+        st.pose = ev === 'javelin' ? 'throw' : 'takeoff';
         if (st.angle >= 80) release();
       }
       if (st.phase === 'air') {
@@ -271,111 +233,152 @@ const Letni = (() => {
     }
 
     // ── Kresba ──
-    const crowd = (() => { const r = rngOf(P.seed ^ 0xc40d), out = []; for (let i = 0; i < 260; i++) out.push([r() * 1400, r(), ['#ff5a7a', '#55f6ff', '#ffd34d', '#6dff9e', '#c77dff', '#ffffff', '#ff9a3d'][Math.floor(r() * 7)]]); return out; })();
+    const crowd = LhArt.makeCrowd(P.seed ^ 0xc40d), confetti = [], flashes = [];
+    let drawDt = 0;
+    const RIVAL_LOOK = [{ skin: '#a8694a', hair: '#1a1210', shorts: '#1d1d2a', shoe: '#ffffff' }, { skin: '#ffd9b3', hair: '#d8a24a', shorts: '#14365e', shoe: '#ff5a7a' }, { skin: '#6e4330', hair: '#1a1210', shorts: '#0f4a2a', shoe: '#55f6ff' }];
+    function cheer(n, x, y) { st.ex = 1; if (n) LhArt.confetti(confetti, x, y, n, fx); }
     function draw() {
-      const g = ctx, k = cssW / VW;
+      const g = ctx, k = cssW / VW, dt = drawDt;
       g.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
-      const focus = st.jav && st.phase === 'throw' ? st.jav.x : st.x, camX = focus * PPM - VW * (st.jav && st.phase === 'throw' ? 0.55 : 0.32);
-      const trackY = 300;
-      // obloha
-      const sky = g.createLinearGradient(0, 0, 0, 200); sky.addColorStop(0, '#3a8ee0'); sky.addColorStop(1, '#b8e2ff');
-      g.fillStyle = sky; g.fillRect(0, 0, VW, VH);
-      g.fillStyle = 'rgba(255,255,255,.85)';
-      for (let i = 0; i < 5; i++) { const cx = ((i * 260 - camX * 0.05 + clock * 6) % 1300 + 1300) % 1300 - 100, cy = 24 + (i % 3) * 14; g.beginPath(); for (const [dx, dy, rr] of [[0, 0, 16], [18, -6, 13], [34, 2, 12], [-16, 4, 11]]) { g.moveTo(cx + dx + rr, cy + dy); g.arc(cx + dx, cy + dy, rr, 0, 7); } g.fill(); }
-      // tribuna s divákyí
-      const off = -camX * 0.35;
-      g.fillStyle = '#3a4060'; g.fillRect(0, 70, VW, 120);
-      for (let row = 0; row < 6; row++) { g.fillStyle = row % 2 ? '#4a5078' : '#454b70'; g.fillRect(0, 80 + row * 17, VW, 15); }
-      for (const [x, yy, col] of crowd) {
-        const px = ((x + off) % 1400 + 1400) % 1400 - 30, row = Math.floor(yy * 6), py = 92 + row * 17 + Math.sin(clock * 6 + x) * (st.phase === 'finish' || st.phase === 'landed' ? 2 : 0.6);
-        if (px < -10 || px > VW + 10) continue;
-        g.fillStyle = col; g.fillRect(px - 3, py - 4, 6, 7); g.fillStyle = '#ffd9b3'; g.beginPath(); g.arc(px, py - 7, 2.6, 0, 7); g.fill();
-      }
-      g.fillStyle = '#20253a'; g.fillRect(0, 186, VW, 16);
-      // reklamní mantinel
-      g.fillStyle = '#1b6bd6'; g.fillRect(0, 202, VW, 14);
-      g.fillStyle = '#fff'; g.font = '700 10px Space Grotesk, sans-serif'; g.textBaseline = 'middle';
-      for (let i = -1; i < 6; i++) { const px = ((i * 160 - camX * 0.9) % 160 + 160) % 160 + i * 160 - 160; g.fillText('WINDOWLING · LETNÍ HRY', px + 10, 209); }
-      // tráva a dráhy
-      g.fillStyle = '#4fae4a'; g.fillRect(0, 216, VW, 20);
-      const tg = g.createLinearGradient(0, 236, 0, VH); tg.addColorStop(0, '#d0563a'); tg.addColorStop(1, '#b8462e');
-      g.fillStyle = tg; g.fillRect(0, 236, VW, VH - 236);
-      g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2;
-      for (const ly of [236, 256, 276, 296, 324]) { g.beginPath(); g.moveTo(0, ly); g.lineTo(VW, ly); g.stroke(); }
+      const flying = st.jav && st.phase === 'throw', focus = flying ? st.jav.x : st.x, camX = focus * PPM - VW * (flying ? 0.55 : 0.32);
+      const trackY = 300, sprintLike = ev === 'sprint' || ev === 'hurdles', goal = ev === 'sprint' ? 100 : 110;
       const X = m => m * PPM - camX;
+      // nadšení diváků a blesky fotoaparátů
+      if (sprintLike && st.phase === 'run' && st.x > goal - 25) st.ex = Math.max(st.ex || 0, 0.5);
+      st.ex = Math.max(0, (st.ex || 0) - dt * 0.25);
+      if (st.ex > 0.3 && fx() < dt * 14 * st.ex) flashes.push({ x: fx() * 1408, y: 86 + Math.floor(fx() * 6) * 19, a: 1 });
+      for (let i = flashes.length - 1; i >= 0; i--) { flashes[i].a -= dt * 5; if (flashes[i].a <= 0) flashes.splice(i, 1); }
+      const shown = sprintLike ? (st.phase === 'finish' || st.phase === 'done' ? (st.fin || 0) : st.t).toFixed(2) : st.best != null ? `${st.best.toFixed(2)} m` : `${st.attempt}/3`;
+      LhArt.stadium(g, { VW, VH, camX, t: clock, ex: st.ex, crowd, flashes, board: [EV[ev].long.toUpperCase(), shown] });
+      LhArt.track(g, { VW, VH, camX });
       // značky po 10 m
-      g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '700 11px Space Grotesk, sans-serif'; g.textAlign = 'center';
-      for (let m = 0; m <= 130; m += 10) { const px = X(m); if (px < -20 || px > VW + 20) continue; g.fillRect(px - 1, 324, 2, 10); g.fillText(`${m}`, px, 346); }
-      // disciplína
-      if (ev === 'sprint' || ev === 'hurdles') {
-        const fin = X(ev === 'sprint' ? 100 : 110);
-        g.fillStyle = '#fff'; g.fillRect(fin - 2, 236, 4, 88);
-        for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? '#111' : '#fff'; g.fillRect(fin + 2, 236 + i * 14.6, 6, 14.6); }
-        g.fillStyle = '#fff'; g.fillRect(X(0) - 2, 236, 3, 88);
+      g.fillStyle = 'rgba(255,255,255,.8)'; g.font = '700 11px Space Grotesk, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+      for (let m = 0; m <= 130; m += 10) { const px = X(m); if (px < -20 || px > VW + 20) continue; g.fillRect(px - 1, 324, 2, 10); g.fillText(`${m}`, px, 348); }
+      if (sprintLike) {
+        // čísla drah a startovní bloky
+        g.font = '900 13px Unbounded, sans-serif'; g.fillStyle = 'rgba(255,255,255,.85)';
+        [250, 270, 290, 316].forEach((ly, i) => g.fillText(`${i + 1}`, X(-1.6), ly));
+        g.fillStyle = '#fff'; g.fillRect(X(0) - 2, 237, 3, 87);
+        if (st.phase === 'ready') { g.fillStyle = '#3a3f52'; g.beginPath(); g.moveTo(X(-0.9), 314); g.lineTo(X(-0.55), 314); g.lineTo(X(-0.9), 304); g.fill(); g.beginPath(); g.moveTo(X(-0.45), 314); g.lineTo(X(-0.1), 314); g.lineTo(X(-0.45), 306); g.fill(); }
+        // cíl: šachovnice a portál s časomírou
+        const fin = X(goal);
+        if (fin > -80 && fin < VW + 80) {
+          g.fillStyle = '#fff'; g.fillRect(fin - 2, 237, 4, 87);
+          for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? '#111' : '#fff'; g.fillRect(fin + 2, 237 + i * 14.5, 6, 14.5); }
+          g.fillStyle = '#d8dde8'; g.fillRect(fin - 34, 160, 5, 76); g.fillRect(fin + 30, 160, 5, 76);
+          g.fillStyle = '#16123a'; g.beginPath(); g.roundRect(fin - 40, 150, 80, 30, 5); g.fill();
+          g.strokeStyle = '#ffd34d'; g.lineWidth = 2; g.stroke();
+          g.fillStyle = '#ffe066'; g.font = '900 14px Unbounded, sans-serif'; g.textBaseline = 'middle'; g.fillText(shown, fin, 166); g.textBaseline = 'alphabetic';
+        }
       }
       if (ev === 'longjump') {
-        g.fillStyle = '#fff'; g.fillRect(X(39.8), 300, X(40) - X(39.8), 18);
-        g.fillStyle = '#e8d28a'; g.fillRect(X(40.5), 296, X(50) - X(40.5), 28);
-        g.fillStyle = 'rgba(160,120,60,.35)'; for (let i = 0; i < 40; i++) g.fillRect(X(40.5 + (i * 0.37) % 9.5), 300 + (i * 7) % 22, 3, 2);
-        for (const m of [6, 7, 8, 9]) { const px = X(40 + m); g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(px - 1, 288, 2, 8); g.fillText(`${m} m`, px, 282); }
-        for (const mk of st.marks) if (mk != null) { const px = X(40 + mk); g.fillStyle = '#ffd34d'; g.beginPath(); g.moveTo(px, 292); g.lineTo(px - 5, 284); g.lineTo(px + 5, 284); g.fill(); }
-        if (st.landing) { g.fillStyle = 'rgba(120,80,40,.5)'; g.beginPath(); g.ellipse(X(st.landing - 0.1), 312, 14, 5, 0, 0, 7); g.fill(); }
+        // rozběhová dráha, odrazové prkno a doskočiště s pískem
+        g.fillStyle = '#fff'; g.fillRect(X(39.8), 298, X(40) - X(39.8), 22); g.fillStyle = '#7fd6a0'; g.fillRect(X(40), 298, X(40.1) - X(40), 22);
+        g.fillStyle = '#6a4a2a'; g.beginPath(); g.roundRect(X(40.5) - 3, 292, X(50) - X(40.5) + 6, 34, 6); g.fill();
+        const sand = g.createLinearGradient(0, 295, 0, 323); sand.addColorStop(0, '#f6e2a0'); sand.addColorStop(1, '#e2c27a');
+        g.fillStyle = sand; g.beginPath(); g.roundRect(X(40.5), 295, X(50) - X(40.5), 28, 5); g.fill();
+        g.fillStyle = 'rgba(160,120,60,.35)'; for (let i = 0; i < 60; i++) g.fillRect(X(40.5 + (i * 0.37) % 9.4), 297 + (i * 7) % 24, 3, 1.5);
+        g.font = '700 10px Space Grotesk, sans-serif'; g.textAlign = 'center';
+        for (const m of [6, 7, 8, 9]) { const px = X(40 + m); g.fillStyle = '#fff'; g.fillRect(px - 1, 270, 2, 22); g.fillStyle = m === 8 ? '#ff5a7a' : '#1b6bd6'; g.fillRect(px + 1, 270, 12, 8); g.fillStyle = 'rgba(255,255,255,.95)'; g.fillText(`${m} m`, px, 266); }
+        for (const mk of st.marks) if (mk != null) { const px = X(40 + mk); g.fillStyle = '#ffd34d'; g.strokeStyle = '#16123a'; g.lineWidth = 1; g.beginPath(); g.moveTo(px, 294); g.lineTo(px - 6, 284); g.lineTo(px + 6, 284); g.closePath(); g.fill(); g.stroke(); }
+        if (st.landing) { g.fillStyle = 'rgba(120,80,40,.45)'; g.beginPath(); g.ellipse(X(st.landing - 0.15), 314, 18, 5, 0, 0, 7); g.fill(); }
       }
       if (ev === 'javelin') {
-        g.fillStyle = '#fff'; g.beginPath(); g.ellipse(X(30), 312, 8, 26, 0, -Math.PI / 2, Math.PI / 2); g.lineTo(X(30), 286); g.fill();
-        g.fillStyle = '#4fae4a'; g.fillRect(X(30.5), 236, X(140) - X(30.5), 88);
-        for (let m = 40; m <= 100; m += 10) { const px = X(30 + m); g.strokeStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.moveTo(px, 236); g.lineTo(px - 12, 324); g.stroke(); g.fillStyle = '#fff'; g.fillText(`${m} m`, px - 6, 248); }
-        for (const mk of st.marks) if (mk != null) { const px = X(30 + mk); g.fillStyle = '#ffd34d'; g.beginPath(); g.moveTo(px, 306); g.lineTo(px - 5, 296); g.lineTo(px + 5, 296); g.fill(); }
-      }
-      if (ev === 'hurdles') st.hurdles.forEach((hx, k) => {
-        const px = X(hx), down = st.hurdlesDown[k] === 1;
-        for (const [ly, sc] of [[254, 0.6], [274, 0.65], [294, 0.7]]) { g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 2; g.beginPath(); g.moveTo(px, ly); g.lineTo(px, ly - 30 * sc); g.lineTo(px + 6, ly - 30 * sc); g.stroke(); }
-        g.save(); g.translate(px, trackY + 6); if (down) g.rotate(1.3);
-        g.strokeStyle = '#ddd'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -34); g.stroke();
-        g.fillStyle = '#fff'; g.fillRect(-2, -36, 14, 8); g.fillStyle = '#111'; g.fillRect(3, -36, 4, 8);
+        // výseč na trávníku s posekanými pruhy a čarami po 10 m
+        g.save(); g.beginPath(); g.moveTo(X(30.5), 237); g.lineTo(X(160), 237); g.lineTo(X(160), 324); g.lineTo(X(30.5), 324); g.clip();
+        g.fillStyle = '#4caf48'; g.fillRect(0, 237, VW, 87);
+        g.fillStyle = 'rgba(255,255,255,.08)'; for (let m = 30; m < 160; m += 8) g.fillRect(X(m), 237, 4 * PPM, 87);
+        g.font = '700 11px Space Grotesk, sans-serif'; g.textAlign = 'center';
+        for (let m = 40; m <= 110; m += 10) { const px = X(30 + m); g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2; g.beginPath(); g.moveTo(px, 237); g.lineTo(px - 14, 324); g.stroke(); g.fillStyle = '#fff'; g.fillText(`${m} m`, px - 7, 252); }
         g.restore();
+        g.fillStyle = '#fff'; g.beginPath(); g.ellipse(X(30), 312, 8, 26, 0, -Math.PI / 2, Math.PI / 2); g.lineTo(X(30), 286); g.fill();
+        for (const mk of st.marks) if (mk != null) { const px = X(30 + mk); g.fillStyle = '#ffd34d'; g.strokeStyle = '#16123a'; g.lineWidth = 1; g.beginPath(); g.moveTo(px, 306); g.lineTo(px - 6, 295); g.lineTo(px + 6, 295); g.closePath(); g.fill(); g.stroke(); }
+      }
+      const hurdle = (px, base, sc, down) => {
+        g.save(); g.translate(px, base); g.scale(sc, sc); if (down) g.rotate(1.35);
+        g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-6, 0, 20, 2);
+        g.strokeStyle = '#2b1712'; g.lineWidth = 4.5; g.lineCap = 'round'; g.beginPath(); g.moveTo(-6, 0); g.lineTo(10, 0); g.moveTo(0, 0); g.lineTo(0, -34); g.stroke();
+        g.strokeStyle = '#d8dde8'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(-6, 0); g.lineTo(10, 0); g.moveTo(0, 0); g.lineTo(0, -34); g.stroke();
+        g.fillStyle = '#fff'; g.strokeStyle = '#2b1712'; g.lineWidth = 1.2; g.beginPath(); g.rect(-3, -39, 10, 9); g.fill(); g.stroke(); g.fillStyle = '#16123a'; g.fillRect(0.5, -39, 3.5, 9);
+        g.restore();
+      };
+      if (ev === 'hurdles') st.hurdles.forEach((hx, i) => {
+        const px = X(hx); if (px < -30 || px > VW + 30) return;
+        [[254, 0.55], [274, 0.6], [294, 0.65]].forEach(([ly, sc]) => hurdle(px, ly, sc, false));
+        hurdle(px, trackY + 14, 1, st.hurdlesDown[i] === 1);
       });
       // soupeři vzadu
-      st.rivals.forEach((rv, k) => {
-        const rx = st.phase === 'ready' ? 0 : rv.pos(st.t), ly = 254 + k * 20;
-        const pose = st.phase === 'ready' ? (ev === 'sprint' || ev === 'hurdles' ? 'set' : 'stand') : rx >= (ev === 'sprint' ? 100 : 110) ? 'stand' : 'run';
-        athlete(g, X(rx), ly, PPM * 0.62, { pose, phase: rx * 1.9 + k, shirt: rv.shirt, shorts: '#2a2a2a', alpha: 0.9, speed: 9 });
+      st.rivals.forEach((rv, i) => {
+        const rx = st.phase === 'ready' ? 0 : rv.pos(st.t), ly = 254 + i * 20, done = rx >= goal;
+        const pose = st.phase === 'ready' ? 'set' : done ? (rv.T < (st.fin || 99) && rv.T <= Math.min(...st.rivals.map(q => q.T)) ? 'cheer' : 'stand') : 'run';
+        g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(X(rx), ly + 1, 10, 2.5, 0, 0, 7); g.fill();
+        athlete(g, X(rx), ly, PPM * 0.6, { pose, phase: rx * 1.9 + i, shirt: rv.shirt, speed: 9, t: clock, ...RIVAL_LOOK[i] });
       });
-      // hlavní závodník
+      // hlavní závodník: stín, prach od tretr a čáry rychlosti
       const ax = X(st.x), ay = trackY + 14 - st.y * PPM;
-      g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(ax, trackY + 16, 16, 4, 0, 0, 7); g.fill();
-      const { hand } = athlete(g, ax, ay, PPM, { pose: st.hitT > 0 ? 'fall' : st.pose, phase: st.step, speed: st.v, shirt: '#ff5a7a', num: true });
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(ax, trackY + 15, 18 - Math.min(10, st.y * 6), 4, 0, 0, 7); g.fill();
+      if (st.v > 6 && (st.phase === 'run' || st.phase === 'aim') && st.y <= 0) {
+        g.strokeStyle = `rgba(255,255,255,${Math.min(0.5, (st.v - 6) / 8)})`; g.lineWidth = 2; g.lineCap = 'round';
+        for (const [dy, l] of [[-50, 26], [-34, 36], [-18, 22]]) { const o = (clock * 300) % 12; g.beginPath(); g.moveTo(ax - 30 - o, ay + dy); g.lineTo(ax - 30 - l - o, ay + dy); g.stroke(); }
+        g.fillStyle = 'rgba(230,140,110,.5)'; for (let i = 0; i < 3; i++) { const o = (clock * 2.3 + i / 3) % 1; g.beginPath(); g.arc(ax - 8 - o * 26, ay - 2 - o * 6, 2 + o * 3, 0, 7); g.fill(); }
+      }
+      const look = { skin: '#ffcf9e', hair: '#3a2414', shorts: '#16123a', shoe: '#ffd34d' };
+      const { hand } = athlete(g, ax, ay, PPM, { pose: st.hitT > 0 ? 'fall' : st.pose, phase: st.step, speed: st.v, shirt: '#ff5a7a', num: 1, t: clock, ...look });
       // oštěp
       if (ev === 'javelin') {
         const j = st.jav;
-        const draw = (x, y, ang) => { g.save(); g.translate(x, y); g.rotate(-ang); g.strokeStyle = '#e8e8f0'; g.lineWidth = 3; g.beginPath(); g.moveTo(-40, 0); g.lineTo(40, 0); g.stroke(); g.fillStyle = '#ff5a5a'; g.fillRect(-4, -2, 8, 4); g.fillStyle = '#c8c8d0'; g.beginPath(); g.moveTo(40, -2); g.lineTo(48, 0); g.lineTo(40, 2); g.fill(); g.restore(); };
-        if (j) draw(X(j.x), trackY + 14 - j.y * PPM, j.flying ? j.ang : Math.max(-0.7, j.ang));
-        else draw(hand[0], hand[1] - 6, st.hold ? st.angle * Math.PI / 180 : 0.15);
+        const jav = (x, y, ang) => { g.save(); g.translate(x, y); g.rotate(-ang); g.lineCap = 'round'; g.strokeStyle = '#2b1712'; g.lineWidth = 4.5; g.beginPath(); g.moveTo(-42, 0); g.lineTo(44, 0); g.stroke(); g.strokeStyle = '#f2f4fa'; g.lineWidth = 2.6; g.beginPath(); g.moveTo(-42, 0); g.lineTo(44, 0); g.stroke(); g.fillStyle = '#ff5a5a'; g.fillRect(-6, -2.5, 12, 5); g.fillStyle = '#9aa3b8'; g.beginPath(); g.moveTo(42, -2.5); g.lineTo(52, 0); g.lineTo(42, 2.5); g.fill(); g.restore(); };
+        if (j) { if (j.flying) { g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(X(j.x), trackY + 15, 30, 3, 0, 0, 7); g.fill(); } jav(X(j.x), trackY + 14 - j.y * PPM, j.flying ? j.ang : Math.max(-0.7, j.ang)); }
+        else jav(hand[0], hand[1] - 4, st.hold ? st.angle * Math.PI / 180 : 0.15);
       }
-      // ukazatel úhlu při držení
+      // ukazatel úhlu při držení: zelená výseč je ideál
       if (st.hold) {
-        const cx = ax + 40, cy = ay - 70, R = 34, a = st.angle * Math.PI / 180;
-        g.fillStyle = 'rgba(10,10,30,.55)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R + 6, -Math.PI / 2 - 0.1, 0.1); g.closePath(); g.fill();
-        g.strokeStyle = 'rgba(109,255,158,.6)'; g.lineWidth = 8; g.beginPath(); g.arc(cx, cy, R - 4, -(48 * Math.PI / 180), -(38 * Math.PI / 180)); g.stroke();
-        g.strokeStyle = '#ffe066'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * R, cy - Math.sin(a) * R); g.stroke();
-        g.fillStyle = '#fff'; g.font = '800 12px Space Grotesk, sans-serif'; g.textAlign = 'left'; g.fillText(`${Math.round(st.angle)}°`, cx + 6, cy + 10);
+        const cx = ax + 44, cy = ay - 76, R = 36, a = st.angle * Math.PI / 180;
+        g.fillStyle = 'rgba(10,8,30,.75)'; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R + 8, -Math.PI / 2 - 0.12, 0.12); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(255,255,255,.15)'; g.lineWidth = 8; g.beginPath(); g.arc(cx, cy, R - 4, -Math.PI / 2, 0); g.stroke();
+        g.strokeStyle = '#6dff9e'; g.beginPath(); g.arc(cx, cy, R - 4, -(48 * Math.PI / 180), -(36 * Math.PI / 180)); g.stroke();
+        g.strokeStyle = '#ffe066'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * R, cy - Math.sin(a) * R); g.stroke();
+        g.fillStyle = '#fff'; g.font = '800 12px Unbounded, sans-serif'; g.textAlign = 'left'; g.fillText(`${Math.round(st.angle)}°`, cx + 6, cy + 14);
       }
-      // HUD v plátně: čas / vzdálenost, rychlost, vítr, soupeři
-      g.textAlign = 'left'; g.fillStyle = 'rgba(10,10,30,.82)'; g.beginPath(); g.roundRect(10, 10, 220, 52, 10); g.fill();
-      g.fillStyle = '#fff'; g.font = '800 20px Unbounded, sans-serif';
-      const sprintLike = ev === 'sprint' || ev === 'hurdles';
-      g.fillText(sprintLike ? `${(st.phase === 'finish' || st.phase === 'done' ? st.fin || 0 : st.t).toFixed(2)} s` : `${L('pokus', 'att.')} ${st.attempt}/3`, 20, 32);
-      g.font = '700 11px Space Grotesk, sans-serif'; g.fillStyle = 'rgba(255,255,255,.8)';
-      g.fillText(sprintLike ? `${Math.max(0, Math.min(ev === 'sprint' ? 100 : 110, st.x)).toFixed(0)} m` : `${L('nejlepší', 'best')} ${st.best != null ? st.best.toFixed(2) + ' m' : '–'}`, 20, 50);
-      // rychloměr
-      g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(120, 42, 100, 10);
-      const sp = Math.min(1, st.v / 11), sg = g.createLinearGradient(120, 0, 220, 0); sg.addColorStop(0, '#6dff9e'); sg.addColorStop(0.7, '#ffe066'); sg.addColorStop(1, '#ff5a5a');
-      g.fillStyle = sg; g.fillRect(120, 42, 100 * sp, 10);
-      g.fillStyle = '#fff'; g.fillText(`${(st.v * 3.6).toFixed(0)} km/h`, 120, 32);
-      if (!sprintLike || ev === 'sprint') { g.textAlign = 'right'; g.fillStyle = 'rgba(10,10,30,.82)'; g.beginPath(); g.roundRect(VW - 120, 10, 110, 30, 10); g.fill(); g.fillStyle = '#fff'; g.fillText(`${L('vítr', 'wind')} ${st.wind >= 0 ? '+' : ''}${st.wind.toFixed(1)} m/s`, VW - 20, 29); }
-      if (st.phase === 'ready' && sprintLike) {
-        const n = Math.ceil(st.countdown / 0.8); g.textAlign = 'center'; g.font = '900 54px Unbounded, sans-serif'; g.fillStyle = 'rgba(255,255,255,.9)'; g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 6;
-        const txt = n >= 3 ? '3' : n === 2 ? '2' : '1'; g.strokeText(txt, VW / 2, 150); g.fillText(txt, VW / 2, 150);
+      LhArt.drawConfetti(g, confetti, dt);
+      // HUD jako v televizním přenosu
+      g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      g.fillStyle = 'rgba(12,8,36,.85)'; g.beginPath(); g.roundRect(10, 10, 254, 56, 12); g.fill();
+      const tab = g.createLinearGradient(10, 10, 66, 66); tab.addColorStop(0, '#ff5a7a'); tab.addColorStop(1, '#ff9a3d');
+      g.fillStyle = tab; g.beginPath(); g.roundRect(10, 10, 56, 56, [12, 0, 0, 12]); g.fill();
+      LhArt.pictogram(g, ev, 38, 39, 1.25);
+      g.fillStyle = '#fff'; g.font = `800 ${sprintLike ? 20 : 17}px Unbounded, sans-serif`;
+      g.fillText(sprintLike ? `${shown} s` : `${L('Pokus', 'Try')} ${Math.min(3, st.attempt)}/3`, 76, 34);
+      g.font = '700 11px Space Grotesk, sans-serif'; g.fillStyle = 'rgba(255,255,255,.75)';
+      g.fillText(sprintLike ? `${Math.max(0, Math.min(goal, st.x)).toFixed(0)} / ${goal} m` : `${L('nejlepší', 'best')} ${st.best != null ? st.best.toFixed(2) + ' m' : '–'}`, 76, 54);
+      // rychloměr z dílků
+      const sp = Math.min(1, st.v / 11);
+      for (let i = 0; i < 10; i++) { const on = sp * 10 > i + 0.2; g.fillStyle = on ? (i < 5 ? '#6dff9e' : i < 8 ? '#ffe066' : '#ff5a5a') : 'rgba(255,255,255,.12)'; g.fillRect(186 + i * 7, 44, 5, 12); }
+      g.fillStyle = '#fff'; g.font = '700 11px Space Grotesk, sans-serif'; g.fillText(`${(st.v * 3.6).toFixed(0)} km/h`, 186, 34);
+      // vítr s rukávem a pokusy
+      const rw = sprintLike ? 118 : 160, rx0 = VW - 10 - rw;
+      g.fillStyle = 'rgba(12,8,36,.85)'; g.beginPath(); g.roundRect(rx0, 10, rw, sprintLike ? 34 : 56, 12); g.fill();
+      const wsx = rx0 + 14, wsy = 20, wd = st.wind >= 0 ? 1 : -1, wl = 8 + Math.min(1, Math.abs(st.wind) / 2) * 12;
+      g.strokeStyle = '#d8dde8'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(wsx, wsy - 4); g.lineTo(wsx, wsy + 16); g.stroke();
+      for (let i = 0; i < 3; i++) { g.fillStyle = i % 2 ? '#fff' : '#ff6a3d'; const x0 = wsx + wd * i * wl / 3, sw = Math.sin(clock * 8 + i) * 0.8; g.beginPath(); g.moveTo(x0, wsy - 3 + i * 0.7 + sw); g.lineTo(x0 + wd * wl / 3, wsy - 2.3 + (i + 1) * 0.7 + sw); g.lineTo(x0 + wd * wl / 3, wsy + 5 - (i + 1) * 0.7 + sw); g.lineTo(x0, wsy + 5 - i * 0.7 + sw); g.fill(); }
+      g.fillStyle = '#fff'; g.font = '700 11px Space Grotesk, sans-serif'; g.textAlign = 'right';
+      g.fillText(`${L('vítr', 'wind')} ${st.wind >= 0 ? '+' : ''}${st.wind.toFixed(1)} m/s`, rx0 + rw - 12, 31);
+      if (!sprintLike) for (let i = 0; i < 3; i++) {
+        const m = st.marks[i], bx = rx0 + 10 + i * 48;
+        g.fillStyle = m === undefined ? 'rgba(255,255,255,.1)' : m === null ? 'rgba(255,90,90,.85)' : m === st.best ? '#ffd34d' : 'rgba(109,255,158,.8)';
+        g.beginPath(); g.roundRect(bx, 42, 44, 16, 8); g.fill();
+        g.fillStyle = m === undefined ? 'rgba(255,255,255,.4)' : '#16123a'; g.textAlign = 'center'; g.font = '800 10px Space Grotesk, sans-serif';
+        g.fillText(m === undefined ? `${i + 1}.` : m === null ? 'X' : m.toFixed(2), bx + 22, 54);
+      }
+      // startovní světla
+      if (sprintLike && (st.phase === 'ready' || (st.phase === 'run' && st.t < 0.7))) {
+        const go = st.phase === 'run', on = go ? 3 : st.countdown < 1.2 ? 2 : 1, cx = VW / 2;
+        g.fillStyle = 'rgba(12,8,36,.88)'; g.beginPath(); g.roundRect(cx - 62, 128, 124, 40, 20); g.fill();
+        for (let i = 0; i < 3; i++) {
+          const lit = go || i < on, col = go ? '#6dff9e' : '#ff4d4d';
+          if (lit) { const gl = g.createRadialGradient(cx - 36 + i * 36, 148, 2, cx - 36 + i * 36, 148, 22); gl.addColorStop(0, col); gl.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gl; g.fillRect(cx - 58 + i * 36, 126, 44, 44); }
+          g.fillStyle = lit ? col : '#3a3550'; g.beginPath(); g.arc(cx - 36 + i * 36, 148, 11, 0, 7); g.fill();
+        }
       }
     }
 
@@ -383,7 +386,7 @@ const Letni = (() => {
     let last = performance.now(), raf = 0;
     function frame(now) {
       raf = requestAnimationFrame(frame);
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; drawDt = paused ? 0 : dt;
       if (api.paused && api.paused() && !paused && !over) setPause(true);
       if (!paused && !over) { tick(dt); if (auto) autoplay(dt); }
       draw();
@@ -427,24 +430,28 @@ const Letni = (() => {
     };
   }
 
-  // úvodní obrázek: sprinter na dráze před tribunou
+  // úvodní obrázek: překážkář v letu před plným stadionem, nad ním letí oštěp
   function art(el) {
     el.innerHTML = '<canvas width="520" height="360" style="object-fit:contain"></canvas>';
     const g = el.querySelector('canvas').getContext('2d');
     g.beginPath(); g.roundRect(0, 0, 520, 360, 28); g.clip();
-    const sky = g.createLinearGradient(0, 0, 0, 160); sky.addColorStop(0, '#3a8ee0'); sky.addColorStop(1, '#b8e2ff'); g.fillStyle = sky; g.fillRect(0, 0, 520, 360);
-    g.fillStyle = '#ffe9a0'; g.beginPath(); g.arc(430, 50, 26, 0, 7); g.fill();
-    g.fillStyle = '#3a4060'; g.fillRect(0, 80, 520, 110);
-    const r = rngOf(7);
-    for (let i = 0; i < 220; i++) { const x = r() * 520, row = Math.floor(r() * 6), y = 96 + row * 16; g.fillStyle = ['#ff5a7a', '#55f6ff', '#ffd34d', '#6dff9e', '#fff'][i % 5]; g.fillRect(x - 3, y - 4, 6, 7); g.fillStyle = '#ffd9b3'; g.beginPath(); g.arc(x, y - 7, 2.6, 0, 7); g.fill(); }
-    g.fillStyle = '#1b6bd6'; g.fillRect(0, 190, 520, 14);
-    g.fillStyle = '#4fae4a'; g.fillRect(0, 204, 520, 16);
-    g.fillStyle = '#c94e34'; g.fillRect(0, 220, 520, 140);
-    g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 3; for (const y of [220, 262, 304, 346]) { g.beginPath(); g.moveTo(0, y); g.lineTo(520, y); g.stroke(); }
-    g.fillStyle = '#fff'; g.fillRect(440, 220, 6, 140); for (let i = 0; i < 10; i++) { g.fillStyle = i % 2 ? '#111' : '#fff'; g.fillRect(446, 220 + i * 14, 8, 14); }
-    athlete(g, 150, 296, 46, { pose: 'run', phase: 1.2, speed: 8, shirt: '#55f6ff', alpha: 0.85 });
-    athlete(g, 300, 340, 62, { pose: 'run', phase: 2.6, speed: 10, shirt: '#ff5a7a', num: true });
-    g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 4; g.lineCap = 'round'; for (const [y, l] of [[250, 60], [270, 40], [290, 52]]) { g.beginPath(); g.moveTo(240 - l, y); g.lineTo(240, y); g.stroke(); }
+    g.fillStyle = '#c9512f'; g.fillRect(0, 0, 520, 360); g.translate(0, -26);
+    LhArt.stadium(g, { VW: 520, VH: 360, camX: -560, t: 2.2, ex: 0.9, crowd: LhArt.makeCrowd(11), board: ['WINDOWLING', 'LETNÍ HRY'], flashes: [{ x: 120, y: 105, a: 1 }, { x: 330, y: 143, a: 0.8 }, { x: 460, y: 86, a: 0.9 }] });
+    LhArt.track(g, { VW: 520, VH: 390, camX: 0 });
+    // překážky v drahách
+    const hurdle = (x, y, sc) => { g.save(); g.translate(x, y); g.scale(sc, sc); g.lineCap = 'round'; for (const [w, c] of [[4.5, '#2b1712'], [2.5, '#d8dde8']]) { g.strokeStyle = c; g.lineWidth = w; g.beginPath(); g.moveTo(-6, 0); g.lineTo(10, 0); g.moveTo(0, 0); g.lineTo(0, -34); g.stroke(); } g.fillStyle = '#fff'; g.strokeStyle = '#2b1712'; g.lineWidth = 1.2; g.beginPath(); g.rect(-3, -39, 10, 9); g.fill(); g.stroke(); g.fillStyle = '#16123a'; g.fillRect(0.5, -39, 3.5, 9); g.restore(); };
+    hurdle(120, 274, 0.6); hurdle(430, 274, 0.6); hurdle(80, 296, 0.66); hurdle(390, 296, 0.66);
+    LhArt.athlete(g, 70, 274, 22, { pose: 'run', phase: 2.2, speed: 9, shirt: '#55f6ff', skin: '#a8694a', hair: '#1a1210', shorts: '#1d1d2a', shoe: '#fff' });
+    LhArt.athlete(g, 330, 296, 24, { pose: 'hurdle', speed: 9, shirt: '#6dff9e', skin: '#6e4330', hair: '#1a1210', shorts: '#0f4a2a', shoe: '#55f6ff' });
+    hurdle(268, 316, 1.25);
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(262, 318, 34, 6, 0, 0, 7); g.fill();
+    LhArt.athlete(g, 240, 290, 58, { pose: 'hurdle', speed: 10, shirt: '#ff5a7a', num: 1, shorts: '#16123a', shoe: '#ffd34d', t: 0.3 });
+    // oštěp na obloze
+    g.save(); g.translate(140, 84); g.rotate(-0.28); g.lineCap = 'round'; for (const [w, c] of [[5, '#2b1712'], [3, '#f2f4fa']]) { g.strokeStyle = c; g.lineWidth = w; g.beginPath(); g.moveTo(-60, 0); g.lineTo(62, 0); g.stroke(); } g.fillStyle = '#ff5a5a'; g.fillRect(-8, -3, 16, 6); g.fillStyle = '#9aa3b8'; g.beginPath(); g.moveTo(60, -3); g.lineTo(74, 0); g.lineTo(60, 3); g.fill(); g.restore();
+    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.setLineDash([4, 6]); g.beginPath(); g.moveTo(10, 150); g.quadraticCurveTo(40, 104, 80, 98); g.stroke(); g.setLineDash([]);
+    // konfety
+    const r = LhArt.rngOf(5), cols = ['#ff5a7a', '#ffd34d', '#55f6ff', '#6dff9e', '#c77dff', '#fff'];
+    for (let i = 0; i < 46; i++) { g.save(); g.translate(r() * 520, 70 + r() * 150); g.rotate(r() * 6); g.fillStyle = cols[i % 6]; g.fillRect(-3, -1.5, 6, 3); g.restore(); }
   }
   return { DIFFS, EVENTS, POINTS, generate, create, art, levelSpec, athlete };
 })();
