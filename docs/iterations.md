@@ -107,7 +107,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] The Right Mix – bartending / cocktail mixing
 - [ ] Happy Wheels – ragdoll physics obstacle courses
 - [ ] Heli Attack – helicopter shooter
-- [ ] Age of War – lane war through the ages, with its iconic-style music
+- [x] Age of War – lane war through the ages, with its iconic-style music (Věky válek)
 - [ ] Burger Tycoon – burger chain business sim
 - [x] Gold Miner – swinging claw grabbing gold (Zlatokop)
 - [ ] Hobo – brawler as a homeless guy

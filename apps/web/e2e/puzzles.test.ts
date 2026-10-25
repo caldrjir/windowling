@@ -31,6 +31,7 @@ const PUZZLES = [
 	'zlatokop',
 	'skokan',
 	'smik',
+	'veky',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -425,6 +426,22 @@ test('smik slices fruit with a swipe and scores', async ({ page }) => {
 	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(6)');
 	await expect(page.locator('.k-result')).toBeVisible({ timeout: 40_000 });
 	await expect(page.locator('.k-result')).toContainText(/bod/);
+});
+
+test('veky trains units that march, fight and earn experience', async ({ page }) => {
+	await startFree(page, 'veky', 'lehka');
+	await expect(page.locator('.vk-cv')).toBeVisible();
+	const before = (await page.evaluate('Kit._test.inst._state()')) as { gold: number };
+	await page.locator('.vk-u[data-u="0"]').click();
+	const after = (await page.evaluate('Kit._test.inst._state()')) as { gold: number; queue: number };
+	expect(after.gold).toBeLessThan(before.gold);
+	expect(after.queue).toBe(1);
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(6)');
+	await expect
+		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { xp: number }).xp, {
+			timeout: 40_000,
+		})
+		.toBeGreaterThan(0);
 });
 
 test('sachy lets the player pick the promotion piece', async ({ page }) => {

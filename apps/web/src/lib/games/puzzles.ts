@@ -3532,4 +3532,159 @@ export const PUZZLE_GAMES: Game[] = [
 			}
 		},
 	},
+	{
+		id: 'veky',
+		title: 'VĚKY VÁLEK',
+		group: 'puzzle',
+		category: 'strategy',
+		tagline: 'Od kyje po laser!',
+		description:
+			'Na motivy Age of War: veď svůj národ od pravěku po budoucnost. Cvič pěšáky, střelce a těžké jednotky od jezdce na dinosaurovi po bojového robota, stav věže, sesílej meteory, nálety i orbitální laser a zboř nepřátelskou základnu. S vlastní hrdinskou hudbou, kterou každý věk hraje jinými nástroji.',
+		genres: ['Strategie', 'Obrana', 'Věky'],
+		features: ['5 věků, 15 jednotek', 'Věže a zvláštní útoky', 'Vlastní hudba', 'Cesta: 120 bitev'],
+		en: {
+			tagline: 'From clubs to lasers!',
+			description:
+				'In the spirit of Age of War: lead your people from the Stone Age to the future. Train infantry, ranged and heavy units from a dino rider to a war mech, build turrets, call down meteors, air strikes and an orbital laser and destroy the enemy base. With its own heroic score that every age plays on different instruments.',
+			genres: ['Strategy', 'Defense', 'Ages'],
+			features: ['5 ages, 15 units', 'Turrets and specials', 'Own music', 'Path: 120 battles'],
+		},
+		statLabels: labels,
+		path: '/games/veky/index.html',
+		colors: ['#b07aff', '#3d8bff', '#ff4d4d'],
+		statsKey: 'gamecenter.stats.veky',
+		cover(ctx, w, h, t) {
+			// a battlefield across the ages: a stone fort (blue) against a future tower (red),
+			// two lines of soldiers clash in the middle while meteors rain down
+			const OL = '#1a1210',
+				gy = h * 0.62;
+			const sky = ctx.createLinearGradient(0, 0, w, 0);
+			sky.addColorStop(0, '#ff9a5a');
+			sky.addColorStop(0.5, '#5aa8ff');
+			sky.addColorStop(1, '#3a1a6a');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, gy);
+			ctx.fillStyle = 'rgba(0,0,0,.18)';
+			ctx.beginPath();
+			ctx.moveTo(0, gy);
+			for (let x = 0; x <= w; x += 20) ctx.lineTo(x, gy - h * 0.12 - Math.sin(x * 0.03) * h * 0.04);
+			ctx.lineTo(w, gy);
+			ctx.fill();
+			const ground = ctx.createLinearGradient(0, gy, 0, h);
+			ground.addColorStop(0, '#6a7a3a');
+			ground.addColorStop(1, '#2a2018');
+			ctx.fillStyle = ground;
+			ctx.fillRect(0, gy, w, h - gy);
+			const m = Math.min(w, h);
+			// stone fort with a blue flag
+			ctx.fillStyle = '#9a9488';
+			ctx.strokeStyle = OL;
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.rect(-m * 0.02, gy - m * 0.3, m * 0.22, m * 0.3);
+			ctx.fill();
+			ctx.stroke();
+			for (let i = 0; i < 3; i++) {
+				ctx.beginPath();
+				ctx.rect(i * m * 0.08, gy - m * 0.34, m * 0.05, m * 0.05);
+				ctx.fill();
+				ctx.stroke();
+			}
+			ctx.fillStyle = '#3d8bff';
+			ctx.beginPath();
+			ctx.moveTo(m * 0.1, gy - m * 0.34);
+			ctx.lineTo(m * 0.1, gy - m * 0.46);
+			ctx.lineTo(m * 0.19, gy - m * 0.43 + Math.sin(t * 4) * 2);
+			ctx.lineTo(m * 0.1, gy - m * 0.4);
+			ctx.fill();
+			// future tower with a red core
+			ctx.fillStyle = '#3a3a5a';
+			ctx.beginPath();
+			ctx.moveTo(w + m * 0.02, gy);
+			ctx.lineTo(w - m * 0.2, gy);
+			ctx.lineTo(w - m * 0.13, gy - m * 0.42);
+			ctx.lineTo(w - m * 0.05, gy - m * 0.48);
+			ctx.lineTo(w + m * 0.02, gy - m * 0.42);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = `rgba(255,90,90,${0.6 + 0.4 * Math.sin(t * 3)})`;
+			ctx.beginPath();
+			ctx.arc(w - m * 0.09, gy - m * 0.3, m * 0.03, 0, TAU);
+			ctx.fill();
+			// soldiers: little figures with team colours, pushing towards the middle
+			const soldier = (x: number, side: number, ph: number) => {
+				const s = m / 250,
+					step = Math.sin(t * 8 + ph) * 3 * s,
+					col = side ? '#ff4d4d' : '#3d8bff';
+				ctx.save();
+				ctx.translate(x, gy);
+				ctx.scale(side ? -s : s, s);
+				ctx.lineCap = 'round';
+				for (const [lw, c] of [
+					[6, OL],
+					[3.6, '#5a4a3a'],
+				] as const) {
+					ctx.strokeStyle = c;
+					ctx.lineWidth = lw;
+					ctx.beginPath();
+					ctx.moveTo(-2, -14);
+					ctx.lineTo(-2 + step, 0);
+					ctx.moveTo(2, -14);
+					ctx.lineTo(2 - step, 0);
+					ctx.stroke();
+				}
+				ctx.fillStyle = col;
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = 1.8;
+				ctx.beginPath();
+				ctx.roundRect(-6, -27, 12, 15, 4);
+				ctx.fill();
+				ctx.stroke();
+				ctx.fillStyle = '#f2c8a0';
+				ctx.beginPath();
+				ctx.arc(1, -33, 6, 0, TAU);
+				ctx.fill();
+				ctx.stroke();
+				ctx.fillStyle = '#d8dce4';
+				ctx.save();
+				ctx.translate(4, -23);
+				ctx.rotate(-0.3 + Math.max(0, Math.sin(t * 6 + ph)) * -1.2);
+				ctx.fillRect(4, -1.5, 16, 3);
+				ctx.restore();
+				ctx.restore();
+			};
+			const clash = w * 0.5 + Math.sin(t * 0.7) * w * 0.05;
+			for (let i = 0; i < 4; i++) soldier(clash - m * 0.05 - i * m * 0.07, 0, i);
+			for (let i = 0; i < 4; i++) soldier(clash + m * 0.05 + i * m * 0.07, 1, i + 2);
+			// sparks at the clash
+			for (let i = 0; i < 5; i++) {
+				const a = t * 9 + i * 1.3,
+					r = (Math.sin(t * 7 + i) * 0.5 + 0.5) * m * 0.04;
+				ctx.fillStyle = i % 2 ? '#ffe066' : '#ffffff';
+				ctx.beginPath();
+				ctx.arc(clash + Math.cos(a) * r, gy - m * 0.1 + Math.sin(a) * r, 2, 0, TAU);
+				ctx.fill();
+			}
+			// meteors over the red side
+			for (let i = 0; i < 3; i++) {
+				const k = (t * 0.5 + i / 3) % 1,
+					mx = w * (0.55 + i * 0.12) - (1 - k) * w * 0.3,
+					my = k * gy * 0.9;
+				const tr = ctx.createLinearGradient(mx - m * 0.12, my - m * 0.12, mx, my);
+				tr.addColorStop(0, 'rgba(255,140,40,0)');
+				tr.addColorStop(1, 'rgba(255,180,60,.9)');
+				ctx.strokeStyle = tr;
+				ctx.lineWidth = 6;
+				ctx.beginPath();
+				ctx.moveTo(mx - m * 0.12, my - m * 0.12);
+				ctx.lineTo(mx, my);
+				ctx.stroke();
+				ctx.fillStyle = '#6a4a3a';
+				ctx.beginPath();
+				ctx.arc(mx, my, m * 0.022, 0, TAU);
+				ctx.fill();
+			}
+		},
+	},
 ];
