@@ -2929,4 +2929,201 @@ export const PUZZLE_GAMES: Game[] = [
 			}
 		},
 	},
+	{
+		id: 'zlatokop',
+		title: 'ZLATOKOP',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Spusť drapák, vytáhni zlato!',
+		description:
+			'Na motivy klasického Gold Mineru: drapák na laně se kývá sem a tam, klepnutím ho spustíš a naviják vytáhne zlato, kameny, diamanty nebo pytel s překvapením. Každý důl má minutu a cíl peněz, mezi doly nakupuješ dynamit a vylepšení u Starého Joea.',
+		genres: ['Arkáda', 'Zlatokop', 'Jedno tlačítko'],
+		features: ['Klasika s obchodem', 'Zlatá horečka', 'Denní důl', 'Žebříčky peněz'],
+		en: {
+			tagline: 'Drop the claw, haul the gold!',
+			description:
+				'In the spirit of the classic Gold Miner: a claw on a rope swings to and fro, one tap drops it and the winch pulls up gold, rocks, diamonds or a surprise bag. Every mine has one minute and a money target, and between mines you buy dynamite and upgrades from Old Joe.',
+			genres: ['Arcade', 'Gold miner', 'One button'],
+			features: ['Classic with a shop', 'Gold rush', 'Daily mine', 'Money leaderboards'],
+		},
+		statLabels: labels,
+		path: '/games/zlatokop/index.html',
+		colors: ['#ffd23f', '#e09a14', '#8e5631'],
+		statsKey: 'gamecenter.stats.zlatokop',
+		cover(ctx, w, h, t) {
+			// a desert mine: the claw swings from the winch, dives and comes back, gold sparkles in the dirt
+			const surf = h * 0.2;
+			const sky = ctx.createLinearGradient(0, 0, 0, surf);
+			sky.addColorStop(0, '#ffb35c');
+			sky.addColorStop(1, '#ffe9b8');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, surf);
+			ctx.fillStyle = '#e8a060';
+			ctx.beginPath();
+			ctx.moveTo(0, surf);
+			for (let x = 0; x <= w; x += w / 8)
+				ctx.lineTo(x, surf - h * 0.04 - Math.sin(x * 0.03) * h * 0.02);
+			ctx.lineTo(w, surf);
+			ctx.fill();
+			const dirt = ctx.createLinearGradient(0, surf, 0, h);
+			dirt.addColorStop(0, '#a0663a');
+			dirt.addColorStop(0.5, '#7a462a');
+			dirt.addColorStop(1, '#4a2a18');
+			ctx.fillStyle = dirt;
+			ctx.fillRect(0, surf, w, h - surf);
+			ctx.strokeStyle = 'rgba(0,0,0,.18)';
+			ctx.lineWidth = 2;
+			for (const k of [0.38, 0.56]) {
+				ctx.beginPath();
+				for (let x = 0; x <= w; x += 16) ctx.lineTo(x, h * k + Math.sin(x * 0.04 + k * 9) * 4);
+				ctx.stroke();
+			}
+			ctx.fillStyle = '#6aa84f';
+			ctx.fillRect(0, surf - 3, w, 5);
+			const m = Math.min(w, h);
+			const lump = (x: number, y: number, r: number, gold: boolean, seed: number) => {
+				const pts: [number, number][] = [];
+				for (let i = 0; i < 9; i++) {
+					const a = (i / 9) * TAU,
+						k = 0.82 + ((Math.sin(seed * 7.3 + i * 2.1) + 1) / 2) * 0.25;
+					pts.push([x + Math.cos(a) * r * k, y + Math.sin(a) * r * k * 0.85]);
+				}
+				ctx.beginPath();
+				pts.forEach((p, i) => {
+					const q = pts[(i + 1) % pts.length] ?? p,
+						mx = (p[0] + q[0]) / 2,
+						my = (p[1] + q[1]) / 2;
+					if (i === 0) {
+						const l = pts[pts.length - 1] ?? p;
+						ctx.moveTo((l[0] + p[0]) / 2, (l[1] + p[1]) / 2);
+					}
+					ctx.quadraticCurveTo(p[0], p[1], mx, my);
+				});
+				ctx.closePath();
+				const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r * 1.1);
+				gr.addColorStop(0, gold ? '#fff3a6' : '#c9c4bd');
+				gr.addColorStop(0.45, gold ? '#ffd23f' : '#8d8780');
+				gr.addColorStop(1, gold ? '#a8650a' : '#5a554f');
+				ctx.fillStyle = gr;
+				ctx.fill();
+				ctx.strokeStyle = '#2a160c';
+				ctx.lineWidth = 1.6;
+				ctx.stroke();
+				if (gold) {
+					const sp = Math.max(0, Math.sin(t * 2.4 + seed * 3)) * r * 0.35;
+					ctx.fillStyle = '#fff';
+					ctx.beginPath();
+					ctx.moveTo(x + r * 0.35, y - r * 0.3 - sp);
+					ctx.lineTo(x + r * 0.35 + sp * 0.25, y - r * 0.3);
+					ctx.lineTo(x + r * 0.35, y - r * 0.3 + sp);
+					ctx.lineTo(x + r * 0.35 - sp * 0.25, y - r * 0.3);
+					ctx.fill();
+				}
+			};
+			lump(w * 0.2, h * 0.46, m * 0.1, true, 1);
+			lump(w * 0.78, h * 0.4, m * 0.06, true, 2);
+			lump(w * 0.62, h * 0.55, m * 0.07, false, 3);
+			lump(w * 0.85, h * 0.6, m * 0.13, true, 4);
+			lump(w * 0.1, h * 0.62, m * 0.05, false, 5);
+			// diamond
+			const dx = w * 0.42,
+				dy = h * 0.66,
+				ds = m * 0.045;
+			ctx.fillStyle = '#8ef0ff';
+			ctx.strokeStyle = '#0d3a5a';
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			ctx.moveTo(dx - ds, dy - ds * 0.3);
+			ctx.lineTo(dx - ds * 0.5, dy - ds * 0.8);
+			ctx.lineTo(dx + ds * 0.5, dy - ds * 0.8);
+			ctx.lineTo(dx + ds, dy - ds * 0.3);
+			ctx.lineTo(dx, dy + ds);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// winch and the swinging claw
+			const px = w * 0.5,
+				py = surf - h * 0.04,
+				ang = Math.sin(t * 1.6) * 0.85,
+				len = h * 0.06 + h * 0.34 * Math.pow(Math.max(0, Math.sin(t * 0.8)), 2),
+				tx = px + Math.sin(ang) * len,
+				ty = py + Math.cos(ang) * len;
+			ctx.strokeStyle = '#2a160c';
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.moveTo(px, py);
+			ctx.lineTo(tx, ty);
+			ctx.stroke();
+			ctx.strokeStyle = '#d8c8a0';
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.moveTo(px, py);
+			ctx.lineTo(tx, ty);
+			ctx.stroke();
+			ctx.save();
+			ctx.translate(tx, ty);
+			ctx.rotate(-ang);
+			ctx.lineCap = 'round';
+			for (const [lw, col] of [
+				[5, '#2a160c'],
+				[3, '#c9ced8'],
+			] as const) {
+				ctx.strokeStyle = col;
+				ctx.lineWidth = lw;
+				for (const sgn of [-1, 1]) {
+					ctx.beginPath();
+					ctx.moveTo(0, 2);
+					ctx.quadraticCurveTo(sgn * 12, 7, sgn * 8, 17);
+					ctx.lineTo(sgn * 2, 19);
+					ctx.stroke();
+				}
+			}
+			ctx.fillStyle = '#8a92a4';
+			ctx.beginPath();
+			ctx.arc(0, 2, 4, 0, TAU);
+			ctx.fill();
+			ctx.restore();
+			ctx.fillStyle = '#7a4a24';
+			ctx.strokeStyle = '#2a160c';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.roundRect(px - m * 0.08, py - m * 0.06, m * 0.16, m * 0.06, 4);
+			ctx.fill();
+			ctx.stroke();
+			ctx.strokeStyle = '#a8703a';
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.moveTo(px - m * 0.09, surf);
+			ctx.lineTo(px - m * 0.03, py - m * 0.03);
+			ctx.moveTo(px + m * 0.09, surf);
+			ctx.lineTo(px + m * 0.03, py - m * 0.03);
+			ctx.stroke();
+			// the miner next to the winch: shirt with braces, head, beard and hat
+			ctx.fillStyle = '#c8402e';
+			ctx.beginPath();
+			ctx.roundRect(px + m * 0.115, py - m * 0.04, m * 0.07, surf - py + m * 0.04, 5);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#7a4a24';
+			ctx.beginPath();
+			ctx.ellipse(px + m * 0.15, py - m * 0.1, m * 0.07, m * 0.018, 0, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(px + m * 0.11, py - m * 0.1);
+			ctx.quadraticCurveTo(px + m * 0.11, py - m * 0.17, px + m * 0.15, py - m * 0.165);
+			ctx.quadraticCurveTo(px + m * 0.19, py - m * 0.17, px + m * 0.19, py - m * 0.1);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#f2c79a';
+			ctx.beginPath();
+			ctx.arc(px + m * 0.15, py - m * 0.065, m * 0.035, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#f4f1ea';
+			ctx.beginPath();
+			ctx.ellipse(px + m * 0.15, py - m * 0.035, m * 0.035, m * 0.025, 0, 0, TAU);
+			ctx.fill();
+		},
+	},
 ];
