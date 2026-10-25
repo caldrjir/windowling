@@ -190,7 +190,8 @@ const Veky = (() => {
         for (const e of units) { if (e.side === u.side || e.dead) continue; const g2 = (e.x - u.x) * dir - (e.st.w + u.st.w) / 2; if (g2 > -20 && g2 < gap) { gap = g2; tgt = e; } }
         const bgap = (FRONT[1 - u.side] - u.x) * dir - u.st.w / 2;
         if (bgap < gap) { gap = bgap; tgt = null; }
-        if (gap <= u.st.range) {
+        u.fight = gap <= u.st.range;
+        if (u.fight) {
           if (u.cd <= 0) {
             u.cd = u.st.rate; u.atk = 1;
             const melee = gap <= 16;
