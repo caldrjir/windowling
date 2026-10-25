@@ -10,7 +10,7 @@ const VkArt = (() => {
   const TEAM = ['#3d7bff', '#e8383a'], TEAM_D = ['#1e4aa8', '#9a1e20'], TEAM_L = ['#8ab8ff', '#ff8a8a'];
   const UNIT_SCALE = 1, BASE_SCALE = 1.35;
   // výška postav kvůli ukazatelům zdraví: pěšák a střelec, těžké jednotky podle věku
-  const TOP = [64, 64, [96, 98, 70, 60, 104]];
+  const TOP = [64, 64, [96, 118, 70, 60, 104]]; // rytíř i s praporcem
 
   // ── Dodané obrázky ── assets/manifest.json je seznam souborů, které existují (bez přípony = .png).
   // Co v něm je, se načte a nahradí kresbu; co chybí, kreslí se jako dosud. Bez 404 v konzoli.
