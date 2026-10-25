@@ -96,7 +96,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Flappy Bird – tap to fly through gaps
 - [ ] Fruit Ninja – swipe to slice fruit, avoid bombs
 - [ ] Temple Run / Subway Surfers – endless runner with lanes, jump and slide
-- [ ] Doodle Jump – endless vertical jumping on platforms
+- [x] Doodle Jump – endless vertical jumping on platforms (Skokan)
 - [ ] Plants vs. Zombies – lane defence with plants
 - [ ] Tower defence – build towers along a path
 - [ ] OpenTTD – transport tycoon (trains, roads, economy)

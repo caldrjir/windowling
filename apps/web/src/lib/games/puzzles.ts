@@ -3230,4 +3230,137 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.restore();
 		},
 	},
+	{
+		id: 'skokan',
+		title: 'SKOKAN',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Skákej pořád výš!',
+		description:
+			'Na motivy Doodle Jumpu: zelený panáček z čtverečkovaného sešitu sám skáče po plošinkách a ty ho posíláš doleva a doprava. Pohyblivé, lámavé a mizející plošinky, pružiny, vrtulka, raketový batoh, příšery a černé díry. Sešit nebo vesmír, denní skok a Cesta se zlatými hvězdami.',
+		genres: ['Arkáda', 'Skákačka', 'Nekonečná'],
+		features: ['Sešit a Vesmír', 'Denní skok', 'Cesta: 120 skoků', 'Žebříčky výšky'],
+		en: {
+			tagline: 'Jump higher and higher!',
+			description:
+				'In the spirit of Doodle Jump: a green doodle from a squared notebook bounces up the platforms by itself and you steer it left and right. Moving, breaking and vanishing platforms, springs, a propeller, a jetpack, monsters and black holes. Notebook or space, a daily jump and a Path with gold stars.',
+			genres: ['Arcade', 'Jumper', 'Endless'],
+			features: ['Notebook and Space', 'Daily jump', 'Path: 120 jumps', 'Height leaderboards'],
+		},
+		statLabels: labels,
+		path: '/games/skokan/index.html',
+		colors: ['#7fd34a', '#5ab8ff', '#f8f3e3'],
+		statsKey: 'gamecenter.stats.skokan',
+		cover(ctx, w, h, t) {
+			// squared notebook paper; the doodle bounces up while the platforms scroll down
+			const INK = '#2b2b3a',
+				s = Math.max(12, w / 20),
+				scroll = (t * 40) % (h * 0.25);
+			ctx.fillStyle = '#f8f3e3';
+			ctx.fillRect(0, 0, w, h);
+			ctx.strokeStyle = 'rgba(120,160,210,.4)';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			for (let x = 0; x <= w; x += s) {
+				ctx.moveTo(x + 0.5, 0);
+				ctx.lineTo(x + 0.5, h);
+			}
+			for (let y = (scroll % s) - s; y <= h; y += s) {
+				ctx.moveTo(0, y + 0.5);
+				ctx.lineTo(w, y + 0.5);
+			}
+			ctx.stroke();
+			ctx.strokeStyle = 'rgba(230,90,90,.4)';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(w * 0.08, 0);
+			ctx.lineTo(w * 0.08, h);
+			ctx.stroke();
+			const pw = w * 0.2,
+				ph = Math.max(8, h * 0.028);
+			const plat = (x: number, y: number, c1: string, c2: string) => {
+				ctx.fillStyle = c1;
+				ctx.beginPath();
+				ctx.roundRect(x - pw / 2, y, pw, ph, ph / 2);
+				ctx.fill();
+				ctx.fillStyle = c2;
+				ctx.beginPath();
+				ctx.roundRect(x - pw / 2 + 2, y + ph * 0.55, pw - 4, ph * 0.38, ph / 3);
+				ctx.fill();
+				ctx.strokeStyle = INK;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.roundRect(x - pw / 2, y, pw, ph, ph / 2);
+				ctx.stroke();
+			};
+			const rows = [0.18, 0.28, 0.43, 0.53, 0.68, 0.78, 0.93, 1.03];
+			rows.forEach((ry, i) => {
+				const y = ((ry * h + scroll) % (h * 1.0)) - ph,
+					x = w * (0.2 + ((i * 0.37 + 0.13) % 1) * 0.6);
+				if (i % 4 === 1) plat(x + Math.sin(t * 1.5 + i) * w * 0.12, y, '#5ab8ff', '#2a74c8');
+				else plat(x, y, '#7fd34a', '#4e9a2a');
+			});
+			// the doodle: bean body, striped trousers, snout and legs
+			const bounce = Math.abs(Math.sin(t * 2.6)),
+				dx = w * 0.5 + Math.sin(t * 0.9) * w * 0.12,
+				dy = h * 0.56 - bounce * h * 0.2,
+				ds = h / 9 / 45,
+				face = Math.cos(t * 0.9) >= 0 ? 1 : -1;
+			ctx.save();
+			ctx.translate(dx, dy);
+			ctx.scale(ds * face, ds * (1 - (1 - bounce) * 0.08));
+			ctx.lineCap = 'round';
+			ctx.strokeStyle = INK;
+			ctx.lineWidth = 3;
+			for (const lx of [-12, -4, 4, 12]) {
+				ctx.beginPath();
+				ctx.moveTo(lx, -10);
+				ctx.lineTo(lx + 1.5, -1);
+				ctx.lineTo(lx + 5, -1);
+				ctx.stroke();
+			}
+			const body = () => {
+				ctx.beginPath();
+				ctx.moveTo(-16, -10);
+				ctx.bezierCurveTo(-19, -26, -16, -44, 0, -45);
+				ctx.bezierCurveTo(14, -45, 18, -32, 17, -20);
+				ctx.lineTo(17, -10);
+				ctx.closePath();
+			};
+			body();
+			ctx.fillStyle = '#a8d84a';
+			ctx.fill();
+			ctx.save();
+			body();
+			ctx.clip();
+			ctx.fillStyle = '#6f9e2c';
+			ctx.fillRect(-20, -19, 40, 10);
+			ctx.fillStyle = '#4a7a1a';
+			for (let i = 0; i < 3; i++) ctx.fillRect(-20, -18 + i * 3.4, 40, 1.6);
+			ctx.restore();
+			body();
+			ctx.lineWidth = 2.4;
+			ctx.stroke();
+			ctx.fillStyle = '#a8d84a';
+			ctx.beginPath();
+			ctx.moveTo(10, -37);
+			ctx.lineTo(24, -36);
+			ctx.lineTo(24, -28);
+			ctx.lineTo(10, -27);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#d9f09a';
+			ctx.beginPath();
+			ctx.ellipse(25, -32, 3, 5.5, 0, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = INK;
+			for (const ex of [3, 9]) {
+				ctx.beginPath();
+				ctx.ellipse(ex, -36, 1.8, 2.6, 0, 0, TAU);
+				ctx.fill();
+			}
+			ctx.restore();
+		},
+	},
 ];
