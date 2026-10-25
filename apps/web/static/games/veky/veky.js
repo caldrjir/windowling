@@ -190,7 +190,8 @@ const Veky = (() => {
         for (const e of units) { if (e.side === u.side || e.dead) continue; const g2 = (e.x - u.x) * dir - (e.st.w + u.st.w) / 2; if (g2 > -20 && g2 < gap) { gap = g2; tgt = e; } }
         const bgap = (FRONT[1 - u.side] - u.x) * dir - u.st.w / 2;
         if (bgap < gap) { gap = bgap; tgt = null; }
-        if (gap <= u.st.range) {
+        u.fight = gap <= u.st.range;
+        if (u.fight) {
           if (u.cd <= 0) {
             u.cd = u.st.rate; u.atk = 1;
             const melee = gap <= 16;
@@ -204,7 +205,7 @@ const Veky = (() => {
           if (!blocked) { u.x += dir * u.st.speed * dt; u.walk += dt * 9; }
         }
       }
-      for (let i = units.length - 1; i >= 0; i--) if (units[i].dead > 0.8) units.splice(i, 1);
+      for (let i = units.length - 1; i >= 0; i--) if (units[i].dead > VkArt.deathTime(units[i])) units.splice(i, 1);
       // střely
       for (let i = shots.length - 1; i >= 0; i--) {
         const p = shots[i]; p.ttl -= dt;

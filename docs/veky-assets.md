@@ -25,6 +25,15 @@ nahradí; co chybí, kreslí se dál jako dosud. Takže se dá měnit postupně,
   každé jednotce: `…-walk` (druhý krok, pravá noha vpředu; hra je střídá), `…-atk` (úder nebo
   výstřel) a `…-dead` (padlý na zemi). Stejná velikost plátna a stejná poloha postavy jako u
   základního obrázku. Chybějící pózu nahradí hra pohybem (houpání, výpad, překlopení).
+  Plynulejší chůze: celý cyklus (dva kroky) jako snímky `unit-…` (první), `…-walk-1` až
+  `…-walk-7` (může jich být libovolně). Stačí poslat jeden list se snímky vedle sebe na
+  průhledném pozadí; rozřežu ho na stejné měřítko a kotvu (zem, střed hlavy).
+  Formát může být i WebP (v `manifest.json` s příponou).
+  Plynulejší útok: snímky `…-atk-0` až `…-atk-7` (taky jako jeden list). Hrají celou dobu mezi
+  dvěma údery; zásah (plný výpad) má být zhruba v **5/8 sekvence** (u 8 snímků šestý snímek),
+  před ním nápřah, po něm návrat do střehu. Měřítko srovnám podle velikosti helmy/hlavy.
+  Plynulá smrt: snímky `…-dead-0` až `…-dead-7` (pád, poslední leží na zemi). Pád trvá 0,7 s,
+  pak tělo chvíli leží a zmizí.
 - **Barva soupeře:** červenou verzi hra dopočítá sama z modré (modré odstíny přebarví na
   karmínové). Ruční `-red` verze je potřeba jen tehdy, když automatika nevypadá dobře.
 - **Jména souborů** přesně podle tabulek níže. Soubory mi pošli, já je dám do

@@ -40,6 +40,29 @@ const VkArt = (() => {
     } catch (e) { RED[n] = IMG[n]; }
     return RED[n];
   }
+  // snímky chůze: základní obrázek, pak `-walk-1`, `-walk-2`… (celý cyklus = dva kroky, delší, ať nohy neklouzou); starší `-walk` = jeden snímek
+  function walkFrames(base) {
+    const f = [base];
+    for (let i = 1; img(`${base}-walk-${i}`); i++) f.push(`${base}-walk-${i}`);
+    if (f.length === 1 && img(`${base}-walk`)) f.push(`${base}-walk`);
+    return f;
+  }
+  // snímky útoku `-atk-0`, `-atk-1`…: hrají přes celou prodlevu mezi údery, zásah padne na ATK_HIT sekvence
+  const ATK_HIT = 0.625;
+  // snímky pádu `-dead-0`, `-dead-1`…: pád trvá DEAD_FALL s, pak tělo chvíli leží a zmizí
+  const DEAD_FALL = 0.7, DEAD_END = 1.7;
+  function deadFrames(base) {
+    const f = [];
+    for (let i = 0; img(`${base}-dead-${i}`); i++) f.push(`${base}-dead-${i}`);
+    return f;
+  }
+  // jak dlouho padlá jednotka zůstává na bojišti (s animací pádu déle)
+  const deathTime = u => (deadFrames(`unit-${u.age}-${u.kind}`).length ? DEAD_END : 0.8);
+  function atkFrames(base) {
+    const f = [];
+    for (let i = 0; img(`${base}-atk-${i}`); i++) f.push(`${base}-atk-${i}`);
+    return f;
+  }
   const pick = (n, red) => (img(n) ? (red ? redOf(n) : img(n)) : null);
   // obrázek s kotvou: ax, ay jsou poměry (0–1) bodu, který leží na (x, y); h = výška v herních px
   function sprite(g, im, x, y, h, ax = 0.5, ay = 1, flip = false) {
@@ -116,16 +139,21 @@ const VkArt = (() => {
     if (img(base)) {
       // dodané obrázky: póza chůze (střídá se se základní), útoku a padlého; chybějící pózu nahradí pohyb
       const h = u.kind === 2 ? TOP[2][u.age] : TOP[u.kind], red = !!u.side;
-      const deadPic = u.dead && pick(`${base}-dead`, red), atkPic = !u.dead && a > 0.45 && pick(`${base}-atk`, red);
-      const walkPic = !u.dead && !atkPic && Math.floor(walk / Math.PI) % 2 === 1 && pick(`${base}-walk`, red);
+      const seq = atkFrames(base), swing = u.st ? 1 - Math.max(0, u.cd || 0) / u.st.rate : 0;
+      const dseq = deadFrames(base);
+      const deadPic = u.dead && (dseq.length ? pick(dseq[Math.min(dseq.length - 1, Math.floor(u.dead / DEAD_FALL * dseq.length))], red) : pick(`${base}-dead`, red));
+      const atkPic = !u.dead && (seq.length ? u.fight && pick(seq[Math.floor(((swing + ATK_HIT) % 1) * seq.length)], red) : a > 0.45 && pick(`${base}-atk`, red));
+      const frames = walkFrames(base), fi = Math.floor(walk / (frames.length > 2 ? 3 * Math.PI : TAU) * frames.length) % frames.length;
+      const walkPic = !u.dead && !atkPic && fi > 0 && pick(frames[fi], red);
       const pic = deadPic || atkPic || walkPic || pick(base, red);
-      if (u.dead) g.globalAlpha = Math.max(0, 1 - u.dead * 1.3);
+      if (u.dead) g.globalAlpha = dseq.length ? Math.max(0, Math.min(1, (DEAD_END - u.dead) / 0.4)) : Math.max(0, 1 - u.dead * 1.3);
       if (u.hit > 0) g.filter = 'brightness(1.9)';
-      if (deadPic) sprite(g, pic, 0, 0, h);
+      const ph = h * pic.height / img(base).height; // pózy můžou mít jinou výšku plátna než základní obrázek
+      if (deadPic) sprite(g, pic, 0, 0, ph);
       else {
         if (u.dead) g.rotate(-Math.min(1.4, u.dead * 3));
-        const bob = img(`${base}-walk`) ? 0 : Math.abs(Math.sin(walk)) * 2, lunge = atkPic ? 0 : Math.sin(a * Math.PI) * 6;
-        g.save(); g.translate(lunge, -bob); if (!img(`${base}-walk`)) g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, h); g.restore();
+        const anim = frames.length > 1, bob = anim ? 0 : Math.abs(Math.sin(walk)) * 2, lunge = atkPic ? 0 : Math.sin(a * Math.PI) * 6;
+        g.save(); g.translate(lunge, -bob); if (!anim) g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, ph); g.restore();
       }
       g.filter = 'none'; g.restore(); return;
     }
@@ -442,5 +470,5 @@ const VkArt = (() => {
     g.restore();
   }
 
-  return { TEAM, UNIT_SCALE, BASE_SCALE, TOP, img, get ready() { return manifest !== null; }, get loaded() { return Object.keys(IMG).length; }, land, base, SLOTS, turret, unit, shot, special, plane };
+  return { TEAM, UNIT_SCALE, BASE_SCALE, TOP, img, get ready() { return manifest !== null; }, get loaded() { return Object.keys(IMG).length; }, land, base, SLOTS, turret, unit, deathTime, shot, special, plane };
 })();
