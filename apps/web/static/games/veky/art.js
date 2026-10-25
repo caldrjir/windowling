@@ -48,8 +48,8 @@ const VkArt = (() => {
     return f;
   }
   // snímky útoku `-atk-0`, `-atk-1`…: hrají přes celou prodlevu mezi údery, zásah padne na ATK_HIT sekvence
-  // (pěšák: plný výpad v 5/8, střelec: vypuštěný šíp v 6/8)
-  const ATK_HIT = [0.625, 0.75, 0.625];
+  // (pěšák: plný výpad v 5/8, střelec: vypuštěný šíp v 6/8, jezdec: náraz kopím mezi 5. a 6. snímkem)
+  const ATK_HIT = [0.625, 0.75, 0.56];
   // snímky pádu `-dead-0`, `-dead-1`…: pád trvá DEAD_FALL s, pak tělo chvíli leží a zmizí
   const DEAD_FALL = 0.7, DEAD_END = 1.7;
   function deadFrames(base) {
