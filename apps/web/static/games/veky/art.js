@@ -12,6 +12,23 @@ const VkArt = (() => {
   // výška postav kvůli ukazatelům zdraví: pěšák a střelec, těžké jednotky podle věku
   const TOP = [64, 64, [96, 98, 70, 60, 104]];
 
+  // ── Dodané obrázky ── assets/manifest.json je seznam jmen souborů (bez .png), které existují.
+  // Co v něm je, se načte a nahradí kresbu; co chybí, kreslí se jako dosud. Bez 404 v konzoli.
+  const IMG = {};
+  let manifest = null;
+  try {
+    fetch('assets/manifest.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : [])).then(list => {
+      manifest = Array.isArray(list) ? list : [];
+      for (const n of manifest) { const im = new Image(); im.onload = () => { IMG[n] = im; }; im.src = `assets/${n}.png`; }
+    }).catch(() => { manifest = []; });
+  } catch (e) { manifest = []; }
+  const img = n => IMG[n] || null;
+  // obrázek s kotvou: ax, ay jsou poměry (0–1) bodu, který leží na (x, y); h = výška v herních px
+  function sprite(g, im, x, y, h, ax = 0.5, ay = 1, flip = false) {
+    const w = im.width * h / im.height;
+    g.save(); g.translate(x, y); if (flip) g.scale(-1, 1); g.drawImage(im, -w * ax, -h * ay, w, h); g.restore();
+  }
+
   const shade = (g, x0, y0, x1, y1, c1, c2) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, c1); gr.addColorStop(1, c2); return gr; };
   const mix = (c, to, k) => { const h = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)); const a = h(c), b = h(to); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(',')})`; };
   const line = (g, w, c, ...p) => { g.strokeStyle = c; g.lineWidth = w; g.beginPath(); g.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); g.stroke(); };
@@ -36,8 +53,14 @@ const VkArt = (() => {
     const be = [shoulderB[0] + Math.cos(bang) * 10, shoulderB[1] + Math.sin(bang) * 10], bh = [be[0] + Math.cos(bang - 0.4) * 9, be[1] + Math.sin(bang - 0.4) * 9];
     limb(g, 5.5, mix(o.sleeve || o.shirt, '#000000', 0.25), shoulderB[0], shoulderB[1], be[0], be[1], bh[0], bh[1]);
     fillOut(g, mix(o.skin, '#000000', 0.2), () => { g.beginPath(); g.arc(bh[0], bh[1], 3, 0, TAU); }, 1.2);
-    drawLeg(w + Math.PI, true);
-    drawLeg(w, false);
+    if (o.sit) {
+      // jezdec sedí: stehno vodorovně dopředu, bérec svisle dolů podél boku zvířete
+      const seat = (back) => { const col = back ? mix(o.pants, '#000000', 0.25) : o.pants, dx = back ? -3 : 0; limb(g, 7, col, dx, -24, dx + 11, -23); limb(g, 6, o.legsBare ? (back ? mix(o.skin, '#000000', 0.2) : o.skin) : col, dx + 11, -23, dx + 9, -10); fillOut(g, back ? mix(o.boots, '#000000', 0.25) : o.boots, () => { g.beginPath(); g.moveTo(dx + 5, -12); g.lineTo(dx + 15, -11); g.quadraticCurveTo(dx + 16, -7, dx + 13, -7); g.lineTo(dx + 5, -8); g.closePath(); }, 1.5); };
+      seat(true); seat(false);
+    } else {
+      drawLeg(w + Math.PI, true);
+      drawLeg(w, false);
+    }
     // trup: ramena širší než pas, světlo zleva shora
     const torso = () => { g.beginPath(); g.moveTo(-7, -23); g.lineTo(7, -23); g.quadraticCurveTo(11, -34, 10, -44); g.quadraticCurveTo(1, -47, -9, -44); g.quadraticCurveTo(-10, -34, -7, -23); g.closePath(); };
     torso(); g.fillStyle = shade(g, -10, -46, 10, -22, mix(o.shirt, '#ffffff', 0.18), mix(o.shirt, '#000000', 0.18)); g.fill();
@@ -74,6 +97,14 @@ const VkArt = (() => {
     if (u.dead) { g.globalAlpha = Math.max(0, 1 - u.dead * 1.3); g.rotate(-Math.min(1.4, u.dead * 3)); }
     if (u.hit > 0) g.filter = 'brightness(1.9)';
     const K = u.age * 3 + u.kind;
+    const pic = (u.side && img(`unit-${u.age}-${u.kind}-red`)) || img(`unit-${u.age}-${u.kind}`);
+    if (pic) {
+      // dodaný obrázek: houpání při chůzi a výpad při útoku; soupeři bez vlastní verze dostanou červený praporek
+      const h = u.kind === 2 ? TOP[2][u.age] : TOP[u.kind], bob = Math.abs(Math.sin(walk)) * 2, lunge = Math.sin(a * Math.PI) * 6;
+      g.save(); g.translate(lunge, -bob); g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, h); g.restore();
+      if (u.side && !img(`unit-${u.age}-${u.kind}-red`)) { g.fillStyle = tc; g.strokeStyle = OL; g.lineWidth = 1.2; g.beginPath(); g.moveTo(-6, -h - 4); g.lineTo(-6, -h - 18); g.lineTo(6, -h - 14); g.lineTo(-6, -h - 10); g.stroke(); g.fill(); }
+      g.filter = 'none'; g.restore(); return;
+    }
     const skin = u.age === 4 ? '#e8c8a8' : u.age === 0 ? '#d89a68' : '#f0c49a';
     switch (K) {
       case 0: person(g, { walk, atk: a, skin, pants: skin, legsBare: true, boots: '#6a4428', shirt: '#9a6a3a',
@@ -85,7 +116,7 @@ const VkArt = (() => {
         torso: q => { q.strokeStyle = 'rgba(60,30,10,.5)'; q.lineWidth = 1; for (let i = -6; i < 8; i += 3) { q.beginPath(); q.moveTo(i, -44); q.lineTo(i + 1, -24); q.stroke(); } q.fillStyle = tc; q.fillRect(-9, -27, 20, 3); },
         head: (q, x, y) => { q.fillStyle = '#2a1a0a'; q.beginPath(); q.arc(x - 1, y - 2, 9, Math.PI * 1.02, Math.PI * 1.95); q.lineTo(x - 7, y + 3); q.fill(); q.fillStyle = tc; q.fillRect(x - 9, y - 5, 17, 3); q.fillStyle = '#fff'; q.beginPath(); q.moveTo(x - 8, y - 5); q.quadraticCurveTo(x - 14, y - 16, x - 9, y - 18); q.quadraticCurveTo(x - 9, y - 10, x - 6, y - 5); q.fill(); },
         weapon: q => { const s = t * 14; q.strokeStyle = '#8a6a4a'; q.lineWidth = 1.4; q.beginPath(); q.moveTo(0, 0); q.lineTo(Math.cos(s) * 13, Math.sin(s) * 13); q.stroke(); fillOut(q, '#9a9a9a', () => { q.beginPath(); q.arc(Math.cos(s) * 13, Math.sin(s) * 13, 3, 0, TAU); }, 1.2); } }); break;
-      case 2: dino(g, walk, a, t, tc, () => person(g, { walk: 0, atk: a, skin, pants: skin, legsBare: true, boots: '#6a4428', shirt: '#9a6a3a', aim: -0.25 + a * 0.4,
+      case 2: dino(g, walk, a, t, tc, () => person(g, { sit: true, walk: 0, atk: a, skin, pants: skin, legsBare: true, boots: '#6a4428', shirt: '#9a6a3a', aim: -0.25 + a * 0.4,
         torso: q => { q.fillStyle = tc; q.fillRect(-9, -27, 20, 3.5); }, head: (q, x, y) => { q.fillStyle = '#3a2410'; q.beginPath(); q.arc(x - 1, y - 2, 9.5, Math.PI, TAU); q.lineTo(x - 8, y + 3); q.fill(); },
         weapon: q => { limb(q, 2.4, '#6a4220', -10, 0, 30, 0); fillOut(q, '#a8a49a', () => { q.beginPath(); q.moveTo(30, -4); q.lineTo(39, 0); q.lineTo(30, 4); q.closePath(); }, 1.2); } })); break;
       case 3: person(g, { walk, atk: a, skin, pants: '#5a4a3a', boots: '#3a2a1a', shirt: '#9aa0aa', sleeve: '#8a909a',
@@ -98,7 +129,7 @@ const VkArt = (() => {
         torso: q => { q.fillStyle = '#6a4a2a'; q.fillRect(-9, -27, 20, 3); q.strokeStyle = '#6a4422'; q.lineWidth = 2; q.beginPath(); q.moveTo(-8, -44); q.lineTo(8, -25); q.stroke(); q.fillStyle = tc; q.fillRect(-9, -45, 20, 3); },
         head: (q, x, y) => { fillOut(q, shade(q, x - 10, y - 12, x + 6, y + 6, '#5a8a4a', '#2e5a26'), () => { q.beginPath(); q.moveTo(x - 9, y + 6); q.quadraticCurveTo(x - 12, y - 10, x + 1, y - 15); q.quadraticCurveTo(x + 9, y - 10, x + 9, y - 4); q.quadraticCurveTo(x + 2, y - 8, x - 3, y + 2); q.lineTo(x - 5, y + 8); q.closePath(); }, 1.6); },
         weapon: q => { q.strokeStyle = '#6a4220'; q.lineWidth = 2.6; q.beginPath(); q.arc(-1, 0, 15, -1.25, 1.25); q.stroke(); q.strokeStyle = '#3a2410'; q.lineWidth = 1; q.beginPath(); q.arc(-1, 0, 15, -1.25, 1.25); q.stroke(); const d = 4 + a * 8; q.strokeStyle = '#eee'; q.lineWidth = 0.8; q.beginPath(); q.moveTo(-1 + Math.cos(-1.25) * 15, Math.sin(-1.25) * 15); q.lineTo(-d, 0); q.lineTo(-1 + Math.cos(1.25) * 15, Math.sin(1.25) * 15); q.stroke(); if (a < 0.5) { line(q, 1.4, '#6a4220', -d, 0, 18, 0); q.fillStyle = '#c8ccd4'; q.beginPath(); q.moveTo(18, -2.5); q.lineTo(23, 0); q.lineTo(18, 2.5); q.fill(); } } }); break;
-      case 5: horse(g, walk, a, t, tc, td, () => person(g, { walk: 0, atk: a, skin, pants: '#8a909a', boots: '#5a5e66', shirt: '#a8acb4', sleeve: '#9aa0aa', aim: 0.02 + a * 0.15,
+      case 5: horse(g, walk, a, t, tc, td, () => person(g, { sit: true, walk: 0, atk: a, skin, pants: '#8a909a', boots: '#5a5e66', shirt: '#a8acb4', sleeve: '#9aa0aa', aim: 0.02 + a * 0.15,
         torso: q => { q.fillStyle = tc; q.beginPath(); q.moveTo(-6, -43); q.lineTo(7, -43); q.lineTo(6, -22); q.lineTo(-5, -22); q.closePath(); q.fill(); q.fillStyle = '#ffe066'; q.beginPath(); q.arc(0.5, -33, 3, 0, TAU); q.fill(); },
         head: (q, x, y) => { fillOut(q, shade(q, x - 9, y - 12, x + 9, y + 8, '#e4e8ee', '#7a7e88'), () => { q.beginPath(); q.roundRect(x - 9, y - 12, 18, 21, 5); }, 1.6); q.fillStyle = OL; q.fillRect(x + 1, y - 3, 8, 2); q.fillRect(x + 1, y + 1, 7, 1.2); fillOut(q, tc, () => { q.beginPath(); q.moveTo(x - 2, y - 12); q.quadraticCurveTo(x - 12, y - 26 + Math.sin(t * 8), x - 20, y - 16); q.quadraticCurveTo(x - 10, y - 16, x - 2, y - 10); q.closePath(); }, 1.2); },
         weapon: q => { limb(q, 3, '#d8c8a0', -14, 0, 44, 0); fillOut(q, '#c8ccd4', () => { q.beginPath(); q.moveTo(44, -3.5); q.lineTo(54, 0); q.lineTo(44, 3.5); q.closePath(); }, 1.2); q.fillStyle = tc; q.beginPath(); q.moveTo(30, 0); q.lineTo(38, -6 + Math.sin(t * 9) * 1.5); q.lineTo(30, -5); q.fill(); } })); break;
@@ -154,7 +185,7 @@ const VkArt = (() => {
     limb(g, 3.5, '#3e8a36', 30, -54, 36, -46, 40, -48);
     // sedlo v barvě týmu
     fillOut(g, tc, () => { g.beginPath(); g.roundRect(-16, -66, 24, 8, 3); }, 1.4);
-    g.save(); g.translate(-4, -60); g.scale(0.85, 0.85); rider(); g.restore();
+    g.save(); g.translate(-6, -64 + 24 * 0.85); g.scale(0.85, 0.85); rider(); g.restore();
     g.restore();
     leg(8, st, false);
   }
@@ -171,7 +202,7 @@ const VkArt = (() => {
     fillOut(g, shade(g, -28, -50, 20, -20, tc, td), () => { g.beginPath(); g.moveTo(-28, -46); g.lineTo(16, -46); g.lineTo(18, -24); for (let i = 0; i <= 6; i++) g.lineTo(18 - i * 7.6, -24 + (i % 2) * 4); g.closePath(); }, 1.6);
     g.fillStyle = '#ffe066'; g.fillRect(-28, -46, 44, 2.5); g.beginPath(); g.arc(-6, -36, 4, 0, TAU); g.fill();
     leg(-18, st, false); leg(20, -st, false);
-    g.save(); g.translate(-6, -44); g.scale(0.82, 0.82); rider(); g.restore();
+    g.save(); g.translate(-8, -46 + 24 * 0.82); g.scale(0.82, 0.82); rider(); g.restore();
   }
   function cannon(g, walk, a, t, tc, td, skin) {
     // dělostřelec vzadu s nabijákem
@@ -218,6 +249,8 @@ const VkArt = (() => {
   const SKY = [['#ff8a4a', '#ffd9a0'], ['#4a98f0', '#cfe9ff'], ['#e8a24a', '#fff0c8'], ['#6a7484', '#c8ccd4'], ['#1a0e4a', '#8a4ac8']];
   function land(W, H, age, gy) {
     const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    const bg = img(`bg-${age}`);
+    if (bg) { g.drawImage(bg, 0, 0, W, H); return c; }
     let s = 7 + age * 13; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
     g.fillStyle = shade(g, 0, 0, 0, gy, SKY[age][0], SKY[age][1]); g.fillRect(0, 0, W, gy);
     // nebeská tělesa a mraky
@@ -270,6 +303,8 @@ const VkArt = (() => {
 
   // ── Základny ── (x, y) je střed paty, side 0 = hráč (vlevo), 1 = soupeř
   function base(g, x, y, age, side, t) {
+    const pic = (side && img(`base-${age}-red`)) || img(`base-${age}`);
+    if (pic) { sprite(g, pic, x, y, 190 * (age === 4 ? 1.25 : age === 2 ? 1.2 : 1), 0.5, 1, !!side); return; }
     g.save(); g.translate(x, y); g.scale(side ? -BASE_SCALE : BASE_SCALE, BASE_SCALE); g.lineJoin = 'round'; g.lineCap = 'round';
     const tc = TEAM[side], td = TEAM_D[side];
     const flag = (fx, fy, h) => { limb(g, 2, '#5a4a3a', fx, fy, fx, fy - h); fillOut(g, shade(g, fx, fy - h, fx + 26, fy - h + 14, tc, td), () => { g.beginPath(); g.moveTo(fx, fy - h); g.quadraticCurveTo(fx + 13, fy - h - 4 + Math.sin(t * 4) * 3, fx + 26, fy - h + 1); g.lineTo(fx + 26, fy - h + 15); g.quadraticCurveTo(fx + 13, fy - h + 11 + Math.sin(t * 4 + 1) * 3, fx, fy - h + 14); g.closePath(); }, 1.4); };
@@ -328,6 +363,8 @@ const VkArt = (() => {
 
   // věž; ang = úhel hlavně k cíli
   function turret(g, x, y, age, kind, ang, side, t) {
+    const foot = img(`turret-${age}-${kind}-base`), gun = img(`turret-${age}-${kind}`);
+    if (gun) { if (foot) sprite(g, foot, x, y + 8, 18); g.save(); g.translate(x, y); g.rotate(ang); sprite(g, gun, 0, 0, 22, 0.25, 0.5); g.restore(); return; }
     g.save(); g.translate(x, y); g.scale(1.25, 1.25); g.lineJoin = 'round';
     fillOut(g, shade(g, 0, -6, 0, 8, ['#a8784a', '#a8a296', '#8a6a4a', '#6a7058', '#4a4a7a'][age], ['#5a3a1a', '#6a665c', '#4a3a2a', '#3a4030', '#22223a'][age]), () => { g.beginPath(); g.roundRect(-11, -5, 22, 12, 3); }, 1.8);
     g.save(); g.rotate(ang);
@@ -344,6 +381,8 @@ const VkArt = (() => {
 
   // střely: kind 'stone' | 'arrow' | 'ball' | 'bullet' | 'shell' | 'laser'
   function shot(g, p) {
+    const pic = img(`shot-${p.kind}`);
+    if (pic) { g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.vy, p.vx)); sprite(g, pic, 0, 0, p.kind === 'arrow' || p.kind === 'laser' ? 8 : 10, 0.5, 0.5); g.restore(); return; }
     g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.vy, p.vx));
     if (p.kind === 'arrow') { line(g, 1.8, '#6a4220', -12, 0, 7, 0); g.fillStyle = '#c8ccd4'; g.beginPath(); g.moveTo(7, -3); g.lineTo(13, 0); g.lineTo(7, 3); g.fill(); g.fillStyle = '#fff'; g.fillRect(-13, -2.5, 5, 5); }
     else if (p.kind === 'bullet') { g.fillStyle = 'rgba(255,224,102,.4)'; g.fillRect(-16, -1.5, 16, 3); g.fillStyle = '#ffe066'; g.fillRect(-4, -1.2, 8, 2.4); }
@@ -354,6 +393,8 @@ const VkArt = (() => {
 
   // zvláštní útoky: padající předměty podle věku
   function special(g, s, t) {
+    const pic = img(`special-${s.age}`);
+    if (pic) { sprite(g, pic, s.x, s.y, s.age === 4 ? 420 : 40, 0.5, s.age === 4 ? 1 : 0.5); return; }
     g.save(); g.translate(s.x, s.y);
     if (s.age === 0) { const tr = g.createLinearGradient(-40, -48, 0, 0); tr.addColorStop(0, 'rgba(255,140,40,0)'); tr.addColorStop(1, 'rgba(255,200,80,.95)'); g.strokeStyle = tr; g.lineWidth = 12; g.beginPath(); g.moveTo(-44, -52); g.lineTo(0, 0); g.stroke(); fillOut(g, shade(g, -10, -10, 10, 10, '#8a6a5a', '#3a2a20'), () => { g.beginPath(); g.arc(0, 0, 11, 0, TAU); }, 1.8); g.fillStyle = '#ff8a3d'; g.beginPath(); g.arc(-3, -3, 5, 0, TAU); g.fill(); }
     else if (s.age === 1) { g.rotate(Math.PI / 2 - 0.15); line(g, 2, '#6a4220', -14, 0, 9, 0); g.fillStyle = '#c8ccd4'; g.beginPath(); g.moveTo(9, -3.5); g.lineTo(16, 0); g.lineTo(9, 3.5); g.fill(); g.fillStyle = '#fff'; g.fillRect(-15, -3, 5, 6); }
@@ -363,7 +404,9 @@ const VkArt = (() => {
     g.restore();
   }
   // bombardér pro nálet moderní doby
-  function plane(g, x, y) {
+  function plane(g, x, y, dir = 1) {
+    const pic = img('plane');
+    if (pic) { sprite(g, pic, x, y, 40, 0.5, 0.5, dir < 0); return; }
     g.save(); g.translate(x, y); g.scale(-1.3, 1.3);
     fillOut(g, shade(g, 0, -8, 0, 8, '#8a9a6a', '#4a5a3a'), () => { g.beginPath(); g.ellipse(0, 0, 42, 8, 0, 0, TAU); }, 2);
     fillOut(g, '#5a6a4a', () => { g.beginPath(); g.moveTo(-8, 0); g.lineTo(10, -32); g.lineTo(20, -32); g.lineTo(14, 0); g.closePath(); }, 1.6);
@@ -373,5 +416,5 @@ const VkArt = (() => {
     g.restore();
   }
 
-  return { TEAM, UNIT_SCALE, BASE_SCALE, TOP, land, base, SLOTS, turret, unit, shot, special, plane };
+  return { TEAM, UNIT_SCALE, BASE_SCALE, TOP, img, get ready() { return manifest !== null; }, get loaded() { return Object.keys(IMG).length; }, land, base, SLOTS, turret, unit, shot, special, plane };
 })();

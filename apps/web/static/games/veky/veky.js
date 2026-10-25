@@ -81,7 +81,7 @@ const Veky = (() => {
     const units = [], shots = [], fx = [], pops = [], falls = [];
     let lands = [], camX = 0, clock = 0, over = false, paused = false, speed = 1, ending = 0, winner = -1, aiThink = 2, planeX = null;
     let started = false, uid = 1;
-    function landOf(age) { if (!lands[age]) lands[age] = VkArt.land(W, VH, age, GY); return lands[age]; }
+    function landOf(age) { const has = !!VkArt.img(`bg-${age}`); if (!lands[age] || lands[age].has !== has) { lands[age] = VkArt.land(W, VH, age, GY); lands[age].has = has; } return lands[age]; }
     function say(t, d = 1.8) { msgEl.textContent = t; msgEl.hidden = false; msgEl.dataset.t = d; }
     function pop(x, y, text, col) { pops.push({ x, y, text, col, life: 1.1 }); }
 
@@ -288,7 +288,7 @@ const Veky = (() => {
       }
       for (const p of shots) VkArt.shot(g, p);
       for (const f of falls) if (f.delay <= 0) VkArt.special(g, f, clock);
-      if (planeX) VkArt.plane(g, planeX.x, 60);
+      if (planeX) VkArt.plane(g, planeX.x, 60, planeX.dir);
       for (const f of fx) { g.globalAlpha = Math.min(1, f.life * 2); g.fillStyle = f.c; g.beginPath(); g.arc(f.x, f.y, f.s, 0, 7); g.fill(); }
       g.globalAlpha = 1;
       g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 13px Unbounded, sans-serif';
@@ -397,7 +397,7 @@ const Veky = (() => {
     addEventListener('keyup', onKeyUp);
 
     // ── Smyčka ──
-    let last = performance.now(), raf = 0, uiT = 0;
+    let last = performance.now(), raf = 0, uiT = 0, artSeen = 0;
     function frame(now) {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -405,7 +405,7 @@ const Veky = (() => {
       if (keysHeld.has('ArrowLeft')) camX = Math.max(0, camX - 700 * dt);
       if (keysHeld.has('ArrowRight')) camX = Math.min(W - VW, camX + 700 * dt);
       if (!paused && !over) for (let s = 0; s < speed; s++) { if (auto) autoplay(); if (!over) tick(dt); }
-      uiT -= dt; if (uiT <= 0) { uiT = 0.15; syncUI(); if (!towerEl.hidden) refreshTower(); }
+      uiT -= dt; if (uiT <= 0) { uiT = 0.15; if (VkArt.loaded !== artSeen) { artSeen = VkArt.loaded; renderIcons(); qKey = ''; towerSig = ''; } syncUI(); if (!towerEl.hidden) refreshTower(); }
       draw();
     }
     function setPause(on) { if (over) return; paused = on; api.setTimer(!on); VkMusic.pause(on); if (on) say(L('Pauza · stiskni P', 'Paused · press P'), 9999); else msgEl.hidden = true; syncUI(); }
@@ -447,7 +447,8 @@ const Veky = (() => {
   }
 
   // úvodní obrázek: bitva přes věky, pravěký jezdec na dinu proti rytíři, tank a robot v pozadí
-  function art(el) {
+  function art(el, again) {
+    if (!again) setTimeout(() => { if (VkArt.loaded && el.isConnected) art(el, true); }, 900);
     el.innerHTML = '<canvas width="520" height="360" style="object-fit:contain"></canvas>';
     const g = el.querySelector('canvas').getContext('2d');
     g.beginPath(); g.roundRect(0, 0, 520, 360, 28); g.clip();
