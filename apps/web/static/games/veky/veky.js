@@ -283,7 +283,7 @@ const Veky = (() => {
       g.save(); g.translate(-camX, 0);
       for (let s = 0; s < 2; s++) {
         VkArt.base(g, BX[s], GY, S[s].age, s, clock);
-        S[s].turrets.forEach((tr, i) => { if (tr) { const [x, y] = slotPos(s, i); VkArt.turret(g, x, y, tr.age, tr.kind, tr.ang, s, clock); } });
+        S[s].turrets.forEach((tr, i) => { if (tr) { const [x, y] = slotPos(s, i); VkArt.turret(g, x, y, tr.age, tr.kind, tr.ang, s, clock, tr.ts.rate - tr.cd, tr.ts.rate); } });
       }
       const sorted = units.slice().sort((a, b) => (a.kind === 2) - (b.kind === 2));
       for (const u of sorted) {
@@ -332,7 +332,7 @@ const Veky = (() => {
       const age = S[0].age;
       wrap.dataset.age = age;
       cards.forEach((b, k) => { const iu = VkArt.img(`icon-unit-${age}-${k}`); icon(b.querySelector('canvas'), (g, s) => (iu ? g.drawImage(iu, 0, 0, s, s) : portrait(g, s, age, k))); b.querySelector('.vk-nm').textContent = UNIT_NAMES[age][k]; const st = stats(age, k); b.title = `${UNIT_NAMES[age][k]} · ${L('životy', 'HP')} ${Kit.fmtNum(st.hp)} · ${L('útok', 'damage')} ${Kit.fmtNum(st.dmg)} · ${L('dosah', 'range')} ${st.range}`; });
-      turs.forEach((b, k) => { const ip = VkArt.img(`icon-turret-${age}-${k}`); icon(b.querySelector('canvas'), (g, s) => { if (ip) { g.drawImage(ip, 0, 0, s, s); return; } g.translate(s * 0.42, s * 0.62); g.scale(3, 3); VkArt.turret(g, 0, 0, age, k, -0.35, 0, 0); }); b.querySelector('.vk-nm').textContent = TURRET_NAMES[age][k]; const ts = turretStats(age, k); b.title = `${TURRET_NAMES[age][k]} · ${L('věž na základně', 'turret on the base')} · ${L('dosah', 'range')} ${ts.range}`; });
+      turs.forEach((b, k) => { const ip = VkArt.img(`icon-turret-${age}-${k}`); icon(b.querySelector('canvas'), (g, s) => { if (ip) { g.drawImage(ip, 0, 0, s, s); return; } const gp = VkArt.img(`turret-${age}-${k}`); if (gp) { g.translate(s / 2, s / 2); g.rotate(-0.35); const w = s * 1.05, h = w * gp.height / gp.width; g.drawImage(gp, -w / 2, -h / 2, w, h); return; } g.translate(s * 0.42, s * 0.62); g.scale(3, 3); VkArt.turret(g, 0, 0, age, k, -0.35, 0, 0); }); b.querySelector('.vk-nm').textContent = TURRET_NAMES[age][k]; const ts = turretStats(age, k); b.title = `${TURRET_NAMES[age][k]} · ${L('věž na základně', 'turret on the base')} · ${L('dosah', 'range')} ${ts.range}`; });
       const isp = VkArt.img(`icon-special-${age}`); icon(btnA.special.querySelector('canvas'), (g, s) => { if (isp) { g.drawImage(isp, 0, 0, s, s); return; } g.translate(s * 0.58, s * 0.58); g.scale(1.8, 1.8); VkArt.special(g, { x: 0, y: 0, age: age === 4 ? 2 : age }, 0); });
       btnA.special.querySelector('.vk-nm').textContent = SPECIAL_NAMES[age];
     }
