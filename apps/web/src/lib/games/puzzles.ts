@@ -2951,36 +2951,50 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#ffd23f', '#e09a14', '#8e5631'],
 		statsKey: 'gamecenter.stats.zlatokop',
 		cover(ctx, w, h, t) {
-			// a desert mine: the claw swings from the winch, dives and comes back, gold sparkles in the dirt
-			const surf = h * 0.2;
+			// the game's scene: an old prospector cranks the reel and hauls a big shiny nugget out of the dirt
+			const surf = h * 0.3,
+				m = Math.min(w, h),
+				OL = '#2a160c';
 			const sky = ctx.createLinearGradient(0, 0, 0, surf);
-			sky.addColorStop(0, '#ffb35c');
-			sky.addColorStop(1, '#ffe9b8');
+			sky.addColorStop(0, '#ff9f4a');
+			sky.addColorStop(0.6, '#ffd27a');
+			sky.addColorStop(1, '#ffeab8');
 			ctx.fillStyle = sky;
 			ctx.fillRect(0, 0, w, surf);
-			ctx.fillStyle = '#e8a060';
-			ctx.beginPath();
-			ctx.moveTo(0, surf);
-			for (let x = 0; x <= w; x += w / 8)
-				ctx.lineTo(x, surf - h * 0.04 - Math.sin(x * 0.03) * h * 0.02);
-			ctx.lineTo(w, surf);
-			ctx.fill();
+			const sun = ctx.createRadialGradient(w * 0.18, h * 0.08, 2, w * 0.18, h * 0.08, m * 0.2);
+			sun.addColorStop(0, 'rgba(255,255,230,1)');
+			sun.addColorStop(0.3, 'rgba(255,240,170,.9)');
+			sun.addColorStop(1, 'rgba(255,240,170,0)');
+			ctx.fillStyle = sun;
+			ctx.fillRect(0, 0, w * 0.5, h * 0.3);
+			ctx.fillStyle = '#e9a070';
+			for (const [x0, x1, top] of [
+				[0.02, 0.3, 0.14],
+				[0.62, 0.95, 0.12],
+			] as const) {
+				ctx.beginPath();
+				ctx.moveTo(w * x0 - 12, surf);
+				ctx.lineTo(w * x0, h * top + 4);
+				ctx.lineTo(w * x1, h * top);
+				ctx.lineTo(w * x1 + 14, surf);
+				ctx.fill();
+			}
 			const dirt = ctx.createLinearGradient(0, surf, 0, h);
-			dirt.addColorStop(0, '#a0663a');
-			dirt.addColorStop(0.5, '#7a462a');
-			dirt.addColorStop(1, '#4a2a18');
+			dirt.addColorStop(0, '#b07440');
+			dirt.addColorStop(0.5, '#7a4426');
+			dirt.addColorStop(1, '#4f2a18');
 			ctx.fillStyle = dirt;
 			ctx.fillRect(0, surf, w, h - surf);
-			ctx.strokeStyle = 'rgba(0,0,0,.18)';
+			ctx.strokeStyle = 'rgba(40,18,6,.35)';
 			ctx.lineWidth = 2;
-			for (const k of [0.38, 0.56]) {
+			for (const k of [0.46, 0.64]) {
 				ctx.beginPath();
-				for (let x = 0; x <= w; x += 16) ctx.lineTo(x, h * k + Math.sin(x * 0.04 + k * 9) * 4);
+				for (let x = 0; x <= w; x += 16) ctx.lineTo(x, h * k + Math.sin(x * 0.03 + k * 9) * 4);
 				ctx.stroke();
 			}
-			ctx.fillStyle = '#6aa84f';
-			ctx.fillRect(0, surf - 3, w, 5);
-			const m = Math.min(w, h);
+			ctx.fillStyle = '#5e9a42';
+			ctx.fillRect(0, surf - 3, w, 4);
+			// lumpy nuggets with a soft shine
 			const lump = (x: number, y: number, r: number, gold: boolean, seed: number) => {
 				const pts: [number, number][] = [];
 				for (let i = 0; i < 9; i++) {
@@ -2988,142 +3002,232 @@ export const PUZZLE_GAMES: Game[] = [
 						k = 0.82 + ((Math.sin(seed * 7.3 + i * 2.1) + 1) / 2) * 0.25;
 					pts.push([x + Math.cos(a) * r * k, y + Math.sin(a) * r * k * 0.85]);
 				}
+				ctx.fillStyle = 'rgba(0,0,0,.28)';
+				ctx.beginPath();
+				ctx.ellipse(x + 2, y + r * 0.72, r, r * 0.3, 0, 0, TAU);
+				ctx.fill();
 				ctx.beginPath();
 				pts.forEach((p, i) => {
-					const q = pts[(i + 1) % pts.length] ?? p,
-						mx = (p[0] + q[0]) / 2,
-						my = (p[1] + q[1]) / 2;
+					const q = pts[(i + 1) % pts.length] ?? p;
 					if (i === 0) {
 						const l = pts[pts.length - 1] ?? p;
 						ctx.moveTo((l[0] + p[0]) / 2, (l[1] + p[1]) / 2);
 					}
-					ctx.quadraticCurveTo(p[0], p[1], mx, my);
+					ctx.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2);
 				});
 				ctx.closePath();
-				const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r * 1.1);
-				gr.addColorStop(0, gold ? '#fff3a6' : '#c9c4bd');
-				gr.addColorStop(0.45, gold ? '#ffd23f' : '#8d8780');
-				gr.addColorStop(1, gold ? '#a8650a' : '#5a554f');
+				const gr = ctx.createRadialGradient(x - r * 0.35, y - r * 0.45, r * 0.05, x, y, r * 1.15);
+				gr.addColorStop(0, gold ? '#fffbd6' : '#ebe7e1');
+				gr.addColorStop(0.3, gold ? '#ffe14d' : '#aaa49c');
+				gr.addColorStop(0.72, gold ? '#f2a71b' : '#7d766e');
+				gr.addColorStop(1, gold ? '#a8620a' : '#4a443e');
 				ctx.fillStyle = gr;
 				ctx.fill();
-				ctx.strokeStyle = '#2a160c';
-				ctx.lineWidth = 1.6;
+				ctx.strokeStyle = gold ? '#6b3a00' : '#2a2622';
+				ctx.lineWidth = Math.max(1.6, r * 0.07);
 				ctx.stroke();
+				ctx.fillStyle = gold ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.4)';
+				ctx.beginPath();
+				ctx.ellipse(x - r * 0.38, y - r * 0.38, r * 0.22, r * 0.11, -0.6, 0, TAU);
+				ctx.fill();
 				if (gold) {
-					const sp = Math.max(0, Math.sin(t * 2.4 + seed * 3)) * r * 0.35;
+					const sp = Math.max(0, Math.sin(t * 2.4 + seed * 3)) * r * 0.4;
 					ctx.fillStyle = '#fff';
 					ctx.beginPath();
-					ctx.moveTo(x + r * 0.35, y - r * 0.3 - sp);
-					ctx.lineTo(x + r * 0.35 + sp * 0.25, y - r * 0.3);
-					ctx.lineTo(x + r * 0.35, y - r * 0.3 + sp);
-					ctx.lineTo(x + r * 0.35 - sp * 0.25, y - r * 0.3);
+					ctx.moveTo(x + r * 0.4, y - r * 0.3 - sp);
+					ctx.quadraticCurveTo(x + r * 0.4, y - r * 0.3, x + r * 0.4 + sp, y - r * 0.3);
+					ctx.quadraticCurveTo(x + r * 0.4, y - r * 0.3, x + r * 0.4, y - r * 0.3 + sp);
+					ctx.quadraticCurveTo(x + r * 0.4, y - r * 0.3, x + r * 0.4 - sp, y - r * 0.3);
+					ctx.quadraticCurveTo(x + r * 0.4, y - r * 0.3, x + r * 0.4, y - r * 0.3 - sp);
 					ctx.fill();
 				}
 			};
-			lump(w * 0.2, h * 0.46, m * 0.1, true, 1);
-			lump(w * 0.78, h * 0.4, m * 0.06, true, 2);
-			lump(w * 0.62, h * 0.55, m * 0.07, false, 3);
-			lump(w * 0.85, h * 0.6, m * 0.13, true, 4);
-			lump(w * 0.1, h * 0.62, m * 0.05, false, 5);
-			// diamond
-			const dx = w * 0.42,
-				dy = h * 0.66,
-				ds = m * 0.045;
-			ctx.fillStyle = '#8ef0ff';
-			ctx.strokeStyle = '#0d3a5a';
-			ctx.lineWidth = 1.5;
+			lump(w * 0.12, h * 0.5, m * 0.07, true, 1);
+			lump(w * 0.86, h * 0.44, m * 0.06, false, 3);
+			lump(w * 0.84, h * 0.62, m * 0.11, true, 4);
+			lump(w * 0.2, h * 0.68, m * 0.05, false, 5);
+			// deck, A-frame and the reel
+			const rx = w * 0.4,
+				ry = surf - h * 0.09,
+				rw = w * 0.13,
+				rr = h * 0.035;
+			ctx.fillStyle = '#a8703a';
+			ctx.strokeStyle = OL;
+			ctx.lineWidth = 2;
 			ctx.beginPath();
-			ctx.moveTo(dx - ds, dy - ds * 0.3);
-			ctx.lineTo(dx - ds * 0.5, dy - ds * 0.8);
-			ctx.lineTo(dx + ds * 0.5, dy - ds * 0.8);
-			ctx.lineTo(dx + ds, dy - ds * 0.3);
-			ctx.lineTo(dx, dy + ds);
-			ctx.closePath();
+			ctx.rect(w * 0.18, surf - h * 0.02, w * 0.64, h * 0.02);
 			ctx.fill();
 			ctx.stroke();
-			// winch and the swinging claw
-			const px = w * 0.5,
-				py = surf - h * 0.04,
-				ang = Math.sin(t * 1.6) * 0.85,
-				len = h * 0.06 + h * 0.34 * Math.pow(Math.max(0, Math.sin(t * 0.8)), 2),
-				tx = px + Math.sin(ang) * len,
-				ty = py + Math.cos(ang) * len;
-			ctx.strokeStyle = '#2a160c';
-			ctx.lineWidth = 3;
+			ctx.lineCap = 'round';
+			for (const s of [-1, 1])
+				for (const [lw, c] of [
+					[6, OL],
+					[3.5, '#a8703a'],
+				] as const) {
+					ctx.strokeStyle = c;
+					ctx.lineWidth = lw;
+					ctx.beginPath();
+					ctx.moveTo(rx + s * (rw + 12), surf - h * 0.02);
+					ctx.lineTo(rx + s * (rw + 3), ry);
+					ctx.lineTo(rx + s * (rw - 6), surf - h * 0.02);
+					ctx.stroke();
+				}
+			const dg = ctx.createLinearGradient(0, ry - rr, 0, ry + rr);
+			dg.addColorStop(0, '#6b4224');
+			dg.addColorStop(0.35, '#e8d6a8');
+			dg.addColorStop(1, '#5a361c');
+			ctx.fillStyle = dg;
+			ctx.strokeStyle = OL;
+			ctx.lineWidth = 2;
 			ctx.beginPath();
-			ctx.moveTo(px, py);
-			ctx.lineTo(tx, ty);
+			ctx.rect(rx - rw, ry - rr, rw * 2, rr * 2);
+			ctx.fill();
 			ctx.stroke();
-			ctx.strokeStyle = '#d8c8a0';
-			ctx.lineWidth = 1.4;
-			ctx.beginPath();
-			ctx.moveTo(px, py);
-			ctx.lineTo(tx, ty);
-			ctx.stroke();
+			ctx.strokeStyle = 'rgba(90,60,30,.6)';
+			ctx.lineWidth = 1;
+			for (let x = rx - rw + 4; x < rx + rw - 4; x += 4) {
+				const o = (t * 12) % 4;
+				ctx.beginPath();
+				ctx.moveTo(x + o, ry - rr);
+				ctx.lineTo(x + o + 3, ry + rr);
+				ctx.stroke();
+			}
+			for (const s of [-1, 1]) {
+				ctx.fillStyle = '#5d6478';
+				ctx.beginPath();
+				ctx.ellipse(rx + s * rw, ry, 4, rr + 3, 0, 0, TAU);
+				ctx.fill();
+				ctx.stroke();
+			}
+			// rope, claw and the hauled nugget
+			const ang = Math.sin(t * 1.1) * 0.25 + 0.15,
+				len = h * 0.24 + Math.sin(t * 0.9) * h * 0.04,
+				tx = rx + Math.sin(ang) * len,
+				ty = ry + rr + Math.cos(ang) * len;
+			for (const [lw, c] of [
+				[3.4, OL],
+				[1.6, '#e8d6a8'],
+			] as const) {
+				ctx.strokeStyle = c;
+				ctx.lineWidth = lw;
+				ctx.beginPath();
+				ctx.moveTo(rx, ry + rr);
+				ctx.lineTo(tx, ty);
+				ctx.stroke();
+			}
+			lump(tx + Math.sin(ang) * m * 0.1, ty + Math.cos(ang) * m * 0.1, m * 0.12, true, 2);
 			ctx.save();
 			ctx.translate(tx, ty);
 			ctx.rotate(-ang);
-			ctx.lineCap = 'round';
-			for (const [lw, col] of [
-				[5, '#2a160c'],
-				[3, '#c9ced8'],
-			] as const) {
-				ctx.strokeStyle = col;
-				ctx.lineWidth = lw;
-				for (const sgn of [-1, 1]) {
+			for (const s of [-1, 1]) {
+				ctx.beginPath();
+				ctx.moveTo(s * 3, 3);
+				ctx.bezierCurveTo(s * 16, 5, s * 18, 18, s * 7, 25);
+				ctx.lineTo(s * 4, 22);
+				ctx.bezierCurveTo(s * 12, 17, s * 11, 9, s * 1, 8);
+				ctx.closePath();
+				ctx.fillStyle = '#d8dde6';
+				ctx.fill();
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = 1.6;
+				ctx.stroke();
+			}
+			ctx.fillStyle = '#c99a3a';
+			ctx.beginPath();
+			ctx.roundRect(-6, -3, 12, 9, 3);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+			// the prospector at the crank
+			const ms = (h * 0.24) / 100,
+				mx = rx + rw + 36 * ms + 4,
+				my = surf - h * 0.02;
+			ctx.save();
+			ctx.translate(mx, my);
+			ctx.scale(ms, ms);
+			ctx.lineJoin = 'round';
+			const limb = (col: string, ...p: number[]) => {
+				for (const [lw, c] of [
+					[11, OL],
+					[8, col],
+				] as const) {
+					ctx.strokeStyle = c;
+					ctx.lineWidth = lw;
 					ctx.beginPath();
-					ctx.moveTo(0, 2);
-					ctx.quadraticCurveTo(sgn * 12, 7, sgn * 8, 17);
-					ctx.lineTo(sgn * 2, 19);
+					ctx.moveTo(p[0] ?? 0, p[1] ?? 0);
+					for (let i = 2; i < p.length; i += 2) ctx.lineTo(p[i] ?? 0, p[i + 1] ?? 0);
 					ctx.stroke();
 				}
-			}
-			ctx.fillStyle = '#8a92a4';
-			ctx.beginPath();
-			ctx.arc(0, 2, 4, 0, TAU);
-			ctx.fill();
-			ctx.restore();
-			ctx.fillStyle = '#7a4a24';
-			ctx.strokeStyle = '#2a160c';
+			};
+			limb('#3b5a8c', -6, -30, -9, -4);
+			limb('#4a6aa0', 6, -30, 8, -4);
+			ctx.fillStyle = '#4a2a14';
+			ctx.strokeStyle = OL;
 			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.roundRect(px - m * 0.08, py - m * 0.06, m * 0.16, m * 0.06, 4);
-			ctx.fill();
-			ctx.stroke();
-			ctx.strokeStyle = '#a8703a';
-			ctx.lineWidth = 3;
-			ctx.beginPath();
-			ctx.moveTo(px - m * 0.09, surf);
-			ctx.lineTo(px - m * 0.03, py - m * 0.03);
-			ctx.moveTo(px + m * 0.09, surf);
-			ctx.lineTo(px + m * 0.03, py - m * 0.03);
-			ctx.stroke();
-			// the miner next to the winch: shirt with braces, head, beard and hat
+			for (const bx of [-12, 5]) {
+				ctx.beginPath();
+				ctx.roundRect(bx, -6, 14, 7, 3);
+				ctx.fill();
+				ctx.stroke();
+			}
 			ctx.fillStyle = '#c8402e';
 			ctx.beginPath();
-			ctx.roundRect(px + m * 0.115, py - m * 0.04, m * 0.07, surf - py + m * 0.04, 5);
+			ctx.moveTo(-13, -30);
+			ctx.quadraticCurveTo(-15, -50, -10, -60);
+			ctx.lineTo(10, -60);
+			ctx.quadraticCurveTo(16, -48, 13, -30);
+			ctx.closePath();
 			ctx.fill();
 			ctx.stroke();
-			ctx.fillStyle = '#7a4a24';
+			ctx.strokeStyle = '#2b3f66';
+			ctx.lineWidth = 3.5;
 			ctx.beginPath();
-			ctx.ellipse(px + m * 0.15, py - m * 0.1, m * 0.07, m * 0.018, 0, 0, TAU);
-			ctx.fill();
+			ctx.moveTo(-7, -59);
+			ctx.lineTo(-6, -32);
+			ctx.moveTo(7, -59);
+			ctx.lineTo(6, -32);
 			ctx.stroke();
-			ctx.beginPath();
-			ctx.moveTo(px + m * 0.11, py - m * 0.1);
-			ctx.quadraticCurveTo(px + m * 0.11, py - m * 0.17, px + m * 0.15, py - m * 0.165);
-			ctx.quadraticCurveTo(px + m * 0.19, py - m * 0.17, px + m * 0.19, py - m * 0.1);
-			ctx.fill();
-			ctx.stroke();
+			const cr = t * 4;
+			limb('#c8402e', -8, -54, -22, -44, -34 + Math.cos(cr) * 4, -48 + Math.sin(cr) * 4);
 			ctx.fillStyle = '#f2c79a';
+			ctx.strokeStyle = OL;
+			ctx.lineWidth = 2;
 			ctx.beginPath();
-			ctx.arc(px + m * 0.15, py - m * 0.065, m * 0.035, 0, TAU);
+			ctx.ellipse(0, -72, 12, 13, 0, 0, TAU);
 			ctx.fill();
 			ctx.stroke();
 			ctx.fillStyle = '#f4f1ea';
 			ctx.beginPath();
-			ctx.ellipse(px + m * 0.15, py - m * 0.035, m * 0.035, m * 0.025, 0, 0, TAU);
+			ctx.moveTo(-12, -70);
+			ctx.quadraticCurveTo(-16, -50, -3, -46);
+			ctx.quadraticCurveTo(8, -48, 10, -64);
+			ctx.quadraticCurveTo(-1, -60, -12, -70);
 			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#e8957a';
+			ctx.beginPath();
+			ctx.ellipse(-11, -68, 5, 4.2, 0, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#1a0e08';
+			ctx.beginPath();
+			ctx.ellipse(-6, -75, 1.6, 2.2, 0, 0, TAU);
+			ctx.fill();
+			ctx.fillStyle = '#8a5428';
+			ctx.strokeStyle = OL;
+			ctx.beginPath();
+			ctx.ellipse(0, -83, 22, 5, -0.06, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(-12, -84);
+			ctx.quadraticCurveTo(-13, -101, -4, -99);
+			ctx.quadraticCurveTo(0, -95, 4, -99);
+			ctx.quadraticCurveTo(13, -101, 12, -84);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
 		},
 	},
 ];

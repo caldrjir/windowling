@@ -7,7 +7,7 @@
 // je pro všechny stejná.
 const Zlatokop = (() => {
   const L = Kit.L, rngOf = ZkArt.rngOf, SURF = ZkArt.SURF;
-  const VW = 640, VH = 420, PX = 320, PY = 82, L0 = 22, LEVEL_TIME = 60;
+  const VW = 640, VH = 420, PX = 320, PY = 98, L0 = 22, LEVEL_TIME = 60;
   const DIFFS = [
     { id: 'klasik', name: L('Klasika', 'Classic'), note: L('důl za dolem s obchodem', 'mine after mine, with a shop'), metric: 'score' },
     { id: 'spech', name: L('Zlatá horečka', 'Gold rush'), note: L('jeden bohatý důl, minuta', 'one rich mine, one minute'), metric: 'score' },
@@ -29,6 +29,11 @@ const Zlatokop = (() => {
   };
   // cíl klasiky: 650, 1195, 2010, 3095, … (jako v originálu, peníze se sčítají)
   function targetOf(lv) { let t = 650; for (let k = 2; k <= lv; k++) t += 545 + 270 * (k - 2); return t; }
+  // lano z kladky pod bubnem k drapáku
+  function rope(g, tx, ty) {
+    const y0 = ZkArt.DRUM.y + ZkArt.DRUM.r + 4;
+    for (const [lw, c] of [[3.6, '#2a160c'], [1.8, '#e8d6a8']]) { g.strokeStyle = c; g.lineWidth = lw; g.beginPath(); g.moveTo(PX, y0); g.lineTo(tx, ty); g.stroke(); }
+  }
   function levelSpec(n) { return { tier: Math.min(10, 1 + Math.floor((n - 1) / 3)), target: Math.min(1600, 450 + (n - 1) * 25), text: L(`Důl ${n}`, `Mine ${n}`) }; }
   function generate(seed, diffId, ctx = {}) {
     if (ctx.kind === 'level') { const s = levelSpec(ctx.key); return { seed, mode: 'level', tier: s.tier, target: s.target, text: s.text }; }
@@ -124,7 +129,7 @@ const Zlatokop = (() => {
       shake = 0.35;
       for (let i = 0; i < n; i++) { const a = fxr() * Math.PI * 2, v = 60 + fxr() * 220; fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40, life: 0.5 + fxr() * 0.6, c: ['#ffd23f', '#ff8a3d', '#ff4d2e', '#fff3c0', '#6b4a30'][Math.floor(fxr() * 5)], s: 2 + fxr() * 4 }); }
     }
-    function float(text, col, x = PX - 120, y = PY - 34) { texts.push({ text, col, x, y, life: 1.4 }); }
+    function float(text, col, x = PX + 70, y = SURF + 28) { texts.push({ text, col, x, y, life: 1.4 }); }
 
     // ── Hodnota úlovku ──
     function cash(it) {
@@ -236,34 +241,34 @@ const Zlatokop = (() => {
       for (const it of items) ZkArt.item(g, it, clock);
       // lano a drapák
       const [tx, ty] = tipPos();
-      g.strokeStyle = '#2a160c'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(PX, PY - 8); g.lineTo(tx, ty); g.stroke();
-      g.strokeStyle = '#d8c8a0'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(PX, PY - 8); g.lineTo(tx, ty); g.stroke();
+      rope(g, tx, ty);
       if (hook.item) ZkArt.item(g, hook.item, clock);
       ZkArt.claw(g, tx, ty, hook.ang, hook.item ? 0 : hook.st === 'out' ? 1 : 0.6);
       // povrch: naviják a zlatokop
-      ZkArt.winch(g, PX, PY - 18, hook.crank, hook.coil);
-      ZkArt.miner(g, PX + 50, SURF - 2, { crank: hook.crank, strain: hook.st === 'back' && hook.item ? Math.min(1, hook.item.w / 4) : 0, t: clock });
-      // dynamity vedle zlatokopa
-      for (let i = 0; i < Math.min(inv.dyn, 6); i++) { const x = PX + 82 + i * 9; g.fillStyle = '#d8342a'; g.strokeStyle = '#2a160c'; g.lineWidth = 1.4; g.beginPath(); g.roundRect(x, SURF - 22, 7, 18, 2); g.fill(); g.stroke(); g.strokeStyle = '#d8c8a0'; g.beginPath(); g.moveTo(x + 3.5, SURF - 22); g.lineTo(x + 5, SURF - 27); g.stroke(); }
+      const [chx, chy] = ZkArt.rig(g, PX, { crank: hook.crank, coil: hook.coil });
+      ZkArt.miner(g, PX + 72, SURF - 9, { hand: [chx - PX - 72, chy - SURF + 9], strain: hook.st === 'back' && hook.item ? Math.min(1, hook.item.w / 4) : 0, t: clock });
+      // dynamity na plošině
+      for (let i = 0; i < Math.min(inv.dyn, 4); i++) { const x = PX - 86 + i * 8; g.fillStyle = '#d8342a'; g.strokeStyle = '#2a160c'; g.lineWidth = 1.4; g.beginPath(); g.roundRect(x, SURF - 27, 7, 18, 2); g.fill(); g.stroke(); g.strokeStyle = '#d8c8a0'; g.beginPath(); g.moveTo(x + 3.5, SURF - 27); g.lineTo(x + 5, SURF - 32); g.stroke(); }
       // částice výbuchů
       for (let i = fx.length - 1; i >= 0; i--) { const p = fx[i]; p.life -= dt; if (p.life <= 0) { fx.splice(i, 1); continue; } p.vy += 300 * dt; p.x += p.vx * dt; p.y += p.vy * dt; g.globalAlpha = Math.min(1, p.life * 2); g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, p.s, 0, 7); g.fill(); g.globalAlpha = 1; }
       // HUD: peníze s cílem vlevo, čas a důl vpravo
       g.textBaseline = 'alphabetic'; g.textAlign = 'left';
-      g.fillStyle = 'rgba(42,22,12,.82)'; g.beginPath(); g.roundRect(10, 10, 196, target ? 58 : 40, 12); g.fill();
-      g.fillStyle = '#ffd23f'; g.font = '900 22px Unbounded, sans-serif'; g.fillText(`$${Kit.fmtNum(money)}`, 22, 38);
+      const txt = (str, x, y, font, col) => { g.font = font; g.lineWidth = 4; g.strokeStyle = 'rgba(42,22,12,.9)'; g.strokeText(str, x, y); g.fillStyle = col; g.fillText(str, x, y); };
+      ZkArt.plank(g, 8, 8, 200, 56);
+      txt(`$${Kit.fmtNum(money)}`, 22, 36, '900 22px Unbounded, sans-serif', '#ffd23f');
       if (target) {
-        g.fillStyle = 'rgba(255,255,255,.7)'; g.font = '700 11px Space Grotesk, sans-serif'; g.fillText(`${L('cíl', 'target')} $${Kit.fmtNum(target)}`, 22, 56);
-        g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(110, 49, 84, 8);
-        g.fillStyle = money >= target ? '#6dff9e' : '#ffd23f'; g.fillRect(110, 49, 84 * Math.min(1, money / Math.max(1, target)), 8);
+        txt(`${L('cíl', 'target')} $${Kit.fmtNum(target)}`, 22, 54, '800 11px Space Grotesk, sans-serif', '#fff3c0');
+        g.fillStyle = 'rgba(42,22,12,.8)'; g.beginPath(); g.roundRect(118, 45, 78, 10, 5); g.fill();
+        g.fillStyle = money >= target ? '#6dff9e' : '#ffd23f'; g.beginPath(); g.roundRect(119, 46, 76 * Math.min(1, money / Math.max(1, target)), 8, 4); g.fill();
       }
-      g.fillStyle = 'rgba(42,22,12,.82)'; g.beginPath(); g.roundRect(VW - 136, 10, 126, 58, 12); g.fill();
+      ZkArt.plank(g, VW - 148, 8, 140, 56);
       const tl = Math.max(0, Math.ceil(time)), low = tl <= 10 && phase === 'play';
-      g.fillStyle = low && Math.sin(clock * 10) > 0 ? '#ff5a5a' : '#fff'; g.font = '900 22px Unbounded, sans-serif'; g.textAlign = 'right'; g.fillText(`0:${String(tl).padStart(2, '0')}`, VW - 22, 38);
-      g.fillStyle = 'rgba(255,255,255,.7)'; g.font = '700 11px Space Grotesk, sans-serif';
+      g.textAlign = 'right'; txt(`0:${String(tl).padStart(2, '0')}`, VW - 22, 36, '900 22px Unbounded, sans-serif', low && Math.sin(clock * 10) > 0 ? '#ff5a5a' : '#fff');
+      g.font = '800 11px Space Grotesk, sans-serif'; g.fillStyle = '#fff3c0';
       const boosts = ['str', 'clover', 'book', 'polish'].filter(b => inv[b]).map(b => SHOP[b].icon).join(' ');
-      g.fillText(`${classic ? `${L('důl', 'mine')} ${lv}` : P.mode === 'level' ? P.text || '' : L('horečka', 'rush')}${boosts ? ' · ' + boosts : ''}`, VW - 22, 56);
+      g.fillText(`${classic ? `${L('důl', 'mine')} ${lv}` : P.mode === 'level' ? P.text || '' : L('horečka', 'rush')}${boosts ? ' · ' + boosts : ''}`, VW - 22, 53);
       // stopky
-      g.save(); g.translate(VW - 120, 32); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 8, 0, 7); g.stroke(); g.beginPath(); g.moveTo(0, 0); const ta = -Math.PI / 2 + (1 - time / LEVEL_TIME) * Math.PI * 2; g.lineTo(Math.cos(ta) * 6, Math.sin(ta) * 6); g.stroke(); g.restore();
+      g.save(); g.translate(VW - 128, 29); g.strokeStyle = '#fff3c0'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 8, 0, 7); g.stroke(); g.beginPath(); g.moveTo(0, 0); const ta = -Math.PI / 2 + (1 - time / LEVEL_TIME) * Math.PI * 2; g.lineTo(Math.cos(ta) * 6, Math.sin(ta) * 6); g.stroke(); g.restore();
       // plovoucí částky
       g.textAlign = 'center';
       for (let i = texts.length - 1; i >= 0; i--) { const t = texts[i]; t.life -= dt; if (t.life <= 0) { texts.splice(i, 1); continue; } t.y -= 28 * dt; g.globalAlpha = Math.min(1, t.life * 1.5); g.font = '900 18px Unbounded, sans-serif'; g.lineWidth = 4; g.strokeStyle = 'rgba(42,22,12,.85)'; g.strokeText(t.text, t.x, t.y); g.fillStyle = t.col; g.fillText(t.text, t.x, t.y); g.globalAlpha = 1; }
@@ -341,13 +346,12 @@ const Zlatokop = (() => {
     it('stone', 130, 270, 22); it('gold', 480, 290, 30); it('diamond', 540, 230, 11); it('bag', 190, 180, 16); it('gold', 570, 160, 14); it('stone', 420, 200, 14); it('tnt', 90, 320, 14); it('gold', 250, 300, 18);
     it('mole', 400, 330, 14, { dir: -1, diamond: true });
     const ang = 0.3, len = 128, tx = PX + Math.sin(ang) * len, ty = PY + Math.cos(ang) * len;
-    g.strokeStyle = '#2a160c'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(PX, PY - 8); g.lineTo(tx, ty); g.stroke();
-    g.strokeStyle = '#d8c8a0'; g.lineWidth = 1.8; g.beginPath(); g.moveTo(PX, PY - 8); g.lineTo(tx, ty); g.stroke();
+    rope(g, tx, ty);
     it('gold', tx + Math.sin(ang) * 30, ty + Math.cos(ang) * 30, 36);
     ZkArt.claw(g, tx, ty, ang, 0);
-    ZkArt.winch(g, PX, PY - 18, 1.2, 2);
-    ZkArt.miner(g, PX + 50, SURF - 2, { crank: 1.2, strain: 1, t: 1 });
-    g.font = '900 20px Unbounded, sans-serif'; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = 'rgba(42,22,12,.85)'; g.strokeText('+$500', PX + 110, 140); g.fillStyle = '#ffd23f'; g.fillText('+$500', PX + 110, 140);
+    const [chx, chy] = ZkArt.rig(g, PX, { crank: 1.2, coil: 2 });
+    ZkArt.miner(g, PX + 72, SURF - 9, { hand: [chx - PX - 72, chy - SURF + 9], strain: 1, t: 1 });
+    g.font = '900 20px Unbounded, sans-serif'; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = 'rgba(42,22,12,.85)'; g.strokeText('+$500', PX + 110, 160); g.fillStyle = '#ffd23f'; g.fillText('+$500', PX + 110, 160);
     g.restore();
   }
   return { DIFFS, KIND, generate, create, art, layout, levelSpec, targetOf };
