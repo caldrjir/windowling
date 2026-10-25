@@ -1,0 +1,41 @@
+/* ZLATOKOP – důl, ovládání a obchod */
+.zk-wrap { display: grid; justify-items: center; gap: 10px; width: 100%; }
+.zk-stage { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.zk-cv { display: block; border-radius: 14px; background: #8e5631; box-shadow: 0 0 0 2px color-mix(in srgb, #ffd23f 40%, transparent), 0 24px 60px -24px #ff9a3d; cursor: pointer; }
+.zk-msg { position: absolute; left: 50%; top: 26%; transform: translateX(-50%); padding: 10px 22px; border-radius: 999px; background: rgba(42, 22, 12, .86); box-shadow: inset 0 0 0 1px rgba(255, 210, 63, .35); color: #fff3c0; font-family: var(--f-d); font-size: 17px; white-space: nowrap; pointer-events: none; animation: zkIn .25s ease-out; }
+.zk-msg[hidden] { display: none; }
+@keyframes zkIn { from { opacity: 0; transform: translate(-50%, -8px); } }
+.zk-shop { position: absolute; inset: 0; display: grid; place-items: center; overflow: auto; padding: 12px; border-radius: 14px; background: rgba(30, 14, 6, .72); backdrop-filter: blur(3px); }
+.zk-shop[hidden] { display: none; }
+.zk-card { width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 16px; border-radius: 18px; background: linear-gradient(180deg, #5a3a22, #3a2214); box-shadow: inset 0 0 0 2px #a8703a, 0 20px 50px -20px #000; color: #fff3c0; text-align: center; }
+.zk-card h3 { margin: 0; font-family: var(--f-d); font-size: 20px; color: #ffd23f; }
+.zk-money { margin: 4px 0 12px; font-size: 13px; color: #f2d9a8; }
+.zk-offers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.zk-offer { display: grid; justify-items: center; gap: 2px; padding: 10px 8px; border-radius: 14px; background: rgba(255, 243, 192, .08); box-shadow: inset 0 0 0 1px rgba(255, 210, 63, .3); color: #fff3c0; transition: transform .08s, background .1s; }
+.zk-offer:not(:disabled):hover { background: rgba(255, 210, 63, .18); transform: translateY(-2px); }
+.zk-offer:disabled { opacity: .45; }
+.zk-offer.sold { opacity: .7; box-shadow: inset 0 0 0 2px #6dff9e; }
+.zk-offer .ic { font-size: 28px; line-height: 1.1; }
+.zk-offer b { font-size: 14px; }
+.zk-offer small { font-size: 11px; color: #f2d9a8; }
+.zk-offer em { font-style: normal; font-family: var(--f-d); color: #ffd23f; font-size: 15px; }
+.zk-pad { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; width: min(520px, 100%); touch-action: none; user-select: none; -webkit-user-select: none; }
+.zk-btn { display: grid; place-items: center; gap: 2px; height: 70px; border-radius: 18px; font-family: var(--f-d); font-size: 22px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); touch-action: none; transition: transform .06s; }
+.zk-btn:active { transform: scale(.96); }
+.zk-btn small { font-family: var(--f-u); font-size: 11px; color: var(--muted); letter-spacing: .06em; }
+.zk-btn.go { color: #2a160c; background: linear-gradient(135deg, #ffe066, #e09a14); box-shadow: 0 10px 26px -10px #e09a14; letter-spacing: .1em; }
+.zk-btn.go small { color: rgba(42, 22, 12, .65); }
+.zk-btn:disabled { opacity: .45; }
+.zk-keys { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
+@media (pointer: coarse) { .zk-keys { display: none; } }
+@media (max-width: 560px) {
+  .zk-card { padding: 10px; border-radius: 14px; }
+  .zk-card h3 { font-size: 15px; }
+  .zk-money { margin: 2px 0 8px; font-size: 11px; }
+  .zk-offers { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; margin-bottom: 0; }
+  .zk-offer { padding: 6px 4px; }
+  .zk-offer .ic { font-size: 20px; }
+  .zk-offer b { font-size: 11px; }
+  .zk-offer small, .zk-next { display: none; }
+  .zk-offer em { font-size: 12px; }
+}
