@@ -432,7 +432,7 @@ test('veky trains units that march, fight and earn experience', async ({ page })
 	await startFree(page, 'veky', 'lehka');
 	await expect(page.locator('.vk-cv')).toBeVisible();
 	const before = (await page.evaluate('Kit._test.inst._state()')) as { gold: number };
-	await page.locator('.vk-u[data-u="0"]').click();
+	await page.locator('.vk-card[data-u="0"]').click();
 	const after = (await page.evaluate('Kit._test.inst._state()')) as { gold: number; queue: number };
 	expect(after.gold).toBeLessThan(before.gold);
 	expect(after.queue).toBe(1);

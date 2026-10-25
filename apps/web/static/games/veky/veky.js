@@ -49,25 +49,26 @@ const Veky = (() => {
 
   function create(el, P, saved, api) {
     const D = DIFF[P.diff], power = P.power || 1;
-    el.innerHTML = `<div class="vk-wrap">
-      <div class="vk-stage"><canvas class="vk-cv"></canvas><div class="vk-msg" hidden></div></div>
-      <div class="vk-bar">
-        <div class="vk-units">${[0, 1, 2].map(k => `<button class="vk-u" data-u="${k}"><canvas width="64" height="64"></canvas><b></b><small></small></button>`).join('')}</div>
-        <div class="vk-side">
-          <button class="vk-b" data-a="tower">🏰<small>${L('věž', 'turret')}</small></button>
-          <button class="vk-b" data-a="special">✸<small></small><i></i></button>
-          <button class="vk-b evo" data-a="evolve">⏫<small>${L('nový věk', 'next age')}</small></button>
-          <button class="vk-b" data-a="speed">1×<small>${L('rychlost', 'speed')}</small></button>
+    el.innerHTML = `<div class="vk-wrap" data-age="0">
+      <div class="vk-stage"><canvas class="vk-cv"></canvas><div class="vk-msg" hidden></div><div class="vk-tower" hidden></div></div>
+      <div class="vk-panel">
+        <div class="vk-units">${[0, 1, 2].map(k => `<button class="vk-card" data-u="${k}"><span class="vk-key">${k + 1}</span><span class="vk-cnt" hidden></span><canvas class="vk-por" width="132" height="132"></canvas><b class="vk-nm"></b><span class="vk-cost"><i class="vk-coin"></i><em></em></span><span class="vk-tp"><i></i></span></button>`).join('')}</div>
+        <div class="vk-queue"><small>${L('Výcvik', 'Training')}</small><div class="vk-qs">${[0, 1, 2, 3, 4].map(() => '<span><canvas width="64" height="64"></canvas></span>').join('')}</div></div>
+        <div class="vk-acts">
+          <button class="vk-act" data-a="tower"><canvas width="96" height="96"></canvas><b>${L('Věže', 'Turrets')}</b><small class="vk-sl"></small></button>
+          <button class="vk-act vk-round" data-a="special"><span class="vk-ring"><canvas width="96" height="96"></canvas><em></em></span><b></b></button>
+          <button class="vk-act vk-evo" data-a="evolve"><span class="vk-ring"><canvas width="96" height="96"></canvas></span><b>${L('Nový věk', 'Next age')}</b><small class="vk-xp"></small></button>
+          <div class="vk-mini"><div class="vk-speed">${[1, 2, 3].map(n => `<button data-s="${n}">${n}×</button>`).join('')}</div><button class="vk-pause" data-a="pause" aria-label="${L('Pauza', 'Pause')}"><i></i></button></div>
         </div>
       </div>
-      <div class="vk-tower" hidden></div>
-      <p class="vk-keys">${L('Táhni bojiště nebo klepni do minimapy. Klávesy 1 2 3 jednotky, ← → posun, Q věž, E speciál, P pauza', 'Drag the battlefield or tap the minimap. Keys 1 2 3 units, ← → scroll, Q turret, E special, P pause')}</p></div>`;
+      <p class="vk-keys">${L('Táhni bojiště nebo klepni do minimapy · 1 2 3 jednotky · ← → posun · Q věže · E speciál · P pauza', 'Drag the battlefield or tap the minimap · 1 2 3 units · ← → scroll · Q turrets · E special · P pause')}</p></div>`;
     const cv = el.querySelector('.vk-cv'), ctx = cv.getContext('2d'), msgEl = el.querySelector('.vk-msg'), towerEl = el.querySelector('.vk-tower');
     let cssW = 900, cssH = 400, dpr = 1, VW = 900;
     function fit() {
       const kv = document.getElementById('kView') || el, pad = getComputedStyle(kv), box = kv.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
       cssW = Math.floor(Math.min(box - 2, 1200));
-      cssH = Math.round(Math.max(220, Math.min(innerHeight - (innerWidth < 760 ? 250 : 230), cssW * (innerWidth < 760 ? 0.9 : 0.48))));
+      const panelH = (el.querySelector('.vk-panel') || { offsetHeight: 140 }).offsetHeight;
+      cssH = Math.round(Math.max(220, Math.min(innerHeight - panelH - (innerWidth < 760 ? 120 : 130), cssW * (innerWidth < 760 ? 0.9 : 0.5))));
       VW = Math.min(W, Math.round(VH * cssW / cssH));
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = cssW * dpr; cv.height = cssH * dpr; cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
@@ -100,14 +101,14 @@ const Veky = (() => {
       const sd = S[s], slot = sd.turrets.indexOf(null), ts = turretStats(sd.age, kind);
       if (slot < 0 || sd.gold < ts.cost) { if (s === 0) api.sound('error'); return false; }
       sd.gold -= ts.cost; sd.turrets[slot] = { age: sd.age, kind, cd: 0, ang: s ? Math.PI : 0, ts };
-      if (s === 0) { api.sound('place'); syncUI(); renderTower(); }
+      if (s === 0) { api.sound('place'); syncUI(); towerSig = ''; }
       return true;
     }
     function sellTurret(s) {
       const sd = S[s]; let i = 2; while (i >= 0 && !sd.turrets[i]) i--;
       if (i < 0) return;
       sd.gold += Math.round(sd.turrets[i].ts.cost / 2); sd.turrets[i] = null;
-      if (s === 0) { api.sound('erase'); syncUI(); renderTower(); }
+      if (s === 0) { api.sound('erase'); syncUI(); towerSig = ''; }
     }
     function evolve(s) {
       const sd = S[s]; if (sd.age >= 4) return false;
@@ -297,7 +298,8 @@ const Veky = (() => {
       // horní lišta: zlato, zkušenosti, věk; minimapa
       const me = S[0], need = me.age < 4 ? XP_NEED[me.age] : 0;
       g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 8, 250, 62, 10); g.fill();
-      g.textAlign = 'left'; g.font = '900 18px Unbounded, sans-serif'; g.fillStyle = '#ffe066'; g.fillText(`$ ${Kit.fmtNum(Math.floor(me.gold))}`, 18, 26);
+      const coin = g.createRadialGradient(22, 22, 1, 25, 25, 9); coin.addColorStop(0, '#fff6b0'); coin.addColorStop(0.5, '#ffd23f'); coin.addColorStop(1, '#b8860b'); g.fillStyle = coin; g.beginPath(); g.arc(25, 25, 8, 0, 7); g.fill(); g.strokeStyle = '#8a6408'; g.lineWidth = 1.5; g.stroke();
+      g.textAlign = 'left'; g.font = '900 18px Unbounded, sans-serif'; g.fillStyle = '#ffe066'; g.fillText(Kit.fmtNum(Math.floor(me.gold)), 38, 26);
       g.font = '700 11px Space Grotesk, sans-serif'; g.fillStyle = '#e8e0ff'; g.fillText(AGE_NAMES[me.age], 150, 22);
       g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(18, 40, 230, 6);
       g.fillStyle = '#b07aff'; g.fillRect(18, 40, 230 * (need ? Math.min(1, me.xp / need) : 1), 6);
@@ -311,44 +313,72 @@ const Veky = (() => {
       for (const u of units) if (!u.dead) { g.fillStyle = u.side ? '#ff6a6a' : '#6aa8ff'; g.fillRect(mx + u.x / W * mw - 1, my + 6, 2, 8); }
       g.fillStyle = '#6aa8ff'; g.fillRect(mx, my + 2, 5, 14); g.fillStyle = '#ff6a6a'; g.fillRect(mx + mw - 5, my + 2, 5, 14);
       g.textAlign = 'left'; hpBar(mx, my + 22, mw - 60, 1);
-      // výcvik
-      if (me.queue.length) { const q = me.queue[0]; g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 76, 200, 18, 6); g.fill(); g.fillStyle = '#6aa8ff'; g.fillRect(12, 80, 60 * Math.min(1, me.prog), 10); g.fillStyle = '#fff'; g.font = '700 10px Space Grotesk, sans-serif'; g.textAlign = 'left'; g.fillText(`${UNIT_NAMES[q.age][q.kind]} · ${me.queue.length}/5`, 78, 85); }
     }
 
-    // ── Rozhraní ──
-    const btnU = [...el.querySelectorAll('.vk-u')], btnA = Object.fromEntries([...el.querySelectorAll('[data-a]')].map(b => [b.dataset.a, b]));
+    // ── Rozhraní ── karty jednotek, fronta výcviku, věže, speciál a nový věk
+    const wrap = el.querySelector('.vk-wrap'), cards = [...el.querySelectorAll('.vk-card')], qSlots = [...el.querySelectorAll('.vk-qs span')];
+    const btnA = Object.fromEntries([...el.querySelectorAll('[data-a]')].map(b => [b.dataset.a, b]));
+    const icon = (c, draw) => { const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.save(); draw(g, c.width); g.restore(); };
+    const portrait = (g, size, age, kind, side = 0) => { const sc = size / 64 * (kind === 2 ? [0.5, 0.56, 0.62, 0.66, 0.52][age] : 0.9); g.translate(size * (kind === 2 ? 0.44 : 0.47), size * 0.95); g.scale(sc, sc); VkArt.unit(g, { x: 0, y: 0, side, age, kind, walk: 0.6, atk: 0, hit: 0, dead: 0 }, 0); };
     function renderIcons() {
-      btnU.forEach((b, k) => {
-        const c = b.querySelector('canvas'), g = c.getContext('2d'), age = S[0].age, sc = k === 2 ? (u => [0.42, 0.5, 0.56, 0.6, 0.5][u])(age) : 0.86;
-        g.clearRect(0, 0, 64, 64); g.save(); g.translate(k === 2 ? 28 : 30, 61); g.scale(sc, sc);
-        VkArt.unit(g, { x: 0, y: 0, side: 0, age, kind: k, walk: 0, atk: 0, hit: 0, dead: 0 }, 0); g.restore();
-        b.querySelector('b').textContent = UNIT_NAMES[age][k];
-      });
+      const age = S[0].age;
+      wrap.dataset.age = age;
+      cards.forEach((b, k) => { icon(b.querySelector('canvas'), (g, s) => portrait(g, s, age, k)); b.querySelector('.vk-nm').textContent = UNIT_NAMES[age][k]; const st = stats(age, k); b.title = `${UNIT_NAMES[age][k]} · ${L('životy', 'HP')} ${Kit.fmtNum(st.hp)} · ${L('útok', 'damage')} ${Kit.fmtNum(st.dmg)} · ${L('dosah', 'range')} ${st.range}`; });
+      icon(btnA.tower.querySelector('canvas'), (g, s) => { g.translate(s / 2, s * 0.62); g.scale(2, 2); VkArt.turret(g, 0, 0, age, 1, -0.35, 0, 0); });
+      icon(btnA.special.querySelector('canvas'), (g, s) => { g.translate(s * 0.58, s * 0.58); g.scale(1.8, 1.8); VkArt.special(g, { x: 0, y: 0, age: age === 4 ? 2 : age }, 0); });
+      if (age === 4) icon(btnA.special.querySelector('canvas'), (g, s) => { g.fillStyle = '#5ad8ff'; g.shadowColor = '#5ad8ff'; g.shadowBlur = 12; g.fillRect(s / 2 - 6, 4, 12, s * 0.7); g.fillStyle = '#e8ffff'; g.fillRect(s / 2 - 2, 4, 4, s * 0.7); g.beginPath(); g.arc(s / 2, s * 0.74, 14, 0, 7); g.fill(); });
+      btnA.special.querySelector('b').textContent = SPECIAL_NAMES[age];
+      icon(btnA.evolve.querySelector('canvas'), (g, s) => { g.translate(s / 2, s * 0.92); g.scale(0.36, 0.36); VkArt.base(g, 0, 0, Math.min(4, age + 1), 0, 0); });
     }
+    let qKey = '';
     function syncUI() {
       const me = S[0];
-      btnU.forEach((b, k) => { const c = stats(me.age, k).cost; b.querySelector('small').textContent = `$${Kit.fmtNum(c)}`; b.disabled = me.gold < c || me.queue.length >= 5; });
-      btnA.special.querySelector('small').textContent = me.spCd > 0 ? `${Math.ceil(me.spCd)} s` : SPECIAL_NAMES[me.age];
+      cards.forEach((b, k) => {
+        const c = stats(me.age, k).cost, n = me.queue.filter(q => q.kind === k).length;
+        b.querySelector('em').textContent = Kit.fmtNum(c);
+        b.classList.toggle('poor', me.gold < c);
+        b.disabled = me.gold < c || me.queue.length >= 5;
+        const cnt = b.querySelector('.vk-cnt'); cnt.hidden = !n; cnt.textContent = n;
+        b.querySelector('.vk-tp i').style.width = me.queue[0] && me.queue[0].kind === k ? `${Math.min(1, me.prog) * 100}%` : '0';
+      });
+      // fronta výcviku s portréty
+      const key = me.queue.map(q => q.age * 3 + q.kind).join(',');
+      if (key !== qKey) { qKey = key; qSlots.forEach((sl, i) => { const q = me.queue[i], c = sl.querySelector('canvas'); sl.classList.toggle('on', !!q); icon(c, (g, s) => { if (q) portrait(g, s, q.age, q.kind); }); }); }
+      qSlots[0].style.setProperty('--p', me.queue.length ? Math.min(1, me.prog) : 0);
+      const tCount = me.turrets.filter(Boolean).length;
+      btnA.tower.querySelector('.vk-sl').textContent = `${'■'.repeat(tCount)}${'□'.repeat(3 - tCount)}`;
+      btnA.tower.classList.toggle('open', !towerEl.hidden);
+      btnA.special.style.setProperty('--cd', me.spCd / 50);
+      btnA.special.querySelector('em').textContent = me.spCd > 0 ? Math.ceil(me.spCd) : '';
       btnA.special.disabled = me.spCd > 0;
-      btnA.special.querySelector('i').style.width = `${(1 - me.spCd / 50) * 100}%`;
-      btnA.evolve.disabled = me.age >= 4 || me.xp < XP_NEED[me.age];
+      const need = me.age < 4 ? XP_NEED[me.age] : 0, xpf = need ? Math.min(1, me.xp / need) : 1;
+      btnA.evolve.style.setProperty('--cd', 1 - xpf);
+      btnA.evolve.querySelector('.vk-xp').textContent = need ? `${Math.floor(xpf * 100)} %` : 'MAX';
+      btnA.evolve.disabled = me.age >= 4 || me.xp < need;
       btnA.evolve.classList.toggle('ready', !btnA.evolve.disabled);
-      btnA.speed.firstChild.textContent = `${speed}×`;
+      el.querySelectorAll('.vk-speed button').forEach(b => b.classList.toggle('on', +b.dataset.s === speed));
+      btnA.pause.classList.toggle('play', paused);
     }
     function renderTower() {
-      const me = S[0];
-      towerEl.innerHTML = [0, 1].map(k => { const ts = turretStats(me.age, k); return `<button class="vk-t" data-t="${k}" ${me.gold < ts.cost || me.turrets.indexOf(null) < 0 ? 'disabled' : ''}><b>${TURRET_NAMES[me.age][k]}</b><small>$${Kit.fmtNum(ts.cost)} · ${L('dosah', 'range')} ${ts.range}</small></button>`; }).join('') +
-        `<button class="vk-t sell" data-t="sell" ${me.turrets.some(Boolean) ? '' : 'disabled'}><b>${L('Prodat věž', 'Sell turret')}</b><small>${L('vrátí polovinu', 'refunds half')}</small></button><span class="vk-slots">${me.turrets.map(t => (t ? '■' : '□')).join(' ')}</span>`;
+      const me = S[0], full = me.turrets.indexOf(null) < 0;
+      towerEl.innerHTML = `<div class="vk-th"><b>${L('Věže', 'Turrets')} · ${AGE_NAMES[me.age]}</b><span class="vk-slots">${me.turrets.map(t => `<i class="${t ? 'on' : ''}"></i>`).join('')}</span><button class="vk-x" data-t="close">✕</button></div><div class="vk-tl">` +
+        [0, 1].map(k => { const ts = turretStats(me.age, k); return `<button class="vk-tc${me.gold < ts.cost ? ' poor' : ''}" data-t="${k}" ${me.gold < ts.cost || full ? 'disabled' : ''}><canvas width="96" height="96"></canvas><b>${TURRET_NAMES[me.age][k]}</b><span class="vk-st"><small>${L('útok', 'damage')}</small><i style="--v:${k ? 0.9 : 0.4}"></i><small>${L('dosah', 'range')}</small><i style="--v:${ts.range / 340}"></i></span><span class="vk-cost"><i class="vk-coin"></i><em>${Kit.fmtNum(ts.cost)}</em></span></button>`; }).join('') +
+        `<button class="vk-tc vk-sell" data-t="sell" ${me.turrets.some(Boolean) ? '' : 'disabled'}><span class="vk-big">💰</span><b>${L('Prodat věž', 'Sell turret')}</b><small>${L('vrátí polovinu ceny', 'refunds half the price')}</small></button></div>`;
+      towerEl.querySelectorAll('.vk-tc[data-t="0"] canvas, .vk-tc[data-t="1"] canvas').forEach((c, k) => icon(c, (g, s) => { g.translate(s / 2, s * 0.62); g.scale(2.2, 2.2); VkArt.turret(g, 0, 0, me.age, k, -0.3, 0, 0); }));
     }
+    let towerSig = '';
+    function refreshTower() { const me = S[0], sig = `${me.age}|${me.turrets.map(Boolean)}|${[0, 1].map(k => me.gold >= turretStats(me.age, k).cost)}`; if (sig !== towerSig) { towerSig = sig; renderTower(); } }
+    function toggleTower(on) { towerEl.hidden = on === undefined ? !towerEl.hidden : !on; towerSig = ''; if (!towerEl.hidden) refreshTower(); syncUI(); }
     el.querySelector('.vk-units').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (b) train(0, +b.dataset.u); });
-    el.querySelector('.vk-side').addEventListener('click', e => {
+    el.querySelector('.vk-acts').addEventListener('click', e => {
+      const sp = e.target.closest('[data-s]'); if (sp) { speed = +sp.dataset.s; syncUI(); return; }
       const b = e.target.closest('[data-a]'); if (!b) return; kick();
-      if (b.dataset.a === 'tower') { towerEl.hidden = !towerEl.hidden; renderTower(); }
+      if (b.dataset.a === 'tower') toggleTower();
       if (b.dataset.a === 'special') special(0);
       if (b.dataset.a === 'evolve') evolve(0);
-      if (b.dataset.a === 'speed') { speed = speed >= 3 ? 1 : speed + 1; syncUI(); }
+      if (b.dataset.a === 'pause') setPause(!paused);
     });
-    towerEl.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; if (b.dataset.t === 'sell') sellTurret(0); else buyTurret(0, +b.dataset.t); });
+    towerEl.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; if (b.dataset.t === 'close') toggleTower(false); else if (b.dataset.t === 'sell') sellTurret(0); else buyTurret(0, +b.dataset.t); towerSig = ''; refreshTower(); });
     // posouvání bojiště tažením a klepnutím do minimapy
     let drag = null;
     const lx = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * VW, (e.clientY - r.top) / r.height * VH]; };
@@ -375,10 +405,10 @@ const Veky = (() => {
       if (keysHeld.has('ArrowLeft')) camX = Math.max(0, camX - 700 * dt);
       if (keysHeld.has('ArrowRight')) camX = Math.min(W - VW, camX + 700 * dt);
       if (!paused && !over) for (let s = 0; s < speed; s++) { if (auto) autoplay(); if (!over) tick(dt); }
-      uiT -= dt; if (uiT <= 0) { uiT = 0.2; syncUI(); if (!towerEl.hidden) renderTower(); }
+      uiT -= dt; if (uiT <= 0) { uiT = 0.15; syncUI(); if (!towerEl.hidden) refreshTower(); }
       draw();
     }
-    function setPause(on) { if (over) return; paused = on; api.setTimer(!on); VkMusic.pause(on); if (on) say(L('Pauza · stiskni P', 'Paused · press P'), 9999); else msgEl.hidden = true; }
+    function setPause(on) { if (over) return; paused = on; api.setTimer(!on); VkMusic.pause(on); if (on) say(L('Pauza · stiskni P', 'Paused · press P'), 9999); else msgEl.hidden = true; syncUI(); }
     // automat pro testy: cvičí smíšenou armádu, staví věže, postupuje věky a používá speciál
     let auto = false;
     function autoplay() {
@@ -404,7 +434,7 @@ const Veky = (() => {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); keysHeld.add(e.key); return; }
         if (e.repeat) return;
         if (e.key === '1' || e.key === '2' || e.key === '3') { kick(); train(0, +e.key - 1); }
-        if (e.key === 'q' || e.key === 'Q') { towerEl.hidden = !towerEl.hidden; renderTower(); }
+        if (e.key === 'q' || e.key === 'Q') toggleTower();
         if (e.key === 'e' || e.key === 'E') special(0);
       },
       _state: () => ({ gold: Math.floor(S[0].gold), xp: Math.floor(S[0].xpTotal), age: S[0].age, aiAge: S[1].age, hp: Math.ceil(S[0].hp), aiHp: Math.ceil(S[1].hp), units: units.filter(u => !u.dead).length, queue: S[0].queue.length, over, clock: +clock.toFixed(1) }),
