@@ -40,6 +40,13 @@ const VkArt = (() => {
     } catch (e) { RED[n] = IMG[n]; }
     return RED[n];
   }
+  // snímky chůze: základní obrázek, pak `-walk-1`, `-walk-2`… (celý cyklus = dva kroky, delší, ať nohy neklouzou); starší `-walk` = jeden snímek
+  function walkFrames(base) {
+    const f = [base];
+    for (let i = 1; img(`${base}-walk-${i}`); i++) f.push(`${base}-walk-${i}`);
+    if (f.length === 1 && img(`${base}-walk`)) f.push(`${base}-walk`);
+    return f;
+  }
   const pick = (n, red) => (img(n) ? (red ? redOf(n) : img(n)) : null);
   // obrázek s kotvou: ax, ay jsou poměry (0–1) bodu, který leží na (x, y); h = výška v herních px
   function sprite(g, im, x, y, h, ax = 0.5, ay = 1, flip = false) {
@@ -117,15 +124,16 @@ const VkArt = (() => {
       // dodané obrázky: póza chůze (střídá se se základní), útoku a padlého; chybějící pózu nahradí pohyb
       const h = u.kind === 2 ? TOP[2][u.age] : TOP[u.kind], red = !!u.side;
       const deadPic = u.dead && pick(`${base}-dead`, red), atkPic = !u.dead && a > 0.45 && pick(`${base}-atk`, red);
-      const walkPic = !u.dead && !atkPic && Math.floor(walk / Math.PI) % 2 === 1 && pick(`${base}-walk`, red);
+      const frames = walkFrames(base), fi = Math.floor(walk / (frames.length > 2 ? 3 * Math.PI : TAU) * frames.length) % frames.length;
+      const walkPic = !u.dead && !atkPic && fi > 0 && pick(frames[fi], red);
       const pic = deadPic || atkPic || walkPic || pick(base, red);
       if (u.dead) g.globalAlpha = Math.max(0, 1 - u.dead * 1.3);
       if (u.hit > 0) g.filter = 'brightness(1.9)';
       if (deadPic) sprite(g, pic, 0, 0, h);
       else {
         if (u.dead) g.rotate(-Math.min(1.4, u.dead * 3));
-        const bob = img(`${base}-walk`) ? 0 : Math.abs(Math.sin(walk)) * 2, lunge = atkPic ? 0 : Math.sin(a * Math.PI) * 6;
-        g.save(); g.translate(lunge, -bob); if (!img(`${base}-walk`)) g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, h); g.restore();
+        const anim = frames.length > 1, bob = anim ? 0 : Math.abs(Math.sin(walk)) * 2, lunge = atkPic ? 0 : Math.sin(a * Math.PI) * 6;
+        g.save(); g.translate(lunge, -bob); if (!anim) g.rotate(Math.sin(walk) * 0.03); sprite(g, pic, 0, 0, h); g.restore();
       }
       g.filter = 'none'; g.restore(); return;
     }
