@@ -9,7 +9,7 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
 holds two shelves: action games (**VOIDBORN**, **STARSPIRE**, **DRIFTWOOD** with multiplayer worlds) and
 **Puzzles** (Sudoku, Nonograms, Kakuro, Souhvězdí/Hashi, Pulsar falling blocks, Fúze/2048, Miny,
-Omalovánky colour by number, Solitaire, Mahjong, Skládačka jigsaw, Šachy chess, Piškvorky gomoku, Sokoban, Clickomania, Rybky à la Fish Fillets, Mlsoun maze chase à la Pac-Man, Had snake, Impakt space shooter à la Space Impact, Skladník crates à la Stack Attack, Bubliny bubble shooter, Tanky two-player artillery, Červíci worms war) built on a shared puzzle kit. Later games will store progress in Postgres.
+Omalovánky colour by number, Solitaire, Mahjong, Skládačka jigsaw, Šachy chess, Piškvorky gomoku, Sokoban, Clickomania, Rybky à la Fish Fillets, Mlsoun maze chase à la Pac-Man, Had snake, Impakt space shooter à la Space Impact, Skladník crates à la Stack Attack, Bubliny bubble shooter, Letní hry athletics à la Playman Summer Games, Tanky two-player artillery, Červíci worms war) built on a shared puzzle kit. Later games will store progress in Postgres.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
