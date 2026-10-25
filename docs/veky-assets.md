@@ -16,8 +16,11 @@ nahradí; co chybí, kreslí se dál jako dosud. Takže se dá měnit postupně,
 - **Barva týmu:** prvky týmu (pásek, štít, čabraka, praporek…) modré `#3d7bff`. Pro soupeře
   můžeš dodat stejný obrázek s červenou `#e8383a` a koncovkou `-red`; když chybí, hra soupeři
   přimaluje červený praporek.
-- **Styl:** kreslený, s tmavým obrysem (`#1a1210`, cca 6–8 px při 4×), plné barvy se
-  stínováním, světlo zleva shora. Ať k sobě všechny věky ladí.
+- **Styl:** malovaný fantasy styl podle návrhu (detailní, poloreálný jako mobilní strategie):
+  měkké stínování a objem, bohaté textury (kámen, dřevo, kov, látka), jemný tmavý obrys,
+  světlo zleva shora, sytě modrá obloha a zelená krajina. Postavy proporčně „chibi“ až
+  poloreálné (hlava cca 1/5 výšky), čitelné i v malé velikosti. Všechny věky ve stejném stylu.
+  Referenční obrázek: `veky-style.png` (návrh obrazovky).
 - **Animace:** stačí jeden obrázek na jednotku. Chůzi (houpání) a útok (výpad) přidá hra.
 - **Jména souborů** přesně podle tabulek níže. Soubory mi pošli, já je dám do
   `static/games/veky/assets/` a zapíšu do `assets/manifest.json`.
@@ -93,7 +96,18 @@ Volitelně `turret-<věk>-<druh>-base.png`: podstavec, výška 72 px, kotva dole
 | `shot-shell`  | granát / raketa, doprava                               | výška 40 px                                 |
 | `shot-laser`  | laserový výboj, doprava                                | výška 32 px                                 |
 
-## 5. Pozadí (5)
+## 5. Ikony do spodní lišty (volitelné)
+
+Dlaždice lišty jinak ukazují zmenšenou jednotku nebo věž. Hezčí jsou samostatné ikony,
+čtvercové **256 × 256 px**, průhledné, motiv vycentrovaný s malým okrajem, světlo zleva:
+
+| Soubor                     | Co to je                                                           |
+| -------------------------- | ------------------------------------------------------------------ |
+| `icon-unit-<věk>-<druh>`   | portrét jednotky v celé postavě (jako na návrhu „Šermíř“, „Rytíř“) |
+| `icon-turret-<věk>-<druh>` | věž/obranný stroj (jako „Beran“, „Hradba“)                         |
+| `icon-special-<věk>`       | symbol zvláštního útoku                                            |
+
+## 6. Pozadí (5)
 
 `bg-<věk>.png`, přesně **3600 × 800 px** (celé bojiště 2×). Pozadí se posouvá vodorovně,
 takže musí být široké celé.
@@ -102,6 +116,8 @@ takže musí být široké celé.
   Pod ní (672–800) je cesta s kameny a trávou na okraji, nad ní krajina.
 - **Volná místa:** levých a pravých **~500 px** nech u země volných, stojí tam základny.
 - **Žádné postavy** a nic výrazného přímo na cestě.
+- **Hloubka:** popředí (keře, kameny na okraji cesty), střední plán (stromy, mlýn, ploty),
+  pozadí (hory, hrad, obloha s mraky), jako na návrhu.
 
 | Soubor | Krajina                                                            |
 | ------ | ------------------------------------------------------------------ |

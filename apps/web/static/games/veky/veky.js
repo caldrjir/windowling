@@ -50,19 +50,22 @@ const Veky = (() => {
   function create(el, P, saved, api) {
     const D = DIFF[P.diff], power = P.power || 1;
     el.innerHTML = `<div class="vk-wrap" data-age="0">
-      <div class="vk-stage"><canvas class="vk-cv"></canvas><div class="vk-msg" hidden></div><div class="vk-tower" hidden></div></div>
-      <div class="vk-panel">
-        <div class="vk-units">${[0, 1, 2].map(k => `<button class="vk-card" data-u="${k}"><span class="vk-key">${k + 1}</span><span class="vk-cnt" hidden></span><canvas class="vk-por" width="132" height="132"></canvas><b class="vk-nm"></b><span class="vk-cost"><i class="vk-coin"></i><em></em></span><span class="vk-tp"><i></i></span></button>`).join('')}</div>
-        <div class="vk-queue"><small>${L('Výcvik', 'Training')}</small><div class="vk-qs">${[0, 1, 2, 3, 4].map(() => '<span><canvas width="64" height="64"></canvas></span>').join('')}</div></div>
-        <div class="vk-acts">
-          <button class="vk-act" data-a="tower"><canvas width="96" height="96"></canvas><b>${L('Věže', 'Turrets')}</b><small class="vk-sl"></small></button>
-          <button class="vk-act vk-round" data-a="special"><span class="vk-ring"><canvas width="96" height="96"></canvas><em></em></span><b></b></button>
-          <button class="vk-act vk-evo" data-a="evolve"><span class="vk-ring"><canvas width="96" height="96"></canvas></span><b>${L('Nový věk', 'Next age')}</b><small class="vk-xp"></small></button>
-          <div class="vk-mini"><div class="vk-speed">${[1, 2, 3].map(n => `<button data-s="${n}">${n}×</button>`).join('')}</div><button class="vk-pause" data-a="pause" aria-label="${L('Pauza', 'Pause')}"><i></i></button></div>
+      <div class="vk-stage"><canvas class="vk-cv"></canvas><div class="vk-msg" hidden></div></div>
+      <div class="vk-panel"><i class="vk-corner l"></i><i class="vk-corner r"></i>
+        <div class="vk-tiles">
+          ${[0, 1, 2].map(k => `<button class="vk-tile vk-card" data-u="${k}"><span class="vk-key">${k + 1}</span><span class="vk-cnt" hidden></span><canvas class="vk-por" width="132" height="132"></canvas><b class="vk-nm"></b><span class="vk-cost"><i class="vk-coin">$</i><em></em></span><span class="vk-tp"><i></i></span></button>`).join('')}
+          ${[0, 1].map(k => `<button class="vk-tile vk-tur" data-tb="${k}"><canvas class="vk-por" width="132" height="132"></canvas><b class="vk-nm"></b><span class="vk-cost"><i class="vk-coin">$</i><em></em></span><span class="vk-sell" data-sell title="${L('Prodat věž (vrátí polovinu)', 'Sell a turret (refunds half)')}" hidden>✕</span></button>`).join('')}
+          <button class="vk-tile vk-sp" data-a="special"><span class="vk-ring"><canvas width="96" height="96"></canvas><em></em></span><b class="vk-nm"></b></button>
+        </div>
+        <span class="vk-sep"></span>
+        <div class="vk-ctrl">
+          <button class="vk-big vk-evo" data-a="evolve"><span class="vk-flame"></span><b>${L('Nový věk', 'Next age')}</b><span class="vk-xpb"><i></i></span></button>
+          <button class="vk-big" data-a="speed"><span class="vk-bigt">1×</span><b>${L('Rychlost', 'Speed')}</b></button>
+          <button class="vk-big" data-a="pause"><span class="vk-pi"><i></i></span><b>${L('Pauza', 'Pause')}</b></button>
         </div>
       </div>
-      <p class="vk-keys">${L('Táhni bojiště nebo klepni do minimapy · 1 2 3 jednotky · ← → posun · Q věže · E speciál · P pauza', 'Drag the battlefield or tap the minimap · 1 2 3 units · ← → scroll · Q turrets · E special · P pause')}</p></div>`;
-    const cv = el.querySelector('.vk-cv'), ctx = cv.getContext('2d'), msgEl = el.querySelector('.vk-msg'), towerEl = el.querySelector('.vk-tower');
+      <p class="vk-keys">${L('Táhni bojiště nebo klepni do minimapy · 1 2 3 jednotky · ← → posun · Q věž · E speciál · P pauza', 'Drag the battlefield or tap the minimap · 1 2 3 units · ← → scroll · Q turret · E special · P pause')}</p></div>`;
+    const cv = el.querySelector('.vk-cv'), ctx = cv.getContext('2d'), msgEl = el.querySelector('.vk-msg');
     let cssW = 900, cssH = 400, dpr = 1, VW = 900;
     function fit() {
       const kv = document.getElementById('kView') || el, pad = getComputedStyle(kv), box = kv.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
@@ -101,14 +104,14 @@ const Veky = (() => {
       const sd = S[s], slot = sd.turrets.indexOf(null), ts = turretStats(sd.age, kind);
       if (slot < 0 || sd.gold < ts.cost) { if (s === 0) api.sound('error'); return false; }
       sd.gold -= ts.cost; sd.turrets[slot] = { age: sd.age, kind, cd: 0, ang: s ? Math.PI : 0, ts };
-      if (s === 0) { api.sound('place'); syncUI(); towerSig = ''; }
+      if (s === 0) { api.sound('place'); syncUI(); }
       return true;
     }
     function sellTurret(s) {
       const sd = S[s]; let i = 2; while (i >= 0 && !sd.turrets[i]) i--;
       if (i < 0) return;
       sd.gold += Math.round(sd.turrets[i].ts.cost / 2); sd.turrets[i] = null;
-      if (s === 0) { api.sound('erase'); syncUI(); towerSig = ''; }
+      if (s === 0) { api.sound('erase'); syncUI(); }
     }
     function evolve(s) {
       const sd = S[s]; if (sd.age >= 4) return false;
@@ -295,44 +298,45 @@ const Veky = (() => {
       for (const p of pops) { g.globalAlpha = Math.min(1, p.life * 2); g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.7)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.col; g.fillText(p.text, p.x, p.y); }
       g.globalAlpha = 1;
       g.restore();
-      // horní lišta: zlato, zkušenosti, věk; minimapa
+      // horní lišta: zlato a věk vlevo, minimapa s erby vpravo (tmavě modré panely s rámečkem)
       const me = S[0], need = me.age < 4 ? XP_NEED[me.age] : 0;
-      g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 8, 250, 62, 10); g.fill();
-      const coin = g.createRadialGradient(22, 22, 1, 25, 25, 9); coin.addColorStop(0, '#fff6b0'); coin.addColorStop(0.5, '#ffd23f'); coin.addColorStop(1, '#b8860b'); g.fillStyle = coin; g.beginPath(); g.arc(25, 25, 8, 0, 7); g.fill(); g.strokeStyle = '#8a6408'; g.lineWidth = 1.5; g.stroke();
-      g.textAlign = 'left'; g.font = '900 18px Unbounded, sans-serif'; g.fillStyle = '#ffe066'; g.fillText(Kit.fmtNum(Math.floor(me.gold)), 38, 26);
-      g.font = '700 11px Space Grotesk, sans-serif'; g.fillStyle = '#e8e0ff'; g.fillText(AGE_NAMES[me.age], 150, 22);
-      g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(18, 40, 230, 6);
-      g.fillStyle = '#b07aff'; g.fillRect(18, 40, 230 * (need ? Math.min(1, me.xp / need) : 1), 6);
-      g.fillStyle = '#e8e0ff'; g.fillText(need ? `XP ${Kit.fmtNum(Math.floor(me.xp))} / ${Kit.fmtNum(need)}` : 'XP max', 150, 34);
-      const hpBar = (x, y, wd, s) => { const f = S[s].hp / S[s].maxHp; g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(x, y, wd, 7); g.fillStyle = f > 0.5 ? '#5ad85a' : f > 0.25 ? '#ffd23f' : '#ff4d4d'; g.fillRect(x, y, wd * f, 7); g.fillStyle = '#fff'; g.font = '700 9px Space Grotesk, sans-serif'; g.fillText(`🏰 ${Kit.fmtNum(Math.ceil(S[s].hp))}`, x + wd + 6, y + 4); };
-      hpBar(18, 56, 170, 0);
-      const mw = Math.min(260, VW * 0.32), mx = VW - mw - 10, my = 10;
-      g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(mx - 4, my - 4, mw + 8, 38, 8); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(mx, my + 8, mw, 4);
-      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.5; g.strokeRect(mx + camX / W * mw, my, VW / W * mw, 18);
-      for (const u of units) if (!u.dead) { g.fillStyle = u.side ? '#ff6a6a' : '#6aa8ff'; g.fillRect(mx + u.x / W * mw - 1, my + 6, 2, 8); }
-      g.fillStyle = '#6aa8ff'; g.fillRect(mx, my + 2, 5, 14); g.fillStyle = '#ff6a6a'; g.fillRect(mx + mw - 5, my + 2, 5, 14);
-      g.textAlign = 'left'; hpBar(mx, my + 22, mw - 60, 1);
+      const panel = (x, y, w, h) => { g.fillStyle = 'rgba(12,20,44,.86)'; g.beginPath(); g.roundRect(x, y, w, h, 8); g.fill(); g.strokeStyle = 'rgba(150,180,230,.55)'; g.lineWidth = 1.2; g.stroke(); g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 1; g.beginPath(); g.roundRect(x + 2.5, y + 2.5, w - 5, h - 5, 6); g.stroke(); };
+      const castle = (x, y) => { g.fillStyle = '#d8d0c0'; g.fillRect(x, y - 7, 10, 7); for (let i = 0; i < 3; i++) g.fillRect(x + i * 4, y - 9, 2, 2); g.fillStyle = '#c83a3a'; g.fillRect(x + 4, y - 4, 2, 4); };
+      const bar = (x, y, w, f, col) => { g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect(x - 1, y - 1, w + 2, 9, 3); g.fill(); const gr = g.createLinearGradient(0, y, 0, y + 7); gr.addColorStop(0, col[0]); gr.addColorStop(1, col[1]); g.fillStyle = gr; g.beginPath(); g.roundRect(x, y, Math.max(0, w * f), 7, 2.5); g.fill(); };
+      panel(10, 10, 232, 54);
+      const coin = g.createRadialGradient(22, 23, 1, 25, 26, 9); coin.addColorStop(0, '#fff6b0'); coin.addColorStop(0.5, '#ffc83a'); coin.addColorStop(1, '#a8740b'); g.fillStyle = coin; g.beginPath(); g.arc(25, 25, 8, 0, 7); g.fill(); g.strokeStyle = '#7a5408'; g.lineWidth = 1.2; g.stroke();
+      g.fillStyle = '#7a5408'; g.font = '900 9px Space Grotesk, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('$', 25, 25.5);
+      g.textAlign = 'left'; g.font = '800 15px Space Grotesk, sans-serif'; g.fillStyle = '#ffd86a'; g.fillText(`$ ${Kit.fmtNum(Math.floor(me.gold))}`, 38, 25);
+      g.fillStyle = 'rgba(150,180,230,.35)'; g.fillRect(146, 16, 1, 22);
+      g.font = '800 12px Space Grotesk, sans-serif'; g.fillStyle = '#fff'; g.fillText(AGE_NAMES[me.age], 154, 21);
+      g.font = '600 8.5px Space Grotesk, sans-serif'; g.fillStyle = '#c8d4f0'; g.fillText(need ? `XP ${Kit.fmtNum(Math.floor(me.xp))} / ${Kit.fmtNum(need)}` : 'XP max', 154, 33);
+      bar(18, 47, 150, S[0].hp / S[0].maxHp, ['#7aec6a', '#2e9a2a']); castle(176, 55); g.font = '700 9px Space Grotesk, sans-serif'; g.fillStyle = '#fff'; g.fillText(Kit.fmtNum(Math.ceil(S[0].hp)), 190, 51);
+      const mw = Math.min(250, VW * 0.3), mx = VW - mw - 34, my = 14;
+      panel(mx - 26, 10, mw + 50, 46);
+      const crest = (x, y, s) => { g.save(); g.translate(x, y); g.fillStyle = s ? '#a81e20' : '#1e4aa8'; g.strokeStyle = '#d8c070'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-9, -12); g.lineTo(9, -12); g.lineTo(9, 1); g.quadraticCurveTo(9, 9, 0, 13); g.quadraticCurveTo(-9, 9, -9, 1); g.closePath(); g.fill(); g.stroke(); g.fillStyle = s ? '#2a0a0a' : '#ffd86a'; if (s) { g.beginPath(); g.moveTo(-5, -6); g.lineTo(-2, -2); g.lineTo(2, -2); g.lineTo(5, -6); g.lineTo(4, 2); g.lineTo(0, 7); g.lineTo(-4, 2); g.closePath(); g.fill(); } else { g.fillRect(-1.2, -9, 2.4, 16); g.fillRect(-5, -4, 10, 2.4); } g.restore(); };
+      crest(mx - 13, 33, 0); crest(mx + mw + 13, 33, 1);
+      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(mx, my + 4, mw, 12);
+      for (const u of units) if (!u.dead) { g.fillStyle = u.side ? '#ff5a5a' : '#5a9aff'; g.fillRect(mx + u.x / W * mw - 1, my + 5, 2.4, 10); }
+      g.strokeStyle = 'rgba(220,230,255,.8)'; g.lineWidth = 1.2; g.strokeRect(mx + camX / W * mw, my + 2, VW / W * mw, 16);
+      bar(mx, my + 26, mw - 46, S[1].hp / S[1].maxHp, ['#7aec6a', '#2e9a2a']); castle(mx + mw - 40, my + 34); g.font = '700 9px Space Grotesk, sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(Kit.fmtNum(Math.ceil(S[1].hp)), mx + mw - 27, my + 30);
+      g.textBaseline = 'alphabetic';
     }
 
-    // ── Rozhraní ── karty jednotek, fronta výcviku, věže, speciál a nový věk
-    const wrap = el.querySelector('.vk-wrap'), cards = [...el.querySelectorAll('.vk-card')], qSlots = [...el.querySelectorAll('.vk-qs span')];
+    // ── Rozhraní ── dlaždice jednotek a věží, speciál, nový věk, rychlost a pauza
+    const wrap = el.querySelector('.vk-wrap'), cards = [...el.querySelectorAll('.vk-card')], turs = [...el.querySelectorAll('.vk-tur')];
     const btnA = Object.fromEntries([...el.querySelectorAll('[data-a]')].map(b => [b.dataset.a, b]));
     const icon = (c, draw) => { const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.save(); draw(g, c.width); g.restore(); };
     const portrait = (g, size, age, kind, side = 0) => { const sc = size / 64 * (kind === 2 ? [0.5, 0.56, 0.62, 0.66, 0.52][age] : 0.9); g.translate(size * (kind === 2 ? 0.44 : 0.47), size * 0.95); g.scale(sc, sc); VkArt.unit(g, { x: 0, y: 0, side, age, kind, walk: 0.6, atk: 0, hit: 0, dead: 0 }, 0); };
     function renderIcons() {
       const age = S[0].age;
       wrap.dataset.age = age;
-      cards.forEach((b, k) => { icon(b.querySelector('canvas'), (g, s) => portrait(g, s, age, k)); b.querySelector('.vk-nm').textContent = UNIT_NAMES[age][k]; const st = stats(age, k); b.title = `${UNIT_NAMES[age][k]} · ${L('životy', 'HP')} ${Kit.fmtNum(st.hp)} · ${L('útok', 'damage')} ${Kit.fmtNum(st.dmg)} · ${L('dosah', 'range')} ${st.range}`; });
-      icon(btnA.tower.querySelector('canvas'), (g, s) => { g.translate(s / 2, s * 0.62); g.scale(2, 2); VkArt.turret(g, 0, 0, age, 1, -0.35, 0, 0); });
-      icon(btnA.special.querySelector('canvas'), (g, s) => { g.translate(s * 0.58, s * 0.58); g.scale(1.8, 1.8); VkArt.special(g, { x: 0, y: 0, age: age === 4 ? 2 : age }, 0); });
-      if (age === 4) icon(btnA.special.querySelector('canvas'), (g, s) => { g.fillStyle = '#5ad8ff'; g.shadowColor = '#5ad8ff'; g.shadowBlur = 12; g.fillRect(s / 2 - 6, 4, 12, s * 0.7); g.fillStyle = '#e8ffff'; g.fillRect(s / 2 - 2, 4, 4, s * 0.7); g.beginPath(); g.arc(s / 2, s * 0.74, 14, 0, 7); g.fill(); });
-      btnA.special.querySelector('b').textContent = SPECIAL_NAMES[age];
-      icon(btnA.evolve.querySelector('canvas'), (g, s) => { g.translate(s / 2, s * 0.92); g.scale(0.36, 0.36); VkArt.base(g, 0, 0, Math.min(4, age + 1), 0, 0); });
+      cards.forEach((b, k) => { const iu = VkArt.img(`icon-unit-${age}-${k}`); icon(b.querySelector('canvas'), (g, s) => (iu ? g.drawImage(iu, 0, 0, s, s) : portrait(g, s, age, k))); b.querySelector('.vk-nm').textContent = UNIT_NAMES[age][k]; const st = stats(age, k); b.title = `${UNIT_NAMES[age][k]} · ${L('životy', 'HP')} ${Kit.fmtNum(st.hp)} · ${L('útok', 'damage')} ${Kit.fmtNum(st.dmg)} · ${L('dosah', 'range')} ${st.range}`; });
+      turs.forEach((b, k) => { const ip = VkArt.img(`icon-turret-${age}-${k}`); icon(b.querySelector('canvas'), (g, s) => { if (ip) { g.drawImage(ip, 0, 0, s, s); return; } g.translate(s * 0.42, s * 0.62); g.scale(3, 3); VkArt.turret(g, 0, 0, age, k, -0.35, 0, 0); }); b.querySelector('.vk-nm').textContent = TURRET_NAMES[age][k]; const ts = turretStats(age, k); b.title = `${TURRET_NAMES[age][k]} · ${L('věž na základně', 'turret on the base')} · ${L('dosah', 'range')} ${ts.range}`; });
+      const isp = VkArt.img(`icon-special-${age}`); icon(btnA.special.querySelector('canvas'), (g, s) => { if (isp) { g.drawImage(isp, 0, 0, s, s); return; } g.translate(s * 0.58, s * 0.58); g.scale(1.8, 1.8); VkArt.special(g, { x: 0, y: 0, age: age === 4 ? 2 : age }, 0); });
+      btnA.special.querySelector('.vk-nm').textContent = SPECIAL_NAMES[age];
     }
-    let qKey = '';
     function syncUI() {
-      const me = S[0];
+      const me = S[0], free = me.turrets.indexOf(null) >= 0, owned = me.turrets.filter(Boolean).length;
       cards.forEach((b, k) => {
         const c = stats(me.age, k).cost, n = me.queue.filter(q => q.kind === k).length;
         b.querySelector('em').textContent = Kit.fmtNum(c);
@@ -341,50 +345,42 @@ const Veky = (() => {
         const cnt = b.querySelector('.vk-cnt'); cnt.hidden = !n; cnt.textContent = n;
         b.querySelector('.vk-tp i').style.width = me.queue[0] && me.queue[0].kind === k ? `${Math.min(1, me.prog) * 100}%` : '0';
       });
-      // fronta výcviku s portréty
-      const key = me.queue.map(q => q.age * 3 + q.kind).join(',');
-      if (key !== qKey) { qKey = key; qSlots.forEach((sl, i) => { const q = me.queue[i], c = sl.querySelector('canvas'); sl.classList.toggle('on', !!q); icon(c, (g, s) => { if (q) portrait(g, s, q.age, q.kind); }); }); }
-      qSlots[0].style.setProperty('--p', me.queue.length ? Math.min(1, me.prog) : 0);
-      const tCount = me.turrets.filter(Boolean).length;
-      btnA.tower.querySelector('.vk-sl').textContent = `${'■'.repeat(tCount)}${'□'.repeat(3 - tCount)}`;
-      btnA.tower.classList.toggle('open', !towerEl.hidden);
+      turs.forEach((b, k) => {
+        const c = turretStats(me.age, k).cost;
+        b.querySelector('em').textContent = free ? Kit.fmtNum(c) : `${owned}/3`;
+        b.classList.toggle('poor', me.gold < c);
+        b.classList.toggle('full', !free);
+        b.querySelector('.vk-sell').hidden = !owned || k !== 0;
+      });
       btnA.special.style.setProperty('--cd', me.spCd / 50);
       btnA.special.querySelector('em').textContent = me.spCd > 0 ? Math.ceil(me.spCd) : '';
-      btnA.special.disabled = me.spCd > 0;
+      btnA.special.classList.toggle('ready', me.spCd <= 0);
       const need = me.age < 4 ? XP_NEED[me.age] : 0, xpf = need ? Math.min(1, me.xp / need) : 1;
-      btnA.evolve.style.setProperty('--cd', 1 - xpf);
-      btnA.evolve.querySelector('.vk-xp').textContent = need ? `${Math.floor(xpf * 100)} %` : 'MAX';
-      btnA.evolve.disabled = me.age >= 4 || me.xp < need;
-      btnA.evolve.classList.toggle('ready', !btnA.evolve.disabled);
-      el.querySelectorAll('.vk-speed button').forEach(b => b.classList.toggle('on', +b.dataset.s === speed));
+      btnA.evolve.querySelector('.vk-xpb i').style.width = `${xpf * 100}%`;
+      btnA.evolve.classList.toggle('ready', me.age < 4 && me.xp >= need);
+      btnA.evolve.classList.toggle('max', me.age >= 4);
+      btnA.speed.querySelector('.vk-bigt').textContent = `${speed}×`;
       btnA.pause.classList.toggle('play', paused);
     }
-    function renderTower() {
-      const me = S[0], full = me.turrets.indexOf(null) < 0;
-      towerEl.innerHTML = `<div class="vk-th"><b>${L('Věže', 'Turrets')} · ${AGE_NAMES[me.age]}</b><span class="vk-slots">${me.turrets.map(t => `<i class="${t ? 'on' : ''}"></i>`).join('')}</span><button class="vk-x" data-t="close">✕</button></div><div class="vk-tl">` +
-        [0, 1].map(k => { const ts = turretStats(me.age, k); return `<button class="vk-tc${me.gold < ts.cost ? ' poor' : ''}" data-t="${k}" ${me.gold < ts.cost || full ? 'disabled' : ''}><canvas width="96" height="96"></canvas><b>${TURRET_NAMES[me.age][k]}</b><span class="vk-st"><small>${L('útok', 'damage')}</small><i style="--v:${k ? 0.9 : 0.4}"></i><small>${L('dosah', 'range')}</small><i style="--v:${ts.range / 340}"></i></span><span class="vk-cost"><i class="vk-coin"></i><em>${Kit.fmtNum(ts.cost)}</em></span></button>`; }).join('') +
-        `<button class="vk-tc vk-sell" data-t="sell" ${me.turrets.some(Boolean) ? '' : 'disabled'}><span class="vk-big">💰</span><b>${L('Prodat věž', 'Sell turret')}</b><small>${L('vrátí polovinu ceny', 'refunds half the price')}</small></button></div>`;
-      towerEl.querySelectorAll('.vk-tc[data-t="0"] canvas, .vk-tc[data-t="1"] canvas').forEach((c, k) => icon(c, (g, s) => { g.translate(s / 2, s * 0.62); g.scale(2.2, 2.2); VkArt.turret(g, 0, 0, me.age, k, -0.3, 0, 0); }));
-    }
-    let towerSig = '';
-    function refreshTower() { const me = S[0], sig = `${me.age}|${me.turrets.map(Boolean)}|${[0, 1].map(k => me.gold >= turretStats(me.age, k).cost)}`; if (sig !== towerSig) { towerSig = sig; renderTower(); } }
-    function toggleTower(on) { towerEl.hidden = on === undefined ? !towerEl.hidden : !on; towerSig = ''; if (!towerEl.hidden) refreshTower(); syncUI(); }
-    el.querySelector('.vk-units').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (b) train(0, +b.dataset.u); });
-    el.querySelector('.vk-acts').addEventListener('click', e => {
-      const sp = e.target.closest('[data-s]'); if (sp) { speed = +sp.dataset.s; syncUI(); return; }
+    el.querySelector('.vk-tiles').addEventListener('click', e => {
+      kick();
+      if (e.target.closest('[data-sell]')) { sellTurret(0); return; }
+      const u = e.target.closest('[data-u]'); if (u) { train(0, +u.dataset.u); return; }
+      const t = e.target.closest('[data-tb]'); if (t) { buyTurret(0, +t.dataset.tb); return; }
+      if (e.target.closest('[data-a="special"]')) special(0);
+    });
+    el.querySelector('.vk-ctrl').addEventListener('click', e => {
       const b = e.target.closest('[data-a]'); if (!b) return; kick();
-      if (b.dataset.a === 'tower') toggleTower();
-      if (b.dataset.a === 'special') special(0);
       if (b.dataset.a === 'evolve') evolve(0);
+      if (b.dataset.a === 'speed') { speed = speed >= 3 ? 1 : speed + 1; syncUI(); }
       if (b.dataset.a === 'pause') setPause(!paused);
     });
-    towerEl.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; if (b.dataset.t === 'close') toggleTower(false); else if (b.dataset.t === 'sell') sellTurret(0); else buyTurret(0, +b.dataset.t); towerSig = ''; refreshTower(); });
     // posouvání bojiště tažením a klepnutím do minimapy
     let drag = null;
     const lx = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * VW, (e.clientY - r.top) / r.height * VH]; };
     cv.addEventListener('pointerdown', e => {
-      kick(); const [x, y] = lx(e), mw = Math.min(260, VW * 0.32), mx = VW - mw - 10;
-      if (y < 46 && x > mx - 4) { camX = Math.max(0, Math.min(W - VW, (x - mx) / mw * W - VW / 2)); return; }
+      kick(); const [x, y] = lx(e), mw = Math.min(250, VW * 0.3), mx = VW - mw - 34;
+      if (y < 60 && x > mx - 4) { camX = Math.max(0, Math.min(W - VW, (x - mx) / mw * W - VW / 2)); return; }
       drag = { x, cam: camX }; try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ukazatel už neplatí */ }
     });
     cv.addEventListener('pointermove', e => { if (!drag) return; const [x] = lx(e); camX = Math.max(0, Math.min(W - VW, drag.cam - (x - drag.x))); });
@@ -405,7 +401,7 @@ const Veky = (() => {
       if (keysHeld.has('ArrowLeft')) camX = Math.max(0, camX - 700 * dt);
       if (keysHeld.has('ArrowRight')) camX = Math.min(W - VW, camX + 700 * dt);
       if (!paused && !over) for (let s = 0; s < speed; s++) { if (auto) autoplay(); if (!over) tick(dt); }
-      uiT -= dt; if (uiT <= 0) { uiT = 0.15; if (VkArt.loaded !== artSeen) { artSeen = VkArt.loaded; renderIcons(); qKey = ''; towerSig = ''; } syncUI(); if (!towerEl.hidden) refreshTower(); }
+      uiT -= dt; if (uiT <= 0) { uiT = 0.15; if (VkArt.loaded !== artSeen) { artSeen = VkArt.loaded; renderIcons(); } syncUI(); }
       draw();
     }
     function setPause(on) { if (over) return; paused = on; api.setTimer(!on); VkMusic.pause(on); if (on) say(L('Pauza · stiskni P', 'Paused · press P'), 9999); else msgEl.hidden = true; syncUI(); }
@@ -434,7 +430,7 @@ const Veky = (() => {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); keysHeld.add(e.key); return; }
         if (e.repeat) return;
         if (e.key === '1' || e.key === '2' || e.key === '3') { kick(); train(0, +e.key - 1); }
-        if (e.key === 'q' || e.key === 'Q') toggleTower();
+        if (e.key === 'q' || e.key === 'Q') buyTurret(0, S[0].gold >= turretStats(S[0].age, 1).cost ? 1 : 0);
         if (e.key === 'e' || e.key === 'E') special(0);
       },
       _state: () => ({ gold: Math.floor(S[0].gold), xp: Math.floor(S[0].xpTotal), age: S[0].age, aiAge: S[1].age, hp: Math.ceil(S[0].hp), aiHp: Math.ceil(S[1].hp), units: units.filter(u => !u.dead).length, queue: S[0].queue.length, over, clock: +clock.toFixed(1) }),
