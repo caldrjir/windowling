@@ -30,6 +30,7 @@ const PUZZLES = [
 	'letni',
 	'zlatokop',
 	'skokan',
+	'smik',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -393,6 +394,37 @@ test('skokan bounces off platforms and climbs while steering', async ({ page }) 
 			},
 		)
 		.toBeGreaterThan(1500);
+});
+
+test('smik slices fruit with a swipe and scores', async ({ page }) => {
+	await startFree(page, 'smik', 'zen');
+	const cv = page.locator('.sm-cv');
+	await expect(cv).toBeVisible();
+	// Wait for a fruit in the air, then swipe straight through it with the mouse.
+	let fruit: { x: number; y: number } | undefined;
+	await expect
+		.poll(
+			async () => {
+				const list = (await page.evaluate('Kit._test.inst._fruits()')) as {
+					x: number;
+					y: number;
+					bomb: boolean;
+				}[];
+				fruit = list.find((f) => !f.bomb && f.y < 380 && f.y > 40);
+				return Boolean(fruit);
+			},
+			{ timeout: 15_000 },
+		)
+		.toBe(true);
+	await page.evaluate(
+		`(() => { const f = Kit._test.inst._fruits().find(q => !q.bomb && q.y < 380); Kit._test.inst._cut(f.x - 60, f.y, f.x + 60, f.y); })()`,
+	);
+	expect(
+		((await page.evaluate('Kit._test.inst._state()')) as { score: number }).score,
+	).toBeGreaterThan(0);
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(6)');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 40_000 });
+	await expect(page.locator('.k-result')).toContainText(/bod/);
 });
 
 test('sachy lets the player pick the promotion piece', async ({ page }) => {
