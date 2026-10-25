@@ -7,65 +7,192 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
-// LETNÍ HRY cover: a stick-figure sprinter in full stride (x, y are the feet, s is pixels per metre)
-function coverRunner(
+// LETNÍ HRY cover: the game's outlined athlete (static/games/letni/art.js), x, y are the feet,
+// s is pixels per metre; pose 'run' uses ph as the stride phase, 'hurdle' clears a hurdle
+function coverAthlete(
 	ctx: CanvasRenderingContext2D,
 	x: number,
 	y: number,
 	s: number,
+	pose: 'run' | 'hurdle',
 	ph: number,
-	shirt: string,
+	look: { shirt: string; skin: string; shorts: string; shoe: string },
 ): void {
+	const OL = '#2b1712';
+	let lean: number, legs: [number, number][], arms: [number, number][];
+	if (pose === 'run') {
+		const t1 = Math.sin(ph) * 0.95,
+			k1 = Math.max(0, -Math.cos(ph)) * 1.7 + 0.15,
+			k2 = Math.max(0, Math.cos(ph)) * 1.7 + 0.15;
+		lean = 0.25;
+		legs = [
+			[t1, t1 - k1],
+			[-t1, -t1 - k2],
+		];
+		arms = [
+			[-t1 * 0.95, -t1 * 0.95 + 1.7],
+			[t1 * 0.95, t1 * 0.95 + 1.7],
+		];
+	} else {
+		lean = 0.55;
+		legs = [
+			[1.55, 1.55],
+			[-1.3, -2.7],
+		];
+		arms = [
+			[1.7, 1.9],
+			[-0.9, 0.3],
+		];
+	}
+	const at = (p: [number, number], a: number, l: number): [number, number] => [
+		p[0] + Math.sin(a) * l,
+		p[1] + Math.cos(a) * l,
+	];
+	const hip: [number, number] = [0, -0.95],
+		up: [number, number] = [Math.sin(lean), -Math.cos(lean)],
+		neck: [number, number] = [hip[0] + up[0] * 0.56, hip[1] + up[1] * 0.56],
+		sh: [number, number] = [neck[0] - up[0] * 0.06, neck[1] - up[1] * 0.06];
+	const limb = (from: [number, number], ang: [number, number], l1: number, l2: number) => {
+		const k = at(from, ang[0], l1);
+		return [k, at(k, ang[1], l2)] as const;
+	};
+	const lg = legs.map((a) => limb(hip, a, 0.46, 0.48)),
+		am = arms.map((a) => limb(sh, a, 0.3, 0.28));
+	let oy = 0;
+	if (pose === 'run') {
+		const f0 = lg[0]?.[1][1] ?? 0,
+			f1 = lg[1]?.[1][1] ?? 0;
+		oy = -Math.max(f0, f1) - 0.03;
+	}
 	ctx.save();
-	ctx.translate(x, y);
+	ctx.translate(x, y + oy * s);
 	ctx.scale(s, s);
 	ctx.lineCap = 'round';
-	const limb = (
-		fx: number,
-		fy: number,
-		a1: number,
-		a2: number,
-		l: number,
-		wdt: number,
+	ctx.lineJoin = 'round';
+	const seg = (
+		a: readonly [number, number],
+		b: readonly [number, number],
+		c: readonly [number, number],
+		w1: number,
+		w2: number,
 		col: string,
 	) => {
-		const kx = fx + Math.sin(a1) * l,
-			ky = fy + Math.cos(a1) * l;
-		ctx.strokeStyle = col;
-		ctx.lineWidth = wdt;
+		for (const [lw, cc] of [
+			[0.045, OL],
+			[0, col],
+		] as const) {
+			ctx.strokeStyle = cc;
+			ctx.lineWidth = w1 + lw;
+			ctx.beginPath();
+			ctx.moveTo(a[0], a[1]);
+			ctx.lineTo(b[0], b[1]);
+			ctx.stroke();
+			ctx.lineWidth = w2 + lw;
+			ctx.beginPath();
+			ctx.moveTo(b[0], b[1]);
+			ctx.lineTo(c[0], c[1]);
+			ctx.stroke();
+		}
+	};
+	const shoe = (f: readonly [number, number], col: string) => {
+		ctx.fillStyle = col;
+		ctx.strokeStyle = OL;
+		ctx.lineWidth = 0.035;
 		ctx.beginPath();
-		ctx.moveTo(fx, fy);
-		ctx.lineTo(kx, ky);
-		ctx.lineTo(kx + Math.sin(a2) * l, ky + Math.cos(a2) * l);
+		ctx.ellipse(f[0] + 0.05, f[1], 0.12, 0.055, 0, 0, TAU);
+		ctx.fill();
 		ctx.stroke();
 	};
-	const t1 = Math.sin(ph) * 0.9,
-		k1 = Math.max(0, -Math.cos(ph)) * 1.6 + 0.2,
-		k2 = Math.max(0, Math.cos(ph)) * 1.6 + 0.2;
-	limb(0, -0.95, -t1, -t1 - k2, 0.49, 0.13, '#c79a7a');
-	limb(0.06, -1.33, t1 * 0.9, t1 * 0.9 + 1.6, 0.31, 0.1, '#c79a7a');
-	ctx.strokeStyle = '#1b2a6b';
-	ctx.lineWidth = 0.24;
+	const shorts = (k: readonly [number, number], col: string) => {
+		for (const [lw, cc] of [
+			[0.045, OL],
+			[0, col],
+		] as const) {
+			ctx.strokeStyle = cc;
+			ctx.lineWidth = 0.21 + lw;
+			ctx.beginPath();
+			ctx.moveTo(hip[0], hip[1]);
+			ctx.lineTo(hip[0] + (k[0] - hip[0]) * 0.42, hip[1] + (k[1] - hip[1]) * 0.42);
+			ctx.stroke();
+		}
+	};
+	const back = lg[1],
+		front = lg[0],
+		armB = am[1],
+		armF = am[0];
+	if (back) {
+		seg(hip, back[0], back[1], 0.15, 0.12, '#c99872');
+		shoe(back[1], '#c9a640');
+		shorts(back[0], '#0e0b26');
+	}
+	if (armB) seg(sh, armB[0], armB[1], 0.1, 0.085, '#c99872');
+	if (front) {
+		seg(hip, front[0], front[1], 0.16, 0.125, look.skin);
+		shoe(front[1], look.shoe);
+		shorts(front[0], look.shorts);
+	}
+	// vest with a race number
+	const pp: [number, number] = [Math.cos(lean), Math.sin(lean)];
+	const pt = (k: number, w: number): [number, number] => [
+		hip[0] + up[0] * k + pp[0] * w,
+		hip[1] + up[1] * k + pp[1] * w,
+	];
+	ctx.fillStyle = look.shirt;
+	ctx.strokeStyle = OL;
+	ctx.lineWidth = 0.045;
 	ctx.beginPath();
-	ctx.moveTo(0, -0.95);
-	ctx.lineTo(0.02, -1.07);
-	ctx.stroke();
-	ctx.strokeStyle = shirt;
-	ctx.lineWidth = 0.26;
-	ctx.beginPath();
-	ctx.moveTo(0.02, -1.05);
-	ctx.lineTo(0.1, -1.44);
-	ctx.stroke();
-	limb(0, -0.95, t1, t1 - k1, 0.49, 0.14, '#ffd9b3');
-	ctx.fillStyle = '#ffd9b3';
-	ctx.beginPath();
-	ctx.arc(0.13, -1.6, 0.15, 0, TAU);
+	for (const [k, w] of [
+		[0.02, -0.12],
+		[0.02, 0.12],
+		[0.4, 0.16],
+		[0.56, 0.1],
+		[0.56, -0.09],
+		[0.36, -0.13],
+	] as const) {
+		const p = pt(k, w);
+		ctx.lineTo(p[0], p[1]);
+	}
+	ctx.closePath();
 	ctx.fill();
-	ctx.fillStyle = '#3a2a1a';
+	ctx.stroke();
+	const bib = pt(0.3, 0.06);
+	ctx.save();
+	ctx.translate(bib[0], bib[1]);
+	ctx.rotate(lean);
+	ctx.fillStyle = '#fff';
+	ctx.fillRect(-0.075, -0.08, 0.15, 0.13);
+	ctx.restore();
+	// head with a headband
+	const hc: [number, number] = [neck[0] + up[0] * 0.17 + 0.02, neck[1] + up[1] * 0.17];
+	ctx.fillStyle = look.shirt;
 	ctx.beginPath();
-	ctx.arc(0.11, -1.64, 0.15, Math.PI * 1.05, Math.PI * 1.95);
+	ctx.moveTo(hc[0] - 0.12, hc[1] - 0.06);
+	ctx.lineTo(hc[0] - 0.4, hc[1] - 0.02);
+	ctx.lineTo(hc[0] - 0.36, hc[1] + 0.05);
+	ctx.closePath();
 	ctx.fill();
-	limb(0.06, -1.33, -t1 * 0.9, -t1 * 0.9 + 1.6, 0.31, 0.11, '#ffd9b3');
+	ctx.fillStyle = look.skin;
+	ctx.strokeStyle = OL;
+	ctx.lineWidth = 0.045;
+	ctx.beginPath();
+	ctx.ellipse(hc[0], hc[1], 0.15, 0.165, 0, 0, TAU);
+	ctx.fill();
+	ctx.stroke();
+	ctx.fillStyle = '#3a2414';
+	ctx.beginPath();
+	ctx.arc(hc[0] - 0.01, hc[1] - 0.04, 0.15, Math.PI * 1.02, Math.PI * 1.9);
+	ctx.fill();
+	ctx.strokeStyle = look.shirt;
+	ctx.lineWidth = 0.05;
+	ctx.beginPath();
+	ctx.moveTo(hc[0] - 0.15, hc[1] - 0.04);
+	ctx.lineTo(hc[0] + 0.15, hc[1] - 0.06);
+	ctx.stroke();
+	ctx.fillStyle = '#1a1020';
+	ctx.beginPath();
+	ctx.arc(hc[0] + 0.09, hc[1] + 0.01, 0.022, 0, TAU);
+	ctx.fill();
+	if (armF) seg(sh, armF[0], armF[1], 0.105, 0.09, look.skin);
 	ctx.restore();
 }
 
@@ -2652,48 +2779,154 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#ff5a7a', '#ffd34d', '#55f6ff'],
 		statsKey: 'gamecenter.stats.letni',
 		cover(ctx, w, h, t) {
-			// a stadium: the crowd waves, two sprinters race to the finish line
-			const sky = ctx.createLinearGradient(0, 0, 0, h * 0.4);
-			sky.addColorStop(0, '#3a8ee0');
-			sky.addColorStop(1, '#b8e2ff');
+			// a summer stadium: sun, bunting, a cheering crowd; a hurdler clears hurdle after hurdle
+			const sky = ctx.createLinearGradient(0, 0, 0, h * 0.12);
+			sky.addColorStop(0, '#2b7fe0');
+			sky.addColorStop(1, '#a8dcff');
 			ctx.fillStyle = sky;
-			ctx.fillRect(0, 0, w, h);
-			ctx.fillStyle = '#3a4060';
-			ctx.fillRect(0, h * 0.18, w, h * 0.3);
-			for (let i = 0; i < 90; i++) {
-				const x = (i * 37.7) % w,
-					row = i % 5,
-					y = h * 0.22 + row * h * 0.05 + Math.sin(t * 6 + i) * 1.2;
-				ctx.fillStyle = ['#ff5a7a', '#55f6ff', '#ffd34d', '#6dff9e', '#ffffff'][i % 5] ?? '#fff';
-				ctx.fillRect(x - 2.5, y - 3, 5, 6);
-				ctx.fillStyle = '#ffd9b3';
+			ctx.fillRect(0, 0, w, h * 0.14);
+			const sx = w * 0.86,
+				sy = h * 0.05,
+				sr = h * 0.04;
+			ctx.save();
+			ctx.translate(sx, sy);
+			ctx.rotate(t * 0.3);
+			ctx.fillStyle = 'rgba(255,236,150,.45)';
+			for (let i = 0; i < 12; i++) {
+				ctx.rotate(TAU / 12);
 				ctx.beginPath();
-				ctx.arc(x, y - 5.5, 2.2, 0, TAU);
+				ctx.moveTo(-sr * 0.2, sr * 1.2);
+				ctx.lineTo(0, sr * 2.2);
+				ctx.lineTo(sr * 0.2, sr * 1.2);
 				ctx.fill();
 			}
-			ctx.fillStyle = '#1b6bd6';
-			ctx.fillRect(0, h * 0.48, w, h * 0.04);
-			ctx.fillStyle = '#4fae4a';
-			ctx.fillRect(0, h * 0.52, w, h * 0.04);
-			ctx.fillStyle = '#c94e34';
-			ctx.fillRect(0, h * 0.56, w, h * 0.44);
-			ctx.strokeStyle = 'rgba(255,255,255,.85)';
-			ctx.lineWidth = 2;
-			for (const y of [0.56, 0.66, 0.76]) {
+			ctx.restore();
+			ctx.fillStyle = '#ffe680';
+			ctx.beginPath();
+			ctx.arc(sx, sy, sr, 0, TAU);
+			ctx.fill();
+			// roof with bunting
+			ctx.fillStyle = '#d8dde8';
+			ctx.fillRect(0, h * 0.1, w, h * 0.015);
+			ctx.fillStyle = '#9aa3b8';
+			ctx.fillRect(0, h * 0.115, w, h * 0.02);
+			// stands and the crowd
+			const st = ctx.createLinearGradient(0, h * 0.135, 0, h * 0.37);
+			st.addColorStop(0, '#2a2f4a');
+			st.addColorStop(1, '#3f4668');
+			ctx.fillStyle = st;
+			ctx.fillRect(0, h * 0.135, w, h * 0.235);
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(0, h * 0.135, w, h * 0.235);
+			ctx.clip();
+			const shirts = ['#ff5a7a', '#55f6ff', '#ffd34d', '#6dff9e', '#c77dff', '#ffffff', '#ff9a3d'];
+			const skins = ['#ffd9b3', '#d79a6a', '#a8694a', '#f1c08e'];
+			const pw = Math.max(7, w / 34);
+			for (let row = 0; row < 5; row++)
+				for (let i = 0; i < 40; i++) {
+					const x = i * pw + (row % 2) * pw * 0.5,
+						y =
+							h * 0.2 + row * h * 0.037 - Math.max(0, Math.sin(t * 7 + i * 1.7 + row)) * h * 0.012;
+					if (x > w + pw) break;
+					ctx.fillStyle = shirts[(i * 3 + row * 5) % 7] ?? '#fff';
+					ctx.fillRect(x - pw * 0.28, y - pw * 0.2, pw * 0.56, pw * 0.6);
+					ctx.fillStyle = skins[(i + row) % 4] ?? '#ffd9b3';
+					ctx.beginPath();
+					ctx.arc(x, y - pw * 0.42, pw * 0.22, 0, TAU);
+					ctx.fill();
+					if ((i * 7 + row * 3) % 11 === 0) {
+						ctx.fillStyle = shirts[(i + row) % 7] ?? '#fff';
+						const wv = Math.sin(t * 6 + i) * pw * 0.2;
+						ctx.fillRect(x + pw * 0.3, y - pw * 1.5 + wv, pw * 0.8, pw * 0.5);
+						ctx.fillStyle = '#ddd';
+						ctx.fillRect(x + pw * 0.26, y - pw * 1.5, pw * 0.08, pw * 1.6);
+					}
+				}
+			ctx.restore();
+			const flags = ['#ff5a7a', '#ffd34d', '#55f6ff', '#6dff9e', '#c77dff', '#ff9a3d'];
+			const fw = w / 18;
+			for (let i = 0; i < 19; i++) {
+				ctx.fillStyle = flags[i % 6] ?? '#fff';
+				const sw = Math.sin(t * 4 + i) * fw * 0.08;
 				ctx.beginPath();
-				ctx.moveTo(0, h * y);
-				ctx.lineTo(w, h * y);
-				ctx.stroke();
+				ctx.moveTo(i * fw + fw * 0.12, h * 0.135);
+				ctx.lineTo(i * fw + fw * 0.88, h * 0.135);
+				ctx.lineTo(i * fw + fw * 0.5 + sw, h * 0.175);
+				ctx.fill();
 			}
-			const fin = w * 0.84;
-			for (let i = 0; i < 8; i++) {
-				ctx.fillStyle = i % 2 ? '#111' : '#fff';
-				ctx.fillRect(fin, h * 0.56 + i * h * 0.025, w * 0.025, h * 0.025);
+			// ad boards and the infield grass
+			const ads = ['#1b6bd6', '#ffd34d', '#ff5a7a', '#13a37a'];
+			const aw = w / 4,
+				aoff = (t * w * 0.35) % aw;
+			for (let i = 0; i < 6; i++) {
+				ctx.fillStyle = ads[(i + Math.floor((t * w * 0.35) / aw)) % 4] ?? '#1b6bd6';
+				ctx.fillRect(i * aw - aoff, h * 0.37, aw - 2, h * 0.035);
 			}
-			const cyc = (t / 3) % 1,
-				s = h / 6;
-			coverRunner(ctx, -w * 0.15 + cyc * w * 1.1, h * 0.65, s * 0.8, t * 14 + 1, '#55f6ff');
-			coverRunner(ctx, -w * 0.05 + cyc * w * 1.2, h * 0.75, s, t * 15, '#ff5a7a');
+			ctx.fillStyle = '#4caf48';
+			ctx.fillRect(0, h * 0.405, w, h * 0.04);
+			// tartan track with lanes
+			ctx.fillStyle = '#c9512f';
+			ctx.fillRect(0, h * 0.445, w, h * 0.555);
+			ctx.fillStyle = 'rgba(255,255,255,.9)';
+			for (const ly of [0.445, 0.52, 0.6, 0.72, 0.86]) ctx.fillRect(0, h * ly - 1, w, 2);
+			// hurdles scroll by, the runners stay in frame
+			const speed = w * 0.42,
+				gap = w * 0.62,
+				scroll = t * speed,
+				ax = w * 0.4,
+				s = h / 7.2;
+			let lift = 0;
+			for (let k = -1; k < 4; k++) {
+				const hx = k * gap - (scroll % gap) + gap * 0.6;
+				const d = hx - ax - s * 0.25;
+				if (Math.abs(d) < s * 1.5) lift = Math.max(lift, Math.cos((d / (s * 1.5)) * (Math.PI / 2)));
+				for (const [base, sc] of [
+					[0.59, 0.6],
+					[0.7, 1],
+				] as const) {
+					const px = base > 0.65 ? hx : hx - w * 0.08,
+						hy = h * base,
+						hh = s * 0.95 * sc;
+					ctx.fillStyle = 'rgba(0,0,0,.25)';
+					ctx.fillRect(px - hh * 0.2, hy, hh * 0.5, 2);
+					ctx.fillStyle = '#d8dde8';
+					ctx.fillRect(px - 2 * sc, hy - hh, 4 * sc, hh);
+					ctx.fillRect(px - 6 * sc, hy - 2 * sc, 16 * sc, 3 * sc);
+					ctx.fillStyle = '#fff';
+					ctx.fillRect(px - 3 * sc, hy - hh - 6 * sc, 10 * sc, 7 * sc);
+					ctx.fillStyle = '#16123a';
+					ctx.fillRect(px + 0.5 * sc, hy - hh - 6 * sc, 3.5 * sc, 7 * sc);
+				}
+			}
+			const rx = w * 0.2 + Math.sin(t * 0.7) * w * 0.04;
+			coverAthlete(ctx, rx, h * 0.59, s * 0.6, 'run', t * 15 + 1, {
+				shirt: '#55f6ff',
+				skin: '#a8694a',
+				shorts: '#1d1d2a',
+				shoe: '#ffffff',
+			});
+			ctx.fillStyle = 'rgba(0,0,0,.25)';
+			ctx.beginPath();
+			ctx.ellipse(ax, h * 0.705, s * (0.45 - lift * 0.2), s * 0.08, 0, 0, TAU);
+			ctx.fill();
+			coverAthlete(ctx, ax, h * 0.7 - lift * s * 0.55, s, lift > 0.35 ? 'hurdle' : 'run', t * 15, {
+				shirt: '#ff5a7a',
+				skin: '#ffcf9e',
+				shorts: '#16123a',
+				shoe: '#ffd34d',
+			});
+			// confetti
+			for (let i = 0; i < 18; i++) {
+				const cx = ((i * 0.137 + Math.sin(t * 0.8 + i) * 0.03) % 1) * w,
+					cy = (((t * 0.18 + i * 0.29) % 1) * 0.5 + 0.1) * h;
+				ctx.save();
+				ctx.translate(cx, cy);
+				ctx.rotate(t * 3 + i);
+				ctx.fillStyle = flags[i % 6] ?? '#fff';
+				ctx.fillRect(-3, -1.5, 6, 3);
+				ctx.restore();
+			}
 		},
 	},
 ];
