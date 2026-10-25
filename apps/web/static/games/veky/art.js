@@ -418,8 +418,9 @@ const VkArt = (() => {
 
   // věž; ang = úhel hlavně k cíli
   function turret(g, x, y, age, kind, ang, side, t) {
-    const foot = img(`turret-${age}-${kind}-base`), gun = img(`turret-${age}-${kind}`);
-    if (gun) { if (foot) sprite(g, foot, x, y + 8, 18); g.save(); g.translate(x, y); g.rotate(ang); sprite(g, gun, 0, 0, 22, 0.25, 0.5); g.restore(); return; }
+    const foot = img(`turret-${age}-${kind}-base`), gun = pick(`turret-${age}-${kind}`, !!side);
+    // dodaná zbraň: daná délka (dražší věž větší), čep ve 25 % šířky; mířící doleva se překlopí, ať praporek visí dolů
+    if (gun) { if (foot) sprite(g, foot, x, y + 8, 18); const len = kind ? 62 : 54; g.save(); g.translate(x, y); g.rotate(ang); if (Math.cos(ang) < 0) g.scale(1, -1); sprite(g, gun, 0, 0, len * gun.height / gun.width, 0.25, 0.5); g.restore(); return; }
     g.save(); g.translate(x, y); g.scale(1.25, 1.25); g.lineJoin = 'round';
     fillOut(g, shade(g, 0, -6, 0, 8, ['#a8784a', '#a8a296', '#8a6a4a', '#6a7058', '#4a4a7a'][age], ['#5a3a1a', '#6a665c', '#4a3a2a', '#3a4030', '#22223a'][age]), () => { g.beginPath(); g.roundRect(-11, -5, 22, 12, 3); }, 1.8);
     g.save(); g.rotate(ang);
