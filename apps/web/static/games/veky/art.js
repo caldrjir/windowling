@@ -48,7 +48,8 @@ const VkArt = (() => {
     return f;
   }
   // snímky útoku `-atk-0`, `-atk-1`…: hrají přes celou prodlevu mezi údery, zásah padne na ATK_HIT sekvence
-  const ATK_HIT = 0.625;
+  // (pěšák: plný výpad v 5/8, střelec: vypuštěný šíp v 6/8)
+  const ATK_HIT = [0.625, 0.75, 0.625];
   // snímky pádu `-dead-0`, `-dead-1`…: pád trvá DEAD_FALL s, pak tělo chvíli leží a zmizí
   const DEAD_FALL = 0.7, DEAD_END = 1.7;
   function deadFrames(base) {
@@ -142,7 +143,7 @@ const VkArt = (() => {
       const seq = atkFrames(base), swing = u.st ? 1 - Math.max(0, u.cd || 0) / u.st.rate : 0;
       const dseq = deadFrames(base);
       const deadPic = u.dead && (dseq.length ? pick(dseq[Math.min(dseq.length - 1, Math.floor(u.dead / DEAD_FALL * dseq.length))], red) : pick(`${base}-dead`, red));
-      const atkPic = !u.dead && (seq.length ? u.fight && pick(seq[Math.floor(((swing + ATK_HIT) % 1) * seq.length)], red) : a > 0.45 && pick(`${base}-atk`, red));
+      const atkPic = !u.dead && (seq.length ? u.fight && pick(seq[Math.floor(((swing + ATK_HIT[u.kind]) % 1) * seq.length)], red) : a > 0.45 && pick(`${base}-atk`, red));
       const frames = walkFrames(base), fi = Math.floor(walk / (frames.length > 2 ? 3 * Math.PI : TAU) * frames.length) % frames.length;
       const walkPic = !u.dead && !atkPic && fi > 0 && pick(frames[fi], red);
       const pic = deadPic || atkPic || walkPic || pick(base, red);
@@ -436,7 +437,8 @@ const VkArt = (() => {
   // střely: kind 'stone' | 'arrow' | 'ball' | 'bullet' | 'shell' | 'laser'
   function shot(g, p) {
     const pic = img(`shot-${p.kind}`);
-    if (pic) { g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.vy, p.vx)); sprite(g, pic, 0, 0, p.kind === 'arrow' || p.kind === 'laser' ? 8 : 10, 0.5, 0.5); g.restore(); return; }
+    // šíp má danou délku (obrázek je dlouhý a nízký), ostatní střely výšku
+    if (pic) { g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.vy, p.vx)); sprite(g, pic, 0, 0, p.kind === 'arrow' ? 34 * pic.height / pic.width : p.kind === 'laser' ? 8 : 10, 0.5, 0.5); g.restore(); return; }
     g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.vy, p.vx));
     if (p.kind === 'arrow') { line(g, 1.8, '#6a4220', -12, 0, 7, 0); g.fillStyle = '#c8ccd4'; g.beginPath(); g.moveTo(7, -3); g.lineTo(13, 0); g.lineTo(7, 3); g.fill(); g.fillStyle = '#fff'; g.fillRect(-13, -2.5, 5, 5); }
     else if (p.kind === 'bullet') { g.fillStyle = 'rgba(255,224,102,.4)'; g.fillRect(-16, -1.5, 16, 3); g.fillStyle = '#ffe066'; g.fillRect(-4, -1.2, 8, 2.4); }
@@ -449,6 +451,8 @@ const VkArt = (() => {
   function special(g, s, t) {
     const pic = img(`special-${s.age}`);
     if (pic) { sprite(g, pic, s.x, s.y, s.age === 4 ? 420 : 40, 0.5, s.age === 4 ? 1 : 0.5); return; }
+    const arrow = s.age === 1 && img('shot-arrow'); // déšť šípů: dodaný šíp hrotem dolů
+    if (arrow) { g.save(); g.translate(s.x, s.y); g.rotate(Math.PI / 2 - 0.15); sprite(g, arrow, 0, 0, 40 * arrow.height / arrow.width, 0.5, 0.5); g.restore(); return; }
     g.save(); g.translate(s.x, s.y);
     if (s.age === 0) { const tr = g.createLinearGradient(-40, -48, 0, 0); tr.addColorStop(0, 'rgba(255,140,40,0)'); tr.addColorStop(1, 'rgba(255,200,80,.95)'); g.strokeStyle = tr; g.lineWidth = 12; g.beginPath(); g.moveTo(-44, -52); g.lineTo(0, 0); g.stroke(); fillOut(g, shade(g, -10, -10, 10, 10, '#8a6a5a', '#3a2a20'), () => { g.beginPath(); g.arc(0, 0, 11, 0, TAU); }, 1.8); g.fillStyle = '#ff8a3d'; g.beginPath(); g.arc(-3, -3, 5, 0, TAU); g.fill(); }
     else if (s.age === 1) { g.rotate(Math.PI / 2 - 0.15); line(g, 2, '#6a4220', -14, 0, 9, 0); g.fillStyle = '#c8ccd4'; g.beginPath(); g.moveTo(9, -3.5); g.lineTo(16, 0); g.lineTo(9, 3.5); g.fill(); g.fillStyle = '#fff'; g.fillRect(-15, -3, 5, 6); }
