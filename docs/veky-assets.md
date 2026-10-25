@@ -31,7 +31,8 @@ nahradí; co chybí, kreslí se dál jako dosud. Takže se dá měnit postupně,
   Formát může být i WebP (v `manifest.json` s příponou).
   Plynulejší útok: snímky `…-atk-0` až `…-atk-7` (taky jako jeden list). Hrají celou dobu mezi
   dvěma údery; zásah (plný výpad) má být zhruba v **5/8 sekvence** (u 8 snímků šestý snímek),
-  před ním nápřah, po něm návrat do střehu. Měřítko srovnám podle velikosti helmy/hlavy.
+  před ním nápřah, po něm návrat do střehu. U střelců je výstřel v **6/8** (sedmý snímek už
+  s prázdnou rukou po vypuštění). Měřítko srovnám podle velikosti helmy/hlavy.
   Plynulá smrt: snímky `…-dead-0` až `…-dead-7` (pád, poslední leží na zemi). Pád trvá 0,7 s,
   pak tělo chvíli leží a zmizí.
 - **Barva soupeře:** červenou verzi hra dopočítá sama z modré (modré odstíny přebarví na
