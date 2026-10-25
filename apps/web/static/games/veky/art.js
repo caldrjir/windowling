@@ -12,14 +12,14 @@ const VkArt = (() => {
   // výška postav kvůli ukazatelům zdraví: pěšák a střelec, těžké jednotky podle věku
   const TOP = [64, 64, [96, 98, 70, 60, 104]];
 
-  // ── Dodané obrázky ── assets/manifest.json je seznam jmen souborů (bez .png), které existují.
+  // ── Dodané obrázky ── assets/manifest.json je seznam souborů, které existují (bez přípony = .png).
   // Co v něm je, se načte a nahradí kresbu; co chybí, kreslí se jako dosud. Bez 404 v konzoli.
   const IMG = {};
   let manifest = null;
   try {
     fetch('assets/manifest.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : [])).then(list => {
       manifest = Array.isArray(list) ? list : [];
-      for (const n of manifest) { const im = new Image(); im.onload = () => { IMG[n] = im; }; im.src = `assets/${n}.png`; }
+      for (const f of manifest) { const n = f.replace(/\.(png|webp|jpg)$/, ''), im = new Image(); im.onload = () => { IMG[n] = im; }; im.src = `assets/${/\.(png|webp|jpg)$/.test(f) ? f : f + '.png'}`; }
     }).catch(() => { manifest = []; });
   } catch (e) { manifest = []; }
   const img = n => IMG[n] || null;
