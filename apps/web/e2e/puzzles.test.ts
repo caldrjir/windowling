@@ -29,6 +29,7 @@ const PUZZLES = [
 	'bubliny',
 	'letni',
 	'zlatokop',
+	'skokan',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -371,6 +372,27 @@ test('zlatokop drops the claw, hauls a catch and pays for it', async ({ page }) 
 		.toBeGreaterThan(0);
 	await expect(page.locator('.k-result')).toBeVisible({ timeout: 30_000 });
 	await expect(page.locator('.k-result')).toContainText('$');
+});
+
+test('skokan bounces off platforms and climbs while steering', async ({ page }) => {
+	await startFree(page, 'skokan', 'klasik');
+	await expect(page.locator('.sk-cv')).toBeVisible();
+	await page.waitForTimeout(600);
+	const before = (await page.evaluate('Kit._test.inst._state()')) as { x: number };
+	await page.locator('.sk-btn[data-b="r"]').dispatchEvent('pointerdown');
+	await page.waitForTimeout(300);
+	await page.locator('.sk-btn[data-b="r"]').dispatchEvent('pointerup');
+	const after = (await page.evaluate('Kit._test.inst._state()')) as { x: number };
+	expect(after.x).not.toBe(before.x);
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
+	await expect
+		.poll(
+			async () => ((await page.evaluate('Kit._test.inst._state()')) as { score: number }).score,
+			{
+				timeout: 20_000,
+			},
+		)
+		.toBeGreaterThan(1500);
 });
 
 test('sachy lets the player pick the promotion piece', async ({ page }) => {
