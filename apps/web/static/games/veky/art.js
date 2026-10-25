@@ -417,10 +417,20 @@ const VkArt = (() => {
   const SLOTS = [[[-30, -86], [12, -94], [40, -66]], [[-40, -114], [10, -114], [40, -114]], [[-44, -102], [44, -102], [0, -178]], [[-30, -100], [30, -100], [0, -60]], [[-26, -150], [26, -150], [0, -176]]].map(a => a.map(([sx, sy]) => [sx * BASE_SCALE, sy * BASE_SCALE]));
 
   // věž; ang = úhel hlavně k cíli
-  function turret(g, x, y, age, kind, ang, side, t) {
-    const foot = img(`turret-${age}-${kind}-base`), gun = pick(`turret-${age}-${kind}`, !!side);
+  // since = s od posledního výstřelu, reload = prodleva mezi výstřely (pro zpětný ráz a nenabitou pózu)
+  function turret(g, x, y, age, kind, ang, side, t, since = 99, reload = 1) {
+    const foot = img(`turret-${age}-${kind}-base`), base = `turret-${age}-${kind}`;
+    // po výstřelu chvíli nenabitá zbraň (`-fired`: povolená tětiva, bez šípu), pak zase nabitá
+    const gun = (since < reload * 0.55 && pick(`${base}-fired`, !!side)) || pick(base, !!side);
     // dodaná zbraň: daná délka (dražší věž větší), čep ve 25 % šířky; mířící doleva se překlopí, ať praporek visí dolů
-    if (gun) { if (foot) sprite(g, foot, x, y + 8, 18); const len = kind ? 62 : 54; g.save(); g.translate(x, y); g.rotate(ang); if (Math.cos(ang) < 0) g.scale(1, -1); sprite(g, gun, 0, 0, len * gun.height / gun.width, 0.25, 0.5); g.restore(); return; }
+    if (gun) {
+      if (foot) sprite(g, foot, x, y + 8, 18);
+      const len = kind ? 62 : 54, kick = since < 0.22 ? (1 - since / 0.22) * (kind ? 7 : 5) : 0; // zpětný ráz podél hlavně
+      g.save(); g.translate(x, y); g.rotate(ang); if (Math.cos(ang) < 0) g.scale(1, -1); g.translate(-kick, 0);
+      sprite(g, gun, 0, 0, len * gun.height / gun.width, 0.25, 0.5);
+      if (age >= 2 && since < 0.1) { g.globalAlpha = 1 - since / 0.1; g.fillStyle = 'rgba(255,240,200,.85)'; g.beginPath(); g.ellipse(len * 0.78, 0, 7, 3, 0, 0, TAU); g.fill(); } // záblesk u ústí (jen střelný prach)
+      g.restore(); return;
+    }
     g.save(); g.translate(x, y); g.scale(1.25, 1.25); g.lineJoin = 'round';
     fillOut(g, shade(g, 0, -6, 0, 8, ['#a8784a', '#a8a296', '#8a6a4a', '#6a7058', '#4a4a7a'][age], ['#5a3a1a', '#6a665c', '#4a3a2a', '#3a4030', '#22223a'][age]), () => { g.beginPath(); g.roundRect(-11, -5, 22, 12, 3); }, 1.8);
     g.save(); g.rotate(ang);

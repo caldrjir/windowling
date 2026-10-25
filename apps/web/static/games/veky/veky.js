@@ -283,7 +283,7 @@ const Veky = (() => {
       g.save(); g.translate(-camX, 0);
       for (let s = 0; s < 2; s++) {
         VkArt.base(g, BX[s], GY, S[s].age, s, clock);
-        S[s].turrets.forEach((tr, i) => { if (tr) { const [x, y] = slotPos(s, i); VkArt.turret(g, x, y, tr.age, tr.kind, tr.ang, s, clock); } });
+        S[s].turrets.forEach((tr, i) => { if (tr) { const [x, y] = slotPos(s, i); VkArt.turret(g, x, y, tr.age, tr.kind, tr.ang, s, clock, tr.ts.rate - tr.cd, tr.ts.rate); } });
       }
       const sorted = units.slice().sort((a, b) => (a.kind === 2) - (b.kind === 2));
       for (const u of sorted) {
