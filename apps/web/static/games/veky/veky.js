@@ -205,7 +205,7 @@ const Veky = (() => {
           if (!blocked) { u.x += dir * u.st.speed * dt; u.walk += dt * 9; }
         }
       }
-      for (let i = units.length - 1; i >= 0; i--) if (units[i].dead > 0.8) units.splice(i, 1);
+      for (let i = units.length - 1; i >= 0; i--) if (units[i].dead > VkArt.deathTime(units[i])) units.splice(i, 1);
       // střely
       for (let i = shots.length - 1; i >= 0; i--) {
         const p = shots[i]; p.ttl -= dt;

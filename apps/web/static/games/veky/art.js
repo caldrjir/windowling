@@ -49,6 +49,15 @@ const VkArt = (() => {
   }
   // snímky útoku `-atk-0`, `-atk-1`…: hrají přes celou prodlevu mezi údery, zásah padne na ATK_HIT sekvence
   const ATK_HIT = 0.625;
+  // snímky pádu `-dead-0`, `-dead-1`…: pád trvá DEAD_FALL s, pak tělo chvíli leží a zmizí
+  const DEAD_FALL = 0.7, DEAD_END = 1.7;
+  function deadFrames(base) {
+    const f = [];
+    for (let i = 0; img(`${base}-dead-${i}`); i++) f.push(`${base}-dead-${i}`);
+    return f;
+  }
+  // jak dlouho padlá jednotka zůstává na bojišti (s animací pádu déle)
+  const deathTime = u => (deadFrames(`unit-${u.age}-${u.kind}`).length ? DEAD_END : 0.8);
   function atkFrames(base) {
     const f = [];
     for (let i = 0; img(`${base}-atk-${i}`); i++) f.push(`${base}-atk-${i}`);
@@ -131,12 +140,13 @@ const VkArt = (() => {
       // dodané obrázky: póza chůze (střídá se se základní), útoku a padlého; chybějící pózu nahradí pohyb
       const h = u.kind === 2 ? TOP[2][u.age] : TOP[u.kind], red = !!u.side;
       const seq = atkFrames(base), swing = u.st ? 1 - Math.max(0, u.cd || 0) / u.st.rate : 0;
-      const deadPic = u.dead && pick(`${base}-dead`, red);
+      const dseq = deadFrames(base);
+      const deadPic = u.dead && (dseq.length ? pick(dseq[Math.min(dseq.length - 1, Math.floor(u.dead / DEAD_FALL * dseq.length))], red) : pick(`${base}-dead`, red));
       const atkPic = !u.dead && (seq.length ? u.fight && pick(seq[Math.floor(((swing + ATK_HIT) % 1) * seq.length)], red) : a > 0.45 && pick(`${base}-atk`, red));
       const frames = walkFrames(base), fi = Math.floor(walk / (frames.length > 2 ? 3 * Math.PI : TAU) * frames.length) % frames.length;
       const walkPic = !u.dead && !atkPic && fi > 0 && pick(frames[fi], red);
       const pic = deadPic || atkPic || walkPic || pick(base, red);
-      if (u.dead) g.globalAlpha = Math.max(0, 1 - u.dead * 1.3);
+      if (u.dead) g.globalAlpha = dseq.length ? Math.max(0, Math.min(1, (DEAD_END - u.dead) / 0.4)) : Math.max(0, 1 - u.dead * 1.3);
       if (u.hit > 0) g.filter = 'brightness(1.9)';
       const ph = h * pic.height / img(base).height; // pózy můžou mít jinou výšku plátna než základní obrázek
       if (deadPic) sprite(g, pic, 0, 0, ph);
@@ -460,5 +470,5 @@ const VkArt = (() => {
     g.restore();
   }
 
-  return { TEAM, UNIT_SCALE, BASE_SCALE, TOP, img, get ready() { return manifest !== null; }, get loaded() { return Object.keys(IMG).length; }, land, base, SLOTS, turret, unit, shot, special, plane };
+  return { TEAM, UNIT_SCALE, BASE_SCALE, TOP, img, get ready() { return manifest !== null; }, get loaded() { return Object.keys(IMG).length; }, land, base, SLOTS, turret, unit, deathTime, shot, special, plane };
 })();
