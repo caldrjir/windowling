@@ -7,7 +7,7 @@
 // základnu. Soupeř se vyvíjí také; jeho rozhodování se bere ze semínka.
 const Veky = (() => {
   const L = Kit.L;
-  const W = 1800, VH = 400, GY = 336, BX = [92, W - 92], FRONT = [150, W - 150];
+  const W = 1800, VH = 400, GY = 336, BX = [100, W - 100], FRONT = [196, W - 196];
   const F = [1, 3, 9, 26, 75];
   const AGE_NAMES = [L('Pravěk', 'Stone Age'), L('Středověk', 'Middle Ages'), L('Renesance', 'Renaissance'), L('Moderní doba', 'Modern Age'), L('Budoucnost', 'Future')];
   const UNIT_NAMES = [
@@ -20,12 +20,12 @@ const Veky = (() => {
   const TURRET_NAMES = [[L('Prak', 'Sling'), L('Kamenomet', 'Rock thrower')], [L('Kuše', 'Crossbow'), L('Balista', 'Ballista')], [L('Malé dělo', 'Small cannon'), L('Dělo', 'Cannon')], [L('Kulomet', 'Machine gun'), L('Raketomet', 'Rocket launcher')], [L('Laser', 'Laser'), L('Iontové dělo', 'Ion cannon')]];
   const SPECIAL_NAMES = [L('Meteorický déšť', 'Meteor shower'), L('Déšť šípů', 'Arrow rain'), L('Dělostřelba', 'Barrage'), L('Nálet', 'Air strike'), L('Orbitální laser', 'Orbital laser')];
   const BASEU = [
-    { cost: 15, hp: 60, dmg: 15, rate: 1.0, range: 14, speed: 34, w: 20, train: 1.0 },
-    { cost: 25, hp: 40, dmg: 9, rate: 1.15, range: 150, speed: 32, w: 20, train: 1.4 },
+    { cost: 15, hp: 60, dmg: 15, rate: 1.0, range: 14, speed: 34, w: 26, train: 1.0 },
+    { cost: 25, hp: 40, dmg: 9, rate: 1.15, range: 150, speed: 32, w: 26, train: 1.4 },
     { cost: 100, hp: 280, dmg: 40, rate: 1.3, range: 22, speed: 26, w: 56, train: 3.0 },
   ];
   const SHOTS = [['', 'stone', ''], ['', 'arrow', ''], ['', 'bullet', 'ball'], ['', 'bullet', 'shell'], ['', 'laser', 'laser']];
-  const HEAVY = [{ w: 76 }, { w: 64 }, { w: 64, range: 170 }, { w: 64, range: 180 }, { w: 42, range: 160 }];
+  const HEAVY = [{ w: 112 }, { w: 92 }, { w: 84, range: 170 }, { w: 82, range: 180 }, { w: 60, range: 160 }];
   const XP_NEED = [1000, 3500, 11000, 32000];
   const BASE_HP = [500, 1200, 3000, 8000, 22000];
   const DIFF = { lehka: { inc: 0.7, evo: 1.35, think: 1.6, mult: 0.7 }, normal: { inc: 1, evo: 1, think: 1.2, mult: 1 }, tezka: { inc: 1.35, evo: 0.75, think: 0.9, mult: 1.4 } };
@@ -174,7 +174,7 @@ const Veky = (() => {
           const [ox, oy] = slotPos(s, i);
           let best = null, bd = 1e9;
           for (const u of units) if (u.side !== s && !u.dead) { const d = Math.abs(u.x - ox); if (d < tr.ts.range && d < bd) { bd = d; best = u; } }
-          if (best) { tr.ang = Math.atan2(best.y - 20 - oy, best.x - ox); if (tr.cd <= 0) { tr.cd = tr.ts.rate; fire(s, ox, oy, best, tr.ts.dmg, ['stone', 'arrow', 'ball', tr.kind ? 'shell' : 'bullet', 'laser'][tr.age], tr.ts.splash); } }
+          if (best) { tr.ang = Math.atan2(best.y - 30 - oy, best.x - ox); if (tr.cd <= 0) { tr.cd = tr.ts.rate; fire(s, ox, oy, best, tr.ts.dmg, ['stone', 'arrow', 'ball', tr.kind ? 'shell' : 'bullet', 'laser'][tr.age], tr.ts.splash); } }
         });
       }
       // jednotky
@@ -191,8 +191,8 @@ const Veky = (() => {
             u.cd = u.st.rate; u.atk = 1;
             const melee = gap <= 16;
             const dmg = melee && u.st.shot && u.kind === 1 ? u.st.dmg * 0.6 : u.st.dmg;
-            if (tgt) { if (!melee && u.st.shot) fire(u.side, u.x + dir * u.st.w / 2, u.y - 34, tgt, dmg, u.st.shot, u.kind === 2 ? 30 : 0); else damage(tgt, dmg, u.side); }
-            else { if (!melee && u.st.shot) fire(u.side, u.x + dir * u.st.w / 2, u.y - 26, null, dmg, u.st.shot, 0); else hitBase(1 - u.side, dmg); }
+            if (tgt) { if (!melee && u.st.shot) fire(u.side, u.x + dir * u.st.w / 2, u.y - (u.kind === 2 ? VkArt.TOP[2][u.age] * 0.6 : 40), tgt, dmg, u.st.shot, u.kind === 2 ? 30 : 0); else damage(tgt, dmg, u.side); }
+            else { if (!melee && u.st.shot) fire(u.side, u.x + dir * u.st.w / 2, u.y - 40, null, dmg, u.st.shot, 0); else hitBase(1 - u.side, dmg); }
           }
         } else {
           let blocked = false;
@@ -204,7 +204,7 @@ const Veky = (() => {
       // střely
       for (let i = shots.length - 1; i >= 0; i--) {
         const p = shots[i]; p.ttl -= dt;
-        const tx = p.tgt && !p.tgt.dead ? p.tgt.x : p.tx, ty = p.tgt && !p.tgt.dead ? p.tgt.y - 20 : p.ty;
+        const tx = p.tgt && !p.tgt.dead ? p.tgt.x : p.tx, ty = p.tgt && !p.tgt.dead ? p.tgt.y - 30 : p.ty;
         const dx = tx - p.x, dy = ty - p.y, d = Math.hypot(dx, dy), sp = p.speed * dt;
         if (d <= sp + 2 || p.ttl <= 0) {
           if (p.tgt && !p.tgt.dead) { if (p.splash) { splash(p.side, tx, p.splash, p.dmg); boomAt(tx, ty, 8); } else damage(p.tgt, p.dmg, p.side); }
@@ -237,7 +237,7 @@ const Veky = (() => {
     }
     function fire(side, x, y, tgt, dmg, kind, splashR) {
       const fast = kind === 'bullet' || kind === 'laser';
-      shots.push({ side, x, y, tgt, tx: tgt ? tgt.x : FRONT[1 - side], ty: tgt ? tgt.y - 20 : GY - 60, dmg, kind, splash: splashR, speed: fast ? 900 : 420, ttl: 3, vx: side ? -1 : 1, vy: 0 });
+      shots.push({ side, x, y, tgt, tx: tgt ? tgt.x : FRONT[1 - side], ty: tgt ? tgt.y - 30 : GY - 80, dmg, kind, splash: splashR, speed: fast ? 900 : 420, ttl: 3, vx: side ? -1 : 1, vy: 0 });
     }
     function slotPos(s, i) { const sl = VkArt.SLOTS[S[s].age][i]; return [BX[s] + (s ? -sl[0] : sl[0]), GY + sl[1]]; }
 
@@ -283,7 +283,7 @@ const Veky = (() => {
       const sorted = units.slice().sort((a, b) => (a.kind === 2) - (b.kind === 2));
       for (const u of sorted) {
         VkArt.unit(g, u, clock);
-        if (!u.dead && u.hp < u.max) { const bw = Math.max(18, u.st.w * 0.7); g.fillStyle = 'rgba(0,0,0,.5)'; const hy = u.y - (u.kind === 2 ? 70 : 50) * VkArt.UNIT_SCALE; g.fillRect(u.x - bw / 2, hy, bw, 4); g.fillStyle = u.side ? '#ff5a5a' : '#5ad85a'; g.fillRect(u.x - bw / 2, hy, bw * u.hp / u.max, 4); }
+        if (!u.dead && u.hp < u.max) { const bw = Math.max(18, u.st.w * 0.7); g.fillStyle = 'rgba(0,0,0,.5)'; const hy = u.y - (u.kind === 2 ? VkArt.TOP[2][u.age] : VkArt.TOP[u.kind]) - 8; g.fillRect(u.x - bw / 2, hy, bw, 4); g.fillStyle = u.side ? '#ff5a5a' : '#5ad85a'; g.fillRect(u.x - bw / 2, hy, bw * u.hp / u.max, 4); }
       }
       for (const p of shots) VkArt.shot(g, p);
       for (const f of falls) if (f.delay <= 0) VkArt.special(g, f, clock);
@@ -293,38 +293,34 @@ const Veky = (() => {
       g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 13px Unbounded, sans-serif';
       for (const p of pops) { g.globalAlpha = Math.min(1, p.life * 2); g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.7)'; g.strokeText(p.text, p.x, p.y); g.fillStyle = p.col; g.fillText(p.text, p.x, p.y); }
       g.globalAlpha = 1;
-      // životy základen
-      for (let s = 0; s < 2; s++) {
-        const x = BX[s] - 50, y = GY - 210, f = S[s].hp / S[s].maxHp;
-        g.fillStyle = 'rgba(0,0,0,.55)'; g.beginPath(); g.roundRect(x - 2, y - 2, 104, 12, 5); g.fill();
-        g.fillStyle = f > 0.5 ? '#5ad85a' : f > 0.25 ? '#ffd23f' : '#ff4d4d'; g.beginPath(); g.roundRect(x, y, 100 * f, 8, 4); g.fill();
-        g.font = '700 10px Space Grotesk, sans-serif'; g.fillStyle = '#fff'; g.fillText(`${Kit.fmtNum(Math.ceil(S[s].hp))}`, BX[s], y - 9);
-      }
       g.restore();
       // horní lišta: zlato, zkušenosti, věk; minimapa
       const me = S[0], need = me.age < 4 ? XP_NEED[me.age] : 0;
-      g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 8, 250, 46, 10); g.fill();
+      g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 8, 250, 62, 10); g.fill();
       g.textAlign = 'left'; g.font = '900 18px Unbounded, sans-serif'; g.fillStyle = '#ffe066'; g.fillText(`$ ${Kit.fmtNum(Math.floor(me.gold))}`, 18, 26);
       g.font = '700 11px Space Grotesk, sans-serif'; g.fillStyle = '#e8e0ff'; g.fillText(AGE_NAMES[me.age], 150, 22);
       g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(18, 40, 230, 6);
       g.fillStyle = '#b07aff'; g.fillRect(18, 40, 230 * (need ? Math.min(1, me.xp / need) : 1), 6);
       g.fillStyle = '#e8e0ff'; g.fillText(need ? `XP ${Kit.fmtNum(Math.floor(me.xp))} / ${Kit.fmtNum(need)}` : 'XP max', 150, 34);
+      const hpBar = (x, y, wd, s) => { const f = S[s].hp / S[s].maxHp; g.fillStyle = 'rgba(255,255,255,.15)'; g.fillRect(x, y, wd, 7); g.fillStyle = f > 0.5 ? '#5ad85a' : f > 0.25 ? '#ffd23f' : '#ff4d4d'; g.fillRect(x, y, wd * f, 7); g.fillStyle = '#fff'; g.font = '700 9px Space Grotesk, sans-serif'; g.fillText(`🏰 ${Kit.fmtNum(Math.ceil(S[s].hp))}`, x + wd + 6, y + 4); };
+      hpBar(18, 56, 170, 0);
       const mw = Math.min(260, VW * 0.32), mx = VW - mw - 10, my = 10;
-      g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(mx - 4, my - 4, mw + 8, 26, 8); g.fill();
+      g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(mx - 4, my - 4, mw + 8, 38, 8); g.fill();
       g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(mx, my + 8, mw, 4);
       g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.5; g.strokeRect(mx + camX / W * mw, my, VW / W * mw, 18);
       for (const u of units) if (!u.dead) { g.fillStyle = u.side ? '#ff6a6a' : '#6aa8ff'; g.fillRect(mx + u.x / W * mw - 1, my + 6, 2, 8); }
       g.fillStyle = '#6aa8ff'; g.fillRect(mx, my + 2, 5, 14); g.fillStyle = '#ff6a6a'; g.fillRect(mx + mw - 5, my + 2, 5, 14);
+      g.textAlign = 'left'; hpBar(mx, my + 22, mw - 60, 1);
       // výcvik
-      if (me.queue.length) { const q = me.queue[0]; g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 60, 150, 18, 6); g.fill(); g.fillStyle = '#6aa8ff'; g.fillRect(12, 64, 100 * Math.min(1, me.prog), 10); g.fillStyle = '#fff'; g.font = '700 10px Space Grotesk, sans-serif'; g.fillText(`${UNIT_NAMES[q.age][q.kind]} · ${me.queue.length}/5`, 116, 69); }
+      if (me.queue.length) { const q = me.queue[0]; g.fillStyle = 'rgba(10,8,20,.72)'; g.beginPath(); g.roundRect(8, 76, 200, 18, 6); g.fill(); g.fillStyle = '#6aa8ff'; g.fillRect(12, 80, 60 * Math.min(1, me.prog), 10); g.fillStyle = '#fff'; g.font = '700 10px Space Grotesk, sans-serif'; g.textAlign = 'left'; g.fillText(`${UNIT_NAMES[q.age][q.kind]} · ${me.queue.length}/5`, 78, 85); }
     }
 
     // ── Rozhraní ──
     const btnU = [...el.querySelectorAll('.vk-u')], btnA = Object.fromEntries([...el.querySelectorAll('[data-a]')].map(b => [b.dataset.a, b]));
     function renderIcons() {
       btnU.forEach((b, k) => {
-        const c = b.querySelector('canvas'), g = c.getContext('2d'), age = S[0].age, sc = (k === 2 ? 0.62 : 1.1) / VkArt.UNIT_SCALE;
-        g.clearRect(0, 0, 64, 64); g.save(); g.translate(k === 2 ? 30 : 30, 60); g.scale(sc, sc);
+        const c = b.querySelector('canvas'), g = c.getContext('2d'), age = S[0].age, sc = k === 2 ? (u => [0.42, 0.5, 0.56, 0.6, 0.5][u])(age) : 0.86;
+        g.clearRect(0, 0, 64, 64); g.save(); g.translate(k === 2 ? 28 : 30, 61); g.scale(sc, sc);
         VkArt.unit(g, { x: 0, y: 0, side: 0, age, kind: k, walk: 0, atk: 0, hit: 0, dead: 0 }, 0); g.restore();
         b.querySelector('b').textContent = UNIT_NAMES[age][k];
       });
@@ -358,7 +354,7 @@ const Veky = (() => {
     const lx = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * VW, (e.clientY - r.top) / r.height * VH]; };
     cv.addEventListener('pointerdown', e => {
       kick(); const [x, y] = lx(e), mw = Math.min(260, VW * 0.32), mx = VW - mw - 10;
-      if (y < 34 && x > mx - 4) { camX = Math.max(0, Math.min(W - VW, (x - mx) / mw * W - VW / 2)); return; }
+      if (y < 46 && x > mx - 4) { camX = Math.max(0, Math.min(W - VW, (x - mx) / mw * W - VW / 2)); return; }
       drag = { x, cam: camX }; try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ukazatel už neplatí */ }
     });
     cv.addEventListener('pointermove', e => { if (!drag) return; const [x] = lx(e); camX = Math.max(0, Math.min(W - VW, drag.cam - (x - drag.x))); });
@@ -425,17 +421,16 @@ const Veky = (() => {
     el.innerHTML = '<canvas width="520" height="360" style="object-fit:contain"></canvas>';
     const g = el.querySelector('canvas').getContext('2d');
     g.beginPath(); g.roundRect(0, 0, 520, 360, 28); g.clip();
-    const sky = g.createLinearGradient(0, 0, 520, 0); sky.addColorStop(0, '#ff9a5a'); sky.addColorStop(0.5, '#5aa8ff'); sky.addColorStop(1, '#2a1a5a');
-    g.fillStyle = sky; g.fillRect(0, 0, 520, 360);
-    const gr = g.createLinearGradient(0, 290, 0, 360); gr.addColorStop(0, '#6a7a3a'); gr.addColorStop(1, '#2a2018'); g.fillStyle = gr; g.fillRect(0, 290, 520, 70);
-    g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.moveTo(0, 290); for (let x = 0; x <= 520; x += 26) g.lineTo(x, 230 - Math.sin(x * 0.02) * 30); g.lineTo(520, 290); g.fill();
-    g.save(); g.translate(-30, 0); VkArt.base(g, 70, 292, 0, 0, 0.5); g.restore();
-    g.save(); g.translate(30, 0); VkArt.base(g, 450, 292, 4, 1, 0.5); g.restore();
-    const u = (age, kind, side, x, s, atk = 0) => { g.save(); g.translate(x, 300); g.scale(s, s); VkArt.unit(g, { x: 0, y: 0, side, age, kind, walk: x * 0.1, atk, hit: 0, dead: 0 }, 0.5); g.restore(); };
-    u(3, 2, 1, 360, 1.3); u(4, 2, 1, 410, 1.4); u(1, 2, 1, 290, 1.6, 0.6);
-    u(0, 2, 0, 200, 1.6, 0.6); u(2, 1, 0, 140, 1.7, 0.8); u(0, 0, 0, 110, 1.6);
-    g.fillStyle = '#ffe066'; g.beginPath(); g.arc(246, 236, 9, 0, 7); g.fill(); g.fillStyle = '#ff8a3d'; g.beginPath(); g.arc(246, 236, 5, 0, 7); g.fill();
-    for (let i = 0; i < 5; i++) VkArt.special(g, { x: 300 + i * 40, y: 60 + i * 26, age: 0 }, 0);
+    g.drawImage(VkArt.land(520, 360, 1, 270), 0, 0);
+    // napravo budoucnost: tmavá obloha se zasahuje přes polovinu
+    const fut = g.createLinearGradient(260, 0, 520, 0); fut.addColorStop(0, 'rgba(42,26,90,0)'); fut.addColorStop(1, 'rgba(42,26,90,.75)'); g.fillStyle = fut; g.fillRect(0, 0, 520, 270);
+    const b = (x, age, side) => { g.save(); g.translate(x, 272); g.scale(0.62, 0.62); VkArt.base(g, 0, 0, age, side, 0.5); g.restore(); };
+    b(30, 1, 0); b(490, 4, 1);
+    const u = (age, kind, side, x, s, atk = 0, walk = 1) => { g.save(); g.translate(x, 276); g.scale(s, s); VkArt.unit(g, { x: 0, y: 0, side, age, kind, walk, atk, hit: 0, dead: 0 }, 0.5); g.restore(); };
+    u(4, 1, 1, 440, 0.95, 0.8, 2); u(3, 2, 1, 380, 0.9, 0.8, 0.5); u(4, 2, 1, 320, 1.05, 0.3, 2.4);
+    u(0, 0, 0, 96, 1, 0, 2.2); u(2, 1, 0, 140, 1, 0.8, 0.8); u(1, 2, 0, 230, 1.05, 0.5, 1.4);
+    for (let i = 0; i < 6; i++) { const a2 = i * 1.05; g.fillStyle = i % 2 ? '#ffe066' : '#fff'; g.beginPath(); g.arc(282 + Math.cos(a2) * 12, 232 + Math.sin(a2) * 12, 2.4, 0, 7); g.fill(); }
+    for (let i = 0; i < 4; i++) VkArt.special(g, { x: 330 + i * 46, y: 50 + i * 30, age: 0 }, 0);
   }
   return { DIFFS, generate, create, art, levelSpec, stats };
 })();

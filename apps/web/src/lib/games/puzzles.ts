@@ -3554,136 +3554,270 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#b07aff', '#3d8bff', '#ff4d4d'],
 		statsKey: 'gamecenter.stats.veky',
 		cover(ctx, w, h, t) {
-			// a battlefield across the ages: a stone fort (blue) against a future tower (red),
-			// two lines of soldiers clash in the middle while meteors rain down
+			// a battle across the ages: blue knights from a stone castle against red robots from a
+			// glowing future tower, sparks at the clash and meteors falling
 			const OL = '#1a1210',
-				gy = h * 0.62;
+				gy = h * 0.62,
+				m = Math.min(w, h);
 			const sky = ctx.createLinearGradient(0, 0, w, 0);
-			sky.addColorStop(0, '#ff9a5a');
-			sky.addColorStop(0.5, '#5aa8ff');
-			sky.addColorStop(1, '#3a1a6a');
+			sky.addColorStop(0, '#5aa8ff');
+			sky.addColorStop(0.55, '#8a7ad8');
+			sky.addColorStop(1, '#2a1a5a');
 			ctx.fillStyle = sky;
 			ctx.fillRect(0, 0, w, gy);
-			ctx.fillStyle = 'rgba(0,0,0,.18)';
+			for (let i = 0; i < 30; i++) {
+				ctx.fillStyle = `rgba(255,255,255,${0.2 + ((i * 37) % 10) / 14})`;
+				ctx.beginPath();
+				ctx.arc(w * 0.55 + ((i * 53) % (w * 0.45)), (i * 29) % (gy * 0.6), 1.1, 0, TAU);
+				ctx.fill();
+			}
+			ctx.fillStyle = 'rgba(40,40,80,.35)';
 			ctx.beginPath();
 			ctx.moveTo(0, gy);
-			for (let x = 0; x <= w; x += 20) ctx.lineTo(x, gy - h * 0.12 - Math.sin(x * 0.03) * h * 0.04);
+			for (let x = 0; x <= w; x += 16)
+				ctx.lineTo(x, gy - h * 0.14 - Math.sin(x * 0.025) * h * 0.04);
 			ctx.lineTo(w, gy);
 			ctx.fill();
 			const ground = ctx.createLinearGradient(0, gy, 0, h);
-			ground.addColorStop(0, '#6a7a3a');
+			ground.addColorStop(0, '#7a8a4a');
+			ground.addColorStop(0.15, '#8a7a5a');
 			ground.addColorStop(1, '#2a2018');
 			ctx.fillStyle = ground;
 			ctx.fillRect(0, gy, w, h - gy);
-			const m = Math.min(w, h);
-			// stone fort with a blue flag
-			ctx.fillStyle = '#9a9488';
-			ctx.strokeStyle = OL;
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.rect(-m * 0.02, gy - m * 0.3, m * 0.22, m * 0.3);
-			ctx.fill();
-			ctx.stroke();
-			for (let i = 0; i < 3; i++) {
-				ctx.beginPath();
-				ctx.rect(i * m * 0.08, gy - m * 0.34, m * 0.05, m * 0.05);
+			ctx.fillStyle = '#5a9a3a';
+			ctx.fillRect(0, gy - 2, w * 0.55, 4);
+			ctx.fillStyle = '#5ad8ff';
+			ctx.fillRect(w * 0.55, gy - 2, w * 0.45, 3);
+			const out = (fill: string | CanvasGradient, path: () => void, lw = 1.6) => {
+				path();
+				ctx.fillStyle = fill;
 				ctx.fill();
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = lw;
 				ctx.stroke();
-			}
-			ctx.fillStyle = '#3d8bff';
+			};
+			// stone castle with a blue banner
+			const cw = m * 0.24;
+			out(
+				'#b8b2a6',
+				() => {
+					ctx.beginPath();
+					ctx.rect(-cw * 0.2, gy - m * 0.3, cw, m * 0.3);
+				},
+				2,
+			);
+			for (let i = 0; i < 4; i++)
+				out('#a8a296', () => {
+					ctx.beginPath();
+					ctx.rect(-cw * 0.2 + i * cw * 0.27, gy - m * 0.34, cw * 0.15, m * 0.04);
+				});
+			out('#3d7bff', () => {
+				ctx.beginPath();
+				ctx.moveTo(cw * 0.25, gy - m * 0.26);
+				ctx.lineTo(cw * 0.5, gy - m * 0.26);
+				ctx.lineTo(cw * 0.5, gy - m * 0.14);
+				ctx.lineTo(cw * 0.375, gy - m * 0.11);
+				ctx.lineTo(cw * 0.25, gy - m * 0.14);
+				ctx.closePath();
+			});
+			ctx.fillStyle = '#ffe066';
+			ctx.fillRect(cw * 0.36, gy - m * 0.25, 3, m * 0.11);
+			ctx.fillRect(cw * 0.29, gy - m * 0.21, cw * 0.17, 3);
+			// future tower with a glowing core
+			out(
+				'#3a3a5a',
+				() => {
+					ctx.beginPath();
+					ctx.moveTo(w + 4, gy);
+					ctx.lineTo(w - m * 0.22, gy);
+					ctx.lineTo(w - m * 0.14, gy - m * 0.44);
+					ctx.lineTo(w - m * 0.05, gy - m * 0.5);
+					ctx.lineTo(w + 4, gy - m * 0.44);
+					ctx.closePath();
+				},
+				2,
+			);
+			ctx.shadowColor = '#5ad8ff';
+			ctx.shadowBlur = 12;
+			ctx.fillStyle = `rgba(90,216,255,${0.7 + 0.3 * Math.sin(t * 3)})`;
 			ctx.beginPath();
-			ctx.moveTo(m * 0.1, gy - m * 0.34);
-			ctx.lineTo(m * 0.1, gy - m * 0.46);
-			ctx.lineTo(m * 0.19, gy - m * 0.43 + Math.sin(t * 4) * 2);
-			ctx.lineTo(m * 0.1, gy - m * 0.4);
+			ctx.arc(w - m * 0.1, gy - m * 0.32, m * 0.03, 0, TAU);
 			ctx.fill();
-			// future tower with a red core
-			ctx.fillStyle = '#3a3a5a';
-			ctx.beginPath();
-			ctx.moveTo(w + m * 0.02, gy);
-			ctx.lineTo(w - m * 0.2, gy);
-			ctx.lineTo(w - m * 0.13, gy - m * 0.42);
-			ctx.lineTo(w - m * 0.05, gy - m * 0.48);
-			ctx.lineTo(w + m * 0.02, gy - m * 0.42);
-			ctx.closePath();
-			ctx.fill();
-			ctx.stroke();
-			ctx.fillStyle = `rgba(255,90,90,${0.6 + 0.4 * Math.sin(t * 3)})`;
-			ctx.beginPath();
-			ctx.arc(w - m * 0.09, gy - m * 0.3, m * 0.03, 0, TAU);
-			ctx.fill();
-			// soldiers: little figures with team colours, pushing towards the middle
-			const soldier = (x: number, side: number, ph: number) => {
-				const s = m / 250,
-					step = Math.sin(t * 8 + ph) * 3 * s,
-					col = side ? '#ff4d4d' : '#3d8bff';
+			ctx.fillRect(w - m * 0.1 - 1.5, gy - m * 0.3, 3, m * 0.3);
+			ctx.shadowBlur = 0;
+			const s = m / 220;
+			const knight = (x: number, ph: number) => {
+				const step = Math.sin(t * 8 + ph) * 4,
+					swing = Math.max(0, Math.sin(t * 5 + ph));
 				ctx.save();
 				ctx.translate(x, gy);
-				ctx.scale(side ? -s : s, s);
+				ctx.scale(s, s);
 				ctx.lineCap = 'round';
 				for (const [lw, c] of [
-					[6, OL],
-					[3.6, '#5a4a3a'],
+					[9, OL],
+					[6.4, '#5a4a3a'],
 				] as const) {
 					ctx.strokeStyle = c;
 					ctx.lineWidth = lw;
 					ctx.beginPath();
-					ctx.moveTo(-2, -14);
-					ctx.lineTo(-2 + step, 0);
-					ctx.moveTo(2, -14);
-					ctx.lineTo(2 - step, 0);
+					ctx.moveTo(-3, -24);
+					ctx.lineTo(-3 + step, 0);
+					ctx.moveTo(3, -24);
+					ctx.lineTo(3 - step, 0);
 					ctx.stroke();
 				}
-				ctx.fillStyle = col;
-				ctx.strokeStyle = OL;
-				ctx.lineWidth = 1.8;
+				out(
+					'#3d7bff',
+					() => {
+						ctx.beginPath();
+						ctx.moveTo(-8, -23);
+						ctx.lineTo(8, -23);
+						ctx.lineTo(10, -44);
+						ctx.lineTo(-9, -44);
+						ctx.closePath();
+					},
+					1.8,
+				);
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(-0.5, -41, 2.4, 14);
+				ctx.fillRect(-4, -36, 9, 2.4);
+				out('#f0c49a', () => {
+					ctx.beginPath();
+					ctx.ellipse(2, -53, 8, 8.8, 0, 0, TAU);
+				});
+				out('#c8ccd4', () => {
+					ctx.beginPath();
+					ctx.moveTo(-9, -52);
+					ctx.quadraticCurveTo(-10, -66, 2, -66);
+					ctx.quadraticCurveTo(12, -66, 11, -54);
+					ctx.lineTo(-9, -54);
+					ctx.closePath();
+				});
+				ctx.fillStyle = OL;
 				ctx.beginPath();
-				ctx.roundRect(-6, -27, 12, 15, 4);
+				ctx.arc(6, -51, 1.3, 0, TAU);
 				ctx.fill();
-				ctx.stroke();
-				ctx.fillStyle = '#f2c8a0';
-				ctx.beginPath();
-				ctx.arc(1, -33, 6, 0, TAU);
-				ctx.fill();
-				ctx.stroke();
-				ctx.fillStyle = '#d8dce4';
 				ctx.save();
-				ctx.translate(4, -23);
-				ctx.rotate(-0.3 + Math.max(0, Math.sin(t * 6 + ph)) * -1.2);
-				ctx.fillRect(4, -1.5, 16, 3);
+				ctx.translate(8, -40);
+				ctx.rotate(0.6 - swing * 2);
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = 6.5;
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(16, 0);
+				ctx.stroke();
+				ctx.fillStyle = '#e8ecf4';
+				ctx.fillRect(16, -1.5, 22, 3);
+				ctx.fillStyle = '#c99a3a';
+				ctx.fillRect(14, -5, 3, 10);
+				ctx.restore();
+				out('#3d7bff', () => {
+					ctx.beginPath();
+					ctx.moveTo(8, -46);
+					ctx.lineTo(20, -46);
+					ctx.quadraticCurveTo(21, -30, 14, -22);
+					ctx.quadraticCurveTo(7, -30, 8, -46);
+					ctx.closePath();
+				});
+				ctx.fillStyle = '#ffe066';
+				ctx.fillRect(13, -42, 2.4, 14);
+				ctx.restore();
+			};
+			const robot = (x: number, ph: number) => {
+				const step = Math.sin(t * 8 + ph) * 4,
+					swing = Math.max(0, Math.sin(t * 5 + ph + 1));
+				ctx.save();
+				ctx.translate(x, gy);
+				ctx.scale(-s, s);
+				ctx.lineCap = 'round';
+				for (const [lw, c] of [
+					[9, OL],
+					[6.4, '#4a4a6a'],
+				] as const) {
+					ctx.strokeStyle = c;
+					ctx.lineWidth = lw;
+					ctx.beginPath();
+					ctx.moveTo(-3, -24);
+					ctx.lineTo(-3 + step, 0);
+					ctx.moveTo(3, -24);
+					ctx.lineTo(3 - step, 0);
+					ctx.stroke();
+				}
+				out(
+					'#8a92b0',
+					() => {
+						ctx.beginPath();
+						ctx.roundRect(-9, -46, 19, 24, 4);
+					},
+					1.8,
+				);
+				ctx.shadowColor = '#e8383a';
+				ctx.shadowBlur = 6;
+				ctx.strokeStyle = '#e8383a';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.moveTo(-8, -36);
+				ctx.lineTo(9, -36);
+				ctx.stroke();
+				ctx.shadowBlur = 0;
+				out('#a8b0c8', () => {
+					ctx.beginPath();
+					ctx.ellipse(1, -55, 9, 10, 0, 0, TAU);
+				});
+				ctx.fillStyle = '#ff5a5a';
+				ctx.shadowColor = '#ff5a5a';
+				ctx.shadowBlur = 8;
+				ctx.fillRect(1, -58, 9, 4);
+				ctx.shadowBlur = 0;
+				ctx.save();
+				ctx.translate(8, -40);
+				ctx.rotate(0.6 - swing * 2);
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = 6.5;
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(16, 0);
+				ctx.stroke();
+				ctx.shadowColor = '#5affe8';
+				ctx.shadowBlur = 10;
+				ctx.fillStyle = '#9affee';
+				ctx.fillRect(16, -2, 26, 4);
+				ctx.shadowBlur = 0;
 				ctx.restore();
 				ctx.restore();
 			};
-			const clash = w * 0.5 + Math.sin(t * 0.7) * w * 0.05;
-			for (let i = 0; i < 4; i++) soldier(clash - m * 0.05 - i * m * 0.07, 0, i);
-			for (let i = 0; i < 4; i++) soldier(clash + m * 0.05 + i * m * 0.07, 1, i + 2);
-			// sparks at the clash
-			for (let i = 0; i < 5; i++) {
-				const a = t * 9 + i * 1.3,
-					r = (Math.sin(t * 7 + i) * 0.5 + 0.5) * m * 0.04;
+			const clash = w * 0.5 + Math.sin(t * 0.7) * w * 0.04;
+			for (let i = 0; i < 3; i++) knight(clash - m * 0.06 - i * m * 0.11, i);
+			for (let i = 0; i < 3; i++) robot(clash + m * 0.06 + i * m * 0.11, i + 2);
+			for (let i = 0; i < 6; i++) {
+				const a = t * 9 + i * 1.05,
+					r = (Math.sin(t * 7 + i) * 0.5 + 0.5) * m * 0.05;
 				ctx.fillStyle = i % 2 ? '#ffe066' : '#ffffff';
 				ctx.beginPath();
-				ctx.arc(clash + Math.cos(a) * r, gy - m * 0.1 + Math.sin(a) * r, 2, 0, TAU);
+				ctx.arc(clash + Math.cos(a) * r, gy - m * 0.17 + Math.sin(a) * r, 2.2, 0, TAU);
 				ctx.fill();
 			}
-			// meteors over the red side
 			for (let i = 0; i < 3; i++) {
-				const k = (t * 0.5 + i / 3) % 1,
-					mx = w * (0.55 + i * 0.12) - (1 - k) * w * 0.3,
-					my = k * gy * 0.9;
-				const tr = ctx.createLinearGradient(mx - m * 0.12, my - m * 0.12, mx, my);
+				const k = (t * 0.45 + i / 3) % 1,
+					mx = w * (0.5 + i * 0.16) - (1 - k) * w * 0.25,
+					my = k * gy * 0.8;
+				const tr = ctx.createLinearGradient(mx - m * 0.14, my - m * 0.14, mx, my);
 				tr.addColorStop(0, 'rgba(255,140,40,0)');
-				tr.addColorStop(1, 'rgba(255,180,60,.9)');
+				tr.addColorStop(1, 'rgba(255,190,70,.95)');
 				ctx.strokeStyle = tr;
-				ctx.lineWidth = 6;
+				ctx.lineWidth = 7;
 				ctx.beginPath();
-				ctx.moveTo(mx - m * 0.12, my - m * 0.12);
+				ctx.moveTo(mx - m * 0.14, my - m * 0.14);
 				ctx.lineTo(mx, my);
 				ctx.stroke();
-				ctx.fillStyle = '#6a4a3a';
-				ctx.beginPath();
-				ctx.arc(mx, my, m * 0.022, 0, TAU);
-				ctx.fill();
+				out(
+					'#6a4a3a',
+					() => {
+						ctx.beginPath();
+						ctx.arc(mx, my, m * 0.025, 0, TAU);
+					},
+					1.4,
+				);
 			}
 		},
 	},
