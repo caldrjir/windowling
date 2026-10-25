@@ -32,10 +32,13 @@ const PUZZLES = [
 // `Kit` is a global of the page's classic scripts, not a property of window.
 const solve = (page: Page) => page.evaluate('Kit._test.inst && Kit._test.inst._solve()');
 
-async function startFree(page: Page, id: string) {
+async function startFree(page: Page, id: string, diff?: string) {
 	await page.goto(`/games/${id}/index.html`);
 	await expect(page.locator('.k-hero h1')).toBeVisible();
-	await page.locator('[data-k="free"]').first().click();
+	await page
+		.locator(diff ? `[data-k="free"][data-diff="${diff}"]` : '[data-k="free"]')
+		.first()
+		.click();
 	await expect(page.locator('.k-gen')).toHaveCount(0, { timeout: 20_000 });
 }
 
@@ -331,6 +334,33 @@ test('skladacka joins matching loose pieces and picks a piece under another', as
 	await drag(c3, [c3[0] + 25, c3[1] + 25]);
 	const c3b = await I<number[]>('_center(3)');
 	expect(c3b[0] - c3[0]).toBeGreaterThan(10);
+});
+
+test('sachy lets the player pick the promotion piece', async ({ page }) => {
+	await startFree(page, 'sachy', 'duo');
+	const go = async (from: string, to: string) => {
+		for (const n of [from, to]) {
+			const s = await page.evaluate(
+				`Chess.sq(${'abcdefgh'.indexOf(n[0] ?? 'a')}, ${Number(n[1]) - 1})`,
+			);
+			await page.locator(`.ch-sq[data-s="${s}"]`).dispatchEvent('pointerdown');
+		}
+	};
+	for (const [f, t] of [
+		['a2', 'a4'],
+		['b7', 'b5'],
+		['a4', 'b5'],
+		['a7', 'a6'],
+		['b5', 'a6'],
+		['h7', 'h6'],
+		['a6', 'a7'],
+		['g8', 'f6'],
+		['a7', 'b8'],
+	] as const)
+		await go(f, t);
+	await expect(page.locator('.ch-promo')).toBeVisible();
+	await page.locator('.ch-promo [data-k="2"]').click();
+	await expect(page.locator('.ch-moves span').last()).toHaveText('axb8=N');
 });
 
 test('sachy plays a knight move and the computer answers', async ({ page }) => {

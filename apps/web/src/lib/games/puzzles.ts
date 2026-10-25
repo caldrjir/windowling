@@ -7,6 +7,73 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// ŠACHY cover: the game's Staunton pieces (static/games/sachy/sachy.js) as canvas paths
+const CHESS_BODY: Record<number, string[]> = {
+	1: [
+		'M22.5 7.5a4.6 4.6 0 0 0-3 8.1c-2 1.1-3.3 3-3.3 5 0 1.5.7 2.9 1.8 3.8-3.4 1.6-6.2 5-6.6 10.6h22.2c-.4-5.6-3.2-9-6.6-10.6 1.1-.9 1.8-2.3 1.8-3.8 0-2-1.3-3.9-3.3-5a4.6 4.6 0 0 0-3-8.1z',
+		'M10.5 35h24v4h-24z',
+	],
+	2: [
+		'M13 39h21.5c.3-8.3-1-14.6-4-19.4-1.3-2.1-2-3.9-2.3-5.9l1.2-4.4-3.6 2-1.3-3.8-2.1 3.7C16.6 12.4 13.2 15 11 19c-1.6 2.9-2.4 5.4-1.5 7 .9 1.4 2.8 1.3 4.6.2 1.6-1 3.4-1.8 5.4-1.6-.6 2.8-2.5 5-4.3 7.2-1.6 1.9-2.4 4.2-2.2 7.2z',
+	],
+	3: [
+		'M10.5 39h24v-3.5h-24zM13.5 35.5c1.3-1.4 2.2-2.6 2.4-4.4h13.2c.2 1.8 1.1 3 2.4 4.4zM15.8 31.1c-3.2-3.9-3.2-10 6.7-17.4 9.9 7.4 9.9 13.5 6.7 17.4z',
+		'M25.1 10.5a2.6 2.6 0 1 1-5.2 0a2.6 2.6 0 1 1 5.2 0z',
+	],
+	4: [
+		'M9.5 39h26v-3.5h-26zM12 35.5l1.5-3.5h18l1.5 3.5zM14.5 32l1-14h14l1 14zM12.5 18l2-3h16l2 3zM12.5 15V8.5h4.2v2.8h3.5V8.5h4.6v2.8h3.5V8.5h4.2V15z',
+	],
+	5: [
+		'M10.5 39h24v-3.5h-24zM12.5 35.5l2-4h16l2 4zM14.5 31.5c.1-4.6-2.4-10.6-5-16.2l6.6 6.4 2.4-10 4 9.6 4-9.6 2.4 10 6.6-6.4c-2.6 5.6-5.1 11.6-5 16.2z',
+		'M11.5 14a2.3 2.3 0 1 1-4.6 0a2.3 2.3 0 1 1 4.6 0zM18.2 10.4a2.3 2.3 0 1 1-4.6 0a2.3 2.3 0 1 1 4.6 0zM24.8 9a2.3 2.3 0 1 1-4.6 0a2.3 2.3 0 1 1 4.6 0zM31.4 10.4a2.3 2.3 0 1 1-4.6 0a2.3 2.3 0 1 1 4.6 0zM38.1 14a2.3 2.3 0 1 1-4.6 0a2.3 2.3 0 1 1 4.6 0z',
+	],
+	6: [
+		'M10.5 39h24v-3.5h-24zM12.5 35.5l2-4h16l2 4zM14.5 31.5c-1.4-3.6-4.6-6.4-4.6-10.6 0-3.6 3-5.8 6.4-5.8 2.6 0 4.6 1.4 6.2 3.6 1.6-2.2 3.6-3.6 6.2-3.6 3.4 0 6.4 2.2 6.4 5.8 0 4.2-3.2 7-4.6 10.6z',
+	],
+};
+function coverChessPiece(
+	ctx: CanvasRenderingContext2D,
+	type: number,
+	white: boolean,
+	x: number,
+	y: number,
+	s: number,
+): void {
+	ctx.save();
+	ctx.translate(x + s * 0.05, y + s * 0.05);
+	ctx.scale((s * 0.9) / 45, (s * 0.9) / 45);
+	ctx.shadowColor = 'rgba(0,0,0,.4)';
+	ctx.shadowOffsetY = 2;
+	ctx.shadowBlur = 2;
+	ctx.fillStyle = white ? '#fbf7ee' : '#2e2724';
+	ctx.strokeStyle = white ? '#2a1f14' : '#0d0907';
+	ctx.lineWidth = 1.4;
+	ctx.lineJoin = 'round';
+	for (const d of CHESS_BODY[type] ?? []) {
+		const p = new Path2D(d);
+		ctx.fill(p);
+		ctx.shadowColor = 'transparent';
+		ctx.stroke(p);
+	}
+	ctx.lineCap = 'round';
+	if (type === 6) {
+		ctx.lineWidth = 2.6;
+		ctx.stroke(new Path2D('M22.5 18.5V7M18.5 10.5h8'));
+	}
+	if (type === 2) {
+		ctx.fillStyle = white ? '#2a1f14' : '#e8dccb';
+		ctx.beginPath();
+		ctx.arc(17.3, 16.6, 1.4, 0, TAU);
+		ctx.fill();
+	}
+	if (type === 3) {
+		ctx.strokeStyle = white ? '#2a1f14' : '#e8dccb';
+		ctx.lineWidth = 1.8;
+		ctx.stroke(new Path2D('M25.6 17.6l-4.6 5.6M17.5 28h10'));
+	}
+	ctx.restore();
+}
+
 // HAD cover: a shiny apple with a leaf
 function coverApple(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
 	ctx.fillStyle = 'rgba(0,0,0,.3)';
@@ -1522,19 +1589,63 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.sachy',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#ffd166', '#5b6cff', '#b14cff'], 12);
-			const n = 5;
-			const s = Math.min(w * 0.6, h * 0.62) / n;
-			const x0 = w / 2 - (s * n) / 2;
-			const y0 = h * 0.1;
+			// a corner of a wooden board: the white knight jumps and checks the black king
+			const n = 5,
+				s = Math.min((w * 0.84) / n, (h * 0.6) / n),
+				x0 = (w - n * s) / 2,
+				y0 = h * 0.08;
+			ctx.fillStyle = '#4a2e1a';
+			ctx.beginPath();
+			ctx.roundRect(x0 - s * 0.12, y0 - s * 0.12, n * s + s * 0.24, n * s + s * 0.24, s * 0.12);
+			ctx.fill();
+			const cyc = (t / 3.6) % 1,
+				k = Math.min(1, Math.max(0, (cyc - 0.25) / 0.3)),
+				check = cyc > 0.55 && cyc < 0.95;
 			for (let y = 0; y < n; y++)
 				for (let x = 0; x < n; x++) {
-					ctx.fillStyle = (x + y) % 2 ? 'rgba(91,108,255,.55)' : 'rgba(255,255,255,.16)';
+					ctx.fillStyle = (x + y) % 2 ? '#b98a5e' : '#f0dbb4';
 					ctx.fillRect(x0 + x * s, y0 + y * s, s, s);
 				}
-			const bob = Math.sin(t * 1.6) * s * 0.06;
-			glowText(ctx, '♞', x0 + s * 1.5, y0 + s * 2.5 + bob, s * 0.95, '#ffd166');
-			glowText(ctx, '♚', x0 + s * 3.5, y0 + s * 0.5, s * 0.85, '#d9b8ff');
-			glowText(ctx, '♛', x0 + s * 3.5, y0 + s * 3.5, s * 0.85, '#ffd166');
+			if (check) {
+				const g = ctx.createRadialGradient(
+					x0 + 3.5 * s,
+					y0 + 0.5 * s,
+					0,
+					x0 + 3.5 * s,
+					y0 + 0.5 * s,
+					s * 0.7,
+				);
+				g.addColorStop(0, 'rgba(255,60,60,.9)');
+				g.addColorStop(1, 'rgba(255,60,60,0)');
+				ctx.fillStyle = g;
+				ctx.fillRect(x0 + 3 * s, y0, s, s);
+			}
+			ctx.fillStyle = 'rgba(205,210,60,.42)';
+			if (k >= 1) {
+				ctx.fillRect(x0, y0 + 3 * s, s, s);
+				ctx.fillRect(x0 + s, y0 + s, s, s);
+			}
+			const put = (type: number, white: boolean, x: number, y: number, lift = 0) =>
+				coverChessPiece(ctx, type, white, x0 + x * s, y0 + y * s - lift, s);
+			put(4, false, 0, 0);
+			put(6, false, 3, 0);
+			put(1, false, 2, 1);
+			put(1, false, 4, 1);
+			put(3, false, 4, 0);
+			put(1, true, 3, 3);
+			put(5, true, 4, 4);
+			put(6, true, 2, 4);
+			// the knight's L-jump: a shadow on the board and the piece arcing above it
+			const kx = k,
+				ky = 3 - 2 * k,
+				lift = Math.sin(k * Math.PI) * s * 0.7;
+			if (lift > 0) {
+				ctx.fillStyle = 'rgba(0,0,0,.25)';
+				ctx.beginPath();
+				ctx.ellipse(x0 + (kx + 0.5) * s, y0 + (ky + 0.85) * s, s * 0.3, s * 0.08, 0, 0, TAU);
+				ctx.fill();
+			}
+			put(2, true, kx, ky, lift);
 		},
 	},
 	{

@@ -55,14 +55,20 @@ const Sachy = (() => {
 
   // ── Figurky (SVG 45×45) ──
   const SHAPE = {
-    1: '<path d="M22.5 9a4.5 4.5 0 0 0-3.6 7.2A6 6 0 0 0 16.5 21a6 6 0 0 0 2.3 4.7C15 27.5 12.5 31 12.5 36h20c0-5-2.5-8.5-6.3-10.3a6 6 0 0 0 2.3-4.7 6 6 0 0 0-2.4-4.8A4.5 4.5 0 0 0 22.5 9z"/>',
-    2: '<path d="M14 36h19v-3c0-8-3-14-9-17l-1-4-2 3c-4 1-8 5-9 9l2 3 3-2 2 1c-3 3-5 6-5 10z"/><circle cx="17" cy="19" r="1.4" class="eye"/>',
-    3: '<path d="M12 36h21v-3H12zM15.5 33c-1-6 1-11 7-17 6 6 8 11 7 17z"/><circle cx="22.5" cy="11.5" r="2.5"/><path d="M25 19l-4 5" class="cut"/>',
-    4: '<path d="M11 36h23v-3H11zM14 33l1.5-3h14l1.5 3zM15.5 30V18h14v12zM13 18l2.5-2.5h14L32 18zM13 15.5V9h4v2.5h4V9h3v2.5h4V9h4v6.5z"/>',
-    5: '<path d="M11 36h23v-3H11zM12 33l2-13 5 7 3.5-11 3.5 11 5-7 2 13z"/><circle cx="14" cy="18" r="2"/><circle cx="19" cy="15" r="2"/><circle cx="22.5" cy="13" r="2"/><circle cx="26" cy="15" r="2"/><circle cx="31" cy="18" r="2"/>',
-    6: '<path d="M11 36h23v-3H11zM13 33c-2-7 3-11 9.5-11S34 26 32 33z"/><path d="M22.5 22v-9M19 16h7" class="cross"/>',
+    // pěšec
+    1: '<path class="bd" d="M22.5 7.5a4.6 4.6 0 0 0-3 8.1c-2 1.1-3.3 3-3.3 5 0 1.5.7 2.9 1.8 3.8-3.4 1.6-6.2 5-6.6 10.6h22.2c-.4-5.6-3.2-9-6.6-10.6 1.1-.9 1.8-2.3 1.8-3.8 0-2-1.3-3.9-3.3-5a4.6 4.6 0 0 0-3-8.1z"/><path class="bd" d="M10.5 35h24v4h-24z"/><path class="hl" d="M20 10.5a2.6 2.6 0 0 1 2.5-1.2M15.6 31c.6-2.6 2-4.4 3.8-5.4"/>',
+    // věž
+    4: '<path class="bd" d="M9.5 39h26v-3.5h-26zM12 35.5l1.5-3.5h18l1.5 3.5zM14.5 32l1-14h14l1 14zM12.5 18l2-3h16l2 3zM12.5 15V8.5h4.2v2.8h3.5V8.5h4.6v2.8h3.5V8.5h4.2V15z"/><path class="hl" d="M15 18h15M14.5 32h16M17 21l-.5 9"/>',
+    // jezdec
+    2: '<path class="bd" d="M13 39h21.5c.3-8.3-1-14.6-4-19.4-1.3-2.1-2-3.9-2.3-5.9l1.2-4.4-3.6 2-1.3-3.8-2.1 3.7C16.6 12.4 13.2 15 11 19c-1.6 2.9-2.4 5.4-1.5 7 .9 1.4 2.8 1.3 4.6.2 1.6-1 3.4-1.8 5.4-1.6-.6 2.8-2.5 5-4.3 7.2-1.6 1.9-2.4 4.2-2.2 7.2z"/><circle class="e" cx="17.3" cy="16.6" r="1.4"/><path class="hl" d="M24.5 12.5c3 2.6 5 7 6 12.5M11.6 24.6l1.3-.6"/>',
+    // střelec
+    3: '<path class="bd" d="M10.5 39h24v-3.5h-24zM13.5 35.5c1.3-1.4 2.2-2.6 2.4-4.4h13.2c.2 1.8 1.1 3 2.4 4.4zM15.8 31.1c-3.2-3.9-3.2-10 6.7-17.4 9.9 7.4 9.9 13.5 6.7 17.4z"/><circle class="bd" cx="22.5" cy="10.5" r="2.6"/><path class="cut" d="M25.6 17.6l-4.6 5.6M17.5 28h10"/>',
+    // dáma
+    5: '<path class="bd" d="M10.5 39h24v-3.5h-24zM12.5 35.5l2-4h16l2 4zM14.5 31.5c.1-4.6-2.4-10.6-5-16.2l6.6 6.4 2.4-10 4 9.6 4-9.6 2.4 10 6.6-6.4c-2.6 5.6-5.1 11.6-5 16.2z"/><circle class="bd" cx="9.2" cy="14" r="2.3"/><circle class="bd" cx="15.9" cy="10.4" r="2.3"/><circle class="bd" cx="22.5" cy="9" r="2.3"/><circle class="bd" cx="29.1" cy="10.4" r="2.3"/><circle class="bd" cx="35.8" cy="14" r="2.3"/><path class="hl" d="M15 31.5h15M15.5 27c4.6-1.4 9.4-1.4 14 0"/>',
+    // král
+    6: '<path class="bd" d="M10.5 39h24v-3.5h-24zM12.5 35.5l2-4h16l2 4zM14.5 31.5c-1.4-3.6-4.6-6.4-4.6-10.6 0-3.6 3-5.8 6.4-5.8 2.6 0 4.6 1.4 6.2 3.6 1.6-2.2 3.6-3.6 6.2-3.6 3.4 0 6.4 2.2 6.4 5.8 0 4.2-3.2 7-4.6 10.6z"/><path class="cross" d="M22.5 18.5V7M18.5 10.5h8"/><path class="hl" d="M15 31.5h15M15.5 27c4.6-1.4 9.4-1.4 14 0M22.5 18.5v7"/>',
   };
-  const piece = p => `<svg viewBox="0 0 45 45" class="pc ${p > 0 ? 'w' : 'b'}">${SHAPE[Math.abs(p)]}</svg>`;
+  const piece = p => `<svg viewBox="0 0 45 45" class="pc ${p > 0 ? 'w' : 'bk'}">${SHAPE[Math.abs(p)]}</svg>`;
 
   // Online tah: "z-kam-proměna" v číslech polí enginu.
   const enc = m => `${m.f}-${m.t}-${m.pr || 0}`;
@@ -76,8 +82,8 @@ const Sachy = (() => {
     let sel = 0, lastMove = null, done = false, thinking = false, moves = [], mistakes = 0;
     if (online) saved = { moves: net.moves.map(dec) };
     if (saved && saved.moves) { for (const u of saved.moves) { const m = pos.legal().find(x => x.f === u.f && x.t === u.t && (x.pr || 0) === (u.pr || 0)); if (m) { moves.push({ ...u, san: pos.san(m) }); pos.make(m); lastMove = m; } } }
-    el.innerHTML = `<div class="ch-wrap"><div class="ch-side"><div class="ch-status"></div><div class="ch-moves"></div></div>
-      <div class="ch-board"></div>
+    el.innerHTML = `<div class="ch-wrap"><div class="ch-side"><div class="ch-status"></div><div class="ch-cap"><div data-c="1"></div><div data-c="-1"></div></div><div class="ch-moves"></div></div>
+      <div class="ch-frame"><div class="ch-board"></div><div class="ch-promo" hidden></div></div>
       <div class="k-tools">${online ? '' : `<button class="k-tool" data-t="undo">${api.icon('undo')}<span>${L('Zpět', 'Undo')}</span></button><button class="k-tool" data-t="hint">${api.icon('bulb')}<span>${L('Nápověda', 'Hint')}</span></button>`}${isPuzzle ? '' : `<button class="k-tool" data-t="resign">${api.icon('x')}<span>${L('Vzdát', 'Resign')}</span></button>`}</div></div>`;
     const boardEl = el.querySelector('.ch-board'), statusEl = el.querySelector('.ch-status'), movesEl = el.querySelector('.ch-moves');
     const squares = [];
@@ -103,15 +109,34 @@ const Sachy = (() => {
       const turn = pos.side > 0 ? L('Bílý', 'White') : L('Černý', 'Black');
       statusEl.innerHTML = isPuzzle ? `<b>${L(`Mat ${P.mate === 1 ? 'jedním tahem' : 've 2 tazích'}`, `Mate in ${P.mate}`)}</b><span>${L(`Táhne ${turn.toLowerCase()}`, `${turn} to move`)}</span>`
         : `<b>${duo ? L(`Na tahu: ${turn}`, `${turn} to move`) : pos.side === human ? L('Jsi na tahu', 'Your move') : online ? L('Táhne soupeř', 'Opponent to move') : L('Soupeř přemýšlí…', 'Opponent is thinking…')}</b><span>${duo ? L('Dva hráči', 'Two players') : online ? `${human > 0 ? L('Hraješ bílými', 'You play white') : L('Hraješ černými', 'You play black')}` : `${L('Soupeř', 'Opponent')}: ${L('úroveň', 'level')} ${P.level}`}${pos.inCheck() ? ` · ${L('ŠACH', 'CHECK')}` : ''}</span>`;
+      // sebrané figurky a materiální převaha
+      const INIT = [0, 8, 2, 2, 2, 1, 1], VALUE = [0, 1, 3, 3, 5, 9, 0], have = { 1: [0, 0, 0, 0, 0, 0, 0], '-1': [0, 0, 0, 0, 0, 0, 0] };
+      for (let s2 = 21; s2 < 99; s2++) { const q = pos.b[s2]; if (q && q !== C.OFF && Math.abs(q) <= 6) have[Math.sign(q)][Math.abs(q)]++; }
+      let mat = 0; for (let k = 1; k <= 5; k++) mat += (have[1][k] - have[-1][k]) * VALUE[k];
+      for (const side of [1, -1]) {
+        let h = ''; for (const k of [5, 4, 3, 2, 1]) for (let i = 0; i < Math.max(0, INIT[k] - have[-side][k]); i++) h += piece(-side * k);
+        const adv = side * mat > 0 ? `<b>+${side * mat}</b>` : '';
+        el.querySelector(`.ch-cap [data-c="${side}"]`).innerHTML = `<span class="who ${side > 0 ? 'w' : 'bk'}"></span>${h}${adv}`;
+      }
       movesEl.innerHTML = moves.reduce((h, m, i) => h + (i % 2 ? '' : `<i>${Math.floor(i / 2) + 1}.</i>`) + `<span>${m.san}</span>`, '');
       movesEl.scrollTop = movesEl.scrollHeight;
     }
-    function play(m, byHuman) {
+    // plynulý posun figurky z výchozího pole na cílové
+    function slide(f, t) {
+      const a = squares[f] && squares[f].getBoundingClientRect(), pc = squares[t] && squares[t].querySelector('.pc');
+      if (!a || !pc) return;
+      const b = squares[t].getBoundingClientRect();
+      pc.style.transition = 'none'; pc.style.transform = `translate(${a.left - b.left}px, ${a.top - b.top}px)`; pc.style.zIndex = 5;
+      void pc.getBoundingClientRect();
+      pc.style.transition = 'transform .2s cubic-bezier(.3,.7,.4,1)'; pc.style.transform = '';
+      setTimeout(() => { pc.style.zIndex = ''; }, 220);
+    }
+    function play(m, byHuman, noSlide) {
       const san = pos.san(m); pos.make(m); lastMove = m; sel = 0;
       moves.push({ f: m.f, t: m.t, pr: m.pr || 0, san });
       if (online && byHuman) net.send(enc(m));
       api.sound(m.c ? 'place' : 'tap'); if (pos.inCheck()) api.sound('line');
-      render(); api.changed();
+      render(); if (!noSlide) slide(m.f, m.t); api.changed();
       if (end()) return;
       if (isPuzzle && byHuman) puzzleReply();
       else if (!duo && !isPuzzle && !online && pos.side !== human) aiMove();
@@ -168,18 +193,40 @@ const Sachy = (() => {
       const p = pos.b[s];
       if (sel) {
         const m = pos.legal().filter(x => x.f === sel && x.t === s);
-        if (m.length) { play(m.find(x => !x.pr || Math.abs(x.pr) === C.Q) || m[0], true); return; }
+        if (m.length > 1) { promo(m); return; }
+        if (m.length) { play(m[0], true, dragged); return; }
       }
       if (p && Math.sign(p) === pos.side) { sel = s === sel ? 0 : s; api.sound('soft'); } else sel = 0;
       render();
     }
-    // klepnutí i tah myší/prstem
-    let dragFrom = 0;
-    boardEl.addEventListener('pointerdown', e => { const d = e.target.closest('.ch-sq'); if (!d) return; const s = +d.dataset.s; dragFrom = pos.b[s] && Math.sign(pos.b[s]) === pos.side ? s : 0; tap(s); });
-    boardEl.addEventListener('pointerup', e => {
-      if (!dragFrom) return; const el2 = document.elementFromPoint(e.clientX, e.clientY), d = el2 && el2.closest && el2.closest('.ch-sq');
-      if (d && +d.dataset.s !== dragFrom && sel === dragFrom) tap(+d.dataset.s); dragFrom = 0;
+    // proměna pěšce: výběr figury
+    const promoEl = el.querySelector('.ch-promo');
+    function promo(list) {
+      promoEl.innerHTML = `<div>${[C.Q, C.R, C.B, C.N].map(k => `<button data-k="${k}">${piece(pos.side * k)}</button>`).join('')}</div>`;
+      promoEl.hidden = false;
+      promoEl.onclick = e => { const b = e.target.closest('[data-k]'); promoEl.hidden = true; if (!b) { sel = 0; render(); return; } const m = list.find(x => Math.abs(x.pr) === +b.dataset.k) || list[0]; play(m, true); };
+    }
+    // klepnutí i tah myší/prstem (figurka jede za prstem)
+    let dragFrom = 0, dragged = false, drag = null;
+    boardEl.addEventListener('pointerdown', e => {
+      const d = e.target.closest('.ch-sq'); if (!d) return; const s = +d.dataset.s;
+      dragFrom = pos.b[s] && Math.sign(pos.b[s]) === pos.side ? s : 0; dragged = false; tap(s);
+      const pc = dragFrom && sel === dragFrom ? squares[s].querySelector('.pc') : null;
+      drag = pc ? { pc, x: e.clientX, y: e.clientY } : null;
     });
+    const onMove = e => {
+      if (!drag || !dragFrom) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!dragged && Math.hypot(dx, dy) < 6) return;
+      dragged = true; drag.pc.style.transition = 'none'; drag.pc.style.transform = `translate(${dx}px, ${dy}px) scale(1.12)`; drag.pc.style.zIndex = 10; drag.pc.style.pointerEvents = 'none';
+    };
+    const onUp = e => {
+      if (drag) { drag.pc.style.transform = ''; drag.pc.style.zIndex = ''; drag.pc.style.pointerEvents = ''; }
+      drag = null;
+      if (!dragFrom) return; const el2 = document.elementFromPoint(e.clientX, e.clientY), d = el2 && el2.closest && el2.closest('.ch-sq');
+      if (d && +d.dataset.s !== dragFrom && sel === dragFrom) tap(+d.dataset.s); dragFrom = 0; dragged = false;
+    };
+    addEventListener('pointermove', onMove); addEventListener('pointerup', onUp);
     el.querySelector('.k-tools').addEventListener('click', e => {
       const t = e.target.closest('[data-t]'); if (!t || done) return;
       if (t.dataset.t === 'undo') {
@@ -197,12 +244,12 @@ const Sachy = (() => {
       }
       if (t.dataset.t === 'resign') { done = true; if (online) net.resign(); else api.failed({ title: L('Vzdáno', 'Resigned') }); }
     });
-    function fit() { const vw = (document.getElementById('kView') || el).clientWidth - 28, wide = innerWidth > 860, s = Math.max(260, Math.min(wide ? vw - 300 : vw, innerHeight - (wide ? 130 : 300), 640)); boardEl.style.width = boardEl.style.height = s + 'px'; }
+    function fit() { const vw = (document.getElementById('kView') || el).clientWidth - 28, wide = innerWidth > 860, s = Math.max(240, Math.min(wide ? vw - 300 : vw, innerHeight - (wide ? 130 : 300), 640) - (wide ? 20 : 12)); boardEl.style.width = boardEl.style.height = s + 'px'; boardEl.style.setProperty('--sq', s / 8 + 'px'); }
     fit(); addEventListener('resize', fit); render();
     if (!isPuzzle && !duo && !online && pos.side !== human && !done) setTimeout(aiMove, 400);
     return {
       getState: () => (done ? null : { moves: moves.map(m => ({ f: m.f, t: m.t, pr: m.pr })) }),
-      destroy() { removeEventListener('resize', fit); if (worker) worker.terminate(); reqId++; },
+      destroy() { removeEventListener('resize', fit); removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); if (worker) worker.terminate(); reqId++; },
       onKey(e) { if (e.key === 'h' || e.key === 'H') el.querySelector('[data-t="hint"]').click(); },
       _solve() { done = true; api.solved({ title: L('Mat!', 'Checkmate!') }); },
     };
@@ -223,14 +270,14 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   diffs: Sachy.DIFFS, generate: Sachy.generate, create: Sachy.create, art: Sachy.art,
   online: { kind: 'turn' },
   dailyDiff: () => 'puzzle', levelDiff: n => (Sachy.levelSpec(n).type === 'puzzle' ? 'puzzle' : ['ai1', 'ai1', 'ai3', 'ai3', 'ai5', 'ai5'][Math.floor((n - 1) / 20)]),
-  rules: Kit.L(`<p>Klasické šachy se všemi pravidly: rošáda, braní mimochodem, proměna pěšce (automaticky na dámu), pat, trojí opakování a pravidlo 50 tahů.</p>
-    <ul><li>Klepni na figurku a pak na cílové pole, nebo figurku přetáhni. Tečky ukazují možné tahy.</li>
+  rules: Kit.L(`<p>Klasické šachy se všemi pravidly: rošáda, braní mimochodem, proměna pěšce (vybereš si figuru), pat, trojí opakování a pravidlo 50 tahů.</p>
+    <ul><li>Klepni na figurku a pak na cílové pole, nebo figurku přetáhni. Tečky ukazují možné tahy. Vedle desky vidíš sebrané figurky a materiální převahu.</li>
     <li><b>Úlohy:</b> najdi mat v 1 nebo 2 tazích. Špatný tah se vrátí a počítá se jako chyba.</li>
     <li><b>Denní úloha</b> je pro všechny stejná: v pondělí až středu mat jedním tahem, od čtvrtka ve dvou.</li>
     <li>Na <b>Cestě</b> se střídají úlohy a partie proti stále silnějšímu soupeři. Tři hvězdy za výhru do 35 tahů bez vracení.</li>
     <li><b>Online:</b> založ hru a pošli kód nebo odkaz kamarádovi, nebo se přidej k otevřené hře. Barvy se po každé partii střídají, remízu lze nabídnout.</li></ul>`,
-    `<p>Classic chess with every rule: castling, en passant, promotion (automatically to a queen), stalemate, threefold repetition and the 50-move rule.</p>
-    <ul><li>Tap a piece and then a square, or drag the piece. Dots show the legal moves.</li>
+    `<p>Classic chess with every rule: castling, en passant, promotion (you pick the piece), stalemate, threefold repetition and the 50-move rule.</p>
+    <ul><li>Tap a piece and then a square, or drag the piece. Dots show the legal moves. Captured pieces and the material lead are shown beside the board.</li>
     <li><b>Puzzles:</b> find mate in 1 or 2. A wrong move is taken back and counts as a mistake.</li>
     <li>The <b>daily puzzle</b> is the same for everyone: mate in one Monday to Wednesday, in two from Thursday.</li>
     <li>The <b>Path</b> alternates puzzles and games against an ever stronger opponent. Three stars for a win within 35 moves without undo.</li>
