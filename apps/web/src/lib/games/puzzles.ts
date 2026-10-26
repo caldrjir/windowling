@@ -7,6 +7,22 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
+// art.js (static/games/mrakodrap), loaded once on the client
+let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
+	null;
+function mrakodrapCover(): typeof mdImages {
+	if (!mdImages && typeof Image !== 'undefined') {
+		const load = (name: string): HTMLImageElement => {
+			const i = new Image();
+			i.src = `/games/mrakodrap/cover/${name}.webp`;
+			return i;
+		};
+		mdImages = { bg: load('../bg/mesto-2'), tower: load('tower'), floor: load('floor') };
+	}
+	return mdImages;
+}
+
 // LETNÍ HRY cover: the game's outlined athlete (static/games/letni/art.js), x, y are the feet,
 // s is pixels per metre; pose 'run' uses ph as the stride phase, 'hurdle' clears a hurdle
 function coverAthlete(
@@ -4225,65 +4241,122 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 		statLabels: labels,
 		path: '/games/mrakodrap/index.html',
-		colors: ['#f2b632', '#5cb8f2', '#e8734a'],
+		colors: ['#f6b80b', '#f0a87a', '#3b86d6'],
 		statsKey: 'gamecenter.stats.mrakodrap',
 		cover(ctx, w, h, t) {
-			// a swinging crane drops floors onto a growing tower under a day sky
-			const OL = '#24171a',
-				gy = h * 0.9,
-				fh = h * 0.1,
-				bw = w * 0.36;
-			const sky = ctx.createLinearGradient(0, 0, 0, gy);
-			sky.addColorStop(0, '#5cb8f2');
-			sky.addColorStop(1, '#bfe8ff');
-			ctx.fillStyle = sky;
-			ctx.fillRect(0, 0, w, gy);
-			ctx.fillStyle = '#8fb7cc';
-			for (let i = 0; i < 10; i++) {
-				const bh = h * (0.12 + ((i * 37) % 9) / 40);
-				ctx.fillRect((i * w) / 10, gy - bh, w / 10 - 3, bh);
+			// the game's own art: its sunset city with the tower on the pedestal; the crane swings a
+			// floor that drops onto the tower every few seconds
+			const img = mrakodrapCover();
+			const loaded = (i: HTMLImageElement): boolean => i.complete && i.naturalWidth > 0;
+			if (!img || !loaded(img.bg) || !loaded(img.tower) || !loaded(img.floor)) {
+				const sky = ctx.createLinearGradient(0, 0, 0, h);
+				sky.addColorStop(0, '#3d6fcf');
+				sky.addColorStop(0.6, '#f0a87a');
+				sky.addColorStop(1, '#ffe0a8');
+				ctx.fillStyle = sky;
+				ctx.fillRect(0, 0, w, h);
+				return;
 			}
-			ctx.fillStyle = '#6cbf4a';
-			ctx.fillRect(0, gy, w, h - gy);
-			const cols = ['#e8734a', '#4fa3d9', '#f2c14e', '#7bc86c'];
-			const floor = (x: number, y: number, c: string, ang: number): void => {
+			// the sunset panel (406×941, the tower pedestal at x 202, y 795), mirrored at the sides on wide canvases
+			const gy = h * 0.88,
+				s = Math.max(gy / 795, Math.min(w / 406, h / 520)),
+				x0 = w / 2 - 202 * s,
+				y0 = gy - 795 * s,
+				pw = 406 * s;
+			ctx.fillStyle = '#3352a7';
+			ctx.fillRect(0, 0, w, h);
+			ctx.drawImage(img.bg, x0, y0, pw, 941 * s);
+			for (let k = 1; x0 - (k - 1) * pw > 0 || x0 + k * pw < w; k++) {
+				for (const side of [-1, 1]) {
+					const x = side < 0 ? x0 - k * pw : x0 + k * pw;
+					ctx.save();
+					if (k % 2) {
+						ctx.translate(x + pw, 0);
+						ctx.scale(-1, 1);
+						ctx.drawImage(img.bg, 0, y0, pw, 941 * s);
+					} else ctx.drawImage(img.bg, x, y0, pw, 941 * s);
+					ctx.restore();
+				}
+			}
+			const jy = Math.max(10, h * 0.07),
+				st = Math.min(s * 0.97, (gy - jy - 120 * s) / 250),
+				cx = w / 2,
+				top = gy - 246 * st,
+				roof = gy - 210 * st;
+			ctx.drawImage(img.tower, cx - 56 * st, gy - 248 * st, 112 * st, 250 * st);
+			// crane jib: two chords and the lattice between them, trolley above the tower
+			const y1 = jy + 14 * st;
+			ctx.strokeStyle = '#f6b80b';
+			ctx.lineWidth = Math.max(1.5, 3 * st);
+			ctx.beginPath();
+			ctx.moveTo(0, jy);
+			ctx.lineTo(w, jy);
+			ctx.moveTo(0, y1);
+			ctx.lineTo(w, y1);
+			ctx.stroke();
+			ctx.strokeStyle = '#c48a00';
+			ctx.lineWidth = Math.max(1, 1.6 * st);
+			ctx.beginPath();
+			for (let x = -14 * st; x < w + 14 * st; x += 14 * st) {
+				ctx.moveTo(x, y1);
+				ctx.lineTo(x + 7 * st, jy);
+				ctx.lineTo(x + 14 * st, y1);
+			}
+			ctx.stroke();
+			ctx.fillStyle = '#38404f';
+			ctx.beginPath();
+			ctx.roundRect(cx - 13 * st, y1 - st, 26 * st, 9 * st, 3 * st);
+			ctx.fill();
+			// the floor swings, drops onto the roof and a perfect ring flashes
+			const cyc = t % 3.8,
+				len = Math.max(20 * st, top - 30 * st - (y1 + 8 * st) - 52 * st),
+				py = y1 + 8 * st,
+				swing = (c: number): number => Math.sin(c * 2.2) * 0.38,
+				th = swing(Math.min(cyc, 2.6)),
+				hx = cx + Math.sin(th) * len,
+				hy = py + Math.cos(th) * len;
+			ctx.strokeStyle = '#3a404c';
+			ctx.lineWidth = Math.max(1, 1.2 * st);
+			ctx.beginPath();
+			ctx.moveTo(cx - 4 * st, py);
+			ctx.lineTo(hx - 3 * st, hy - 9 * st);
+			ctx.moveTo(cx + 4 * st, py);
+			ctx.lineTo(hx + 3 * st, hy - 9 * st);
+			ctx.stroke();
+			ctx.fillStyle = '#f6b80b';
+			ctx.fillRect(hx - 8 * st, hy - 15 * st, 16 * st, 10 * st);
+			ctx.fillStyle = '#1b1f28';
+			for (let k = 0; k < 3; k++)
+				ctx.fillRect(hx - 6 * st + k * 5 * st, hy - 15 * st, 2 * st, 10 * st);
+			const drop = Math.max(0, cyc - 2.6),
+				fallY = hy + 6 * st + Math.min(1, (drop / 0.45) ** 2) * (roof - 36 * st - hy - 6 * st),
+				landed = drop > 0.45;
+			if (cyc < 3.5) {
 				ctx.save();
-				ctx.translate(x, y);
-				ctx.rotate(ang);
-				ctx.fillStyle = c;
-				ctx.fillRect(-bw / 2, -fh, bw, fh);
-				ctx.fillStyle = '#bfe4f7';
-				for (let k = 0; k < 3; k++)
-					ctx.fillRect(-bw / 2 + 6 + (k * (bw - 12)) / 3, -fh + 5, (bw - 12) / 3 - 6, fh - 10);
-				ctx.strokeStyle = OL;
-				ctx.lineWidth = 2;
-				ctx.strokeRect(-bw / 2, -fh, bw, fh);
+				ctx.translate(hx, drop > 0 ? fallY : hy);
+				if (!drop) {
+					ctx.rotate(-th * 0.12);
+					ctx.strokeStyle = '#4a5160';
+					ctx.lineWidth = Math.max(1, 1.2 * st);
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.lineTo(-46 * st, 6 * st);
+					ctx.moveTo(0, 0);
+					ctx.lineTo(46 * st, 6 * st);
+					ctx.stroke();
+				}
+				ctx.globalAlpha = landed ? Math.max(0, 1 - (drop - 0.45) / 0.45) : 1;
+				ctx.drawImage(img.floor, -56 * st, drop > 0 ? 0 : 6 * st, 112 * st, 36 * st);
 				ctx.restore();
-			};
-			const offs = [0, 3, -4, 2, 5];
-			let x = w / 2;
-			offs.forEach((o, i) => {
-				x += o;
-				floor(x, gy - i * fh, cols[i % cols.length] ?? '#e8734a', 0);
-			});
-			// crane and the swinging floor
-			ctx.strokeStyle = '#f2b632';
-			ctx.lineWidth = 4;
-			ctx.beginPath();
-			ctx.moveTo(0, h * 0.06);
-			ctx.lineTo(w, h * 0.06);
-			ctx.stroke();
-			const th = Math.sin(t * 2.2) * 0.5,
-				len = h * 0.2,
-				hx = w / 2 + Math.sin(th) * len,
-				hy = h * 0.08 + Math.cos(th) * len;
-			ctx.strokeStyle = '#2e2f35';
-			ctx.lineWidth = 1.5;
-			ctx.beginPath();
-			ctx.moveTo(w / 2, h * 0.08);
-			ctx.lineTo(hx, hy);
-			ctx.stroke();
-			floor(hx, hy + fh + 3, '#c86fd0', -th * 0.15);
+			}
+			if (landed) {
+				const r = Math.min(1, (drop - 0.45) / 0.6);
+				ctx.strokeStyle = `rgba(255,214,90,${1 - r})`;
+				ctx.lineWidth = Math.max(1.5, 3 * st * (1 - r));
+				ctx.beginPath();
+				ctx.ellipse(hx, roof - 18 * st, (52 + r * 70) * st, (14 + r * 22) * st, 0, 0, TAU);
+				ctx.stroke();
+			}
 		},
 	},
 ];
