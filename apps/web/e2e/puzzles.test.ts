@@ -32,6 +32,7 @@ const PUZZLES = [
 	'skokan',
 	'smik',
 	'veky',
+	'ptaci',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -844,4 +845,23 @@ test('bubliny: a shot sticks to the cluster, swap and pause work', async ({ page
 	await page.locator('.bb-over [data-b="resume"]').click();
 	await expect(page.locator('.bb-over')).toBeHidden();
 	expect(errors).toEqual([]);
+});
+
+test('ptaci launches a bird from the slingshot and the forts break', async ({ page }) => {
+	await startFree(page, 'ptaci', 'lehka');
+	const cv = page.locator('.pt-cv');
+	await expect(cv).toBeVisible();
+	// Drag back from the slingshot with the mouse and let go: the bird flies.
+	const box = await cv.boundingBox();
+	if (!box) throw new Error('no canvas');
+	await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.5);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.width * 0.3 - 120, box.y + box.height * 0.5 + 80, { steps: 5 });
+	await page.mouse.up();
+	await expect
+		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { shots: number }).shots)
+		.toBe(1);
+	// The autoplayer aims at the pigs until the level ends with a result.
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 60_000 });
 });

@@ -92,7 +92,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Bounce / Bounce Tales – rolling red ball platformer
 - [ ] Splinter Cell – stealth in shadows
 - [ ] Tower Bloxx – stack swinging floors into a tower
-- [ ] Angry Birds – slingshot physics against structures
+- [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
 - [ ] Flappy Bird – tap to fly through gaps
 - [x] Fruit Ninja – swipe to slice fruit, avoid bombs (Šmik!)
 - [ ] Temple Run / Subway Surfers – endless runner with lanes, jump and slide
