@@ -7,7 +7,8 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
-// MRAKODRAP cover art: images rendered from the game's art.js, loaded once on the client
+// MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
+// art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
 	null;
 function mrakodrapCover(): typeof mdImages {
@@ -17,7 +18,7 @@ function mrakodrapCover(): typeof mdImages {
 			i.src = `/games/mrakodrap/cover/${name}.webp`;
 			return i;
 		};
-		mdImages = { bg: load('bg'), tower: load('tower'), floor: load('floor') };
+		mdImages = { bg: load('../bg/mesto-2'), tower: load('tower'), floor: load('floor') };
 	}
 	return mdImages;
 }
@@ -4243,8 +4244,8 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#f6b80b', '#f0a87a', '#3b86d6'],
 		statsKey: 'gamecenter.stats.mrakodrap',
 		cover(ctx, w, h, t) {
-			// the game's own art (static/games/mrakodrap/cover, rendered from its art.js): golden-hour
-			// city and glass tower; the crane swings a floor that drops onto the tower every few seconds
+			// the game's own art: its sunset city with the tower on the pedestal; the crane swings a
+			// floor that drops onto the tower every few seconds
 			const img = mrakodrapCover();
 			const loaded = (i: HTMLImageElement): boolean => i.complete && i.naturalWidth > 0;
 			if (!img || !loaded(img.bg) || !loaded(img.tower) || !loaded(img.floor)) {
@@ -4256,15 +4257,30 @@ export const PUZZLE_GAMES: Game[] = [
 				ctx.fillRect(0, 0, w, h);
 				return;
 			}
-			const s = Math.max(w / 800, h / 450),
-				// the crop keeps the sun (x ≈ 580 in the art) in view
-				ox = Math.min(0, Math.max(w - 800 * s, w * 0.8 - 580 * s)),
-				oy = h - 450 * s,
-				gy = oy + 395 * s;
-			ctx.drawImage(img.bg, ox, oy, 800 * s, 450 * s);
+			// the sunset panel (406×941, the tower pedestal at x 202, y 795), mirrored at the sides on wide canvases
+			const gy = h * 0.88,
+				s = Math.max(gy / 795, Math.min(w / 406, h / 520)),
+				x0 = w / 2 - 202 * s,
+				y0 = gy - 795 * s,
+				pw = 406 * s;
+			ctx.fillStyle = '#3352a7';
+			ctx.fillRect(0, 0, w, h);
+			ctx.drawImage(img.bg, x0, y0, pw, 941 * s);
+			for (let k = 1; x0 - (k - 1) * pw > 0 || x0 + k * pw < w; k++) {
+				for (const side of [-1, 1]) {
+					const x = side < 0 ? x0 - k * pw : x0 + k * pw;
+					ctx.save();
+					if (k % 2) {
+						ctx.translate(x + pw, 0);
+						ctx.scale(-1, 1);
+						ctx.drawImage(img.bg, 0, y0, pw, 941 * s);
+					} else ctx.drawImage(img.bg, x, y0, pw, 941 * s);
+					ctx.restore();
+				}
+			}
 			const jy = Math.max(10, h * 0.07),
-				st = Math.min(s, (gy - jy - 150 * s) / 250),
-				cx = w * 0.5,
+				st = Math.min(s * 0.97, (gy - jy - 120 * s) / 250),
+				cx = w / 2,
 				top = gy - 246 * st,
 				roof = gy - 210 * st;
 			ctx.drawImage(img.tower, cx - 56 * st, gy - 248 * st, 112 * st, 250 * st);

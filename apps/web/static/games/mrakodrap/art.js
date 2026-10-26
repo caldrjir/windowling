@@ -248,6 +248,65 @@ const MdArt = (() => {
     g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx - w / 2 + 6, hy + 10); g.moveTo(hx, hy); g.lineTo(hx + w / 2 - 6, hy + 10); g.stroke();
   }
 
+  // ── Ilustrovaná pozadí: světy, každý s několika scénami podle výšky (pak vesmír) ──
+  // obrázky 941 px vysoké; betonový podstavec věže má horní plochu na y `pedy` a střed na x `pedx`
+  const WORLDS = [
+    { id: 'mesto', name: ['Město', 'City'], iw: 406, pedx: 202, pedy: 795, from: [0, 14, 28, 44],
+      top: ['#1b80ec', '#1775e1', '#3352a7', '#040c3f'], night: [0, 0, 0, 1] },
+    { id: 'venkov', name: ['Venkov', 'Countryside'], iw: 320, pedx: 162, pedy: 770, from: [0, 12, 24, 36, 48],
+      top: ['#247de3', '#2378d9', '#595fa5', '#3c487f', '#3e6cbe'], night: [0, 0, 0, 1, 1] },
+    { id: 'ruiny', name: ['Ruiny', 'Ruins'], iw: 320, pedx: 162, pedy: 770, from: [0, 12, 24, 36, 48],
+      top: ['#398ae7', '#5c588a', '#5a6479', '#844b3e', '#10224c'], night: [0, 0, 0, 0, 1] },
+    { id: 'svet', name: ['Cesta světem', 'World tour'], iw: 320, pedx: 162, pedy: 770, from: [0, 12, 24, 36, 48],
+      top: ['#2180e6', '#3084d1', '#2f7edd', '#2a81db', '#07275c'], night: [0, 0, 0, 0, 1] },
+  ];
+  const IH = 941, SPACE = 62, FADE = 3;
+  const imgs = {}, waiting = [];
+  let base = 'bg/', WI = 0;
+  function img(w, k) {
+    const key = WORLDS[w].id + '-' + k;
+    if (!imgs[key]) {
+      const i = new Image();
+      i.onload = () => { for (const f of waiting.splice(0)) f(); };
+      i.src = base + key + '.webp';
+      imgs[key] = i;
+    }
+    return imgs[key];
+  }
+  const ok = (w, k) => { const i = img(w, k); return i.complete && i.naturalWidth > 0; };
+  // svět hry: první scéna se načte hned, ostatní hned po ní
+  function setWorld(w, b) { if (b) base = b; WI = ((w % WORLDS.length) + WORLDS.length) % WORLDS.length; for (let k = 0; k < WORLDS[WI].from.length; k++) img(WI, k); }
+  function whenBg(w, k, f) { if (ok(w, k)) f(); else waiting.push(() => { if (ok(w, k)) f(); else waiting.push(() => whenBg(w, k, f)); }); }
+  // obrázek pozadí: podstavec pod středem věže na zemi gy; s měřítko, dx/dy posun
+  function drawBg(g, w, k, W, gy, s, dx, dy, a = 1) {
+    if (!ok(w, k) || a <= 0) return;
+    const Wd = WORLDS[w];
+    g.globalAlpha = a;
+    g.drawImage(img(w, k), W / 2 - Wd.pedx * s + dx, gy - Wd.pedy * s + dy, Wd.iw * s, IH * s);
+    g.globalAlpha = 1;
+  }
+  // pozadí hry podle počtu pater n; vrací { night, images }
+  function backdrop(g, W, H, n, cam, camX, clock, gy) {
+    const Wd = WORLDS[WI];
+    if (!ok(WI, 0)) { const T = scene(g, W, H, Math.min(4.2, n / 18), cam, camX, clock, gy); return { T, night: T.night > 0.5, images: false }; }
+    const F = Wd.from, last = F.length - 1;
+    let i = 0; while (i < last && n >= F[i + 1]) i++;
+    const next = i < last ? F[i + 1] : SPACE, a = Math.max(0, Math.min(1, (n - (next - FADE)) / FADE));
+    const s = (W + 56) / Wd.iw, C = 240, dy = cam < C ? cam : C + (cam - C) * 0.1, dx = Math.max(-28, Math.min(28, -camX));
+    const top = gy - Wd.pedy * s + dy;
+    g.fillStyle = i < last && a > 0 ? mix(Wd.top[i], Wd.top[i + 1], a) : Wd.top[i];
+    g.fillRect(0, 0, W, H);
+    const nightNow = Wd.night[i] || (i < last && a > 0.5 && Wd.night[i + 1]);
+    if (top > 0 && nightNow) { // hvězdy nad obrázkem
+      for (let k = 0; k < 60; k++) { const x = hash(k * 3) * W, y = hash(k * 7) * top; g.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * Math.sin(clock * (1 + hash(k) * 2) + k) ** 2})`; g.fillRect(x, y, 1.6, 1.6); }
+    }
+    drawBg(g, WI, i, W, gy, s, dx, dy);
+    if (i < last) drawBg(g, WI, i + 1, W, gy, s, dx, dy, a);
+    if (i === last && a > 0) { g.globalAlpha = a; scene(g, W, H, 4.2, 99999, camX, clock, gy); g.globalAlpha = 1; }
+    return { night: !!nightNow || n >= SPACE - FADE, images: true };
+  }
+  const worldName = w => WORLDS[((w % WORLDS.length) + WORLDS.length) % WORLDS.length].name;
+
   // věž o n patrech (přízemí a skleněná patra) se střechou; x střed, gy zem
   function tower(g, x, gy, bw, fh, n, night = false, clock = 1) {
     for (let i = 0; i <= n; i++) floor(g, x, gy - i * fh, bw, fh, i, night);
@@ -255,9 +314,9 @@ const MdArt = (() => {
   }
   // plakát pro úvod hry: zlatá hodinka, věž a jeřáb s visícím patrem
   function poster(g, w, h, o = {}) {
-    const gy = h * 0.9, bw = o.bw || 104, fh = o.fh || 36, n = o.n || 5, x = w * 0.5;
-    const T = scene(g, w, h, o.h != null ? o.h : 1.0, 0, 0, 0, gy);
-    ground(g, w, gy, h, T, 0);
+    const gy = h * 0.9, bw = o.bw || 104, fh = o.fh || 36, n = o.n || 5, x = w * 0.5, bw0 = o.world || 0, bk = o.scene != null ? o.scene : 2;
+    if (ok(bw0, bk)) { g.fillStyle = WORLDS[bw0].top[bk]; g.fillRect(0, 0, w, h); drawBg(g, bw0, bk, w, gy, w / WORLDS[bw0].iw * 1.02, 0, 0); }
+    else { const T = scene(g, w, h, o.h != null ? o.h : 1.0, 0, 0, 0, gy); ground(g, w, gy, h, T, 0); }
     g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, gy + 3, bw * 0.7, 5, 0, 0, 7); g.fill();
     tower(g, x, gy, bw, fh, n, false, 1);
     const py = 34, th = o.th != null ? o.th : 0.5, len = 45, hx = x + Math.sin(th) * len, hy = py + Math.cos(th) * len;
@@ -265,5 +324,5 @@ const MdArt = (() => {
     g.save(); g.translate(hx, hy); g.rotate(-th * 0.12); slings(g, 0, 0, bw, false); floor(g, 0, 6 + fh, bw, fh, n + 1, false); g.restore();
   }
 
-  return { setScale, time, scene, ground, floor, roof, crane, slings, tower, poster, mix, styleOf };
+  return { setScale, time, scene, ground, floor, roof, crane, slings, tower, poster, backdrop, setWorld, whenBg, worldName, WORLDS, mix, styleOf };
 })();

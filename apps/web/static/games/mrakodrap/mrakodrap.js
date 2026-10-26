@@ -15,15 +15,18 @@ const Mrakodrap = (() => {
   const targetOf = n => Math.min(80, 6 + n + Math.floor(n / 3));
   const levelMode = n => (n <= 30 ? 'lehka' : n <= 80 ? 'klasik' : 'tezka');
   function generate(seed, diffId, ctx = {}) {
-    if (ctx.kind === 'level') { const n = ctx.key; return { seed, mode: levelMode(n), level: n, target: targetOf(n), text: L(`Úroveň ${n}`, `Level ${n}`) }; }
-    if (ctx.kind === 'daily') return { seed, mode: 'klasik', text: L('Denní stavba', 'Daily build') };
-    return { seed, mode: DIFFS.some(d => d.id === diffId) ? diffId : 'klasik' };
+    // svět (pozadí): na Cestě se mění po deseti úrovních, jinak podle semínka
+    if (ctx.kind === 'level') { const n = ctx.key; return { seed, mode: levelMode(n), level: n, target: targetOf(n), world: Math.floor((n - 1) / 10), text: L(`Úroveň ${n}`, `Level ${n}`) }; }
+    if (ctx.kind === 'daily') return { seed, mode: 'klasik', world: seed % 97, text: L('Denní stavba', 'Daily build') };
+    return { seed, mode: DIFFS.some(d => d.id === diffId) ? diffId : 'klasik', world: seed % 97 };
   }
 
   function create(el, P, saved, api) {
     const D = DIFFS.find(d => d.id === P.mode) || DIFFS[1];
     el.innerHTML = `<div class="md-wrap"><canvas class="md-cv"></canvas><p class="md-keys">${L('Ťukni, klikni nebo mezerník: pustit patro. P pauza', 'Tap, click or Space to drop the floor. P pauses')}</p></div>`;
     const cv = el.querySelector('.md-cv'), ctx = cv.getContext('2d', { alpha: false });
+    const world = P.world != null ? P.world : P.seed;
+    MdArt.setWorld(world, 'bg/');
     let cssW = 360, cssH = 640, dpr = 1;
     function fit() {
       const kv = document.getElementById('kView') || el, pad = getComputedStyle(kv), box = kv.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
@@ -193,9 +196,9 @@ const Mrakodrap = (() => {
     function draw() {
       const g = ctx, k = cssW / W, n = floors.length - 1, h = Math.min(4.2, n / 18), sh = shake > 0 ? Math.sin(clock * 90) * 4 * shake : 0;
       g.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
-      const T = MdArt.scene(g, W, H, h, cam, camX, clock, GY), night = T.night > 0.5;
+      const bd = MdArt.backdrop(g, W, H, n, cam, camX, clock, GY), night = bd.night;
       g.save(); g.translate(sh - camX, cam);
-      MdArt.ground(g, W, GY, H, T, camX);
+      if (!bd.images) MdArt.ground(g, W, GY, H, bd.T, camX);
       // měkký stín věže na zemi
       g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(floorX(0), GY + 3, D.bw * 0.7, 5, 0, 0, 7); g.fill();
       // věž: kreslí se jen viditelná patra
@@ -278,7 +281,7 @@ const Mrakodrap = (() => {
         g.font = '900 30px Unbounded, sans-serif';
         const gr = g.createLinearGradient(0, H * 0.48 - 16, 0, H * 0.48 + 16); gr.addColorStop(0, '#fff6c2'); gr.addColorStop(1, '#ffb21e');
         g.fillStyle = 'rgba(0,0,0,.3)'; g.fillText('MRAKODRAP', W / 2, H * 0.48 + 2); g.fillStyle = gr; g.fillText('MRAKODRAP', W / 2, H * 0.48);
-        label(g, P.text || D.name, W / 2, H * 0.535, 13, '#fff', 700, '"Space Grotesk"');
+        label(g, `${P.text || D.name} · ${(Kit.LANG === 'en' ? MdArt.worldName(world)[1] : MdArt.worldName(world)[0])}`, W / 2, H * 0.535, 13, '#fff', 700, '"Space Grotesk"');
         const sub = P.level ? `${L('Postav', 'Build')} ${P.target} ${L('pater', 'floors')}` : api.data['best_' + P.mode] ? `${L('rekord', 'best')} ${api.data['best_' + P.mode].toLocaleString(Kit.LANG === 'en' ? 'en-US' : 'cs-CZ')}` : L('postav co nejvyšší věž', 'build the tallest tower');
         label(g, sub, W / 2, H * 0.575, 12, '#ffe7a8', 700, '"Space Grotesk"');
         const pw = 190, py = H * 0.62, pulse = 1 + Math.sin(t * 4) * 0.03;
@@ -351,7 +354,8 @@ const Mrakodrap = (() => {
     const g = el.querySelector('canvas').getContext('2d');
     g.scale(2, 2); MdArt.setScale(2);
     g.beginPath(); g.roundRect(0, 0, 360, 360, 24); g.clip();
-    MdArt.poster(g, 360, 360, { h: 1.0, n: 4, bw: 104, fh: 34, th: 0.5 });
+    const paint = () => { MdArt.setScale(2); MdArt.poster(g, 360, 360, { h: 1.0, n: 4, bw: 104, fh: 34, th: 0.5, world: 0, scene: 2 }); };
+    MdArt.setWorld(0, 'bg/'); paint(); MdArt.whenBg(0, 2, paint);
   }
   return { DIFFS, generate, create, art, targetOf };
 })();
