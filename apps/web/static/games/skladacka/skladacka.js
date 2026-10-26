@@ -13,67 +13,8 @@ const Skladacka = (() => {
   ];
   const IW = 960, IH = 640;
 
-  // ── Malba obrazu ──
-  function noiseCanvas(r, w, h, hue) {
-    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), d = g.createImageData(w, h);
-    const v = [...Array((w + 1) * (h + 1))].map(() => r());
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = v[y * (w + 1) + x], i = (y * w + x) * 4, s = Math.pow(a, 3); d.data[i] = 120 + 120 * Math.sin(hue); d.data[i + 1] = 80; d.data[i + 2] = 200; d.data[i + 3] = s * 255; }
-    g.putImageData(d, 0, 0); return c;
-  }
-  function paint(seed) {
-    const r = Kit.rng(seed), c = document.createElement('canvas'); c.width = IW; c.height = IH;
-    const g = c.getContext('2d'), h = r() * 360, kind = Math.floor(r() * 5);
-    const bg = g.createLinearGradient(0, 0, IW * 0.3, IH);
-    bg.addColorStop(0, `hsl(${h + 230} 60% 7%)`); bg.addColorStop(1, `hsl(${h + 260} 55% 3%)`);
-    g.fillStyle = bg; g.fillRect(0, 0, IW, IH);
-    // mlhovina
-    g.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 9; i++) {
-      const x = r() * IW, y = r() * IH, rad = 140 + r() * 320, hh = h + (r() - 0.5) * 140;
-      const rg = g.createRadialGradient(x, y, 0, x, y, rad); rg.addColorStop(0, `hsla(${hh} 85% 55% / ${0.16 + r() * 0.2})`); rg.addColorStop(1, `hsla(${hh} 85% 40% / 0)`);
-      g.fillStyle = rg; g.fillRect(0, 0, IW, IH);
-    }
-    for (let k = 0; k < 2; k++) { const nc = noiseCanvas(r, 24, 16, h / 57 + k); g.globalAlpha = 0.35; g.imageSmoothingEnabled = true; g.filter = 'blur(18px)'; g.drawImage(nc, 0, 0, IW, IH); g.filter = 'none'; g.globalAlpha = 1; }
-    // hvězdy
-    for (let i = 0; i < 520; i++) { const x = r() * IW, y = r() * IH, s = r() < 0.94 ? r() * 1.4 + 0.3 : r() * 2.5 + 1.2; g.fillStyle = `hsla(${h + r() * 60} 60% ${80 + r() * 20}% / ${0.4 + r() * 0.6})`; g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill(); if (s > 2.2) { g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(x - s * 4, y); g.lineTo(x + s * 4, y); g.moveTo(x, y - s * 4); g.lineTo(x, y + s * 4); g.stroke(); } }
-    g.globalCompositeOperation = 'source-over';
-    const px = IW * (0.3 + r() * 0.4), py = IH * (0.35 + r() * 0.3);
-    if (kind === 0 || kind === 3) { // planeta s prstencem
-      const R = 110 + r() * 80, ph = h + 120 + r() * 80, tilt = (r() - 0.5) * 0.8;
-      const ring = (front) => { g.save(); g.translate(px, py); g.rotate(tilt); g.scale(1, 0.28); g.lineWidth = 26; for (let k = 0; k < 4; k++) { g.strokeStyle = `hsla(${ph + k * 15} 70% ${55 + k * 6}% / .55)`; g.beginPath(); g.arc(0, 0, R * (1.45 + k * 0.13), front ? 0 : Math.PI, front ? Math.PI : Math.PI * 2); g.stroke(); } g.restore(); };
-      ring(false);
-      const pg = g.createRadialGradient(px - R * 0.35, py - R * 0.4, R * 0.1, px, py, R); pg.addColorStop(0, `hsl(${ph} 80% 72%)`); pg.addColorStop(0.6, `hsl(${ph + 20} 70% 45%)`); pg.addColorStop(1, `hsl(${ph + 40} 60% 14%)`);
-      g.fillStyle = pg; g.beginPath(); g.arc(px, py, R, 0, Math.PI * 2); g.fill();
-      g.save(); g.beginPath(); g.arc(px, py, R, 0, Math.PI * 2); g.clip(); for (let k = 0; k < 7; k++) { g.fillStyle = `hsla(${ph + k * 9} 70% ${40 + (k % 3) * 12}% / .35)`; g.fillRect(px - R, py - R + k * R * 0.3 + Math.sin(k) * 10, R * 2, R * 0.12 + r() * 10); } g.restore();
-      ring(true);
-      const glow = g.createRadialGradient(px, py, R, px, py, R * 1.3); glow.addColorStop(0, `hsla(${ph} 90% 70% / .35)`); glow.addColorStop(1, 'transparent'); g.fillStyle = glow; g.fillRect(0, 0, IW, IH);
-    }
-    if (kind === 1) { // spirální galaxie
-      g.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < 2600; i++) { const arm = i % 2, t = r() * 4.2, a = t + arm * Math.PI + (r() - 0.5) * 0.5, rad = 20 + t * 55 + r() * 18; const x = px + Math.cos(a) * rad * 1.3, y = py + Math.sin(a) * rad * 0.6; g.fillStyle = `hsla(${h + 180 + t * 20} 80% ${60 + r() * 30}% / ${0.25 + r() * 0.5})`; g.fillRect(x, y, 1.6, 1.6); }
-      const core = g.createRadialGradient(px, py, 0, px, py, 90); core.addColorStop(0, 'rgba(255,240,220,.95)'); core.addColorStop(1, 'rgba(255,200,150,0)'); g.fillStyle = core; g.fillRect(0, 0, IW, IH);
-      g.globalCompositeOperation = 'source-over';
-    }
-    if (kind === 2) { // kometa
-      const ang = r() * Math.PI * 2, len = 380;
-      g.globalCompositeOperation = 'lighter';
-      for (let k = 0; k < 60; k++) { const t = k / 60, x = px - Math.cos(ang) * len * t, y = py - Math.sin(ang) * len * t; const rg = g.createRadialGradient(x, y, 0, x, y, 12 + t * 50); rg.addColorStop(0, `hsla(${h + 160} 90% 80% / ${0.25 * (1 - t)})`); rg.addColorStop(1, 'transparent'); g.fillStyle = rg; g.fillRect(x - 70, y - 70, 140, 140); }
-      g.globalCompositeOperation = 'source-over';
-      g.fillStyle = '#fff'; g.beginPath(); g.arc(px, py, 9, 0, Math.PI * 2); g.fill();
-    }
-    if (kind === 3 || kind === 4) { // krajina s měsíci
-      if (kind === 4) for (let k = 0; k < 2; k++) { const mx = IW * (0.15 + r() * 0.7), my = IH * (0.15 + r() * 0.25), mr = 30 + r() * 50, mh = h + 60 * k; const mg = g.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, 2, mx, my, mr); mg.addColorStop(0, `hsl(${mh} 40% 85%)`); mg.addColorStop(1, `hsl(${mh} 35% 35%)`); g.fillStyle = mg; g.beginPath(); g.arc(mx, my, mr, 0, Math.PI * 2); g.fill(); }
-      for (let layer = 0; layer < 3; layer++) {
-        const base = IH * (0.62 + layer * 0.11), amp = 60 - layer * 15;
-        g.fillStyle = `hsl(${h + 250 - layer * 10} ${40 - layer * 8}% ${16 - layer * 4}%)`;
-        g.beginPath(); g.moveTo(0, IH);
-        const f1 = 0.005 + r() * 0.01, f2 = 0.02 + r() * 0.02, o1 = r() * 10, o2 = r() * 10;
-        for (let x = 0; x <= IW; x += 8) g.lineTo(x, base - Math.abs(Math.sin(x * f1 + o1)) * amp - Math.sin(x * f2 + o2) * amp * 0.3);
-        g.lineTo(IW, IH); g.closePath(); g.fill();
-      }
-    }
-    return c;
-  }
+  // obrazy maluje art.js (JgArt): motiv, denní doba a název
+  const paint = seed => JgArt.paint(seed);
 
   // ── Tvar dílku ──
   function edge(g, ax, ay, bx, by, dir, s) {
@@ -246,7 +187,18 @@ const Skladacka = (() => {
       if (!pieces.every(p => p.placed) || done) return;
       done = true; board.classList.add('done'); area.classList.add('done');
       const g = api.data.gallery = api.data.gallery || []; if (!g.includes(P.seed)) { g.push(P.seed); if (g.length > 200) g.shift(); }
-      setTimeout(() => api.solved({ html: `<p class="k-muted">${L('Obraz je ve tvé galerii', 'The picture is in your gallery')}</p>` }), 900);
+      // odhalení: švy zmizí, obraz se rozzáří v rámu a ukáže se jeho název
+      const title = img.jgTitle ? img.jgTitle[Kit.lang === 'en' ? 1 : 0] : '';
+      const rv = document.createElement('div'); rv.className = 'jg-reveal';
+      rv.style.left = bx + 'px'; rv.style.top = by + 'px'; rv.style.width = IW * scale + 'px'; rv.style.height = IH * scale + 'px';
+      const rc = document.createElement('canvas'); rc.width = IW; rc.height = IH; rc.getContext('2d').drawImage(img, 0, 0); rv.appendChild(rc);
+      const cap = document.createElement('div'); cap.className = 'jg-cap'; cap.innerHTML = `<small>${L('Složil jsi', 'You assembled')}</small><b></b>`; cap.querySelector('b').textContent = title; rv.appendChild(cap);
+      area.appendChild(rv); api.sound('win');
+      setTimeout(() => {
+        api.solved({ html: `<div class="jg-res"><canvas width="480" height="320"></canvas><b></b></div><p class="k-muted">${L('Obraz je ve tvé galerii', 'The picture is in your gallery')}</p>` });
+        // náhled hotového obrazu ve výsledku (vložený až po vykreslení karty)
+        setTimeout(() => document.querySelectorAll('.jg-res').forEach(box => { const cv = box.querySelector('canvas'); if (cv && !cv.dataset.done) { cv.dataset.done = 1; cv.getContext('2d').drawImage(img, 0, 0, 480, 320); box.querySelector('b').textContent = title; } }), 30);
+      }, 3200);
     }
     el.querySelector('.k-tools').addEventListener('click', e => {
       const t = e.target.closest('[data-t]'); if (!t || done) return;
@@ -296,15 +248,15 @@ const Skladacka = (() => {
     render(el, save) {
       const g = (save.data.gallery || []).slice().reverse();
       el.innerHTML = `<h2>${L('Galerie', 'Gallery')}</h2><p class="k-muted">${L(`Složené obrazy: ${g.length}.`, `Pictures completed: ${g.length}.`)}</p><div class="jg-gal">${g.map((s, k) => `<canvas data-g="${k}" width="240" height="160"></canvas>`).join('') || `<p class="k-muted">${L('Zatím prázdná.', 'Empty so far.')}</p>`}</div>`;
-      el.querySelectorAll('canvas[data-g]').forEach(cv => cv.getContext('2d').drawImage(paint(g[+cv.dataset.g]), 0, 0, 240, 160));
+      el.querySelectorAll('canvas[data-g]').forEach(cv => { const pic = paint(g[+cv.dataset.g]); cv.getContext('2d').drawImage(pic, 0, 0, 240, 160); if (pic.jgTitle) cv.title = pic.jgTitle[Kit.lang === 'en' ? 1 : 0]; });
     } };
-  function art(el) { const c = paint(Kit.hash('jart' + Kit.dayKey())); c.className = 'jg-art'; el.innerHTML = ''; el.appendChild(c); }
+  function art(el) { const src = paint(Kit.hash('jart' + Kit.dayKey())), c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); c.className = 'jg-art'; el.innerHTML = ''; el.appendChild(c); }
   return { DIFFS, generate, create, art, gallery, paint };
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'skladacka', title: 'SKLÁDAČKA',
-  tagline: Kit.L('Jigsaw z vesmírných obrazů: mlhoviny, planety s prstenci, galaxie a komety. Každý obraz je nový a skončí v galerii.', 'A jigsaw of cosmic paintings: nebulae, ringed planets, galaxies and comets. Every picture is new and joins your gallery.'),
+  tagline: Kit.L('Jigsaw z malovaných obrazů: maják nad mořem, horské jezero, balóny nad údolím, korálový útes, pohádkový hrad, sakurová zahrada, polární záře i planeta s prstenci. Co skládáš, poznáš až na konci, a každý obraz skončí v galerii.', 'A jigsaw of painted pictures: a lighthouse by the sea, a mountain lake, balloons over a valley, a coral reef, a fairytale castle, a cherry blossom garden, the northern lights and a ringed planet. You only find out what you built at the end, and every picture joins your gallery.'),
   diffs: Skladacka.DIFFS, generate: Skladacka.generate, create: Skladacka.create, art: Skladacka.art, views: [Skladacka.gallery],
   online: { kind: 'race' },
   dailyDiff: () => 'p48', levelDiff: n => ['p24', 'p24', 'p48', 'p48', 'p96', 'p96'][Math.floor((n - 1) / 20)],

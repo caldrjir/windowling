@@ -514,60 +514,130 @@ function jigsawPicture(w: number, h: number): HTMLCanvasElement {
 	c.height = Math.max(1, h);
 	const g = c.getContext('2d');
 	if (!g) return c;
-	const bg = g.createLinearGradient(0, 0, w * 0.4, h);
-	bg.addColorStop(0, '#1a0f3a');
-	bg.addColorStop(1, '#07051a');
-	g.fillStyle = bg;
+	// a painted lighthouse on a cliff at sunset, like the game's pictures
+	const wy = h * 0.62;
+	const sky = g.createLinearGradient(0, 0, 0, wy);
+	sky.addColorStop(0, '#2a2a6a');
+	sky.addColorStop(0.45, '#c8506a');
+	sky.addColorStop(0.75, '#ff9a4a');
+	sky.addColorStop(1, '#ffd88a');
+	g.fillStyle = sky;
 	g.fillRect(0, 0, w, h);
-	g.globalCompositeOperation = 'lighter';
-	for (const [x, y, r, col] of [
-		[0.25, 0.3, 0.55, '255,90,200'],
-		[0.75, 0.65, 0.6, '80,200,255'],
-		[0.5, 0.15, 0.4, '150,90,255'],
+	const sx = w * 0.3,
+		sy = wy - h * 0.16;
+	const glow = g.createRadialGradient(sx, sy, h * 0.03, sx, sy, h * 0.45);
+	glow.addColorStop(0, 'rgba(255,200,120,.7)');
+	glow.addColorStop(1, 'rgba(255,200,120,0)');
+	g.fillStyle = glow;
+	g.fillRect(0, 0, w, h);
+	g.fillStyle = '#fff0b0';
+	g.beginPath();
+	g.arc(sx, sy, h * 0.07, 0, TAU);
+	g.fill();
+	g.fillStyle = 'rgba(255,190,170,.75)';
+	for (const [cx, cy, r] of [
+		[0.12, 0.16, 0.06],
+		[0.2, 0.14, 0.07],
+		[0.28, 0.17, 0.05],
+		[0.6, 0.1, 0.05],
+		[0.68, 0.12, 0.06],
 	] as const) {
-		const rg = g.createRadialGradient(x * w, y * h, 0, x * w, y * h, r * w);
-		rg.addColorStop(0, `rgba(${col},.45)`);
-		rg.addColorStop(1, `rgba(${col},0)`);
-		g.fillStyle = rg;
-		g.fillRect(0, 0, w, h);
-	}
-	for (let i = 0; i < 140; i++) {
-		const n = Math.sin(i * 91.7) * 43758.5453,
-			m = Math.sin(i * 12.3) * 9341.17,
-			fx = n - Math.floor(n),
-			fy = m - Math.floor(m);
-		g.fillStyle = `rgba(255,255,255,${0.4 + (i % 5) * 0.12})`;
 		g.beginPath();
-		g.arc(fx * w, fy * h, i % 17 === 0 ? 1.8 : 0.8, 0, TAU);
+		g.ellipse(w * cx, h * cy, h * r * 1.5, h * r, 0, 0, TAU);
 		g.fill();
 	}
-	g.globalCompositeOperation = 'source-over';
-	// a ringed planet
-	const px = w * 0.62,
-		py = h * 0.5,
-		R = h * 0.26;
-	const ring = (front: boolean) => {
-		g.save();
-		g.translate(px, py);
-		g.rotate(-0.35);
-		g.scale(1, 0.3);
-		g.lineWidth = R * 0.18;
-		g.strokeStyle = 'rgba(255,200,140,.7)';
-		g.beginPath();
-		g.arc(0, 0, R * 1.6, front ? 0 : Math.PI, front ? Math.PI : TAU);
-		g.stroke();
-		g.restore();
-	};
-	ring(false);
-	const pg = g.createRadialGradient(px - R * 0.35, py - R * 0.4, R * 0.1, px, py, R);
-	pg.addColorStop(0, '#ffd0a0');
-	pg.addColorStop(0.6, '#e0608a');
-	pg.addColorStop(1, '#3a1040');
-	g.fillStyle = pg;
+	g.fillStyle = '#8a5a7a';
 	g.beginPath();
-	g.arc(px, py, R, 0, TAU);
+	g.moveTo(0, wy);
+	for (let x = 0; x <= w; x += 4) g.lineTo(x, wy - h * 0.04 - Math.sin(x * 0.03) * h * 0.02);
+	g.lineTo(w, wy);
 	g.fill();
-	ring(true);
+	const sea = g.createLinearGradient(0, wy, 0, h);
+	sea.addColorStop(0, '#a85a7a');
+	sea.addColorStop(1, '#4a2a5a');
+	g.fillStyle = sea;
+	g.fillRect(0, wy, w, h - wy);
+	g.fillStyle = 'rgba(255,200,130,.55)';
+	for (let y = wy + 2; y < h; y += 4) {
+		const ww = 6 + (y - wy) * 0.4;
+		g.fillRect(sx - ww / 2 + Math.sin(y) * 3, y, ww, 1.5);
+	}
+	// cliff, lighthouse and keeper's house
+	const cx = w * 0.66;
+	const cliff = g.createLinearGradient(cx, wy - h * 0.2, w, h);
+	cliff.addColorStop(0, '#7a5a4a');
+	cliff.addColorStop(1, '#2a1a18');
+	g.fillStyle = cliff;
+	g.beginPath();
+	g.moveTo(cx - w * 0.04, h);
+	g.lineTo(cx, wy - h * 0.1);
+	g.lineTo(cx + w * 0.08, wy - h * 0.18);
+	g.lineTo(w, wy - h * 0.2);
+	g.lineTo(w, h);
+	g.fill();
+	g.fillStyle = '#5a8a3a';
+	g.fillRect(cx + w * 0.02, wy - h * 0.205, w, h * 0.03);
+	const lx = cx + w * 0.17,
+		lb = wy - h * 0.19,
+		lh = h * 0.34,
+		lw = w * 0.035;
+	g.fillStyle = '#f4f0e8';
+	g.beginPath();
+	g.moveTo(lx - lw, lb);
+	g.lineTo(lx - lw * 0.65, lb - lh);
+	g.lineTo(lx + lw * 0.65, lb - lh);
+	g.lineTo(lx + lw, lb);
+	g.fill();
+	g.fillStyle = '#c83a3a';
+	for (let k = 0; k < 3; k++) {
+		const y = lb - lh * (0.15 + k * 0.3);
+		g.fillRect(lx - lw * (0.95 - k * 0.1), y - lh * 0.12, lw * 2 * (0.95 - k * 0.1), lh * 0.12);
+	}
+	g.fillStyle = '#ffe9a0';
+	g.fillRect(lx - lw * 0.5, lb - lh - h * 0.06, lw, h * 0.06);
+	g.fillStyle = '#c83a3a';
+	g.beginPath();
+	g.moveTo(lx - lw * 0.8, lb - lh - h * 0.06);
+	g.lineTo(lx, lb - lh - h * 0.11);
+	g.lineTo(lx + lw * 0.8, lb - lh - h * 0.06);
+	g.fill();
+	g.fillStyle = '#e8e0d0';
+	g.fillRect(lx - w * 0.1, lb - h * 0.07, w * 0.06, h * 0.07);
+	g.fillStyle = '#7a3a2a';
+	g.beginPath();
+	g.moveTo(lx - w * 0.11, lb - h * 0.07);
+	g.lineTo(lx - w * 0.07, lb - h * 0.11);
+	g.lineTo(lx - w * 0.03, lb - h * 0.07);
+	g.fill();
+	// a sailboat and gulls
+	const bx = w * 0.35,
+		by = wy + h * 0.12;
+	g.fillStyle = '#4a2a2a';
+	g.beginPath();
+	g.moveTo(bx - w * 0.05, by);
+	g.lineTo(bx + w * 0.05, by);
+	g.lineTo(bx + w * 0.035, by + h * 0.025);
+	g.lineTo(bx - w * 0.035, by + h * 0.025);
+	g.fill();
+	g.fillStyle = '#f8f0e0';
+	g.beginPath();
+	g.moveTo(bx, by - h * 0.005);
+	g.lineTo(bx, by - h * 0.14);
+	g.lineTo(bx + w * 0.045, by - h * 0.01);
+	g.fill();
+	g.strokeStyle = '#2a1a2a';
+	g.lineWidth = Math.max(1, h * 0.006);
+	for (const [gx, gy] of [
+		[0.45, 0.25],
+		[0.52, 0.3],
+		[0.4, 0.32],
+	] as const) {
+		g.beginPath();
+		g.moveTo(w * gx - h * 0.02, h * gy);
+		g.quadraticCurveTo(w * gx - h * 0.01, h * gy - h * 0.015, w * gx, h * gy);
+		g.quadraticCurveTo(w * gx + h * 0.01, h * gy - h * 0.015, w * gx + h * 0.02, h * gy);
+		g.stroke();
+	}
 	jigsawPic = c;
 	return c;
 }
@@ -1650,15 +1720,15 @@ export const PUZZLE_GAMES: Game[] = [
 		title: 'SKLÁDAČKA',
 		group: 'puzzle',
 		category: 'relax',
-		tagline: 'Jigsaw z vesmírných obrazů.',
+		tagline: 'Co skládáš, poznáš až na konci.',
 		description:
-			'Skládej generované vesmírné obrazy: mlhoviny, planety s prstenci, galaxie, komety a mimozemské krajiny. Od 24 do 150 dílků, náhled, třídění okrajů a galerie složených obrazů.',
+			'Skládej malované obrazy: maják nad mořem, horské jezero, balóny nad údolím, korálový útes, pohádkový hrad, sakurová zahrada, noční město, polární záře, pyramidy i planeta s prstenci, každý v jiné denní době. Po složení se obraz odhalí i se jménem a skončí v galerii. Od 24 do 150 dílků.',
 		genres: ['Relax', 'Skládačka', 'Jigsaw'],
 		features: ['Denní obraz', 'Cesta: 120 obrazů', '24–150 dílků', 'Galerie'],
 		en: {
-			tagline: 'A jigsaw of cosmic paintings.',
+			tagline: 'You only find out what you built at the end.',
 			description:
-				'Assemble generated cosmic paintings: nebulae, ringed planets, galaxies, comets and alien landscapes. From 24 to 150 pieces, with preview, edge sorting and a gallery of finished pictures.',
+				'Assemble painted pictures: a lighthouse by the sea, a mountain lake, balloons over a valley, a coral reef, a fairytale castle, a cherry blossom garden, a city at night, the northern lights, pyramids and a ringed planet, each at a different time of day. When done, the picture is revealed with its name and joins your gallery. From 24 to 150 pieces.',
 			genres: ['Relax', 'Jigsaw', 'Puzzle'],
 			features: ['Daily picture', 'Path: 120 pictures', '24–150 pieces', 'Gallery'],
 		},
@@ -1668,7 +1738,7 @@ export const PUZZLE_GAMES: Game[] = [
 		statsKey: 'gamecenter.stats.skladacka',
 		cover(ctx, w, h, t) {
 			sky(ctx, w, h, t, ['#3dd6ff', '#ff8ae0', '#7a2cff'], 11);
-			// a cosmic picture cut into 4 × 3 real jigsaw pieces; a joined pair flies in and snaps home
+			// a painted picture cut into 4 × 3 real jigsaw pieces; a joined pair flies in and snaps home
 			const cols = 4,
 				rows = 3,
 				pw = Math.min(w * 0.82, (h * 0.62 * 4) / 3),
