@@ -1,0 +1,5 @@
+/* MRAKODRAP – svislé plátno se zaoblenými rohy */
+.md-wrap { display: grid; justify-items: center; gap: 8px; width: 100%; }
+.md-cv { display: block; border-radius: 18px; background: #5cb8f2; box-shadow: 0 0 0 3px #24171a, 0 0 0 6px rgba(242, 182, 50, .55), 0 24px 60px -20px #000; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
+.md-keys { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
+@media (pointer: coarse) { .md-keys { display: none; } }
