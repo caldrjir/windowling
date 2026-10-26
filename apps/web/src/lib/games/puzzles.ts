@@ -3821,4 +3821,171 @@ export const PUZZLE_GAMES: Game[] = [
 			}
 		},
 	},
+	{
+		id: 'ptaci',
+		title: 'PTAČÍ POMSTA',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Natáhni prak a pomsti hnízdo!',
+		description:
+			'Na motivy Angry Birds: prakem střílíš ptáky na stavby ze dřeva, skla a kamene, ve kterých se schovávají zelená prasata. Skutečná fyzika, padající věže, žlutý pták, který zrychlí, modrý, který se rozdělí na tři, a černý, který vybuchne. Čím míň ptáků spotřebuješ, tím víc hvězd.',
+		genres: ['Arkáda', 'Fyzika', 'Prak'],
+		features: ['Fyzika staveb', '4 druhy ptáků', 'Cesta: 120 úrovní', 'Denní pomsta'],
+		en: {
+			tagline: 'Pull the slingshot, avenge the nest!',
+			description:
+				'In the spirit of Angry Birds: launch birds from a slingshot at forts of wood, glass and stone where green pigs are hiding. Real physics, toppling towers, a yellow bird that dashes, a blue one that splits in three and a black one that explodes. The fewer birds you use, the more stars you get.',
+			genres: ['Arcade', 'Physics', 'Slingshot'],
+			features: ['Fort physics', '4 kinds of birds', 'Path: 120 levels', 'Daily revenge'],
+		},
+		statLabels: labels,
+		path: '/games/ptaci/index.html',
+		colors: ['#ff4a3a', '#7cc8f4', '#7ccd3c'],
+		statsKey: 'gamecenter.stats.ptaci',
+		cover(ctx, w, h, t) {
+			// a summer field: a red bird flies from the slingshot in an arc and knocks the pig
+			// off a little wooden tower, then everything starts again
+			const OL = '#1c1410',
+				gy = h * 0.8,
+				m = Math.min(w, h),
+				cyc = (t % 3.2) / 3.2;
+			const sky = ctx.createLinearGradient(0, 0, 0, gy);
+			sky.addColorStop(0, '#7cc8f4');
+			sky.addColorStop(1, '#d6f0ff');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, gy);
+			ctx.fillStyle = 'rgba(255,255,255,.85)';
+			for (const [cx, cy, r] of [
+				[0.2, 0.18, 0.06],
+				[0.26, 0.2, 0.05],
+				[0.72, 0.12, 0.05],
+				[0.78, 0.14, 0.06],
+			] as const) {
+				ctx.beginPath();
+				ctx.arc(w * cx, h * cy, m * r, 0, TAU);
+				ctx.fill();
+			}
+			ctx.fillStyle = '#7cbf5a';
+			ctx.beginPath();
+			ctx.moveTo(0, gy);
+			for (let x = 0; x <= w; x += 10)
+				ctx.lineTo(x, gy - h * 0.12 - Math.sin(x * 0.012) * h * 0.05);
+			ctx.lineTo(w, gy);
+			ctx.fill();
+			ctx.fillStyle = '#7a4e2a';
+			ctx.fillRect(0, gy, w, h - gy);
+			ctx.fillStyle = '#8fd14f';
+			ctx.fillRect(0, gy - 3, w, 8);
+			const blob = (fill: string | CanvasGradient, path: () => void) => {
+				ctx.beginPath();
+				path();
+				ctx.fillStyle = fill;
+				ctx.fill();
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = OL;
+				ctx.stroke();
+			};
+			// tower: two posts and a roof plank, the pig on top until the bird arrives
+			const tx = w * 0.74,
+				ph = h * 0.22,
+				pw = m * 0.035;
+			const plank = (x: number, y: number, ww: number, hh: number) =>
+				blob('#d8944a', () => ctx.rect(x - ww / 2, y - hh / 2, ww, hh));
+			plank(tx - m * 0.1, gy - ph / 2, pw, ph);
+			plank(tx + m * 0.1, gy - ph / 2, pw, ph);
+			const hitT = 0.55,
+				after = Math.max(0, cyc - hitT);
+			ctx.save();
+			ctx.translate(tx, gy - ph - pw / 2);
+			ctx.rotate(Math.min(0.5, after * 3));
+			plank(0, 0, m * 0.28, pw);
+			ctx.restore();
+			const pr = m * 0.075,
+				px = tx + after * w * 0.5,
+				py = gy - ph - pw - pr + after * after * h * 2.4;
+			if (py < gy + pr) {
+				ctx.save();
+				ctx.translate(px, Math.min(py, gy - pr));
+				ctx.rotate(after * 6);
+				blob('#7ccd3c', () => ctx.arc(0, 0, pr, 0, TAU));
+				blob('#b4ec6a', () => ctx.ellipse(0, pr * 0.2, pr * 0.32, pr * 0.24, 0, 0, TAU));
+				ctx.fillStyle = '#fff';
+				for (const s of [-1, 1]) {
+					ctx.beginPath();
+					ctx.arc(s * pr * 0.38, -pr * 0.25, pr * 0.16, 0, TAU);
+					ctx.fill();
+					ctx.fillStyle = OL;
+					ctx.beginPath();
+					ctx.arc(s * pr * 0.38, -pr * 0.22, pr * 0.07, 0, TAU);
+					ctx.fill();
+					ctx.fillStyle = '#fff';
+				}
+				ctx.restore();
+			}
+			// slingshot and the flying bird
+			const sx = w * 0.18,
+				sy = gy - h * 0.25;
+			ctx.lineCap = 'round';
+			ctx.strokeStyle = OL;
+			ctx.lineWidth = m * 0.05;
+			ctx.beginPath();
+			ctx.moveTo(sx, gy);
+			ctx.lineTo(sx, sy + h * 0.08);
+			ctx.lineTo(sx - m * 0.05, sy);
+			ctx.moveTo(sx, sy + h * 0.08);
+			ctx.lineTo(sx + m * 0.05, sy);
+			ctx.stroke();
+			ctx.strokeStyle = '#9a5a2a';
+			ctx.lineWidth = m * 0.035;
+			ctx.stroke();
+			const k = Math.min(1, cyc / hitT),
+				bx = sx + (tx - sx) * k,
+				by = sy - Math.sin(k * Math.PI) * h * 0.35 + (gy - ph - pw - sy) * k,
+				br = m * 0.07;
+			for (let i = 1; i < 7; i++) {
+				const q = k - i * 0.06;
+				if (q <= 0) break;
+				ctx.fillStyle = 'rgba(255,255,255,.85)';
+				ctx.beginPath();
+				ctx.arc(
+					sx + (tx - sx) * q,
+					sy - Math.sin(q * Math.PI) * h * 0.35 + (gy - ph - pw - sy) * q,
+					2.5,
+					0,
+					TAU,
+				);
+				ctx.fill();
+			}
+			const bird = (x: number, y: number) => {
+				ctx.save();
+				ctx.translate(x, y);
+				ctx.rotate(cyc < hitT ? k * 1.2 - 0.6 : 0.6);
+				const gr = ctx.createRadialGradient(-br * 0.3, -br * 0.3, br * 0.1, 0, 0, br * 1.1);
+				gr.addColorStop(0, '#ff6a5a');
+				gr.addColorStop(1, '#c8181e');
+				blob(gr, () => ctx.arc(0, 0, br, 0, TAU));
+				ctx.fillStyle = 'rgba(255,240,220,.8)';
+				ctx.beginPath();
+				ctx.ellipse(br * 0.15, br * 0.5, br * 0.55, br * 0.35, 0, 0, TAU);
+				ctx.fill();
+				ctx.fillStyle = '#fff';
+				ctx.beginPath();
+				ctx.arc(br * 0.3, -br * 0.15, br * 0.2, 0, TAU);
+				ctx.fill();
+				ctx.fillStyle = OL;
+				ctx.beginPath();
+				ctx.arc(br * 0.36, -br * 0.13, br * 0.08, 0, TAU);
+				ctx.fill();
+				ctx.fillRect(0, -br * 0.5, br * 0.7, br * 0.12);
+				blob('#ffb23a', () => {
+					ctx.moveTo(br * 0.5, 0);
+					ctx.lineTo(br * 1.1, br * 0.15);
+					ctx.lineTo(br * 0.5, br * 0.35);
+					ctx.closePath();
+				});
+				ctx.restore();
+			};
+			bird(bx, cyc < hitT ? by : gy - ph - pw - br + Math.min(after * h * 1.5, ph + pw));
+		},
+	},
 ];
