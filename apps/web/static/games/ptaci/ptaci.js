@@ -19,15 +19,44 @@ const Ptaci = (() => {
   }
 
   function create(el, P, saved, api) {
-    el.innerHTML = `<div class="pt-wrap"><div class="pt-stage"><canvas class="pt-cv"></canvas><div class="pt-msg" hidden></div></div>
+    el.innerHTML = `<div class="pt-wrap"><div class="pt-stage"><div class="pt-box"><canvas class="pt-cv"></canvas><div class="pt-msg" hidden></div><button class="pt-fs" type="button"></button></div></div>
       <p class="pt-keys">${L('Táhni od praku a pusť. Za letu klepni pro schopnost ptáka. P pauza', 'Drag back from the slingshot and let go. Tap in flight for the bird\'s power. P pauses')}</p></div>`;
     const cv = el.querySelector('.pt-cv'), ctx = cv.getContext('2d'), msgEl = el.querySelector('.pt-msg');
+    const wrapEl = el.querySelector('.pt-wrap'), stage = el.querySelector('.pt-stage'), boxEl = el.querySelector('.pt-box'), fsBtn = el.querySelector('.pt-fs');
     const VW = 960;
     let cssW = 960, cssH = 540, dpr = 1, VH = 540, GY = 484, bg = null, PPM = 40;
+    // Na šířku přes celou obrazovku (mobil): skutečná celá obrazovka se zámkem na šířku, kde to jde
+    // (Android); jinak hra vyplní okno a na výšku se otočí o 90°, takže stačí otočit telefon (iPhone).
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    let full = false, rot = false, autoFull = false;
+    function setFull(on, auto = false) {
+      if (on === full) return;
+      full = on; autoFull = on && auto;
+      stage.classList.toggle('pt-full', on); document.documentElement.classList.toggle('pt-lock', on);
+      // přes celou obrazovku jen přímo v body (předek s transformací by fixed pozici uvěznil)
+      if (on) document.body.appendChild(stage); else wrapEl.prepend(stage);
+      if (on && !auto) {
+        const fs = document.documentElement;
+        try { const pr = fs.requestFullscreen && fs.requestFullscreen({ navigationUI: 'hide' }); if (pr && pr.then) pr.then(() => { try { const lk = screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'); if (lk && lk.catch) lk.catch(() => {}); } catch (e) { /* zámek není */ } }).catch(() => {}); } catch (e) { /* celá obrazovka není */ }
+      }
+      if (!on && document.fullscreenElement) { try { document.exitFullscreen().catch(() => {}); } catch (e) { /* už není */ } }
+      fit();
+    }
+    fsBtn.addEventListener('pointerdown', e => e.stopPropagation());
+    fsBtn.addEventListener('click', e => { e.stopPropagation(); setFull(!full); });
+    // telefon otočený na šířku: hra se sama roztáhne přes celou obrazovku
+    function orient() { if (!coarse || over) { fit(); return; } const land = innerWidth > innerHeight && innerHeight < 560; if (land && !full) setFull(true, true); else if (!land && full && autoFull) setFull(false); else fit(); }
     function fit() {
-      const kv = document.getElementById('kView') || el, pad = getComputedStyle(kv), box = kv.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
-      cssW = Math.floor(Math.min(box - 2, 1100));
-      cssH = Math.max(Math.min(260, cssW * 0.75), Math.min(innerHeight - (innerWidth < 760 ? 150 : 170), cssW * 0.58));
+      rot = full && innerHeight > innerWidth;
+      fsBtn.hidden = !coarse && !full; fsBtn.textContent = full ? '✕' : L('⤢ Na šířku', '⤢ Landscape');
+      if (full) {
+        cssW = rot ? innerHeight : innerWidth; cssH = rot ? innerWidth : innerHeight;
+      } else {
+        const kv = document.getElementById('kView') || el, pad = getComputedStyle(kv), box = kv.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
+        cssW = Math.floor(Math.min(box - 2, 1100));
+        cssH = Math.max(Math.min(260, cssW * 0.75), Math.min(innerHeight - (innerWidth < 760 ? 150 : 170), cssW * 0.58));
+      }
+      boxEl.classList.toggle('pt-rot', rot); boxEl.style.width = cssW + 'px'; boxEl.style.height = cssH + 'px';
       VH = Math.round(VW * cssH / cssW); GY = VH - 56; PPM = VW / (X1 - X0);
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = cssW * dpr; cv.height = cssH * dpr; cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
@@ -87,6 +116,7 @@ const Ptaci = (() => {
     }
     function finish() {
       if (over) return; over = true; api.setTimer(false);
+      if (full) setFull(false); // výsledek ukazuje stavebnice pod hrou
       const nb = spec.birds.length, left = S.birdsLeft.length;
       if (S.phase !== 'won') { api.failed({ score: S.score, html: `<p class="k-muted">${L(`Zbývá ${sim.live('pig').length} prasat`, `${sim.live('pig').length} pigs left`)}</p>` }); return; }
       api.data.best = Math.max(api.data.best || 0, S.score);
@@ -156,7 +186,8 @@ const Ptaci = (() => {
       draw();
     }
     function setPause(on) { if (over) return; paused = on; api.setTimer(!on); if (on) say(L('Pauza · stiskni P', 'Paused · press P'), 9999); else msgEl.hidden = true; }
-    const cssPos = e => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+    // souřadnice na plátně; otočené o 90° po směru: x plátna jde dolů po obrazovce, y doleva
+    const cssPos = e => { const b = cv.getBoundingClientRect(); return rot ? [e.clientY - b.top, b.right - e.clientX] : [e.clientX - b.left, e.clientY - b.top]; };
     cv.addEventListener('pointerdown', e => {
       e.preventDefault(); if (paused || over) return;
       if (S.phase === 'fly') { sim.ability(); handleEvents(); return; }
@@ -185,7 +216,7 @@ const Ptaci = (() => {
       } else if (S.phase === 'fly' && S.armed && S.flyers.length && S.flyers[0].getPosition().x > 8 && S.flyers[0].getUserData().kind !== 'red') sim.ability();
     }
 
-    fit(); addEventListener('resize', fit);
+    fit(); orient(); addEventListener('resize', orient);
     api.setTimer(true);
     say(`${P.text}: ${L('sestřel všechna prasata!', 'knock down every pig!')}`, 2);
     const kinds = [...new Set(spec.birds)].filter(k => k !== 'red');
@@ -194,7 +225,7 @@ const Ptaci = (() => {
     return {
       getState: () => null,
       progress: () => 1 - sim.live('pig').length / Math.max(1, S.pigsTotal),
-      destroy() { cancelAnimationFrame(raf); removeEventListener('resize', fit); },
+      destroy() { cancelAnimationFrame(raf); removeEventListener('resize', orient); if (full) setFull(false); stage.remove(); },
       pause() { setPause(true); },
       onKey(e) { if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') { e.preventDefault(); setPause(!paused); } },
       _state: () => ({ phase: S.phase, pigs: sim.live('pig').length, birds: S.birdsLeft.length + (S.bird ? 1 : 0), score: S.score, over, shots: S.shots }),
