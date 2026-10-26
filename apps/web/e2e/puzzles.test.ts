@@ -33,6 +33,7 @@ const PUZZLES = [
 	'smik',
 	'veky',
 	'ptaci',
+	'pirko',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -864,4 +865,25 @@ test('ptaci launches a bird from the slingshot and the forts break', async ({ pa
 	// The autoplayer aims at the pigs until the level ends with a result.
 	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
 	await expect(page.locator('.k-result')).toBeVisible({ timeout: 60_000 });
+});
+
+test('pirko flaps through the pipes and scores', async ({ page }) => {
+	await startFree(page, 'pirko', 'lehka');
+	const cv = page.locator('.pk-cv');
+	await expect(cv).toBeVisible();
+	// The first tap starts the flight.
+	await cv.click();
+	await expect
+		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { phase: string }).phase)
+		.not.toBe('ready');
+	// The autopilot flies through a few gaps.
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
+	await expect
+		.poll(
+			async () => ((await page.evaluate('Kit._test.inst._state()')) as { score: number }).score,
+			{
+				timeout: 20_000,
+			},
+		)
+		.toBeGreaterThan(2);
 });
