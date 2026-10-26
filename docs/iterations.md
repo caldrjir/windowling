@@ -94,7 +94,6 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Tower Bloxx – stack swinging floors into a tower
 - [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
 - [x] Flappy Bird – tap to fly through gaps (Pírko)
-- [x] Piano Tiles – tap the tiles and play the song (Klávesy)
 - [x] Fruit Ninja – swipe to slice fruit, avoid bombs (Šmik!)
 - [ ] Temple Run / Subway Surfers – endless runner with lanes, jump and slide
 - [x] Doodle Jump – endless vertical jumping on platforms (Skokan)

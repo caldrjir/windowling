@@ -16,7 +16,7 @@
   let state = Object.assign({ src: 'game', url: '', vol: 70, side: 'right' }, (ls && store(ls, KEY)) || {});
   const GAME = (location.pathname.match(/\/games\/([a-z0-9-]+)\//) || [])[1] || null;
   // Games with music of their own; the other games get a generated playlist.
-  const OWN_MUSIC = ['voidborn', 'starspire', 'driftwood', 'veky', 'klavesy'];
+  const OWN_MUSIC = ['voidborn', 'starspire', 'driftwood', 'veky'];
   const generated = () => state.src === 'game' && !!GAME && !OWN_MUSIC.includes(GAME);
   const lang = () => { try { return (ls && ls.getItem('gamecenter.lang')) === 'en' ? 'en' : 'cs'; } catch (e) { return 'cs'; } };
   const L = (cs, en) => (lang() === 'en' ? en : cs);

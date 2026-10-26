@@ -1,5 +1,0 @@
-Piano samples: Salamander Grand Piano V3 by Alexander Holm
-https://archive.org/details/SalamanderGrandPianoV3
-License: Creative Commons Attribution 3.0 (https://creativecommons.org/licenses/by/3.0/)
-Changes: velocity layers 6 (s) and 12 (f), every third semitone from A1 to C7,
-mixed to mono, trimmed to 3.2 s with a fade-out and re-encoded as 64 kbit/s MP3.
