@@ -77,9 +77,7 @@ The hub and every game page load `music.js` (after `sync.js`). The synced key
 `gamecenter.music` (`{ src: 'game' | 'own' | 'off', url, vol, side }`) chooses the music:
 
 - `game` (default): VOIDBORN, STARSPIRE, DRIFTWOOD and Věky válek (`veky/hudba.js`, a generated
-  march whose instruments change with each age) play their own music, Klávesy is music itself (the
-  player's taps play the song: Salamander Grand Piano samples, CC BY 3.0, in
-  `klavesy/assets/piano/` plus Web Audio drums and synths); the other puzzle games get
+  march whose instruments change with each age) play their own music; the other puzzle games get
   a generated playlist (`music-gen.js`, Web Audio, four tracks per game seeded by its id, the
   same for everyone; no audio files).
 - `own`: a YouTube, SoundCloud or Spotify link plays in a small player card on every page
