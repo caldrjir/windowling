@@ -3,7 +3,7 @@
 // Na motivy Piano Tiles: čtyři sloupce, shora jedou černé dlaždice, ťukej jen na ně. Každé
 // ťuknutí zahraje další notu skladby, takže hráč skladbu opravdu hraje. Dlouhé dlaždice se
 // drží. Ťuknutí vedle nebo propásnutá dlaždice hru končí. Po každém zahrání skladby (★) se
-// tempo zrychlí. Skladba a styl (Klavír, Pop, House, EDM, Rock) se vybírají na startu.
+// tempo zrychlí. Skladba se vybírá na startu, každá hraje ve své aranži (Klavír, Pop, House, EDM, Rock).
 const Klavesy = (() => {
   const L = Kit.L, W = 360, H = 640, LANES = 4, LW = W / LANES, RH = 160, Y0 = H - RH * 0.25;
   const { SONGS, STYLES } = KlSongs;
@@ -41,9 +41,9 @@ const Klavesy = (() => {
     const data = api.data;
     const free = !P.song;
     let song = songById(P.song || data.song || 'neon');
-    let style = data.style && data.style[song.id] ? data.style[song.id] : song.style;
+    let style = song.style;
     el.innerHTML = `<div class="kl-wrap"><div class="kl-stage"><canvas class="kl-cv"></canvas>
-      <div class="kl-top"><button class="kl-song" type="button"></button><p class="kl-info"></p><div class="kl-styles">${STYLES.map(s => `<button type="button" data-s="${s.id}">${nm(s.name)}</button>`).join('')}</div></div>
+      <div class="kl-top"><button class="kl-song" type="button"></button><p class="kl-info"></p></div>
       <div class="kl-pick" hidden><div class="kl-pick-h"><b>${L('Vyber skladbu', 'Pick a song')}</b><button type="button" class="kl-x" aria-label="${L('Zavřít', 'Close')}">✕</button></div><div class="kl-list"></div></div>
       </div><p class="kl-keys">${L('Ťukej na dlaždice, nebo klávesy D F J K. P pauza', 'Tap the tiles, or keys D F J K. P pauses')}</p></div>`;
     const stage = el.querySelector('.kl-stage'), cv = el.querySelector('.kl-cv'), ctx = cv.getContext('2d', { alpha: false });
@@ -353,11 +353,10 @@ const Klavesy = (() => {
       g.fillStyle = T.tile[1]; g.beginPath(); g.arc(cx, y + hh - 22, 4, 0, Math.PI * 2); g.fill();
     }
 
-    // ── Výběr skladby a stylu ──
+    // ── Výběr skladby ──
     function ui() {
       songBtn.innerHTML = `<span class="kl-note">♪</span><span><b>${nm(song.name)}</b><small>${song.by}</small></span>${free ? '<span class="kl-caret">▾</span>' : ''}`;
       songBtn.disabled = !free;
-      for (const b of top.querySelectorAll('[data-s]')) b.classList.toggle('on', b.dataset.s === style);
       stage.dataset.theme = style;
       const best = (data.best_song || {})[song.id];
       el.querySelector('.kl-info').textContent = [P.text || D.name, P.level ? L(`zahraj skladbu ${P.laps}×`, `play the song ${P.laps}×`) : best ? `${L('rekord', 'best')} ${best}` : ''].filter(Boolean).join(' · ');
@@ -374,17 +373,11 @@ const Klavesy = (() => {
     el.querySelector('.kl-x').addEventListener('click', () => { pick.hidden = true; });
     list.addEventListener('click', e => {
       const b = e.target.closest('[data-id]'); if (!b) return;
-      song = songById(b.dataset.id); style = data.style && data.style[song.id] ? data.style[song.id] : song.style;
+      song = songById(b.dataset.id); style = song.style;
       data.song = song.id; api.persist && api.persist();
       pick.hidden = true; setup(); preview();
     });
-    top.querySelector('.kl-styles').addEventListener('click', e => {
-      const b = e.target.closest('[data-s]'); if (!b || phase !== 'ready') return;
-      KlAudio.unlock();
-      style = b.dataset.s; (data.style || (data.style = {}))[song.id] = style; api.persist && api.persist();
-      setup(); preview();
-    });
-    // krátká ukázka stylu: první takty doprovodu a melodie
+    // krátká ukázka: první takty doprovodu a melodie
     let prevT = 0;
     function preview() {
       if (!KlAudio.ready() || speed > 1) return;
@@ -491,7 +484,7 @@ const Klavesy = (() => {
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'klavesy', title: 'KLÁVESY',
-  tagline: Kit.L('Na motivy Piano Tiles: ťukej na dlaždice a skladba hraje pod tvými prsty. Beethoven, Mozart, Grieg i lidovky jako klavír, pop, house, EDM nebo rock.', 'In the spirit of Piano Tiles: tap the tiles and the song plays under your fingers. Beethoven, Mozart, Grieg and folk tunes as piano, pop, house, EDM or rock.'),
+  tagline: Kit.L('Na motivy Piano Tiles: ťukej na dlaždice a skladba hraje pod tvými prsty. vlastní skladby i Beethoven, Mozart, Grieg a lidovky, každá ve své aranži: klavír, pop, house, EDM nebo rock.', 'In the spirit of Piano Tiles: tap the tiles and the song plays under your fingers. original songs plus Beethoven, Mozart, Grieg and folk tunes, each in its own arrangement: piano, pop, house, EDM or rock.'),
   diffs: Klavesy.DIFFS, generate: Klavesy.generate, create: Klavesy.create, art: Klavesy.art,
   dailyDiff: () => 'skladba',
   levelDiff: n => (n <= 40 ? 'lehka' : n <= 90 ? 'skladba' : 'rychla'),
@@ -499,14 +492,14 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
     <ul><li>Ťuknutí do prázdna nebo propásnutá dlaždice hru končí.</li>
     <li>Dlouhé dlaždice drž, dokud nedojedou. Za každý držený řádek je bod navíc.</li>
     <li>Po každém zahrání skladby získáš ★ a tempo se zrychlí.</li>
-    <li>Na startu si vyber skladbu a styl: Klavír, Pop, House, EDM nebo Rock. <b>Zen</b>: dlaždice stojí, zahraj jich co nejvíc za 30 sekund.</li>
+    <li>Na startu si vyber skladbu, každá má svou aranži: klavír, pop, house, EDM nebo rock. <b>Zen</b>: dlaždice stojí, zahraj jich co nejvíc za 30 sekund.</li>
     <li>Na počítači hraj klávesami D F J K. P pozastaví hru.</li></ul>
     <p class="k-muted">Klavír: Salamander Grand Piano, Alexander Holm (CC BY 3.0). Skladby jsou volná díla.</p>`,
     `<p>Tiles slide down from the top. Tap only them, bottom first: every tap plays the next note of the song.</p>
     <ul><li>Tapping an empty spot or missing a tile ends the game.</li>
     <li>Hold long tiles until they pass. Every row held is a bonus point.</li>
     <li>Every time you finish the song you earn a ★ and the tempo goes up.</li>
-    <li>Pick a song and a style at the start: Piano, Pop, House, EDM or Rock. <b>Zen</b>: the tiles stand still, play as many as you can in 30 seconds.</li>
+    <li>Pick a song at the start, each has its own arrangement: piano, pop, house, EDM or rock. <b>Zen</b>: the tiles stand still, play as many as you can in 30 seconds.</li>
     <li>On a computer, play with the keys D F J K. P pauses.</li></ul>
     <p class="k-muted">Piano: Salamander Grand Piano by Alexander Holm (CC BY 3.0). The songs are in the public domain.</p>`),
   achievements: [

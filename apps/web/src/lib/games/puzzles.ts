@@ -4203,7 +4203,7 @@ export const PUZZLE_GAMES: Game[] = [
 		category: 'arcade',
 		tagline: 'Ťukej a skladba hraje!',
 		description:
-			'Na motivy Piano Tiles: shora jedou dlaždice a každé ťuknutí zahraje další notu skladby, takže ji opravdu hraješ ty. Deset vlastních chytlavých skladeb a dvacet volných klasik od Beethovena, Mozarta, Griega, Smetany a Dvořáka po lidovky, opravdový koncertní klavír a pět stylů: Klavír, Pop, House, EDM a Rock. Dlouhé dlaždice drž, po každém zahrání se tempo zrychlí. Zen na 30 sekund.',
+			'Na motivy Piano Tiles: shora jedou dlaždice a každé ťuknutí zahraje další notu skladby, takže ji opravdu hraješ ty. Deset vlastních chytlavých skladeb a dvacet volných klasik od Beethovena, Mozarta, Griega, Smetany a Dvořáka po lidovky, opravdový koncertní klavír a každá skladba ve své aranži: klavír, pop, house, EDM nebo rock. Dlouhé dlaždice drž, po každém zahrání se tempo zrychlí. Zen na 30 sekund.',
 		genres: ['Arkáda', 'Hudba', 'Rytmus', 'Reflexy'],
 		features: [
 			'30 skladeb, 10 vlastních',
@@ -4214,7 +4214,7 @@ export const PUZZLE_GAMES: Game[] = [
 		en: {
 			tagline: 'Tap and the song plays!',
 			description:
-				'In the spirit of Piano Tiles: tiles slide down and every tap plays the next note of the song, so you really play it yourself. Ten catchy original songs and twenty public-domain classics from Beethoven, Mozart, Grieg, Smetana and Dvořák to folk tunes, a real concert grand and five styles: Piano, Pop, House, EDM and Rock. Hold the long tiles, the tempo rises after every run. Zen for 30 seconds.',
+				'In the spirit of Piano Tiles: tiles slide down and every tap plays the next note of the song, so you really play it yourself. Ten catchy original songs and twenty public-domain classics from Beethoven, Mozart, Grieg, Smetana and Dvořák to folk tunes, a real concert grand and every song in its own arrangement: piano, pop, house, EDM or rock. Hold the long tiles, the tempo rises after every run. Zen for 30 seconds.',
 			genres: ['Arcade', 'Music', 'Rhythm', 'Reflexes'],
 			features: ['30 songs, 10 originals', '5 music styles', 'A real piano', 'Tile leaderboards'],
 		},
