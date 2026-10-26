@@ -38,7 +38,7 @@ const Mrakodrap = (() => {
     const r = rngOf(P.seed), fr = rngOf(P.seed ^ 0x51);
     const floors = [{ off: 0 }];   // přízemí stojí od začátku
     let cum = 0, swayA = 0, swayPh = 0, cam = 0, camX = 0, pivotX = PX, clock = 0, score = 0, perfects = 0, combo = 0, best = 0, lives = 3;
-    let phase = 'ready', over = false, paused = false, speed = 1, acc = 0, auto = false, wait = 0, endT = 0, shake = 0;
+    let lean = 0, collapsed = false, phase = 'ready', over = false, paused = false, speed = 1, acc = 0, auto = false, wait = 0, endT = 0, shake = 0;
     let hook = null, fall = null;
     const debris = [], pops = [], dust = [], rings = [], sparks = [];
     let wind = 0;
@@ -103,8 +103,43 @@ const Mrakodrap = (() => {
       for (let k = 0; k < 8; k++) dust.push({ x: topX() + (fr() - 0.5) * D.bw, y: towerTop() + FH, vx: (fr() - 0.5) * 120, vy: -fr() * 60, life: 0.5 + fr() * 0.3 });
       shake = perfect ? 0.08 : 0.15;
       api.changed && api.changed();
+      // statika: těžiště pater nad každým podlažím musí ležet nad tím podlažím
+      const st = stability();
+      lean = st.worst;
+      if (st.worst > 1) { collapse(st.at, st.dir); return; }
+      if (st.worst > 0.72 && !perfect) {
+        for (let i = pops.length - 1; i >= 0; i--) if (pops[i].big) pops.splice(i, 1);
+        pops.push({ t: L('Věž se naklání!', 'The tower leans!'), x: W / 2, y: 0, life: 1.2, big: true, bad: true });
+        swayA = Math.min(46, swayA + 6);
+      }
       if (P.level && n >= P.target) { phase = 'end'; endT = 0; api.sound('win'); return; }
       wait = 0.35;
+    }
+    function stability() {
+      const xs = []; let x = PX;
+      for (let i = 0; i < floors.length; i++) { x += i ? floors[i].off : 0; xs.push(x); }
+      let sum = 0, worst = 0, at = -1, dir = 1;
+      for (let k = xs.length - 1; k >= 1; k--) {
+        sum += xs[k];
+        const com = sum / (xs.length - k), r = Math.abs(com - xs[k - 1]) / (D.bw / 2);
+        if (r > worst) { worst = r; at = k; dir = Math.sign(com - xs[k - 1]) || 1; }
+      }
+      return { worst, at, dir };
+    }
+    // zřícení: patra od podlaží `at` výš se překlopí a spadnou, hra končí
+    function collapse(at, dir) {
+      const n = floors.length - 1;
+      for (let i = n; i >= at; i--) {
+        const k = i - at;
+        debris.push({ x: floorX(i), y: GY - i * FH, vx: dir * (50 + k * 22), vy: -30 - k * 6, ang: 0, va: dir * (0.7 + k * 0.12), i, life: 3.2 });
+      }
+      floors.length = at;
+      cum = floors.reduce((a, f, i) => a + (i ? f.off : 0), 0);
+      collapsed = true; lean = 0; shake = 0.7; combo = 0;
+      for (let i = pops.length - 1; i >= 0; i--) if (pops[i].big) pops.splice(i, 1);
+      pops.push({ t: L('Věž se zřítila!', 'The tower fell!'), x: W / 2, y: 0, life: 2, big: true, bad: true });
+      api.sound('error');
+      phase = 'end'; endT = -1;
     }
     function lose(f, edge) {
       lives--; combo = 0; shake = 0.3;
@@ -142,16 +177,16 @@ const Mrakodrap = (() => {
     }
     function finish() {
       if (over) return; over = true; api.setTimer(false);
-      const n = floors.length - 1;
+      const n = floors.length - 1, fell = collapsed ? ` · ${L('věž se zřítila', 'the tower fell')}` : '';
       if (P.level) {
-        if (n < P.target) { api.failed({ score, html: `<p class="k-muted">${L(`Postaveno ${n} z ${P.target} pater`, `Built ${n} of ${P.target} floors`)}</p>` }); return; }
+        if (n < P.target) { api.failed({ score, html: `<p class="k-muted">${L(`Postaveno ${n} z ${P.target} pater`, `Built ${n} of ${P.target} floors`)}${fell}</p>` }); return; }
         api.solved({ title: `${n} ${L('pater', 'floors')}`, stars: lives >= 3 ? 3 : lives === 2 ? 2 : 1, score }); return;
       }
       api.data.best = Math.max(api.data.best || 0, score);
       api.data['best_' + P.mode] = Math.max(api.data['best_' + P.mode] || 0, score);
       api.data.floors = Math.max(api.data.floors || 0, n);
       api.data.combo = Math.max(api.data.combo || 0, best);
-      api.solved({ title: `${score} ${L('obyvatel', 'residents')}`, stars: n >= 40 ? 3 : n >= 20 ? 2 : 1, score, html: `<p class="k-muted">${L(`${n} pater · ${perfects}× perfektně`, `${n} floors · ${perfects} perfect`)}</p>` });
+      api.solved({ title: `${score} ${L('obyvatel', 'residents')}`, stars: n >= 40 ? 3 : n >= 20 ? 2 : 1, score, html: `<p class="k-muted">${L(`${n} pater · ${perfects}× perfektně`, `${n} floors · ${perfects} perfect`)}${fell}</p>` });
     }
 
     // ── Kresba ──
@@ -204,6 +239,13 @@ const Mrakodrap = (() => {
       // patra a série
       const info = `${n}${P.level ? ' / ' + P.target : ''} ${L('pater', 'floors')}${combo > 1 ? `  ·  ×${combo}` : ''}`;
       label(g, info, W / 2, 58, 12, combo > 1 ? '#ffd65a' : '#fff', 700, '"Space Grotesk"');
+      // náklon věže: ukazatel se plní k hraně, kdy se věž zřítí
+      if (lean > 0.35 && phase === 'play') {
+        const a = Math.min(1, lean), pulse = lean > 0.72 ? 0.6 + 0.4 * Math.sin(clock * 10) : 1;
+        g.fillStyle = 'rgba(12,16,34,.42)'; g.beginPath(); g.roundRect(10, 47, 58, 6, 3); g.fill();
+        g.fillStyle = lean > 0.72 ? `rgba(255,77,109,${pulse})` : '#ffd65a'; g.beginPath(); g.roundRect(10, 47, 58 * a, 6, 3); g.fill();
+        if (D.wind) label(g, L('náklon', 'lean'), 39, 62, 9, lean > 0.72 ? '#ff8da1' : '#fff', 700, '"Space Grotesk"');
+      }
       // životy
       pill(g, W - 84, 12, 74, 30);
       for (let i = 0; i < 3; i++) heart(g, W - 66 + i * 21, 27, i < lives);
@@ -214,7 +256,7 @@ const Mrakodrap = (() => {
         g.strokeStyle = '#bfe6ff'; g.lineWidth = 2.5; g.lineCap = 'round'; g.lineJoin = 'round';
         g.beginPath(); g.moveTo(ax, 27); g.lineTo(ax + sgn * len, 27); g.moveTo(ax + sgn * (len - 5), 22); g.lineTo(ax + sgn * len, 27); g.lineTo(ax + sgn * (len - 5), 32); g.stroke();
         g.beginPath(); g.moveTo(ax - sgn * 2, 21); g.lineTo(ax + sgn * (len * 0.5), 21); g.stroke();
-      } else { g.fillStyle = 'rgba(255,255,255,.7)'; g.font = '700 10px "Space Grotesk", sans-serif'; g.fillText(L('bezvětří', 'calm'), 39, 27); }
+      } else { g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '700 10px "Space Grotesk", sans-serif'; g.fillText(D.wind ? L('bezvětří', 'calm') : `${L('náklon', 'lean')} ${Math.round(Math.min(1, lean) * 100)}%`, 39, 27); }
       for (const p of pops) {
         g.globalAlpha = Math.min(1, p.life * 2.5);
         if (p.big) {
@@ -271,6 +313,7 @@ const Mrakodrap = (() => {
     function setPause(on) { if (over || phase !== 'play') return; paused = on; api.setTimer(!on); }
     cv.addEventListener('pointerdown', e => { e.preventDefault(); if (paused) { setPause(false); return; } drop(); });
     // automat pro testy: nanečisto spustí pád a pustí patro, když by dopadlo skoro přesně
+    let aimDx = 0, aimOnce = false;
     function autopilot() {
       if (!hook || fall || wait > 0) return;
       const p = hookPos(), f = { x: p.x, y: p.y + 6 + FH, vx: p.vx * 0.85, vy: Math.max(0, p.vy * 0.5) };
@@ -278,7 +321,7 @@ const Mrakodrap = (() => {
       for (let i = 0; i < 400; i++) {
         ph += DT * (1.3 + Math.min(1, floors.length * 0.012));
         const res = fallStep(f, DT, ph);
-        if (res) { if (res === 'land' && Math.abs(f.x - topX(ph)) <= D.tol * 0.8) drop(); return; }
+        if (res) { if (res === 'land' && Math.abs(f.x - topX(ph) - aimDx) <= D.tol * 0.8) { drop(); if (aimOnce) { auto = false; aimOnce = false; aimDx = 0; } } return; }
       }
     }
 
@@ -295,27 +338,20 @@ const Mrakodrap = (() => {
       },
       _state: () => ({ phase, score, floors: floors.length - 1, lives, perfects, over }),
       _drop() { drop(); },
+      _aim(dx) { aimDx = dx; aimOnce = true; auto = true; },
       _auto(on) { auto = on !== false; },
       _speed(n) { speed = Math.max(1, n | 0); },
       _solve() { while (floors.length - 1 < (P.level ? P.target : 40)) floors.push({ off: 0 }); score = Math.max(score, 400); phase = 'end'; finish(); },
     };
   }
 
-  // úvodní obrázek: skleněná věž ve zlaté hodince pod jeřábem
+  // úvodní obrázek: stejná scéna jako ve hře (zlatá hodinka, skleněná věž, jeřáb)
   function art(el) {
-    el.innerHTML = '<canvas width="360" height="360" style="object-fit:contain"></canvas>';
+    el.innerHTML = '<canvas width="720" height="720"></canvas>';
     const g = el.querySelector('canvas').getContext('2d');
-    MdArt.setScale(1);
+    g.scale(2, 2); MdArt.setScale(2);
     g.beginPath(); g.roundRect(0, 0, 360, 360, 24); g.clip();
-    const gy = 318;
-    const T = MdArt.scene(g, 360, 360, 1.15, 0, 0, 0, gy);
-    MdArt.ground(g, 360, gy, 360, T, 0);
-    const offs = [0, 2, -3, 2, 4, -2, 1];
-    let x = 180;
-    offs.forEach((o, i) => { x += o; MdArt.floor(g, x, gy - i * 34, 96, 34, i === 0 ? 0 : i + 16, false); });
-    MdArt.roof(g, x, gy - offs.length * 34, 96, false, 1);
-    MdArt.crane(g, 360, 196, 36, 204, 66, false);
-    g.save(); g.translate(204, 66); g.rotate(-0.06); MdArt.slings(g, 0, 0, 96, false); MdArt.floor(g, 0, 40, 96, 34, 24, false); g.restore();
+    MdArt.poster(g, 360, 360, { h: 1.0, n: 4, bw: 104, fh: 34, th: 0.5 });
   }
   return { DIFFS, generate, create, art, targetOf };
 })();
@@ -329,11 +365,13 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   rules: Kit.L(`<p>Jeřáb houpe patrem. Ťukni na plátno, klikni nebo stiskni mezerník a patro spadne na věž.</p>
     <ul><li>Patro musí dopadnout na to předchozí. Když mine, spadne a ztratíš jeden ze tří životů.</li>
     <li><b>Perfektní</b> položení (skoro přesně nad středem) dává víc obyvatel, řadu bonusů a zklidní houpání věže. Nepřesná patra ji rozkývají.</li>
+    <li>Hlídej <b>náklon</b>: když těžiště pater nad některým podlažím přeleze jeho hranu, věž se od toho místa zřítí a hra končí.</li>
     <li>Čím výš, tím rychleji jeřáb houpe. Nebe se mění ze dne v západ, noc a vesmír. V <b>Těžké</b> fouká vítr (šipka vlevo nahoře).</li>
     <li>Na <b>Cestě</b> postav zadaný počet pater, hvězdy jsou za zachované životy. P pozastaví hru.</li></ul>`,
     `<p>The crane swings a floor. Tap the canvas, click or press Space and the floor drops onto the tower.</p>
     <ul><li>The floor must land on the one below. If it misses, it falls and you lose one of three lives.</li>
     <li>A <b>perfect</b> drop (almost exactly over the centre) brings more residents, builds a bonus streak and calms the tower's sway. Sloppy floors make it sway more.</li>
+    <li>Watch the <b>lean</b>: if the centre of mass of the floors above any floor moves past its edge, the tower falls from there and the game ends.</li>
     <li>The higher you build, the faster the crane swings. The sky turns from day to sunset, night and space. In <b>Hard</b> the wind blows (the arrow top left).</li>
     <li>On the <b>Path</b>, build the given number of floors; stars are for lives kept. P pauses the game.</li></ul>`),
   achievements: [

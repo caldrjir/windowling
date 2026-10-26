@@ -7,6 +7,21 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// MRAKODRAP cover art: images rendered from the game's art.js, loaded once on the client
+let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
+	null;
+function mrakodrapCover(): typeof mdImages {
+	if (!mdImages && typeof Image !== 'undefined') {
+		const load = (name: string): HTMLImageElement => {
+			const i = new Image();
+			i.src = `/games/mrakodrap/cover/${name}.webp`;
+			return i;
+		};
+		mdImages = { bg: load('bg'), tower: load('tower'), floor: load('floor') };
+	}
+	return mdImages;
+}
+
 // LETNÍ HRY cover: the game's outlined athlete (static/games/letni/art.js), x, y are the feet,
 // s is pixels per metre; pose 'run' uses ph as the stride phase, 'hurdle' clears a hurdle
 function coverAthlete(
@@ -4228,154 +4243,104 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#f6b80b', '#f0a87a', '#3b86d6'],
 		statsKey: 'gamecenter.stats.mrakodrap',
 		cover(ctx, w, h, t) {
-			// golden hour over a hazy skyline: a glass tower grows while the crane swings the next floor
-			const m = Math.min(w, h),
-				gy = h * 0.86;
-			const sky = ctx.createLinearGradient(0, 0, 0, gy);
-			sky.addColorStop(0, '#3d6fcf');
-			sky.addColorStop(0.55, '#f0a87a');
-			sky.addColorStop(1, '#ffe0a8');
-			ctx.fillStyle = sky;
-			ctx.fillRect(0, 0, w, h);
-			const sx = w * 0.24,
-				sy = h * 0.36;
-			const glow = ctx.createRadialGradient(sx, sy, m * 0.02, sx, sy, m * 0.4);
-			glow.addColorStop(0, 'rgba(255,244,214,.95)');
-			glow.addColorStop(0.25, 'rgba(255,214,150,.35)');
-			glow.addColorStop(1, 'rgba(255,200,140,0)');
-			ctx.fillStyle = glow;
-			ctx.fillRect(0, 0, w, h);
-			ctx.fillStyle = '#fffaf0';
-			ctx.beginPath();
-			ctx.arc(sx, sy, m * 0.06, 0, TAU);
-			ctx.fill();
-			// soft clouds drifting past
-			for (let i = 0; i < 3; i++) {
-				const s = m * (0.05 + i * 0.012),
-					x = ((i * 0.37 + t * 0.012 * (i + 1)) % 1.3) * w * 1.1 - w * 0.15,
-					y = h * (0.2 + i * 0.09);
-				ctx.fillStyle = 'rgba(255,236,220,.85)';
-				ctx.beginPath();
-				ctx.arc(x, y, s, 0, TAU);
-				ctx.arc(x + s * 1.2, y - s * 0.6, s * 1.25, 0, TAU);
-				ctx.arc(x + s * 2.6, y - s * 0.2, s, 0, TAU);
-				ctx.rect(x, y - s * 0.2, s * 2.6, s * 1.1);
-				ctx.fill();
+			// the game's own art (static/games/mrakodrap/cover, rendered from its art.js): golden-hour
+			// city and glass tower; the crane swings a floor that drops onto the tower every few seconds
+			const img = mrakodrapCover();
+			const loaded = (i: HTMLImageElement): boolean => i.complete && i.naturalWidth > 0;
+			if (!img || !loaded(img.bg) || !loaded(img.tower) || !loaded(img.floor)) {
+				const sky = ctx.createLinearGradient(0, 0, 0, h);
+				sky.addColorStop(0, '#3d6fcf');
+				sky.addColorStop(0.6, '#f0a87a');
+				sky.addColorStop(1, '#ffe0a8');
+				ctx.fillStyle = sky;
+				ctx.fillRect(0, 0, w, h);
+				return;
 			}
-			// two skyline layers in the haze
-			for (const [col, f, hm] of [
-				['#d9a9a0', 0.4, 0.38],
-				['#9c7186', 0.75, 0.26],
-			] as const) {
-				ctx.fillStyle = col;
-				let x = -10;
-				for (let i = 0; x < w; i++) {
-					const bw = w * (0.05 + (((i * 37) % 11) / 11) * 0.06),
-						bh = h * hm * (0.4 + (((i * 53 + f * 10) % 13) / 13) * 0.6);
-					ctx.fillRect(x, gy - bh, bw, bh);
-					x += bw + w * 0.008;
-				}
-			}
-			ctx.fillStyle = '#c9ced8';
-			ctx.fillRect(0, gy, w, h - gy);
-			ctx.fillStyle = '#4a5160';
-			ctx.fillRect(0, gy + h * 0.035, w, h);
-			// the tower: glass floors with a sheen, lit edges and slabs
-			const bw = w * 0.32,
-				fh = h * 0.075,
-				cx = w * 0.66,
-				floors = 5 + (Math.floor(t / 1.6) % 3);
-			const floor = (x: number, y: number, ang: number, a: number): void => {
-				ctx.save();
-				ctx.translate(x, y);
-				ctx.rotate(ang);
-				ctx.globalAlpha = a;
-				ctx.fillStyle = '#1f2d3f';
-				ctx.fillRect(-bw / 2, -fh, bw, fh);
-				const n = 4,
-					pw = (bw - 6) / n;
-				for (let k = 0; k < n; k++) {
-					const px = -bw / 2 + 3 + k * pw + 1,
-						g = ctx.createLinearGradient(0, -fh, 0, 0);
-					g.addColorStop(0, '#8fd8ff');
-					g.addColorStop(1, '#3b86d6');
-					ctx.fillStyle = g;
-					ctx.fillRect(px, -fh + 5, pw - 2, fh - 8);
-					ctx.fillStyle = 'rgba(255,255,255,.3)';
-					ctx.beginPath();
-					ctx.moveTo(px + pw * 0.15, -3);
-					ctx.lineTo(px + pw * 0.55, -fh + 5);
-					ctx.lineTo(px + pw * 0.8, -fh + 5);
-					ctx.lineTo(px + pw * 0.4, -3);
-					ctx.fill();
-				}
-				ctx.fillStyle = '#e9edf2';
-				ctx.fillRect(-bw / 2 - 2, -fh, bw + 4, 3);
-				const lg = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
-				lg.addColorStop(0, 'rgba(255,255,255,.14)');
-				lg.addColorStop(0.4, 'rgba(255,255,255,0)');
-				lg.addColorStop(1, 'rgba(0,0,0,.25)');
-				ctx.fillStyle = lg;
-				ctx.fillRect(-bw / 2, -fh, bw, fh);
-				ctx.restore();
-			};
-			ctx.fillStyle = 'rgba(0,0,0,.2)';
-			ctx.beginPath();
-			ctx.ellipse(cx, gy + 2, bw * 0.7, h * 0.012, 0, 0, TAU);
-			ctx.fill();
-			for (let i = 0; i < floors; i++) floor(cx + Math.sin(i * 1.7) * w * 0.006, gy - i * fh, 0, 1);
-			// crane: lattice jib, trolley, cable and the swinging floor
-			const jy = h * 0.07;
+			const s = Math.max(w / 800, h / 450),
+				// the crop keeps the sun (x ≈ 580 in the art) in view
+				ox = Math.min(0, Math.max(w - 800 * s, w * 0.8 - 580 * s)),
+				oy = h - 450 * s,
+				gy = oy + 395 * s;
+			ctx.drawImage(img.bg, ox, oy, 800 * s, 450 * s);
+			const jy = Math.max(10, h * 0.07),
+				st = Math.min(s, (gy - jy - 150 * s) / 250),
+				cx = w * 0.5,
+				top = gy - 246 * st,
+				roof = gy - 210 * st;
+			ctx.drawImage(img.tower, cx - 56 * st, gy - 248 * st, 112 * st, 250 * st);
+			// crane jib: two chords and the lattice between them, trolley above the tower
+			const y1 = jy + 14 * st;
 			ctx.strokeStyle = '#f6b80b';
-			ctx.lineWidth = Math.max(1.5, m * 0.008);
+			ctx.lineWidth = Math.max(1.5, 3 * st);
 			ctx.beginPath();
 			ctx.moveTo(0, jy);
 			ctx.lineTo(w, jy);
-			ctx.moveTo(0, jy + h * 0.035);
-			ctx.lineTo(w, jy + h * 0.035);
+			ctx.moveTo(0, y1);
+			ctx.lineTo(w, y1);
 			ctx.stroke();
 			ctx.strokeStyle = '#c48a00';
-			ctx.lineWidth = Math.max(1, m * 0.004);
+			ctx.lineWidth = Math.max(1, 1.6 * st);
 			ctx.beginPath();
-			for (let x = 0; x < w; x += h * 0.04) {
-				ctx.moveTo(x, jy + h * 0.035);
-				ctx.lineTo(x + h * 0.02, jy);
-				ctx.lineTo(x + h * 0.04, jy + h * 0.035);
+			for (let x = -14 * st; x < w + 14 * st; x += 14 * st) {
+				ctx.moveTo(x, y1);
+				ctx.lineTo(x + 7 * st, jy);
+				ctx.lineTo(x + 14 * st, y1);
 			}
 			ctx.stroke();
-			const th = Math.sin(t * 2.1) * 0.45,
-				len = h * 0.18,
-				px = cx,
-				py = jy + h * 0.04,
-				hx = px + Math.sin(th) * len,
-				hy = py + Math.cos(th) * len;
 			ctx.fillStyle = '#38404f';
-			ctx.fillRect(px - m * 0.04, jy + h * 0.03, m * 0.08, h * 0.025);
-			ctx.strokeStyle = '#3a404c';
-			ctx.lineWidth = 1.2;
 			ctx.beginPath();
-			ctx.moveTo(px, py);
-			ctx.lineTo(hx, hy);
+			ctx.roundRect(cx - 13 * st, y1 - st, 26 * st, 9 * st, 3 * st);
+			ctx.fill();
+			// the floor swings, drops onto the roof and a perfect ring flashes
+			const cyc = t % 3.8,
+				len = Math.max(20 * st, top - 30 * st - (y1 + 8 * st) - 52 * st),
+				py = y1 + 8 * st,
+				swing = (c: number): number => Math.sin(c * 2.2) * 0.38,
+				th = swing(Math.min(cyc, 2.6)),
+				hx = cx + Math.sin(th) * len,
+				hy = py + Math.cos(th) * len;
+			ctx.strokeStyle = '#3a404c';
+			ctx.lineWidth = Math.max(1, 1.2 * st);
+			ctx.beginPath();
+			ctx.moveTo(cx - 4 * st, py);
+			ctx.lineTo(hx - 3 * st, hy - 9 * st);
+			ctx.moveTo(cx + 4 * st, py);
+			ctx.lineTo(hx + 3 * st, hy - 9 * st);
 			ctx.stroke();
 			ctx.fillStyle = '#f6b80b';
-			ctx.fillRect(hx - m * 0.02, hy - m * 0.012, m * 0.04, m * 0.024);
-			const top = gy - floors * fh;
-			if (hy + fh + 6 < top) floor(hx, hy + fh + m * 0.02, -th * 0.15, 1);
-			// a perfect drop ring pulses on the roof
-			const ph = (t % 1.6) / 1.6;
-			ctx.strokeStyle = `rgba(255,214,90,${1 - ph})`;
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.ellipse(
-				cx,
-				top + fh * 0.5,
-				bw * 0.5 + ph * bw * 0.5,
-				fh * 0.3 + ph * fh * 0.6,
-				0,
-				0,
-				TAU,
-			);
-			ctx.stroke();
+			ctx.fillRect(hx - 8 * st, hy - 15 * st, 16 * st, 10 * st);
+			ctx.fillStyle = '#1b1f28';
+			for (let k = 0; k < 3; k++)
+				ctx.fillRect(hx - 6 * st + k * 5 * st, hy - 15 * st, 2 * st, 10 * st);
+			const drop = Math.max(0, cyc - 2.6),
+				fallY = hy + 6 * st + Math.min(1, (drop / 0.45) ** 2) * (roof - 36 * st - hy - 6 * st),
+				landed = drop > 0.45;
+			if (cyc < 3.5) {
+				ctx.save();
+				ctx.translate(hx, drop > 0 ? fallY : hy);
+				if (!drop) {
+					ctx.rotate(-th * 0.12);
+					ctx.strokeStyle = '#4a5160';
+					ctx.lineWidth = Math.max(1, 1.2 * st);
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.lineTo(-46 * st, 6 * st);
+					ctx.moveTo(0, 0);
+					ctx.lineTo(46 * st, 6 * st);
+					ctx.stroke();
+				}
+				ctx.globalAlpha = landed ? Math.max(0, 1 - (drop - 0.45) / 0.45) : 1;
+				ctx.drawImage(img.floor, -56 * st, drop > 0 ? 0 : 6 * st, 112 * st, 36 * st);
+				ctx.restore();
+			}
+			if (landed) {
+				const r = Math.min(1, (drop - 0.45) / 0.6);
+				ctx.strokeStyle = `rgba(255,214,90,${1 - r})`;
+				ctx.lineWidth = Math.max(1.5, 3 * st * (1 - r));
+				ctx.beginPath();
+				ctx.ellipse(hx, roof - 18 * st, (52 + r * 70) * st, (14 + r * 22) * st, 0, 0, TAU);
+				ctx.stroke();
+			}
 		},
 	},
 ];

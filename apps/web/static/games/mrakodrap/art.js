@@ -40,7 +40,7 @@ const MdArt = (() => {
   // ── Panorama: tři vrstvy domů (vygenerované jednou) ──
   const LAYERS = [0, 1, 2].map(l => {
     const out = []; let x = -360;
-    for (let i = 0; x < 720; i++) {
+    for (let i = 0; x < 1240; i++) {
       const s = hash(l * 1000 + i), w = 18 + s * (l === 2 ? 46 : 34), h = (l === 0 ? 120 : l === 1 ? 90 : 60) * (0.45 + hash(l * 777 + i * 3) * 0.9);
       out.push({ x, w, h, top: hash(i * 13 + l) > 0.72 ? 1 : hash(i * 17 + l) > 0.8 ? 2 : 0, lights: Array.from({ length: Math.floor(w * h / 260) }, (_, k) => [hash(i * 91 + k * 7 + l), hash(i * 53 + k * 11 + l)]) });
       x += w + (l === 2 ? 2 : 4 + hash(i + l * 50) * 10);
@@ -248,5 +248,22 @@ const MdArt = (() => {
     g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx - w / 2 + 6, hy + 10); g.moveTo(hx, hy); g.lineTo(hx + w / 2 - 6, hy + 10); g.stroke();
   }
 
-  return { setScale, time, scene, ground, floor, roof, crane, slings, mix, styleOf };
+  // věž o n patrech (přízemí a skleněná patra) se střechou; x střed, gy zem
+  function tower(g, x, gy, bw, fh, n, night = false, clock = 1) {
+    for (let i = 0; i <= n; i++) floor(g, x, gy - i * fh, bw, fh, i, night);
+    roof(g, x, gy - (n + 1) * fh, bw, night, clock);
+  }
+  // plakát pro úvod hry: zlatá hodinka, věž a jeřáb s visícím patrem
+  function poster(g, w, h, o = {}) {
+    const gy = h * 0.9, bw = o.bw || 104, fh = o.fh || 36, n = o.n || 5, x = w * 0.5;
+    const T = scene(g, w, h, o.h != null ? o.h : 1.0, 0, 0, 0, gy);
+    ground(g, w, gy, h, T, 0);
+    g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, gy + 3, bw * 0.7, 5, 0, 0, 7); g.fill();
+    tower(g, x, gy, bw, fh, n, false, 1);
+    const py = 34, th = o.th != null ? o.th : 0.5, len = 45, hx = x + Math.sin(th) * len, hy = py + Math.cos(th) * len;
+    crane(g, w, x, py, hx, hy, false);
+    g.save(); g.translate(hx, hy); g.rotate(-th * 0.12); slings(g, 0, 0, bw, false); floor(g, 0, 6 + fh, bw, fh, n + 1, false); g.restore();
+  }
+
+  return { setScale, time, scene, ground, floor, roof, crane, slings, tower, poster, mix, styleOf };
 })();
