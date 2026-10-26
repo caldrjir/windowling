@@ -3,7 +3,7 @@
 // Na motivy Piano Tiles: čtyři sloupce, shora jedou černé dlaždice, ťukej jen na ně. Každé
 // ťuknutí zahraje další notu skladby, takže hráč skladbu opravdu hraje. Dlouhé dlaždice se
 // drží. Ťuknutí vedle nebo propásnutá dlaždice hru končí. Po každém zahrání skladby (★) se
-// tempo zrychlí. Skladba a styl (Klavír, Pop, House, EDM, Rock) se vybírají na startu.
+// tempo zrychlí. Skladba se vybírá na startu, každá hraje ve své aranži (Klavír, Pop, House, EDM, Rock).
 const Klavesy = (() => {
   const L = Kit.L, W = 360, H = 640, LANES = 4, LW = W / LANES, RH = 160, Y0 = H - RH * 0.25;
   const { SONGS, STYLES } = KlSongs;
@@ -13,7 +13,7 @@ const Klavesy = (() => {
     { id: 'rychla', name: L('Rychlá', 'Fast'), note: L('pro zkušené prsty', 'for nimble fingers'), metric: 'score', speed: 1.25, ramp: 1.14 },
     { id: 'zen', name: L('Zen', 'Zen'), note: L('co nejvíc dlaždic za 30 s', 'most tiles in 30 s'), metric: 'score', zen: 30 },
   ];
-  const LEVEL_ORDER = ['twinkle', 'narozeniny', 'largo', 'ukolebavka', 'rolnicky', 'vanoce', 'auld', 'oda', 'susanna', 'saints', 'greensleeves', 'vltava', 'kanon', 'menuet', 'nachtmusik', 'korobejniki', 'eliska', 'kralhor', 'entertainer', 'turecky'];
+  const LEVEL_ORDER = ['twinkle', 'prach', 'narozeniny', 'park', 'largo', 'stastny', 'ukolebavka', 'rolnicky', 'mesic', 'vanoce', 'auld', 'vlna', 'oda', 'susanna', 'neon', 'saints', 'greensleeves', 'pulz', 'vltava', 'kanon', 'dalnice', 'menuet', 'nachtmusik', 'boure', 'korobejniki', 'eliska', 'turbo', 'kralhor', 'entertainer', 'turecky'];
   const THEMES = {
     piano: { bg: ['#fbf8f2', '#ece5d6'], line: 'rgba(60,45,30,.12)', tile: ['#26262c', '#0d0d10'], hi: 'rgba(255,255,255,.14)', done: 'rgba(20,20,25,.10)', hold: '#3fa7ff', text: '#1d1a17', sub: '#7a6e60', glow: null },
     pop: { bg: ['#ffe1ee', '#d8e6ff'], line: 'rgba(90,60,140,.14)', tile: ['#7b4fd6', '#3b2483'], hi: 'rgba(255,255,255,.22)', done: 'rgba(90,60,160,.13)', hold: '#ff5fa2', text: '#2e1c55', sub: '#6d5a99', glow: null },
@@ -40,24 +40,66 @@ const Klavesy = (() => {
     const D = DIFFS.find(d => d.id === P.mode) || DIFFS[1];
     const data = api.data;
     const free = !P.song;
-    let song = songById(P.song || data.song || 'oda');
-    let style = data.style && data.style[song.id] ? data.style[song.id] : song.style;
+    let song = songById(P.song || data.song || 'neon');
+    let style = song.style;
     el.innerHTML = `<div class="kl-wrap"><div class="kl-stage"><canvas class="kl-cv"></canvas>
-      <div class="kl-top"><button class="kl-song" type="button"></button><p class="kl-info"></p><div class="kl-styles">${STYLES.map(s => `<button type="button" data-s="${s.id}">${nm(s.name)}</button>`).join('')}</div></div>
+      <div class="kl-top"><button class="kl-song" type="button"></button><p class="kl-info"></p></div>
       <div class="kl-pick" hidden><div class="kl-pick-h"><b>${L('Vyber skladbu', 'Pick a song')}</b><button type="button" class="kl-x" aria-label="${L('Zavřít', 'Close')}">✕</button></div><div class="kl-list"></div></div>
       </div><p class="kl-keys">${L('Ťukej na dlaždice, nebo klávesy D F J K. P pauza', 'Tap the tiles, or keys D F J K. P pauses')}</p></div>`;
-    const stage = el.querySelector('.kl-stage'), cv = el.querySelector('.kl-cv'), ctx = cv.getContext('2d');
+    const stage = el.querySelector('.kl-stage'), cv = el.querySelector('.kl-cv'), ctx = cv.getContext('2d', { alpha: false });
     const top = el.querySelector('.kl-top'), songBtn = el.querySelector('.kl-song'), pick = el.querySelector('.kl-pick'), list = el.querySelector('.kl-list');
     let cssW = 360, cssH = 640, dpr = 1;
+    // rozlišení plátna: když telefon nestíhá, sníží se o stupeň (pixely jsou to nejdražší)
+    const QUALITY = [1.5, 1.2, 1];
+    let quality = 0, slow = 0, slowN = 0;
+    function watchFps(dt) {
+      if (quality >= QUALITY.length - 1 || phase !== 'play' || dt <= 0) return;
+      slow += dt; slowN++;
+      if (slowN >= 90) { if (slow / slowN > 0.024) { quality++; fit(); } slow = 0; slowN = 0; }
+    }
     function fit() {
       const kv = document.getElementById('kView') || el, pad = getComputedStyle(kv), box = kv.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
       cssH = Math.max(400, Math.min(innerHeight - (innerWidth < 760 ? 110 : 150), 860));
       cssW = Math.min(box - 2, cssH * W / H); cssH = cssW * H / W;
-      dpr = Math.min(2, devicePixelRatio || 1);
+      dpr = Math.min(QUALITY[quality], devicePixelRatio || 1);
       cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
       stage.style.width = cssW + 'px'; stage.style.height = cssH + 'px';
       stage.style.setProperty('--k', cssW / W);
+      sprites.clear();
     }
+    // ── Předkreslené obrázky: pozadí, záře a dlaždice se kreslí jednou, ve hře se jen kopírují ──
+    const sprites = new Map();
+    function sprite(key, w, h, paint) {
+      let c = sprites.get(key);
+      if (c) return c;
+      const sc = dpr * (cssW / W);
+      c = document.createElement('canvas');
+      c.width = Math.max(1, Math.ceil(w * sc)); c.height = Math.max(1, Math.ceil(h * sc));
+      const g = c.getContext('2d'); g.scale(sc, sc); paint(g);
+      if (sprites.size > 80) sprites.clear();
+      sprites.set(key, c);
+      return c;
+    }
+    const bgSprite = () => sprite('bg|' + style, W, H, g => {
+      const T = THEMES[style], bg = g.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, T.bg[0]); bg.addColorStop(1, T.bg[1]); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      g.fillStyle = T.line;
+      for (let i = 1; i < LANES; i++) g.fillRect(i * LW, 0, 1, H);
+    });
+    const glowSprite = () => sprite('glow|' + style, W, H, g => {
+      const T = THEMES[style], gl = g.createRadialGradient(W / 2, H, 20, W / 2, H, H * 0.9);
+      gl.addColorStop(0, T.glow); gl.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H);
+    });
+    const PAD = 10;
+    // čekající dlaždice dané výšky (se září, odleskem a značkou držení)
+    const tileSprite = (hh, hold, red) => sprite(`t|${style}|${Math.round(hh)}|${hold ? 1 : 0}|${red ? 1 : 0}`, LW - 3 + PAD * 2, hh + PAD * 2, g => {
+      const T = THEMES[style], w = LW - 3, gr = g.createLinearGradient(0, PAD, 0, PAD + hh);
+      gr.addColorStop(0, red ? '#ff4a4a' : T.tile[0]); gr.addColorStop(1, red ? '#b31515' : T.tile[1]);
+      if (T.glow) { g.shadowColor = T.glow; g.shadowBlur = 9; }
+      g.fillStyle = gr; rr(g, PAD, PAD, w, hh, 7); g.fill(); g.shadowBlur = 0;
+      g.fillStyle = T.hi; rr(g, PAD + 4, PAD + 4, w - 8, Math.min(14, hh * 0.18), 5); g.fill();
+      if (hold) holdMarks(g, PAD, PAD, w, hh, T, 0);
+    });
     KlAudio.load('assets/piano/');
     const loadStart = performance.now();
 
@@ -238,17 +280,13 @@ const Klavesy = (() => {
     function draw() {
       const g = ctx, T = THEMES[style], k = cssW / W;
       g.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
-      const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, T.bg[0]); bg.addColorStop(1, T.bg[1]);
-      g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      g.drawImage(bgSprite(), 0, 0, W, H);
       // tep: pozadí lehce blikne na každý puls
       if (T.glow && phase === 'play' && !D.zen) {
         const pr = arr.pulse, ph = ((pos - song.pickup) % pr + pr) % pr, a = Math.exp(-ph / pr * 5) * 0.16;
-        const gl = g.createRadialGradient(W / 2, H, 20, W / 2, H, H * 0.9); gl.addColorStop(0, T.glow); gl.addColorStop(1, 'rgba(0,0,0,0)');
-        g.globalAlpha = a; g.fillStyle = gl; g.fillRect(0, 0, W, H); g.globalAlpha = 1;
+        if (a > 0.01) { g.globalAlpha = a; g.drawImage(glowSprite(), 0, 0, W, H); g.globalAlpha = 1; }
       }
       if (lapFlash > 0) { g.fillStyle = T.hold; g.globalAlpha = lapFlash * 0.18; g.fillRect(0, 0, W, H); g.globalAlpha = 1; }
-      g.strokeStyle = T.line; g.lineWidth = 1;
-      for (let i = 1; i < LANES; i++) { g.beginPath(); g.moveTo(i * LW + 0.5, 0); g.lineTo(i * LW + 0.5, H); g.stroke(); }
       // dlaždice
       const blink = phase === 'fail' && Math.floor(failInfo.t * 6) % 2 === 0;
       for (let i = Math.max(0, next - 12); i < tiles.length; i++) {
@@ -258,12 +296,7 @@ const Klavesy = (() => {
         const x = t.lane * LW + 1.5, w = LW - 3, y = yt + 1.5, hh = h - 3;
         if (t.st === 0) {
           const miss = phase === 'fail' && failInfo.kind === 'miss' && failInfo.tile === t;
-          const gr = g.createLinearGradient(0, y, 0, y + hh);
-          gr.addColorStop(0, miss && blink ? '#ff4a4a' : T.tile[0]); gr.addColorStop(1, miss && blink ? '#b31515' : T.tile[1]);
-          if (T.glow) { g.shadowColor = T.glow; g.shadowBlur = 14; }
-          g.fillStyle = gr; rr(g, x, y, w, hh, 7); g.fill(); g.shadowBlur = 0;
-          g.fillStyle = T.hi; rr(g, x + 4, y + 4, w - 8, Math.min(14, hh * 0.18), 5); g.fill();
-          if (isHold(t)) holdMarks(g, t, x, y, w, hh, T, 0);
+          g.drawImage(tileSprite(hh, isHold(t), miss && blink), x - PAD, y - PAD, w + PAD * 2, hh + PAD * 2);
           if (phase === 'ready' && i === next) {
             g.fillStyle = '#fff'; g.font = '700 17px Unbounded, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
             const ok = canStart();
@@ -274,7 +307,7 @@ const Klavesy = (() => {
         } else if (t.st === 2) {
           const prog = Math.max(0, Math.min(1, (pos - t.r0) / t.len));
           g.fillStyle = T.tile[1]; rr(g, x, y, w, hh, 7); g.fill();
-          holdMarks(g, t, x, y, w, hh, T, prog);
+          holdMarks(g, x, y, w, hh, T, prog);
         } else {
           g.fillStyle = T.done; rr(g, x, y, w, hh, 7); g.fill();
           if (isHold(t) && t.held) { const fh = hh * Math.min(1, t.held / t.len); g.fillStyle = T.hold; g.globalAlpha = 0.28; rr(g, x, y + hh - fh, w, fh, 7); g.fill(); g.globalAlpha = 1; }
@@ -307,7 +340,7 @@ const Klavesy = (() => {
       g.globalAlpha = 1;
       if (paused) { g.fillStyle = 'rgba(10,8,20,.5)'; g.fillRect(0, 0, W, H); txt(L('PAUZA', 'PAUSED'), W / 2, H * 0.45, 30, '#fff'); txt(L('ťukni nebo P', 'tap or press P'), W / 2, H * 0.52, 14, '#fff', 700, '"Space Grotesk"'); }
     }
-    function holdMarks(g, t, x, y, w, hh, T, prog) {
+    function holdMarks(g, x, y, w, hh, T, prog) {
       const cx = x + w / 2;
       if (prog > 0) {
         const fh = (hh - 6) * prog, gr = g.createLinearGradient(0, y + hh - fh, 0, y + hh);
@@ -320,18 +353,19 @@ const Klavesy = (() => {
       g.fillStyle = T.tile[1]; g.beginPath(); g.arc(cx, y + hh - 22, 4, 0, Math.PI * 2); g.fill();
     }
 
-    // ── Výběr skladby a stylu ──
+    // ── Výběr skladby ──
     function ui() {
       songBtn.innerHTML = `<span class="kl-note">♪</span><span><b>${nm(song.name)}</b><small>${song.by}</small></span>${free ? '<span class="kl-caret">▾</span>' : ''}`;
       songBtn.disabled = !free;
-      for (const b of top.querySelectorAll('[data-s]')) b.classList.toggle('on', b.dataset.s === style);
       stage.dataset.theme = style;
       const best = (data.best_song || {})[song.id];
       el.querySelector('.kl-info').textContent = [P.text || D.name, P.level ? L(`zahraj skladbu ${P.laps}×`, `play the song ${P.laps}×`) : best ? `${L('rekord', 'best')} ${best}` : ''].filter(Boolean).join(' · ');
     }
     function openPick() {
       const best = data.best_song || {};
-      list.innerHTML = SONGS.map(s => `<button type="button" data-id="${s.id}" class="${s.id === song.id ? 'on' : ''}"><span><b>${nm(s.name)}</b><small>${s.by}</small></span><em>${nm(STYLES.find(x => x.id === s.style).name)}${best[s.id] ? ` · ${best[s.id]}` : ''}</em></button>`).join('');
+      const row = s => `<button type="button" data-id="${s.id}" class="${s.id === song.id ? 'on' : ''}"><span><b>${nm(s.name)}</b><small>${s.by}</small></span><em>${nm(STYLES.find(x => x.id === s.style).name)}${best[s.id] ? ` · ${best[s.id]}` : ''}</em></button>`;
+      const own = SONGS.filter(s => s.by === 'Windowling'), old = SONGS.filter(s => s.by !== 'Windowling');
+      list.innerHTML = `<h4>${L('Vlastní skladby', 'Original songs')}</h4>${own.map(row).join('')}<h4>${L('Klasika a lidovky', 'Classics and folk')}</h4>${old.map(row).join('')}`;
       pick.hidden = false;
       const on = list.querySelector('.on'); if (on) on.scrollIntoView({ block: 'center' });
     }
@@ -339,17 +373,11 @@ const Klavesy = (() => {
     el.querySelector('.kl-x').addEventListener('click', () => { pick.hidden = true; });
     list.addEventListener('click', e => {
       const b = e.target.closest('[data-id]'); if (!b) return;
-      song = songById(b.dataset.id); style = data.style && data.style[song.id] ? data.style[song.id] : song.style;
+      song = songById(b.dataset.id); style = song.style;
       data.song = song.id; api.persist && api.persist();
       pick.hidden = true; setup(); preview();
     });
-    top.querySelector('.kl-styles').addEventListener('click', e => {
-      const b = e.target.closest('[data-s]'); if (!b || phase !== 'ready') return;
-      KlAudio.unlock();
-      style = b.dataset.s; (data.style || (data.style = {}))[song.id] = style; api.persist && api.persist();
-      setup(); preview();
-    });
-    // krátká ukázka stylu: první takty doprovodu a melodie
+    // krátká ukázka: první takty doprovodu a melodie
     let prevT = 0;
     function preview() {
       if (!KlAudio.ready() || speed > 1) return;
@@ -362,10 +390,11 @@ const Klavesy = (() => {
     }
 
     // ── Smyčka a ovládání ──
-    let last = performance.now(), raf = 0;
+    let last = performance.now(), last0 = last, raf = 0;
     function frame(nowT) {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.05, (nowT - last) / 1000); last = nowT;
+      watchFps((nowT - last0) / 1000); last0 = nowT;
       if (api.paused && api.paused() && !paused && !over && phase === 'play') setPause(true);
       if (!paused && !over) {
         const n = Math.max(1, speed);
@@ -455,7 +484,7 @@ const Klavesy = (() => {
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'klavesy', title: 'KLÁVESY',
-  tagline: Kit.L('Na motivy Piano Tiles: ťukej na dlaždice a skladba hraje pod tvými prsty. Beethoven, Mozart, Grieg i lidovky jako klavír, pop, house, EDM nebo rock.', 'In the spirit of Piano Tiles: tap the tiles and the song plays under your fingers. Beethoven, Mozart, Grieg and folk tunes as piano, pop, house, EDM or rock.'),
+  tagline: Kit.L('Na motivy Piano Tiles: ťukej na dlaždice a skladba hraje pod tvými prsty. vlastní skladby i Beethoven, Mozart, Grieg a lidovky, každá ve své aranži: klavír, pop, house, EDM nebo rock.', 'In the spirit of Piano Tiles: tap the tiles and the song plays under your fingers. original songs plus Beethoven, Mozart, Grieg and folk tunes, each in its own arrangement: piano, pop, house, EDM or rock.'),
   diffs: Klavesy.DIFFS, generate: Klavesy.generate, create: Klavesy.create, art: Klavesy.art,
   dailyDiff: () => 'skladba',
   levelDiff: n => (n <= 40 ? 'lehka' : n <= 90 ? 'skladba' : 'rychla'),
@@ -463,14 +492,14 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
     <ul><li>Ťuknutí do prázdna nebo propásnutá dlaždice hru končí.</li>
     <li>Dlouhé dlaždice drž, dokud nedojedou. Za každý držený řádek je bod navíc.</li>
     <li>Po každém zahrání skladby získáš ★ a tempo se zrychlí.</li>
-    <li>Na startu si vyber skladbu a styl: Klavír, Pop, House, EDM nebo Rock. <b>Zen</b>: dlaždice stojí, zahraj jich co nejvíc za 30 sekund.</li>
+    <li>Na startu si vyber skladbu, každá má svou aranži: klavír, pop, house, EDM nebo rock. <b>Zen</b>: dlaždice stojí, zahraj jich co nejvíc za 30 sekund.</li>
     <li>Na počítači hraj klávesami D F J K. P pozastaví hru.</li></ul>
     <p class="k-muted">Klavír: Salamander Grand Piano, Alexander Holm (CC BY 3.0). Skladby jsou volná díla.</p>`,
     `<p>Tiles slide down from the top. Tap only them, bottom first: every tap plays the next note of the song.</p>
     <ul><li>Tapping an empty spot or missing a tile ends the game.</li>
     <li>Hold long tiles until they pass. Every row held is a bonus point.</li>
     <li>Every time you finish the song you earn a ★ and the tempo goes up.</li>
-    <li>Pick a song and a style at the start: Piano, Pop, House, EDM or Rock. <b>Zen</b>: the tiles stand still, play as many as you can in 30 seconds.</li>
+    <li>Pick a song at the start, each has its own arrangement: piano, pop, house, EDM or rock. <b>Zen</b>: the tiles stand still, play as many as you can in 30 seconds.</li>
     <li>On a computer, play with the keys D F J K. P pauses.</li></ul>
     <p class="k-muted">Piano: Salamander Grand Piano by Alexander Holm (CC BY 3.0). The songs are in the public domain.</p>`),
   achievements: [

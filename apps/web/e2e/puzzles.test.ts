@@ -894,12 +894,10 @@ test('klavesy plays a picked song tile by tile', async ({ page }) => {
 	page.on('pageerror', (error) => errors.push(error.message));
 	await startFree(page, 'klavesy', 'lehka');
 	await expect(page.locator('.kl-cv')).toBeVisible();
-	// The song picker switches the song, the chips switch the style.
+	// The song picker switches the song; every song plays in its own arrangement.
 	await page.locator('.kl-song').click();
 	await page.locator('.kl-list [data-id="menuet"]').click();
 	await expect(page.locator('.kl-song')).toContainText(/Menuet|Minuet/);
-	await page.locator('.kl-styles [data-s="rock"]').click();
-	await expect(page.locator('.kl-styles [data-s="rock"]')).toHaveClass(/on/);
 	// The autopilot starts once the piano is loaded and plays the tiles in order.
 	await page.evaluate('Kit._test.inst._auto(true)');
 	await expect
@@ -911,6 +909,6 @@ test('klavesy plays a picked song tile by tile', async ({ page }) => {
 		.toBeGreaterThan(5);
 	expect(
 		((await page.evaluate('Kit._test.inst._state()')) as { song: string; style: string }).style,
-	).toBe('rock');
+	).toBe('piano');
 	expect(errors).toEqual([]);
 });

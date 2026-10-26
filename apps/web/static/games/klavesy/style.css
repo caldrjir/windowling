@@ -14,14 +14,7 @@
 .kl-song small { font-size: 12px; color: #6b6158; }
 .kl-note { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: #1d1a17; color: #fff; font-size: 18px; flex: none; }
 .kl-caret { font-size: 14px; color: #6b6158; }
-.kl-styles { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-.kl-styles button { padding: 6px 11px; border-radius: 999px; border: 0; background: rgba(255, 255, 255, .72); color: #2a2320; font: 600 12px "Space Grotesk", sans-serif; cursor: pointer; box-shadow: 0 3px 10px -6px rgba(0, 0, 0, .5); }
-.kl-styles button.on { background: #1d1a17; color: #fff; }
-[data-theme="house"] .kl-styles button.on { background: #ff8a3d; }
-[data-theme="edm"] .kl-styles button.on { background: linear-gradient(90deg, #27e3ff, #7d4dff); }
-[data-theme="rock"] .kl-styles button.on { background: #e23d2b; }
-[data-theme="pop"] .kl-styles button.on { background: #6b3fc8; }
-
+[data-theme="house"] [data-theme="edm"] [data-theme="rock"] [data-theme="pop"] 
 .kl-pick { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr; background: rgba(250, 247, 240, .97); color: #1d1a17; }
 .kl-pick[hidden] { display: none; }
 .kl-pick-h { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid rgba(0, 0, 0, .08); }
@@ -37,3 +30,4 @@
 .kl-list em { font-style: normal; font-size: 11px; opacity: .7; white-space: nowrap; }
 .kl-info { margin: -2px 0 0; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, .35); color: #fff; font: 600 12px "Space Grotesk", sans-serif; }
 .kl-info:empty { display: none; }
+.kl-list h4 { margin: 12px 10px 4px; font: 700 11px "Space Grotesk", sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
