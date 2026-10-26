@@ -34,6 +34,7 @@ const PUZZLES = [
 	'veky',
 	'ptaci',
 	'pirko',
+	'klavesy',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -886,4 +887,30 @@ test('pirko flaps through the pipes and scores', async ({ page }) => {
 			},
 		)
 		.toBeGreaterThan(2);
+});
+
+test('klavesy plays a picked song tile by tile', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'klavesy', 'lehka');
+	await expect(page.locator('.kl-cv')).toBeVisible();
+	// The song picker switches the song, the chips switch the style.
+	await page.locator('.kl-song').click();
+	await page.locator('.kl-list [data-id="menuet"]').click();
+	await expect(page.locator('.kl-song')).toContainText(/Menuet|Minuet/);
+	await page.locator('.kl-styles [data-s="rock"]').click();
+	await expect(page.locator('.kl-styles [data-s="rock"]')).toHaveClass(/on/);
+	// The autopilot starts once the piano is loaded and plays the tiles in order.
+	await page.evaluate('Kit._test.inst._auto(true)');
+	await expect
+		.poll(
+			async () =>
+				((await page.evaluate('Kit._test.inst._state()')) as { score: number; song: string }).score,
+			{ timeout: 30_000 },
+		)
+		.toBeGreaterThan(5);
+	expect(
+		((await page.evaluate('Kit._test.inst._state()')) as { song: string; style: string }).style,
+	).toBe('rock');
+	expect(errors).toEqual([]);
 });
