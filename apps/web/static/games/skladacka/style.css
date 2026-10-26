@@ -20,3 +20,16 @@
 .jg-head div { justify-items: center; gap: 2px; }
 .jg-bar { display: block; width: 120px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; }
 .jg-bar s { display: block; height: 100%; text-decoration: none; background: var(--a); transition: width .4s; }
+/* odhalení složeného obrazu: rám, záblesk a název */
+.jg-reveal { position: absolute; z-index: 99999; border-radius: 6px; animation: jgPop .6s cubic-bezier(.2, 1.4, .4, 1); box-shadow: 0 0 0 4px #f4d58a, 0 0 0 9px #8a5a20, 0 0 0 11px #f4d58a, 0 30px 80px -10px rgba(0, 0, 0, .8), 0 0 120px 10px color-mix(in srgb, var(--a) 50%, transparent); overflow: hidden; pointer-events: none; }
+.jg-reveal canvas { display: block; width: 100%; height: 100%; }
+.jg-reveal::after { content: ''; position: absolute; inset: -20%; background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .55) 50%, transparent 65%); transform: translateX(-120%); animation: jgShine 1.4s .5s ease-in-out; }
+.jg-cap { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; padding: 10px 26px; border-radius: 14px; background: rgba(12, 10, 24, .78); box-shadow: inset 0 0 0 1px rgba(244, 213, 138, .6); color: #fff; text-align: center; white-space: nowrap; opacity: 0; animation: jgCap .6s 1.1s forwards; }
+.jg-cap small { color: #f4d58a; font-size: 11px; letter-spacing: .18em; font-weight: 700; text-transform: uppercase; }
+.jg-cap b { font-family: var(--f-d); font-size: clamp(16px, 2.6vw, 26px); }
+@keyframes jgPop { from { transform: scale(.94); filter: brightness(1.8); } }
+@keyframes jgShine { to { transform: translateX(120%); } }
+@keyframes jgCap { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translateX(-50%); } }
+.jg-res { display: grid; justify-items: center; gap: 6px; margin: 4px 0 8px; }
+.jg-res canvas { width: min(100%, 360px); border-radius: 10px; box-shadow: 0 0 0 3px #f4d58a, 0 0 0 6px #8a5a20, 0 14px 30px -10px #000; }
+.jg-res b { font-family: var(--f-d); font-size: 16px; }
