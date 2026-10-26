@@ -37,3 +37,4 @@
 .kl-list em { font-style: normal; font-size: 11px; opacity: .7; white-space: nowrap; }
 .kl-info { margin: -2px 0 0; padding: 3px 10px; border-radius: 999px; background: rgba(0, 0, 0, .35); color: #fff; font: 600 12px "Space Grotesk", sans-serif; }
 .kl-info:empty { display: none; }
+.kl-list h4 { margin: 12px 10px 4px; font: 700 11px "Space Grotesk", sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }

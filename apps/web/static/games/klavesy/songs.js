@@ -10,6 +10,86 @@
 // sekundu při základní rychlosti.
 const KlSongs = (() => {
   const SONGS = [
+    // ── Vlastní skladby (Windowling) ──
+    {
+      id: 'neon', name: ['Neonová noc', 'Neon Night'], by: 'Windowling', style: 'edm', rps: 3.6, bar: 8, beat: 2, pickup: 0,
+      mel: `A4 C5 E5:2 D5 C5 E5:2 | C5 A4 F4:2 A4 C5 F5:2 | E5:2 G5 E5 C5:2 E5 D5 | B4:3 D5 G5:4 |
+        A4 C5 E5:2 D5 C5 E5:2 | C5 A4 F4:2 A4 C5 A5:2 | G5:2 E5 G5 C6:2 B5 G5 | B5:3 A5 G5:2 D5:2 |
+        A5 A5 A5:2 G5 A5 C6:2 | B5 B5 B5:2 A5 B5 D6:2 | C6:2 B5 A5 E5:2 A5 C6 | B5:4 G#5:4 |
+        A5 A5 A5:2 G5 A5 C6:2 | B5 B5 B5:2 A5 B5 D6:2 | C6:2 A5 C6 D6:2 B5 G5 | A5:8`,
+      ch: 'Am | F | C | G | Am | F | C | G | F | G | Am | E | F | G | F G | Am',
+    },
+    {
+      id: 'stastny', name: ['Šťastný den', 'Happy Day'], by: 'Windowling', style: 'pop', rps: 3.2, bar: 8, beat: 2, pickup: 0,
+      mel: `B4 D5 G5:2 F#5 G5 A5:2 | F#5:2 E5 D5:3 A4 D5 | E5:2 G5 B5:3 A5 G5 | E5:4 G5:2 E5 D5 |
+        B4 D5 G5:2 F#5 G5 A5:2 | F#5:2 A5 D6:3 C6 B5 | B5:2 G5 E5:3 F#5 G5 | G5:4 F#5:4 |
+        D6:2 B5 G5:2 B5 D6:2 | A5:2 F#5 D5:2 F#5 A5:2 | B5:2 G5 E5:2 G5 B5:2 | C6:3 B5 G5:2 E5:2 |
+        D6:2 B5 G5:2 B5 D6:2 | E6:2 D6 A5:2 F#5 A5:2 | G5:2 B5:2 C6:2 E6:2 | D6:4 G5:4`,
+      ch: 'G | D | Em | C | G | D | Em | C D | G | D | Em | C | G | D | Em C | D G',
+    },
+    {
+      id: 'vlna', name: ['Letní vlna', 'Summer Wave'], by: 'Windowling', style: 'house', rps: 3.6, bar: 8, beat: 2, pickup: 0,
+      mel: `F5:2 A5 G5:2 F5 D5:2 | B4:2 D5 F5:3 E5 D5 | E5:2 G5 C6:3 B5 G5 | A5:3 G5 E5:2 C5:2 |
+        F5:2 A5 G5:2 F5 D5:2 | B4:2 D5 F5:3 G5 A5 | G5:2 E5 C5:3 D5 E5 | A4:4 C5 E5 A5:2 |
+        A5 A5 C6:2 A5 G5 F5:2 | G5 G5 B5:2 G5 F5 D5:2 | E5 G5 B5:2 A5 G5 E5:2 | A5:3 G5 A5:2 C6:2 |
+        A5 A5 C6:2 A5 G5 F5:2 | G5 G5 B5:2 D6 C6 B5:2 | C6:2 G5 E5:2 G5 C6:2 | A5:6 G5 E5`,
+      ch: 'Dm | G7 | C | Am | Dm | G7 | C | Am | F | G | Em | Am | F | G | C | Am',
+    },
+    {
+      id: 'dalnice', name: ['Dálnice', 'Highway'], by: 'Windowling', style: 'rock', rps: 3.4, bar: 8, beat: 2, pickup: 0,
+      mel: `E4 E4 G4 E4 A4 E4 B4 A4 | E4 E4 G4 E4 A4 G4 E4:2 | E4 E4 G4 E4 A4 E4 B4 A4 | D5 C5 B4 A4 B4:4 |
+        E4 E4 G4 E4 A4 E4 B4 A4 | E4 E4 G4 E4 A4 G4 E4:2 | E4 E4 G4 E4 A4 E4 B4 A4 | D5 E5 F#5 D5 E5:4 |
+        G5:3 E5 G5:2 A5:2 | B5:3 A5 G5:4 | F#5:3 E5 D5:2 A5:2 | E5:4 B4:2 E5:2 |
+        G5:3 E5 G5:2 A5:2 | B5:3 D6 B5:2 G5:2 | A5:2 F#5:2 D5:2 F#5:2 | E5:4 E4 G4 A4 B4`,
+      ch: 'Em | C | Em | G | Em | C | Em | D:4 Em:4 | C | G | D | Em | C | G | D | Em',
+    },
+    {
+      id: 'prach', name: ['Hvězdný prach', 'Stardust'], by: 'Windowling', style: 'piano', rps: 2.9, bar: 8, beat: 2, pickup: 0,
+      mel: `E5:2 G5 E5 D5:2 C5:2 | D5:2 G5 D5 B4:4 | C5:2 E5 A5 G5:2 E5:2 | F5:6 E5 D5 |
+        E5:2 G5 E5 D5:2 C5:2 | D5:2 G5 B5 A5:2 G5:2 | A5:2 C6 A5 G5:2 F5 E5 | D5:4 B4:2 D5:2 |
+        C6:3 B5 A5:2 E5:2 | A5:3 G5 F5:2 C5:2 | G5:3 F5 E5:2 C5:2 | D5:2 E5 F5 G5:4 |
+        C6:3 B5 A5:2 E5:2 | A5:3 G5 F5:2 A5:2 | B5:2 D6 B5 G5:2 F5 D5 | C5:8`,
+      ch: 'C | G | Am | F | C | G | F | G | Am | F | C | G | Am | F | G | C',
+    },
+    {
+      id: 'turbo', name: ['Turbo', 'Turbo'], by: 'Windowling', style: 'edm', rps: 3.8, bar: 8, beat: 2, pickup: 0,
+      mel: `D5 D5 F5 D5 A5 D5 G5 F5 | D5 D5 F5 D5 Bb5 A5 G5 F5 | E5 E5 G5 E5 C6 E5 A5 G5 | C#6:2 A5 E5 C#5:4 |
+        D5 D5 F5 D5 A5 D5 G5 F5 | D5 D5 F5 D5 Bb5 A5 G5 F5 | E5 E5 G5 E5 C6 E5 A5 G5 | A5 G5 F5 E5 C#5:4 |
+        F5:2 Bb5:2 D6:2 C6 Bb5 | G5:2 C6:2 E6:2 D6 C6 | A5:2 D6:2 F6:2 E6 D6 | E6:3 D6 C#6:4 |
+        F5:2 Bb5:2 D6:2 C6 Bb5 | G5:2 C6:2 E6:2 G6 E6 | F6:2 D6:2 E6:2 C#6:2 | D6:8`,
+      ch: 'Dm | Bb | C | A | Dm | Bb | C | A | Bb | C | Dm | A | Bb | C | Dm A | Dm',
+    },
+    {
+      id: 'park', name: ['Ráno v parku', 'Morning in the Park'], by: 'Windowling', style: 'piano', rps: 3.0, bar: 6, beat: 2, pickup: 0,
+      mel: `C5:2 F5 A5 C6:2 | G5:3 E5 C5:2 | D5:2 F5 A5 D6:2 | D6:3 C6 Bb5:2 | A5:2 F5 A5 C6:2 | C6:3 Bb5 G5:2 | D6:3 C6:3 | F5:6 |
+        A5:2 G5 F5 D5:2 | F5:3 D5 Bb4:2 | G5:2 F5 E5 C5:2 | A5:4 C6:2 | D6:2 C6 A5 F5:2 | Bb5:3 A5 G5:2 | G5:2 A5 Bb5 C6:2 | F5:6`,
+      ch: 'F | C | Dm | Bb | F | C | Bb:3 C:3 | F | Dm | Bb | C | F | Dm | Bb | C | F',
+    },
+    {
+      id: 'pulz', name: ['Pulz města', 'City Pulse'], by: 'Windowling', style: 'house', rps: 3.6, bar: 8, beat: 2, pickup: 0,
+      mel: `G5:2 Bb5 G5 D6:2 C6 Bb5 | G5:2 Bb5 G5 Eb6:2 D6 C6 | D6:2 Bb5 F5:2 Bb5 D6:2 | C6:3 A5 F5:2 A5 C6 |
+        G5:2 Bb5 G5 D6:2 C6 Bb5 | G5:2 Bb5 G5 Eb6:2 D6 Eb6 | F6:2 D6 Bb5:2 D6 F6 D6 | C6:4 A5:4 |
+        G5 G5 Bb5 G5 Eb5:2 F5 G5 | A5 A5 C6 A5 F5:2 G5 A5 | Bb5:2 A5 G5 D5:2 G5 Bb5 | A5:4 F#5:4 |
+        G5 G5 Bb5 G5 Eb5:2 F5 G5 | A5 A5 C6 A5 F5:2 G5 A5 | Bb5:2 A5 G5 F#5:2 A5 D6 | G5:8`,
+      ch: 'Gm | Eb | Bb | F | Gm | Eb | Bb | F | Eb | F | Gm | D | Eb | F | Gm D | Gm',
+    },
+    {
+      id: 'mesic', name: ['Až na Měsíc', 'To the Moon'], by: 'Windowling', style: 'pop', rps: 3.4, bar: 8, beat: 2, pickup: 0,
+      mel: `G5 E5 G5:2 C6 G5 E5:2 | A5 E5 A5:2 C6 A5 E5:2 | F5 A5 C6:2 A5 F5 C5:2 | D5 G5 B5:2 D6:4 |
+        G5 E5 G5:2 C6 G5 E5:2 | A5 E5 A5:2 C6 B5 A5:2 | A5:2 C6:2 B5:2 G5:2 | C6:8 |
+        A5:3 G5 F5:2 E5:2 | G5:3 F5 E5:2 C5:2 | F5:3 E5 D5:2 F5:2 | G5:4 B5:2 D6:2 |
+        A5:3 G5 F5:2 A5:2 | G5:3 E5 C6:2 G5:2 | F5:2 A5:2 B5:2 D6:2 | C6:4 G5 E5 C5:2`,
+      ch: 'C | Am | F | G | C | Am | F G | C | F | C | Dm | G | F | C | Dm G | C',
+    },
+    {
+      id: 'boure', name: ['Bouře', 'Storm'], by: 'Windowling', style: 'rock', rps: 3.6, bar: 8, beat: 2, pickup: 0,
+      mel: `A4 A4 C5 A4 D5 A4 E5 D5 | G4 G4 B4 G4 D5 G4 E5 D5 | F4 F4 A4 F4 C5 F4 D5 C5 | E4 G#4 B4 E5:2 D5 C5 B4 |
+        A4 A4 C5 A4 D5 A4 E5 D5 | G4 G4 B4 G4 D5 G4 E5 D5 | F4 F4 A4 F4 C5 F4 D5 C5 | E5:2 B4:2 G#4:2 E4:2 |
+        E5:3 A5 C6:2 B5 A5 | D5:3 G5 B5:2 A5 G5 | C5:3 F5 A5:2 G5 F5 | G#5:4 B5:4 |
+        E5:3 A5 C6:2 D6 E6 | D6:3 B5 G5:2 A5 B5 | C6:2 A5:2 B5:2 G#5:2 | A5:8`,
+      ch: 'Am | G | F | E | Am | G | F | E | Am | G | F | E | Am | G | F E | Am',
+    },
+    // ── Volná díla ──
     {
       id: 'oda', name: ['Óda na radost', 'Ode to Joy'], by: 'L. van Beethoven', style: 'edm', rps: 2.7, bar: 4, beat: 1, pickup: 0,
       mel: `E5 E5 F5 G5 | G5 F5 E5 D5 | C5 C5 D5 E5 | E5:1.5 D5:.5 D5:2 | E5 E5 F5 G5 | G5 F5 E5 D5 | C5 C5 D5 E5 | D5:1.5 C5:.5 C5:2 |

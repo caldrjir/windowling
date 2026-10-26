@@ -30,7 +30,7 @@ const KlAudio = (() => {
     padBus = ac.createGain(); padBus.connect(bgBus);
     // dozvuk: generovaná odezva malého sálu
     rev = ac.createConvolver();
-    const len = Math.floor(ac.sampleRate * 2.2), ir = ac.createBuffer(2, len, ac.sampleRate);
+    const len = Math.floor(ac.sampleRate * 1.5), ir = ac.createBuffer(2, len, ac.sampleRate);
     for (let c = 0; c < 2; c++) {
       const d = ir.getChannelData(c);
       for (let i = 0; i < len; i++) { const t = i / ac.sampleRate; d[i] = (Math.random() * 2 - 1) * Math.exp(-t * 3.2) * (t < 0.012 ? t / 0.012 : 1); }
@@ -215,17 +215,17 @@ const KlAudio = (() => {
   function pad(ms, t, dur, v = 1) { return saws(ms, t, dur, v, { dest: padBus, f0: 1300, att: 0.06, rel: 0.25, level: 0.16, wet: 0.5, detune: [-12, 0, 12] }); }
   function pluck(ms, t, v = 1) { return saws(ms, t, 0.18, v, { f0: 4200, f1: 600, fd: 0.15, att: 0.003, dec: 0.08, sus: 0.3, rel: 0.12, level: 0.28, wet: 0.6, detune: [-8, 8] }); }
   function lead(m, t, dur, v = 1) {
-    const h = saws([m, m - 12], t, dur, v, { f0: 5200, f1: 2600, fd: 0.25, att: 0.006, dec: 0.25, sus: 0.7, rel: 0.18, level: 0.3, wet: 0.45 });
+    const h = saws([m], t, dur, v, { f0: 5200, f1: 2600, fd: 0.25, att: 0.006, dec: 0.25, sus: 0.7, rel: 0.18, level: 0.3, wet: 0.45, detune: [-12, 0, 12] });
     return h;
   }
   // zkreslená kytara: pila → saturace → „reprobedna“
   function guitar(ms, t, dur, v = 1, mute = false) {
     const g = ac.createGain(), ws = ac.createWaveShaper(), lp = ac.createBiquadFilter(), hp = ac.createBiquadFilter(), pre = ac.createGain(), oscs = [];
-    ws.curve = shaper; ws.oversample = '2x';
+    ws.curve = shaper; ws.oversample = 'none';
     pre.gain.value = 0.9;
     lp.type = 'lowpass'; lp.frequency.value = mute ? 1500 : 2900; lp.Q.value = 0.9;
     hp.type = 'highpass'; hp.frequency.value = 90;
-    for (const m of ms) for (const d of [-7, 7]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hz(m); o.detune.value = d; o.connect(pre); oscs.push(o); }
+    for (const m of ms) for (const d of ms.length > 1 ? [0] : [-7, 7]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hz(m); o.detune.value = d; o.connect(pre); oscs.push(o); }
     pre.connect(ws); ws.connect(lp); lp.connect(hp); hp.connect(g); g.connect(bus);
     const s = ac.createGain(); s.gain.value = 0.25; g.connect(s); s.connect(rv);
     const a = 0.16 * v;
