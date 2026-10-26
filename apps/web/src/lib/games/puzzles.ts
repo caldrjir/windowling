@@ -4196,4 +4196,94 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.restore();
 		},
 	},
+	{
+		id: 'mrakodrap',
+		title: 'MRAKODRAP',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Pusť patro a stav do nebe!',
+		description:
+			'Na motivy Tower Bloxx: jeřáb houpe patrem a ty ho ťuknutím pustíš na věž. Přesně položená patra přivedou víc obyvatel a zklidní houpání, nepřesná věž rozkývají. Tři patra smíš upustit. Stav ze dne přes západ a noc až do vesmíru. Lehká, Klasika a Těžká s větrem.',
+		genres: ['Arkáda', 'Jedno tlačítko', 'Načasování'],
+		features: [
+			'Perfektní položení a série',
+			'Den, noc i vesmír',
+			'Vítr v Těžké',
+			'Žebříčky obyvatel',
+		],
+		en: {
+			tagline: 'Drop a floor and build to the sky!',
+			description:
+				'In the spirit of Tower Bloxx: the crane swings a floor and one tap drops it onto the tower. Precisely placed floors bring more residents and calm the sway, sloppy ones make the tower rock. You may drop three floors. Build from day through sunset and night into space. Easy, Classic and Hard with wind.',
+			genres: ['Arcade', 'One button', 'Timing'],
+			features: [
+				'Perfect drops and streaks',
+				'Day, night and space',
+				'Wind in Hard',
+				'Resident leaderboards',
+			],
+		},
+		statLabels: labels,
+		path: '/games/mrakodrap/index.html',
+		colors: ['#f2b632', '#5cb8f2', '#e8734a'],
+		statsKey: 'gamecenter.stats.mrakodrap',
+		cover(ctx, w, h, t) {
+			// a swinging crane drops floors onto a growing tower under a day sky
+			const OL = '#24171a',
+				gy = h * 0.9,
+				fh = h * 0.1,
+				bw = w * 0.36;
+			const sky = ctx.createLinearGradient(0, 0, 0, gy);
+			sky.addColorStop(0, '#5cb8f2');
+			sky.addColorStop(1, '#bfe8ff');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, gy);
+			ctx.fillStyle = '#8fb7cc';
+			for (let i = 0; i < 10; i++) {
+				const bh = h * (0.12 + ((i * 37) % 9) / 40);
+				ctx.fillRect((i * w) / 10, gy - bh, w / 10 - 3, bh);
+			}
+			ctx.fillStyle = '#6cbf4a';
+			ctx.fillRect(0, gy, w, h - gy);
+			const cols = ['#e8734a', '#4fa3d9', '#f2c14e', '#7bc86c'];
+			const floor = (x: number, y: number, c: string, ang: number): void => {
+				ctx.save();
+				ctx.translate(x, y);
+				ctx.rotate(ang);
+				ctx.fillStyle = c;
+				ctx.fillRect(-bw / 2, -fh, bw, fh);
+				ctx.fillStyle = '#bfe4f7';
+				for (let k = 0; k < 3; k++)
+					ctx.fillRect(-bw / 2 + 6 + (k * (bw - 12)) / 3, -fh + 5, (bw - 12) / 3 - 6, fh - 10);
+				ctx.strokeStyle = OL;
+				ctx.lineWidth = 2;
+				ctx.strokeRect(-bw / 2, -fh, bw, fh);
+				ctx.restore();
+			};
+			const offs = [0, 3, -4, 2, 5];
+			let x = w / 2;
+			offs.forEach((o, i) => {
+				x += o;
+				floor(x, gy - i * fh, cols[i % cols.length] ?? '#e8734a', 0);
+			});
+			// crane and the swinging floor
+			ctx.strokeStyle = '#f2b632';
+			ctx.lineWidth = 4;
+			ctx.beginPath();
+			ctx.moveTo(0, h * 0.06);
+			ctx.lineTo(w, h * 0.06);
+			ctx.stroke();
+			const th = Math.sin(t * 2.2) * 0.5,
+				len = h * 0.2,
+				hx = w / 2 + Math.sin(th) * len,
+				hy = h * 0.08 + Math.cos(th) * len;
+			ctx.strokeStyle = '#2e2f35';
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			ctx.moveTo(w / 2, h * 0.08);
+			ctx.lineTo(hx, hy);
+			ctx.stroke();
+			floor(hx, hy + fh + 3, '#c86fd0', -th * 0.15);
+		},
+	},
 ];

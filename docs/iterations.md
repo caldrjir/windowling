@@ -91,7 +91,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Diamond Rush – maze adventure, collect diamonds, push boulders
 - [ ] Bounce / Bounce Tales – rolling red ball platformer
 - [ ] Splinter Cell – stealth in shadows
-- [ ] Tower Bloxx – stack swinging floors into a tower
+- [x] Tower Bloxx – stack swinging floors into a tower (Mrakodrap)
 - [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
 - [x] Flappy Bird – tap to fly through gaps (Pírko)
 - [x] Fruit Ninja – swipe to slice fruit, avoid bombs (Šmik!)

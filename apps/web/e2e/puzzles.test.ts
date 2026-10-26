@@ -34,6 +34,7 @@ const PUZZLES = [
 	'veky',
 	'ptaci',
 	'pirko',
+	'mrakodrap',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -886,4 +887,23 @@ test('pirko flaps through the pipes and scores', async ({ page }) => {
 			},
 		)
 		.toBeGreaterThan(2);
+});
+
+test('mrakodrap drops floors onto the tower and scores', async ({ page }) => {
+	await startFree(page, 'mrakodrap', 'lehka');
+	const cv = page.locator('.md-cv');
+	await expect(cv).toBeVisible();
+	// The first tap drops the first floor.
+	await cv.click();
+	await expect
+		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { phase: string }).phase)
+		.not.toBe('ready');
+	// The autopilot drops the next floors precisely.
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
+	await expect
+		.poll(
+			async () => ((await page.evaluate('Kit._test.inst._state()')) as { floors: number }).floors,
+			{ timeout: 20_000 },
+		)
+		.toBeGreaterThan(3);
 });
