@@ -3988,4 +3988,142 @@ export const PUZZLE_GAMES: Game[] = [
 			bird(bx, cyc < hitT ? by : gy - ph - pw - br + Math.min(after * h * 1.5, ph + pw));
 		},
 	},
+	{
+		id: 'pirko',
+		title: 'PÍRKO',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Ťukni a mávni křídly!',
+		description:
+			'Na motivy Flappy Bird: jedno ťuknutí a ptáček mávne křídly. Proleť co nejvíc mezer mezi zelenými rourami, každá desátá je zlatá, sbírej medaile od bronzové po platinovou a sleduj, jak se den mění v západ a noc. Lehká, Klasika a Těžká s pohyblivými rourami.',
+		genres: ['Arkáda', 'Jedno tlačítko', 'Reflexy'],
+		features: ['Tři obtížnosti', 'Medaile', 'Den, západ a noc', 'Žebříčky rour'],
+		en: {
+			tagline: 'Tap and flap!',
+			description:
+				'In the spirit of Flappy Bird: one tap and the little bird flaps its wings. Fly through as many gaps between the green pipes as you can, every tenth one is golden, earn medals from bronze to platinum and watch the day turn to sunset and night. Easy, Classic and Hard with moving pipes.',
+			genres: ['Arcade', 'One button', 'Reflexes'],
+			features: ['Three difficulties', 'Medals', 'Day, sunset and night', 'Pipe leaderboards'],
+		},
+		statLabels: labels,
+		path: '/games/pirko/index.html',
+		colors: ['#ffe14a', '#5ec4f0', '#7ccd3c'],
+		statsKey: 'gamecenter.stats.pirko',
+		cover(ctx, w, h, t) {
+			// a sunny sky over a little city: pipes slide past and the bird flaps through the gaps
+			const OL = '#2a1e14',
+				gy = h * 0.84,
+				m = Math.min(w, h);
+			const sky = ctx.createLinearGradient(0, 0, 0, gy);
+			sky.addColorStop(0, '#5ec4f0');
+			sky.addColorStop(1, '#c8f0ff');
+			ctx.fillStyle = sky;
+			ctx.fillRect(0, 0, w, gy);
+			ctx.fillStyle = 'rgba(255,255,255,.9)';
+			for (const [cx, cy, r] of [
+				[0.18, 0.2, 0.06],
+				[0.24, 0.22, 0.05],
+				[0.7, 0.14, 0.05],
+				[0.76, 0.16, 0.06],
+			] as const) {
+				ctx.beginPath();
+				ctx.arc(((w * cx - t * 10) % (w * 1.2)) + w * 0.1, h * cy, m * r, 0, TAU);
+				ctx.fill();
+			}
+			ctx.fillStyle = '#8ccab8';
+			for (let i = 0; i < 12; i++) {
+				const bw = w / 12,
+					bh = h * (0.08 + ((i * 37) % 7) / 50);
+				ctx.fillRect(i * bw, gy - bh, bw - 2, bh);
+			}
+			ctx.fillStyle = '#5cbf4a';
+			for (let i = 0; i <= 8; i++) {
+				ctx.beginPath();
+				ctx.arc((i * w) / 8, gy, m * 0.05, Math.PI, 0);
+				ctx.fill();
+			}
+			// pipes
+			const pw = m * 0.16,
+				gap = h * 0.32,
+				span = w * 0.62,
+				off = (t * w * 0.18) % span;
+			for (let i = -1; i < 3; i++) {
+				const x = w * 0.75 + i * span - off,
+					c = h * (0.42 + 0.12 * Math.sin(i * 2.1 + Math.floor((t * w * 0.18) / span) * 1.3));
+				for (const [y0, y1] of [
+					[-4, c - gap / 2],
+					[c + gap / 2, gy],
+				] as const) {
+					const gr = ctx.createLinearGradient(x, 0, x + pw, 0);
+					gr.addColorStop(0, '#4a9a2a');
+					gr.addColorStop(0.3, '#a8ec6a');
+					gr.addColorStop(1, '#3e8a22');
+					ctx.fillStyle = gr;
+					ctx.strokeStyle = OL;
+					ctx.lineWidth = 2;
+					ctx.fillRect(x, y0, pw, y1 - y0);
+					ctx.strokeRect(x, y0, pw, y1 - y0);
+					const ly = y0 < 0 ? y1 - h * 0.05 : y0;
+					ctx.fillRect(x - 3, ly, pw + 6, h * 0.05);
+					ctx.strokeRect(x - 3, ly, pw + 6, h * 0.05);
+				}
+			}
+			ctx.fillStyle = '#ded28a';
+			ctx.fillRect(0, gy, w, h - gy);
+			ctx.fillStyle = '#7ccd3c';
+			ctx.fillRect(0, gy, w, h * 0.03);
+			ctx.fillStyle = OL;
+			ctx.fillRect(0, gy, w, 2);
+			// the bird
+			const bx = w * 0.3,
+				by = h * 0.44 + Math.sin(t * 4) * h * 0.04,
+				r = m * 0.08,
+				wing = Math.sin(t * 14);
+			ctx.save();
+			ctx.translate(bx, by);
+			ctx.rotate(-Math.cos(t * 4) * 0.25);
+			const gr = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r * 1.15);
+			gr.addColorStop(0, '#fff6c0');
+			gr.addColorStop(0.35, '#ffe14a');
+			gr.addColorStop(1, '#f0a81a');
+			ctx.fillStyle = gr;
+			ctx.strokeStyle = OL;
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.ellipse(0, 0, r * 1.08, r, 0, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#fff';
+			ctx.beginPath();
+			ctx.ellipse(r * 0.48, -r * 0.3, r * 0.34, r * 0.38, 0, 0, TAU);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = OL;
+			ctx.beginPath();
+			ctx.arc(r * 0.6, -r * 0.27, r * 0.14, 0, TAU);
+			ctx.fill();
+			ctx.fillStyle = '#ff8a2a';
+			ctx.beginPath();
+			ctx.moveTo(r * 0.7, 0);
+			ctx.lineTo(r * 1.45, r * 0.15);
+			ctx.lineTo(r * 0.72, r * 0.32);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#fff6c0';
+			ctx.beginPath();
+			ctx.ellipse(
+				-r * 0.25,
+				r * 0.05 + wing * r * 0.15,
+				r * 0.5,
+				r * 0.28,
+				-0.3 - wing * 0.4,
+				0,
+				TAU,
+			);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		},
+	},
 ];
