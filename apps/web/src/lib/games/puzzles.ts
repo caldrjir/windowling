@@ -4225,65 +4225,157 @@ export const PUZZLE_GAMES: Game[] = [
 		},
 		statLabels: labels,
 		path: '/games/mrakodrap/index.html',
-		colors: ['#f2b632', '#5cb8f2', '#e8734a'],
+		colors: ['#f6b80b', '#f0a87a', '#3b86d6'],
 		statsKey: 'gamecenter.stats.mrakodrap',
 		cover(ctx, w, h, t) {
-			// a swinging crane drops floors onto a growing tower under a day sky
-			const OL = '#24171a',
-				gy = h * 0.9,
-				fh = h * 0.1,
-				bw = w * 0.36;
+			// golden hour over a hazy skyline: a glass tower grows while the crane swings the next floor
+			const m = Math.min(w, h),
+				gy = h * 0.86;
 			const sky = ctx.createLinearGradient(0, 0, 0, gy);
-			sky.addColorStop(0, '#5cb8f2');
-			sky.addColorStop(1, '#bfe8ff');
+			sky.addColorStop(0, '#3d6fcf');
+			sky.addColorStop(0.55, '#f0a87a');
+			sky.addColorStop(1, '#ffe0a8');
 			ctx.fillStyle = sky;
-			ctx.fillRect(0, 0, w, gy);
-			ctx.fillStyle = '#8fb7cc';
-			for (let i = 0; i < 10; i++) {
-				const bh = h * (0.12 + ((i * 37) % 9) / 40);
-				ctx.fillRect((i * w) / 10, gy - bh, w / 10 - 3, bh);
+			ctx.fillRect(0, 0, w, h);
+			const sx = w * 0.24,
+				sy = h * 0.36;
+			const glow = ctx.createRadialGradient(sx, sy, m * 0.02, sx, sy, m * 0.4);
+			glow.addColorStop(0, 'rgba(255,244,214,.95)');
+			glow.addColorStop(0.25, 'rgba(255,214,150,.35)');
+			glow.addColorStop(1, 'rgba(255,200,140,0)');
+			ctx.fillStyle = glow;
+			ctx.fillRect(0, 0, w, h);
+			ctx.fillStyle = '#fffaf0';
+			ctx.beginPath();
+			ctx.arc(sx, sy, m * 0.06, 0, TAU);
+			ctx.fill();
+			// soft clouds drifting past
+			for (let i = 0; i < 3; i++) {
+				const s = m * (0.05 + i * 0.012),
+					x = ((i * 0.37 + t * 0.012 * (i + 1)) % 1.3) * w * 1.1 - w * 0.15,
+					y = h * (0.2 + i * 0.09);
+				ctx.fillStyle = 'rgba(255,236,220,.85)';
+				ctx.beginPath();
+				ctx.arc(x, y, s, 0, TAU);
+				ctx.arc(x + s * 1.2, y - s * 0.6, s * 1.25, 0, TAU);
+				ctx.arc(x + s * 2.6, y - s * 0.2, s, 0, TAU);
+				ctx.rect(x, y - s * 0.2, s * 2.6, s * 1.1);
+				ctx.fill();
 			}
-			ctx.fillStyle = '#6cbf4a';
+			// two skyline layers in the haze
+			for (const [col, f, hm] of [
+				['#d9a9a0', 0.4, 0.38],
+				['#9c7186', 0.75, 0.26],
+			] as const) {
+				ctx.fillStyle = col;
+				let x = -10;
+				for (let i = 0; x < w; i++) {
+					const bw = w * (0.05 + (((i * 37) % 11) / 11) * 0.06),
+						bh = h * hm * (0.4 + (((i * 53 + f * 10) % 13) / 13) * 0.6);
+					ctx.fillRect(x, gy - bh, bw, bh);
+					x += bw + w * 0.008;
+				}
+			}
+			ctx.fillStyle = '#c9ced8';
 			ctx.fillRect(0, gy, w, h - gy);
-			const cols = ['#e8734a', '#4fa3d9', '#f2c14e', '#7bc86c'];
-			const floor = (x: number, y: number, c: string, ang: number): void => {
+			ctx.fillStyle = '#4a5160';
+			ctx.fillRect(0, gy + h * 0.035, w, h);
+			// the tower: glass floors with a sheen, lit edges and slabs
+			const bw = w * 0.32,
+				fh = h * 0.075,
+				cx = w * 0.66,
+				floors = 5 + (Math.floor(t / 1.6) % 3);
+			const floor = (x: number, y: number, ang: number, a: number): void => {
 				ctx.save();
 				ctx.translate(x, y);
 				ctx.rotate(ang);
-				ctx.fillStyle = c;
+				ctx.globalAlpha = a;
+				ctx.fillStyle = '#1f2d3f';
 				ctx.fillRect(-bw / 2, -fh, bw, fh);
-				ctx.fillStyle = '#bfe4f7';
-				for (let k = 0; k < 3; k++)
-					ctx.fillRect(-bw / 2 + 6 + (k * (bw - 12)) / 3, -fh + 5, (bw - 12) / 3 - 6, fh - 10);
-				ctx.strokeStyle = OL;
-				ctx.lineWidth = 2;
-				ctx.strokeRect(-bw / 2, -fh, bw, fh);
+				const n = 4,
+					pw = (bw - 6) / n;
+				for (let k = 0; k < n; k++) {
+					const px = -bw / 2 + 3 + k * pw + 1,
+						g = ctx.createLinearGradient(0, -fh, 0, 0);
+					g.addColorStop(0, '#8fd8ff');
+					g.addColorStop(1, '#3b86d6');
+					ctx.fillStyle = g;
+					ctx.fillRect(px, -fh + 5, pw - 2, fh - 8);
+					ctx.fillStyle = 'rgba(255,255,255,.3)';
+					ctx.beginPath();
+					ctx.moveTo(px + pw * 0.15, -3);
+					ctx.lineTo(px + pw * 0.55, -fh + 5);
+					ctx.lineTo(px + pw * 0.8, -fh + 5);
+					ctx.lineTo(px + pw * 0.4, -3);
+					ctx.fill();
+				}
+				ctx.fillStyle = '#e9edf2';
+				ctx.fillRect(-bw / 2 - 2, -fh, bw + 4, 3);
+				const lg = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0);
+				lg.addColorStop(0, 'rgba(255,255,255,.14)');
+				lg.addColorStop(0.4, 'rgba(255,255,255,0)');
+				lg.addColorStop(1, 'rgba(0,0,0,.25)');
+				ctx.fillStyle = lg;
+				ctx.fillRect(-bw / 2, -fh, bw, fh);
 				ctx.restore();
 			};
-			const offs = [0, 3, -4, 2, 5];
-			let x = w / 2;
-			offs.forEach((o, i) => {
-				x += o;
-				floor(x, gy - i * fh, cols[i % cols.length] ?? '#e8734a', 0);
-			});
-			// crane and the swinging floor
-			ctx.strokeStyle = '#f2b632';
-			ctx.lineWidth = 4;
+			ctx.fillStyle = 'rgba(0,0,0,.2)';
 			ctx.beginPath();
-			ctx.moveTo(0, h * 0.06);
-			ctx.lineTo(w, h * 0.06);
+			ctx.ellipse(cx, gy + 2, bw * 0.7, h * 0.012, 0, 0, TAU);
+			ctx.fill();
+			for (let i = 0; i < floors; i++) floor(cx + Math.sin(i * 1.7) * w * 0.006, gy - i * fh, 0, 1);
+			// crane: lattice jib, trolley, cable and the swinging floor
+			const jy = h * 0.07;
+			ctx.strokeStyle = '#f6b80b';
+			ctx.lineWidth = Math.max(1.5, m * 0.008);
+			ctx.beginPath();
+			ctx.moveTo(0, jy);
+			ctx.lineTo(w, jy);
+			ctx.moveTo(0, jy + h * 0.035);
+			ctx.lineTo(w, jy + h * 0.035);
 			ctx.stroke();
-			const th = Math.sin(t * 2.2) * 0.5,
-				len = h * 0.2,
-				hx = w / 2 + Math.sin(th) * len,
-				hy = h * 0.08 + Math.cos(th) * len;
-			ctx.strokeStyle = '#2e2f35';
-			ctx.lineWidth = 1.5;
+			ctx.strokeStyle = '#c48a00';
+			ctx.lineWidth = Math.max(1, m * 0.004);
 			ctx.beginPath();
-			ctx.moveTo(w / 2, h * 0.08);
+			for (let x = 0; x < w; x += h * 0.04) {
+				ctx.moveTo(x, jy + h * 0.035);
+				ctx.lineTo(x + h * 0.02, jy);
+				ctx.lineTo(x + h * 0.04, jy + h * 0.035);
+			}
+			ctx.stroke();
+			const th = Math.sin(t * 2.1) * 0.45,
+				len = h * 0.18,
+				px = cx,
+				py = jy + h * 0.04,
+				hx = px + Math.sin(th) * len,
+				hy = py + Math.cos(th) * len;
+			ctx.fillStyle = '#38404f';
+			ctx.fillRect(px - m * 0.04, jy + h * 0.03, m * 0.08, h * 0.025);
+			ctx.strokeStyle = '#3a404c';
+			ctx.lineWidth = 1.2;
+			ctx.beginPath();
+			ctx.moveTo(px, py);
 			ctx.lineTo(hx, hy);
 			ctx.stroke();
-			floor(hx, hy + fh + 3, '#c86fd0', -th * 0.15);
+			ctx.fillStyle = '#f6b80b';
+			ctx.fillRect(hx - m * 0.02, hy - m * 0.012, m * 0.04, m * 0.024);
+			const top = gy - floors * fh;
+			if (hy + fh + 6 < top) floor(hx, hy + fh + m * 0.02, -th * 0.15, 1);
+			// a perfect drop ring pulses on the roof
+			const ph = (t % 1.6) / 1.6;
+			ctx.strokeStyle = `rgba(255,214,90,${1 - ph})`;
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.ellipse(
+				cx,
+				top + fh * 0.5,
+				bw * 0.5 + ph * bw * 0.5,
+				fh * 0.3 + ph * fh * 0.6,
+				0,
+				0,
+				TAU,
+			);
+			ctx.stroke();
 		},
 	},
 ];

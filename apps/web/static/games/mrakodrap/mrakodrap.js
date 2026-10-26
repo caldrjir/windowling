@@ -31,6 +31,7 @@ const Mrakodrap = (() => {
       cssW = Math.min(box - 2, cssH * W / H); cssH = cssW * H / W;
       dpr = Math.min(1.5, devicePixelRatio || 1);
       cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr); cv.style.width = cssW + 'px'; cv.style.height = cssH + 'px';
+      MdArt.setScale(dpr * cssW / W);
     }
 
     // ── Stav ──
@@ -39,7 +40,7 @@ const Mrakodrap = (() => {
     let cum = 0, swayA = 0, swayPh = 0, cam = 0, camX = 0, pivotX = PX, clock = 0, score = 0, perfects = 0, combo = 0, best = 0, lives = 3;
     let phase = 'ready', over = false, paused = false, speed = 1, acc = 0, auto = false, wait = 0, endT = 0, shake = 0;
     let hook = null, fall = null;
-    const debris = [], pops = [], dust = [];
+    const debris = [], pops = [], dust = [], rings = [], sparks = [];
     let wind = 0;
     function newHook() {
       const n = floors.length;
@@ -90,6 +91,8 @@ const Mrakodrap = (() => {
         for (let i = pops.length - 1; i >= 0; i--) if (pops[i].big) pops.splice(i, 1);
         pops.push({ t: combo > 1 ? `${L('PERFEKTNÍ', 'PERFECT')} ×${combo}` : L('PERFEKTNÍ!', 'PERFECT!'), x: W / 2, y: 0, life: 1.2, big: true });
         api.sound(combo >= 3 ? 'line' : 'star');
+        rings.push({ x: topX(), y: towerTop() + FH * 0.5, t: 0 });
+        for (let k = 0; k < 14; k++) { const a = fr() * 6.28, v = 80 + fr() * 140; sparks.push({ x: topX() + (fr() - 0.5) * D.bw, y: towerTop() + FH * 0.6, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.6 + fr() * 0.4 }); }
       } else {
         combo = 0;
         swayA = Math.min(46, swayA + Math.abs(dx) * 0.12 + 0.8);
@@ -130,6 +133,8 @@ const Mrakodrap = (() => {
       if (!fall) pivotX += (PX + cum - pivotX) * Math.min(1, dt * 2);
       camX += (cum * 0.7 - camX) * Math.min(1, dt * 2);
       for (let i = debris.length - 1; i >= 0; i--) { const d = debris[i]; d.vy += 1500 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.ang += d.va * dt; d.life -= dt; if (d.life <= 0) debris.splice(i, 1); }
+      for (let i = rings.length - 1; i >= 0; i--) { rings[i].t += dt; if (rings[i].t > 0.6) rings.splice(i, 1); }
+      for (let i = sparks.length - 1; i >= 0; i--) { const d = sparks[i]; d.vy += 400 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.life -= dt; if (d.life <= 0) sparks.splice(i, 1); }
       for (let i = dust.length - 1; i >= 0; i--) { const d = dust[i]; d.x += d.vx * dt; d.y += d.vy * dt; d.life -= dt; if (d.life <= 0) dust.splice(i, 1); }
       for (let i = pops.length - 1; i >= 0; i--) { pops[i].life -= dt; if (pops[i].life <= 0) pops.splice(i, 1); }
       shake = Math.max(0, shake - dt);
@@ -151,65 +156,106 @@ const Mrakodrap = (() => {
 
     // ── Kresba ──
     function draw() {
-      const g = ctx, k = cssW / W, n = floors.length - 1, h = n / 22, sh = shake > 0 ? Math.sin(clock * 90) * 5 * shake : 0;
+      const g = ctx, k = cssW / W, n = floors.length - 1, h = Math.min(4.2, n / 18), sh = shake > 0 ? Math.sin(clock * 90) * 4 * shake : 0;
       g.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
-      MdArt.sky(g, W, H, h);
-      MdArt.stars(g, W, H, Math.max(0, Math.min(1, h - 1.6)), cam);
-      if (h < 1.8) { const a = 0.85 * (1 - Math.max(0, h - 1)); for (let i = 0; i < 5; i++) MdArt.cloud(g, ((i * 130 + clock * (8 + i * 3)) % (W + 160)) - 100, ((i * 170 + cam * 0.35) % (H + 120)) - 60, 0.8 + (i % 3) * 0.25, a); }
+      const T = MdArt.scene(g, W, H, h, cam, camX, clock, GY), night = T.night > 0.5;
       g.save(); g.translate(sh - camX, cam);
-      MdArt.city(g, W, GY, h > 1.5);
-      MdArt.ground(g, W, GY, H);
+      MdArt.ground(g, W, GY, H, T, camX);
+      // měkký stín věže na zemi
+      g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(floorX(0), GY + 3, D.bw * 0.7, 5, 0, 0, 7); g.fill();
       // věž: kreslí se jen viditelná patra
       for (let i = 0; i <= n; i++) {
         const y = GY - i * FH;
         if (y + cam < -FH || y - FH + cam > H + FH) continue;
-        MdArt.floor(g, floorX(i), y, D.bw, FH, i, h > 1.4);
+        MdArt.floor(g, floorX(i), y, D.bw, FH, i, night);
       }
-      if (n > 0) MdArt.roof(g, floorX(n), GY - (n + 1) * FH, D.bw, n);
-      for (const d of dust) { g.fillStyle = `rgba(230,220,200,${d.life * 1.4})`; g.beginPath(); g.arc(d.x, d.y, 4, 0, 7); g.fill(); }
-      if (fall) MdArt.floor(g, fall.x, fall.y, D.bw, FH, fall.i, h > 1.4, fall.ang);
-      for (const d of debris) { g.globalAlpha = Math.min(1, d.life); MdArt.floor(g, d.x, d.y, D.bw, FH, d.i, false, d.ang); g.globalAlpha = 1; }
+      if (n > 0) MdArt.roof(g, floorX(n), GY - (n + 1) * FH, D.bw, night, clock);
+      for (const d of dust) { g.fillStyle = `rgba(235,230,220,${Math.min(0.6, d.life)})`; g.beginPath(); g.arc(d.x, d.y, 3 + (0.8 - d.life) * 8, 0, 7); g.fill(); }
+      for (const r of rings) { const a = 1 - r.t / 0.6; g.strokeStyle = `rgba(255,214,90,${a})`; g.lineWidth = 3 * a + 1; g.beginPath(); g.ellipse(r.x, r.y, D.bw * 0.5 + r.t * 140, 14 + r.t * 40, 0, 0, 7); g.stroke(); }
+      for (const d of sparks) { g.fillStyle = `rgba(255,236,150,${Math.min(1, d.life * 2)})`; g.fillRect(d.x - 1.5, d.y - 1.5, 3, 3); }
+      if (fall) MdArt.floor(g, fall.x, fall.y, D.bw, FH, fall.i, night, fall.ang);
+      for (const d of debris) { g.globalAlpha = Math.min(1, d.life); MdArt.floor(g, d.x, d.y, D.bw, FH, d.i, night, d.ang); g.globalAlpha = 1; }
       g.restore();
       // jeřáb s visícím patrem
       if (hook) {
-        const p = hookPos();
-        MdArt.crane(g, W, pivotX - camX, PY, p.x - camX, p.y + cam);
-        g.save(); g.translate(p.x - camX, p.y + cam); g.rotate(-hook.max * Math.sin(hook.t) * 0.12);
-        MdArt.floor(g, 0, 6 + FH, D.bw, FH, floors.length, h > 1.4);
-        g.strokeStyle = '#2e2f35'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 0); g.lineTo(-D.bw / 2 + 8, 6); g.moveTo(0, 0); g.lineTo(D.bw / 2 - 8, 6); g.stroke();
+        const p = hookPos(), hx = p.x - camX + sh, hy = p.y + cam;
+        MdArt.crane(g, W, pivotX - camX + sh, PY, hx, hy, night);
+        g.save(); g.translate(hx, hy); g.rotate(-hook.max * Math.sin(hook.t) * 0.12);
+        MdArt.slings(g, 0, 0, D.bw, night);
+        MdArt.floor(g, 0, 6 + FH, D.bw, FH, floors.length, night);
         g.restore();
-      } else MdArt.crane(g, W, pivotX - camX, PY, pivotX - camX, PY + 40);
-      // nápisy
-      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-      const txt = (s, x, y, size, col = '#fff', lw = 6) => { g.font = `900 ${size}px Unbounded, sans-serif`; g.lineWidth = lw; g.strokeStyle = MdArt.OL; g.strokeText(s, x, y); g.fillStyle = col; g.fillText(s, x, y); };
-      txt(String(score), W / 2, 30, 30);
-      g.font = '700 13px "Space Grotesk", sans-serif'; g.fillStyle = '#fff'; g.lineWidth = 4; g.strokeStyle = MdArt.OL;
-      const info = `${n} ${L('pater', 'floors')}${P.level ? ` / ${P.target}` : ''}`;
-      g.strokeText(info, W / 2, 58); g.fillText(info, W / 2, 58);
-      for (let i = 0; i < 3; i++) { g.globalAlpha = i < lives ? 1 : 0.25; heart(g, W - 22 - i * 22, 30); }
-      g.globalAlpha = 1;
+      } else MdArt.crane(g, W, pivotX - camX + sh, PY, pivotX - camX + sh, PY + 30, night);
+      hud(g, n);
+    }
+    // ── Rozhraní: skleněné štítky nahoře, nápisy ──
+    function pill(g, x, y, w, h) { g.fillStyle = 'rgba(12,16,34,.42)'; g.beginPath(); g.roundRect(x, y, w, h, h / 2); g.fill(); g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; g.stroke(); }
+    function label(g, s, x, y, size, col = '#fff', wgt = 800, font = 'Unbounded') {
+      g.font = `${wgt} ${size}px ${font}, sans-serif`;
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.fillText(s, x, y + Math.max(1.5, size * 0.06));
+      g.fillStyle = col; g.fillText(s, x, y);
+    }
+    function hud(g, n) {
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      // obyvatelé (skóre)
+      pill(g, W / 2 - 74, 8, 148, 38);
+      person(g, W / 2 - 52, 27);
+      g.textAlign = 'left'; label(g, score.toLocaleString(Kit.LANG === 'en' ? 'en-US' : 'cs-CZ'), W / 2 - 38, 28, 19, '#fff', 900);
+      g.textAlign = 'center';
+      // patra a série
+      const info = `${n}${P.level ? ' / ' + P.target : ''} ${L('pater', 'floors')}${combo > 1 ? `  ·  ×${combo}` : ''}`;
+      label(g, info, W / 2, 58, 12, combo > 1 ? '#ffd65a' : '#fff', 700, '"Space Grotesk"');
+      // životy
+      pill(g, W - 84, 12, 74, 30);
+      for (let i = 0; i < 3; i++) heart(g, W - 66 + i * 21, 27, i < lives);
+      // vítr
+      pill(g, 10, 12, 58, 30);
       if (D.wind && wind) {
-        const s = Math.sign(wind), len = 10 + Math.abs(wind) / D.wind * 18;
-        g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); const ax = 40 - s * len / 2; g.moveTo(ax, 30); g.lineTo(ax + s * len, 30); g.lineTo(ax + s * (len - 6), 24); g.moveTo(ax + s * len, 30); g.lineTo(ax + s * (len - 6), 36); g.stroke();
-      }
+        const sgn = Math.sign(wind), len = 8 + Math.abs(wind) / D.wind * 14, ax = 39 - sgn * len / 2;
+        g.strokeStyle = '#bfe6ff'; g.lineWidth = 2.5; g.lineCap = 'round'; g.lineJoin = 'round';
+        g.beginPath(); g.moveTo(ax, 27); g.lineTo(ax + sgn * len, 27); g.moveTo(ax + sgn * (len - 5), 22); g.lineTo(ax + sgn * len, 27); g.lineTo(ax + sgn * (len - 5), 32); g.stroke();
+        g.beginPath(); g.moveTo(ax - sgn * 2, 21); g.lineTo(ax + sgn * (len * 0.5), 21); g.stroke();
+      } else { g.fillStyle = 'rgba(255,255,255,.7)'; g.font = '700 10px "Space Grotesk", sans-serif'; g.fillText(L('bezvětří', 'calm'), 39, 27); }
       for (const p of pops) {
-        g.globalAlpha = Math.min(1, p.life * 2);
-        if (p.big) txt(p.t, W / 2, H * 0.36 - (1.2 - p.life) * 30, 22, p.bad ? '#ff6b6b' : '#ffe14a', 6);
-        else txt(p.t, p.x, p.y - (0.9 - p.life) * 40, 16, '#fff', 5);
+        g.globalAlpha = Math.min(1, p.life * 2.5);
+        if (p.big) {
+          const y = H * 0.34 - (1.2 - p.life) * 26, sc = 1 + Math.max(0, p.life - 1) * 1.5;
+          g.save(); g.translate(W / 2, y); g.scale(sc, sc);
+          g.font = '900 24px Unbounded, sans-serif';
+          const gr = g.createLinearGradient(0, -14, 0, 14);
+          if (p.bad) { gr.addColorStop(0, '#ff9a9a'); gr.addColorStop(1, '#ff3b5c'); } else { gr.addColorStop(0, '#fff6c2'); gr.addColorStop(1, '#ffb21e'); }
+          g.lineWidth = 6; g.lineJoin = 'round'; g.strokeStyle = 'rgba(40,20,10,.55)'; g.strokeText(p.t, 0, 0);
+          g.fillStyle = gr; g.fillText(p.t, 0, 0);
+          g.restore();
+        } else label(g, p.t, p.x, p.y - (0.9 - p.life) * 40, 15, '#fff', 800);
       }
       g.globalAlpha = 1;
       if (phase === 'ready') {
-        txt('MRAKODRAP', W / 2, H * 0.5, 30, '#ffe14a', 8);
-        txt(P.text || D.name, W / 2, H * 0.56, 15, '#fff', 5);
-        if (P.level) txt(`${L('Postav', 'Build')} ${P.target} ${L('pater', 'floors')}`, W / 2, H * 0.62, 16, '#fff3c0', 5);
-        else if (api.data['best_' + P.mode]) txt(`${L('rekord', 'best')} ${api.data['best_' + P.mode]}`, W / 2, H * 0.62, 15, '#fff3c0', 5);
-        txt(L('ŤUKNI A PUSŤ PATRO', 'TAP TO DROP A FLOOR'), W / 2, H * 0.7, 14, '#fff', 5);
+        const t = clock;
+        g.fillStyle = 'rgba(8,12,30,.35)'; g.beginPath(); g.roundRect(30, H * 0.44, W - 60, 150, 22); g.fill();
+        g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; g.stroke();
+        g.font = '900 30px Unbounded, sans-serif';
+        const gr = g.createLinearGradient(0, H * 0.48 - 16, 0, H * 0.48 + 16); gr.addColorStop(0, '#fff6c2'); gr.addColorStop(1, '#ffb21e');
+        g.fillStyle = 'rgba(0,0,0,.3)'; g.fillText('MRAKODRAP', W / 2, H * 0.48 + 2); g.fillStyle = gr; g.fillText('MRAKODRAP', W / 2, H * 0.48);
+        label(g, P.text || D.name, W / 2, H * 0.535, 13, '#fff', 700, '"Space Grotesk"');
+        const sub = P.level ? `${L('Postav', 'Build')} ${P.target} ${L('pater', 'floors')}` : api.data['best_' + P.mode] ? `${L('rekord', 'best')} ${api.data['best_' + P.mode].toLocaleString(Kit.LANG === 'en' ? 'en-US' : 'cs-CZ')}` : L('postav co nejvyšší věž', 'build the tallest tower');
+        label(g, sub, W / 2, H * 0.575, 12, '#ffe7a8', 700, '"Space Grotesk"');
+        const pw = 190, py = H * 0.62, pulse = 1 + Math.sin(t * 4) * 0.03;
+        g.save(); g.translate(W / 2, py + 14); g.scale(pulse, pulse);
+        const bg = g.createLinearGradient(0, -16, 0, 16); bg.addColorStop(0, '#ffcf4a'); bg.addColorStop(1, '#f59e0b');
+        g.fillStyle = bg; g.beginPath(); g.roundRect(-pw / 2, -16, pw, 32, 16); g.fill();
+        g.fillStyle = '#3a2408'; g.font = '800 12px Unbounded, sans-serif'; g.fillText(L('ŤUKNI A PUSŤ PATRO', 'TAP TO DROP'), 0, 1);
+        g.restore();
       }
-      if (paused) { g.fillStyle = 'rgba(10,8,20,.5)'; g.fillRect(0, 0, W, H); txt(L('PAUZA', 'PAUSED'), W / 2, H * 0.45, 30); txt(L('ťukni nebo P', 'tap or press P'), W / 2, H * 0.52, 14, '#fff3c0', 5); }
+      if (paused) { g.fillStyle = 'rgba(8,10,24,.55)'; g.fillRect(0, 0, W, H); label(g, L('PAUZA', 'PAUSED'), W / 2, H * 0.45, 28, '#fff', 900); label(g, L('ťukni nebo P', 'tap or press P'), W / 2, H * 0.51, 13, '#ffe7a8', 700, '"Space Grotesk"'); }
     }
-    function heart(g, x, y) {
-      g.fillStyle = '#ff4d6d'; g.strokeStyle = MdArt.OL; g.lineWidth = 2;
-      g.beginPath(); g.moveTo(x, y + 7); g.bezierCurveTo(x - 12, y - 1, x - 7, y - 10, x, y - 4); g.bezierCurveTo(x + 7, y - 10, x + 12, y - 1, x, y + 7); g.fill(); g.stroke();
+    function heart(g, x, y, on) {
+      g.fillStyle = on ? '#ff4d6d' : 'rgba(255,255,255,.22)';
+      g.beginPath(); g.moveTo(x, y + 7); g.bezierCurveTo(x - 11, y - 1, x - 6, y - 9, x, y - 4); g.bezierCurveTo(x + 6, y - 9, x + 11, y - 1, x, y + 7); g.fill();
+      if (on) { g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.arc(x - 4, y - 3, 1.8, 0, 7); g.fill(); }
+    }
+    function person(g, x, y) {
+      g.fillStyle = '#ffd65a'; g.beginPath(); g.arc(x, y - 6, 4.5, 0, 7); g.fill();
+      g.beginPath(); g.roundRect(x - 7, y, 14, 9, [7, 7, 2, 2]); g.fill();
     }
 
     // ── Smyčka a ovládání ──
@@ -255,19 +301,21 @@ const Mrakodrap = (() => {
     };
   }
 
-  // úvodní obrázek: věž pod jeřábem v denním nebi
+  // úvodní obrázek: skleněná věž ve zlaté hodince pod jeřábem
   function art(el) {
     el.innerHTML = '<canvas width="360" height="360" style="object-fit:contain"></canvas>';
     const g = el.querySelector('canvas').getContext('2d');
+    MdArt.setScale(1);
     g.beginPath(); g.roundRect(0, 0, 360, 360, 24); g.clip();
-    MdArt.sky(g, 360, 360, 0.6); MdArt.cloud(g, 40, 90, 1, 0.85); MdArt.cloud(g, 250, 60, 0.8, 0.85);
-    MdArt.city(g, 360, 330, false); MdArt.ground(g, 360, 330, 360);
-    const offs = [0, 4, -6, 3, 8, -2];
+    const gy = 318;
+    const T = MdArt.scene(g, 360, 360, 1.15, 0, 0, 0, gy);
+    MdArt.ground(g, 360, gy, 360, T, 0);
+    const offs = [0, 2, -3, 2, 4, -2, 1];
     let x = 180;
-    offs.forEach((o, i) => { x += o; MdArt.floor(g, x, 330 - i * 40, 92, 40, i, false); });
-    MdArt.roof(g, x, 330 - 6 * 40, 92, 5);
-    MdArt.crane(g, 360, 180, 40, 200, 90);
-    MdArt.floor(g, 200, 136, 92, 40, 6, false, -0.08);
+    offs.forEach((o, i) => { x += o; MdArt.floor(g, x, gy - i * 34, 96, 34, i === 0 ? 0 : i + 16, false); });
+    MdArt.roof(g, x, gy - offs.length * 34, 96, false, 1);
+    MdArt.crane(g, 360, 196, 36, 204, 66, false);
+    g.save(); g.translate(204, 66); g.rotate(-0.06); MdArt.slings(g, 0, 0, 96, false); MdArt.floor(g, 0, 40, 96, 34, 24, false); g.restore();
   }
   return { DIFFS, generate, create, art, targetOf };
 })();
