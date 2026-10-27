@@ -92,6 +92,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Bounce / Bounce Tales – rolling red ball platformer
 - [ ] Splinter Cell – stealth in shadows
 - [x] Tower Bloxx – stack swinging floors into a tower (Mrakodrap)
+- [x] Vlak (1993) – steer a growing train, collect items, leave through the gate (Vlak)
 - [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
 - [x] Flappy Bird – tap to fly through gaps (Pírko)
 - [x] Fruit Ninja – swipe to slice fruit, avoid bombs (Šmik!)
