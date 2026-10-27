@@ -57,6 +57,16 @@ function lodeCover(): HTMLImageElement | null {
 	return ldScene;
 }
 
+// ČLOVĚČE cover art: the game's own board mid-game (static/games/clovece/cover)
+let clScene: HTMLImageElement | null = null;
+function cloveceCover(): HTMLImageElement | null {
+	if (!clScene && typeof Image !== 'undefined') {
+		clScene = new Image();
+		clScene.src = '/games/clovece/cover/scene.webp';
+	}
+	return clScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4630,6 +4640,90 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.beginPath();
 			ctx.ellipse(bx + 482 * s, by + 352 * s, (14 + k * 60) * s, (9 + k * 38) * s, 0, 0, TAU);
 			ctx.stroke();
+		},
+	},
+	{
+		id: 'clovece',
+		title: 'ČLOVĚČE, NEZLOB SE',
+		group: 'puzzle',
+		category: 'board',
+		tagline: 'Šestka nasazuje, soupeř letí domů!',
+		description:
+			'Klasická desková hra pro dva až čtyři: hoď kostkou, nasaď figurky šestkou, vyhazuj soupeře a dostaň všechny čtyři figurky do domečku jako první. Hraj proti jednomu nebo třem počítačovým hráčům, denní partii se stejnými hody pro všechny, nebo online s kamarádem.',
+		genres: ['Desková', 'Česká klasika', 'Online'],
+		features: ['Online ve dvou', 'Až 4 hráči', 'Denní partie', 'Poctivá kostka'],
+		en: {
+			tagline: 'A six brings you out, rivals go home!',
+			description:
+				'The classic board game for two to four (Mensch ärgere dich nicht): roll the die, bring pieces out with a six, knock opponents back and be the first to get all four pieces home. Play one or three computer players, a daily game with the same rolls for everyone, or a friend online.',
+			genres: ['Board', 'Classic', 'Online'],
+			features: ['Two-player online', 'Up to 4 players', 'Daily game', 'A fair die'],
+		},
+		statLabels: labels,
+		path: '/games/clovece/index.html',
+		colors: ['#e23b3b', '#2f6fe0', '#f2c230'],
+		statsKey: 'gamecenter.stats.clovece',
+		cover(ctx, w, h, t) {
+			// the game's own board (1200×800); a die tumbles in the corner
+			ctx.fillStyle = '#21183a';
+			ctx.fillRect(0, 0, w, h);
+			const img = cloveceCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 1200, h / 800),
+				bx = (w - 1200 * s) / 2,
+				by = Math.min(0, Math.max(h - 800 * s, h / 2 - 400 * s));
+			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
+			const z = Math.max(18, Math.min(w, h) * 0.16),
+				x = w - z * 1.2,
+				y = h - z * 1.25;
+			ctx.save();
+			ctx.translate(x, y);
+			ctx.rotate(Math.sin(t * 2) * 0.25);
+			ctx.fillStyle = '#fff';
+			ctx.beginPath();
+			ctx.roundRect(-z / 2, -z / 2, z, z, z * 0.2);
+			ctx.fill();
+			ctx.fillStyle = '#222';
+			const face = 1 + (Math.floor(t * 1.5) % 6),
+				pips: Record<number, number[][]> = {
+					1: [[0, 0]],
+					2: [
+						[-1, -1],
+						[1, 1],
+					],
+					3: [
+						[-1, -1],
+						[0, 0],
+						[1, 1],
+					],
+					4: [
+						[-1, -1],
+						[1, -1],
+						[-1, 1],
+						[1, 1],
+					],
+					5: [
+						[-1, -1],
+						[1, -1],
+						[0, 0],
+						[-1, 1],
+						[1, 1],
+					],
+					6: [
+						[-1, -1],
+						[1, -1],
+						[-1, 0],
+						[1, 0],
+						[-1, 1],
+						[1, 1],
+					],
+				};
+			for (const [px, py] of pips[face] ?? []) {
+				ctx.beginPath();
+				ctx.arc((px ?? 0) * z * 0.26, (py ?? 0) * z * 0.26, z * 0.09, 0, TAU);
+				ctx.fill();
+			}
+			ctx.restore();
 		},
 	},
 ];

@@ -205,6 +205,26 @@ test('lode online: hidden fleets, shots answered by the defender, one side sinks
 	await bob.close();
 });
 
+test('clovece online: both boards replay the same rolls and moves until someone is home', async ({
+	browser,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'clovece');
+	await bob.page.goto(`/games/clovece/index.html?duel=${code}`);
+	await expect(ann.page.locator('.cl-pc')).toHaveCount(8);
+	await expect(bob.page.locator('.cl-pc')).toHaveCount(8);
+	for (const p of [ann.page, bob.page])
+		await p.evaluate('Kit._test.inst._speed(20); Kit._test.inst._auto(true)');
+	await expect(result(ann.page)).toHaveText(/Výhra!|Prohra/, { timeout: 120_000 });
+	await expect(result(bob.page)).toHaveText(/Výhra!|Prohra/, { timeout: 30_000 });
+	expect(await result(ann.page).textContent()).not.toEqual(await result(bob.page).textContent());
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('tanks online: both see the same shots, terrain and damage; a resignation ends it', async ({
 	browser,
 }, info) => {
