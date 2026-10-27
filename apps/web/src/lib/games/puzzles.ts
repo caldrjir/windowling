@@ -4384,17 +4384,17 @@ export const PUZZLE_GAMES: Game[] = [
 		title: 'VLAK',
 		group: 'puzzle',
 		category: 'logic',
-		tagline: 'Posbírej vše a vjeď do brány!',
+		tagline: 'Naplánuj trasu, ať se vlak nezamotá!',
 		description:
-			'Na motivy české klasiky Vlak z roku 1993: mašinka jezdí po louce a ty jí určuješ, kam zatočí. Posbírej všechna jablka, diamanty, koruny i dorty, každý předmět přidá vagón, a pak vjeď otevřenou bránou ven. Nenaraz do zdi ani do vlastních vagonů! Úrovně se generují a vždy jdou projet, denní výzva, 120 úrovní Cesty a čtyři obtížnosti.',
+			'Logický hlavolam na motivy české klasiky Vlak z roku 1993: každý stisk posune mašinku o políčko, posbírej všechna jablka, diamanty, koruny i dorty a vjeď otevřenou bránou ven. Každý předmět přidá vagón, takže vlak zaplní skoro celou louku a jen správné pořadí vede k cíli. Bez spěchu, se Zpět a Znovu. Úrovně se generují a vždy jdou projet, denní výzva, 120 úrovní Cesty a čtyři obtížnosti.',
 		genres: ['Logická', 'Retro', 'Plánování'],
-		features: ['Generované úrovně', 'Rostoucí vlak', 'Denní výzva', 'Žebříčky časů'],
+		features: ['Krok za krokem', 'Rostoucí vlak', 'Denní výzva', 'Žebříčky časů'],
 		en: {
-			tagline: 'Collect it all and leave through the gate!',
+			tagline: 'Plan the route before the train ties itself in knots!',
 			description:
-				'In the spirit of the Czech classic Vlak from 1993: the engine rolls across the meadow and you decide where it turns. Collect every apple, diamond, crown and cake, each item adds a wagon, then drive out through the open gate. Do not crash into a wall or your own wagons! Generated levels that can always be solved, a daily puzzle, 120 Path levels and four difficulties.',
+				'A logic puzzle in the spirit of the Czech classic Vlak from 1993: each press moves the engine one tile; collect every apple, diamond, crown and cake, then drive out through the open gate. Each item adds a wagon, so the train fills most of the meadow and only the right order leads home. No rush, with undo and restart. Generated levels that can always be solved, a daily puzzle, 120 Path levels and four difficulties.',
 			genres: ['Logic', 'Retro', 'Planning'],
-			features: ['Generated levels', 'A growing train', 'Daily puzzle', 'Time leaderboards'],
+			features: ['Step by step', 'A growing train', 'Daily puzzle', 'Time leaderboards'],
 		},
 		statLabels: labels,
 		path: '/games/vlak/index.html',
