@@ -910,6 +910,17 @@ test('mrakodrap drops floors onto the tower and scores', async ({ page }) => {
 		.toBeGreaterThan(3);
 });
 
+test("vlak plays the first original scene with the author's solution", async ({ page }) => {
+	await page.goto('/games/vlak/index.html');
+	await expect(page.locator('.k-hero h1')).toBeVisible();
+	await page.evaluate("Kit._test.start('level', 1)");
+	await expect(page.locator('.vl-cv')).toBeVisible();
+	await expect(page.locator('.vl-scene')).toContainText('GOLEM');
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(6)');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 40_000 });
+	await expect(page.locator('.k-result')).toContainText('KRONE');
+});
+
 test('vlak drives the generated route, collects every item and leaves through the gate', async ({
 	page,
 }) => {

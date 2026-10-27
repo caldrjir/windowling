@@ -4386,13 +4386,13 @@ export const PUZZLE_GAMES: Game[] = [
 		category: 'logic',
 		tagline: 'Posbírej vše a vjeď do brány!',
 		description:
-			'Na motivy české klasiky Vlak z roku 1993: mašinka jezdí po scéně z červených cihel a ty jí určuješ, kam zatočí. Posbírej všechny stromy, auta, letadla, jablka i koruny, každý předmět přidá vagón, a pak vjeď otevřenou bránou ven. Vlak nakonec zabere skoro celou scénu, tak si trasu rozmysli, ať do něj nenarazíš! Souměrné scény se generují a vždy jdou projet, denní výzva, 120 úrovní Cesty a čtyři obtížnosti.',
+			'Česká klasika Vlak Miroslava Němečka z roku 1993 se všemi 50 původními scénami a původní grafikou: mašinka jezdí sama a ty jí určuješ, kam zatočí. Posbírej všechny krystaly, koruny, stromy, kravičky, slony i letadla, každý předmět přidá vagón, a vjeď otevřenou bránou ven. Nenaraz do zdi ani do vlastních vagonů! Po každé scéně heslo jako kdysi, po 50 scénách pokračují nové, denní výzva a žebříčky.',
 		genres: ['Logická', 'Retro', 'Plánování'],
-		features: ['Scény jako v originále', 'Rostoucí vlak', 'Denní výzva', 'Žebříčky časů'],
+		features: ['50 původních scén', 'Původní grafika', 'Denní výzva', 'Žebříčky časů'],
 		en: {
 			tagline: 'Collect it all and leave through the gate!',
 			description:
-				'In the spirit of the Czech classic Vlak from 1993: the engine rolls through a red-brick scene and you decide where it turns. Collect every tree, car, plane, apple and crown, each item adds a wagon, then drive out through the open gate. The train ends up filling most of the scene, so think your route through or you will crash into it! Symmetric generated scenes that can always be solved, a daily puzzle, 120 Path levels and four difficulties.',
+				'The Czech classic Vlak by Miroslav Němeček from 1993 with all 50 original scenes and the original graphics: the engine rolls on its own and you decide where it turns. Collect every crystal, crown, tree, cow, elephant and plane, each item adds a wagon, then drive out through the open gate. Do not crash into a wall or your own wagons! A password after every scene as in the old days, new scenes after the first 50, a daily puzzle and leaderboards.',
 			genres: ['Logic', 'Retro', 'Planning'],
 			features: [
 				'Scenes like the original',
@@ -4406,33 +4406,24 @@ export const PUZZLE_GAMES: Game[] = [
 		colors: ['#7cc768', '#e5463b', '#5fe3ff'],
 		statsKey: 'gamecenter.stats.vlak',
 		cover(ctx, w, h, t) {
-			// the game's own scene (rendered from its art.js, 1280×768); the closed gate blinks and the
-			// engine puffs smoke
-			ctx.fillStyle = '#07070d';
+			// scene 20 of the original game in its own pixel graphics (rendered from the game's
+			// sprites, 1280×768); the gate glows
+			ctx.fillStyle = '#000';
 			ctx.fillRect(0, 0, w, h);
 			const img = vlakCover();
 			if (!img || !img.complete || img.naturalWidth === 0) return;
 			const s = Math.max(w / 1280, h / 768),
 				bx = Math.min(0, Math.max(w - 1280 * s, w / 2 - 560 * s)),
 				by = Math.min(0, Math.max(h - 768 * s, h / 2 - 384 * s));
+			ctx.imageSmoothingEnabled = false;
 			ctx.drawImage(img, bx, by, 1280 * s, 768 * s);
-			const p = (Math.sin(t * 4) + 1) / 2,
-				gx = bx + 32 * s,
-				gy = by + 416 * s;
-			ctx.strokeStyle = `rgba(255,220,120,${0.35 + p * 0.5})`;
+			ctx.imageSmoothingEnabled = true;
+			const p = (Math.sin(t * 4) + 1) / 2;
+			ctx.strokeStyle = `rgba(255,255,85,${0.35 + p * 0.5})`;
 			ctx.lineWidth = Math.max(1.5, 3 * s);
 			ctx.beginPath();
-			ctx.arc(gx, gy, (26 + p * 12) * s, 0, TAU);
+			ctx.arc(bx + 1120 * s, by + 544 * s, (34 + p * 14) * s, 0, TAU);
 			ctx.stroke();
-			for (let i = 0; i < 5; i++) {
-				const k = (t * 0.8 + i / 5) % 1,
-					x = bx + (480 + k * 40) * s,
-					y = by + (330 - k * 90) * s;
-				ctx.fillStyle = `rgba(235,235,245,${0.6 * (1 - k)})`;
-				ctx.beginPath();
-				ctx.arc(x, y, (6 + k * 16) * s, 0, TAU);
-				ctx.fill();
-			}
 		},
 	},
 	{
