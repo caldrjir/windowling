@@ -188,7 +188,7 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
 Every puzzle can be played online, served by the Worker entry like DRIFTWOOD multiplayer.
 
 - `DuelRoom` (SQLite-backed Durable Object, one per room, 5-letter code). Two kinds:
-  - **turn** (Šachy, Piškvorky, Tanky, Červíci, Prší): two seats, the room keeps the move list and accepts a move
+  - **turn** (Šachy, Piškvorky, Tanky, Červíci, Prší, Dáma): two seats, the room keeps the move list and accepts a move
     only from the seat to move (`seatToMove`: colours swap every round). It also records the
     result (game end reported by the clients, resignation, draw by agreement, or a win claimed
     when the opponent has been gone 60 s) and handles rematches. The clients check the rules
