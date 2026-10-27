@@ -1,6 +1,7 @@
 'use strict';
-// ── VLAK · generátor úrovní ─────────────────────────────────────────────────
-// Scény jako v původním Vlaku (1993): obdélníková plocha 18×10 obehnaná cihlovou zdí, uvnitř
+// ── VLAK · scény ────────────────────────────────────────────────────────────
+// Prvních 50 scén Cesty je originálních (scenes.js, převod fromScene). Další scény generuje
+// generate() ve stejném duchu jako původní Vlak (1993): obdélníková plocha 18×10 obehnaná cihlovou zdí, uvnitř
 // souměrné cihlové útvary a předměty seskupené do obrazců (řady, úhlopříčky, sloupce, shluky),
 // brána je zasazená do obvodové zdi. Řešitelnost se zaručí konstrukcí: od brány se pozpátku
 // vylosuje trasa, která sama sebe nikde nekříží a projede skoro celou volnou plochu
@@ -8,7 +9,8 @@
 const VlCore = (() => {
   const rngOf = seed => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]]; // vpravo, dolů, vlevo, nahoru
-  const ITEMS = ['strom', 'jablko', 'auto', 'letadlo', 'diamant', 'koruna', 'dort', 'darek', 'hvezda', 'houba'];
+  // předměty v pořadí originálu (index = sloupec ve spritech); druh předmětu je jeho index
+  const ITEMS = ['krystal', 'koruna', 'strom', 'jablko', 'krava', 'tresne', 'rybnik', 'zirafa', 'zmrzlina', 'dort', 'pocitac', 'auto', 'balon', 'budik', 'slon', 'vino', 'penize', 'letadlo'];
   const W = 20, H = 12;
 
   // o = { items (kolik předmětů), walls (kolik útvarů na polovinu), cover (jak velkou část volné plochy trasa projede) }
@@ -79,7 +81,7 @@ const VlCore = (() => {
         (x, y) => [[x, y], [x + 2, y], [x + 1, y + 1], [x, y + 2], [x + 2, y + 2]],
       ];
       for (let guard = 0; guard < 400 && items.size < o.items; guard++) {
-        const kind = pick(ITEMS), cells = pick(shapes)(1 + Math.floor(r() * (w / 2 - 1)), 1 + Math.floor(r() * (h - 2)));
+        const kind = Math.floor(r() * ITEMS.length), cells = pick(shapes)(1 + Math.floor(r() * (w / 2 - 1)), 1 + Math.floor(r() * (h - 2)));
         for (const [x, y] of cells) {
           if (items.size >= o.items) break;
           if (x < 1 || x > w / 2 - 1 || y < 1 || y > h - 2) continue;
@@ -94,6 +96,22 @@ const VlCore = (() => {
       best = { w, h, wall: Array.from(wall), start: { x: x0, y: y0, dir }, gate: { x: gx, y: gy }, items: [...items].map(([i, kind]) => ({ x: i % w, y: Math.floor(i / w), kind })), path, inner: free.length };
     }
     return best;
+  }
+
+  // původní scéna (z scenes.js) ve stejném tvaru, jaký vrací generate()
+  function fromScene(sc) {
+    const w = W, h = H, wall = new Array(w * h).fill(0), items = [];
+    let start = null, gate = null, inner = 0;
+    sc.grid.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c === '#' || c === '@') wall[y * w + x] = 1; else inner++;
+      if (c === '@') gate = { x, y };
+      if (c >= 'a' && c <= 'r') items.push({ x, y, kind: c.charCodeAt(0) - 97 });
+      const sd = '>v<^'.indexOf(c);
+      if (sd >= 0) start = { x, y, dir: sd };
+    }));
+    const step = { R: 0, D: 1, L: 2, U: 3 }, path = [[start.x, start.y]];
+    for (const ch of sc.sol) { const [px, py] = path[path.length - 1], [dx, dy] = DIRS[step[ch]]; path.push([px + dx, py + dy]); }
+    return { w, h, wall, start, gate, items, path, inner, name: sc.name };
   }
 
   // pomocník pro testy: projede trasu a ověří, že nikde nenarazí a sebere vše
@@ -112,6 +130,6 @@ const VlCore = (() => {
     return 'no-gate';
   }
 
-  return { generate, check, DIRS, ITEMS, rngOf, W, H };
+  return { generate, fromScene, check, DIRS, ITEMS, rngOf, W, H };
 })();
 if (typeof module !== 'undefined') module.exports = VlCore;
