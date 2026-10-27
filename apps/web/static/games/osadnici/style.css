@@ -1,0 +1,68 @@
+/* OSADNÍCI – ostrov ze šestiúhelníků v moři, karty surovin a stavební lišta */
+.os-wrap { display: grid; gap: 10px; justify-items: center; width: 100%; }
+.os-status { display: grid; justify-items: center; gap: 2px; min-height: 40px; text-align: center; }
+.os-status b { font: 700 15px/1.3 var(--f-d, Unbounded, sans-serif); }
+.os-status span { color: var(--muted); font-size: 13px; display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.os-board { position: relative; user-select: none; -webkit-user-select: none; }
+.os-board > svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .45)); }
+.os-board svg text { font: 800 16px var(--f-d, Unbounded, sans-serif); text-anchor: middle; fill: #2a2a2a; }
+.os-board svg text.hot { fill: #c62020; }
+.os-board svg text.os-port { font-size: 11px; fill: #3a2a10; }
+.os-board svg text.os-port.small { font-size: 8.5px; }
+.os-bld { filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, .45)); }
+.os-robber { filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .4)); }
+.os-spot { fill: rgba(255, 255, 255, .85); stroke: #1b1b1b; stroke-width: 2.5; cursor: pointer; animation: osPulse .9s ease-in-out infinite alternate; }
+.os-lane { stroke: rgba(255, 255, 255, .8); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 4 6; cursor: pointer; animation: osPulse .9s ease-in-out infinite alternate; }
+.os-tile { fill: rgba(255, 255, 255, .12); stroke: #fff; stroke-width: 3; stroke-dasharray: 6 6; cursor: pointer; }
+.os-tile:hover { fill: rgba(255, 255, 255, .35); }
+.os-spot:hover { fill: #fff; }
+.os-lane:hover { stroke: #fff; }
+@keyframes osPulse { from { opacity: .55; } to { opacity: 1; } }
+.os-players { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.os-players > span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 99px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; }
+.os-players > span.turn { box-shadow: inset 0 0 0 2px var(--c); }
+.os-players i { width: 12px; height: 12px; border-radius: 3px; background: var(--c); box-shadow: 0 0 0 1.5px var(--d); }
+.os-players em { font-style: normal; font-weight: 800; padding: 0 7px; border-radius: 99px; background: var(--c); color: #111; box-shadow: inset 0 0 0 1.5px var(--d); }
+.os-players small { display: inline-flex; align-items: center; gap: 2px; color: var(--muted); }
+.os-players small.gold { color: #f4c542; font-weight: 700; }
+.os-ri { width: 22px; height: 22px; flex: none; }
+.os-ri.in { width: 18px; height: 18px; vertical-align: -4px; }
+.os-ri.g { filter: grayscale(1) brightness(1.6); }
+.os-hand { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; min-height: 52px; }
+.os-card { display: grid; justify-items: center; align-content: center; width: 44px; height: 54px; border-radius: 9px; background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 85%, #fff), var(--rc)); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .25), 0 4px 10px rgba(0, 0, 0, .3); }
+.os-card .os-ri { width: 28px; height: 28px; }
+.os-card b { font: 800 15px/1 var(--f-d, Unbounded, sans-serif); color: #111; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+.os-card.none { opacity: .35; }
+.os-devc { display: grid; justify-items: center; align-content: center; gap: 1px; min-width: 54px; height: 54px; padding: 2px 5px; border: 0; border-radius: 9px; background: #f6efe0; color: #2a2210; box-shadow: inset 0 0 0 2px #7a5bd6, 0 4px 10px rgba(0, 0, 0, .3); cursor: pointer; }
+.os-devc b { font: 800 12px/1 var(--f-d, Unbounded, sans-serif); }
+.os-devc small { font-size: 9px; line-height: 1; }
+.os-devc:disabled { opacity: .55; cursor: default; }
+.os-devc:not(:disabled) { animation: osGlow 1.2s ease-in-out infinite alternate; }
+.os-devc.vp { box-shadow: inset 0 0 0 2px #c9a020, 0 4px 10px rgba(0, 0, 0, .3); }
+@keyframes osGlow { to { box-shadow: inset 0 0 0 2px #7a5bd6, 0 0 0 4px rgba(122, 91, 214, .45), 0 4px 10px rgba(0, 0, 0, .3); } }
+.os-bar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: stretch; }
+.os-act { display: grid; justify-items: center; align-content: center; gap: 3px; min-width: 62px; height: 54px; padding: 0 8px; border: 0; border-radius: 12px; background: var(--glass); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); font: 600 12px var(--f-b, inherit); cursor: pointer; }
+.os-act:disabled { opacity: .4; cursor: default; }
+.os-act.on { box-shadow: inset 0 0 0 2px var(--a); color: var(--a); }
+.os-act.end:not(:disabled) { box-shadow: inset 0 0 0 2px var(--a); }
+.os-cost { display: flex; gap: 2px; }
+.os-cost i { width: 7px; height: 7px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); }
+.os-dice { display: flex; gap: 5px; padding: 6px; border: 0; border-radius: 12px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); cursor: pointer; }
+.os-dice:disabled { cursor: default; }
+.os-dice.go { animation: osGo 1s ease-in-out infinite; }
+@keyframes osGo { 50% { box-shadow: inset 0 0 0 1px var(--line-2), 0 0 0 5px rgba(255, 230, 120, .6); } }
+.os-face { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 40px; height: 40px; padding: 5px; box-sizing: border-box; border-radius: 9px; background: #fff; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .12); }
+.os-face i { display: block; margin: 15%; border-radius: 50%; }
+.os-face i.on { background: #222; }
+.os-panel { display: grid; gap: 8px; justify-items: center; padding: 12px; border-radius: 16px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-2); max-width: 100%; }
+.os-panel[hidden] { display: none; }
+.os-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.os-row > span { min-width: 64px; color: var(--muted); font-size: 13px; }
+.os-pick { display: grid; justify-items: center; gap: 1px; width: 52px; padding: 4px 0; border: 0; border-radius: 10px; background: color-mix(in srgb, var(--rc) 35%, transparent); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); cursor: pointer; font-size: 11px; }
+.os-pick small { font-weight: 700; }
+.os-pick.on { box-shadow: inset 0 0 0 3px var(--a); }
+.os-pick:disabled { opacity: .3; cursor: default; }
+.os-art text { font: 800 16px Unbounded, sans-serif; text-anchor: middle; fill: #2a2a2a; }
+.os-art text.hot { fill: #c62020; }
+.os-art text.os-port { font-size: 11px; }
+.os-art text.os-port.small { font-size: 8.5px; }

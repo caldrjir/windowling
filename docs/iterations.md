@@ -94,6 +94,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [x] Tower Bloxx – stack swinging floors into a tower (Mrakodrap)
 - [x] Vlak (1993) – steer a growing train, collect items, leave through the gate (Vlak)
 - [x] Člověče, nezlob se – two or four players, seeded dice, online for two (Člověče)
+- [x] Settlers of Catan – seeded hex island, bank and harbour trades, development cards, computer players at three strengths, online for two (Osadníci)
 - [x] Lodě – battleship: computer admiral at three strengths and online with hidden fleets (Lodě)
 - [x] Dáma – Czech draughts: computer at three strengths, two players and online (Dáma)
 - [x] Prší – the Czech card game: computer players, a daily deal and two-player online (Prší)
