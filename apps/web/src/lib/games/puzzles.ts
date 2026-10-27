@@ -4384,47 +4384,51 @@ export const PUZZLE_GAMES: Game[] = [
 		title: 'VLAK',
 		group: 'puzzle',
 		category: 'logic',
-		tagline: 'Naplánuj trasu, ať se vlak nezamotá!',
+		tagline: 'Posbírej vše a vjeď do brány!',
 		description:
-			'Logický hlavolam na motivy české klasiky Vlak z roku 1993: každý stisk posune mašinku o políčko, posbírej všechna jablka, diamanty, koruny i dorty a vjeď otevřenou bránou ven. Každý předmět přidá vagón, takže vlak zaplní skoro celou louku a jen správné pořadí vede k cíli. Bez spěchu, se Zpět a Znovu. Úrovně se generují a vždy jdou projet, denní výzva, 120 úrovní Cesty a čtyři obtížnosti.',
+			'Na motivy české klasiky Vlak z roku 1993: mašinka jezdí po scéně z červených cihel a ty jí určuješ, kam zatočí. Posbírej všechny stromy, auta, letadla, jablka i koruny, každý předmět přidá vagón, a pak vjeď otevřenou bránou ven. Vlak nakonec zabere skoro celou scénu, tak si trasu rozmysli, ať do něj nenarazíš! Souměrné scény se generují a vždy jdou projet, denní výzva, 120 úrovní Cesty a čtyři obtížnosti.',
 		genres: ['Logická', 'Retro', 'Plánování'],
-		features: ['Krok za krokem', 'Rostoucí vlak', 'Denní výzva', 'Žebříčky časů'],
+		features: ['Scény jako v originále', 'Rostoucí vlak', 'Denní výzva', 'Žebříčky časů'],
 		en: {
-			tagline: 'Plan the route before the train ties itself in knots!',
+			tagline: 'Collect it all and leave through the gate!',
 			description:
-				'A logic puzzle in the spirit of the Czech classic Vlak from 1993: each press moves the engine one tile; collect every apple, diamond, crown and cake, then drive out through the open gate. Each item adds a wagon, so the train fills most of the meadow and only the right order leads home. No rush, with undo and restart. Generated levels that can always be solved, a daily puzzle, 120 Path levels and four difficulties.',
+				'In the spirit of the Czech classic Vlak from 1993: the engine rolls through a red-brick scene and you decide where it turns. Collect every tree, car, plane, apple and crown, each item adds a wagon, then drive out through the open gate. The train ends up filling most of the scene, so think your route through or you will crash into it! Symmetric generated scenes that can always be solved, a daily puzzle, 120 Path levels and four difficulties.',
 			genres: ['Logic', 'Retro', 'Planning'],
-			features: ['Step by step', 'A growing train', 'Daily puzzle', 'Time leaderboards'],
+			features: [
+				'Scenes like the original',
+				'A growing train',
+				'Daily puzzle',
+				'Time leaderboards',
+			],
 		},
 		statLabels: labels,
 		path: '/games/vlak/index.html',
 		colors: ['#7cc768', '#e5463b', '#5fe3ff'],
 		statsKey: 'gamecenter.stats.vlak',
 		cover(ctx, w, h, t) {
-			// the game's own scene (rendered from its art.js); smoke puffs from the engine and the gate glows
-			ctx.fillStyle = '#5d6a7c';
+			// the game's own scene (rendered from its art.js, 1280×768); the closed gate blinks and the
+			// engine puffs smoke
+			ctx.fillStyle = '#07070d';
 			ctx.fillRect(0, 0, w, h);
 			const img = vlakCover();
 			if (!img || !img.complete || img.naturalWidth === 0) return;
-			const s = Math.max(w / 960, h / 960),
-				bx = Math.min(0, Math.max(w - 960 * s, w / 2 - 520 * s)),
-				by = Math.min(0, Math.max(h - 960 * s, h * 0.42 - 440 * s));
-			ctx.drawImage(img, bx, by, 960 * s, 960 * s);
-			// glowing gate
+			const s = Math.max(w / 1280, h / 768),
+				bx = Math.min(0, Math.max(w - 1280 * s, w / 2 - 560 * s)),
+				by = Math.min(0, Math.max(h - 768 * s, h / 2 - 384 * s));
+			ctx.drawImage(img, bx, by, 1280 * s, 768 * s);
 			const p = (Math.sin(t * 4) + 1) / 2,
-				gx = bx + 760 * s,
-				gy = by + 520 * s;
-			ctx.strokeStyle = `rgba(255,255,255,${0.4 + p * 0.5})`;
+				gx = bx + 32 * s,
+				gy = by + 416 * s;
+			ctx.strokeStyle = `rgba(255,220,120,${0.35 + p * 0.5})`;
 			ctx.lineWidth = Math.max(1.5, 3 * s);
 			ctx.beginPath();
-			ctx.arc(gx, gy, (22 + p * 14) * s, 0, TAU);
+			ctx.arc(gx, gy, (26 + p * 12) * s, 0, TAU);
 			ctx.stroke();
-			// smoke from the chimney drifting back over the train
 			for (let i = 0; i < 5; i++) {
 				const k = (t * 0.8 + i / 5) % 1,
-					x = bx + (545 - k * 120) * s,
-					y = by + (440 - 30 - k * 60) * s;
-				ctx.fillStyle = `rgba(245,245,250,${0.7 * (1 - k)})`;
+					x = bx + (480 + k * 40) * s,
+					y = by + (330 - k * 90) * s;
+				ctx.fillStyle = `rgba(235,235,245,${0.6 * (1 - k)})`;
 				ctx.beginPath();
 				ctx.arc(x, y, (6 + k * 16) * s, 0, TAU);
 				ctx.fill();
