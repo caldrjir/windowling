@@ -225,6 +225,30 @@ test('clovece online: both boards replay the same rolls and moves until someone 
 	await bob.close();
 });
 
+test('osadnici online: both islands replay the same rolls, builds and robberies to 10 points', async ({
+	browser,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	test.setTimeout(240_000);
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'osadnici');
+	await bob.page.goto(`/games/osadnici/index.html?duel=${code}`);
+	await expect(ann.page.locator('.os-board svg')).toBeVisible();
+	await expect(bob.page.locator('.os-board svg')).toBeVisible();
+	// Ann (who created the game) places the first settlement; Bob waits.
+	await expect(ann.page.locator('.os-spot').first()).toBeAttached();
+	await expect(bob.page.locator('.os-spot')).toHaveCount(0);
+	for (const p of [ann.page, bob.page])
+		await p.evaluate('Kit._test.inst._speed(30); Kit._test.inst._auto(true)');
+	await expect(result(ann.page)).toHaveText(/Výhra!|Prohra/, { timeout: 200_000 });
+	await expect(result(bob.page)).toHaveText(/Výhra!|Prohra/, { timeout: 30_000 });
+	expect(await result(ann.page).textContent()).not.toEqual(await result(bob.page).textContent());
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('tanks online: both see the same shots, terrain and damage; a resignation ends it', async ({
 	browser,
 }, info) => {

@@ -67,6 +67,16 @@ function cloveceCover(): HTMLImageElement | null {
 	return clScene;
 }
 
+// OSADNÍCI cover art: the game's own island mid-game (static/games/osadnici/cover)
+let osScene: HTMLImageElement | null = null;
+function osadniciCover(): HTMLImageElement | null {
+	if (!osScene && typeof Image !== 'undefined') {
+		osScene = new Image();
+		osScene.src = '/games/osadnici/cover/scene.webp';
+	}
+	return osScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4724,6 +4734,39 @@ export const PUZZLE_GAMES: Game[] = [
 				ctx.fill();
 			}
 			ctx.restore();
+		},
+	},
+	{
+		id: 'osadnici',
+		title: 'OSADNÍCI',
+		group: 'puzzle',
+		category: 'board',
+		tagline: 'Dřevo, cihly, obilí… a deset bodů!',
+		description:
+			'Budovatelská desková hra na ostrově ze šestiúhelníků: sbírej suroviny podle hodů kostkami, stav cesty, osady a města, kupuj akční karty, posílej zloděje na soupeře a směňuj v přístavech. Hraj proti jednomu nebo třem počítačovým hráčům, denní ostrov stejný pro všechny, nebo online s kamarádem.',
+		genres: ['Desková', 'Strategie', 'Online'],
+		features: ['Online ve dvou', 'Až 4 hráči', 'Denní ostrov', 'Akční karty'],
+		en: {
+			tagline: 'Wood, brick, grain… and ten points!',
+			description:
+				'A building board game on an island of hexes: gather resources as the dice fall, build roads, settlements and cities, buy development cards, set the robber on your rivals and trade at the harbours. Play one or three computer players, a daily island that is the same for everyone, or a friend online.',
+			genres: ['Board', 'Strategy', 'Online'],
+			features: ['Two-player online', 'Up to 4 players', 'Daily island', 'Development cards'],
+		},
+		statLabels: labels,
+		path: '/games/osadnici/index.html',
+		colors: ['#3f8f45', '#ecc94f', '#c9703f'],
+		statsKey: 'gamecenter.stats.osadnici',
+		cover(ctx, w, h, t) {
+			// the game's own island (1200×800), slowly drifting
+			ctx.fillStyle = '#16466f';
+			ctx.fillRect(0, 0, w, h);
+			const img = osadniciCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 1200, h / 800) * (1.04 + Math.sin(t * 0.5) * 0.02),
+				bx = (w - 1200 * s) / 2,
+				by = (h - 800 * s) / 2;
+			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
 		},
 	},
 ];
