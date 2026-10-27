@@ -1,59 +1,48 @@
 'use strict';
 // ── VLAK · kresba ───────────────────────────────────────────────────────────
-// Pohled shora: louka z dlaždic, kamenné zdi, brána (zavřená závora / otevřený portál), osm
-// druhů předmětů a parní mašinka s vagóny, které vezou, co posbírala. Podklad úrovně (louka a
-// zdi) se kreslí jednou do vlastního plátna.
+// Pohled shora jako v původním Vlaku: černá plocha, červené cihlové zdi, brána ve zdi (zavřená
+// závora / otevřený portál), deset druhů předmětů a parní mašinka s vagóny, které vezou, co
+// posbírala. Podklad scény (plocha a zdi) se kreslí jednou do vlastního plátna.
 const VlArt = (() => {
   const OL = '#1d2a1c';
+  let TILT = 0; // při otočené scéně (telefon na výšku) stojí předměty pořád rovně
   const hash = n => { let x = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); return ((x ^ (x >>> 16)) >>> 0) / 4294967296; };
   function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
 
-  // ── Podklad: louka a zdi ──
+  // ── Podklad: černá plocha a červené cihly (jako v původním Vlaku) ──
   function board(L, t, sc) {
     const c = document.createElement('canvas');
     c.width = Math.ceil(L.w * t * sc); c.height = Math.ceil(L.h * t * sc);
     const g = c.getContext('2d'); g.scale(sc, sc);
     const isWall = (x, y) => x < 0 || y < 0 || x >= L.w || y >= L.h || L.wall[y * L.w + x];
-    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-      const px = x * t, py = y * t, h = hash(x * 131 + y * 17);
-      if (!isWall(x, y)) {
-        g.fillStyle = (x + y) % 2 ? '#86cf72' : '#7cc768'; g.fillRect(px, py, t, t);
-        g.fillStyle = 'rgba(40,110,40,.35)';
-        for (let k = 0; k < 3; k++) { const gx = px + hash(x * 7 + y * 13 + k) * (t - 4) + 2, gy = py + hash(x * 11 + y * 5 + k * 3) * (t - 5) + 3; g.fillRect(gx, gy, 1.2, 3); g.fillRect(gx + 2, gy + 1, 1.2, 2.5); }
-        if (h > 0.93) { g.fillStyle = hash(x + y * 3) > 0.5 ? '#fff6a8' : '#ffd1e6'; g.beginPath(); g.arc(px + t * 0.3, py + t * 0.6, t * 0.06, 0, 7); g.fill(); }
-      }
-    }
-    // stín zdí na louce
+    g.fillStyle = '#07070d'; g.fillRect(0, 0, L.w * t, L.h * t);
+    // jemná mřížka, ať je vidět, kudy vede kolej
+    g.fillStyle = 'rgba(255,255,255,.035)';
+    for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (!isWall(x, y) && (x + y) % 2) g.fillRect(x * t, y * t, t, t);
     for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (!isWall(x, y)) {
-      const px = x * t, py = y * t;
-      g.fillStyle = 'rgba(20,50,20,.22)';
-      if (isWall(x, y - 1)) g.fillRect(px, py, t, t * 0.16);
-      if (isWall(x - 1, y)) g.fillRect(px, py, t * 0.12, t);
+      g.fillStyle = 'rgba(0,0,0,.55)';
+      if (isWall(x, y - 1)) g.fillRect(x * t, y * t, t, t * 0.14);
+      if (isWall(x - 1, y)) g.fillRect(x * t, y * t, t * 0.1, t);
     }
     for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (isWall(x, y)) wallTile(g, x * t, y * t, t, x, y, isWall);
     return c;
   }
   function wallTile(g, px, py, t, x, y, isWall) {
-    const h = hash(x * 97 + y * 31);
-    g.fillStyle = '#5d6a7c'; g.fillRect(px, py, t, t);
-    // kameny: dvě řady s posunutými spárami
-    const rows = 2, rh = t / rows;
+    g.fillStyle = '#7a1c1a'; g.fillRect(px, py, t, t); // malta
+    const rows = 2, rh = t / rows, m = Math.max(1, t * 0.06);
     for (let i = 0; i < rows; i++) {
       const off = (i + y) % 2 ? t / 2 : 0;
       for (let j = -1; j < 2; j++) {
-        const sx = px + off + j * (t / 1) * 1, sw = t;
-        const x0 = Math.max(px, sx + 1), x1 = Math.min(px + t, sx + sw - 1);
+        const sx = px + off + j * t, x0 = Math.max(px, sx + m / 2), x1 = Math.min(px + t, sx + t - m / 2);
         if (x1 <= x0) continue;
-        const shade = 0.5 + hash(x * 13 + y * 7 + i * 3 + j) * 0.5;
-        g.fillStyle = `rgb(${Math.round(120 + shade * 30)},${Math.round(132 + shade * 30)},${Math.round(150 + shade * 30)})`;
-        g.fillRect(x0, py + i * rh + 1, x1 - x0, rh - 2);
-        g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(x0, py + i * rh + 1, x1 - x0, 1.5);
+        const shade = hash(x * 13 + y * 7 + i * 3 + j);
+        g.fillStyle = `rgb(${Math.round(214 + shade * 30)},${Math.round(62 + shade * 22)},${Math.round(56 + shade * 18)})`;
+        g.fillRect(x0, py + i * rh + m / 2, x1 - x0, rh - m);
+        g.fillStyle = 'rgba(255,220,200,.28)'; g.fillRect(x0, py + i * rh + m / 2, x1 - x0, Math.max(1, t * 0.05));
+        g.fillStyle = 'rgba(60,0,0,.25)'; g.fillRect(x0, py + (i + 1) * rh - m / 2 - Math.max(1, t * 0.05), x1 - x0, Math.max(1, t * 0.05));
       }
     }
-    // horní hrana světlejší, kde zeď sousedí s loukou, mech
-    if (!isWall(x, y - 1)) { g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(px, py, t, 2); }
-    if (!isWall(x, y + 1)) { g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(px, py + t - 3, t, 3); }
-    if (h > 0.7) { g.fillStyle = 'rgba(90,160,70,.75)'; g.beginPath(); g.arc(px + t * (0.2 + h * 0.5), py + t * 0.15, t * 0.14, 0, Math.PI); g.fill(); }
+    if (!isWall(x, y + 1)) { g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(px, py + t - 2, t, 2); }
   }
 
   // ── Brána ──
@@ -84,7 +73,7 @@ const VlArt = (() => {
 
   // ── Předměty (střed cx, cy; velikost s ≈ šířka) ──
   function item(g, kind, cx, cy, s) {
-    g.save(); g.translate(cx, cy);
+    g.save(); g.translate(cx, cy); if (TILT) g.rotate(TILT);
     const u = s / 2;
     g.lineWidth = Math.max(1, s * 0.06); g.strokeStyle = OL; g.lineJoin = 'round';
     switch (kind) {
@@ -134,6 +123,25 @@ const VlArt = (() => {
         for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr2 = k % 2 ? u * 0.42 : u * 0.9; g.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); }
         g.closePath(); g.fill(); g.stroke();
         g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.arc(-u * 0.15, -u * 0.2, u * 0.13, 0, 7); g.fill();
+        break;
+      }
+      case 'auto': {
+        g.fillStyle = '#5ad15a'; rr(g, -u * 0.9, -u * 0.1, u * 1.8, u * 0.6, u * 0.18); g.fill(); g.stroke();
+        g.fillStyle = '#7fe37f'; g.beginPath(); g.moveTo(-u * 0.5, -u * 0.1); g.lineTo(-u * 0.3, -u * 0.55); g.lineTo(u * 0.35, -u * 0.55); g.lineTo(u * 0.6, -u * 0.1); g.closePath(); g.fill(); g.stroke();
+        g.fillStyle = '#bfe9ff'; g.beginPath(); g.moveTo(-u * 0.38, -u * 0.15); g.lineTo(-u * 0.24, -u * 0.45); g.lineTo(u * 0.02, -u * 0.45); g.lineTo(u * 0.02, -u * 0.15); g.closePath(); g.fill();
+        g.beginPath(); g.moveTo(u * 0.12, -u * 0.15); g.lineTo(u * 0.12, -u * 0.45); g.lineTo(u * 0.3, -u * 0.45); g.lineTo(u * 0.48, -u * 0.15); g.closePath(); g.fill();
+        g.fillStyle = '#26262e'; g.beginPath(); g.arc(-u * 0.5, u * 0.5, u * 0.22, 0, 7); g.arc(u * 0.5, u * 0.5, u * 0.22, 0, 7); g.fill();
+        g.fillStyle = '#bbb'; g.beginPath(); g.arc(-u * 0.5, u * 0.5, u * 0.08, 0, 7); g.arc(u * 0.5, u * 0.5, u * 0.08, 0, 7); g.fill();
+        g.fillStyle = '#fff3a8'; g.fillRect(u * 0.75, u * 0.02, u * 0.12, u * 0.14);
+        break;
+      }
+      case 'letadlo': {
+        g.fillStyle = '#e9f4ff';
+        g.beginPath(); g.ellipse(0, 0, u * 0.92, u * 0.2, 0, 0, 7); g.fill(); g.stroke();
+        g.fillStyle = '#cfe2f5'; g.beginPath(); g.moveTo(-u * 0.15, 0); g.lineTo(u * 0.25, 0); g.lineTo(-u * 0.25, u * 0.75); g.lineTo(-u * 0.45, u * 0.75); g.closePath(); g.fill(); g.stroke();
+        g.beginPath(); g.moveTo(-u * 0.15, 0); g.lineTo(u * 0.25, 0); g.lineTo(-u * 0.25, -u * 0.75); g.lineTo(-u * 0.45, -u * 0.75); g.closePath(); g.fill(); g.stroke();
+        g.beginPath(); g.moveTo(-u * 0.7, 0); g.lineTo(-u * 0.95, -u * 0.4); g.lineTo(-u * 0.8, -u * 0.4); g.lineTo(-u * 0.55, 0); g.closePath(); g.fill(); g.stroke();
+        g.fillStyle = '#3f8fe0'; g.beginPath(); g.ellipse(u * 0.55, -u * 0.04, u * 0.18, u * 0.09, 0, 0, 7); g.fill();
         break;
       }
       default: { // houba
@@ -187,5 +195,5 @@ const VlArt = (() => {
     g.fillStyle = `rgba(240,240,245,${Math.max(0, p.life) * 0.6})`;
     g.beginPath(); g.arc(p.x, p.y, p.r, 0, 7); g.fill();
   }
-  return { board, gate, item, loco, wagon, smoke, OL };
+  return { board, gate, item, loco, wagon, smoke, OL, tilt: a => { TILT = a; } };
 })();
