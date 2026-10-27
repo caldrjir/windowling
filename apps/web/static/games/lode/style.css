@@ -1,0 +1,45 @@
+/* LODĚ – dvě moře: soupeřovo (střílí se do něj) a moje flotila */
+.ld-wrap { display: grid; gap: 14px; justify-items: center; width: 100%; }
+.ld-status { display: grid; justify-items: center; gap: 2px; text-align: center; min-height: 42px; }
+.ld-status b { font: 700 15px/1.3 var(--f-d, Unbounded, sans-serif); }
+.ld-status span { color: var(--muted); font-size: 13px; }
+.ld-seas { display: flex; gap: 22px; align-items: flex-start; justify-content: center; flex-wrap: wrap; width: 100%; }
+.ld-sea { display: grid; gap: 8px; justify-items: center; }
+.ld-sea h3 { margin: 0; font: 700 13px/1 var(--f-d, Unbounded, sans-serif); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ld-grid { --c: 34px; display: grid; grid-template-columns: calc(var(--c) * .6) repeat(10, var(--c)); grid-auto-rows: var(--c); padding: 8px; border-radius: 16px; background: linear-gradient(160deg, #0d3a5c, #082640); box-shadow: inset 0 0 0 2px rgba(120, 200, 255, .15), 0 18px 40px -18px #000; user-select: none; -webkit-user-select: none; }
+.ld-grid > i { display: grid; place-items: center; font: 700 11px/1 sans-serif; font-style: normal; color: rgba(170, 220, 255, .6); }
+.ld-grid > i:nth-child(-n+11) { grid-row: 1; }
+.ld-enemy .ld-grid { --c: 40px; }
+.ld-mine .ld-grid { --c: 28px; }
+.placing .ld-mine .ld-grid { --c: 40px; }
+.placing .ld-enemy { opacity: .45; pointer-events: none; }
+.ld-c { position: relative; padding: 0; border: 0; background: rgba(60, 150, 220, .14); box-shadow: inset 0 0 0 1px rgba(120, 200, 255, .12); }
+.ld-c.aim { cursor: crosshair; }
+.ld-c.aim:hover { background: rgba(255, 230, 120, .28); }
+/* lodě: šedé trupy se zakulacenou přídí a zádí */
+.ld-c.sh::before { content: ''; position: absolute; inset: 14% 0; background: linear-gradient(180deg, #c3cbd6, #7f8a99); box-shadow: inset 0 0 0 1px #4a5463; }
+.ld-c.sh.v::before { inset: 0 14%; background: linear-gradient(90deg, #c3cbd6, #7f8a99); }
+.ld-c.sh.h.st::before { left: 8%; border-radius: 50% 0 0 50%; } .ld-c.sh.h.en::before { right: 8%; border-radius: 0 50% 50% 0; }
+.ld-c.sh.v.st::before { top: 8%; border-radius: 50% 50% 0 0; } .ld-c.sh.v.en::before { bottom: 8%; border-radius: 0 0 50% 50%; }
+.ld-c.sh.md::after { content: ''; position: absolute; left: 34%; top: 34%; width: 32%; height: 32%; border-radius: 3px; background: #5a6575; }
+.ld-c.sel::before { background: linear-gradient(180deg, #ffe48a, #d6a63a); }
+.ld-c.miss::after { content: ''; position: absolute; left: 38%; top: 38%; width: 24%; height: 24%; border-radius: 50%; background: rgba(220, 240, 255, .85); box-shadow: 0 0 0 4px rgba(220, 240, 255, .15); }
+.ld-c.hit::after, .ld-c.sunk::after { content: ''; position: absolute; inset: 18%; border-radius: 50%; background: radial-gradient(circle, #fff3a0 0 18%, #ff8a2a 40%, #e8262c 70%, transparent 72%); animation: ldFire 1s ease-in-out infinite alternate; }
+.ld-enemy .ld-c.sunk::before { content: ''; position: absolute; inset: 14% 0; background: #3a4250; }
+.ld-c.sunk::before { background: #3a4250 !important; }
+.ld-c.reveal::after { display: none; }
+.ld-c.reveal::before { content: ''; position: absolute; inset: 14% 4%; border-radius: 4px; background: rgba(195, 203, 214, .55); }
+.ld-c.last { box-shadow: inset 0 0 0 2px #ffe066; }
+@keyframes ldFire { from { transform: scale(.85); } to { transform: scale(1.08); } }
+.ld-fleet { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ld-fleet span { display: inline-flex; gap: 2px; }
+.ld-fleet b { width: 9px; height: 9px; border-radius: 2px; background: #9aa6b6; }
+.ld-fleet .gone b { background: #e8262c; opacity: .45; }
+.ld-place { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ld-place[hidden] { display: none; }
+.ld-art { display: grid; grid-template-columns: repeat(10, 22px); grid-auto-rows: 22px; margin: auto; padding: 8px; border-radius: 12px; background: linear-gradient(160deg, #0d3a5c, #082640); }
+@media (max-width: 760px) {
+  .placing .ld-enemy { display: none; }
+  .ld-enemy .ld-grid, .placing .ld-mine .ld-grid { --c: min(34px, calc((100vw - 60px) / 10.6)); }
+  .ld-mine .ld-grid { --c: min(24px, calc((100vw - 60px) / 10.6)); }
+}

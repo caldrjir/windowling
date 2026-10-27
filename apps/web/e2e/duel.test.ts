@@ -178,6 +178,33 @@ test('dama online: moves cross over and a resignation ends the game', async ({ b
 	await bob.close();
 });
 
+test('lode online: hidden fleets, shots answered by the defender, one side sinks the other', async ({
+	browser,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'lode');
+	await bob.page.goto(`/games/lode/index.html?duel=${code}`);
+	for (const p of [ann.page, bob.page]) {
+		await expect(p.locator('[data-b="ready"]')).toBeVisible();
+		await p.evaluate('Kit._test.inst._ready()');
+	}
+	// whoever may fire takes the best shot until a fleet is gone
+	for (let k = 0; k < 220; k++) {
+		if ((await result(ann.page).count()) && (await result(bob.page).count())) break;
+		for (const p of [ann.page, bob.page])
+			await p.evaluate('Kit._test.inst && Kit._test.inst._fireBest()');
+		await ann.page.waitForTimeout(60);
+	}
+	await expect(result(ann.page)).toHaveText(/Výhra!|Prohra/, { timeout: 20_000 });
+	await expect(result(bob.page)).toHaveText(/Výhra!|Prohra/, { timeout: 20_000 });
+	expect(await result(ann.page).textContent()).not.toEqual(await result(bob.page).textContent());
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('tanks online: both see the same shots, terrain and damage; a resignation ends it', async ({
 	browser,
 }, info) => {

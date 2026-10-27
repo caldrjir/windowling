@@ -47,6 +47,16 @@ function damaCover(): HTMLImageElement | null {
 	return dmScene;
 }
 
+// LODĚ cover art: a sea with ships rendered from the game's own styles (static/games/lode/cover)
+let ldScene: HTMLImageElement | null = null;
+function lodeCover(): HTMLImageElement | null {
+	if (!ldScene && typeof Image !== 'undefined') {
+		ldScene = new Image();
+		ldScene.src = '/games/lode/cover/scene.webp';
+	}
+	return ldScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4576,6 +4586,50 @@ export const PUZZLE_GAMES: Game[] = [
 				ctx.ellipse(bx + x * s, by + y * s, 52 * s, 34 * s, 0, 0, TAU);
 				ctx.fill();
 			}
+		},
+	},
+	{
+		id: 'lode',
+		title: 'LODĚ',
+		group: 'puzzle',
+		category: 'board',
+		tagline: 'Zásah, potopena!',
+		description:
+			'Námořní bitva na moři 10×10: rozmísti letadlovou loď, bitevní loď, dva křižníky a torpédoborec, pak se se soupeřem střídej v ranách. Kdo dřív potopí celou nepřátelskou flotilu, vyhrává. Hraj proti počítačovému admirálovi ve třech silách nebo online s kamarádem, kde tvoje rozmístění zůstane skryté.',
+		genres: ['Desková', 'Strategie', 'Online'],
+		features: ['Online ve dvou', 'Admirál ve 3 silách', 'Vlastní rozmístění', 'Denní bitva'],
+		en: {
+			tagline: 'Hit, sunk!',
+			description:
+				'Naval battle on a 10×10 sea: place a carrier, a battleship, two cruisers and a destroyer, then take turns firing with your opponent. The first to sink the whole enemy fleet wins. Play the computer admiral at three strengths or a friend online, with your layout kept secret.',
+			genres: ['Board', 'Strategy', 'Online'],
+			features: [
+				'Two-player online',
+				'Admiral at 3 strengths',
+				'Place your own fleet',
+				'Daily battle',
+			],
+		},
+		statLabels: labels,
+		path: '/games/lode/index.html',
+		colors: ['#0d3a5c', '#e8262c', '#c3cbd6'],
+		statsKey: 'gamecenter.stats.lode',
+		cover(ctx, w, h, t) {
+			// the sea rendered from the game's own styles (1200×800); a new shot splashes now and then
+			ctx.fillStyle = '#06182a';
+			ctx.fillRect(0, 0, w, h);
+			const img = lodeCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 1200, h / 800),
+				bx = (w - 1200 * s) / 2,
+				by = Math.min(0, Math.max(h - 800 * s, h / 2 - 400 * s));
+			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
+			const k = (t * 0.7) % 1;
+			ctx.strokeStyle = `rgba(255,170,60,${1 - k})`;
+			ctx.lineWidth = Math.max(1.5, 4 * s);
+			ctx.beginPath();
+			ctx.ellipse(bx + 482 * s, by + 352 * s, (14 + k * 60) * s, (9 + k * 38) * s, 0, 0, TAU);
+			ctx.stroke();
 		},
 	},
 ];
