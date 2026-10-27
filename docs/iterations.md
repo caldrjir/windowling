@@ -93,6 +93,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Splinter Cell – stealth in shadows
 - [x] Tower Bloxx – stack swinging floors into a tower (Mrakodrap)
 - [x] Vlak (1993) – steer a growing train, collect items, leave through the gate (Vlak)
+- [x] Prší – the Czech card game: computer players, a daily deal and two-player online (Prší)
 - [x] Bomberman – bombs, crates with power-ups, monsters and a hidden exit, battles against computer bombers (Bombarďák)
 - [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
 - [x] Flappy Bird – tap to fly through gaps (Pírko)

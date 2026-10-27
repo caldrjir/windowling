@@ -120,6 +120,33 @@ test('gomoku online: five in a row wins for one player and loses for the other',
 	await bob.close();
 });
 
+test('prsi online: both players see the same deal and one of them wins', async ({
+	browser,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'prsi');
+	await bob.page.goto(`/games/prsi/index.html?duel=${code}`);
+	await expect(ann.page.locator('.pr-hand .pr-card')).toHaveCount(4);
+	await expect(bob.page.locator('.pr-hand .pr-card')).toHaveCount(4);
+	// the same table on both sides: the same top card and the same card counts
+	const table = (page: Page) =>
+		page.evaluate('(s => [s.top, s.counts.join()])(Kit._test.inst._state())') as Promise<
+			[number, string]
+		>;
+	expect(await table(ann.page)).toEqual(await table(bob.page));
+	// both let the computer play for them until someone runs out of cards
+	await ann.page.evaluate('Kit._test.inst._autoplay()');
+	await bob.page.evaluate('Kit._test.inst._autoplay()');
+	await expect(result(ann.page)).toHaveText(/Výhra!|Prohra/, { timeout: 60_000 });
+	await expect(result(bob.page)).toHaveText(/Výhra!|Prohra/, { timeout: 60_000 });
+	expect(await result(ann.page).textContent()).not.toEqual(await result(bob.page).textContent());
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('tanks online: both see the same shots, terrain and damage; a resignation ends it', async ({
 	browser,
 }, info) => {

@@ -37,6 +37,7 @@ const PUZZLES = [
 	'mrakodrap',
 	'vlak',
 	'bombardak',
+	'prsi',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -953,4 +954,14 @@ test('bombardak: standing on your own bomb costs a life and restarts the arena',
 	await page.waitForFunction('Kit._test.inst._state().lives === 2', null, { timeout: 6_000 });
 	await page.waitForFunction('Kit._test.inst._state().phase === "play"', null, { timeout: 6_000 });
 	await expect(page.locator('.bb-hearts i')).toHaveCount(2);
+});
+
+test('prsi: a full game against three computer players reaches a result', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'prsi', 'tri');
+	await expect(page.locator('.pr-hand .pr-card')).toHaveCount(4);
+	await page.evaluate('Kit._test.inst._autoplay()');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 90_000 });
+	expect(errors).toEqual([]);
 });

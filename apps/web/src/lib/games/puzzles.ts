@@ -27,6 +27,16 @@ function bombardakCover(): HTMLImageElement | null {
 	return bbScene;
 }
 
+// PRŠÍ cover art: German-suited cards rendered from the game's cards.js (static/games/prsi/cover)
+let prScene: HTMLImageElement | null = null;
+function prsiCover(): HTMLImageElement | null {
+	if (!prScene && typeof Image !== 'undefined') {
+		prScene = new Image();
+		prScene.src = '/games/prsi/cover/scene.webp';
+	}
+	return prScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4475,6 +4485,44 @@ export const PUZZLE_GAMES: Game[] = [
 				ctx.arc(fx + Math.cos(a) * 9 * s, fy + Math.sin(a) * 9 * s, (4 + (i % 2) * 2) * s, 0, TAU);
 				ctx.fill();
 			}
+		},
+	},
+	{
+		id: 'prsi',
+		title: 'PRŠÍ',
+		group: 'puzzle',
+		category: 'board',
+		tagline: 'Sedma bere, eso stojí!',
+		description:
+			'Česká karetní klasika s mariášovými kartami: přikládej kartu stejné barvy nebo hodnoty a zbav se všech karet dřív než ostatní. Sedma bere dvě, eso stojí a svršek mění barvu. Hraj proti jednomu až třem počítačovým hráčům, denní rozdání stejné pro všechny, nebo online s kamarádem přes kód nebo odkaz.',
+		genres: ['Karty', 'Česká klasika', 'Online'],
+		features: ['Online ve dvou', 'Až 3 soupeři', 'Denní rozdání', 'Mariášové karty'],
+		en: {
+			tagline: 'Seven draws, ace skips!',
+			description:
+				'The Czech card classic with German-suited cards: add a card of the same suit or rank and get rid of all your cards before the others. A seven makes the next player draw two, an ace skips a turn and an Ober changes the suit. Play one to three computer players, a daily deal that is the same for everyone, or a friend online via a code or link.',
+			genres: ['Cards', 'Czech classic', 'Online'],
+			features: ['Two-player online', 'Up to 3 opponents', 'Daily deal', 'German-suited cards'],
+		},
+		statLabels: labels,
+		path: '/games/prsi/index.html',
+		colors: ['#2f7a4a', '#d8262c', '#f2c230'],
+		statsKey: 'gamecenter.stats.prsi',
+		cover(ctx, w, h, t) {
+			// cards rendered from the game's own SVG cards (1200×800); the top card bobs gently
+			ctx.fillStyle = '#1b4d2e';
+			ctx.fillRect(0, 0, w, h);
+			const img = prsiCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 1200, h / 800),
+				bx = (w - 1200 * s) / 2,
+				by = Math.min(0, Math.max(h - 800 * s, h / 2 - 430 * s));
+			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
+			const p = (Math.sin(t * 3) + 1) / 2;
+			ctx.fillStyle = `rgba(255,230,120,${0.12 + p * 0.12})`;
+			ctx.beginPath();
+			ctx.ellipse(bx + 600 * s, by + 330 * s, 150 * s, 190 * s, 0, 0, TAU);
+			ctx.fill();
 		},
 	},
 ];
