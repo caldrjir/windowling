@@ -7,6 +7,16 @@ import type { Game } from './registry';
 
 const TAU = Math.PI * 2;
 
+// VLAK cover art: a scene rendered from the game's art.js (static/games/vlak/cover), loaded once
+let vlScene: HTMLImageElement | null = null;
+function vlakCover(): HTMLImageElement | null {
+	if (!vlScene && typeof Image !== 'undefined') {
+		vlScene = new Image();
+		vlScene.src = '/games/vlak/cover/scene.webp';
+	}
+	return vlScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4356,6 +4366,58 @@ export const PUZZLE_GAMES: Game[] = [
 				ctx.beginPath();
 				ctx.ellipse(hx, roof - 18 * st, (52 + r * 70) * st, (14 + r * 22) * st, 0, 0, TAU);
 				ctx.stroke();
+			}
+		},
+	},
+	{
+		id: 'vlak',
+		title: 'VLAK',
+		group: 'puzzle',
+		category: 'logic',
+		tagline: 'Posbírej vše a vjeď do brány!',
+		description:
+			'Na motivy české klasiky Vlak z roku 1993: mašinka jezdí po louce a ty jí určuješ, kam zatočí. Posbírej všechna jablka, diamanty, koruny i dorty, každý předmět přidá vagón, a pak vjeď otevřenou bránou ven. Nenaraz do zdi ani do vlastních vagonů! Úrovně se generují a vždy jdou projet, denní výzva, 120 úrovní Cesty a čtyři obtížnosti.',
+		genres: ['Logická', 'Retro', 'Plánování'],
+		features: ['Generované úrovně', 'Rostoucí vlak', 'Denní výzva', 'Žebříčky časů'],
+		en: {
+			tagline: 'Collect it all and leave through the gate!',
+			description:
+				'In the spirit of the Czech classic Vlak from 1993: the engine rolls across the meadow and you decide where it turns. Collect every apple, diamond, crown and cake, each item adds a wagon, then drive out through the open gate. Do not crash into a wall or your own wagons! Generated levels that can always be solved, a daily puzzle, 120 Path levels and four difficulties.',
+			genres: ['Logic', 'Retro', 'Planning'],
+			features: ['Generated levels', 'A growing train', 'Daily puzzle', 'Time leaderboards'],
+		},
+		statLabels: labels,
+		path: '/games/vlak/index.html',
+		colors: ['#7cc768', '#e5463b', '#5fe3ff'],
+		statsKey: 'gamecenter.stats.vlak',
+		cover(ctx, w, h, t) {
+			// the game's own scene (rendered from its art.js); smoke puffs from the engine and the gate glows
+			ctx.fillStyle = '#5d6a7c';
+			ctx.fillRect(0, 0, w, h);
+			const img = vlakCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 960, h / 960),
+				bx = Math.min(0, Math.max(w - 960 * s, w / 2 - 520 * s)),
+				by = Math.min(0, Math.max(h - 960 * s, h * 0.42 - 440 * s));
+			ctx.drawImage(img, bx, by, 960 * s, 960 * s);
+			// glowing gate
+			const p = (Math.sin(t * 4) + 1) / 2,
+				gx = bx + 760 * s,
+				gy = by + 520 * s;
+			ctx.strokeStyle = `rgba(255,255,255,${0.4 + p * 0.5})`;
+			ctx.lineWidth = Math.max(1.5, 3 * s);
+			ctx.beginPath();
+			ctx.arc(gx, gy, (22 + p * 14) * s, 0, TAU);
+			ctx.stroke();
+			// smoke from the chimney drifting back over the train
+			for (let i = 0; i < 5; i++) {
+				const k = (t * 0.8 + i / 5) % 1,
+					x = bx + (545 - k * 120) * s,
+					y = by + (440 - 30 - k * 60) * s;
+				ctx.fillStyle = `rgba(245,245,250,${0.7 * (1 - k)})`;
+				ctx.beginPath();
+				ctx.arc(x, y, (6 + k * 16) * s, 0, TAU);
+				ctx.fill();
 			}
 		},
 	},

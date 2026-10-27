@@ -1,0 +1,13 @@
+/* VLAK – louka na plátně, pod ní šipky pro dotyk */
+.vl-wrap { display: grid; justify-items: center; gap: 10px; width: 100%; }
+.vl-cv { display: block; border-radius: 14px; box-shadow: 0 0 0 3px #1d2a1c, 0 0 0 6px rgba(124, 199, 104, .45), 0 24px 60px -20px #000; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+.vl-pad { display: grid; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(2, 50px); gap: 6px; }
+.vl-pad[hidden] { display: none; }
+.vl-pad button { border: 0; border-radius: 14px; background: rgba(255, 255, 255, .12); color: #fff; font-size: 20px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); touch-action: manipulation; }
+.vl-pad button:active { background: rgba(124, 199, 104, .45); }
+.vl-pad [data-d="3"] { grid-column: 2; grid-row: 1; }
+.vl-pad [data-d="2"] { grid-column: 1; grid-row: 2; }
+.vl-pad [data-d="1"] { grid-column: 2; grid-row: 2; }
+.vl-pad [data-d="0"] { grid-column: 3; grid-row: 2; }
+.vl-keys { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
+@media (pointer: coarse) { .vl-keys { display: none; } }

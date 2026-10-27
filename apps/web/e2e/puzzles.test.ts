@@ -35,6 +35,7 @@ const PUZZLES = [
 	'ptaci',
 	'pirko',
 	'mrakodrap',
+	'vlak',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -906,4 +907,14 @@ test('mrakodrap drops floors onto the tower and scores', async ({ page }) => {
 			{ timeout: 20_000 },
 		)
 		.toBeGreaterThan(3);
+});
+
+test('vlak drives the generated route, collects every item and leaves through the gate', async ({
+	page,
+}) => {
+	await startFree(page, 'vlak', 'lehka');
+	await expect(page.locator('.vl-cv')).toBeVisible();
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 40_000 });
+	await expect(page.locator('.k-result')).toContainText(/Vlak dojel|The train made it/);
 });
