@@ -36,6 +36,7 @@ const PUZZLES = [
 	'pirko',
 	'mrakodrap',
 	'vlak',
+	'bombardak',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
@@ -917,4 +918,28 @@ test('vlak drives the generated route, collects every item and leaves through th
 	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
 	await expect(page.locator('.k-result')).toBeVisible({ timeout: 40_000 });
 	await expect(page.locator('.k-result')).toContainText(/Vlak dojel|The train made it/);
+});
+
+test('bombardak battle runs to the end with the autopilot', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await startFree(page, 'bombardak', 'souboj');
+	await expect(page.locator('.bb-cv')).toBeVisible();
+	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(8)');
+	await expect(page.locator('.k-result')).toBeVisible({ timeout: 60_000 });
+	await expect(page.locator('.k-result')).toContainText(/Vítězství|Vyřazen|Remíza/);
+	expect(errors).toEqual([]);
+});
+
+test('bombardak: standing on your own bomb costs a life and restarts the arena', async ({
+	page,
+}) => {
+	await startFree(page, 'bombardak', 'vyprava');
+	await expect(page.locator('.bb-cv')).toBeVisible();
+	await page.waitForFunction('Kit._test.inst._state().phase === "play"');
+	await page.evaluate('Kit._test.inst._input(null, true)');
+	await page.waitForFunction('Kit._test.inst._state().bombs === 1');
+	await page.waitForFunction('Kit._test.inst._state().lives === 2', null, { timeout: 6_000 });
+	await page.waitForFunction('Kit._test.inst._state().phase === "play"', null, { timeout: 6_000 });
+	await expect(page.locator('.bb-hearts i')).toHaveCount(2);
 });
