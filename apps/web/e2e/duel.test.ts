@@ -147,6 +147,37 @@ test('prsi online: both players see the same deal and one of them wins', async (
 	await bob.close();
 });
 
+test('dama online: moves cross over and a resignation ends the game', async ({ browser }, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const ann = await player(browser, 'Ann');
+	const bob = await player(browser, 'Bob');
+	const code = await create(ann.page, 'dama');
+	await bob.page.goto(`/games/dama/index.html?duel=${code}`);
+	await expect(ann.page.locator('.dm-pc')).toHaveCount(24);
+	await expect(bob.page.locator('.dm-pc')).toHaveCount(24);
+	const count = (page: Page) =>
+		page.evaluate('Kit._test.inst ? Kit._test.inst._state().moves.length : -1') as Promise<number>;
+	// whoever is on the move plays the engine's choice; both boards must stay identical
+	for (let k = 0; k < 6; k++) {
+		const [a, b] = [ann.page, bob.page];
+		const annMoves = (await a.evaluate(
+			'(s => s.turn === s.me)(Kit._test.inst._state())',
+		)) as boolean;
+		await (annMoves ? a : b).evaluate('Kit._test.inst._move(Kit._test.inst._best())');
+		await expect.poll(() => count(a)).toBe(k + 1);
+		await expect.poll(() => count(b)).toBe(k + 1);
+	}
+	const board = (page: Page) =>
+		page.evaluate('Kit._test.inst._state().b.join()') as Promise<string>;
+	expect(await board(ann.page)).toEqual(await board(bob.page));
+	await ann.page.locator('[data-t="resign"]').click();
+	await expect(result(ann.page)).toHaveText('Prohra');
+	await expect(result(bob.page)).toHaveText('Výhra!');
+	expect([...ann.errors, ...bob.errors]).toEqual([]);
+	await ann.close();
+	await bob.close();
+});
+
 test('tanks online: both see the same shots, terrain and damage; a resignation ends it', async ({
 	browser,
 }, info) => {

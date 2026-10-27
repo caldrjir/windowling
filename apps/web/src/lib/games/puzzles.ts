@@ -37,6 +37,16 @@ function prsiCover(): HTMLImageElement | null {
 	return prScene;
 }
 
+// DÁMA cover art: a board rendered from the game's own pieces (static/games/dama/cover)
+let dmScene: HTMLImageElement | null = null;
+function damaCover(): HTMLImageElement | null {
+	if (!dmScene && typeof Image !== 'undefined') {
+		dmScene = new Image();
+		dmScene.src = '/games/dama/cover/scene.webp';
+	}
+	return dmScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4523,6 +4533,49 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.beginPath();
 			ctx.ellipse(bx + 600 * s, by + 330 * s, 150 * s, 190 * s, 0, 0, TAU);
 			ctx.fill();
+		},
+	},
+	{
+		id: 'dama',
+		title: 'DÁMA',
+		group: 'puzzle',
+		category: 'board',
+		tagline: 'Skákat se musí!',
+		description:
+			'Česká dáma na desce 8×8: kameny táhnou šikmo dopředu, skákání je povinné a pokračuje, dokud to jde, a dáma létá přes celou úhlopříčku. Hraj proti počítači ve třech silách, ve dvou na jednom zařízení nebo online s kamarádem přes kód nebo odkaz. Denní partie a 120 úrovní Cesty.',
+		genres: ['Desková', 'Česká klasika', 'Online'],
+		features: ['Online ve dvou', 'Soupeř ve 3 silách', 'Hra ve dvou', 'Nápověda tahu'],
+		en: {
+			tagline: 'Capturing is compulsory!',
+			description:
+				'Czech draughts on an 8×8 board: men move diagonally forward, capturing is compulsory and continues while possible, and a king flies across the whole diagonal. Play the computer at three strengths, two players on one device or a friend online via a code or link. A daily game and 120 Path levels.',
+			genres: ['Board', 'Czech classic', 'Online'],
+			features: ['Two-player online', 'Opponent at 3 strengths', 'Two players', 'Move hints'],
+		},
+		statLabels: labels,
+		path: '/games/dama/index.html',
+		colors: ['#9a242a', '#f7eedd', '#f2c230'],
+		statsKey: 'gamecenter.stats.dama',
+		cover(ctx, w, h, t) {
+			// the board in perspective, rendered from the game's pieces (1200×800); the kings glow
+			ctx.fillStyle = '#1a1226';
+			ctx.fillRect(0, 0, w, h);
+			const img = damaCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 1200, h / 800),
+				bx = (w - 1200 * s) / 2,
+				by = Math.min(0, Math.max(h - 800 * s, h / 2 - 400 * s));
+			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
+			const p = (Math.sin(t * 3) + 1) / 2;
+			ctx.fillStyle = `rgba(242,194,48,${0.12 + p * 0.18})`;
+			for (const [x, y] of [
+				[370, 285],
+				[340, 635],
+			] as const) {
+				ctx.beginPath();
+				ctx.ellipse(bx + x * s, by + y * s, 52 * s, 34 * s, 0, 0, TAU);
+				ctx.fill();
+			}
 		},
 	},
 ];

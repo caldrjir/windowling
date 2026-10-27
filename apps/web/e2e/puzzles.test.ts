@@ -38,6 +38,7 @@ const PUZZLES = [
 	'vlak',
 	'bombardak',
 	'prsi',
+	'dama',
 ] as const;
 
 // `Kit` is a global of the page's classic scripts, not a property of window.
