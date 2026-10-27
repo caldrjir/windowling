@@ -17,6 +17,16 @@ function vlakCover(): HTMLImageElement | null {
 	return vlScene;
 }
 
+// BOMBARĎÁK cover art: an arena scene rendered from the game's art.js (static/games/bombardak/cover)
+let bbScene: HTMLImageElement | null = null;
+function bombardakCover(): HTMLImageElement | null {
+	if (!bbScene && typeof Image !== 'undefined') {
+		bbScene = new Image();
+		bbScene.src = '/games/bombardak/cover/scene.webp';
+	}
+	return bbScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4417,6 +4427,57 @@ export const PUZZLE_GAMES: Game[] = [
 				ctx.fillStyle = `rgba(245,245,250,${0.7 * (1 - k)})`;
 				ctx.beginPath();
 				ctx.arc(x, y, (6 + k * 16) * s, 0, TAU);
+				ctx.fill();
+			}
+		},
+	},
+	{
+		id: 'bombardak',
+		title: 'BOMBARĎÁK',
+		group: 'puzzle',
+		category: 'arcade',
+		tagline: 'Polož bombu a uteč za roh!',
+		description:
+			'Na motivy Bombermana: v aréně plné beden pokládáš bomby, plameny boří bedny a pod nimi čekají vylepšení, delší plamen, víc bomb a rychlost. Ve Výpravě zneškodníš příšery a najdeš skrytý východ, v Souboji se utkáš se třemi počítačovými bombarďáky, kteří umí utíkat i útočit. Šest světů, 120 úrovní Cesty, denní výprava a arkáda na skóre.',
+		genres: ['Arkáda', 'Akce', 'Souboj'],
+		features: ['Souboj proti počítači', '6 světů', 'Denní výprava', 'Arkáda na skóre'],
+		en: {
+			tagline: 'Drop a bomb and run around the corner!',
+			description:
+				'In the spirit of Bomberman: drop bombs in an arena full of crates, blast them open and grab the power-ups underneath, a longer blast, more bombs and speed. In Quest defeat the monsters and find the hidden exit; in Battle take on three computer bombers that know how to dodge and attack. Six worlds, 120 Path levels, a daily quest and an arcade for score.',
+			genres: ['Arcade', 'Action', 'Battle'],
+			features: ['Battle against the computer', '6 worlds', 'Daily quest', 'Arcade for score'],
+		},
+		statLabels: labels,
+		path: '/games/bombardak/index.html',
+		colors: ['#ffb22e', '#3d7bff', '#ff4d5e'],
+		statsKey: 'gamecenter.stats.bombardak',
+		cover(ctx, w, h, t) {
+			// the game's own arena (rendered from its art.js); the blast pulses and the fuse sparks
+			ctx.fillStyle = '#5fae4a';
+			ctx.fillRect(0, 0, w, h);
+			const img = bombardakCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 960, h / 960),
+				bx = Math.min(0, Math.max(w - 960 * s, w / 2 - 520 * s)),
+				by = Math.min(0, Math.max(h - 960 * s, h / 2 - 520 * s));
+			ctx.drawImage(img, bx, by, 960 * s, 960 * s);
+			const p = (Math.sin(t * 5) + 1) / 2,
+				cx = bx + 540 * s,
+				cy = by + 540 * s,
+				glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, (150 + p * 60) * s);
+			glow.addColorStop(0, `rgba(255,240,160,${0.35 + p * 0.3})`);
+			glow.addColorStop(1, 'rgba(255,140,40,0)');
+			ctx.fillStyle = glow;
+			ctx.fillRect(cx - 220 * s, cy - 220 * s, 440 * s, 440 * s);
+			// spark on the fuse of the lit bomb
+			const fx = bx + 325 * s,
+				fy = by + 248 * s;
+			for (let i = 0; i < 4; i++) {
+				const a = t * 9 + i * 1.7;
+				ctx.fillStyle = i % 2 ? '#ff8a2a' : '#fff6b0';
+				ctx.beginPath();
+				ctx.arc(fx + Math.cos(a) * 9 * s, fy + Math.sin(a) * 9 * s, (4 + (i % 2) * 2) * s, 0, TAU);
 				ctx.fill();
 			}
 		},
