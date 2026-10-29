@@ -10,6 +10,9 @@ const PrsiCards2 = (() => {
   // (srdce: zlatý obrys, kule: středy trámů), ozdoby, které z něj vyčnívají, zůstávají celé
   // (karta tak nemusí být přesný obdélník)
   const CLIP = { 0: [34, 51, 989, 1473, 88], 3: [70, 140, 960, 1380, 10] };
+  // rámeček zvětšený kolem středu karty (víc místa uvnitř, nejkrajnější špičky ozdob se ořežou);
+  // ořez pozadí i místo v rozích se zvětší s ním
+  const FRAME_S = { 3: 1 };
   const RANKS_CS = ['7', '8', '9', '10', 'Sp', 'Sv', 'K', 'E'], RANKS_EN = ['7', '8', '9', '10', 'U', 'O', 'K', 'A'];
   const INK = ['#8e1520', '#1d5e2b', '#6b4012', '#9a4a0c'];
   const img = {};
@@ -137,8 +140,9 @@ const PrsiCards2 = (() => {
     const su = c >> 3, rk = c & 7, k = width / DW;
     const cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
     const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
+    const fs = FRAME_S[su] || 1, fx = x => DW / 2 + (x - DW / 2) * fs, fy = y => DH / 2 + (y - DH / 2) * fs;
     const [x0, y0, x1, y1, r] = CLIP[su] || CLIP[0];
-    rr(ctx, x0, y0, x1 - x0, y1 - y0, r); ctx.save(); ctx.clip();
+    rr(ctx, fx(x0), fy(y0), (x1 - x0) * fs, (y1 - y0) * fs, r * fs); ctx.save(); ctx.clip();
     const bg = img[`bg-${su}-${rk}`], fit = FIT[`${su}-${rk}`];
     if (bg && fit) {
       ctx.save(); ctx.filter = `blur(${Math.max(1, Math.round(18 * k))}px) brightness(.8)`; ctx.drawImage(bg, 0, 0, DW, DH); ctx.restore();
@@ -154,20 +158,20 @@ const PrsiCards2 = (() => {
     else if (bg && FIG_PIP[rk]) for (const [x, y, w] of FIG_PIP[rk]) pip(ctx, k, sign, x, y, w, 7);
     else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
-    const fr = emboss(`frame-${su}`, img[`frame-${su}`], cv.width, cv.height, 6 * k);
+    const fr = emboss(`frame-${su}`, img[`frame-${su}`], Math.round(DW * fs * k), Math.round(DH * fs * k), 6 * k);
     if (fr) {
       ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 20 * k; ctx.shadowOffsetX = 1e4 + 3 * k; ctx.shadowOffsetY = 8 * k;
-      ctx.drawImage(fr, -1e4 / k, 0, DW, DH);
+      ctx.drawImage(fr, fx(0) - 1e4 / k, fy(0), DW * fs, DH * fs);
     }
     ctx.restore();
     // rámeček celý, i s ozdobami, které z karty vyčnívají
-    if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
+    if (fr) ctx.drawImage(fr, fx(0), fy(0), DW * fs, DH * fs);
     // v horních rozích, vedle ozdob rámečku, římská číslice nebo značka figury
     const [nx, ny, sc] = CORNER[su] || CORNER[0];
     for (const right of [false, true]) {
-      const x = right ? DW - nx : nx;
-      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, ny, right, sc);
-      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}-${sc}`, 104 * sc, 108 * sc, (t, op) => { t.save(); t.scale(sc, sc); MARKS[rk](t, op); t.restore(); }, x, ny, right);
+      const x = fx(right ? DW - nx : nx), y = fy(ny), s = sc * fs;
+      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, y, right, s);
+      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}-${s}`, 104 * s, 108 * s, (t, op) => { t.save(); t.scale(s, s); MARKS[rk](t, op); t.restore(); }, x, y, right);
     }
     return cv;
   }
