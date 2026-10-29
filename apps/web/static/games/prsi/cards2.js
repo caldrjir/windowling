@@ -6,6 +6,10 @@
 // v rozměru 1024 × 1536 (rozměr ilustrací), kreslí se zmenšeně.
 const PrsiCards2 = (() => {
   const DW = 1024, DH = 1536, BASE = '/games/prsi/img/';
+  // rámeček se roztáhne až k okraji karty: jeho zlatý obrys (v obrázku x 34–989, y 51–1473)
+  // padne na okraj karty, pozadí se ořízne podle něj
+  const EDGE = 8, FX = [34, 989], FY = [51, 1473];
+  const SX = (DW - 2 * EDGE) / (FX[1] - FX[0]), SY = (DH - 2 * EDGE) / (FY[1] - FY[0]);
   const RANKS_CS = ['7', '8', '9', '10', 'Sp', 'Sv', 'K', 'E'], RANKS_EN = ['7', '8', '9', '10', 'U', 'O', 'K', 'A'];
   const INK = ['#8e1520', '#1d5e2b', '#6b4012', '#9a4a0c'];
   const img = {};
@@ -23,7 +27,7 @@ const PrsiCards2 = (() => {
     const su = c >> 3, rk = c & 7, k = width / DW;
     const cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
     const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
-    rr(ctx, 6, 6, DW - 12, DH - 12, 70); ctx.save(); ctx.clip();
+    rr(ctx, EDGE, EDGE, DW - 2 * EDGE, DH - 2 * EDGE, 92); ctx.save(); ctx.clip();
     const bg = img[`bg-${su}-${rk}`];
     if (bg) ctx.drawImage(bg, 0, 0, DW, DH);
     else { const g = ctx.createLinearGradient(0, 0, 0, DH); g.addColorStop(0, '#fffaf0'); g.addColorStop(1, '#efe3c8'); ctx.fillStyle = g; ctx.fillRect(0, 0, DW, DH); }
@@ -35,17 +39,17 @@ const PrsiCards2 = (() => {
     ctx.restore();
     ctx.restore();
     // rámeček
-    if (img[`frame-${su}`]) ctx.drawImage(img[`frame-${su}`], 0, 0, DW, DH);
+    if (img[`frame-${su}`]) ctx.drawImage(img[`frame-${su}`], EDGE - FX[0] * SX, EDGE - FY[0] * SY, DW * SX, DH * SY);
     // rohové indexy: hodnota a malý znak na pergamenovém štítku
     const R = (en ? RANKS_EN : RANKS_CS)[rk];
     const index = () => {
       ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 4;
-      rr(ctx, 110, 226, 184, 256, 40); ctx.fillStyle = 'rgba(255,248,232,.95)'; ctx.fill(); ctx.restore();
-      rr(ctx, 110, 226, 184, 256, 40); ctx.lineWidth = 8; ctx.strokeStyle = '#c9a23a'; ctx.stroke();
+      rr(ctx, 100, 214, 184, 256, 40); ctx.fillStyle = 'rgba(255,248,232,.95)'; ctx.fill(); ctx.restore();
+      rr(ctx, 100, 214, 184, 256, 40); ctx.lineWidth = 8; ctx.strokeStyle = '#c9a23a'; ctx.stroke();
       ctx.fillStyle = INK[su]; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.font = `700 ${R.length > 1 ? 120 : 164}px Georgia, 'Times New Roman', serif`;
-      ctx.fillText(R, 202, R.length > 1 ? 364 : 380);
-      contain(ctx, img[`suit-${su}`], 202, 432, 88);
+      ctx.fillText(R, 192, R.length > 1 ? 352 : 368);
+      contain(ctx, img[`suit-${su}`], 192, 420, 88);
     };
     index();
     ctx.save(); ctx.translate(DW, DH); ctx.rotate(Math.PI); index(); ctx.restore();
