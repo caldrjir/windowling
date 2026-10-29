@@ -13,17 +13,24 @@ const PrsiCards2 = (() => {
   const INK = ['#8e1520', '#1d5e2b', '#6b4012', '#9a4a0c'];
   const img = {};
   const load = name => new Promise(res => { const i = new Image(); i.onload = () => { img[name] = i; res(i); }; i.onerror = () => res(null); i.src = BASE + name + '.webp'; });
-  // načte všechny vrstvy, které existují (chybějící se přeskočí)
+  // římské číslice píše Cinzel (SIL Open Font License), přibalený jen se znaky I, V a X
+  const FONT = 'PrsiRoman, Cinzel, Georgia, serif';
+  const loadFont = () => typeof FontFace === 'function'
+    ? new FontFace('PrsiRoman', `url(${BASE}cinzel-ivx.woff2)`, { weight: '700' }).load().then(f => { document.fonts.add(f); }, () => {})
+    : null;
+  // načte všechny vrstvy, které existují (chybějící se přeskočí), a písmo číslic
   function ready() {
     const names = [];
     for (let su = 0; su < 4; su++) { names.push(`suit-${su}`, `emblem-${su}`, `frame-${su}`); for (let rk = 0; rk < 8; rk++) names.push(`bg-${su}-${rk}`); }
-    return Promise.all(names.map(load));
+    return Promise.all([...names.map(load), loadFont()]);
   }
   // rozložení znaků na číselných kartách jako na jednohlavých mariáškách: znaky v horních
-  // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; žádná čísla
+  // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; hodnotu ukazují
+  // římské číslice v obou horních rozích
+  const ROMAN = ['VII', 'VIII', 'IX', 'X'];
   const PIPS = {
     0: [[512, 330], [272, 540], [752, 540], [272, 810], [752, 810], [272, 1080], [752, 1080]],
-    1: [[272, 340], [752, 340], [272, 610], [752, 610], [272, 880], [752, 880], [272, 1150], [752, 1150]],
+    1: [[272, 380], [752, 380], [272, 650], [752, 650], [272, 920], [752, 920], [272, 1190], [752, 1190]],
     2: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [772, 470], [772, 740], [772, 1010]],
     3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
   };
@@ -33,8 +40,7 @@ const PrsiCards2 = (() => {
   // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
   // (stín plátna nezná ctx.scale), proto se počítá pro každou velikost zvlášť a pamatuje si.
   const raised = {};
-  function emboss(name, w, h, depth) {
-    const im = img[name];
+  function emboss(name, im, w, h, depth) {
     if (!im) return null;
     const key = `${name}:${w}x${h}`;
     if (raised[key]) return raised[key];
@@ -53,9 +59,25 @@ const PrsiCards2 = (() => {
   function pip(ctx, k, name, cx, cy, w, depth) {
     const im = img[name];
     if (!im) return;
-    const h = w * im.height / im.width, e = emboss(name, Math.round(w * k), Math.round(h * k), depth * k);
+    const h = w * im.height / im.width, e = emboss(name, im, Math.round(w * k), Math.round(h * k), depth * k);
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 22 * k; ctx.shadowOffsetX = 4 * k; ctx.shadowOffsetY = 10 * k;
     ctx.drawImage(e, cx - w / 2, cy - h / 2, w, h);
+    ctx.restore();
+  }
+  // zlatá římská číslice s tmavým obrysem, vystouplá jako znaky; x je levý (nebo pravý) okraj, y účaří
+  function numeral(ctx, k, text, x, y, right) {
+    const s = 112 * k, line = 7 * k, c = document.createElement('canvas'), t = c.getContext('2d');
+    t.font = `700 ${s}px ${FONT}`;
+    const m = t.measureText(text), pad = Math.ceil(line + 2), asc = m.actualBoundingBoxAscent;
+    c.width = Math.ceil(m.actualBoundingBoxLeft + m.actualBoundingBoxRight) + 2 * pad; c.height = Math.ceil(asc + m.actualBoundingBoxDescent) + 2 * pad;
+    t.font = `700 ${s}px ${FONT}`; t.lineJoin = 'round';
+    const bx = pad + m.actualBoundingBoxLeft, by = pad + asc, g = t.createLinearGradient(0, pad, 0, by);
+    g.addColorStop(0, '#fff6cf'); g.addColorStop(0.45, '#f1c95a'); g.addColorStop(1, '#a8701c');
+    t.lineWidth = line; t.strokeStyle = '#3a1c06'; t.strokeText(text, bx, by);
+    t.fillStyle = g; t.fillText(text, bx, by);
+    const e = emboss(`roman-${text}`, c, c.width, c.height, 4 * k), w = c.width / k, h = c.height / k;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 14 * k; ctx.shadowOffsetX = 3 * k; ctx.shadowOffsetY = 7 * k;
+    ctx.drawImage(e, right ? x - w + pad / k : x - pad / k, y - by / k, w, h);
     ctx.restore();
   }
 
@@ -74,7 +96,7 @@ const PrsiCards2 = (() => {
     if (PIPS[rk]) for (const [x, y] of PIPS[rk]) pip(ctx, k, sign, x, y, PIP_W, 7);
     else pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
-    const fr = emboss(`frame-${su}`, cv.width, cv.height, 6 * k);
+    const fr = emboss(`frame-${su}`, img[`frame-${su}`], cv.width, cv.height, 6 * k);
     if (fr) {
       ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 20 * k; ctx.shadowOffsetX = 1e4 + 3 * k; ctx.shadowOffsetY = 8 * k;
       ctx.drawImage(fr, -1e4 / k, 0, DW, DH);
@@ -82,6 +104,8 @@ const PrsiCards2 = (() => {
     ctx.restore();
     // rámeček celý, i s ozdobami, které z karty vyčnívají
     if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
+    // římské číslice v horních rozích, vedle ozdob rámečku
+    if (ROMAN[rk]) { numeral(ctx, k, ROMAN[rk], 215, 240, false); numeral(ctx, k, ROMAN[rk], DW - 215, 240, true); }
     return cv;
   }
   const cache = {};
