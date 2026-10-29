@@ -50,8 +50,11 @@ const PrsiCards2 = (() => {
     },
   };
   // figura je celá obrázkem a nese znaky barvy [x, y, šířka]: spodek jeden dole, svršek jeden
-  // nahoře (stranou od obličeje), král a eso v obou horních rozích
-  const FIG_PIP = { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] };
+  // nahoře (stranou od obličeje), král a eso v obou horních rozích; podle barvy (rámeček, obrázek)
+  const FIG_PIP = {
+    0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] },
+    3: { 5: [[765, 460, 185]] },
+  };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
   const FIT = { '0-5': { s: 0.86, y: 138 } };
@@ -166,7 +169,7 @@ const PrsiCards2 = (() => {
     // obrázkem se znaky barvy, karta bez obrázku má velký znak uprostřed
     const lay = PIPS[su] || PIPS[0];
     if (lay[rk]) for (const [x, y] of lay[rk]) pip(ctx, k, sign, x, y, lay.w, 7);
-    else if (bg && FIG_PIP[rk]) for (const [x, y, w] of FIG_PIP[rk]) pip(ctx, k, sign, x, y, w, 7);
+    else if (bg && (FIG_PIP[su] || FIG_PIP[0])[rk]) for (const [x, y, w] of (FIG_PIP[su] || FIG_PIP[0])[rk]) pip(ctx, k, sign, x, y, w, 7);
     else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
     const fr = emboss(`frame-${su}`, img[`frame-${su}`], Math.round(DW * fs * k), Math.round(DH * fs * k), 6 * k);
