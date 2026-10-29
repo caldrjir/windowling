@@ -64,22 +64,35 @@ const PrsiCards2 = (() => {
     ctx.drawImage(e, cx - w / 2, cy - h / 2, w, h);
     ctx.restore();
   }
-  // zlatá římská číslice s tmavým obrysem, vystouplá jako znaky; x je levý (nebo pravý) okraj, y účaří
-  function numeral(ctx, k, text, x, y, right) {
-    const s = 112 * k, line = 7 * k, c = document.createElement('canvas'), t = c.getContext('2d');
-    t.font = `700 ${s}px ${FONT}`;
-    const m = t.measureText(text), pad = Math.ceil(line + 2), asc = m.actualBoundingBoxAscent;
-    c.width = Math.ceil(m.actualBoundingBoxLeft + m.actualBoundingBoxRight) + 2 * pad; c.height = Math.ceil(asc + m.actualBoundingBoxDescent) + 2 * pad;
-    t.font = `700 ${s}px ${FONT}`; t.lineJoin = 'round';
-    const bx = pad + m.actualBoundingBoxLeft, by = pad + asc, g = t.createLinearGradient(0, pad, 0, by);
-    g.addColorStop(0, '#fff6cf'); g.addColorStop(0.45, '#f1c95a'); g.addColorStop(1, '#a8701c');
-    t.lineWidth = line; t.strokeStyle = '#3a1c06'; t.strokeText(text, bx, by);
-    t.fillStyle = g; t.fillText(text, bx, by);
-    const e = emboss(`roman-${text}`, c, c.width, c.height, 4 * k), w = c.width / k, h = c.height / k;
+  // zlatý odznak v rohu s tmavým obrysem, vystouplý jako znaky. shape(t, op) nakreslí tvar
+  // w × h v návrhových jednotkách (op je 'stroke', pak 'fill'); x je levý (u pravého rohu pravý)
+  // okraj, y spodní hrana (účaří číslic)
+  function badge(ctx, k, key, w, h, shape, x, y, right) {
+    const line = 7, pad = line + 4, c = document.createElement('canvas'), t = c.getContext('2d');
+    c.width = Math.ceil((w + 2 * pad) * k); c.height = Math.ceil((h + 2 * pad) * k);
+    t.scale(k, k); t.translate(pad, pad); t.lineJoin = 'round';
+    const g = t.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#fff6cf'); g.addColorStop(0.45, '#f1c95a'); g.addColorStop(1, '#a8701c');
+    t.lineWidth = line; t.strokeStyle = '#3a1c06'; shape(t, 'stroke');
+    t.fillStyle = g; shape(t, 'fill');
+    const e = emboss(key, c, c.width, c.height, 4 * k);
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 14 * k; ctx.shadowOffsetX = 3 * k; ctx.shadowOffsetY = 7 * k;
-    ctx.drawImage(e, right ? x - w + pad / k : x - pad / k, y - by / k, w, h);
+    ctx.drawImage(e, (right ? x - w : x) - pad, y - h - pad, c.width / k, c.height / k);
     ctx.restore();
   }
+  const NUM = '700 112px ' + FONT;
+  let measure = null;
+  function numeral(ctx, k, text, x, y, right) {
+    measure = measure || document.createElement('canvas').getContext('2d');
+    measure.font = NUM;
+    const m = measure.measureText(text), w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight, h = m.actualBoundingBoxAscent;
+    badge(ctx, k, `roman-${text}`, w, h, (t, op) => { t.font = NUM; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); }, x, y, right);
+  }
+  // figury mají v rozích místo písmen značku, která nepotřebuje překlad: spodek (Unter, „dolní“)
+  // hrot dolů, svršek (Ober, „horní“) hrot nahoru
+  const MARKS = {
+    4: (t, op) => { t.beginPath(); t.moveTo(0, 0); t.lineTo(84, 0); t.quadraticCurveTo(64, 38, 42, 86); t.quadraticCurveTo(20, 38, 0, 0); t.closePath(); t[op](); },
+    5: (t, op) => { t.beginPath(); t.moveTo(42, 0); t.quadraticCurveTo(64, 48, 84, 86); t.lineTo(0, 86); t.quadraticCurveTo(20, 48, 42, 0); t.closePath(); t[op](); },
+  };
 
   function draw(c, width, en) {
     const su = c >> 3, rk = c & 7, k = width / DW;
@@ -92,9 +105,10 @@ const PrsiCards2 = (() => {
     // jemné ztmavení okrajů, ať rámeček a znak vyniknou
     const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
     const sign = img[`emblem-${su}`] ? `emblem-${su}` : `suit-${su}`;
-    // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty, jinak velký znak uprostřed
+    // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty; figura je celá
+    // obrázkem, eso (a figura, dokud nemá obrázek) má velký znak uprostřed
     if (PIPS[rk]) for (const [x, y] of PIPS[rk]) pip(ctx, k, sign, x, y, PIP_W, 7);
-    else pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
+    else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
     const fr = emboss(`frame-${su}`, img[`frame-${su}`], cv.width, cv.height, 6 * k);
     if (fr) {
@@ -104,8 +118,12 @@ const PrsiCards2 = (() => {
     ctx.restore();
     // rámeček celý, i s ozdobami, které z karty vyčnívají
     if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
-    // římské číslice v horních rozích, vedle ozdob rámečku
-    if (ROMAN[rk]) { numeral(ctx, k, ROMAN[rk], 215, 240, false); numeral(ctx, k, ROMAN[rk], DW - 215, 240, true); }
+    // v horních rozích, vedle ozdob rámečku, římská číslice nebo značka figury
+    for (const right of [false, true]) {
+      const x = right ? DW - 215 : 215;
+      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, 240, right);
+      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}`, 84, 86, MARKS[rk], x, 240, right);
+    }
     return cv;
   }
   const cache = {};
