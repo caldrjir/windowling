@@ -97,7 +97,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [x] Settlers of Catan – seeded hex island, bank and harbour trades, development cards, computer players at three strengths, online for two (Osadníci)
 - [x] Lodě – battleship: computer admiral at three strengths and online with hidden fleets (Lodě)
 - [x] Dáma – Czech draughts: computer at three strengths, two players and online (Dáma)
-- [x] Prší – the Czech card game: computer players, a daily deal and two-player online (Prší)
+- [x] Prší – the Czech card game: computer players and two-player online with a who-beat-whom score, no daily or Path (Prší)
 - [x] Bomberman – bombs, crates with power-ups, monsters and a hidden exit, battles against computer bombers (Bombarďák)
 - [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
 - [x] Flappy Bird – tap to fly through gaps (Pírko)

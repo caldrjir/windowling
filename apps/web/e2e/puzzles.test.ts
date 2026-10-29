@@ -962,11 +962,20 @@ test('bombardak: standing on your own bomb costs a life and restarts the arena',
 });
 
 test('prsi: a full game against three computer players reaches a result', async ({ page }) => {
+	test.setTimeout(120_000);
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
+	// Prší has only the game against the computer, online and the score: no daily, Path or quests.
+	await page.goto('/games/prsi/index.html');
+	await expect(page.locator('.k-online')).toBeVisible();
+	await expect(page.locator('.k-score')).toBeVisible();
+	await expect(page.locator('.k-daily, .k-path, .k-quests')).toHaveCount(0);
 	await startFree(page, 'prsi', 'tri');
 	await expect(page.locator('.pr-hand .pr-card')).toHaveCount(4);
-	await page.evaluate('Kit._test.inst._autoplay()');
+	await page.evaluate('Kit._test.inst._speed(4); Kit._test.inst._autoplay()');
 	await expect(page.locator('.k-result')).toBeVisible({ timeout: 90_000 });
+	// the score now shows who beat whom
+	await page.locator('#kHome').click();
+	await expect(page.locator('.k-score tr')).not.toHaveCount(0);
 	expect(errors).toEqual([]);
 });

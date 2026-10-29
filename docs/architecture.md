@@ -151,6 +151,12 @@ keep players coming back for weeks:
 - **Weekly quests** shared by all puzzle games and **stardust** for themes
   (`gamecenter.puzzles` in localStorage).
 - Storage: `<id>.save.v1` (game), `gamecenter.puzzles` (shared), `gamecenter.stats.<id>` (hub).
+- Parts a game can switch off: `Kit.game({ daily: false, path: false, quests: false, perfect: false })`
+  hides the daily puzzle, the Star Path, the weekly quests and the no-mistake achievements (cards,
+  achievements, leaderboard tabs and hub stats follow). `versus: true` adds a **Score** card: who
+  beat whom, from online results (by nickname) and `api.versus(id, name, 'w' | 'l' | 'd')` against
+  computer players, kept in the game's save (`vs`). `freeTitle` / `freeNote` rename free play
+  (Prší: "Proti počítači").
 - Wording: `Kit.game({ wording })` picks the shell's words: `solve` (default: a puzzle is
   solved), `win` (board, card and two-player games: a game is won) or `play` (arcade and relax
   games: a run is finished). The catalogue's `statLabels` match (`labels`, `winLabels`, `doneLabels`).
