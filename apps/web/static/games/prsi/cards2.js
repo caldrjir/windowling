@@ -17,10 +17,10 @@ const PrsiCards2 = (() => {
   const INK = ['#8e1520', '#1d5e2b', '#6b4012', '#9a4a0c'];
   const img = {};
   const load = name => new Promise(res => { const i = new Image(); i.onload = () => { img[name] = i; res(i); }; i.onerror = () => res(null); i.src = BASE + name + '.webp'; });
-  // římské číslice píše Cinzel (SIL Open Font License), přibalený jen se znaky I, V a X
+  // římské číslice a písmena figur píše Cinzel (SIL Open Font License), přibalený jen se znaky I, V, X, K a A
   const FONT = 'PrsiRoman, Cinzel, Georgia, serif';
   const loadFont = () => typeof FontFace === 'function'
-    ? new FontFace('PrsiRoman', `url(${BASE}cinzel-ivx.woff2)`, { weight: '700' }).load().then(f => { document.fonts.add(f); }, () => {})
+    ? new FontFace('PrsiRoman', `url(${BASE}cinzel-caps.woff2)`, { weight: '700' }).load().then(f => { document.fonts.add(f); }, () => {})
     : null;
   // načte všechny vrstvy, které existují (chybějící se přeskočí), a písmo číslic
   function ready() {
@@ -52,9 +52,11 @@ const PrsiCards2 = (() => {
   // figura je celá obrázkem a nese znaky barvy [x, y, šířka]: spodek jeden dole, svršek jeden
   // nahoře (stranou od obličeje), král a eso v obou horních rozích; podle barvy (rámeček, obrázek)
   const FIG_PIP = {
-    0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] },
-    3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]], 6: [[300, 355, 165], [724, 355, 165]], 7: [[300, 355, 165], [724, 355, 165]] },
+    0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 380, 190], [724, 380, 190]], 7: [[300, 380, 190], [724, 380, 190]] },
+    3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]], 6: [[300, 405, 165], [724, 405, 165]], 7: [[300, 405, 165], [724, 405, 165]] },
   };
+  // král a eso mají nad znaky v rozích písmeno, srozumitelné ve všech jazycích hry
+  const LETTER = { 6: 'K', 7: 'A' };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
   const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 } };
@@ -115,9 +117,9 @@ const PrsiCards2 = (() => {
     ctx.restore();
   }
   // zlatý odznak v rohu s tmavým obrysem, vystouplý jako znaky. shape(t, op) nakreslí tvar
-  // w × h v návrhových jednotkách (op je 'stroke', pak 'fill'); x je levý (u pravého rohu pravý)
-  // okraj, y spodní hrana (účaří číslic)
-  function badge(ctx, k, key, w, h, shape, x, y, right) {
+  // w × h v návrhových jednotkách (op je 'stroke', pak 'fill'); x je bod, ke kterému se odznak zarovná
+  // (align 0 levý okraj, 1 pravý, 0.5 střed), y spodní hrana (účaří číslic)
+  function badge(ctx, k, key, w, h, shape, x, y, align) {
     const line = 7, pad = line + 4, c = document.createElement('canvas'), t = c.getContext('2d');
     c.width = Math.ceil((w + 2 * pad) * k); c.height = Math.ceil((h + 2 * pad) * k);
     t.scale(k, k); t.translate(pad, pad); t.lineJoin = 'round';
@@ -126,18 +128,18 @@ const PrsiCards2 = (() => {
     t.fillStyle = g; shape(t, 'fill');
     const e = emboss(key, c, c.width, c.height, 4 * k);
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 14 * k; ctx.shadowOffsetX = 3 * k; ctx.shadowOffsetY = 7 * k;
-    ctx.drawImage(e, (right ? x - w : x) - pad, y - h - pad, c.width / k, c.height / k);
+    ctx.drawImage(e, x - w * align - pad, y - h - pad, c.width / k, c.height / k);
     ctx.restore();
   }
   // velké číslice, do šířky trochu stažené, ať se VIII vejde mezi roh a horní ozdobu (sc je velikost)
   const NARROW = 0.85, numFont = sc => `700 ${Math.round(142 * sc)}px ${FONT}`;
   let measure = null;
-  function numeral(ctx, k, text, x, y, right, sc) {
+  function numeral(ctx, k, text, x, y, align, sc) {
     const font = numFont(sc);
     measure = measure || document.createElement('canvas').getContext('2d');
     measure.font = font;
     const m = measure.measureText(text), w = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * NARROW, h = m.actualBoundingBoxAscent;
-    badge(ctx, k, `roman-${text}-${sc}`, w, h, (t, op) => { t.save(); t.scale(NARROW, 1); t.font = font; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); t.restore(); }, x, y, right);
+    badge(ctx, k, `roman-${text}-${sc}`, w, h, (t, op) => { t.save(); t.scale(NARROW, 1); t.font = font; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); t.restore(); }, x, y, align);
   }
   // figury mají v rozích místo písmen značku, která nepotřebuje překlad: spodek (Unter, „dolní“)
   // hrot dolů, svršek (Ober, „horní“) hrot nahoru
@@ -184,9 +186,11 @@ const PrsiCards2 = (() => {
     const [nx, ny, sc] = CORNER[su] || CORNER[0];
     for (const right of [false, true]) {
       const x = fx(right ? DW - nx : nx), y = fy(ny), s = sc * fs;
-      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, y, right, s);
-      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}-${s}`, 104 * s, 108 * s, (t, op) => { t.save(); t.scale(s, s); MARKS[rk](t, op); t.restore(); }, x, y, right);
+      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, y, right ? 1 : 0, s);
+      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}-${s}`, 104 * s, 108 * s, (t, op) => { t.save(); t.scale(s, s); MARKS[rk](t, op); t.restore(); }, x, y, right ? 1 : 0);
     }
+    const figs = (FIG_PIP[su] || FIG_PIP[0])[rk], si = img[sign];
+    if (bg && LETTER[rk] && figs && si) for (const [x, y, w] of figs) numeral(ctx, k, LETTER[rk], x, y - w * si.height / si.width / 2 - 14, 0.5, sc);
     return cv;
   }
   const cache = {};
