@@ -20,11 +20,11 @@ const PrsiCards2 = (() => {
     return Promise.all(names.map(load));
   }
   // rozložení znaků na číselných kartách jako na jednohlavých mariáškách: znaky v horních
-  // dvou třetinách (sloupce srdcí se překrývají), dole zůstává vidět obrázek; žádná čísla
+  // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; žádná čísla
   const PIPS = {
-    0: [[512, 330], [276, 520], [748, 520], [276, 690], [748, 690], [276, 860], [748, 860]],
+    0: [[512, 330], [272, 540], [752, 540], [272, 810], [752, 810], [272, 1080], [752, 1080]],
   };
-  const PIP_W = 235;
+  const PIP_W = 205;
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
   // vystouplý vzhled: uvnitř tvaru světlá hrana vlevo nahoře a tmavá vpravo dole (vnitřní stín).
   // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
