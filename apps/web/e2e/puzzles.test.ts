@@ -980,6 +980,50 @@ test('prsi: a full game against three computer players reaches a result', async 
 	expect(errors).toEqual([]);
 });
 
+test('lode: ships are dragged from the harbour onto the sea and turned by a tap', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'mouse drag');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	// Lodě has only the game against the computer, online and the score: no daily, Path or quests.
+	await page.goto('/games/lode/index.html');
+	await expect(page.locator('.k-score')).toBeVisible();
+	await expect(page.locator('.k-daily, .k-path, .k-quests')).toHaveCount(0);
+	await startFree(page, 'lode', 'ai1');
+	await expect(page.locator('.ld-dship')).toHaveCount(5);
+	await expect(page.locator('[data-b="ready"]')).toBeDisabled();
+	const fleet = () =>
+		page.evaluate('Kit._test.inst._state().fleet') as Promise<
+			({ len: number; v: boolean; x: number; y: number } | null)[]
+		>;
+	const water = await page.locator('.ld-mine .ld-water').boundingBox();
+	const hull = await page.locator('.ld-dship[data-i="0"] .ld-dhull').boundingBox();
+	if (!water || !hull) throw new Error('the sea and the harbour are laid out');
+	const cell = water.width / 10;
+	// drag the carrier by its stern onto B2
+	await page.mouse.move(hull.x + cell * 0.5, hull.y + hull.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(water.x + cell * 1.5, water.y + cell * 1.5, { steps: 10 });
+	await page.mouse.up();
+	await expect(page.locator('.ld-dship')).toHaveCount(4);
+	expect((await fleet())[0]).toEqual({ len: 5, v: false, x: 1, y: 1 });
+	// a tap on it turns it around the tapped square
+	await page.mouse.click(water.x + cell * 1.5, water.y + cell * 1.5);
+	expect((await fleet())[0]).toEqual({ len: 5, v: true, x: 1, y: 1 });
+	// the rest at random, then to battle; resigning counts as a loss to the cadet
+	await page.locator('[data-b="shuffle"]').click();
+	await expect(page.locator('[data-b="ready"]')).toBeEnabled();
+	await page.locator('[data-b="ready"]').click();
+	await expect(page.locator('.ld-enemy .ld-c.aim').first()).toBeVisible();
+	await page.locator('[data-t="resign"]').click();
+	await expect(page.locator('.k-result')).toBeVisible();
+	await page.locator('#kHome').click();
+	await expect(page.locator('.k-score tr')).not.toHaveCount(0);
+	expect(errors).toEqual([]);
+});
+
 test('prsi: the card gallery shows the pictures and opens one up close', async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));

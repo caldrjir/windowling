@@ -47,7 +47,7 @@ function damaCover(): HTMLImageElement | null {
 	return dmScene;
 }
 
-// LODĚ cover art: a sea with ships rendered from the game's own styles (static/games/lode/cover)
+// LODĚ cover art: a screenshot of a battle in the game (static/games/lode/cover)
 let ldScene: HTMLImageElement | null = null;
 function lodeCover(): HTMLImageElement | null {
 	if (!ldScene && typeof Image !== 'undefined') {
@@ -1026,7 +1026,8 @@ const doneLabels = { ...labels, solved: ['Dokončeno', 'Completed'] } satisfies 
 >;
 
 /** Prší has no daily or Path: wins against the computer and online. */
-const prsiLabels = {
+// games with a who-beat-whom score instead of the daily puzzle and the Path (Prší, Lodě)
+const versusLabels = {
 	solved: ['Výhry proti počítači', 'Wins vs computer'],
 	online: ['Výhry online', 'Online wins'],
 	rank: ['Hodnost', 'Rank'],
@@ -4575,7 +4576,7 @@ export const PUZZLE_GAMES: Game[] = [
 				'Gallery of illustrated cards',
 			],
 		},
-		statLabels: prsiLabels,
+		statLabels: versusLabels,
 		path: '/games/prsi/index.html',
 		colors: ['#1d4a2c', '#d9572f', '#f2c56b'],
 		statsKey: 'gamecenter.stats.prsi',
@@ -4638,32 +4639,38 @@ export const PUZZLE_GAMES: Game[] = [
 	{
 		id: 'lode',
 		online: 'turn',
+		record: { board: 'online:wins', label: ['Online výhry', 'Online wins'] },
 		title: 'LODĚ',
 		group: 'puzzle',
 		category: 'board',
 		tagline: 'Zásah, potopena!',
 		description:
-			'Námořní bitva na moři 10×10: rozmísti letadlovou loď, bitevní loď, dva křižníky a torpédoborec, pak se se soupeřem střídej v ranách. Kdo dřív potopí celou nepřátelskou flotilu, vyhrává. Hraj proti počítačovému admirálovi ve třech silách nebo online s kamarádem, kde tvoje rozmístění zůstane skryté.',
+			'Námořní bitva na moři 10×10: přetáhni z přístavu letadlovou loď, bitevní loď, dva křižníky a torpédoborec, nebo je rozmísti náhodně, pak se se soupeřem střídej v ranách. Kdo dřív potopí celou nepřátelskou flotilu, vyhrává. Hraj proti kadetovi, kapitánovi nebo admirálovi, nebo online s kamarádem, kde tvoje rozmístění zůstane skryté. Skóre ukazuje, nad kým jsi vyhrál a kdo nad tebou.',
 		genres: ['Desková', 'Strategie', 'Námořní bitva'],
-		features: ['Online ve dvou', 'Admirál ve 3 silách', 'Vlastní rozmístění', 'Denní bitva'],
+		features: [
+			'Online ve dvou',
+			'Soupeř ve 3 silách',
+			'Rozmístění přetažením',
+			'Skóre: kdo koho porazil',
+		],
 		en: {
 			tagline: 'Hit, sunk!',
 			description:
-				'Naval battle on a 10×10 sea: place a carrier, a battleship, two cruisers and a destroyer, then take turns firing with your opponent. The first to sink the whole enemy fleet wins. Play the computer admiral at three strengths or a friend online, with your layout kept secret.',
+				'Naval battle on a 10×10 sea: drag a carrier, a battleship, two cruisers and a destroyer out of the harbour, or place them at random, then take turns firing with your opponent. The first to sink the whole enemy fleet wins. Play a cadet, a captain or an admiral, or a friend online with your layout kept secret. The score shows whom you beat and who beat you.',
 			genres: ['Board', 'Strategy', 'Battleship'],
 			features: [
 				'Two-player online',
-				'Admiral at 3 strengths',
-				'Place your own fleet',
-				'Daily battle',
+				'Opponent at 3 strengths',
+				'Drag-and-drop placement',
+				'Score: who beat whom',
 			],
 		},
-		statLabels: winLabels,
+		statLabels: versusLabels,
 		path: '/games/lode/index.html',
-		colors: ['#0d3a5c', '#e8262c', '#c3cbd6'],
+		colors: ['#0b3150', '#e4572e', '#e9b44c'],
 		statsKey: 'gamecenter.stats.lode',
 		cover(ctx, w, h, t) {
-			// the sea rendered from the game's own styles (1200×800); a new shot splashes now and then
+			// a battle in progress, a screenshot of the game (1200×800); a new shot splashes now and then
 			ctx.fillStyle = '#06182a';
 			ctx.fillRect(0, 0, w, h);
 			const img = lodeCover();
@@ -4676,7 +4683,7 @@ export const PUZZLE_GAMES: Game[] = [
 			ctx.strokeStyle = `rgba(255,170,60,${1 - k})`;
 			ctx.lineWidth = Math.max(1.5, 4 * s);
 			ctx.beginPath();
-			ctx.ellipse(bx + 482 * s, by + 352 * s, (14 + k * 60) * s, (9 + k * 38) * s, 0, 0, TAU);
+			ctx.ellipse(bx + 362 * s, by + 374 * s, (8 + k * 34) * s, (8 + k * 34) * s, 0, 0, TAU);
 			ctx.stroke();
 		},
 	},
