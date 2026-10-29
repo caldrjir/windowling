@@ -26,7 +26,35 @@ const PrsiCards2 = (() => {
   };
   const PIP_W = 235;
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
-  const contain = (ctx, im, cx, cy, w) => { if (!im) return; const h = w * im.height / im.width; ctx.drawImage(im, cx - w / 2, cy - h / 2, w, h); };
+  // vystouplý vzhled: uvnitř tvaru světlá hrana vlevo nahoře a tmavá vpravo dole (vnitřní stín).
+  // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
+  // (stín plátna nezná ctx.scale), proto se počítá pro každou velikost zvlášť a pamatuje si.
+  const raised = {};
+  function emboss(name, w, h, depth) {
+    const im = img[name];
+    if (!im) return null;
+    const key = `${name}:${w}x${h}`;
+    if (raised[key]) return raised[key];
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, 0, 0, w, h);
+    const p = Math.ceil(depth * 4) + 2, m = document.createElement('canvas'); m.width = w + 2 * p; m.height = h + 2 * p;
+    const mc = m.getContext('2d'); mc.fillRect(0, 0, m.width, m.height); mc.globalCompositeOperation = 'destination-out'; mc.drawImage(im, p, p, w, h);
+    ctx.globalCompositeOperation = 'source-atop'; ctx.shadowBlur = depth * 1.6;
+    for (const [color, d] of [['rgba(45,10,0,.7)', -depth], ['rgba(255,243,212,.6)', depth]]) {
+      ctx.shadowColor = color; ctx.shadowOffsetX = 1e4 + d; ctx.shadowOffsetY = d;
+      ctx.drawImage(m, -p - 1e4, -p);
+    }
+    return (raised[key] = cv);
+  }
+  // znak barvy vystouplý nad pozadím: vnitřní stín a stín vržený na pozadí
+  function pip(ctx, k, name, cx, cy, w, depth) {
+    const im = img[name];
+    if (!im) return;
+    const h = w * im.height / im.width, e = emboss(name, Math.round(w * k), Math.round(h * k), depth * k);
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 22 * k; ctx.shadowOffsetX = 4 * k; ctx.shadowOffsetY = 10 * k;
+    ctx.drawImage(e, cx - w / 2, cy - h / 2, w, h);
+    ctx.restore();
+  }
 
   function draw(c, width, en) {
     const su = c >> 3, rk = c & 7, k = width / DW;
@@ -38,16 +66,19 @@ const PrsiCards2 = (() => {
     else { const g = ctx.createLinearGradient(0, 0, 0, DH); g.addColorStop(0, '#fffaf0'); g.addColorStop(1, '#efe3c8'); ctx.fillStyle = g; ctx.fillRect(0, 0, DW, DH); }
     // jemné ztmavení okrajů, ať rámeček a znak vyniknou
     const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
-    if (PIPS[rk]) {
-      // číselná karta: znaky barvy v rozložení podle hodnoty
-      // znaky na kartě jsou symboly barvy (srdce s elfkou), stojí rovně jako na obrázku
-      for (const [x, y] of PIPS[rk]) contain(ctx, img[`emblem-${su}`] || img[`suit-${su}`], x, y, PIP_W);
-    } else contain(ctx, img[`emblem-${su}`] || img[`suit-${su}`], DW / 2, DH * 0.5, 560); // velký znak uprostřed
+    const sign = img[`emblem-${su}`] ? `emblem-${su}` : `suit-${su}`;
+    // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty, jinak velký znak uprostřed
+    if (PIPS[rk]) for (const [x, y] of PIPS[rk]) pip(ctx, k, sign, x, y, PIP_W, 7);
+    else pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
+    // stín rámečku padá jen dovnitř karty (venku je průhledno)
+    const fr = emboss(`frame-${su}`, cv.width, cv.height, 6 * k);
+    if (fr) {
+      ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 20 * k; ctx.shadowOffsetX = 1e4 + 3 * k; ctx.shadowOffsetY = 8 * k;
+      ctx.drawImage(fr, -1e4 / k, 0, DW, DH);
+    }
     ctx.restore();
-    ctx.restore();
-    // rámeček
-    if (img[`frame-${su}`]) ctx.drawImage(img[`frame-${su}`], 0, 0, DW, DH);
+    // rámeček celý, i s ozdobami, které z karty vyčnívají
+    if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
     return cv;
   }
   const cache = {};
