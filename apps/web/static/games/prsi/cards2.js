@@ -7,9 +7,9 @@
 const PrsiCards2 = (() => {
   const DW = 1024, DH = 1536, BASE = '/games/prsi/img/';
   // tvar karty dává rámeček barvy: pozadí jen uvnitř jeho obrysu [x0, y0, x1, y1, zaoblení]
-  // (srdce: zlatý obrys, kule: středy trámů), ozdoby, které z něj vyčnívají, zůstávají celé
-  // (karta tak nemusí být přesný obdélník)
-  const CLIP = { 0: [34, 51, 989, 1473, 88], 3: [75, 150, 950, 1390, 10] };
+  // (srdce: zlatý obrys, listy a kule: středy lišt a trámů), ozdoby, které z něj vyčnívají,
+  // zůstávají celé (karta tak nemusí být přesný obdélník)
+  const CLIP = { 0: [34, 51, 989, 1473, 88], 1: [105, 225, 920, 1400, 10], 3: [75, 150, 950, 1390, 10] };
   // rámeček zvětšený kolem středu karty (víc místa uvnitř, nejkrajnější špičky ozdob se ořežou);
   // ořez pozadí i místo v rozích se zvětší s ním
   const FRAME_S = { 3: 1 };
@@ -31,7 +31,8 @@ const PrsiCards2 = (() => {
   // rozložení znaků na číselných kartách jako na jednohlavých mariáškách: znaky v horních
   // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; hodnotu ukazují
   // římské číslice v obou horních rozích. Každá barva má rozložení podle vnitřku svého rámečku
-  // (kule: užší vnitřek, nahoře hlava orka a praporce, dole hrot, proto menší znaky); w je šířka znaku.
+  // (listy: nahoře a dole ozdoba s rytířem, kule: nahoře hlava orka a praporce, dole hrot, proto
+  // menší znaky); w je šířka znaku.
   const ROMAN = ['VII', 'VIII', 'IX', 'X'];
   const PIPS = {
     0: {
@@ -40,6 +41,13 @@ const PrsiCards2 = (() => {
       1: [[272, 405], [752, 405], [272, 670], [752, 670], [272, 935], [752, 935], [272, 1200], [752, 1200]],
       2: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [772, 470], [772, 740], [772, 1010]],
       3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
+    },
+    1: {
+      w: 160,
+      0: [[512, 515], [290, 725], [734, 725], [290, 960], [734, 960], [290, 1195], [734, 1195]],
+      1: [[290, 505], [734, 505], [290, 738], [734, 738], [290, 971], [734, 971], [290, 1204], [734, 1204]],
+      2: [[287, 630], [287, 865], [287, 1100], [512, 512], [512, 747], [512, 982], [737, 630], [737, 865], [737, 1100]],
+      3: [[287, 617], [287, 846], [287, 1075], [512, 508], [512, 733], [512, 958], [512, 1183], [737, 617], [737, 846], [737, 1075]],
     },
     3: {
       w: 185,
@@ -143,9 +151,10 @@ const PrsiCards2 = (() => {
   }
   // figury mají v rozích místo písmen značku, která nepotřebuje překlad: spodek (Unter, „dolní“)
   // hrot dolů, svršek (Ober, „horní“) hrot nahoru
-  // místo v horních rozích podle rámečku barvy [levý okraj, spodní hrana, velikost]: u kulí
-  // pod trámem mezi praporcem a hlavou orka, proto níž a menší
-  const CORNER = { 0: [205, 258, 1], 3: [215, 350, 0.78] };
+  // místo v horních rozích podle rámečku barvy [levý okraj, spodní hrana, velikost]: u listů
+  // pod lištou mezi rohovou ozdobou a rytířem, u kulí pod trámem mezi praporcem a hlavou orka,
+  // proto níž a menší
+  const CORNER = { 0: [205, 258, 1], 1: [185, 365, 0.8], 3: [215, 350, 0.78] };
   const MARKS = {
     4: (t, op) => { t.beginPath(); t.moveTo(0, 0); t.lineTo(104, 0); t.quadraticCurveTo(79, 48, 52, 108); t.quadraticCurveTo(25, 48, 0, 0); t.closePath(); t[op](); },
     5: (t, op) => { t.beginPath(); t.moveTo(52, 0); t.quadraticCurveTo(79, 60, 104, 108); t.lineTo(0, 108); t.quadraticCurveTo(25, 60, 52, 0); t.closePath(); t[op](); },
