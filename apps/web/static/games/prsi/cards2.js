@@ -37,6 +37,17 @@ const PrsiCards2 = (() => {
   const PIP_W = 205;
   // figura je celá obrázkem a nese jeden znak barvy: spodek dole, svršek nahoře (stranou od obličeje)
   const FIG_PIP = { 4: [512, 1190], 5: [790, 400] };
+  // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
+  // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
+  const FIT = { '0-5': { s: 0.86, y: 138 } };
+  function fitted(bg, k, s) {
+    const c = document.createElement('canvas'), t = c.getContext('2d');
+    c.width = Math.round(DW * s * k); c.height = Math.round(DH * s * k);
+    t.imageSmoothingQuality = 'high'; t.drawImage(bg, 0, 0, c.width, c.height);
+    const g = t.createLinearGradient(0, 0, 0, c.height); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(1, 70 * k / c.height), '#000'); g.addColorStop(1, '#000');
+    t.globalCompositeOperation = 'destination-in'; t.fillStyle = g; t.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
   // vystouplý vzhled: uvnitř tvaru světlá hrana vlevo nahoře a tmavá vpravo dole (vnitřní stín).
   // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
@@ -101,8 +112,11 @@ const PrsiCards2 = (() => {
     const cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
     const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
     rr(ctx, FX[0], FY[0], FX[1] - FX[0], FY[1] - FY[0], FR); ctx.save(); ctx.clip();
-    const bg = img[`bg-${su}-${rk}`];
-    if (bg) ctx.drawImage(bg, 0, 0, DW, DH);
+    const bg = img[`bg-${su}-${rk}`], fit = FIT[`${su}-${rk}`];
+    if (bg && fit) {
+      ctx.save(); ctx.filter = `blur(${Math.max(1, Math.round(18 * k))}px) brightness(.8)`; ctx.drawImage(bg, 0, 0, DW, DH); ctx.restore();
+      ctx.drawImage(fitted(bg, k, fit.s), (DW - DW * fit.s) / 2, fit.y, DW * fit.s, DH * fit.s);
+    } else if (bg) ctx.drawImage(bg, 0, 0, DW, DH);
     else { const g = ctx.createLinearGradient(0, 0, 0, DH); g.addColorStop(0, '#fffaf0'); g.addColorStop(1, '#efe3c8'); ctx.fillStyle = g; ctx.fillRect(0, 0, DW, DH); }
     // jemné ztmavení okrajů, ať rámeček a znak vyniknou
     const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
