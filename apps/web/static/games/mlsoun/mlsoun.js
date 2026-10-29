@@ -372,7 +372,7 @@ const Mlsoun = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'mlsoun', title: 'MLSOUN',
+  id: 'mlsoun', title: 'MLSOUN', wording: 'play',
   tagline: Kit.L('Spořádej všechny tečky v bludišti a nenech se chytit přízraky. Velká tečka je vyleká a pak je můžeš sníst.', 'Eat every dot in the maze and don\'t get caught by the ghosts. A big dot scares them and then you can eat them.'),
   diffs: Mlsoun.DIFFS, generate: Mlsoun.generate, create: Mlsoun.create, art: Mlsoun.art,
   online: { kind: 'race', diffs: ['maze', 'calm'] },

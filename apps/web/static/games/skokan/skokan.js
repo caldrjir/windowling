@@ -289,7 +289,7 @@ const Skokan = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'skokan', title: 'SKOKAN',
+  id: 'skokan', title: 'SKOKAN', wording: 'play',
   tagline: Kit.L('Na motivy Doodle Jumpu: panáček z čtverečkovaného sešitu skáče po plošinkách pořád výš. Pružiny, vrtulka, raketový batoh, příšery a černé díry. Jak vysoko doskočíš?', 'In the spirit of Doodle Jump: a doodle from a squared notebook bounces up the platforms higher and higher. Springs, a propeller, a jetpack, monsters and black holes. How high can you go?'),
   diffs: Skokan.DIFFS, generate: Skokan.generate, create: Skokan.create, art: Skokan.art,
   dailyDiff: () => 'klasik',

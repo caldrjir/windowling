@@ -457,7 +457,7 @@ const Letni = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'letni', title: 'LETNÍ HRY',
+  id: 'letni', title: 'LETNÍ HRY', wording: 'play',
   tagline: Kit.L('Atletický víceboj na motivy mobilních Playman Summer Games: běh na 100 m, skok daleký, překážky a oštěp. Mačkej střídavě dvě tlačítka a trefuj úhel odrazu.', 'An athletics multi-event in the spirit of the mobile Playman Summer Games: 100 m, long jump, hurdles and javelin. Alternate two buttons and nail the take-off angle.'),
   diffs: Letni.DIFFS, generate: Letni.generate, create: Letni.create, art: Letni.art,
   dailyDiff: () => 'decathlon',

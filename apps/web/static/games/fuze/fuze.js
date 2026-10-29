@@ -165,7 +165,7 @@ const Fuze = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'fuze', title: 'FÚZE',
+  id: 'fuze', title: 'FÚZE', wording: 'play',
   tagline: Kit.L('Slučuj vesmírná tělesa: z prachu planety, z planet hvězdy, ze hvězd supernovu. Každý tah se počítá.', 'Merge cosmic bodies: dust into planets, planets into stars, stars into a supernova. Every move counts.'),
   diffs: Fuze.DIFFS, generate: Fuze.generate, create: Fuze.create, art: Fuze.art,
   online: { kind: 'race' },

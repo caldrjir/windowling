@@ -176,7 +176,7 @@ const Clovece = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'clovece', title: 'ČLOVĚČE, NEZLOB SE',
+  id: 'clovece', title: 'ČLOVĚČE, NEZLOB SE', wording: 'win',
   tagline: Kit.L('Klasická desková hra: dostaň všechny čtyři figurky do domečku dřív než ostatní. Šestka nasazuje, soupeře se vyhazuje.', 'The classic board game: get all four pieces home before the others. A six brings a piece out and opponents get knocked back.'),
   diffs: Clovece.DIFFS, generate: Clovece.generate, create: Clovece.create, art: Clovece.art,
   online: { kind: 'turn' },

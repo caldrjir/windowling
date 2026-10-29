@@ -780,7 +780,7 @@ const Cervici = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'cervici', title: 'ČERVÍCI',
+  id: 'cervici', title: 'ČERVÍCI', wording: 'win',
   tagline: Kit.L('Tahová válka dvou týmů červů na zničitelném ostrově: bazuka, granát, brokovnice, dynamit a nálet. Proti počítači, ve dvou i online.', 'A turn-based war of two worm teams on a destructible island: bazooka, grenade, shotgun, dynamite and an air strike. Against the computer, two players or online.'),
   diffs: Cervici.DIFFS, generate: Cervici.generate, create: Cervici.create, art: Cervici.art,
   online: { kind: 'turn' },

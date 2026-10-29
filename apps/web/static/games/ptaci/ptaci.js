@@ -248,7 +248,7 @@ const Ptaci = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'ptaci', title: 'PTAČÍ POMSTA',
+  id: 'ptaci', title: 'PTAČÍ POMSTA', wording: 'play',
   tagline: Kit.L('Na motivy Angry Birds: natáhni prak, pusť ptáka a rozbij stavby ze dřeva, skla a kamene. Zelená prasata musí padnout všechna, a čím míň ptáků spotřebuješ, tím víc hvězd.', 'In the spirit of Angry Birds: pull the slingshot, let the bird fly and smash forts of wood, glass and stone. Every green pig has to fall, and the fewer birds you use, the more stars you get.'),
   diffs: Ptaci.DIFFS, generate: Ptaci.generate, create: Ptaci.create, art: Ptaci.art,
   dailyDiff: () => 'normal',

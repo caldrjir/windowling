@@ -163,7 +163,7 @@ const Prsi = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'prsi', title: 'PRŠÍ',
+  id: 'prsi', title: 'PRŠÍ', wording: 'win',
   tagline: Kit.L('Česká karetní klasika s mariášovými kartami: zbav se všech karet dřív než soupeři. Sedma bere dvě, eso stojí a svršek mění barvu.', 'The Czech card classic with German-suited cards: get rid of all your cards before the others. A seven makes the next player draw two, an ace skips and an Ober changes the suit.'),
   diffs: Prsi.DIFFS, generate: Prsi.generate, create: Prsi.create, art: Prsi.art,
   online: { kind: 'turn' },

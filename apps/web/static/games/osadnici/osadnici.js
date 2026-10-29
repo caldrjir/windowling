@@ -390,7 +390,7 @@ const Osadnici = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'osadnici', title: 'OSADNÍCI',
+  id: 'osadnici', title: 'OSADNÍCI', wording: 'win',
   tagline: Kit.L('Budovatelská desková hra na ostrově: sbírej suroviny, stav cesty, osady a města a jako první získej 10 vítězných bodů.', 'A building board game on an island: gather resources, build roads, settlements and cities and be the first to reach 10 victory points.'),
   diffs: Osadnici.DIFFS, generate: Osadnici.generate, create: Osadnici.create, art: Osadnici.art,
   online: { kind: 'turn' },

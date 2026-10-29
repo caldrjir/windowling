@@ -83,7 +83,8 @@ for (const id of PUZZLES) {
 		await page.goto('/');
 		const card = page.locator(`.gslot[data-game="${id}"] .gcard`).first();
 		await card.click();
-		await expect(page.locator('.stats')).toContainText('Vyřešeno');
+		// Puzzles count solves, board games wins and arcade games finished runs.
+		await expect(page.locator('.stats')).toContainText(/Vyřešeno|Výhry|Dokončeno/);
 		expect(errors).toEqual([]);
 	});
 }

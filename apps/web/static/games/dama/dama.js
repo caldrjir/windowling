@@ -143,7 +143,7 @@ const Dama = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'dama', title: 'DÁMA',
+  id: 'dama', title: 'DÁMA', wording: 'win',
   tagline: Kit.L('Česká dáma: skákání je povinné a dáma létá přes celou úhlopříčku. Proti počítači, ve dvou nebo online.', 'Czech draughts: capturing is compulsory and a king flies across the whole diagonal. Against the computer, two players or online.'),
   diffs: Dama.DIFFS, generate: Dama.generate, create: Dama.create, art: Dama.art,
   online: { kind: 'turn' },

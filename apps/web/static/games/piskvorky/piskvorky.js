@@ -174,8 +174,8 @@ const Piskvorky = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'piskvorky', title: 'PIŠKVORKY',
-  tagline: Kit.L('Pět v řadě: hvězdy proti planetám. Soupeř ve čtyřech silách, denní partie a hra ve dvou.', 'Five in a row: stars against planets. An opponent at four strengths, a daily game and two-player mode.'),
+  id: 'piskvorky', title: 'PIŠKVORKY', wording: 'win',
+  tagline: Kit.L('Pět v řadě: hvězdy proti planetám. Soupeř ve čtyřech silách, denní partie a hra ve dvou na jednom zařízení i online.', 'Five in a row: stars against planets. An opponent at four strengths, a daily game and two players on one device or online.'),
   diffs: Piskvorky.DIFFS, generate: Piskvorky.generate, create: Piskvorky.create, art: Piskvorky.art,
   online: { kind: 'turn' },
   dailyDiff: () => 'ai2', levelDiff: n => ['ai1', 'ai1', 'ai2', 'ai2', 'ai3', 'ai3'][Math.floor((n - 1) / 20)],

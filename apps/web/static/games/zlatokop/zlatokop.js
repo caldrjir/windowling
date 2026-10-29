@@ -358,7 +358,7 @@ const Zlatokop = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'zlatokop', title: 'ZLATOKOP',
+  id: 'zlatokop', title: 'ZLATOKOP', wording: 'play',
   tagline: Kit.L('Na motivy klasického Gold Mineru: kývající se drapák, minuta času a hlína plná zlata, kamenů, diamantů a překvapení. Splň cíl a nakup v obchodě na další důl.', 'In the spirit of the classic Gold Miner: a swinging claw, one minute and dirt full of gold, rocks, diamonds and surprises. Reach the target and shop for the next mine.'),
   diffs: Zlatokop.DIFFS, generate: Zlatokop.generate, create: Zlatokop.create, art: Zlatokop.art,
   dailyDiff: () => 'klasik',

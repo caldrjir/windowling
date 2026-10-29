@@ -412,7 +412,7 @@ const Bombardak = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'bombardak', title: 'BOMBARĎÁK',
+  id: 'bombardak', title: 'BOMBARĎÁK', wording: 'play',
   tagline: Kit.L('Na motivy Bombermana: pokládej bomby, boř bedny, sbírej vylepšení a vyřaď příšery i soupeře. Pozor na vlastní plameny!', 'In the spirit of Bomberman: drop bombs, blast crates, grab power-ups and take out monsters and rivals. Mind your own flames!'),
   diffs: Bombardak.DIFFS, generate: Bombardak.generate, create: Bombardak.create, art: Bombardak.art,
   online: { kind: 'race', diffs: ['vyprava'] },

@@ -547,7 +547,7 @@ const Tanky = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'tanky', title: 'TANKY',
+  id: 'tanky', title: 'TANKY', wording: 'win',
   tagline: Kit.L('Dělostřelecký souboj dvou tanků na tahy: nastav úhel a sílu, počítej s větrem a trefuj. Proti počítači, ve dvou na jednom zařízení i online.', 'An artillery duel of two tanks, turn by turn: set the angle and power, mind the wind and hit. Against the computer, two players on one device or online.'),
   diffs: Tanky.DIFFS, generate: Tanky.generate, create: Tanky.create, art: Tanky.art,
   online: { kind: 'turn' },

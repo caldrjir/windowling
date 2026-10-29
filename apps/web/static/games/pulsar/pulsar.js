@@ -283,7 +283,7 @@ const Pulsar = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'pulsar', title: 'PULSAR',
+  id: 'pulsar', title: 'PULSAR', wording: 'play',
   tagline: Kit.L('Padající bloky v rytmu pulsaru. Maraton, Sprint, Ultra, Kopání a denní sprint, ve kterém závodíš se všemi.', 'Falling blocks to the beat of a pulsar. Marathon, Sprint, Ultra, Dig and a daily sprint where you race everyone.'),
   diffs: Pulsar.DIFFS, generate: Pulsar.generate, create: Pulsar.create, art: Pulsar.art,
   online: { kind: 'race', diffs: ['sprint', 'dig'] },

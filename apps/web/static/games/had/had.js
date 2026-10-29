@@ -308,7 +308,7 @@ const Had = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'had', title: 'HAD',
+  id: 'had', title: 'HAD', wording: 'play',
   tagline: Kit.L('Klasický had: sbírej plody, roste a zrychluje. Nenaraz do zdi ani sám do sebe.', 'The classic snake: eat the fruit, grow and speed up. Don\'t hit a wall or yourself.'),
   diffs: Had.DIFFS, generate: Had.generate, create: Had.create, art: Had.art,
   online: { kind: 'race', diffs: ['sprint'] },

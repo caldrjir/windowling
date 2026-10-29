@@ -255,7 +255,7 @@ const Skladacka = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'skladacka', title: 'SKLÁDAČKA',
+  id: 'skladacka', title: 'SKLÁDAČKA', wording: 'play',
   tagline: Kit.L('Jigsaw z malovaných obrazů: maják nad mořem, horské jezero, balóny nad údolím, korálový útes, pohádkový hrad, sakurová zahrada, polární záře i planeta s prstenci. Co skládáš, poznáš až na konci, a každý obraz skončí v galerii.', 'A jigsaw of painted pictures: a lighthouse by the sea, a mountain lake, balloons over a valley, a coral reef, a fairytale castle, a cherry blossom garden, the northern lights and a ringed planet. You only find out what you built at the end, and every picture joins your gallery.'),
   diffs: Skladacka.DIFFS, generate: Skladacka.generate, create: Skladacka.create, art: Skladacka.art, views: [Skladacka.gallery],
   online: { kind: 'race' },
