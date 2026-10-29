@@ -533,7 +533,7 @@ const Skladnik = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'skladnik', title: 'SKLADNÍK',
+  id: 'skladnik', title: 'SKLADNÍK', wording: 'play',
   tagline: Kit.L('Jeřáby shazují bedny, ty je tlačíš a skládáš do plných řad. Hlavně ať ti žádná nespadne na hlavu.', 'Cranes drop crates, you push them into full rows. Just don\'t let one land on your head.'),
   diffs: Skladnik.DIFFS, generate: Skladnik.generate, create: Skladnik.create, art: Skladnik.art,
   online: { kind: 'race', diffs: ['shift', 'calm'] },

@@ -199,7 +199,7 @@ const Lode = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'lode', title: 'LODĚ',
+  id: 'lode', title: 'LODĚ', wording: 'win',
   tagline: Kit.L('Námořní bitva: rozmísti flotilu a potop všechny soupeřovy lodě dřív než on tvoje. Proti admirálovi nebo online.', 'Naval battle: place your fleet and sink all the opponent\'s ships before they sink yours. Against the admiral or online.'),
   diffs: Lode.DIFFS, generate: Lode.generate, create: Lode.create, art: Lode.art,
   online: { kind: 'turn' },

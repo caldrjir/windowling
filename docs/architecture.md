@@ -151,6 +151,9 @@ keep players coming back for weeks:
 - **Weekly quests** shared by all puzzle games and **stardust** for themes
   (`gamecenter.puzzles` in localStorage).
 - Storage: `<id>.save.v1` (game), `gamecenter.puzzles` (shared), `gamecenter.stats.<id>` (hub).
+- Wording: `Kit.game({ wording })` picks the shell's words: `solve` (default: a puzzle is
+  solved), `win` (board, card and two-player games: a game is won) or `play` (arcade and relax
+  games: a run is finished). The catalogue's `statLabels` match (`labels`, `winLabels`, `doneLabels`).
 
 Generators guarantee a unique solution (Sudoku: digging with a solution counter, graded by a
 logic solver; Nonograms: line solver; Kakuro: combination solver with repair; Souhvězdí: bridge

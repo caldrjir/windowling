@@ -361,7 +361,7 @@ const Mrakodrap = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'mrakodrap', title: 'MRAKODRAP',
+  id: 'mrakodrap', title: 'MRAKODRAP', wording: 'play',
   tagline: Kit.L('Na motivy Tower Bloxx: jeřáb houpe patrem, ťukni ve správnou chvíli a postav co nejvyšší věž. Přesná patra přivedou víc obyvatel.', 'In the spirit of Tower Bloxx: the crane swings a floor, tap at the right moment and build the tallest tower you can. Precise floors bring more residents.'),
   diffs: Mrakodrap.DIFFS, generate: Mrakodrap.generate, create: Mrakodrap.create, art: Mrakodrap.art,
   dailyDiff: () => 'klasik',

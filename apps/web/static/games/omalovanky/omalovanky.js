@@ -452,7 +452,7 @@ const Omalovanky = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'omalovanky', title: 'OMALOVÁNKY',
+  id: 'omalovanky', title: 'OMALOVÁNKY', wording: 'play',
   tagline: Kit.L('Malování podle čísel pro chvíle klidu. Kytice, kočky, rybky, domky, balóny, plachetnice i planety, každý obraz nový a tvůj.', 'Colour by number for quiet moments. Bouquets, cats, fish, cottages, balloons, sailboats and planets, every picture new and yours.'),
   diffs: Omalovanky.DIFFS, generate: Omalovanky.generate, create: Omalovanky.create, art: Omalovanky.art, views: [Omalovanky.gallery],
   online: { kind: 'race' },

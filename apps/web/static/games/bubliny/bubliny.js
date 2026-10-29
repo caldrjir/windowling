@@ -307,7 +307,7 @@ const Bubliny = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'bubliny', title: 'BUBLINY',
+  id: 'bubliny', title: 'BUBLINY', wording: 'play',
   tagline: Kit.L('Klasický Bubble Shooter: střílej bubliny, spoj tři stejné a nech prasknout celé shluky. Co nevisí, spadne.', 'The classic Bubble Shooter: shoot bubbles, match three and pop whole clusters. Whatever hangs free falls down.'),
   diffs: Bubliny.DIFFS, generate: Bubliny.generate, create: Bubliny.create, art: Bubliny.art,
   online: { kind: 'race', diffs: ['clear', 'easy'] },

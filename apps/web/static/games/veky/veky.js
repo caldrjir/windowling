@@ -464,7 +464,7 @@ const Veky = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'veky', title: 'VĚKY VÁLEK',
+  id: 'veky', title: 'VĚKY VÁLEK', wording: 'win',
   tagline: Kit.L('Na motivy Age of War: veď svůj národ od pravěku po budoucnost. Cvič jednotky, stav věže, sesílej zvláštní útoky a zboř nepřátelskou základnu. S vlastní hrdinskou hudbou, která roste s každým věkem.', 'In the spirit of Age of War: lead your people from the Stone Age to the future. Train units, build turrets, call down special attacks and destroy the enemy base. With its own heroic score that grows with every age.'),
   diffs: Veky.DIFFS, generate: Veky.generate, create: Veky.create, art: Veky.art,
   dailyDiff: () => 'normal',

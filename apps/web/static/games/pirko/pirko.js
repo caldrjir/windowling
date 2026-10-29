@@ -198,7 +198,7 @@ const Pirko = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'pirko', title: 'PÍRKO',
+  id: 'pirko', title: 'PÍRKO', wording: 'play',
   tagline: Kit.L('Na motivy Flappy Bird: ťukni a ptáček mávne křídly. Proleť mezerami mezi rourami co nejdál, sbírej medaile a sleduj, jak se den mění v noc.', 'In the spirit of Flappy Bird: tap and the little bird flaps its wings. Fly through the gaps between the pipes as far as you can, earn medals and watch the day turn to night.'),
   diffs: Pirko.DIFFS, generate: Pirko.generate, create: Pirko.create, art: Pirko.art,
   dailyDiff: () => 'klasik',

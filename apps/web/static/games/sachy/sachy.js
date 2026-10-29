@@ -265,8 +265,8 @@ const Sachy = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'sachy', title: 'ŠACHY',
-  tagline: Kit.L('Šachy proti počítači v šesti silách, denní úloha mat v 1–2 tazích a partie ve dvou na jednom zařízení.', 'Chess against the computer at six strengths, a daily mate-in-1–2 puzzle and two-player games on one device.'),
+  id: 'sachy', title: 'ŠACHY', wording: 'win',
+  tagline: Kit.L('Šachy proti počítači v šesti silách, denní úloha mat v 1–2 tazích a partie ve dvou na jednom zařízení i online.', 'Chess against the computer at six strengths, a daily mate-in-1–2 puzzle and two-player games on one device or online.'),
   diffs: Sachy.DIFFS, generate: Sachy.generate, create: Sachy.create, art: Sachy.art,
   online: { kind: 'turn' },
   dailyDiff: () => 'puzzle', levelDiff: n => (Sachy.levelSpec(n).type === 'puzzle' ? 'puzzle' : ['ai1', 'ai1', 'ai3', 'ai3', 'ai5', 'ai5'][Math.floor((n - 1) / 20)]),

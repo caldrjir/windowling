@@ -91,13 +91,21 @@ const Kit = (() => {
   let META = loadMeta();
   const saveMeta = () => write(META_KEY, META);
 
-  // Týdenní úkoly: stejné pro všechny hlavolamy, nové každé pondělí.
+  // Slova podle druhu hry (Kit.game({ wording })): hlavolam se řeší, partie vyhrává, arkáda a relax dokončují.
+  const WORDS = {
+    solve: { did: L('Vyřešeno', 'Solved'), didIn: L('Vyřešeno za', 'Solved in'), title: L('Vyřešeno!', 'Solved!'), shelf: L('Hlavolamy', 'Puzzles'), diff: L('Obtížnost', 'Difficulty'), prep: L('Připravuji hlavolam…', 'Preparing your puzzle…'), free: L('Nekonečně nových hlavolamů. Vyber obtížnost:', 'Endless new puzzles. Pick a difficulty:'), first: L('Vyřeš první hlavolam', 'Solve your first puzzle'), n: n => L(`Vyřeš ${n} hlavolamů`, `Solve ${n} puzzles`), at: d => L(`Vyřeš hlavolam na obtížnost ${d}`, `Solve a ${d} puzzle`) },
+    win: { did: L('Výhry', 'Wins'), didIn: L('Vyhráno za', 'Won in'), title: L('Výhra!', 'Victory!'), shelf: L('Hry', 'Games'), diff: L('Režim', 'Mode'), prep: L('Připravuji partii…', 'Setting up the game…'), free: L('Pokaždé nová partie. Vyber soupeře nebo režim:', 'A new game every time. Pick an opponent or mode:'), first: L('Vyhraj první partii', 'Win your first game'), n: n => L(`Vyhraj ${n} partií`, `Win ${n} games`), at: d => L(`Vyhraj v režimu ${d}`, `Win in ${d} mode`) },
+    play: { did: L('Dokončeno', 'Completed'), didIn: L('Dokončeno za', 'Completed in'), title: L('Hotovo!', 'Done!'), shelf: L('Hry', 'Games'), diff: L('Režim', 'Mode'), prep: L('Připravuji hru…', 'Preparing the game…'), free: L('Pokaždé nová hra. Vyber režim:', 'A new game every time. Pick a mode:'), first: L('Dokonči první hru', 'Finish your first game'), n: n => L(`Dokonči ${n} her`, `Finish ${n} games`), at: d => L(`Dokonči hru v režimu ${d}`, `Finish a game in ${d} mode`) },
+  };
+  let W = WORDS.solve;
+
+  // Týdenní úkoly: stejné pro všechny hry, nové každé pondělí.
   const QUEST_TYPES = [
-    { kind: 'solve', n: 8, reward: 40, text: n => L(`Vyřeš ${n} hlavolamů`, `Solve ${n} puzzles`) },
-    { kind: 'daily', n: 4, reward: 50, text: n => L(`Splň ${n} denní výzvy`, `Complete ${n} daily puzzles`) },
-    { kind: 'variety', n: 3, reward: 40, text: n => L(`Zahraj si ${n} různé hlavolamy`, `Solve ${n} different puzzle games`) },
-    { kind: 'hard', n: 2, reward: 60, text: n => L(`Vyřeš ${n}× na Těžké nebo víc`, `Solve ${n} on Hard or above`) },
-    { kind: 'perfect', n: 5, reward: 50, text: n => L(`${n}× bez chyby a nápovědy`, `${n} perfect solves (no mistakes, no hints)`) },
+    { kind: 'solve', n: 8, reward: 40, text: n => L(`Zvládni ${n} her`, `Clear ${n} games`) },
+    { kind: 'daily', n: 4, reward: 50, text: n => L(`Splň ${n} denní výzvy`, `Complete ${n} daily challenges`) },
+    { kind: 'variety', n: 3, reward: 40, text: n => L(`Zvládni ${n} různé hry`, `Clear ${n} different games`) },
+    { kind: 'hard', n: 2, reward: 60, text: n => L(`Zvládni ${n}× na Těžké nebo víc`, `Clear ${n} on Hard or above`) },
+    { kind: 'perfect', n: 5, reward: 50, text: n => L(`${n}× bez chyby a nápovědy`, `${n} perfect games (no mistakes, no hints)`) },
     { kind: 'stars', n: 6, reward: 40, text: n => L(`Získej ${n} hvězd na Cestě`, `Earn ${n} stars on the Path`) },
     { kind: 'time', n: 45, reward: 45, text: n => L(`Hraj ${n} minut`, `Play for ${n} minutes`) },
   ];
@@ -223,18 +231,18 @@ const Kit = (() => {
     const own = DEF.achievements || [];
     const S = s => s.stats;
     const base = [
-      { id: 'first', name: L('První světlo', 'First Light'), desc: L('Vyřeš první hlavolam', 'Solve your first puzzle'), prog: s => [S(s).solved, 1] },
-      { id: 's10', name: L('Rozehřátí', 'Warming Up'), desc: L('Vyřeš 10 hlavolamů', 'Solve 10 puzzles'), prog: s => [S(s).solved, 10] },
-      { id: 's50', name: L('Vytrvalec', 'Persistent'), desc: L('Vyřeš 50 hlavolamů', 'Solve 50 puzzles'), prog: s => [S(s).solved, 50] },
-      { id: 's200', name: L('Posedlost', 'Obsessed'), desc: L('Vyřeš 200 hlavolamů', 'Solve 200 puzzles'), prog: s => [S(s).solved, 200] },
-      { id: 's500', name: L('Nekonečno', 'Infinity'), desc: L('Vyřeš 500 hlavolamů', 'Solve 500 puzzles'), prog: s => [S(s).solved, 500] },
+      { id: 'first', name: L('První světlo', 'First Light'), desc: W.first, prog: s => [S(s).solved, 1] },
+      { id: 's10', name: L('Rozehřátí', 'Warming Up'), desc: W.n(10), prog: s => [S(s).solved, 10] },
+      { id: 's50', name: L('Vytrvalec', 'Persistent'), desc: W.n(50), prog: s => [S(s).solved, 50] },
+      { id: 's200', name: L('Posedlost', 'Obsessed'), desc: W.n(200), prog: s => [S(s).solved, 200] },
+      { id: 's500', name: L('Nekonečno', 'Infinity'), desc: W.n(500), prog: s => [S(s).solved, 500] },
       { id: 'st3', name: L('Zvyk', 'Habit'), desc: L('Série 3 denních výzev', '3-day daily streak'), prog: s => [s.streak.best, 3] },
       { id: 'st7', name: L('Týden pod hvězdami', 'A Week of Stars'), desc: L('Série 7 denních výzev', '7-day daily streak'), prog: s => [s.streak.best, 7] },
       { id: 'st30', name: L('Měsíční cyklus', 'Lunar Cycle'), desc: L('Série 30 denních výzev', '30-day daily streak'), prog: s => [s.streak.best, 30] },
       { id: 'st100', name: L('Stálice', 'Fixed Star'), desc: L('Série 100 denních výzev', '100-day daily streak'), prog: s => [s.streak.best, 100] },
-      { id: 'p10', name: L('Čistá práce', 'Clean Work'), desc: L('10× bez chyby a nápovědy', '10 perfect solves'), prog: s => [S(s).perfect, 10] },
-      { id: 'p50', name: L('Bezchybný', 'Flawless'), desc: L('50× bez chyby a nápovědy', '50 perfect solves'), prog: s => [S(s).perfect, 50] },
-      ...DEF.diffs.slice(1).map(d => ({ id: 'd_' + d.id, name: L(`Zdolat: ${d.name}`, `Conquer: ${d.name}`), desc: L(`Vyřeš hlavolam na obtížnost ${d.name}`, `Solve a ${d.name} puzzle`), prog: s => [(S(s).by[d.id] || {}).n || 0, 1] })),
+      { id: 'p10', name: L('Čistá práce', 'Clean Work'), desc: L('10× bez chyby a nápovědy', '10 perfect games'), prog: s => [S(s).perfect, 10] },
+      { id: 'p50', name: L('Bezchybný', 'Flawless'), desc: L('50× bez chyby a nápovědy', '50 perfect games'), prog: s => [S(s).perfect, 50] },
+      ...DEF.diffs.slice(1).map(d => ({ id: 'd_' + d.id, name: L(`Zdolat: ${d.name}`, `Conquer: ${d.name}`), desc: W.at(d.name), prog: s => [(S(s).by[d.id] || {}).n || 0, 1] })),
       ...CHAPTERS.map((c, i) => ({ id: 'ch' + i, name: c, desc: L(`Dokonči kapitolu ${i + 1} Cesty hvězd`, `Finish chapter ${i + 1} of the Star Path`), prog: s => [chapterDone(s, i), PER_CHAPTER] })),
       { id: 'allstars', name: L('Všechny hvězdy', 'Every Star'), desc: L(`Získej všech ${LEVELS * 3} hvězd na Cestě`, `Earn all ${LEVELS * 3} Path stars`), prog: s => [Object.values(s.levels).reduce((a, b) => a + b, 0), LEVELS * 3] },
       { id: 'rank5', name: L('Astronom', 'Astronomer'), desc: L('Dosáhni hodnosti Astronom', 'Reach the Astronomer rank'), prog: s => [s.xp, RANKS[4][0]] },
@@ -260,7 +268,7 @@ const Kit = (() => {
       <header class="k-top">
         <a class="k-icon" href="../../index.html" id="kHub" title="Game Center" aria-label="Game Center">${icon('home')}</a>
         <button class="k-icon" id="kBack" hidden aria-label="${L('Zpět', 'Back')}">${icon('back')}</button>
-        <div class="k-title"><b>${esc(DEF.title)}</b><small id="kSub">${L('Hlavolamy', 'Puzzles')} · Windowling</small></div>
+        <div class="k-title"><b>${esc(DEF.title)}</b><small id="kSub">${W.shelf} · Windowling</small></div>
         <div class="k-sp"></div>
         <div class="k-pill" id="kTimer" hidden></div>
         <div class="k-pill k-shards" title="${L('Hvězdný prach', 'Stardust')}">${icon('gem')}<b id="kShards">0</b></div>
@@ -312,7 +320,7 @@ const Kit = (() => {
     $('#kBack').hidden = v === 'home';
     $('#kHub').hidden = v !== 'home';
     $('#kTimer').hidden = v !== 'play';
-    $('#kSub').textContent = sub || `${L('Hlavolamy', 'Puzzles')} · Windowling`;
+    $('#kSub').textContent = sub || `${W.shelf} · Windowling`;
     document.body.dataset.view = v;
     window.scrollTo(0, 0);
   }
@@ -335,7 +343,7 @@ const Kit = (() => {
         <div class="k-hero">
           <div class="k-hero-art" id="kArt"></div>
           <div class="k-hero-txt">
-            <span class="k-eyebrow">${L('Hlavolamy', 'Puzzles')} · Windowling</span>
+            <span class="k-eyebrow">${W.shelf} · Windowling</span>
             <h1>${esc(DEF.title)}</h1>
             <p>${DEF.tagline}</p>
             <div class="k-rank"><b>${r.name}</b><span>${SAVE.xp} XP${r.next ? ` · ${L('další', 'next')}: ${r.next}` : ''}</span><i><u style="width:${Math.round(r.pct * 100)}%"></u></i></div>
@@ -346,7 +354,7 @@ const Kit = (() => {
             <div class="k-card-h">${icon('cal')}<span>${L('Denní výzva', 'Daily puzzle')}</span><em class="k-streak ${st ? 'on' : ''}">${icon('flame')}${st}</em></div>
             <b class="k-big">${fromKey(t).toLocaleDateString(LANG === 'en' ? 'en-US' : 'cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' })}</b>
             <span class="k-muted">${diffName(dailyDiff(t))} · ${L('stejná pro všechny hráče', 'the same for everyone')}</span>
-            ${daily ? `<span class="k-ok">${icon('check')} ${L('Vyřešeno za', 'Solved in')} ${fmtTime(daily.time)}</span>` : ''}
+            ${daily ? `<span class="k-ok">${icon('check')} ${W.didIn} ${fmtTime(daily.time)}</span>` : ''}
             <div class="k-row"><button class="k-btn ${daily ? '' : 'primary'}" data-k="daily">${daily ? L('Zahrát znovu', 'Play again') : L('Hrát denní', 'Play daily')}</button><button class="k-btn ghost" data-k="calendar">${L('Kalendář', 'Calendar')}</button></div>`)}
           ${cur ? card('k-cont', `
             <div class="k-card-h">${icon('play')}<span>${L('Rozehraná hra', 'In progress')}</span></div>
@@ -359,11 +367,11 @@ const Kit = (() => {
             <div class="k-row"><button class="k-btn primary" data-k="level" ${lv > LEVELS ? 'disabled' : ''}>${L('Další úroveň', 'Next level')}</button><button class="k-btn ghost" data-k="path">${L('Mapa', 'Map')}</button></div>`)}
           ${card('k-free', `
             <div class="k-card-h">${icon('plus')}<span>${L('Volná hra', 'Free play')}</span></div>
-            <span class="k-muted">${L('Nekonečně nových hlavolamů. Vyber obtížnost:', 'Endless new puzzles. Pick a difficulty:')}</span>
+            <span class="k-muted">${W.free}</span>
             <div class="k-diffs">${DEF.diffs.map(d => `<button class="k-btn" data-k="free" data-diff="${d.id}"><b>${d.name}</b>${d.note ? `<small>${d.note}</small>` : ''}<small>${d.metric === 'score' ? `${L('rekord', 'best')} ${fmtNum((SAVE.stats.by[d.id] || {}).bestScore || 0)}` : `${(SAVE.stats.by[d.id] || {}).n || 0}×${(SAVE.stats.by[d.id] || {}).best ? ' · ' + fmtTime(SAVE.stats.by[d.id].best) : ''}`}</small></button>`).join('')}</div>`)}
           ${onlineCard()}
           ${card('k-quests', `
-            <div class="k-card-h">${icon('quest')}<span>${L('Týdenní úkoly', 'Weekly quests')}</span><em class="k-muted">${L('všechny hlavolamy', 'all puzzles')}</em></div>
+            <div class="k-card-h">${icon('quest')}<span>${L('Týdenní úkoly', 'Weekly quests')}</span><em class="k-muted">${L('všechny hry', 'all games')}</em></div>
             <ul>${q.list.map(it => `<li class="${it.done ? 'done' : ''}"><span>${questText(it)}</span><i><u style="width:${Math.round(it.p / it.n * 100)}%"></u></i><small>${it.done ? icon('check') : `${it.p}/${it.n}`} · +${it.reward} ${icon('gem', 'tiny')}</small></li>`).join('')}</ul>`)}
         </div>
         <nav class="k-links">
@@ -520,7 +528,7 @@ const Kit = (() => {
     $('#kView').innerHTML = `<div class="k-page"><h2>${L('Statistiky', 'Statistics')}</h2>
       <div class="k-statrow"><div><b>${S.solved}</b><span>${L('vyřešeno', 'solved')}</span></div><div><b>${fmtTime(SAVE.time)}</b><span>${L('odehráno', 'played')}</span></div><div><b>${S.perfect}</b><span>${L('bez chyby', 'perfect')}</span></div><div><b>${SAVE.streak.best}</b><span>${L('nejdelší série', 'best streak')}</span></div>${extra.map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
       <div class="k-rank wide"><b>${r.name}</b><span>${SAVE.xp} XP${r.next ? ` · ${L('do hodnosti', 'to')} ${r.next}: ${r.toNext} XP` : ''}</span><i><u style="width:${Math.round(r.pct * 100)}%"></u></i></div>
-      <div class="k-table"><table><thead><tr><th>${L('Obtížnost', 'Difficulty')}</th><th>${L('Vyřešeno', 'Solved')}</th><th>${L('Nejlepší', 'Best')}</th><th>${L('Průměr', 'Average')}</th><th>${L('Bez chyby', 'Perfect')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="k-table"><table><thead><tr><th>${W.diff}</th><th>${W.did}</th><th>${L('Nejlepší', 'Best')}</th><th>${L('Průměr', 'Average')}</th><th>${L('Bez chyby', 'Perfect')}</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h3>${L('Hodnosti', 'Ranks')}</h3><ol class="k-ranks">${RANKS.map(([x, n], i) => `<li class="${i <= r.i ? 'on' : ''}"><b>${n}</b><span>${x} XP</span></li>`).join('')}</ol></div>`;
   }
   function themesView() {
@@ -543,7 +551,7 @@ const Kit = (() => {
       <h3>${L('Postup a odměny', 'Progress and rewards')}</h3><ul>
       <li>${L('<b>Denní výzva</b> je každý den nová a pro všechny stejná. Splň ji několik dní po sobě a roste ti série.', '<b>The daily puzzle</b> is new every day and the same for everyone. Solve it on consecutive days to build a streak.')}</li>
       <li>${L('<b>Cesta hvězd</b> má 120 úrovní. Tři hvězdy dostaneš za řešení bez chyby a nápovědy v časovém limitu.', '<b>The Star Path</b> has 120 levels. Three stars for a solve with no mistakes or hints within par time.')}</li>
-      <li>${L('<b>Týdenní úkoly</b> jsou společné pro všechny hlavolamy a každé pondělí se obnoví.', '<b>Weekly quests</b> are shared by all puzzle games and reset every Monday.')}</li>
+      <li>${L('<b>Týdenní úkoly</b> jsou společné pro všechny hry a každé pondělí se obnoví.', '<b>Weekly quests</b> are shared by all games and reset every Monday.')}</li>
       <li>${L('Za všechno dostáváš <b>XP</b> (hodnosti) a <b>hvězdný prach</b> na nové vzhledy.', 'Everything earns <b>XP</b> (ranks) and <b>stardust</b> for new themes.')}</li></ul></div>`;
   }
 
@@ -566,7 +574,7 @@ const Kit = (() => {
   function open() {
     const label = cur.kind === 'daily' ? (cur.key === dayKey() ? L('Denní výzva', 'Daily puzzle') : L(`Archiv ${fromKey(cur.key).toLocaleDateString(LANG === 'en' ? 'en-US' : 'cs-CZ')}`, `Archive ${cur.key}`)) : cur.kind === 'level' ? L(`Úroveň ${cur.key}`, `Level ${cur.key}`) : L('Volná hra', 'Free play');
     setView('play', `${label} · ${diffName(cur.diff)}`);
-    $('#kView').innerHTML = `<div class="k-play"><div class="k-board" id="kBoard"><div class="k-gen"><i></i>${L('Připravuji hlavolam…', 'Preparing your puzzle…')}</div></div></div>`;
+    $('#kView').innerHTML = `<div class="k-play"><div class="k-board" id="kBoard"><div class="k-gen"><i></i>${W.prep}</div></div></div>`;
     timerOn = false; updTimer();
     setTimeout(() => {
       let puzzle;
@@ -651,7 +659,7 @@ const Kit = (() => {
     const next = c.kind === 'level' && c.key < LEVELS ? `<button class="k-btn primary" id="kNextLv">${L(`Úroveň ${c.key + 1}`, `Level ${c.key + 1}`)}</button>` : c.kind === 'free' ? `<button class="k-btn primary" id="kAgain">${L('Další', 'Another')} · ${d.name}</button>` : '';
     modal(`<div class="k-result">
       <span class="k-eyebrow">${c.kind === 'daily' ? L('Denní výzva', 'Daily puzzle') : c.kind === 'level' ? L(`Úroveň ${c.key}`, `Level ${c.key}`) : d.name}</span>
-      <h2>${extra.title || L('Vyřešeno!', 'Solved!')}</h2>
+      <h2>${extra.title || W.title}</h2>
       ${c.kind === 'level' ? `<div class="k-stars">${[1, 2, 3].map(i => icon('star', i <= stars ? 'on' : '')).join('')}</div>` : ''}
       ${extra.score != null
         ? `<div class="k-statrow"><div><b>${fmtNum(extra.score)}</b><span>${newBest ? L('nový rekord!', 'new best!') : extra.scoreLabel || L('skóre', 'score')}</span></div><div><b>${fmtTime(c.time)}</b><span>${L('čas', 'time')}</span></div><div><b>${fmtNum(Math.max(oldScore, extra.score))}</b><span>${L('rekord', 'best')}</span></div></div>`
@@ -1011,7 +1019,7 @@ const Kit = (() => {
     checkAch(); persist(); shardsUi();
     send({ t: 'done', ok: true, mistakes: c.mistakes, score: extra && extra.score != null ? Math.round(extra.score) : undefined });
     SOUND.win(); burst(innerWidth / 2, innerHeight / 2, 60);
-    standingsModal(extra && extra.title || L('Vyřešeno!', 'Solved!'), `+${xp} XP`);
+    standingsModal(extra && extra.title || W.title, `+${xp} XP`);
   }
   function onlineFailed(extra) {
     timerOn = false;
@@ -1119,6 +1127,7 @@ const Kit = (() => {
   // ── Start ──
   function game(def) {
     DEF = def;
+    W = WORDS[def.wording] || WORDS.solve;
     SAVE = loadSave();
     applyTheme();
     shell();

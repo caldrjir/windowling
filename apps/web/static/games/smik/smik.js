@@ -256,7 +256,7 @@ const Smik = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'smik', title: 'ŠMIK!',
+  id: 'smik', title: 'ŠMIK!', wording: 'play',
   tagline: Kit.L('Na motivy Fruit Ninji: ovoce vylétá do vzduchu a ty ho krájíš tahem prstu nebo myši. Kombo za víc kusů najednou, šťáva po celém dojo, jen do bomb nesekej!', 'In the spirit of Fruit Ninja: fruit flies up and you slice it with a swipe of a finger or the mouse. Combos for several at once, juice all over the dojo, just never slice a bomb!'),
   diffs: Smik.DIFFS, generate: Smik.generate, create: Smik.create, art: Smik.art,
   dailyDiff: () => 'arkada',

@@ -415,7 +415,7 @@ const Solitaire = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'solitaire', title: 'SOLITAIRE',
+  id: 'solitaire', title: 'SOLITAIRE', wording: 'win',
   tagline: Kit.L('Klondike, FreeCell a Pavouk pod hvězdami. Rozdání Klondike, která jdou vždy dohrát, a denní partie pro všechny.', 'Klondike, FreeCell and Spider under the stars. Klondike deals that can always be won, and a daily deal for everyone.'),
   diffs: Solitaire.DIFFS, generate: Solitaire.generate, create: Solitaire.create, art: Solitaire.art,
   online: { kind: 'race' },

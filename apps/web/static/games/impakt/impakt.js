@@ -418,7 +418,7 @@ const Impakt = (() => {
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
-  id: 'impakt', title: 'IMPAKT',
+  id: 'impakt', title: 'IMPAKT', wording: 'play',
   tagline: Kit.L('Vesmírná střílečka na motivy Space Impact: sestřeluj vlny nepřátel, sbírej zbraně a poraz bosse na konci sektoru.', 'A space shooter in the spirit of Space Impact: shoot down enemy waves, pick up weapons and beat the boss at the end of each sector.'),
   diffs: Impakt.DIFFS, generate: Impakt.generate, create: Impakt.create, art: Impakt.art,
   online: { kind: 'race', diffs: ['sector'] },
