@@ -30,18 +30,28 @@ const PrsiCards2 = (() => {
   }
   // rozložení znaků na číselných kartách jako na jednohlavých mariáškách: znaky v horních
   // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; hodnotu ukazují
-  // římské číslice v obou horních rozích
+  // římské číslice v obou horních rozích. Každá barva má rozložení podle vnitřku svého rámečku
+  // (kule: menší vnitřek, nahoře lebka, dole rohy, proto menší znaky); w je šířka znaku.
   const ROMAN = ['VII', 'VIII', 'IX', 'X'];
   const PIPS = {
-    0: [[512, 370], [272, 575], [752, 575], [272, 845], [752, 845], [272, 1115], [752, 1115]],
-    1: [[272, 405], [752, 405], [272, 670], [752, 670], [272, 935], [752, 935], [272, 1200], [752, 1200]],
-    2: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [772, 470], [772, 740], [772, 1010]],
-    3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
+    0: {
+      w: 205,
+      0: [[512, 370], [272, 575], [752, 575], [272, 845], [752, 845], [272, 1115], [752, 1115]],
+      1: [[272, 405], [752, 405], [272, 670], [752, 670], [272, 935], [752, 935], [272, 1200], [752, 1200]],
+      2: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [772, 470], [772, 740], [772, 1010]],
+      3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
+    },
+    3: {
+      w: 185,
+      0: [[512, 470], [282, 640], [742, 640], [282, 865], [742, 865], [282, 1090], [742, 1090]],
+      1: [[282, 440], [742, 440], [282, 660], [742, 660], [282, 880], [742, 880], [282, 1100], [742, 1100]],
+      2: [[287, 575], [287, 795], [287, 1015], [512, 465], [512, 685], [512, 905], [737, 575], [737, 795], [737, 1015]],
+      3: [[287, 570], [287, 783], [287, 996], [512, 463], [512, 676], [512, 889], [512, 1102], [737, 570], [737, 783], [737, 996]],
+    },
   };
-  const PIP_W = 205;
   // figura je celá obrázkem a nese znaky barvy [x, y, šířka]: spodek jeden dole, svršek jeden
   // nahoře (stranou od obličeje), král a eso v obou horních rozích
-  const FIG_PIP = { 4: [[512, 1190, PIP_W]], 5: [[790, 400, PIP_W]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] };
+  const FIG_PIP = { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
   const FIT = { '0-5': { s: 0.86, y: 138 } };
@@ -154,7 +164,8 @@ const PrsiCards2 = (() => {
     const sign = img[`emblem-${su}`] ? `emblem-${su}` : `suit-${su}`;
     // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty; figura je celá
     // obrázkem se znaky barvy, karta bez obrázku má velký znak uprostřed
-    if (PIPS[rk]) for (const [x, y] of PIPS[rk]) pip(ctx, k, sign, x, y, PIP_W, 7);
+    const lay = PIPS[su] || PIPS[0];
+    if (lay[rk]) for (const [x, y] of lay[rk]) pip(ctx, k, sign, x, y, lay.w, 7);
     else if (bg && FIG_PIP[rk]) for (const [x, y, w] of FIG_PIP[rk]) pip(ctx, k, sign, x, y, w, 7);
     else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
