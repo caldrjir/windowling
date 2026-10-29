@@ -35,6 +35,8 @@ const PrsiCards2 = (() => {
     3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
   };
   const PIP_W = 205;
+  // figura je celá obrázkem a nese jeden znak barvy: spodek dole
+  const FIG_PIP = { 4: [512, 1190] };
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
   // vystouplý vzhled: uvnitř tvaru světlá hrana vlevo nahoře a tmavá vpravo dole (vnitřní stín).
   // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
@@ -106,8 +108,9 @@ const PrsiCards2 = (() => {
     const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
     const sign = img[`emblem-${su}`] ? `emblem-${su}` : `suit-${su}`;
     // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty; figura je celá
-    // obrázkem, eso (a figura, dokud nemá obrázek) má velký znak uprostřed
+    // obrázkem s jedním znakem, eso (a figura, dokud nemá obrázek) má velký znak uprostřed
     if (PIPS[rk]) for (const [x, y] of PIPS[rk]) pip(ctx, k, sign, x, y, PIP_W, 7);
+    else if (bg && FIG_PIP[rk]) pip(ctx, k, sign, FIG_PIP[rk][0], FIG_PIP[rk][1], PIP_W, 7);
     else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
     const fr = emboss(`frame-${su}`, img[`frame-${su}`], cv.width, cv.height, 6 * k);
