@@ -29,8 +29,8 @@ const PrsiCards2 = (() => {
   // římské číslice v obou horních rozích
   const ROMAN = ['VII', 'VIII', 'IX', 'X'];
   const PIPS = {
-    0: [[512, 330], [272, 540], [752, 540], [272, 810], [752, 810], [272, 1080], [752, 1080]],
-    1: [[272, 380], [752, 380], [272, 650], [752, 650], [272, 920], [752, 920], [272, 1190], [752, 1190]],
+    0: [[512, 370], [272, 575], [752, 575], [272, 845], [752, 845], [272, 1115], [752, 1115]],
+    1: [[272, 405], [752, 405], [272, 670], [752, 670], [272, 935], [752, 935], [272, 1200], [752, 1200]],
     2: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [772, 470], [772, 740], [772, 1010]],
     3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
   };
@@ -112,19 +112,20 @@ const PrsiCards2 = (() => {
     ctx.drawImage(e, (right ? x - w : x) - pad, y - h - pad, c.width / k, c.height / k);
     ctx.restore();
   }
-  const NUM = '700 112px ' + FONT;
+  // velké číslice, do šířky trochu stažené, ať se VIII vejde mezi roh a horní ozdobu
+  const NUM = '700 142px ' + FONT, NARROW = 0.85;
   let measure = null;
   function numeral(ctx, k, text, x, y, right) {
     measure = measure || document.createElement('canvas').getContext('2d');
     measure.font = NUM;
-    const m = measure.measureText(text), w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight, h = m.actualBoundingBoxAscent;
-    badge(ctx, k, `roman-${text}`, w, h, (t, op) => { t.font = NUM; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); }, x, y, right);
+    const m = measure.measureText(text), w = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * NARROW, h = m.actualBoundingBoxAscent;
+    badge(ctx, k, `roman-${text}`, w, h, (t, op) => { t.save(); t.scale(NARROW, 1); t.font = NUM; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); t.restore(); }, x, y, right);
   }
   // figury mají v rozích místo písmen značku, která nepotřebuje překlad: spodek (Unter, „dolní“)
   // hrot dolů, svršek (Ober, „horní“) hrot nahoru
   const MARKS = {
-    4: (t, op) => { t.beginPath(); t.moveTo(0, 0); t.lineTo(84, 0); t.quadraticCurveTo(64, 38, 42, 86); t.quadraticCurveTo(20, 38, 0, 0); t.closePath(); t[op](); },
-    5: (t, op) => { t.beginPath(); t.moveTo(42, 0); t.quadraticCurveTo(64, 48, 84, 86); t.lineTo(0, 86); t.quadraticCurveTo(20, 48, 42, 0); t.closePath(); t[op](); },
+    4: (t, op) => { t.beginPath(); t.moveTo(0, 0); t.lineTo(104, 0); t.quadraticCurveTo(79, 48, 52, 108); t.quadraticCurveTo(25, 48, 0, 0); t.closePath(); t[op](); },
+    5: (t, op) => { t.beginPath(); t.moveTo(52, 0); t.quadraticCurveTo(79, 60, 104, 108); t.lineTo(0, 108); t.quadraticCurveTo(25, 60, 52, 0); t.closePath(); t[op](); },
   };
 
   function draw(c, width, en) {
@@ -157,9 +158,9 @@ const PrsiCards2 = (() => {
     if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
     // v horních rozích, vedle ozdob rámečku, římská číslice nebo značka figury
     for (const right of [false, true]) {
-      const x = right ? DW - 215 : 215;
-      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, 240, right);
-      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}`, 84, 86, MARKS[rk], x, 240, right);
+      const x = right ? DW - 205 : 205;
+      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, 258, right);
+      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}`, 104, 108, MARKS[rk], x, 258, right);
     }
     return cv;
   }
