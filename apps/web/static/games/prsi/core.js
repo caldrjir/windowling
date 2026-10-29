@@ -4,7 +4,9 @@
 // král, eso). Karta = barva * 8 + hodnota. Každý dostane 4 karty, jedna se otočí.
 // Hraje se na barvu nebo hodnotu, svršek jde na cokoli a hráč jím změní barvu.
 // Sedma: další bere 2 (nebo přebije sedmou a bere se 4, 6, 8). Eso: další stojí (nebo přebije esem).
-// Kdo nemůže nebo nechce hrát, lízne si kartu. Vyhrává, kdo se první zbaví všech karet.
+// Otočená karta platí pro prvního hráče: sedma = bere 2, eso = stojí, svršek = jeho barva.
+// Kdo nemůže nebo nechce hrát, lízne si kartu. Vyhrává, kdo se první zbaví všech karet; když ale
+// dohraje sedmou, může ho další hráč přebitím sedmou vrátit do hry (pak bere i on).
 // Balíček se míchá ze semínka, takže online oba hráči vidí stejnou hru jen z tahů.
 const PrsiCore = (() => {
   const SEDMA = 0, SPODEK = 4, SVRSEK = 5, KRAL = 6, ESO = 7;
@@ -16,11 +18,9 @@ const PrsiCore = (() => {
     const r = rngOf(seed), deck = shuffle([...Array(32).keys()], r);
     const hands = Array.from({ length: players }, () => []);
     for (let k = 0; k < handSize; k++) for (const h of hands) h.push(deck.pop());
-    // otočená karta nemá žádný účinek: sedmy, esa a svršky jdou zpět pod balíček
-    let guard = 0;
-    while ([SEDMA, ESO, SVRSEK].includes(rankOf(deck[deck.length - 1])) && guard++ < 32) deck.unshift(deck.pop());
+    // otočená karta platí pro prvního hráče
     const top = deck.pop();
-    return { seed, n: players, deck, discard: [top], hands, turn: 0, suit: suitOf(top), draw: 0, skip: false, winner: -1, shuffles: 0, moves: 0 };
+    return { seed, n: players, deck, discard: [top], hands, turn: 0, suit: suitOf(top), draw: rankOf(top) === SEDMA ? 2 : 0, skip: rankOf(top) === ESO, winner: -1, pending: -1, shuffles: 0, moves: 0 };
   }
   const top = s => s.discard[s.discard.length - 1];
   function canPlay(s, c) {
@@ -66,9 +66,15 @@ const PrsiCore = (() => {
       s.suit = rk === SVRSEK && a.suit != null ? a.suit : suitOf(a.c);
       if (rk === SEDMA) s.draw += 2;
       if (rk === ESO) s.skip = true;
-      if (!hand.length) { s.winner = me; return s; }
-    } else if (a.t === 'd') { drawCards(s, me, s.draw || 1); s.draw = 0; }
-    else s.skip = false;
+      if (rk === SEDMA && s.pending >= 0) s.pending = -1;          // přebito sedmou: dohravší se vrací do hry
+      if (!hand.length) {
+        if (rk !== SEDMA) { s.winner = me; return s; }
+        s.pending = me;                                           // dohrál sedmou: vyhrává, když ho další nepřebije
+      }
+    } else if (a.t === 'd') {
+      drawCards(s, me, s.draw || 1); s.draw = 0;
+      if (s.pending >= 0) { s.winner = s.pending; s.pending = -1; return s; }
+    } else s.skip = false;
     s.turn = (me + 1) % s.n;
     return s;
   }
@@ -78,7 +84,7 @@ const PrsiCore = (() => {
     const x = /^p(\d{1,2})(?:\.(\d))?$/.exec(m);
     return x ? { t: 'p', c: +x[1], suit: x[2] != null ? +x[2] : undefined } : null;
   }
-  const clone = s => ({ ...s, deck: s.deck.slice(), discard: s.discard.slice(), hands: s.hands.map(h => h.slice()) });
+  const clone = s => ({ pending: -1, ...s, deck: s.deck.slice(), discard: s.discard.slice(), hands: s.hands.map(h => h.slice()) });
 
   // ── Počítačový hráč ──
   // level 1: hraje skoro náhodně; 2: drží svršky na později, útočí sedmou na slabého soupeře;

@@ -128,6 +128,14 @@ main#kView { position: relative; z-index: 2; padding: 6px max(14px, env(safe-are
 .k-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .k-table th, .k-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .k-table th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+/* Skóre: kdo koho porazil */
+.k-vs-t td, .k-vs-t th { padding: 7px 10px; }
+.k-vs-t td:first-child { font-weight: 600; white-space: normal; }
+.k-vs-t td:first-child .ki { vertical-align: -3px; margin-right: 4px; }
+.k-vs-t .w, .k-vs-t .l { width: 1%; text-align: right; font-weight: 800; }
+.k-vs-t td.w { color: var(--good); } .k-vs-t td.l { color: var(--bad); text-align: left; }
+.k-vs-t td:nth-child(3) { width: 1%; padding: 7px 0; color: var(--muted); }
+.k-score .k-table { margin: 4px 0; }
 .k-ranks { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
 .k-ranks li { display: flex; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.04); color: var(--dim); }
 .k-ranks li.on { color: var(--text); background: color-mix(in srgb, var(--a) 12%, transparent); }
