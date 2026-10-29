@@ -19,6 +19,11 @@ const PrsiCards2 = (() => {
     for (let su = 0; su < 4; su++) { names.push(`suit-${su}`, `emblem-${su}`, `frame-${su}`); for (let rk = 0; rk < 8; rk++) names.push(`bg-${su}-${rk}`); }
     return Promise.all(names.map(load));
   }
+  // rozložení znaků na číselných kartách (jako na mariáškách): [x, y], dolní polovina otočená
+  const PIPS = {
+    0: [[400, 400], [624, 400], [512, 592], [400, 784], [624, 784], [400, 1140], [624, 1140]],
+  };
+  const PIP_W = 170;
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
   const contain = (ctx, im, cx, cy, w) => { if (!im) return; const h = w * im.height / im.width; ctx.drawImage(im, cx - w / 2, cy - h / 2, w, h); };
 
@@ -32,9 +37,14 @@ const PrsiCards2 = (() => {
     else { const g = ctx.createLinearGradient(0, 0, 0, DH); g.addColorStop(0, '#fffaf0'); g.addColorStop(1, '#efe3c8'); ctx.fillStyle = g; ctx.fillRect(0, 0, DW, DH); }
     // jemné ztmavení okrajů, ať rámeček a znak vyniknou
     const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
-    // velký znak barvy uprostřed
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
-    contain(ctx, img[`emblem-${su}`] || img[`suit-${su}`], DW / 2, DH * 0.5, 560);
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+    if (PIPS[rk]) {
+      // číselná karta: znaky barvy v rozložení podle hodnoty
+      for (const [x, y] of PIPS[rk]) {
+        if (y > DH * 0.6) { ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI); contain(ctx, img[`suit-${su}`], 0, 0, PIP_W); ctx.restore(); }
+        else contain(ctx, img[`suit-${su}`], x, y, PIP_W);
+      }
+    } else contain(ctx, img[`emblem-${su}`] || img[`suit-${su}`], DW / 2, DH * 0.5, 560); // velký znak uprostřed
     ctx.restore();
     ctx.restore();
     // rámeček
