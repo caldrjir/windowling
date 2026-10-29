@@ -35,8 +35,8 @@ const PrsiCards2 = (() => {
     3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
   };
   const PIP_W = 205;
-  // figura je celá obrázkem a nese jeden znak barvy: spodek dole
-  const FIG_PIP = { 4: [512, 1190] };
+  // figura je celá obrázkem a nese jeden znak barvy: spodek dole, svršek nahoře (stranou od obličeje)
+  const FIG_PIP = { 4: [512, 1190], 5: [790, 400] };
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
   // vystouplý vzhled: uvnitř tvaru světlá hrana vlevo nahoře a tmavá vpravo dole (vnitřní stín).
   // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
