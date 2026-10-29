@@ -53,11 +53,11 @@ const PrsiCards2 = (() => {
   // nahoře (stranou od obličeje), král a eso v obou horních rozích; podle barvy (rámeček, obrázek)
   const FIG_PIP = {
     0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] },
-    3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]], 6: [[300, 355, 165], [724, 355, 165]] },
+    3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]], 6: [[300, 355, 165], [724, 355, 165]], 7: [[300, 355, 165], [724, 355, 165]] },
   };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
-  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 } };
+  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 } };
   function fitted(bg, k, s) {
     const c = document.createElement('canvas'), t = c.getContext('2d');
     c.width = Math.round(DW * s * k); c.height = Math.round(DH * s * k);
