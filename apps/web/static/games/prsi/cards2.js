@@ -6,9 +6,10 @@
 // v rozměru 1024 × 1536 (rozměr ilustrací), kreslí se zmenšeně.
 const PrsiCards2 = (() => {
   const DW = 1024, DH = 1536, BASE = '/games/prsi/img/';
-  // tvar karty dává rámeček: pozadí jen uvnitř jeho zlatého obrysu (x 34–989, y 51–1473),
-  // ozdoby, které z něj vyčnívají, zůstávají celé (karta tak nemusí být přesný obdélník)
-  const FX = [34, 989], FY = [51, 1473], FR = 88;
+  // tvar karty dává rámeček barvy: pozadí jen uvnitř jeho obrysu [x0, y0, x1, y1, zaoblení]
+  // (srdce: zlatý obrys, kule: středy trámů), ozdoby, které z něj vyčnívají, zůstávají celé
+  // (karta tak nemusí být přesný obdélník)
+  const CLIP = { 0: [34, 51, 989, 1473, 88], 3: [70, 140, 960, 1380, 10] };
   const RANKS_CS = ['7', '8', '9', '10', 'Sp', 'Sv', 'K', 'E'], RANKS_EN = ['7', '8', '9', '10', 'U', 'O', 'K', 'A'];
   const INK = ['#8e1520', '#1d5e2b', '#6b4012', '#9a4a0c'];
   const img = {};
@@ -112,17 +113,21 @@ const PrsiCards2 = (() => {
     ctx.drawImage(e, (right ? x - w : x) - pad, y - h - pad, c.width / k, c.height / k);
     ctx.restore();
   }
-  // velké číslice, do šířky trochu stažené, ať se VIII vejde mezi roh a horní ozdobu
-  const NUM = '700 142px ' + FONT, NARROW = 0.85;
+  // velké číslice, do šířky trochu stažené, ať se VIII vejde mezi roh a horní ozdobu (sc je velikost)
+  const NARROW = 0.85, numFont = sc => `700 ${Math.round(142 * sc)}px ${FONT}`;
   let measure = null;
-  function numeral(ctx, k, text, x, y, right) {
+  function numeral(ctx, k, text, x, y, right, sc) {
+    const font = numFont(sc);
     measure = measure || document.createElement('canvas').getContext('2d');
-    measure.font = NUM;
+    measure.font = font;
     const m = measure.measureText(text), w = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * NARROW, h = m.actualBoundingBoxAscent;
-    badge(ctx, k, `roman-${text}`, w, h, (t, op) => { t.save(); t.scale(NARROW, 1); t.font = NUM; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); t.restore(); }, x, y, right);
+    badge(ctx, k, `roman-${text}-${sc}`, w, h, (t, op) => { t.save(); t.scale(NARROW, 1); t.font = font; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); t.restore(); }, x, y, right);
   }
   // figury mají v rozích místo písmen značku, která nepotřebuje překlad: spodek (Unter, „dolní“)
   // hrot dolů, svršek (Ober, „horní“) hrot nahoru
+  // místo v horních rozích podle rámečku barvy [levý okraj, spodní hrana, velikost]: u kulí
+  // pod trámem a vedle lebky, proto níž a menší
+  const CORNER = { 0: [205, 258, 1], 3: [185, 328, 0.75] };
   const MARKS = {
     4: (t, op) => { t.beginPath(); t.moveTo(0, 0); t.lineTo(104, 0); t.quadraticCurveTo(79, 48, 52, 108); t.quadraticCurveTo(25, 48, 0, 0); t.closePath(); t[op](); },
     5: (t, op) => { t.beginPath(); t.moveTo(52, 0); t.quadraticCurveTo(79, 60, 104, 108); t.lineTo(0, 108); t.quadraticCurveTo(25, 60, 52, 0); t.closePath(); t[op](); },
@@ -132,7 +137,8 @@ const PrsiCards2 = (() => {
     const su = c >> 3, rk = c & 7, k = width / DW;
     const cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
     const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
-    rr(ctx, FX[0], FY[0], FX[1] - FX[0], FY[1] - FY[0], FR); ctx.save(); ctx.clip();
+    const [x0, y0, x1, y1, r] = CLIP[su] || CLIP[0];
+    rr(ctx, x0, y0, x1 - x0, y1 - y0, r); ctx.save(); ctx.clip();
     const bg = img[`bg-${su}-${rk}`], fit = FIT[`${su}-${rk}`];
     if (bg && fit) {
       ctx.save(); ctx.filter = `blur(${Math.max(1, Math.round(18 * k))}px) brightness(.8)`; ctx.drawImage(bg, 0, 0, DW, DH); ctx.restore();
@@ -157,10 +163,11 @@ const PrsiCards2 = (() => {
     // rámeček celý, i s ozdobami, které z karty vyčnívají
     if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
     // v horních rozích, vedle ozdob rámečku, římská číslice nebo značka figury
+    const [nx, ny, sc] = CORNER[su] || CORNER[0];
     for (const right of [false, true]) {
-      const x = right ? DW - 205 : 205;
-      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, 258, right);
-      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}`, 104, 108, MARKS[rk], x, 258, right);
+      const x = right ? DW - nx : nx;
+      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, ny, right, sc);
+      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}-${sc}`, 104 * sc, 108 * sc, (t, op) => { t.save(); t.scale(sc, sc); MARKS[rk](t, op); t.restore(); }, x, ny, right);
     }
     return cv;
   }
