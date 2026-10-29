@@ -6,6 +6,11 @@
 const Prsi = (() => {
   const L = Kit.L, C = PrsiCore, K = PrsiCards;
   const SUITS = [L('srdce', 'hearts'), L('listy', 'leaves'), L('žaludy', 'acorns'), L('kule', 'bells')];
+  // celé jméno karty („srdcová sedma“, „kulový svršek“, „Ace of hearts“): přídavné jméno barvy
+  // se shoduje s rodem hodnoty (sedma… desítka ženský, spodek, svršek, král mužský, eso střední)
+  const SUIT_ADJ = ['srdcov', 'listov', 'žaludov', 'kulov'], RANK_CS = ['sedma', 'osma', 'devítka', 'desítka', 'spodek', 'svršek', 'král', 'eso'];
+  const RANK_END = ['á', 'á', 'á', 'á', 'ý', 'ý', 'ý', 'é'], RANK_EN = ['Seven', 'Eight', 'Nine', 'Ten', 'Unter', 'Ober', 'King', 'Ace'];
+  const cardTitle = c => { const su = c >> 3, rk = c & 7; return Kit.LANG === 'en' ? `${RANK_EN[rk]} of ${SUITS[su]}` : `${SUIT_ADJ[su].charAt(0).toUpperCase()}${SUIT_ADJ[su].slice(1)}${RANK_END[rk]} ${RANK_CS[rk]}`; };
   const BOTS = [{ id: 'pepa', name: L('Pepa', 'Joe') }, { id: 'mana', name: L('Máňa', 'Mary') }, { id: 'jarda', name: L('Jarda', 'Jack') }];
   const SEAT = ['#e0453a', '#2f6fe0', '#f08a24', '#9b59d0'];
   const DIFFS = [
@@ -21,13 +26,15 @@ const Prsi = (() => {
   function create(el, P, saved, api, opts = {}) {
     const net = P.online ? opts.net : null, online = !!net;
     const n = P.opp + 1, me = online ? (net.side === 1 ? 0 : 1) : 0;
-    const en = Kit.lang === 'en';
+    const en = Kit.LANG === 'en';
     const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
     const rawNames = online ? (me === 0 ? [net.me, net.opp] : [net.opp, net.me]) : [L('Ty', 'You'), ...BOTS.slice(0, P.opp).map(b => b.name)];
     const names = rawNames.map(esc);
     const initial = p => esc(String(rawNames[p] || '?').trim().charAt(0).toUpperCase() || '?');
     let s = saved && saved.s ? saved.s : C.deal(P.seed, n);
-    let done = false, picking = null, busy = false, lastAct = '', speed = 1;
+    // karty se kreslí z obrázků: hra začne, až jsou načtené (tahy soupeře zatím počkají)
+    let done = false, picking = null, busy = false, lastAct = '', speed = 1, loaded = false;
+    const waiting = [];
     const r = C.rngOf((P.seed ^ 0xa11ce) >>> 0);
     if (online) for (const m of net.moves) { const a = C.decode(m); if (a && C.valid(s, a)) C.apply(s, a); }
 
@@ -41,14 +48,13 @@ const Prsi = (() => {
       <div class="pr-status"></div>
       <div class="pr-hand"></div>
       <div class="pr-acts"><button class="k-btn pr-draw">${L('Líznout', 'Draw')}</button><button class="k-btn primary pr-stand" hidden>${L('Stojím', 'Skip my turn')}</button><button class="k-tool pr-resign">${api.icon('x')}<span>${L('Vzdát', 'Resign')}</span></button></div>
-      <div class="pr-pick" hidden><div><b>${L('Svršek: vyber barvu', 'Ober: pick a suit')}</b><div class="pr-suits">${[0, 1, 2, 3].map(su => `<button data-su="${su}">${K.suitSvg(su, 46)}<span>${SUITS[su]}</span></button>`).join('')}</div></div></div>
+      <div class="pr-pick" hidden><div><b>${L('Svršek: vyber barvu', 'Ober: pick a suit')}</b><div class="pr-suits">${[0, 1, 2, 3].map(su => `<button data-su="${su}">${K.suitIcon(su, 46)}<span>${SUITS[su]}</span></button>`).join('')}</div></div></div>
       <div class="pr-fly"></div></div>`;
     const $ = q => el.querySelector(q);
     const wrap = $('.pr-wrap'), oppsEl = $('.pr-opps'), handEl = $('.pr-hand'), discEl = $('.pr-discard'), infoEl = $('.pr-info'), statusEl = $('.pr-status');
     const deckEl = $('.pr-deck'), drawEl = $('.pr-draw'), standEl = $('.pr-stand'), pickEl = $('.pr-pick'), flyEl = $('.pr-fly');
-    for (const img of deckEl.querySelectorAll('img')) img.src = K.backSrc();
     const rankName = rk => (en ? K.RANKS_EN : K.RANKS_CS)[rk];
-    const cardName = c => `<span class="pr-mini">${rankName(C.rankOf(c))}${K.suitSvg(C.suitOf(c), 14)}</span>`;
+    const cardName = c => `<span class="pr-mini">${rankName(C.rankOf(c))}${K.suitIcon(C.suitOf(c), 14)}</span>`;
     const sortHand = h => h.slice().sort((a, b) => C.suitOf(a) - C.suitOf(b) || C.rankOf(a) - C.rankOf(b));
     const tilt = c => (((c * 37) % 13) - 6) * 1.4;
 
@@ -62,9 +68,9 @@ const Prsi = (() => {
           <div class="pr-who"><i style="--c:${SEAT[p]}">${initial(p)}</i><b>${names[p]}</b><small>${cnt === 1 ? L('poslední karta!', 'last card!') : cnt ? L(`${cnt} ${cnt < 5 ? 'karty' : 'karet'}`, `${cnt} cards`) : L('bez karet', 'no cards')}</small></div></div>`;
       }
       oppsEl.innerHTML = oh;
-      // odhazovací balíček: poslední čtyři karty, každá trochu jinak natočená
+      // odhazovací balíček: poslední čtyři karty, každá trochu jinak natočená, nad nimi jméno vrchní
       const d = s.discard.slice(-4);
-      discEl.innerHTML = d.map((c, i) => `<img src="${K.src(c, en)}" style="--r:${tilt(c) * (i === d.length - 1 ? 0.5 : 1.2)}deg;--x:${i === d.length - 1 ? 0 : (((c * 13) % 9) - 4)}px" alt="">`).join('');
+      discEl.innerHTML = `<span class="pr-tag">${K.suitIcon(C.suitOf(C.top(s)), 14)}${cardTitle(C.top(s))}</span>` + d.map((c, i) => `<img src="${K.src(c)}" style="--r:${tilt(c) * (i === d.length - 1 ? 0.5 : 1.2)}deg;--x:${i === d.length - 1 ? 0 : (((c * 13) % 9) - 4)}px" alt="">`).join('');
       deckEl.querySelector('b').textContent = s.deck.length;
       deckEl.querySelector('.pr-stack').style.setProperty('--h', Math.min(3, Math.ceil(s.deck.length / 8)));
       const myTurn = s.turn === me && s.winner < 0 && !done;
@@ -74,14 +80,14 @@ const Prsi = (() => {
       standEl.hidden = !(myTurn && s.skip && !busy);
       // stav stolu: barva po svrškovi, sedmy, eso
       let info = '';
-      if (C.rankOf(C.top(s)) === C.SVRSEK) info += `<span class="pr-chip suit">${K.suitSvg(s.suit, 26)}<em>${SUITS[s.suit]}</em></span>`;
+      if (C.rankOf(C.top(s)) === C.SVRSEK) info += `<span class="pr-chip suit">${K.suitIcon(s.suit, 26)}<em>${SUITS[s.suit]}</em></span>`;
       if (s.draw) info += `<span class="pr-chip hot">+${s.draw}</span>`;
       if (s.skip) info += `<span class="pr-chip hot">${L('stojí se', 'skip')}</span>`;
       infoEl.innerHTML = info;
       // ruka do vějíře
       const hand = sortHand(s.hands[me]), hn = hand.length, spread = Math.min(7, 44 / Math.max(1, hn));
       handEl.style.setProperty('--n', hn);
-      handEl.innerHTML = hand.map((c, i) => { const o = i - (hn - 1) / 2; return `<button class="pr-card${myTurn && !busy && C.canPlay(s, c) ? ' ok' : ''}" data-c="${c}" style="--rot:${(o * spread).toFixed(1)}deg;--lift:${(Math.abs(o) * Math.abs(o) * 0.9).toFixed(1)}px"><img src="${K.src(c, en)}" alt=""></button>`; }).join('');
+      handEl.innerHTML = hand.map((c, i) => { const o = i - (hn - 1) / 2; return `<button class="pr-card${myTurn && !busy && C.canPlay(s, c) ? ' ok' : ''}" data-c="${c}" title="${cardTitle(c)}" aria-label="${cardTitle(c)}" style="--rot:${(o * spread).toFixed(1)}deg;--lift:${(Math.abs(o) * Math.abs(o) * 0.9).toFixed(1)}px"><span class="pr-tag">${rankName(C.rankOf(c))}${K.suitIcon(C.suitOf(c), 12)}</span><img src="${K.src(c)}" alt=""></button>`; }).join('');
       handEl.classList.toggle('mine', myTurn);
       // stav hry slovy
       let st, sub = lastAct;
@@ -96,7 +102,7 @@ const Prsi = (() => {
     }
     function describe(p, a) {
       const who = p === me ? L('Ty', 'You') : names[p];
-      if (a.t === 'p') return C.rankOf(a.c) === C.SVRSEK && a.suit != null ? `${who}: ${cardName(a.c)} → ${K.suitSvg(a.suit, 14)} ${SUITS[a.suit]}` : `${who}: ${cardName(a.c)}`;
+      if (a.t === 'p') return C.rankOf(a.c) === C.SVRSEK && a.suit != null ? `${who}: ${cardName(a.c)} → ${K.suitIcon(a.suit, 14)} ${SUITS[a.suit]}` : `${who}: ${cardName(a.c)}`;
       if (a.t === 'd') { const k = s.draw || 1; return p === me ? L(`Bereš si ${k}`, `You drew ${k}`) : L(`${who} si bere ${k}`, `${who} drew ${k}`); }
       return p === me ? L('Stojíš', 'You skip') : L(`${who} stojí`, `${who} skips`);
     }
@@ -118,7 +124,7 @@ const Prsi = (() => {
     function seatEl(p) { return p === me ? handEl : oppsEl.querySelector(`.pr-opp[data-p="${p}"] .pr-fan`) || oppsEl.querySelector(`.pr-opp[data-p="${p}"]`); }
 
     function act(a, byMe) {
-      if (done || !C.valid(s, a)) return false;
+      if (done || !loaded || !C.valid(s, a)) return false;
       const p = s.turn, drawn = a.t === 'd' ? (s.draw || 1) : 0, before = s.hands[p].slice();
       // odkud karta poletí: z mé ruky (konkrétní karta), nebo od soupeřova místa
       let from = null;
@@ -130,16 +136,16 @@ const Prsi = (() => {
       if (online && byMe) net.send(C.encode(a));
       render(); api.changed();
       if (a.t === 'p') {
-        const top = discEl.lastElementChild;
+        const top = discEl.querySelector(':scope > img:last-of-type');
         if (top && from) {
           const cw = top.getBoundingClientRect().width;
           if (p !== me) from = { x: from.x + from.w / 2 - cw * 0.3, y: from.y, w: cw * 0.6, h: cw * 0.9 };
           top.style.visibility = 'hidden';
-          fly(K.src(a.c, en), from, rel(top), 0, tilt(a.c) * 0.5).then(() => { top.style.visibility = ''; });
+          fly(K.src(a.c), from, rel(top), 0, tilt(a.c) * 0.5).then(() => { top.style.visibility = ''; });
         }
       } else if (a.t === 'd') {
         const got = s.hands[p].filter(c => !before.includes(c));
-        if (p === me) got.forEach((c, i) => { const node = handEl.querySelector(`.pr-card[data-c="${c}"]`); if (node) { node.style.visibility = 'hidden'; fly(K.src(c, en), deckFrom, rel(node), i * 90).then(() => { node.style.visibility = ''; }); } });
+        if (p === me) got.forEach((c, i) => { const node = handEl.querySelector(`.pr-card[data-c="${c}"]`); if (node) { node.style.visibility = 'hidden'; fly(K.src(c), deckFrom, rel(node), i * 90).then(() => { node.style.visibility = ''; }); } });
         else { const seat = seatEl(p); if (seat) { const to = rel(seat); for (let i = 0; i < Math.min(drawn, 6); i++) fly(K.backSrc(), deckFrom, { x: to.x + to.w / 2 - deckFrom.w * 0.3, y: to.y, w: deckFrom.w * 0.6, h: 0 }, i * 90); } }
       }
       if (s.winner >= 0) { finish(); return true; }
@@ -190,10 +196,18 @@ const Prsi = (() => {
       if (online) net.resign();
       else { for (let k = 1; k < n; k++) api.versus(BOTS[k - 1].id, BOTS[k - 1].name, 'l'); api.failed({ title: L('Vzdáno', 'Resigned') }); }
     });
-    if (online) net.onMove = m => { const a = C.decode(m); if (a && s.turn !== me) act(a, false); };
+    const onMove = m => { const a = C.decode(m); if (a && s.turn !== me) act(a, false); };
+    if (online) net.onMove = m => (loaded ? onMove(m) : waiting.push(m));
 
-    render(); api.setTimer(true);
-    if (s.winner >= 0) finish(); else schedule();
+    statusEl.innerHTML = `<b>${L('Míchám karty…', 'Shuffling the cards…')}</b>`;
+    K.ready().then(() => {
+      if (done) return;
+      loaded = true;
+      for (const img of deckEl.querySelectorAll('img')) img.src = K.backSrc();
+      render(); api.setTimer(true);
+      for (const m of waiting.splice(0)) onMove(m);
+      if (s.winner >= 0) finish(); else schedule();
+    });
     return {
       getState: () => (done || online ? null : { s }),
       destroy() { done = true; },
@@ -208,20 +222,76 @@ const Prsi = (() => {
     };
   }
 
-  // obrázek na úvodní stránce: vějíř skutečných karet ze hry
+  // obrázek na úvodní stránce: vějíř skutečných karet ze hry (a zároveň se tu karty začnou načítat)
   function art(el) {
-    const en = Kit.lang === 'en', cards = [[K.backSrc(), -32], [PrsiCards.src(7, en), -16], [PrsiCards.src(13, en), 0], [PrsiCards.src(22, en), 16], [PrsiCards.src(24, en), 32]];
-    el.innerHTML = `<div class="pr-art">${cards.map(([src, r]) => `<img src="${src}" style="--r:${r}deg" alt="">`).join('')}</div>`;
+    el.innerHTML = '<div class="pr-art"></div>';
+    K.ready().then(() => {
+      const box = el.querySelector('.pr-art');
+      if (!box) return;
+      const cards = [[K.backSrc(), -32], [K.src(7), -16], [K.src(13), 0], [K.src(22), 16], [K.src(24), 32]];
+      box.innerHTML = cards.map(([src, r]) => `<img src="${src}" style="--r:${r}deg" alt="">`).join('');
+    });
   }
-  return { DIFFS, generate, create, art };
+  // galerie karet: obrázky všech karet v rámečku, bez znaků a číslic; klepnutím se karta otevře
+  // přes celou obrazovku v plném rozlišení (šipky, přejetí prstem, klepnutím přiblížit)
+  const gallery = {
+    icon: 'brush', name: L('Galerie karet', 'Card gallery'),
+    render(el) {
+      el.innerHTML = `<h2>${L('Galerie karet', 'Card gallery')}</h2>
+        <p class="k-muted">${L('Obrázky karet bez znaků a čísel. Klepni na kartu a prohlédni si ji zblízka.', 'The card pictures without signs and numbers. Tap a card to see it up close.')}</p>
+        <div class="pr-gal"><p class="k-muted">${L('Načítám karty…', 'Loading the cards…')}</p></div>`;
+      // prohlížeč visí přímo v <body>, aby překryl i horní lištu hry
+      for (const old of document.querySelectorAll('body > .pr-lb')) old.remove();
+      const lb = document.createElement('div'); lb.className = 'pr-lb'; lb.hidden = true;
+      lb.innerHTML = `<button class="pr-lb-x" aria-label="${L('Zavřít', 'Close')}">${Kit.icon('x')}</button>
+          <button class="pr-lb-go" data-d="-1" aria-label="${L('Předchozí', 'Previous')}">‹</button><figure><img alt=""><figcaption></figcaption></figure>
+          <button class="pr-lb-go" data-d="1" aria-label="${L('Další', 'Next')}">›</button>`;
+      document.body.appendChild(lb);
+      const gal = el.querySelector('.pr-gal'), fig = lb.querySelector('figure'), pic = lb.querySelector('img'), cap = lb.querySelector('figcaption');
+      let list = [], at = 0;
+      // za kartami je ještě rub (číslo 32)
+      const title = c => (c === 32 ? L('Rub karty', 'Card back') : cardTitle(c));
+      const show = i => { at = (i + list.length) % list.length; fig.classList.remove('zoom'); pic.src = K.artSrc(list[at]); pic.alt = cap.textContent = title(list[at]); };
+      const close = () => { lb.hidden = true; document.removeEventListener('keydown', key); };
+      function key(e) {
+        if (!el.isConnected) { document.removeEventListener('keydown', key); lb.remove(); return; }
+        if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') show(at - 1); else if (e.key === 'ArrowRight') show(at + 1); else return;
+        e.preventDefault();
+      }
+      const open = i => { show(i); lb.hidden = false; document.addEventListener('keydown', key); };
+      lb.querySelector('.pr-lb-x').onclick = close;
+      for (const b of lb.querySelectorAll('.pr-lb-go')) b.onclick = () => show(at + +b.dataset.d);
+      pic.onclick = () => fig.classList.toggle('zoom');
+      // přejetí prstem: doleva další, doprava předchozí (jen když obrázek není přiblížený)
+      let sx = null;
+      fig.addEventListener('pointerdown', e => { sx = e.clientX; });
+      fig.addEventListener('pointerup', e => { if (sx === null || fig.classList.contains('zoom')) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 50) show(at + (dx < 0 ? 1 : -1)); });
+      K.ready().then(async () => {
+        if (!el.isConnected) return;
+        list = Array.from({ length: 33 }, (_, c) => c).filter(K.has);
+        const heads = [...SUITS, L('rub', 'back')];
+        gal.innerHTML = heads.map((h, su) => list.some(c => c >> 3 === su) ? `<h3>${h.charAt(0).toUpperCase()}${h.slice(1)}</h3><div class="pr-gal-row" data-su="${su}"></div>` : '').join('');
+        for (const [i, c] of list.entries()) {
+          const b = document.createElement('button'), cv = c === 32 ? K.drawBack(300) : K.draw(c, 300, true);
+          b.title = b.ariaLabel = title(c); b.onclick = () => open(i); b.appendChild(cv);
+          gal.querySelector(`.pr-gal-row[data-su="${c >> 3}"]`).appendChild(b);
+          await new Promise(res => setTimeout(res));
+          if (!el.isConnected) return;
+        }
+      });
+    },
+  };
+  return { DIFFS, generate, create, art, gallery };
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   id: 'prsi', title: 'PRŠÍ', wording: 'win',
   daily: false, path: false, quests: false, perfect: false, versus: true,
+  // hospoda při svíčkách: zlato, žár a dřevo (barvy ladí s kartami a stolem)
+  palette: { a: '#f2c56b', b: '#d9572f', c: '#8a4b1d', bg: '#0d0805' },
   freeTitle: Kit.L('Proti počítači', 'Against the computer'), freeNote: Kit.L('Vyber, kolik soupeřů sedne ke stolu:', 'Pick how many opponents sit at the table:'),
   tagline: Kit.L('Česká karetní klasika s mariášovými kartami: zbav se všech karet dřív než soupeři. Sedma bere dvě, eso stojí a svršek mění barvu.', 'The Czech card classic with German-suited cards: get rid of all your cards before the others. A seven makes the next player draw two, an ace skips and an Ober changes the suit.'),
-  diffs: Prsi.DIFFS, generate: Prsi.generate, create: Prsi.create, art: Prsi.art,
+  diffs: Prsi.DIFFS, generate: Prsi.generate, create: Prsi.create, art: Prsi.art, views: [Prsi.gallery],
   online: { kind: 'turn' },
   rules: Kit.L(`<p>Každý dostane čtyři karty, jedna se otočí. Hráči se střídají a přikládají kartu <b>stejné barvy nebo hodnoty</b>. Kdo nemůže nebo nechce, lízne si z balíčku. Vyhrává, kdo se první zbaví všech karet.</p>
     <ul><li><b>Sedma:</b> další hráč si lízne dvě karty, nebo přebije sedmou a líže se čtyři, šest, osm…</li>

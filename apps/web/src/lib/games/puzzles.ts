@@ -4555,24 +4555,29 @@ export const PUZZLE_GAMES: Game[] = [
 		category: 'board',
 		tagline: 'Sedma bere, eso stojí!',
 		description:
-			'Česká karetní klasika s mariášovými kartami: přikládej kartu stejné barvy nebo hodnoty a zbav se všech karet dřív než ostatní. Sedma bere dvě, eso stojí a svršek mění barvu. Hraj proti jednomu až třem počítačovým hráčům, nebo online s kamarádem přes kód nebo odkaz. Skóre ukazuje, nad kým jsi vyhrál a kdo nad tebou.',
+			'Česká karetní klasika s mariášovými kartami: přikládej kartu stejné barvy nebo hodnoty a zbav se všech karet dřív než ostatní. Sedma bere dvě, eso stojí a svršek mění barvu. Hraj proti jednomu až třem počítačovým hráčům, nebo online s kamarádem přes kód nebo odkaz. Skóre ukazuje, nad kým jsi vyhrál a kdo nad tebou. Každá karta je ilustrace, v galerii si ji prohlédneš zblízka.',
 		genres: ['Karty', 'Česká klasika', 'Mariášky'],
-		features: ['Online ve dvou', 'Až 3 soupeři', 'Skóre: kdo koho porazil', 'Mariášové karty'],
+		features: [
+			'Online ve dvou',
+			'Až 3 soupeři',
+			'Skóre: kdo koho porazil',
+			'Galerie ilustrovaných karet',
+		],
 		en: {
 			tagline: 'Seven draws, ace skips!',
 			description:
-				'The Czech card classic with German-suited cards: add a card of the same suit or rank and get rid of all your cards before the others. A seven makes the next player draw two, an ace skips a turn and an Ober changes the suit. Play one to three computer players or a friend online via a code or link. The score shows whom you beat and who beat you.',
+				'The Czech card classic with German-suited cards: add a card of the same suit or rank and get rid of all your cards before the others. A seven makes the next player draw two, an ace skips a turn and an Ober changes the suit. Play one to three computer players or a friend online via a code or link. The score shows whom you beat and who beat you. Every card is an illustration you can view up close in the gallery.',
 			genres: ['Cards', 'Czech classic', 'German suits'],
 			features: [
 				'Two-player online',
 				'Up to 3 opponents',
 				'Score: who beat whom',
-				'German-suited cards',
+				'Gallery of illustrated cards',
 			],
 		},
 		statLabels: prsiLabels,
 		path: '/games/prsi/index.html',
-		colors: ['#2f7a4a', '#d8262c', '#f2c230'],
+		colors: ['#1d4a2c', '#d9572f', '#f2c56b'],
 		statsKey: 'gamecenter.stats.prsi',
 		cover(ctx, w, h, t) {
 			// a screenshot of the game's own table (1200×800), drifting slowly
