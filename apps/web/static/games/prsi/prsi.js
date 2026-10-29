@@ -6,6 +6,10 @@
 const Prsi = (() => {
   const L = Kit.L, C = PrsiCore, K = PrsiCards;
   const SUITS = [L('srdce', 'hearts'), L('listy', 'leaves'), L('žaludy', 'acorns'), L('kule', 'bells')];
+  // celé jméno karty („srdcová sedma“, „kulový svršek“, „Ace of hearts“): přídavné jméno barvy
+  // se shoduje s rodem hodnoty (sedma… desítka ženský, spodek, svršek, král mužský, eso střední)
+  const SUIT_ADJ = ['srdcov', 'listov', 'žaludov', 'kulov'], RANK_CS = ['sedma', 'osma', 'devítka', 'desítka', 'spodek', 'svršek', 'král', 'eso'];
+  const RANK_END = ['á', 'á', 'á', 'á', 'ý', 'ý', 'ý', 'é'], RANK_EN = ['Seven', 'Eight', 'Nine', 'Ten', 'Unter', 'Ober', 'King', 'Ace'];
   const BOTS = [{ id: 'pepa', name: L('Pepa', 'Joe') }, { id: 'mana', name: L('Máňa', 'Mary') }, { id: 'jarda', name: L('Jarda', 'Jack') }];
   const SEAT = ['#e0453a', '#2f6fe0', '#f08a24', '#9b59d0'];
   const DIFFS = [
@@ -21,7 +25,7 @@ const Prsi = (() => {
   function create(el, P, saved, api, opts = {}) {
     const net = P.online ? opts.net : null, online = !!net;
     const n = P.opp + 1, me = online ? (net.side === 1 ? 0 : 1) : 0;
-    const en = Kit.lang === 'en';
+    const en = Kit.LANG === 'en';
     const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
     const rawNames = online ? (me === 0 ? [net.me, net.opp] : [net.opp, net.me]) : [L('Ty', 'You'), ...BOTS.slice(0, P.opp).map(b => b.name)];
     const names = rawNames.map(esc);
@@ -49,6 +53,7 @@ const Prsi = (() => {
     for (const img of deckEl.querySelectorAll('img')) img.src = K.backSrc();
     const rankName = rk => (en ? K.RANKS_EN : K.RANKS_CS)[rk];
     const cardName = c => `<span class="pr-mini">${rankName(C.rankOf(c))}${K.suitSvg(C.suitOf(c), 14)}</span>`;
+    const cardTitle = c => { const su = C.suitOf(c), rk = C.rankOf(c); return en ? `${RANK_EN[rk]} of ${SUITS[su]}` : `${SUIT_ADJ[su].charAt(0).toUpperCase()}${SUIT_ADJ[su].slice(1)}${RANK_END[rk]} ${RANK_CS[rk]}`; };
     const sortHand = h => h.slice().sort((a, b) => C.suitOf(a) - C.suitOf(b) || C.rankOf(a) - C.rankOf(b));
     const tilt = c => (((c * 37) % 13) - 6) * 1.4;
 
@@ -62,9 +67,9 @@ const Prsi = (() => {
           <div class="pr-who"><i style="--c:${SEAT[p]}">${initial(p)}</i><b>${names[p]}</b><small>${cnt === 1 ? L('poslední karta!', 'last card!') : cnt ? L(`${cnt} ${cnt < 5 ? 'karty' : 'karet'}`, `${cnt} cards`) : L('bez karet', 'no cards')}</small></div></div>`;
       }
       oppsEl.innerHTML = oh;
-      // odhazovací balíček: poslední čtyři karty, každá trochu jinak natočená
+      // odhazovací balíček: poslední čtyři karty, každá trochu jinak natočená, nad nimi jméno vrchní
       const d = s.discard.slice(-4);
-      discEl.innerHTML = d.map((c, i) => `<img src="${K.src(c, en)}" style="--r:${tilt(c) * (i === d.length - 1 ? 0.5 : 1.2)}deg;--x:${i === d.length - 1 ? 0 : (((c * 13) % 9) - 4)}px" alt="">`).join('');
+      discEl.innerHTML = `<span class="pr-tag">${K.suitSvg(C.suitOf(C.top(s)), 14)}${cardTitle(C.top(s))}</span>` + d.map((c, i) => `<img src="${K.src(c, en)}" style="--r:${tilt(c) * (i === d.length - 1 ? 0.5 : 1.2)}deg;--x:${i === d.length - 1 ? 0 : (((c * 13) % 9) - 4)}px" alt="">`).join('');
       deckEl.querySelector('b').textContent = s.deck.length;
       deckEl.querySelector('.pr-stack').style.setProperty('--h', Math.min(3, Math.ceil(s.deck.length / 8)));
       const myTurn = s.turn === me && s.winner < 0 && !done;
@@ -81,7 +86,7 @@ const Prsi = (() => {
       // ruka do vějíře
       const hand = sortHand(s.hands[me]), hn = hand.length, spread = Math.min(7, 44 / Math.max(1, hn));
       handEl.style.setProperty('--n', hn);
-      handEl.innerHTML = hand.map((c, i) => { const o = i - (hn - 1) / 2; return `<button class="pr-card${myTurn && !busy && C.canPlay(s, c) ? ' ok' : ''}" data-c="${c}" style="--rot:${(o * spread).toFixed(1)}deg;--lift:${(Math.abs(o) * Math.abs(o) * 0.9).toFixed(1)}px"><img src="${K.src(c, en)}" alt=""></button>`; }).join('');
+      handEl.innerHTML = hand.map((c, i) => { const o = i - (hn - 1) / 2; return `<button class="pr-card${myTurn && !busy && C.canPlay(s, c) ? ' ok' : ''}" data-c="${c}" title="${cardTitle(c)}" aria-label="${cardTitle(c)}" style="--rot:${(o * spread).toFixed(1)}deg;--lift:${(Math.abs(o) * Math.abs(o) * 0.9).toFixed(1)}px"><span class="pr-tag">${rankName(C.rankOf(c))}${K.suitSvg(C.suitOf(c), 12)}</span><img src="${K.src(c, en)}" alt=""></button>`; }).join('');
       handEl.classList.toggle('mine', myTurn);
       // stav hry slovy
       let st, sub = lastAct;
@@ -130,7 +135,7 @@ const Prsi = (() => {
       if (online && byMe) net.send(C.encode(a));
       render(); api.changed();
       if (a.t === 'p') {
-        const top = discEl.lastElementChild;
+        const top = discEl.querySelector('img:last-of-type');
         if (top && from) {
           const cw = top.getBoundingClientRect().width;
           if (p !== me) from = { x: from.x + from.w / 2 - cw * 0.3, y: from.y, w: cw * 0.6, h: cw * 0.9 };
@@ -210,7 +215,7 @@ const Prsi = (() => {
 
   // obrázek na úvodní stránce: vějíř skutečných karet ze hry
   function art(el) {
-    const en = Kit.lang === 'en', cards = [[K.backSrc(), -32], [PrsiCards.src(7, en), -16], [PrsiCards.src(13, en), 0], [PrsiCards.src(22, en), 16], [PrsiCards.src(24, en), 32]];
+    const en = Kit.LANG === 'en', cards = [[K.backSrc(), -32], [PrsiCards.src(7, en), -16], [PrsiCards.src(13, en), 0], [PrsiCards.src(22, en), 16], [PrsiCards.src(24, en), 32]];
     el.innerHTML = `<div class="pr-art">${cards.map(([src, r]) => `<img src="${src}" style="--r:${r}deg" alt="">`).join('')}</div>`;
   }
   return { DIFFS, generate, create, art };

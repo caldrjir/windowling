@@ -188,7 +188,7 @@ const Skladacka = (() => {
       done = true; board.classList.add('done'); area.classList.add('done');
       const g = api.data.gallery = api.data.gallery || []; if (!g.includes(P.seed)) { g.push(P.seed); if (g.length > 200) g.shift(); }
       // odhalení: švy zmizí, obraz se rozzáří v rámu a ukáže se jeho název
-      const title = img.jgTitle ? img.jgTitle[Kit.lang === 'en' ? 1 : 0] : '';
+      const title = img.jgTitle ? img.jgTitle[Kit.LANG === 'en' ? 1 : 0] : '';
       const rv = document.createElement('div'); rv.className = 'jg-reveal';
       rv.style.left = bx + 'px'; rv.style.top = by + 'px'; rv.style.width = IW * scale + 'px'; rv.style.height = IH * scale + 'px';
       const rc = document.createElement('canvas'); rc.width = IW; rc.height = IH; rc.getContext('2d').drawImage(img, 0, 0); rv.appendChild(rc);
@@ -248,7 +248,7 @@ const Skladacka = (() => {
     render(el, save) {
       const g = (save.data.gallery || []).slice().reverse();
       el.innerHTML = `<h2>${L('Galerie', 'Gallery')}</h2><p class="k-muted">${L(`Složené obrazy: ${g.length}.`, `Pictures completed: ${g.length}.`)}</p><div class="jg-gal">${g.map((s, k) => `<canvas data-g="${k}" width="240" height="160"></canvas>`).join('') || `<p class="k-muted">${L('Zatím prázdná.', 'Empty so far.')}</p>`}</div>`;
-      el.querySelectorAll('canvas[data-g]').forEach(cv => { const pic = paint(g[+cv.dataset.g]); cv.getContext('2d').drawImage(pic, 0, 0, 240, 160); if (pic.jgTitle) cv.title = pic.jgTitle[Kit.lang === 'en' ? 1 : 0]; });
+      el.querySelectorAll('canvas[data-g]').forEach(cv => { const pic = paint(g[+cv.dataset.g]); cv.getContext('2d').drawImage(pic, 0, 0, 240, 160); if (pic.jgTitle) cv.title = pic.jgTitle[Kit.LANG === 'en' ? 1 : 0]; });
     } };
   function art(el) { const src = paint(Kit.hash('jart' + Kit.dayKey())), c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); c.className = 'jg-art'; el.innerHTML = ''; el.appendChild(c); }
   return { DIFFS, generate, create, art, gallery, paint };
