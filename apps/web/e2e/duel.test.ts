@@ -124,6 +124,8 @@ test('prsi online: both players see the same deal and one of them wins', async (
 	browser,
 }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	// a whole game is played, give it the time its result waits allow
+	test.setTimeout(150_000);
 	const ann = await player(browser, 'Ann');
 	const bob = await player(browser, 'Bob');
 	const code = await create(ann.page, 'prsi');
@@ -137,8 +139,8 @@ test('prsi online: both players see the same deal and one of them wins', async (
 		>;
 	expect(await table(ann.page)).toEqual(await table(bob.page));
 	// both let the computer play for them until someone runs out of cards
-	await ann.page.evaluate('Kit._test.inst._autoplay()');
-	await bob.page.evaluate('Kit._test.inst._autoplay()');
+	for (const p of [ann.page, bob.page])
+		await p.evaluate('Kit._test.inst._speed(4); Kit._test.inst._autoplay()');
 	await expect(result(ann.page)).toHaveText(/Výhra!|Prohra/, { timeout: 60_000 });
 	await expect(result(bob.page)).toHaveText(/Výhra!|Prohra/, { timeout: 60_000 });
 	expect(await result(ann.page).textContent()).not.toEqual(await result(bob.page).textContent());
@@ -209,6 +211,8 @@ test('clovece online: both boards replay the same rolls and moves until someone 
 	browser,
 }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	// a whole game is played (its length depends on the dice), give it the time its result waits allow
+	test.setTimeout(180_000);
 	const ann = await player(browser, 'Ann');
 	const bob = await player(browser, 'Bob');
 	const code = await create(ann.page, 'clovece');
