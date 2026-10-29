@@ -40,10 +40,8 @@ const PrsiCards2 = (() => {
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
     if (PIPS[rk]) {
       // číselná karta: znaky barvy v rozložení podle hodnoty
-      for (const [x, y] of PIPS[rk]) {
-        if (y > DH * 0.6) { ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI); contain(ctx, img[`suit-${su}`], 0, 0, PIP_W); ctx.restore(); }
-        else contain(ctx, img[`suit-${su}`], x, y, PIP_W);
-      }
+      // znaky na kartě jsou symboly barvy (srdce s elfkou), stojí rovně jako na obrázku
+      for (const [x, y] of PIPS[rk]) contain(ctx, img[`emblem-${su}`] || img[`suit-${su}`], x, y, PIP_W);
     } else contain(ctx, img[`emblem-${su}`] || img[`suit-${su}`], DW / 2, DH * 0.5, 560); // velký znak uprostřed
     ctx.restore();
     ctx.restore();
