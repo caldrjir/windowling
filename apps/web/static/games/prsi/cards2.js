@@ -36,8 +36,8 @@ const PrsiCards2 = (() => {
   };
   const PIP_W = 205;
   // figura je celá obrázkem a nese znaky barvy [x, y, šířka]: spodek jeden dole, svršek jeden
-  // nahoře (stranou od obličeje), král v obou horních rozích
-  const FIG_PIP = { 4: [[512, 1190, PIP_W]], 5: [[790, 400, PIP_W]], 6: [[300, 305, 190], [724, 305, 190]] };
+  // nahoře (stranou od obličeje), král a eso v obou horních rozích
+  const FIG_PIP = { 4: [[512, 1190, PIP_W]], 5: [[790, 400, PIP_W]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
   const FIT = { '0-5': { s: 0.86, y: 138 } };
@@ -123,7 +123,7 @@ const PrsiCards2 = (() => {
     const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
     const sign = img[`emblem-${su}`] ? `emblem-${su}` : `suit-${su}`;
     // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty; figura je celá
-    // obrázkem s jedním znakem, eso (a figura, dokud nemá obrázek) má velký znak uprostřed
+    // obrázkem se znaky barvy, karta bez obrázku má velký znak uprostřed
     if (PIPS[rk]) for (const [x, y] of PIPS[rk]) pip(ctx, k, sign, x, y, PIP_W, 7);
     else if (bg && FIG_PIP[rk]) for (const [x, y, w] of FIG_PIP[rk]) pip(ctx, k, sign, x, y, w, 7);
     else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
