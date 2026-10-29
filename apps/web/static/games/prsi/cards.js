@@ -1,134 +1,237 @@
 'use strict';
-// ── PRŠÍ · mariášové karty (SVG) ────────────────────────────────────────────
-// Každá karta se nakreslí jednou do SVG a dál se používá jako obrázek (data URL).
-// Barvy: 0 srdce, 1 listy (zelené), 2 žaludy, 3 kule. Hodnoty: 7, 8, 9, 10, spodek, svršek, král, eso.
-// Číselné karty se značkami ve dvou sloupcích, figury dvouhlavé jako na klasických mariáškách,
-// esa s ročním obdobím (srdce léto, listy jaro, žaludy podzim, kule zima).
+// ── PRŠÍ · karty z ilustrací ─────────────────────────────────────────────────
+// Karta se složí na plátně z vrstev: obrázek, znaky barvy (rozložené podle hodnoty jako na
+// mariáškách) a navrch rámeček barvy, v horních rozích římská číslice nebo značka figury.
+// Výsledek se uloží jako obrázek (data URL), hra pak pracuje s obyčejnými <img>. Návrhové
+// souřadnice jsou v rozměru 1024 × 1536 (rozměr ilustrací), kreslí se zmenšeně.
 const PrsiCards = (() => {
-  const W = 100, H = 150;
+  const DW = 1024, DH = 1536, BASE = '/games/prsi/img/';
+  // tvar karty dává rámeček barvy: pozadí jen uvnitř jeho obrysu [x0, y0, x1, y1, zaoblení]
+  // (srdce: zlatý obrys, listy, žaludy a kule: středy lišt a trámů), ozdoby, které z něj
+  // vyčnívají, zůstávají celé (karta tak nemusí být přesný obdélník)
+  const CLIP = { 0: [34, 51, 989, 1473, 88], 1: [105, 225, 920, 1400, 10], 2: [110, 95, 915, 1405, 10], 3: [75, 150, 950, 1390, 10] };
   const RANKS_CS = ['7', '8', '9', '10', 'Sp', 'Sv', 'K', 'E'], RANKS_EN = ['7', '8', '9', '10', 'U', 'O', 'K', 'A'];
-  const INK = ['#c41f2a', '#1e7a35', '#8a5216', '#c9620f'];
-  const DARK = ['#6e0d13', '#0c4519', '#4a2a08', '#6e2c05'];
-  const LIGHT = ['#fbe1dc', '#dff1df', '#f4e6cf', '#fbe7cf'];
-  const SEASON_CS = ['LÉTO', 'JARO', 'PODZIM', 'ZIMA'], SEASON_EN = ['SUMMER', 'SPRING', 'AUTUMN', 'WINTER'];
-
-  // přechody pro značky (v každém SVG zvlášť, id jsou jen uvnitř karty)
-  const DEFS = `<defs>
-    <radialGradient id="gh" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#ff7a74"/><stop offset=".55" stop-color="#d4232c"/><stop offset="1" stop-color="#8e1018"/></radialGradient>
-    <radialGradient id="gl" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#7fd98c"/><stop offset=".55" stop-color="#26923f"/><stop offset="1" stop-color="#0f5420"/></radialGradient>
-    <radialGradient id="ga" cx=".35" cy=".35" r=".9"><stop offset="0" stop-color="#ffe08a"/><stop offset=".6" stop-color="#d9a032"/><stop offset="1" stop-color="#8e5a12"/></radialGradient>
-    <radialGradient id="gb" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#fff2a8"/><stop offset=".5" stop-color="#f2b21c"/><stop offset="1" stop-color="#a35f06"/></radialGradient>
-    <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf6"/><stop offset="1" stop-color="#f3ead6"/></linearGradient>
-    <linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe8f7"/><stop offset=".62" stop-color="#f6f1df"/><stop offset=".63" stop-color="#b9d38c"/><stop offset="1" stop-color="#8fb565"/></linearGradient>
-    <linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1a6"/><stop offset=".5" stop-color="#f2c230"/><stop offset="1" stop-color="#a87a10"/></linearGradient>
-  </defs>`;
-
-  // značky barev v jednotkovém čtverci [-1, 1], umístěné na (x, y) ve velikosti s
-  function pip(su, x, y, s, flip) {
-    const t = `transform="translate(${x} ${y}) scale(${s})${flip ? ' rotate(180)' : ''}"`, w = (0.9 / Math.max(4, s)).toFixed(3);
-    if (su === 0) return `<g ${t}><path d="M0,.92C-.24,.7-1,.26-1,-.3C-1,-.76-.55,-1-.26,-.9C-.11,-.85 0,-.72 0,-.6C0,-.72 .11,-.85 .26,-.9C.55,-1 1,-.76 1,-.3C1,.26 .24,.7 0,.92Z" fill="url(#gh)" stroke="${DARK[0]}" stroke-width="${w}"/><ellipse cx="-.45" cy="-.45" rx=".22" ry=".14" transform="rotate(-35 -.45 -.45)" fill="#fff" opacity=".55"/></g>`;
-    if (su === 1) return `<g ${t}><path d="M0,.72V1.02" stroke="${DARK[1]}" stroke-width=".12" stroke-linecap="round"/><path d="M0,-1C.3,-.72 .95,-.42 .95,.08C.95,.48 .55,.74 .2,.6C.12,.66 .05,.72 0,.78C-.05,.72-.12,.66-.2,.6C-.55,.74-.95,.48-.95,.08C-.95,-.42-.3,-.72 0,-1Z" fill="url(#gl)" stroke="${DARK[1]}" stroke-width="${w}"/><path d="M0,-.8V.7M0,-.3L.45,-.45M0,-.3L-.45,-.45M0,.08L.6,-.05M0,.08L-.6,-.05M0,.42L.48,.36M0,.42L-.48,.36" stroke="#d9f5d7" stroke-width=".06" stroke-linecap="round" fill="none" opacity=".85"/></g>`;
-    if (su === 2) return `<g ${t}><ellipse cx="0" cy=".32" rx=".55" ry=".66" fill="url(#ga)" stroke="${DARK[2]}" stroke-width="${w}"/><ellipse cx="-.2" cy=".18" rx=".13" ry=".25" fill="#fff6cf" opacity=".7"/><path d="M-.8,0C-.8,-.75 .8,-.75 .8,0C.4,.12-.4,.12-.8,0Z" fill="#6b3a10" stroke="${DARK[2]}" stroke-width="${w}"/><path d="M-.62,-.12L-.3,-.5M-.32,-.03L.1,-.6M.02,0L.42,-.52M.34,-.04L.6,-.36M-.6,-.3L.1,.02M-.3,-.55L.5,-.06" stroke="#b07a3c" stroke-width=".06" opacity=".8"/><path d="M0,-.6C.05,-.85 .22,-.95 .3,-1" stroke="#4a2808" stroke-width=".12" stroke-linecap="round" fill="none"/></g>`;
-    return `<g ${t}><circle r=".86" fill="url(#gb)" stroke="${DARK[3]}" stroke-width="${w}"/><path d="M-.86,0C-.6,.2 .6,.2 .86,0C.84,-.14 .8,-.24 .74,-.32C.5,-.18-.5,-.18-.74,-.32C-.8,-.24-.84,-.14-.86,0Z" fill="#c8202a" stroke="${DARK[3]}" stroke-width="${(w * 0.7).toFixed(3)}"/><path d="M-.34,.5Q0,.66 .34,.5" stroke="${DARK[3]}" stroke-width=".1" fill="none" stroke-linecap="round"/><circle cy=".52" r=".07" fill="${DARK[3]}"/><circle cx="-.34" cy="-.46" r=".16" fill="#fff" opacity=".75"/><path d="M-.12,-.86C-.12,-1.04 .12,-1.04 .12,-.86" stroke="${DARK[3]}" stroke-width=".1" fill="none"/></g>`;
+  // ukazatel barvy (štítek „hraje se…“, výběr barvy po svrškovi): srdce a žaludy mají vlastní
+  // jednoduchý znak, listy a kule ten z karet
+  const IND = ['suit-0', 'emblem-1', 'suit-2', 'emblem-3'];
+  const img = {};
+  const load = name => new Promise(res => { const i = new Image(); i.onload = () => { img[name] = i; res(i); }; i.onerror = () => res(null); i.src = BASE + name + '.webp'; });
+  // římské číslice a písmena figur píše Cinzel (SIL Open Font License), přibalený jen se znaky I, V, X, K a A
+  const FONT = 'PrsiRoman, Cinzel, Georgia, serif';
+  const loadFont = () => typeof FontFace === 'function'
+    ? new FontFace('PrsiRoman', `url(${BASE}cinzel-caps.woff2)`, { weight: '700' }).load().then(f => { document.fonts.add(f); }, () => {})
+    : null;
+  // načte všechny vrstvy a písmo číslic (jen jednou, další volání vrátí tentýž slib)
+  let loading = null;
+  function ready() {
+    if (loading) return loading;
+    const names = ['back', 'suit-0', 'suit-2'];
+    for (let su = 0; su < 4; su++) { names.push(`emblem-${su}`, `frame-${su}`); for (let rk = 0; rk < 8; rk++) names.push(`bg-${su}-${rk}`); }
+    return (loading = Promise.all([...names.map(load), loadFont()]));
   }
-  // rozmístění značek na číselných kartách (dva sloupce, jako na mariáškách)
+  // rozložení znaků na číselných kartách jako na jednohlavých mariáškách: znaky v horních
+  // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; hodnotu ukazují
+  // římské číslice v obou horních rozích. Každá barva má rozložení podle vnitřku svého rámečku
+  // (listy: nahoře a dole ozdoba s rytířem, žaludy: v rozích žaludy, kule: nahoře hlava orka
+  // a praporce, dole hrot, proto menší znaky); w je šířka znaku.
+  const ROMAN = ['VII', 'VIII', 'IX', 'X'];
   const PIPS = {
-    0: [[32, 36], [68, 36], [50, 56], [32, 76], [68, 76], [32, 114], [68, 114]],
-    1: [[32, 36], [68, 36], [32, 62], [68, 62], [32, 88], [68, 88], [32, 114], [68, 114]],
-    2: [[32, 36], [68, 36], [32, 62], [68, 62], [50, 75], [32, 88], [68, 88], [32, 114], [68, 114]],
-    3: [[32, 34], [68, 34], [50, 47], [32, 62], [68, 62], [32, 88], [68, 88], [50, 103], [32, 116], [68, 116]],
+    0: {
+      w: 205,
+      0: [[512, 370], [272, 575], [752, 575], [272, 845], [752, 845], [272, 1115], [752, 1115]],
+      1: [[272, 405], [752, 405], [272, 670], [752, 670], [272, 935], [752, 935], [272, 1200], [752, 1200]],
+      2: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [772, 470], [772, 740], [772, 1010]],
+      3: [[252, 470], [252, 740], [252, 1010], [512, 340], [512, 610], [512, 880], [512, 1150], [772, 470], [772, 740], [772, 1010]],
+    },
+    1: {
+      w: 160,
+      0: [[512, 515], [290, 725], [734, 725], [290, 960], [734, 960], [290, 1195], [734, 1195]],
+      1: [[290, 505], [734, 505], [290, 738], [734, 738], [290, 971], [734, 971], [290, 1204], [734, 1204]],
+      2: [[287, 630], [287, 865], [287, 1100], [512, 512], [512, 747], [512, 982], [737, 630], [737, 865], [737, 1100]],
+      3: [[287, 617], [287, 846], [287, 1075], [512, 508], [512, 733], [512, 958], [512, 1183], [737, 617], [737, 846], [737, 1075]],
+    },
+    2: {
+      w: 185,
+      0: [[512, 400], [295, 615], [729, 615], [295, 855], [729, 855], [295, 1095], [729, 1095]],
+      1: [[295, 405], [729, 405], [295, 645], [729, 645], [295, 885], [729, 885], [295, 1125], [729, 1125]],
+      2: [[285, 530], [285, 775], [285, 1020], [512, 405], [512, 650], [512, 895], [739, 530], [739, 775], [739, 1020]],
+      3: [[285, 525], [285, 760], [285, 995], [512, 400], [512, 635], [512, 870], [512, 1105], [739, 525], [739, 760], [739, 995]],
+    },
+    3: {
+      w: 185,
+      0: [[512, 480], [282, 690], [742, 690], [282, 920], [742, 920], [282, 1150], [742, 1150]],
+      1: [[282, 470], [742, 470], [282, 700], [742, 700], [282, 930], [742, 930], [282, 1160], [742, 1160]],
+      2: [[272, 595], [272, 835], [272, 1075], [512, 475], [512, 715], [512, 955], [752, 595], [752, 835], [752, 1075]],
+      3: [[272, 582], [272, 797], [272, 1012], [512, 475], [512, 690], [512, 905], [512, 1120], [752, 582], [752, 797], [752, 1012]],
+    },
   };
-  const frame = su => `<rect x="1" y="1" width="98" height="148" rx="9" fill="url(#gp)" stroke="#bdb39b" stroke-width="1.4"/><rect x="6.5" y="6.5" width="87" height="137" rx="5" fill="none" stroke="${INK[su]}" stroke-width=".9" opacity=".55"/>`;
-  const ribbon = (y, text, su) => {
-    const fs = text.length > 5 ? 7.2 : 8.4;
-    return `<path d="M21,${y}h58l-4,6l4,6h-58l4,-6z" fill="${INK[su]}" stroke="${DARK[su]}" stroke-width=".8"/><text x="50" y="${y + 8.6}" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="${fs}" letter-spacing=".8" text-anchor="middle" fill="#fff8e4">${text}</text>`;
+  // figura je celá obrázkem a nese znaky barvy [x, y, šířka]: spodek jeden dole, svršek jeden
+  // nahoře (stranou od obličeje), král a eso v obou horních rozích; podle barvy (rámeček, obrázek)
+  const FIG_PIP = {
+    0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 380, 190], [724, 380, 190]], 7: [[300, 380, 190], [724, 380, 190]] },
+    1: { 4: [[512, 1200, 160]], 5: [[790, 470, 160]], 6: [[300, 460, 150], [724, 460, 150]], 7: [[300, 460, 150], [724, 460, 150]] },
+    2: { 4: [[512, 1180, 185]], 5: [[750, 400, 185]], 6: [[300, 400, 165], [724, 400, 165]], 7: [[300, 400, 165], [724, 400, 165]] },
+    3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]], 6: [[300, 405, 165], [724, 405, 165]], 7: [[300, 405, 165], [724, 405, 165]] },
+  };
+  // král a eso mají nad znaky v rozích písmeno, srozumitelné ve všech jazycích hry
+  const LETTER = { 6: 'K', 7: 'A' };
+  // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
+  // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
+  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 }, '1-4': { s: 0.8, y: 245 }, '1-5': { s: 0.82, y: 220 }, '1-6': { s: 0.8, y: 200 }, '1-7': { s: 0.8, y: 320 }, '2-6': { s: 0.86, y: 215 }, '2-7': { s: 0.82, y: 290 } };
+  function fitted(bg, k, s) {
+    const c = document.createElement('canvas'), t = c.getContext('2d');
+    c.width = Math.round(DW * s * k); c.height = Math.round(DH * s * k);
+    t.imageSmoothingQuality = 'high'; t.drawImage(bg, 0, 0, c.width, c.height);
+    const g = t.createLinearGradient(0, 0, 0, c.height); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(Math.min(1, 70 * k / c.height), '#000'); g.addColorStop(1, '#000');
+    t.globalCompositeOperation = 'destination-in'; t.fillStyle = g; t.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+  // vystouplý vzhled: uvnitř tvaru světlá hrana vlevo nahoře a tmavá vpravo dole (vnitřní stín).
+  // Stín vrhá negativ tvaru posunutý mimo plátno, takže se kreslí jen stín; vše v pixelech
+  // (stín plátna nezná ctx.scale), proto se počítá pro každou velikost zvlášť a pamatuje si.
+  const raised = {};
+  function emboss(name, im, w, h, depth) {
+    if (!im) return null;
+    const key = `${name}:${w}x${h}`;
+    if (raised[key]) return raised[key];
+    if (typeof im === 'function') im = im();
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, 0, 0, w, h);
+    const p = Math.ceil(depth * 4) + 2, m = document.createElement('canvas'); m.width = w + 2 * p; m.height = h + 2 * p;
+    const mc = m.getContext('2d'); mc.fillRect(0, 0, m.width, m.height); mc.globalCompositeOperation = 'destination-out'; mc.drawImage(im, p, p, w, h);
+    ctx.globalCompositeOperation = 'source-atop'; ctx.shadowBlur = depth * 1.6;
+    for (const [color, d] of [['rgba(45,10,0,.7)', -depth], ['rgba(255,243,212,.6)', depth]]) {
+      ctx.shadowColor = color; ctx.shadowOffsetX = 1e4 + d; ctx.shadowOffsetY = d;
+      ctx.drawImage(m, -p - 1e4, -p);
+    }
+    return (raised[key] = cv);
+  }
+  // znak s obrysem, ať nesplývá s obrázkem: tmavý okraj, uvnitř něj tenká zlatá linka a znak
+  // o něco sytější; obrys se dělá otisky siluety dokola (o je okraj v pixelech)
+  function rimmed(im, w, h, o) {
+    const c = document.createElement('canvas'), t = c.getContext('2d');
+    c.width = w + 2 * o; c.height = h + 2 * o;
+    const s = document.createElement('canvas'), st = s.getContext('2d');
+    s.width = c.width; s.height = c.height; st.drawImage(im, o, o, w, h); st.globalCompositeOperation = 'source-in';
+    for (const [color, r] of [['#260902', o], ['#f6d277', o * 0.4]]) {
+      st.fillStyle = color; st.fillRect(0, 0, s.width, s.height);
+      for (let a = 0; a < 16; a++) t.drawImage(s, Math.cos(a * Math.PI / 8) * r, Math.sin(a * Math.PI / 8) * r);
+    }
+    t.filter = 'saturate(1.2) contrast(1.08)'; t.drawImage(im, o, o, w, h);
+    return c;
+  }
+  // znak barvy vystouplý nad pozadím: obrys, vnitřní stín, tmavá záře kolem a stín vržený na pozadí
+  function pip(ctx, k, name, cx, cy, w, depth) {
+    const im = img[name];
+    if (!im) return;
+    const h = w * im.height / im.width, iw = Math.round(w * k), ih = Math.round(h * k), o = Math.max(1, Math.round(8 * k));
+    const e = emboss(name, () => rimmed(im, iw, ih, o), iw + 2 * o, ih + 2 * o, depth * k);
+    const x = cx - w / 2 - o / k, y = cy - h / 2 - o / k;
+    ctx.save(); ctx.shadowColor = 'rgba(25,5,0,.6)'; ctx.shadowBlur = 36 * k;
+    ctx.drawImage(e, x, y, e.width / k, e.height / k);
+    ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 24 * k; ctx.shadowOffsetX = 4 * k; ctx.shadowOffsetY = 12 * k;
+    ctx.drawImage(e, x, y, e.width / k, e.height / k);
+    ctx.restore();
+  }
+  // zlatý odznak v rohu s tmavým obrysem, vystouplý jako znaky. shape(t, op) nakreslí tvar
+  // w × h v návrhových jednotkách (op je 'stroke', pak 'fill'); x je bod, ke kterému se odznak zarovná
+  // (align 0 levý okraj, 1 pravý, 0.5 střed), y spodní hrana (účaří číslic)
+  function badge(ctx, k, key, w, h, shape, x, y, align) {
+    const line = 7, pad = line + 4, c = document.createElement('canvas'), t = c.getContext('2d');
+    c.width = Math.ceil((w + 2 * pad) * k); c.height = Math.ceil((h + 2 * pad) * k);
+    t.scale(k, k); t.translate(pad, pad); t.lineJoin = 'round';
+    const g = t.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#fff6cf'); g.addColorStop(0.45, '#f1c95a'); g.addColorStop(1, '#a8701c');
+    t.lineWidth = line; t.strokeStyle = '#3a1c06'; shape(t, 'stroke');
+    t.fillStyle = g; shape(t, 'fill');
+    const e = emboss(key, c, c.width, c.height, 4 * k);
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 14 * k; ctx.shadowOffsetX = 3 * k; ctx.shadowOffsetY = 7 * k;
+    ctx.drawImage(e, x - w * align - pad, y - h - pad, c.width / k, c.height / k);
+    ctx.restore();
+  }
+  // velké číslice, do šířky trochu stažené, ať se VIII vejde mezi roh a horní ozdobu (sc je velikost)
+  const NARROW = 0.85, numFont = sc => `700 ${Math.round(142 * sc)}px ${FONT}`;
+  let measure = null;
+  function numeral(ctx, k, text, x, y, align, sc) {
+    const font = numFont(sc);
+    measure = measure || document.createElement('canvas').getContext('2d');
+    measure.font = font;
+    const m = measure.measureText(text), w = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * NARROW, h = m.actualBoundingBoxAscent;
+    badge(ctx, k, `roman-${text}-${sc}`, w, h, (t, op) => { t.save(); t.scale(NARROW, 1); t.font = font; t[op + 'Text'](text, m.actualBoundingBoxLeft, h); t.restore(); }, x, y, align);
+  }
+  // figury mají v rozích místo písmen značku, která nepotřebuje překlad: spodek (Unter, „dolní“)
+  // hrot dolů, svršek (Ober, „horní“) hrot nahoru
+  // místo v horních rozích podle rámečku barvy [levý okraj, spodní hrana, velikost]: u listů
+  // pod lištou mezi rohovou ozdobou a rytířem, u žaludů vedle rohového žaludu, u kulí pod trámem mezi praporcem a hlavou orka,
+  // proto níž a menší
+  const CORNER = { 0: [205, 258, 1], 1: [185, 365, 0.8], 2: [250, 290, 0.8], 3: [215, 350, 0.78] };
+  const MARKS = {
+    4: (t, op) => { t.beginPath(); t.moveTo(0, 0); t.lineTo(104, 0); t.quadraticCurveTo(79, 48, 52, 108); t.quadraticCurveTo(25, 48, 0, 0); t.closePath(); t[op](); },
+    5: (t, op) => { t.beginPath(); t.moveTo(52, 0); t.quadraticCurveTo(79, 60, 104, 108); t.lineTo(0, 108); t.quadraticCurveTo(25, 60, 52, 0); t.closePath(); t[op](); },
   };
 
-  // figury: dvouhlavé jako na klasických mariáškách – poprsí nahoře, zrcadlově dole; šaty v barvě,
-  // silné obrysy, spodek s baretem, svršek s kloboukem a pérem, král s korunou, vousem a hermelínem
-  function figure(su, rk) {
-    const ink = INK[su], dk = DARK[su], OL = '#2a1a10', skin = '#f4d2ac';
-    const hair = rk === 6 ? '#9b8f80' : rk === 5 ? '#6b4220' : '#b0722e';
-    const o = `stroke="${OL}" stroke-width="1.1" stroke-linejoin="round"`;
-    // tělo a šaty (horní polovina, končí na středu karty)
-    // trup jako lichoběžník (ramena široká, pas užší) a rukáv k ruce, ve které drží značku
-    const sleeve = (x, sgn) => `<path d="M${50 + sgn * 17},53.5Q${50 + sgn * 27},54.5 ${x + sgn * 2},${60}L${x - sgn * 1},${65.5}Q${50 + sgn * 22},${61.5} ${50 + sgn * 16},61Z" fill="${ink}" ${o}/><path d="M${x + sgn * 1.4},${61.2}L${x - sgn * 2},${64.6}" stroke="#f2c230" stroke-width="1.6"/>`;
-    let body = `<path d="M33,76L29.5,61Q28,54.5 35,53L65,53Q72,54.5 70.5,61L67,76Z" fill="${ink}" ${o}/>`;
-    body += `<path d="M31,62L35,76M69,62L65,76" stroke="#f2c230" stroke-width="1.3" opacity=".9"/>`;
-    body += sleeve(78, 1);
-    if (rk === 6) body += sleeve(22, -1);
-    if (rk === 6) {
-      // hermelínový plášť a zlatý řetěz
-      body += `<path d="M29.5,61Q28,54.5 35,53L42,53C38,57 36.5,62 36,68L31.2,68Z" fill="#fffaf0" ${o}/><path d="M70.5,61Q72,54.5 65,53L58,53C62,57 63.5,62 64,68L68.8,68Z" fill="#fffaf0" ${o}/>`;
-      body += [[33, 57], [38, 56], [33.5, 63], [67, 57], [62, 56], [66.5, 63]].map(([x, y]) => `<path d="M${x},${y - 1.6}l1.3,2.6h-2.6z" fill="${OL}"/>`).join('');
-      body += `<path d="M38,58Q50,70 62,58" stroke="#e0a91c" stroke-width="2.2" fill="none" stroke-dasharray="2.2 1.2"/><circle cx="50" cy="66" r="2.6" fill="url(#gg)" stroke="#7a5a08" stroke-width=".6"/>`;
-    } else if (rk === 5) {
-      body += `<path d="M42,53L50,64L58,53Z" fill="#fffaf0" ${o}/><path d="M50,64V76" stroke="${dk}" stroke-width="1"/>${[68, 72].map(y => `<circle cx="50" cy="${y}" r="1.3" fill="#f2c230"/>`).join('')}`;
-      body += `<path d="M36,55L66,74" stroke="#f2c230" stroke-width="2.8" opacity=".9"/>`;
-    } else {
-      body += `<path d="M39,53C41,58 59,58 61,53" fill="#fffaf0" ${o}/><path d="M50,56V76" stroke="${dk}" stroke-width="1"/>${[61, 66, 71].map(y => `<circle cx="50" cy="${y}" r="1.2" fill="#f2c230"/>`).join('')}`;
+  // plain: jen obrázek v rámečku, bez znaků, číslic a značek (galerie karet)
+  function draw(c, width, plain) {
+    const su = c >> 3, rk = c & 7, k = width / DW;
+    const cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
+    const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
+    const [x0, y0, x1, y1, r] = CLIP[su];
+    rr(ctx, x0, y0, x1 - x0, y1 - y0, r); ctx.save(); ctx.clip();
+    const bg = img[`bg-${su}-${rk}`], fit = FIT[`${su}-${rk}`];
+    if (bg && fit) {
+      ctx.save(); ctx.filter = `blur(${Math.max(1, Math.round(18 * k))}px) brightness(.8)`; ctx.drawImage(bg, 0, 0, DW, DH); ctx.restore();
+      ctx.drawImage(fitted(bg, k, fit.s), (DW - DW * fit.s) / 2, fit.y, DW * fit.s, DH * fit.s);
+    } else if (bg) ctx.drawImage(bg, 0, 0, DW, DH);
+    else { const g = ctx.createLinearGradient(0, 0, 0, DH); g.addColorStop(0, '#fffaf0'); g.addColorStop(1, '#efe3c8'); ctx.fillStyle = g; ctx.fillRect(0, 0, DW, DH); }
+    // jemné ztmavení okrajů, ať rámeček a znak vyniknou
+    const v = ctx.createRadialGradient(DW / 2, DH / 2, DW * 0.35, DW / 2, DH / 2, DH * 0.62); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,6,0,.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
+    const sign = img[`emblem-${su}`] ? `emblem-${su}` : `suit-${su}`;
+    // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty; figura je celá
+    // obrázkem se znaky barvy, karta bez obrázku má velký znak uprostřed
+    const lay = PIPS[su] || PIPS[0];
+    if (!plain) {
+      if (lay[rk]) for (const [x, y] of lay[rk]) pip(ctx, k, sign, x, y, lay.w, 7);
+      else if (bg && (FIG_PIP[su] || FIG_PIP[0])[rk]) for (const [x, y, w] of (FIG_PIP[su] || FIG_PIP[0])[rk]) pip(ctx, k, sign, x, y, w, 7);
+      else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
     }
-    // hlava: krk, obličej, vlasy
-    let head = `<path d="M45.5,44V53.5H54.5V44Z" fill="${skin}" ${o}/>`;
-    head += `<path d="M38.5,34C37,40 38,44 39,46L44,42Z" fill="${hair}" ${o}/><path d="M61.5,34C63,40 62,44 61,46L56,42Z" fill="${hair}" ${o}/>`;
-    head += `<ellipse cx="50" cy="35" rx="10.5" ry="12" fill="${skin}" ${o}/>`;
-    head += `<path d="M44.2,33.2q1.8,-1.2 3.6,0M52.2,33.2q1.8,-1.2 3.6,0" stroke="${OL}" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
-    head += `<ellipse cx="46" cy="35.6" rx="1.15" ry="1.35" fill="${OL}"/><ellipse cx="54" cy="35.6" rx="1.15" ry="1.35" fill="${OL}"/>`;
-    head += `<path d="M48.4,39.6Q50,41.2 51.6,39.6" stroke="#b07a52" stroke-width=".9" fill="none" stroke-linecap="round"/><circle cx="43.6" cy="40" r="1.9" fill="#ef9a86" opacity=".55"/><circle cx="56.4" cy="40" r="1.9" fill="#ef9a86" opacity=".55"/>`;
-    if (rk === 6) head += `<path d="M39.5,38C39,48 44,55 50,56C56,55 61,48 60.5,38C58,42 55,43.5 50,43.5C45,43.5 42,42 39.5,38Z" fill="${hair}" ${o}/><path d="M45,43.6Q50,41.6 55,43.6" stroke="${OL}" stroke-width="1.1" fill="none"/><path d="M47.5,46.2h5" stroke="#6e6458" stroke-width=".9"/>`;
-    else if (rk === 5) head += `<path d="M44.5,43.2Q47.5,41.6 50,42.6Q52.5,41.6 55.5,43.2Q52.5,44.4 50,43.6Q47.5,44.4 44.5,43.2Z" fill="${hair}" ${o}/><path d="M48.6,45.2Q50,48.6 51.4,45.2Z" fill="${hair}"/>`;
-    else head += `<path d="M46.6,43.4Q50,45.4 53.4,43.4" stroke="${OL}" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
-    // pokrývka hlavy
-    let hat;
-    if (rk === 6) hat = `<path d="M38,27L36.5,13L43,20L50,10L57,20L63.5,13L62,27Z" fill="url(#gg)" ${o}/><path d="M37.5,24.5H62.5V28.5H37.5Z" fill="url(#gg)" ${o}/><circle cx="50" cy="13.5" r="2" fill="#c8202a" ${o}/><circle cx="43.5" cy="21.5" r="1.4" fill="#2f6fe0"/><circle cx="56.5" cy="21.5" r="1.4" fill="#1e7a35"/><circle cx="50" cy="26.5" r="1.3" fill="#c8202a"/>`;
-    else if (rk === 5) hat = `<path d="M30,27C34,22 42,20.5 50,20.5C58,20.5 66,22 70,27C64,29.2 36,29.2 30,27Z" fill="#2b2b3a" ${o}/><path d="M40,23.5C40,14 60,14 60,23.5Z" fill="#2b2b3a" ${o}/><path d="M40,22.2H60" stroke="#e0a91c" stroke-width="1.8"/><path d="M57,19C62,9 71,5 79,3C75,11 67,18 60,22Z" fill="${ink}" ${o}/><path d="M59.5,20.5C64,13 70,8.5 77,4.8" stroke="#fffaf0" stroke-width=".6" fill="none" opacity=".8"/>`;
-    else hat = `<path d="M36.5,29C33,20 42,15 51,15.5C60,16 66,21 63.5,29C57,26.6 43,26.6 36.5,29Z" fill="${dk}" ${o}/><path d="M38,27.5Q50,24.6 62,27.5" stroke="#f2c230" stroke-width="1.4" fill="none"/><path d="M58,19C61,12 65,9 69,7.5C68,12 64,16 60,20Z" fill="#fffaf0" ${o}/>`;
-    // co drží v ruce: značku barvy (a král žezlo)
-    let held = '';
-    if (rk === 6) held = `<path d="M21.5,68L27,40" stroke="#a87a10" stroke-width="2.4" stroke-linecap="round"/><circle cx="27.4" cy="38" r="3.2" fill="url(#gg)" ${o}/><ellipse cx="22" cy="64.5" rx="3.4" ry="2.9" fill="${skin}" ${o}/>`;
-    const hand = [78, 64];
-    held += `${pip(su, hand[0], hand[1] - 8.5, 7.5)}<ellipse cx="${hand[0]}" cy="${hand[1]}" rx="3.6" ry="3" fill="${skin}" ${o}/>`;
-    const half = `${body}${head}${hat}${held}`;
-    return `<defs><clipPath id="hf"><rect x="9" y="9" width="82" height="66"/></clipPath></defs>
-      <rect x="9" y="9" width="82" height="132" rx="4" fill="${LIGHT[su]}"/>
-      <g clip-path="url(#hf)">${half}</g><g transform="rotate(180 50 75)"><g clip-path="url(#hf)">${half}</g></g>
-      <path d="M9,75H91" stroke="${dk}" stroke-width="1.2"/><rect x="9" y="9" width="82" height="132" rx="4" fill="none" stroke="${dk}" stroke-width="1"/>`;
-  }
-  function ace(su, en) {
-    let wreath = '';
-    for (let k = 0; k < 9; k++) {
-      for (const side of [-1, 1]) {
-        const a = Math.PI * (0.62 + k * 0.1), x = 50 + side * Math.cos(a) * -31, y = 66 + Math.sin(a) * 31, rot = side * (k * 18 - 30);
-        wreath += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="2.2" ry="5" transform="rotate(${rot} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${k % 2 ? '#3f8f45' : '#2e7a38'}"/>`;
-      }
+    // stín rámečku padá jen dovnitř karty (venku je průhledno)
+    const fr = emboss(`frame-${su}`, img[`frame-${su}`], cv.width, cv.height, 6 * k);
+    if (fr) {
+      ctx.shadowColor = 'rgba(0,0,0,.65)'; ctx.shadowBlur = 20 * k; ctx.shadowOffsetX = 1e4 + 3 * k; ctx.shadowOffsetY = 8 * k;
+      ctx.drawImage(fr, -1e4 / k, 0, DW, DH);
     }
-    return `<circle cx="50" cy="66" r="36" fill="${LIGHT[su]}" stroke="${INK[su]}" stroke-width="1" stroke-dasharray="2 2.5" opacity=".9"/>${wreath}${pip(su, 50, 64, 23)}${ribbon(112, (en ? SEASON_EN : SEASON_CS)[su], su)}`;
+    ctx.restore();
+    // rámeček celý, i s ozdobami, které z karty vyčnívají
+    if (fr) ctx.drawImage(fr, 0, 0, DW, DH);
+    // v horních rozích, vedle ozdob rámečku, římská číslice nebo značka figury
+    const [nx, ny, sc] = CORNER[su] || CORNER[0];
+    if (plain) return cv;
+    for (const right of [false, true]) {
+      const x = right ? DW - nx : nx;
+      if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, ny, right ? 1 : 0, sc);
+      else if (MARKS[rk]) badge(ctx, k, `mark-${rk}-${sc}`, 104 * sc, 108 * sc, (t, op) => { t.save(); t.scale(sc, sc); MARKS[rk](t, op); t.restore(); }, x, ny, right ? 1 : 0);
+    }
+    const figs = (FIG_PIP[su] || FIG_PIP[0])[rk], si = img[sign];
+    if (bg && LETTER[rk] && figs && si) for (const [x, y, w] of figs) numeral(ctx, k, LETTER[rk], x, y - w * si.height / si.width / 2 - 14, 0.5, sc);
+    return cv;
   }
-  function face(c, en) {
-    const su = c >> 3, rk = c & 7, ink = INK[su], R = (en ? RANKS_EN : RANKS_CS)[rk];
-    let mid;
-    if (rk <= 3) mid = PIPS[rk].map(([x, y]) => pip(su, x, y, 10, y > 80)).join('');
-    else if (rk === 7) mid = ace(su, en);
-    else mid = figure(su, rk);
-    const fig = rk >= 4 && rk <= 6;
-    const idx = (x, y, rot) => `<g transform="translate(${x} ${y})${rot ? ' rotate(180)' : ''}"><rect x="-8" y="-11" width="16" height="25" rx="3" fill="#fffdf6" opacity="${fig ? 0.92 : 0}"/><text x="0" y="1.5" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="${R.length > 1 ? 11.5 : 14}" text-anchor="middle" fill="${ink}">${R}</text>${pip(su, 0, 8.5, 4.4)}</g>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${DEFS}${frame(su)}${mid}${idx(13, 17, false)}${idx(87, 133, true)}</svg>`;
+  // rub karty: obrázek v kartě se zaoblenými rohy, stejně velké jako líc
+  function drawBack(width) {
+    const k = width / DW, cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
+    const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
+    rr(ctx, 8, 8, DW - 16, DH - 16, 80); ctx.clip();
+    if (img.back) ctx.drawImage(img.back, 8, 8, DW - 16, DH - 16);
+    else { ctx.fillStyle = '#6b1d1d'; ctx.fillRect(0, 0, DW, DH); }
+    return cv;
   }
-  function back() {
-    let lattice = '';
-    for (let k = -150; k < 250; k += 10) lattice += `<path d="M${k},0L${k + 150},150M${k + 150},0L${k},150" stroke="#e9c46a" stroke-width=".7" opacity=".32"/>`;
-    const corner = (x, y, r) => `<path transform="translate(${x} ${y}) rotate(${r})" d="M0,0C6,0 10,4 10,10M0,0C0,6 4,10 10,10" stroke="#e9c46a" stroke-width="1.2" fill="none"/>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}">${DEFS}<defs><radialGradient id="bk" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#a32436"/><stop offset="1" stop-color="#5a0f1c"/></radialGradient><clipPath id="b"><rect x="8" y="8" width="84" height="134" rx="6"/></clipPath></defs>
-      <rect x="1" y="1" width="98" height="148" rx="9" fill="#fffaf0" stroke="#bdb39b" stroke-width="1.4"/><rect x="5" y="5" width="90" height="140" rx="7" fill="url(#bk)"/>
-      <g clip-path="url(#b)">${lattice}</g><rect x="8" y="8" width="84" height="134" rx="6" fill="none" stroke="#e9c46a" stroke-width="1.6"/>
-      ${corner(13, 13, 0)}${corner(87, 13, 90)}${corner(87, 137, 180)}${corner(13, 137, 270)}
-      <ellipse cx="50" cy="75" rx="22" ry="28" fill="#5a0f1c" stroke="#e9c46a" stroke-width="1.6"/><ellipse cx="50" cy="75" rx="18" ry="24" fill="none" stroke="#e9c46a" stroke-width=".6" opacity=".7"/>
-      ${pip(0, 43, 66, 5.2)}${pip(1, 57, 66, 5.2)}${pip(2, 43, 84, 5.2)}${pip(3, 57, 84, 5.2)}</svg>`;
-  }
+  // karty se kreslí v šířce 360 px (stačí i na displeje s hustými pixely) a pamatují si
   const cache = {};
-  const uri = svg => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  const src = (c, en) => cache[c + (en ? 'e' : 'c')] || (cache[c + (en ? 'e' : 'c')] = uri(face(c, en)));
-  const backSrc = () => cache.back || (cache.back = uri(back()));
-  const suitSvg = (su, s = 24) => `<svg viewBox="-1.15 -1.15 2.3 2.3" width="${s}" height="${s}">${DEFS}${pip(su, 0, 0, 1)}</svg>`;
-  return { src, backSrc, suitSvg, face, back, INK, RANKS_CS, RANKS_EN };
+  const src = (c, width = 360) => { const key = `${c}:${width}`; return cache[key] || (cache[key] = draw(c, width).toDataURL('image/webp', 0.9)); };
+  const backSrc = (width = 360) => cache[`b:${width}`] || (cache[`b:${width}`] = drawBack(width).toDataURL('image/webp', 0.9));
+  // ukazatel barvy jako <img> dané výšky
+  const suitIcon = (su, px) => `<img class="pr-si" src="${BASE}${IND[su]}.webp" alt="" style="height:${px}px">`;
+  // karta má vlastní obrázek; ten je i ve velkém rozlišení pro prohlížení zblízka (32 je rub)
+  const has = c => !!(c === 32 ? img.back : img[`bg-${c >> 3}-${c & 7}`]);
+  const artSrc = c => `${BASE}art/${c === 32 ? 'back' : `bg-${c >> 3}-${c & 7}`}.webp`;
+  return { ready, draw, drawBack, src, backSrc, suitIcon, has, artSrc, RANKS_CS, RANKS_EN };
 })();

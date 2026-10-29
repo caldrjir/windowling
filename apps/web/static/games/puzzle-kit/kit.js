@@ -140,8 +140,9 @@ const Kit = (() => {
   }
   const questText = it => (QUEST_TYPES.find(q => q.kind === it.kind) || QUEST_TYPES[0]).text(it.n);
 
+  // hra s vlastní grafikou může mít pevné barvy (palette), pak se motiv nevybírá
   function applyTheme() {
-    const t = THEMES.find(x => x.id === META.theme) || THEMES[0];
+    const t = (DEF && DEF.palette) || THEMES.find(x => x.id === META.theme) || THEMES[0];
     const r = document.documentElement.style;
     r.setProperty('--a', t.a); r.setProperty('--b', t.b); r.setProperty('--c', t.c); r.setProperty('--bg', t.bg);
     const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t.bg;
@@ -386,7 +387,7 @@ const Kit = (() => {
           <button data-k="ach">${icon('trophy')}<span>${L('Úspěchy', 'Achievements')}</span><small>${Object.keys(SAVE.ach).length}/${allAchievements().length}</small></button>
           <button data-k="lb">${icon('podium')}<span>${L('Žebříčky', 'Leaderboards')}</span></button>
           <button data-k="stats">${icon('chart')}<span>${L('Statistiky', 'Statistics')}</span></button>
-          <button data-k="themes">${icon('brush')}<span>${L('Vzhled', 'Themes')}</span><small>${META.owned.length}/${THEMES.length}</small></button>
+          ${DEF.palette ? '' : `<button data-k="themes">${icon('brush')}<span>${L('Vzhled', 'Themes')}</span><small>${META.owned.length}/${THEMES.length}</small></button>`}
           <button data-k="help">${icon('help')}<span>${L('Jak hrát', 'How to play')}</span></button>
           ${(DEF.views || []).map((v, i) => `<button data-k="view" data-v="${i}">${icon(v.icon || 'star')}<span>${v.name}</span>${v.badge ? `<small>${v.badge(SAVE)}</small>` : ''}</button>`).join('')}
         </nav>

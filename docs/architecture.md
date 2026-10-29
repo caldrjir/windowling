@@ -156,7 +156,8 @@ keep players coming back for weeks:
   achievements, leaderboard tabs and hub stats follow). `versus: true` adds a **Score** card: who
   beat whom, from online results (by nickname) and `api.versus(id, name, 'w' | 'l' | 'd')` against
   computer players, kept in the game's save (`vs`). `freeTitle` / `freeNote` rename free play
-  (Prší: "Proti počítači").
+  (Prší: "Proti počítači"). `palette: { a, b, c, bg }` fixes the colours for a game with its own
+  artwork (Prší: candlelit tavern) and hides the theme picker there.
 - Wording: `Kit.game({ wording })` picks the shell's words: `solve` (default: a puzzle is
   solved), `win` (board, card and two-player games: a game is won) or `play` (arcade and relax
   games: a run is finished). The catalogue's `statLabels` match (`labels`, `winLabels`, `doneLabels`).

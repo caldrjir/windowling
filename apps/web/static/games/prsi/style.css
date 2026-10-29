@@ -1,14 +1,42 @@
-/* PRŠÍ – zelené sukno v dřevěném rámu, soupeři nahoře, balíček a odhazovací balíček uprostřed, vějíř v ruce dole */
-.pr-wrap {
-  --cw: clamp(58px, 10.5vw, 92px);
-  position: relative; display: grid; gap: 12px; justify-items: center; width: 100%; max-width: 920px; margin: 0 auto; padding: 18px 14px 14px; box-sizing: border-box;
-  border-radius: 26px; color: #f4f7ef; user-select: none; -webkit-user-select: none;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, .05) 0 1px, transparent 1.5px) 0 0 / 7px 7px,
-    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, .06) 0 1px, transparent 1.5px) 0 0 / 9px 9px,
-    radial-gradient(ellipse at 50% 42%, #3a8c55 0%, #23633a 55%, #153f25 100%);
-  box-shadow: inset 0 0 0 3px #b98a4e, inset 0 0 0 7px #6e4a22, inset 0 0 0 9px #3d2610, inset 0 0 70px rgba(0, 0, 0, .55), 0 26px 60px -24px #000;
+/* PRŠÍ – hospoda při svíčkách: tmavé dřevo, zlato, rudé sukno, stůl se zeleným plátnem.
+   Karty mají tvar podle svého rámečku (ozdoby vyčnívají), proto stíny přes filter: drop-shadow, ne box-shadow. */
+:root {
+  --text: #f6ead3; --muted: #c8ad89; --dim: #8c7358;
+  --glass: rgba(36, 22, 12, .8); --glass-2: rgba(42, 26, 14, .96);
+  --line: rgba(242, 197, 107, .16); --line-2: rgba(242, 197, 107, .32);
+  --f-d: 'Cinzel', Georgia, serif;
 }
+/* tmavé okraje stránky jako v šeru hospody, světlo svíček (pozadí kitu) zůstává uprostřed */
+body.kit::before { content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at 50% 35%, transparent 35%, rgba(0, 0, 0, .6) 100%); }
+.k-top { background: linear-gradient(180deg, rgba(13, 8, 5, .92), rgba(13, 8, 5, .5) 70%, transparent); }
+.k-card, .k-links button, .k-statrow div, .k-table, .k-ach > div { box-shadow: inset 0 1px 0 rgba(255, 220, 160, .07), inset 0 0 0 1px var(--line); }
+.k-card-h, .k-hero h1, .k-page h2, .k-result h2 { letter-spacing: .06em; }
+.k-btn.primary { color: #2a1606; }
+#kModal { background: rgba(10, 6, 3, .66); }
+/* úvodní karta: hrací stůl z hospody, vlevo na plátně vějíř karet, vpravo text v šeru */
+.k-hero {
+  position: relative; background: linear-gradient(90deg, rgba(13, 8, 5, 0) 25%, rgba(13, 8, 5, .7) 52%, rgba(13, 8, 5, .94) 72%), url(img/table.webp) 20% 50% / cover;
+  box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px -24px #000;
+}
+.k-hero h1 { background: linear-gradient(180deg, #fff3d6 10%, var(--a) 60%, #b07a2a); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .6)); }
+@media (max-width: 720px) {
+  .k-hero { background: linear-gradient(180deg, rgba(13, 8, 5, 0) 30%, rgba(13, 8, 5, .82) 52%, rgba(13, 8, 5, .95) 70%), url(img/table.webp) 50% 0 / 100% auto no-repeat, #0d0805; }
+}
+/* stůl: plátno z obrázku, přes něj rám s ozdobami jako 9-slice (rohy drží tvar, trámy se natáhnou)
+   a uprostřed horního a dolního trámu kování; --ts je měřítko rámu vůči obrázku */
+.pr-wrap {
+  --cw: clamp(58px, 10.5vw, 92px); --ts: .5;
+  position: relative; isolation: isolate; display: grid; gap: 12px; justify-items: center; width: 100%; max-width: 920px; margin: 0 auto; box-sizing: border-box;
+  padding: calc(70px * var(--ts) + 12px) calc(100px * var(--ts) + 10px) calc(112px * var(--ts) + 10px);
+  border-radius: 14px; color: #f6ead3; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, .45) 100%), url(img/felt.webp) center / cover, #1d4a2c;
+  box-shadow: 0 26px 60px -24px #000;
+}
+.pr-wrap::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border: solid transparent;
+  border-width: calc(410px * var(--ts)) calc(560px * var(--ts)) calc(421px * var(--ts)) calc(440px * var(--ts));
+  border-image: url(img/frame.webp) 410 560 421 440 stretch; }
+.pr-wrap::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: url(img/orn-top.webp) 50% 0 / calc(160px * var(--ts)) auto no-repeat, url(img/orn-bottom.webp) 50% 100% / calc(140px * var(--ts)) auto no-repeat; }
 .pr-opps { display: flex; justify-content: center; gap: clamp(10px, 4vw, 44px); flex-wrap: wrap; min-height: calc(var(--cw) * 1.05); }
 .pr-opp { display: grid; justify-items: center; gap: 4px; padding: 6px 12px 8px; border-radius: 16px; transition: background .2s, box-shadow .2s; }
 .pr-opp.turn { background: rgba(255, 230, 120, .13); box-shadow: inset 0 0 0 2px rgba(255, 230, 120, .6), 0 0 22px rgba(255, 230, 120, .25); }
@@ -17,57 +45,60 @@
 .pr-who b { font-size: 13px; } .pr-who small { font-size: 11px; opacity: .75; }
 .pr-opp.last .pr-who small { opacity: 1; color: #ffe27a; font-weight: 700; animation: prPulse 1s ease-in-out infinite; }
 .pr-fan { position: relative; width: calc(var(--cw) * .55 + (var(--n) - 1) * var(--cw) * .13); height: calc(var(--cw) * .85); }
-.pr-fan img { position: absolute; aspect-ratio: 2 / 3; left: calc(var(--i) * var(--cw) * .13); top: 0; width: calc(var(--cw) * .55); border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, .45); transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 5deg)); transform-origin: 50% 130%; }
+.pr-fan img { position: absolute; aspect-ratio: 2 / 3; left: calc(var(--i) * var(--cw) * .13); top: 0; width: calc(var(--cw) * .55); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 5deg)); transform-origin: 50% 130%; }
 .pr-table { display: flex; align-items: center; justify-content: center; gap: clamp(16px, 6vw, 60px); min-height: calc(var(--cw) * 1.65); padding-top: 26px; }
 .pr-deck { position: relative; padding: 0; border: 0; background: none; border-radius: 9px; cursor: pointer; }
 .pr-stack { position: relative; display: block; width: var(--cw); height: calc(var(--cw) * 1.5); }
-.pr-stack img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 9px; box-shadow: 0 1px 0 rgba(0, 0, 0, .3); }
-.pr-stack img:nth-child(1) { transform: translate(calc(var(--h, 3) * 2px), calc(var(--h, 3) * 2px)); filter: brightness(.7); }
-.pr-stack img:nth-child(2) { transform: translate(calc(var(--h, 3) * 1px), calc(var(--h, 3) * 1px)); filter: brightness(.85); }
-.pr-stack img:nth-child(3) { box-shadow: 0 10px 18px rgba(0, 0, 0, .45); }
+.pr-stack img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pr-stack img:nth-child(1) { transform: translate(calc(var(--h, 3) * 2px), calc(var(--h, 3) * 2px)); filter: brightness(.6); }
+.pr-stack img:nth-child(2) { transform: translate(calc(var(--h, 3) * 1px), calc(var(--h, 3) * 1px)); filter: brightness(.8); }
+.pr-stack img:nth-child(3) { filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .5)); }
 .pr-deck b { position: absolute; right: -10px; bottom: -10px; min-width: 26px; padding: 3px 7px; border-radius: 99px; background: #111; color: #fff; font: 700 12px/1 Unbounded, sans-serif; box-shadow: 0 0 0 2px rgba(255, 255, 255, .25); }
 .pr-deck.go .pr-stack img:nth-child(3) { animation: prGlow 1.4s ease-in-out infinite; }
-@keyframes prGlow { 50% { box-shadow: 0 0 0 4px rgba(255, 230, 120, .85), 0 0 26px rgba(255, 230, 120, .75); } }
+@keyframes prGlow { 50% { filter: drop-shadow(0 0 3px rgba(255, 230, 120, .95)) drop-shadow(0 0 12px rgba(255, 230, 120, .8)); } }
 .pr-discard { position: relative; width: var(--cw); height: calc(var(--cw) * 1.5); }
-.pr-discard img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 9px; box-shadow: 0 6px 14px rgba(0, 0, 0, .45); transform: translateX(var(--x, 0)) rotate(var(--r)); }
+.pr-discard > img { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 5px 7px rgba(0, 0, 0, .5)); transform: translateX(var(--x, 0)) rotate(var(--r)); }
 /* jméno karty nad kartou v ruce a nad vrchní kartou odhazovacího balíčku, ať je jasné, co to je */
-.pr-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; background: #fffdf6; color: #222; font: 800 11px/1.15 Unbounded, sans-serif; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, .45); pointer-events: none; }
+.pr-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; background: #f4e6c8; color: #2a1606; font: 800 11px/1.15 Unbounded, sans-serif; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, .45); pointer-events: none; }
 .pr-discard .pr-tag { position: absolute; left: 50%; bottom: calc(100% + 8px); z-index: 2; transform: translateX(-50%); font-size: 12px; }
 .pr-card .pr-tag { position: absolute; left: 0; bottom: calc(100% + 3px); z-index: 1; }
+/* ukazatel barvy (obrázek) ve štítcích, v čipu barvy a ve výběru barvy */
+.pr-si { flex: none; display: inline-block; width: auto; vertical-align: middle; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .35)); }
 .pr-info { display: grid; gap: 6px; justify-items: start; min-width: 76px; }
 .pr-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 99px; background: rgba(0, 0, 0, .38); font: 700 13px/1 Unbounded, sans-serif; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15); }
-.pr-chip.suit { padding: 4px 12px 4px 4px; background: #fffdf6; color: #222; }
+.pr-chip.suit { padding: 4px 12px 4px 4px; background: #f4e6c8; color: #2a1606; box-shadow: inset 0 0 0 1px rgba(120, 70, 20, .5), 0 3px 8px rgba(0, 0, 0, .4); }
 .pr-chip.suit em { font-style: normal; font-size: 12px; }
 .pr-chip.hot { background: #c8202a; animation: prPulse 1s ease-in-out infinite; }
 @keyframes prPulse { 50% { transform: scale(1.08); } }
 .pr-status { display: grid; justify-items: center; gap: 3px; min-height: 42px; max-width: 640px; text-align: center; }
 .pr-status b { font: 700 15px/1.3 Unbounded, sans-serif; }
 .pr-status span { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 13px; opacity: .85; }
-.pr-mini { display: inline-flex; align-items: center; gap: 2px; padding: 1px 6px 1px 7px; border-radius: 6px; background: #fffdf6; color: #222; font-weight: 800; }
+.pr-mini { display: inline-flex; align-items: center; gap: 2px; padding: 1px 6px 1px 7px; border-radius: 6px; background: #f4e6c8; color: #2a1606; font-weight: 800; }
 .pr-hand { display: flex; justify-content: center; align-items: flex-end; width: 100%; padding: 34px 0 6px; min-height: calc(var(--cw) * 1.5 + 42px); }
 /* karty v ruce se překrývají víc, čím víc jich je, a vždy tak, aby se vějíř vešel na šířku stolu (i na mobilu) */
 .pr-card { position: relative; flex: none; padding: 0; border: 0; background: none; width: var(--cw); height: calc(var(--cw) * 1.5); margin-left: min(calc(var(--cw) * -1 * (.16 + .32 * min(1, max(0, (var(--n) - 4) / 7)))), calc((100% - var(--n) * var(--cw) - var(--cw) * 1.4) / max(1, var(--n) - 1))); border-radius: 9px; transform: translateY(var(--lift)) rotate(var(--rot)); transform-origin: 50% 160%; transition: transform .16s; cursor: pointer; }
 .pr-card:first-child { margin-left: 0; }
-.pr-card img { display: block; width: 100%; height: 100%; border-radius: 9px; box-shadow: 0 4px 10px rgba(0, 0, 0, .45); }
-.pr-hand.mine .pr-card:not(.ok) img { filter: brightness(.78) saturate(.8); }
+.pr-card > img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .5)); }
+.pr-hand.mine .pr-card:not(.ok) > img { filter: brightness(.7) saturate(.75) drop-shadow(0 4px 5px rgba(0, 0, 0, .5)); }
 .pr-card.ok { transform: translateY(calc(var(--lift) - 12px)) rotate(var(--rot)); }
-.pr-card.ok img { box-shadow: 0 0 0 3px rgba(255, 230, 120, .95), 0 10px 20px rgba(0, 0, 0, .5); }
+.pr-card.ok > img { filter: drop-shadow(0 0 2px rgba(255, 230, 120, 1)) drop-shadow(0 0 6px rgba(255, 230, 120, .9)) drop-shadow(0 8px 10px rgba(0, 0, 0, .5)); }
 .pr-card.ok:hover { transform: translateY(calc(var(--lift) - 24px)) rotate(var(--rot)); z-index: 2; }
 .pr-card.no { animation: prNo .3s; }
 @keyframes prNo { 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
 .pr-acts { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .pr-acts [hidden] { display: none; }
 .pr-fly { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
-.pr-fly img { position: absolute; border-radius: 9px; box-shadow: 0 12px 24px rgba(0, 0, 0, .5); transform-origin: 0 0; transition: transform .34s cubic-bezier(.25, .8, .3, 1); }
-.pr-pick { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 26px; background: rgba(5, 20, 10, .6); backdrop-filter: blur(2px); z-index: 8; }
+.pr-fly img { position: absolute; filter: drop-shadow(0 10px 12px rgba(0, 0, 0, .5)); transform-origin: 0 0; transition: transform .34s cubic-bezier(.25, .8, .3, 1); }
+.pr-pick { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 14px; background: rgba(10, 6, 3, .6); backdrop-filter: blur(2px); z-index: 8; }
 .pr-pick[hidden] { display: none; }
-.pr-pick > div { display: grid; gap: 12px; justify-items: center; padding: 18px; border-radius: 18px; background: #fffdf6; color: #222; box-shadow: 0 20px 50px rgba(0, 0, 0, .5); }
+.pr-pick > div { display: grid; gap: 12px; justify-items: center; padding: 18px; border-radius: 18px; background: var(--glass-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2), 0 20px 50px rgba(0, 0, 0, .6); }
+.pr-pick > div > b { font: 700 17px/1.2 var(--f-d); letter-spacing: .04em; color: var(--a); }
 .pr-suits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.pr-suits button { display: grid; justify-items: center; gap: 4px; padding: 10px 8px; border: 0; border-radius: 12px; background: #f1ece0; font-size: 12px; font-weight: 600; color: #333; cursor: pointer; }
-.pr-suits button:hover { background: #ffe9a8; }
+.pr-suits button { display: grid; justify-items: center; gap: 4px; padding: 10px 8px; border: 0; border-radius: 12px; background: rgba(255, 230, 180, .06); box-shadow: inset 0 0 0 1px var(--line); font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer; }
+.pr-suits button:hover { background: rgba(242, 197, 107, .16); box-shadow: inset 0 0 0 1px var(--a); }
 /* úvodní obrázek: vějíř karet ze hry */
 .pr-art { position: relative; display: grid; place-items: center; width: 100%; height: 100%; min-height: 150px; }
-.pr-art img { position: absolute; height: min(160px, 72%); aspect-ratio: 2 / 3; border-radius: 9px; box-shadow: 0 10px 24px rgba(0, 0, 0, .5); transform: translateY(-6%) rotate(var(--r)); transform-origin: 50% 125%; }
+.pr-art img { position: absolute; height: min(170px, 76%); aspect-ratio: 2 / 3; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .55)); transform: translateY(-6%) rotate(var(--r)); transform-origin: 50% 125%; }
 /* galerie karet: obrázky v rámečku po barvách, po klepnutí přes celou obrazovku */
 .pr-gal h3 { margin: 18px 0 8px; font: 700 15px/1.2 var(--f-d); }
 .pr-gal-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px 10px; }
@@ -88,7 +119,7 @@
 @media (max-width: 520px) {
   .pr-lb-go { width: 34px; font-size: 34px; }
   .pr-gal-row { grid-template-columns: repeat(4, 1fr); }
-  .pr-wrap { --cw: clamp(54px, 16.5vw, 80px); padding: 14px 8px 10px; border-radius: 18px; gap: 8px; }
+  .pr-wrap { --cw: clamp(54px, 16.5vw, 80px); --ts: .26; gap: 8px; padding-left: calc(100px * var(--ts) + 4px); padding-right: calc(100px * var(--ts) + 4px); }
   .pr-status b { font-size: 13px; }
   .pr-tag { padding: 1px 4px; gap: 2px; font-size: 9px; }
   .pr-discard .pr-tag { font-size: 10px; }
