@@ -1,7 +1,7 @@
 'use strict';
 // ── PRŠÍ · karty z ilustrací (rozpracované, zatím nezapojené do hry) ─────────
-// Karta se složí na plátně z vrstev: obrázek pozadí přes celou kartu, velký znak barvy
-// uprostřed, rámeček barvy a rohové indexy (hodnota + malý znak barvy). Výsledek se uloží
+// Karta se složí na plátně z vrstev: obrázek pozadí, znaky barvy (rozložené podle hodnoty jako
+// na mariáškách, bez čísel) nebo velký znak uprostřed a navrch rámeček barvy. Výsledek se uloží
 // jako obrázek (data URL), hra pak pracuje s obyčejnými <img>. Návrhové souřadnice jsou
 // v rozměru 1024 × 1536 (rozměr ilustrací), kreslí se zmenšeně.
 const PrsiCards2 = (() => {
@@ -19,11 +19,12 @@ const PrsiCards2 = (() => {
     for (let su = 0; su < 4; su++) { names.push(`suit-${su}`, `emblem-${su}`, `frame-${su}`); for (let rk = 0; rk < 8; rk++) names.push(`bg-${su}-${rk}`); }
     return Promise.all(names.map(load));
   }
-  // rozložení znaků na číselných kartách (jako na mariáškách): [x, y], dolní polovina otočená
+  // rozložení znaků na číselných kartách jako na jednohlavých mariáškách: znaky v horních
+  // dvou třetinách (sloupce srdcí se překrývají), dole zůstává vidět obrázek; žádná čísla
   const PIPS = {
-    0: [[400, 400], [624, 400], [512, 592], [400, 784], [624, 784], [400, 1140], [624, 1140]],
+    0: [[512, 330], [276, 520], [748, 520], [276, 690], [748, 690], [276, 860], [748, 860]],
   };
-  const PIP_W = 170;
+  const PIP_W = 235;
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
   const contain = (ctx, im, cx, cy, w) => { if (!im) return; const h = w * im.height / im.width; ctx.drawImage(im, cx - w / 2, cy - h / 2, w, h); };
 
@@ -47,19 +48,6 @@ const PrsiCards2 = (() => {
     ctx.restore();
     // rámeček
     if (img[`frame-${su}`]) ctx.drawImage(img[`frame-${su}`], 0, 0, DW, DH);
-    // rohové indexy: hodnota a malý znak na pergamenovém štítku
-    const R = (en ? RANKS_EN : RANKS_CS)[rk];
-    const index = () => {
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 4;
-      rr(ctx, 112, 232, 184, 256, 40); ctx.fillStyle = 'rgba(255,248,232,.95)'; ctx.fill(); ctx.restore();
-      rr(ctx, 112, 232, 184, 256, 40); ctx.lineWidth = 8; ctx.strokeStyle = '#c9a23a'; ctx.stroke();
-      ctx.fillStyle = INK[su]; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.font = `700 ${R.length > 1 ? 120 : 164}px Georgia, 'Times New Roman', serif`;
-      ctx.fillText(R, 204, R.length > 1 ? 370 : 386);
-      contain(ctx, img[`suit-${su}`], 204, 438, 88);
-    };
-    index();
-    ctx.save(); ctx.translate(DW, DH); ctx.rotate(Math.PI); index(); ctx.restore();
     return cv;
   }
   const cache = {};
