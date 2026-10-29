@@ -53,7 +53,7 @@ const PrsiCards2 = (() => {
   // nahoře (stranou od obličeje), král a eso v obou horních rozích; podle barvy (rámeček, obrázek)
   const FIG_PIP = {
     0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 305, 190], [724, 305, 190]], 7: [[300, 305, 190], [724, 305, 190]] },
-    3: { 5: [[765, 460, 185]] },
+    3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]] },
   };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
