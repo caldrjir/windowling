@@ -23,6 +23,7 @@ const PrsiCards2 = (() => {
   // třech čtvrtinách s mezerami mezi sebou, dole zůstává vidět obrázek; žádná čísla
   const PIPS = {
     0: [[512, 330], [272, 540], [752, 540], [272, 810], [752, 810], [272, 1080], [752, 1080]],
+    1: [[272, 340], [752, 340], [272, 610], [752, 610], [272, 880], [752, 880], [272, 1150], [752, 1150]],
   };
   const PIP_W = 205;
   const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
