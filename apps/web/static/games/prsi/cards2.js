@@ -61,14 +61,14 @@ const PrsiCards2 = (() => {
   // nahoře (stranou od obličeje), král a eso v obou horních rozích; podle barvy (rámeček, obrázek)
   const FIG_PIP = {
     0: { 4: [[512, 1190, 205]], 5: [[790, 400, 205]], 6: [[300, 380, 190], [724, 380, 190]], 7: [[300, 380, 190], [724, 380, 190]] },
-    1: { 4: [[512, 1200, 160]] },
+    1: { 4: [[512, 1200, 160]], 5: [[790, 470, 160]] },
     3: { 4: [[512, 1130, 185]], 5: [[765, 460, 185]], 6: [[300, 405, 165], [724, 405, 165]], 7: [[300, 405, 165], [724, 405, 165]] },
   };
   // král a eso mají nad znaky v rozích písmeno, srozumitelné ve všech jazycích hry
   const LETTER = { 6: 'K', 7: 'A' };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
-  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 }, '1-4': { s: 0.8, y: 245 } };
+  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 }, '1-4': { s: 0.8, y: 245 }, '1-5': { s: 0.82, y: 220 } };
   function fitted(bg, k, s) {
     const c = document.createElement('canvas'), t = c.getContext('2d');
     c.width = Math.round(DW * s * k); c.height = Math.round(DH * s * k);
