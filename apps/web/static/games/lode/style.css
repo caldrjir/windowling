@@ -1,6 +1,8 @@
 /* LODĚ – námořní bitva v noci: ocelové velitelské mapy, mosazné souřadnice, moře v pohybu.
-   Moře je obrázek vln (img/sea.webp, dlaždice), lodě jsou SVG shora přes celá pole, nad nimi
-   průhledná pole s ranami (voda, oheň s kouřem, výbuch, vodní tříšť). */
+   Moře je jen statický přechod v CSS (žádný obrázek ani pohyb vody, ať stránka nic zbytečně
+   nepřekresluje), lodě jsou SVG shora přes celá pole, nad nimi průhledná pole s ranami
+   (voda, oheň s kouřem, výbuch, vodní tříšť). */
+:root { --sea: radial-gradient(ellipse at 30% 20%, rgba(70, 150, 200, .22), transparent 60%), linear-gradient(160deg, #0d4166, #072b4a 55%, #041c33); }
 :root {
   --text: #e8f1f8; --muted: #9db3c6; --dim: #5d7387;
   --glass: rgba(7, 24, 40, .8); --glass-2: rgba(9, 28, 46, .96);
@@ -14,8 +16,8 @@ body.kit::before { content: ''; position: fixed; inset: 0; z-index: 1; pointer-e
 .k-hero, .k-page h2, .k-result h2, .k-card-h { letter-spacing: .06em; }
 .k-hero h1 { font-weight: 900; letter-spacing: .08em; background: linear-gradient(180deg, #f4f8fb 15%, #c3cfdb 55%, var(--a)); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .6)); }
 /* úvodní karta: noční moře, vlevo výřez bitvy, vpravo text */
-.k-hero { background: linear-gradient(90deg, rgba(3, 16, 28, .5) 20%, rgba(3, 16, 28, .86) 55%, rgba(3, 16, 28, .96) 75%), url(img/sea.webp) 0 0 / 300px; box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px -24px #000; }
-@media (max-width: 720px) { .k-hero { background: linear-gradient(180deg, rgba(3, 16, 28, .1) 30%, rgba(3, 16, 28, .9) 60%), url(img/sea.webp) 0 0 / 260px; } }
+.k-hero { background: linear-gradient(90deg, rgba(3, 16, 28, .2) 20%, rgba(3, 16, 28, .86) 55%, rgba(3, 16, 28, .96) 75%), var(--sea); box-shadow: inset 0 0 0 1px var(--line-2), 0 24px 60px -24px #000; }
+@media (max-width: 720px) { .k-hero { background: linear-gradient(180deg, rgba(3, 16, 28, 0) 30%, rgba(3, 16, 28, .9) 60%), var(--sea); } }
 
 /* ── Rozložení ── */
 .ld-wrap { --szE: 440px; --szM: 270px; --szP: 440px; --lab: 20px; --cell: calc(var(--szP) / 10); display: grid; gap: 14px; justify-items: center; width: 100%; user-select: none; -webkit-user-select: none; }
@@ -53,12 +55,9 @@ body.kit::before { content: ''; position: fixed; inset: 0; z-index: 1; pointer-e
 .ld-cols { grid-column: 2; grid-row: 1; grid-template-columns: repeat(10, 1fr); align-items: center; }
 .ld-rows { grid-column: 1; grid-row: 2; grid-template-rows: repeat(10, 1fr); justify-items: center; align-items: center; }
 .ld-cols span { text-align: center; }
-.ld-water { grid-column: 2; grid-row: 2; position: relative; overflow: hidden; border-radius: 4px; background: #062038; box-shadow: inset 0 0 0 1px rgba(160, 210, 240, .3); }
-/* vlny se pomalu posouvají (posun o celou dlaždici, takže smyčka navazuje) */
-.ld-water::before { content: ''; position: absolute; left: -280px; top: -280px; right: 0; bottom: 0; background: url(img/sea.webp) 0 0 / 280px; opacity: .58; animation: ldDrift 70s linear infinite; will-change: transform; }
+.ld-water { grid-column: 2; grid-row: 2; position: relative; overflow: hidden; border-radius: 4px; background: var(--sea); box-shadow: inset 0 0 0 1px rgba(160, 210, 240, .3); }
+.ld-enemy .ld-water { background: linear-gradient(rgba(2, 10, 20, .22), rgba(2, 10, 20, .22)), var(--sea); }
 .ld-water::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 50%, rgba(0, 8, 18, .55) 100%); box-shadow: inset 0 0 26px rgba(0, 0, 0, .55); }
-.ld-enemy .ld-water::before { filter: brightness(.82) saturate(.85); }
-@keyframes ldDrift { to { transform: translate(280px, 280px); } }
 .ld-ships { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .ld-cells { position: absolute; inset: 0; z-index: 2; display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); }
 .ld-c { position: relative; display: block; padding: 0; border: 0; background: none; box-shadow: inset 0 0 0 .5px rgba(170, 215, 240, .22); font: inherit; color: inherit; }
@@ -68,9 +67,6 @@ button.ld-c:disabled { cursor: default; }
 /* ── Lodě ── */
 .ld-ship { position: absolute; filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .6)); }
 .ld-ship svg { display: block; width: 100%; height: 100%; }
-.ld-mine .ld-ship:not(.sunk) { animation: ldBob 4.5s ease-in-out infinite alternate; }
-.ld-mine .ld-ship:nth-child(2n) { animation-duration: 5.3s; animation-delay: -2s; }
-@keyframes ldBob { from { transform: rotate(-.6deg) translateY(-1%); } to { transform: rotate(.6deg) translateY(1%); } }
 .ld-ship.sunk { filter: grayscale(.85) brightness(.42) sepia(.55) drop-shadow(0 2px 2px rgba(0, 0, 0, .6)); }
 .ld-ship.reveal { opacity: .6; filter: grayscale(.4) drop-shadow(0 0 3px rgba(233, 180, 76, .7)); }
 .ld-ship.no { animation: ldNo .35s; }
@@ -86,7 +82,7 @@ button.ld-c:disabled { cursor: default; }
 .ld-c.hit::before, .ld-c.sunk::before { content: ''; position: absolute; left: 14%; top: -18%; width: 72%; height: 72%; border-radius: 50%; background: radial-gradient(circle, rgba(64, 66, 72, .7), rgba(64, 66, 72, 0) 70%); animation: ldSmoke 2.8s ease-out infinite; }
 .ld-c:nth-child(3n).hit::before, .ld-c:nth-child(3n).sunk::before { animation-delay: -1s; }
 .ld-c:nth-child(3n + 1).hit::before, .ld-c:nth-child(3n + 1).sunk::before { animation-delay: -1.9s; }
-@keyframes ldFlame { from { transform: scale(.86, .82); filter: brightness(.95); } to { transform: scale(1.04, 1.1); filter: brightness(1.15); } }
+@keyframes ldFlame { from { transform: scale(.86, .82); opacity: .9; } to { transform: scale(1.04, 1.1); opacity: 1; } }
 @keyframes ldSmoke { from { transform: translateY(20%) scale(.5); opacity: .9; } to { transform: translateY(-70%) scale(1.5); opacity: 0; } }
 .ld-c.last { box-shadow: inset 0 0 0 2px rgba(233, 180, 76, .95); }
 .ld-boom { position: absolute; inset: -45%; z-index: 4; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, #fffbe2 0 10%, #ffd166 22%, #ff7b1c 40%, rgba(226, 38, 20, .6) 58%, transparent 70%); animation: ldBoom .75s ease-out forwards; }
@@ -99,7 +95,7 @@ button.ld-c:disabled { cursor: default; }
 .ld-c.pv.bad { background: rgba(240, 70, 60, .38); box-shadow: inset 0 0 0 1px rgba(255, 120, 110, .75); }
 .ld-c.halo { background: repeating-linear-gradient(45deg, rgba(255, 255, 255, .1) 0 3px, transparent 3px 7px); }
 .ld-dock { display: flex; flex-wrap: wrap; gap: 8px; }
-.ld-dship { display: grid; gap: 5px; justify-items: start; padding: 8px 10px 6px; border-radius: 12px; cursor: grab; touch-action: none; background: linear-gradient(rgba(3, 16, 28, .7), rgba(3, 16, 28, .7)), url(img/sea.webp) 0 0 / 200px; box-shadow: inset 0 0 0 1px var(--line-2); }
+.ld-dship { display: grid; gap: 5px; justify-items: start; padding: 8px 10px 6px; border-radius: 12px; cursor: grab; touch-action: none; background: linear-gradient(rgba(3, 16, 28, .35), rgba(3, 16, 28, .35)), var(--sea); box-shadow: inset 0 0 0 1px var(--line-2); }
 .ld-dship:hover { box-shadow: inset 0 0 0 1px var(--a); }
 .ld-dship.sel { box-shadow: inset 0 0 0 2px var(--a), 0 0 18px -4px var(--a); }
 .ld-dhull { height: var(--cell); filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .6)); }
