@@ -58,6 +58,7 @@ const PrsiCards2 = (() => {
     if (!im) return null;
     const key = `${name}:${w}x${h}`;
     if (raised[key]) return raised[key];
+    if (typeof im === 'function') im = im();
     const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, 0, 0, w, h);
     const p = Math.ceil(depth * 4) + 2, m = document.createElement('canvas'); m.width = w + 2 * p; m.height = h + 2 * p;
@@ -69,13 +70,31 @@ const PrsiCards2 = (() => {
     }
     return (raised[key] = cv);
   }
-  // znak barvy vystouplý nad pozadím: vnitřní stín a stín vržený na pozadí
+  // znak s obrysem, ať nesplývá s obrázkem: tmavý okraj, uvnitř něj tenká zlatá linka a znak
+  // o něco sytější; obrys se dělá otisky siluety dokola (o je okraj v pixelech)
+  function rimmed(im, w, h, o) {
+    const c = document.createElement('canvas'), t = c.getContext('2d');
+    c.width = w + 2 * o; c.height = h + 2 * o;
+    const s = document.createElement('canvas'), st = s.getContext('2d');
+    s.width = c.width; s.height = c.height; st.drawImage(im, o, o, w, h); st.globalCompositeOperation = 'source-in';
+    for (const [color, r] of [['#260902', o], ['#f6d277', o * 0.4]]) {
+      st.fillStyle = color; st.fillRect(0, 0, s.width, s.height);
+      for (let a = 0; a < 16; a++) t.drawImage(s, Math.cos(a * Math.PI / 8) * r, Math.sin(a * Math.PI / 8) * r);
+    }
+    t.filter = 'saturate(1.2) contrast(1.08)'; t.drawImage(im, o, o, w, h);
+    return c;
+  }
+  // znak barvy vystouplý nad pozadím: obrys, vnitřní stín, tmavá záře kolem a stín vržený na pozadí
   function pip(ctx, k, name, cx, cy, w, depth) {
     const im = img[name];
     if (!im) return;
-    const h = w * im.height / im.width, e = emboss(name, im, Math.round(w * k), Math.round(h * k), depth * k);
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 22 * k; ctx.shadowOffsetX = 4 * k; ctx.shadowOffsetY = 10 * k;
-    ctx.drawImage(e, cx - w / 2, cy - h / 2, w, h);
+    const h = w * im.height / im.width, iw = Math.round(w * k), ih = Math.round(h * k), o = Math.max(1, Math.round(8 * k));
+    const e = emboss(name, () => rimmed(im, iw, ih, o), iw + 2 * o, ih + 2 * o, depth * k);
+    const x = cx - w / 2 - o / k, y = cy - h / 2 - o / k;
+    ctx.save(); ctx.shadowColor = 'rgba(25,5,0,.6)'; ctx.shadowBlur = 36 * k;
+    ctx.drawImage(e, x, y, e.width / k, e.height / k);
+    ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 24 * k; ctx.shadowOffsetX = 4 * k; ctx.shadowOffsetY = 12 * k;
+    ctx.drawImage(e, x, y, e.width / k, e.height / k);
     ctx.restore();
   }
   // zlatý odznak v rohu s tmavým obrysem, vystouplý jako znaky. shape(t, op) nakreslí tvar
