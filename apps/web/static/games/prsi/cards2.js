@@ -168,7 +168,8 @@ const PrsiCards2 = (() => {
     5: (t, op) => { t.beginPath(); t.moveTo(52, 0); t.quadraticCurveTo(79, 60, 104, 108); t.lineTo(0, 108); t.quadraticCurveTo(25, 60, 52, 0); t.closePath(); t[op](); },
   };
 
-  function draw(c, width, en) {
+  // plain: jen obrázek v rámečku, bez znaků, číslic a značek (galerie karet)
+  function draw(c, width, en, plain) {
     const su = c >> 3, rk = c & 7, k = width / DW;
     const cv = document.createElement('canvas'); cv.width = width; cv.height = Math.round(DH * k);
     const ctx = cv.getContext('2d'); ctx.scale(k, k); ctx.imageSmoothingQuality = 'high';
@@ -187,9 +188,11 @@ const PrsiCards2 = (() => {
     // číselná karta: znaky barvy (srdce s elfkou) v rozložení podle hodnoty; figura je celá
     // obrázkem se znaky barvy, karta bez obrázku má velký znak uprostřed
     const lay = PIPS[su] || PIPS[0];
-    if (lay[rk]) for (const [x, y] of lay[rk]) pip(ctx, k, sign, x, y, lay.w, 7);
-    else if (bg && (FIG_PIP[su] || FIG_PIP[0])[rk]) for (const [x, y, w] of (FIG_PIP[su] || FIG_PIP[0])[rk]) pip(ctx, k, sign, x, y, w, 7);
-    else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
+    if (!plain) {
+      if (lay[rk]) for (const [x, y] of lay[rk]) pip(ctx, k, sign, x, y, lay.w, 7);
+      else if (bg && (FIG_PIP[su] || FIG_PIP[0])[rk]) for (const [x, y, w] of (FIG_PIP[su] || FIG_PIP[0])[rk]) pip(ctx, k, sign, x, y, w, 7);
+      else if (!bg || !MARKS[rk]) pip(ctx, k, sign, DW / 2, DH * 0.5, 560, 12);
+    }
     // stín rámečku padá jen dovnitř karty (venku je průhledno)
     const fr = emboss(`frame-${su}`, img[`frame-${su}`], Math.round(DW * fs * k), Math.round(DH * fs * k), 6 * k);
     if (fr) {
@@ -201,6 +204,7 @@ const PrsiCards2 = (() => {
     if (fr) ctx.drawImage(fr, fx(0), fy(0), DW * fs, DH * fs);
     // v horních rozích, vedle ozdob rámečku, římská číslice nebo značka figury
     const [nx, ny, sc] = CORNER[su] || CORNER[0];
+    if (plain) return cv;
     for (const right of [false, true]) {
       const x = fx(right ? DW - nx : nx), y = fy(ny), s = sc * fs;
       if (ROMAN[rk]) numeral(ctx, k, ROMAN[rk], x, y, right ? 1 : 0, s);
@@ -212,5 +216,8 @@ const PrsiCards2 = (() => {
   }
   const cache = {};
   const src = (c, en, width = 360) => { const key = `${c}:${en ? 'e' : 'c'}:${width}`; return cache[key] || (cache[key] = draw(c, width, en).toDataURL('image/webp', 0.9)); };
-  return { ready, draw, src, RANKS_CS, RANKS_EN };
+  // karta má vlastní obrázek; ten je i ve velkém rozlišení pro prohlížení zblízka
+  const has = c => !!img[`bg-${c >> 3}-${c & 7}`];
+  const artSrc = c => `${BASE}art/bg-${c >> 3}-${c & 7}.webp`;
+  return { ready, draw, src, has, artSrc, RANKS_CS, RANKS_EN };
 })();

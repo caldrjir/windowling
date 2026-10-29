@@ -68,7 +68,26 @@
 /* úvodní obrázek: vějíř karet ze hry */
 .pr-art { position: relative; display: grid; place-items: center; width: 100%; height: 100%; min-height: 150px; }
 .pr-art img { position: absolute; height: min(160px, 72%); aspect-ratio: 2 / 3; border-radius: 9px; box-shadow: 0 10px 24px rgba(0, 0, 0, .5); transform: translateY(-6%) rotate(var(--r)); transform-origin: 50% 125%; }
+/* galerie karet: obrázky v rámečku po barvách, po klepnutí přes celou obrazovku */
+.pr-gal h3 { margin: 18px 0 8px; font: 700 15px/1.2 var(--f-d); }
+.pr-gal-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px 10px; }
+.pr-gal-row button { padding: 0; border: 0; background: none; cursor: zoom-in; transition: transform .15s; }
+.pr-gal-row button:hover { transform: translateY(-4px); }
+.pr-gal-row canvas { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
+.pr-lb { position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-columns: auto 1fr auto; align-items: center; background: rgba(4, 3, 12, .94); }
+.pr-lb[hidden] { display: none; }
+.pr-lb figure { display: grid; justify-items: center; gap: 10px; height: 100dvh; margin: 0; padding: 14px 0; box-sizing: border-box; grid-template-rows: 1fr auto; min-width: 0; touch-action: pan-y; }
+.pr-lb img { align-self: center; max-width: 100%; max-height: 100%; min-height: 0; object-fit: contain; border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, .7); cursor: zoom-in; }
+.pr-lb figure.zoom { display: block; overflow: auto; touch-action: auto; }
+.pr-lb figure.zoom img { max-width: none; max-height: none; width: max(100%, 1024px); cursor: zoom-out; }
+.pr-lb figure.zoom figcaption { display: none; }
+.pr-lb figcaption { font: 700 15px/1.2 var(--f-d); color: #fff; }
+.pr-lb-go { width: 52px; height: 100%; border: 0; background: none; color: #fff; font-size: 44px; opacity: .7; cursor: pointer; }
+.pr-lb-go:hover { opacity: 1; }
+.pr-lb-x { position: absolute; top: 12px; right: 12px; z-index: 1; display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(20, 16, 40, .8); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); color: #fff; cursor: pointer; }
 @media (max-width: 520px) {
+  .pr-lb-go { width: 34px; font-size: 34px; }
+  .pr-gal-row { grid-template-columns: repeat(4, 1fr); }
   .pr-wrap { --cw: clamp(54px, 16.5vw, 80px); padding: 14px 8px 10px; border-radius: 18px; gap: 8px; }
   .pr-status b { font-size: 13px; }
   .pr-tag { padding: 1px 4px; gap: 2px; font-size: 9px; }

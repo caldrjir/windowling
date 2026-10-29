@@ -979,3 +979,17 @@ test('prsi: a full game against three computer players reaches a result', async 
 	await expect(page.locator('.k-score tr')).not.toHaveCount(0);
 	expect(errors).toEqual([]);
 });
+
+test('prsi: the card gallery shows the pictures and opens one up close', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/prsi/index.html');
+	await page.locator('[data-k="view"]').click();
+	await expect(page.locator('.pr-gal-row canvas').first()).toBeVisible({ timeout: 30_000 });
+	await page.locator('.pr-gal-row button').first().click();
+	await expect(page.locator('.pr-lb img')).toBeVisible();
+	await expect(page.locator('.pr-lb figcaption')).not.toBeEmpty();
+	await page.keyboard.press('Escape');
+	await expect(page.locator('.pr-lb')).toBeHidden();
+	expect(errors).toEqual([]);
+});

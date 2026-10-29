@@ -10,6 +10,7 @@ const Prsi = (() => {
   // se shoduje s rodem hodnoty (sedma… desítka ženský, spodek, svršek, král mužský, eso střední)
   const SUIT_ADJ = ['srdcov', 'listov', 'žaludov', 'kulov'], RANK_CS = ['sedma', 'osma', 'devítka', 'desítka', 'spodek', 'svršek', 'král', 'eso'];
   const RANK_END = ['á', 'á', 'á', 'á', 'ý', 'ý', 'ý', 'é'], RANK_EN = ['Seven', 'Eight', 'Nine', 'Ten', 'Unter', 'Ober', 'King', 'Ace'];
+  const cardTitle = c => { const su = c >> 3, rk = c & 7; return Kit.LANG === 'en' ? `${RANK_EN[rk]} of ${SUITS[su]}` : `${SUIT_ADJ[su].charAt(0).toUpperCase()}${SUIT_ADJ[su].slice(1)}${RANK_END[rk]} ${RANK_CS[rk]}`; };
   const BOTS = [{ id: 'pepa', name: L('Pepa', 'Joe') }, { id: 'mana', name: L('Máňa', 'Mary') }, { id: 'jarda', name: L('Jarda', 'Jack') }];
   const SEAT = ['#e0453a', '#2f6fe0', '#f08a24', '#9b59d0'];
   const DIFFS = [
@@ -53,7 +54,6 @@ const Prsi = (() => {
     for (const img of deckEl.querySelectorAll('img')) img.src = K.backSrc();
     const rankName = rk => (en ? K.RANKS_EN : K.RANKS_CS)[rk];
     const cardName = c => `<span class="pr-mini">${rankName(C.rankOf(c))}${K.suitSvg(C.suitOf(c), 14)}</span>`;
-    const cardTitle = c => { const su = C.suitOf(c), rk = C.rankOf(c); return en ? `${RANK_EN[rk]} of ${SUITS[su]}` : `${SUIT_ADJ[su].charAt(0).toUpperCase()}${SUIT_ADJ[su].slice(1)}${RANK_END[rk]} ${RANK_CS[rk]}`; };
     const sortHand = h => h.slice().sort((a, b) => C.suitOf(a) - C.suitOf(b) || C.rankOf(a) - C.rankOf(b));
     const tilt = c => (((c * 37) % 13) - 6) * 1.4;
 
@@ -218,7 +218,54 @@ const Prsi = (() => {
     const en = Kit.LANG === 'en', cards = [[K.backSrc(), -32], [PrsiCards.src(7, en), -16], [PrsiCards.src(13, en), 0], [PrsiCards.src(22, en), 16], [PrsiCards.src(24, en), 32]];
     el.innerHTML = `<div class="pr-art">${cards.map(([src, r]) => `<img src="${src}" style="--r:${r}deg" alt="">`).join('')}</div>`;
   }
-  return { DIFFS, generate, create, art };
+  // galerie karet: obrázky všech karet v rámečku, bez znaků a číslic; klepnutím se karta otevře
+  // přes celou obrazovku v plném rozlišení (šipky, přejetí prstem, klepnutím přiblížit)
+  const gallery = {
+    icon: 'brush', name: L('Galerie karet', 'Card gallery'),
+    render(el) {
+      const K2 = PrsiCards2, en = Kit.LANG === 'en';
+      el.innerHTML = `<h2>${L('Galerie karet', 'Card gallery')}</h2>
+        <p class="k-muted">${L('Obrázky karet bez znaků a čísel. Klepni na kartu a prohlédni si ji zblízka.', 'The card pictures without signs and numbers. Tap a card to see it up close.')}</p>
+        <div class="pr-gal"><p class="k-muted">${L('Načítám karty…', 'Loading the cards…')}</p></div>`;
+      // prohlížeč visí přímo v <body>, aby překryl i horní lištu hry
+      for (const old of document.querySelectorAll('body > .pr-lb')) old.remove();
+      const lb = document.createElement('div'); lb.className = 'pr-lb'; lb.hidden = true;
+      lb.innerHTML = `<button class="pr-lb-x" aria-label="${L('Zavřít', 'Close')}">${Kit.icon('x')}</button>
+          <button class="pr-lb-go" data-d="-1" aria-label="${L('Předchozí', 'Previous')}">‹</button><figure><img alt=""><figcaption></figcaption></figure>
+          <button class="pr-lb-go" data-d="1" aria-label="${L('Další', 'Next')}">›</button>`;
+      document.body.appendChild(lb);
+      const gal = el.querySelector('.pr-gal'), fig = lb.querySelector('figure'), pic = lb.querySelector('img'), cap = lb.querySelector('figcaption');
+      let list = [], at = 0;
+      const show = i => { at = (i + list.length) % list.length; fig.classList.remove('zoom'); pic.src = K2.artSrc(list[at]); pic.alt = cap.textContent = cardTitle(list[at]); };
+      const close = () => { lb.hidden = true; document.removeEventListener('keydown', key); };
+      function key(e) {
+        if (!el.isConnected) { document.removeEventListener('keydown', key); lb.remove(); return; }
+        if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') show(at - 1); else if (e.key === 'ArrowRight') show(at + 1); else return;
+        e.preventDefault();
+      }
+      const open = i => { show(i); lb.hidden = false; document.addEventListener('keydown', key); };
+      lb.querySelector('.pr-lb-x').onclick = close;
+      for (const b of lb.querySelectorAll('.pr-lb-go')) b.onclick = () => show(at + +b.dataset.d);
+      pic.onclick = () => fig.classList.toggle('zoom');
+      // přejetí prstem: doleva další, doprava předchozí (jen když obrázek není přiblížený)
+      let sx = null;
+      fig.addEventListener('pointerdown', e => { sx = e.clientX; });
+      fig.addEventListener('pointerup', e => { if (sx === null || fig.classList.contains('zoom')) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 50) show(at + (dx < 0 ? 1 : -1)); });
+      K2.ready().then(async () => {
+        if (!el.isConnected) return;
+        list = Array.from({ length: 32 }, (_, c) => c).filter(K2.has);
+        gal.innerHTML = [0, 1, 2, 3].map(su => list.some(c => c >> 3 === su) ? `<h3>${SUITS[su].charAt(0).toUpperCase()}${SUITS[su].slice(1)}</h3><div class="pr-gal-row" data-su="${su}"></div>` : '').join('');
+        for (const [i, c] of list.entries()) {
+          const b = document.createElement('button'), cv = K2.draw(c, 300, en, true);
+          b.title = b.ariaLabel = cardTitle(c); b.onclick = () => open(i); b.appendChild(cv);
+          gal.querySelector(`.pr-gal-row[data-su="${c >> 3}"]`).appendChild(b);
+          await new Promise(res => setTimeout(res));
+          if (!el.isConnected) return;
+        }
+      });
+    },
+  };
+  return { DIFFS, generate, create, art, gallery };
 })();
 
 if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
@@ -226,7 +273,7 @@ if (typeof window !== 'undefined' && !window.__KIT_TEST__) Kit.game({
   daily: false, path: false, quests: false, perfect: false, versus: true,
   freeTitle: Kit.L('Proti počítači', 'Against the computer'), freeNote: Kit.L('Vyber, kolik soupeřů sedne ke stolu:', 'Pick how many opponents sit at the table:'),
   tagline: Kit.L('Česká karetní klasika s mariášovými kartami: zbav se všech karet dřív než soupeři. Sedma bere dvě, eso stojí a svršek mění barvu.', 'The Czech card classic with German-suited cards: get rid of all your cards before the others. A seven makes the next player draw two, an ace skips and an Ober changes the suit.'),
-  diffs: Prsi.DIFFS, generate: Prsi.generate, create: Prsi.create, art: Prsi.art,
+  diffs: Prsi.DIFFS, generate: Prsi.generate, create: Prsi.create, art: Prsi.art, views: [Prsi.gallery],
   online: { kind: 'turn' },
   rules: Kit.L(`<p>Každý dostane čtyři karty, jedna se otočí. Hráči se střídají a přikládají kartu <b>stejné barvy nebo hodnoty</b>. Kdo nemůže nebo nechce, lízne si z balíčku. Vyhrává, kdo se první zbaví všech karet.</p>
     <ul><li><b>Sedma:</b> další hráč si lízne dvě karty, nebo přebije sedmou a líže se čtyři, šest, osm…</li>
