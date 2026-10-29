@@ -68,7 +68,7 @@ const PrsiCards2 = (() => {
   const LETTER = { 6: 'K', 7: 'A' };
   // obrázky, kterým by rámeček zakryl hlavu: zmenšit (s) a posunout dolů (y); okraj nad nimi
   // vyplní rozmazaná kopie téhož obrázku, přechod je pozvolný
-  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 }, '1-4': { s: 0.8, y: 245 }, '1-5': { s: 0.82, y: 220 }, '1-6': { s: 0.8, y: 200 } };
+  const FIT = { '0-5': { s: 0.86, y: 138 }, '3-6': { s: 0.92, y: 118 }, '3-7': { s: 0.84, y: 270 }, '1-4': { s: 0.8, y: 245 }, '1-5': { s: 0.82, y: 220 }, '1-6': { s: 0.8, y: 200 }, '1-7': { s: 0.8, y: 320 } };
   function fitted(bg, k, s) {
     const c = document.createElement('canvas'), t = c.getContext('2d');
     c.width = Math.round(DW * s * k); c.height = Math.round(DH * s * k);
