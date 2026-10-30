@@ -64,6 +64,15 @@ describe('site gate', () => {
 		}
 	});
 
+	it('opens the hidden page /tajne/ruzek and nothing next to it', async () => {
+		for (const path of ['/tajne/ruzek', '/tajne/ruzek/', '/tajne/ruzek/img/a.webp']) {
+			expect(await (await gate(page(path), env, ok, NOW)).text(), path).toBe('app');
+		}
+		for (const path of ['/tajne/', '/tajne/ruzekx', '/tajne/ruzek/../../games/voidborn/']) {
+			expect((await gate(page(path), env, ok, NOW)).status, path).toBe(303);
+		}
+	});
+
 	it('lets people in with the right password, for 30 days', async () => {
 		const response = await gate(login(PASSWORD, '/games/voidborn/'), env, ok, NOW);
 		expect(response.status).toBe(303);

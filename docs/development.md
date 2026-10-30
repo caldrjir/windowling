@@ -135,7 +135,7 @@ Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.
 
 The whole site (hub, games, API) is behind one shared password - `apps/web/src/worker/gate.ts`,
 switched on by `SITE_GATE: "on"` in `apps/web/wrangler.jsonc`. Only the deploy smoke test
-(`/api/health`) and a few cookie-less browser files stay open. The password is never stored;
+(`/api/health`), a few cookie-less browser files and the hidden page `/tajne/ruzek` stay open. The password is never stored;
 the Worker secret `SITE_PASSWORD_HASH` holds a salted PBKDF2 hash. To set or change it:
 
 ```bash
