@@ -1,8 +1,10 @@
 name: CI
 
+# Pull requests run once (pull_request); master runs again on push because Deploy waits for
+# that run. Pushing to a feature branch alone does not start CI - open a PR (or run it by hand).
 on:
   push:
-    branches: ['**']
+    branches: [master]
   pull_request:
     branches: [master]
   workflow_dispatch:

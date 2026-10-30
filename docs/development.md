@@ -26,6 +26,8 @@ All local configuration lives in the root `.env`: `pnpm dev`, the database tools
    `feat(web): add game tile`, `fix(auth): keep session after sign-in`.
 4. `pnpm check` before pushing (same as CI's quality job). Run `pnpm test:e2e` for UI/auth/server changes.
 5. Open a PR to `master`, title in Conventional Commit form, body `Closes #<issue>`.
+   CI runs on the PR (once per push) and again on `master` after the merge; pushing a branch
+   without a PR does not start it.
 6. CI green → **squash merge**. `master` deploys to production automatically.
 
 ```
