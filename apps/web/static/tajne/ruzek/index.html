@@ -1,75 +1,2218 @@
 <!doctype html>
 <html lang="cs">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<!-- Skrytá stránka: nikde na ni nevede odkaz a vyhledávače ji nemají indexovat. -->
-		<meta name="robots" content="noindex, nofollow" />
-		<meta name="theme-color" content="#14110f" />
-		<title>Růžek</title>
-		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-		<style>
-			:root {
-				color-scheme: dark;
-				--bg: #14110f;
-				--ink: #f3ece4;
-				--soft: #b8aa9a;
-				--accent: #e8a87c;
-			}
-			* {
-				box-sizing: border-box;
-			}
-			html,
-			body {
-				margin: 0;
-				min-height: 100%;
-			}
-			body {
-				min-height: 100vh;
-				min-height: 100dvh;
-				display: grid;
-				place-items: center;
-				padding: 24px 16px;
-				background: radial-gradient(ellipse at 50% 30%, #2a211b, var(--bg) 70%);
-				color: var(--ink);
-				font:
-					400 17px/1.6 system-ui,
-					-apple-system,
-					'Segoe UI',
-					Roboto,
-					sans-serif;
-			}
-			main {
-				max-width: 520px;
-				text-align: center;
-			}
-			h1 {
-				margin: 0 0 8px;
-				font:
-					600 clamp(32px, 9vw, 48px)/1.1 Georgia,
-					'Times New Roman',
-					serif;
-				letter-spacing: 0.01em;
-			}
-			h1::after {
-				content: '';
-				display: block;
-				width: 48px;
-				height: 2px;
-				margin: 18px auto 0;
-				background: var(--accent);
-				border-radius: 2px;
-			}
-			p {
-				margin: 16px 0 0;
-				color: var(--soft);
-			}
-		</style>
-	</head>
-	<body>
-		<main>
-			<h1>Růžek</h1>
-			<p>Tady brzy něco bude.</p>
-		</main>
-	</body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Honza Růžek – osobní trenér Praha | trénink a výživa</title>
+<meta name="description" content="Mgr. Jan Růžek – osobní trenér a výživový poradce v Praze (Smíchov, Pankrác, Karlín). Trénink na míru a jídelníček. Od 850 Kč za lekci.">
+<meta name="theme-color" content="#0d0d0d">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Honza Růžek – změň svůj život už dnes!">
+<meta property="og:description" content="Osobní trenér a výživový poradce v Praze. Trénink na míru a jídelníček.">
+<meta property="og:image" content="assets/hero.jpg">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"LocalBusiness","name":"Honza Růžek – osobní trenér","description":"Osobní trenér a výživový poradce v Praze.","telephone":"+420775046906","email":"honzaruzek@seznam.cz","url":"https://honzaruzek.com/","image":"assets/hero.jpg","priceRange":"850–1200 Kč / lekce","address":{"@type":"PostalAddress","streetAddress":"Štefánikova 43a (Euforie Fitness)","addressLocality":"Praha 5 – Smíchov","postalCode":"150 00","addressCountry":"CZ"},"sameAs":["https://www.facebook.com/honza.ruzek","https://www.instagram.com/_honza_ruzek_/"]}
+</script>
+<style>
+:root{
+  --ink:#0d0d0d; --ink2:#1b1b1b; --paper:#fff7e8; --white:#fff;
+  --lime:#d4ff3a; --pink:#ff5ca8; --gold:#ffb52e; --blue:#7b9bff;
+  --shc:var(--ink); --r:20px;
+  --font:'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:124px}
+body{background:var(--paper);color:var(--ink);font:500 17px/1.55 var(--font);overflow-x:clip;-webkit-font-smoothing:antialiased}
+body.lock{overflow:hidden}
+main{overflow-x:clip}
+img{max-width:100%;display:block}
+a{color:inherit}
+ul{list-style:none}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-weight:900;font-stretch:70%;line-height:.92;letter-spacing:-.005em;text-transform:uppercase}
+h2{font-size:clamp(2.6rem,7vw,5.6rem)}
+h2 em{font-style:normal;color:var(--pink)}
+h3{font-size:clamp(1.7rem,3.2vw,2.3rem)}
+.wrap{width:100%;max-width:1240px;margin-inline:auto;padding-inline:clamp(16px,4vw,40px)}
+.sec{padding:clamp(72px,11vw,128px) 0;position:relative}
+.ink{background:var(--ink);color:var(--white);--shc:var(--white)}
+.paper{background:var(--paper)}
+.lime{background:var(--lime)}
+.pinkbg{background:var(--pink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+
+/* ---------- progress + header ---------- */
+#progress{position:fixed;top:0;left:0;right:0;height:5px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--lime),var(--pink),var(--gold))}
+.hdr{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .25s,border-color .25s;border-bottom:3px solid transparent}
+.hdr.scrolled{background:rgba(13,13,13,.92);backdrop-filter:blur(10px);border-bottom-color:var(--lime)}
+.hdr .wrap{display:flex;align-items:center;gap:14px;height:72px;color:#fff}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:900;font-stretch:75%;text-transform:uppercase;letter-spacing:.02em;flex-shrink:0}
+.hr-logo{width:62px;height:auto;overflow:visible;flex-shrink:0}
+.hr-tile,.hr-l,.hr-burst{transform-box:fill-box;transform-origin:center}
+.hr-tile{transform:rotate(-5deg)}
+.hr-l{font:900 64px var(--font);font-stretch:72%;fill:var(--ink)}
+.hr-r{fill:var(--pink);stroke:var(--ink);stroke-width:3.5px;paint-order:stroke;stroke-linejoin:round}
+.hr-n{font:900 19px var(--font);font-stretch:80%;fill:var(--ink)}
+.hr-burst{fill:var(--gold);stroke:var(--ink);stroke-width:3.5px;stroke-linejoin:round;animation:rot 9s linear infinite}
+.hr-spark line{stroke:var(--lime);stroke-width:5px;stroke-linecap:round;animation:spark 1.1s ease-in-out infinite}
+.hr-spark line:nth-child(2){animation-delay:.18s}
+.hr-spark line:nth-child(3){animation-delay:.36s}
+@keyframes spark{50%{opacity:.15;transform:translate(-3px,3px)}}
+.logo:hover .hr-tile{animation:logoWiggle .5s}
+.logo:hover .hr-h{animation:hop .45s}
+.logo:hover .hr-r{animation:hop .45s .1s}
+@keyframes logoWiggle{25%{transform:rotate(-12deg) scale(1.08)}75%{transform:rotate(4deg) scale(1.08)}}
+@keyframes hop{40%{transform:translateY(-10px) rotate(-6deg)}}
+.nav{display:flex;gap:4px;margin-left:auto}
+.nav a{text-decoration:none;font-weight:700;font-size:.95rem;padding:8px 12px;border-radius:999px;white-space:nowrap;transition:background .15s,color .15s}
+@media (max-width:1280px){.hdr .logo span{display:none}.nav a{padding:8px 9px}}
+.nav a:hover{background:var(--lime);color:var(--ink)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:700 .8rem/1 var(--mono);padding:9px 12px;border-radius:999px;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);color:#fff;white-space:nowrap}
+.xp b{color:var(--lime)}
+.xp.bump{animation:bump .5s}
+@keyframes bump{30%{transform:scale(1.25) rotate(-6deg);background:var(--lime);color:var(--ink)}}
+#calm[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.hdr .btn{padding:.75rem 1.1rem;font-size:.9rem}
+#menu-btn{display:none;width:46px;height:46px;border-radius:50%;border:2px solid #fff;background:transparent;font-size:1.3rem;line-height:1}
+.menu{position:fixed;inset:0;z-index:45;background:var(--lime);color:var(--ink);display:flex;flex-direction:column;justify-content:center;gap:4px;padding:90px 24px 40px;transform:translateY(-100%);transition:transform .35s cubic-bezier(.7,0,.2,1);visibility:hidden}
+.menu.open{transform:none;visibility:visible}
+.menu a{font-weight:900;font-stretch:70%;text-transform:uppercase;font-size:clamp(2.4rem,11vw,4rem);line-height:1.05;text-decoration:none}
+.menu a:hover{color:var(--pink)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;font:900 1.05rem/1 var(--font);font-stretch:85%;text-transform:uppercase;letter-spacing:.02em;padding:1.05rem 1.5rem;border:3px solid var(--ink);border-radius:999px;background:var(--lime);color:var(--ink);text-decoration:none;box-shadow:4px 4px 0 var(--shc);transition:transform .12s,box-shadow .12s;white-space:nowrap}
+.btn:hover{transform:translate(-2px,-2px) rotate(-1.5deg);box-shadow:7px 7px 0 var(--shc)}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--shc)}
+.btn-pink{background:var(--pink)}
+.btn-white{background:#fff}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-ghost{background:transparent;color:inherit;border-color:currentColor}
+.btn-sm{padding:.8rem 1.15rem;font-size:.92rem}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;background:var(--ink);color:#fff;overflow:hidden;padding:120px 0 80px;--shc:#fff}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:62% 40%}
+.hero::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(13,13,13,.94) 0%,rgba(13,13,13,.7) 40%,rgba(13,13,13,.05) 78%),linear-gradient(0deg,rgba(13,13,13,.9),transparent 45%)}
+.hero-inner{position:relative;z-index:2}
+.kicker{font:700 .85rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;display:inline-block;background:#fff;color:var(--ink);padding:8px 12px;border-radius:999px;transform:rotate(-2deg);margin-bottom:22px}
+.hero h1{font-size:clamp(3.4rem,min(11vw,14.5vh),9.5rem);max-width:10ch}
+.hl{display:inline-block;background:var(--lime);color:var(--ink);padding:.02em .14em 0;transform:rotate(-2deg);animation:wiggle 3.2s ease-in-out infinite}
+@keyframes wiggle{0%,86%,100%{transform:rotate(-2deg)}89%{transform:rotate(2deg) scale(1.04)}92%{transform:rotate(-4deg) scale(1.04)}95%{transform:rotate(1deg)}}
+.rot{font-weight:900;font-stretch:80%;font-size:clamp(1.5rem,3.6vw,2.4rem);text-transform:uppercase;margin:26px 0 20px}
+.rot-word{display:inline-block;color:var(--ink);background:var(--pink);padding:0 .25em;border-radius:8px}
+.rot-word.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:translateY(40%) scale(.6) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
+.tldr{max-width:540px;border:2px dashed rgba(255,255,255,.55);border-radius:16px;padding:14px 18px;background:rgba(13,13,13,.45);backdrop-filter:blur(6px);font-size:1rem}
+.tldr b:first-child{font:700 .75rem/1 var(--mono);background:var(--lime);color:var(--ink);padding:5px 8px;border-radius:6px;margin-right:8px;vertical-align:2px}
+.cta-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px}
+.spin{position:absolute;z-index:2;right:clamp(16px,5vw,80px);top:clamp(100px,16vh,160px);width:clamp(120px,14vw,190px);aspect-ratio:1}
+.spin .ring{width:100%;height:100%;animation:rot 14s linear infinite}
+.spin .ring text{font:900 17px var(--font);font-stretch:80%;letter-spacing:.06em;fill:var(--ink)}
+.spin .hr-logo{position:absolute;inset:0;margin:auto;width:46%}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ---------- tickers ---------- */
+.ticker{overflow:hidden;border-block:3px solid var(--ink);padding:14px 0;white-space:nowrap;font-weight:900;font-stretch:72%;text-transform:uppercase;font-size:clamp(1.5rem,3.4vw,2.4rem);line-height:1}
+.ticker-track{display:inline-flex;animation:marq 28s linear infinite}
+.ticker-track span{padding-right:.5em}
+.ticker.rev .ticker-track{animation-direction:reverse}
+.ticker i{font-style:normal;color:var(--pink);-webkit-text-stroke:0}
+.ticker.pinkbg i{color:#fff}
+@keyframes marq{to{transform:translateX(-50%)}}
+.tilt{transform:rotate(-1.6deg);margin:-14px -20px 0;position:relative;z-index:3}
+
+/* ---------- section head ---------- */
+.sec-head{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.lvl,.time{font:700 .78rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:8px 11px;border-radius:999px;border:2px solid currentColor}
+.lvl{background:var(--ink);color:var(--lime);border-color:var(--ink)}
+.ink .lvl{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.lead{font-size:clamp(1.1rem,2vw,1.35rem);max-width:640px;margin-top:18px;font-weight:600}
+
+/* ---------- reveal ---------- */
+.js .reveal{opacity:0;transform:translateY(34px) rotate(-1.2deg);transition:opacity .6s,transform .7s cubic-bezier(.2,1.2,.3,1)}
+.js .reveal.in{opacity:1;transform:none}
+
+/* ---------- cards / lists ---------- */
+.card{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:var(--r);box-shadow:7px 7px 0 var(--ink)}
+.ink .card{box-shadow:7px 7px 0 var(--lime)}
+.check li{position:relative;padding-left:32px;margin:10px 0;font-size:.98rem}
+.check li::before{content:"✔";position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;background:var(--lime);border:2px solid var(--ink);font-size:.7rem;display:grid;place-items:center;font-weight:900}
+.check b{font-weight:800}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags li{font:700 .72rem/1 var(--mono);text-transform:uppercase;padding:7px 9px;border-radius:999px;border:2px solid var(--ink);background:var(--paper)}
+details.more{margin-top:16px;border-top:2px dashed currentColor;padding-top:12px}
+details.more summary{cursor:pointer;font-weight:800;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::after{content:"+";flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--lime);display:grid;place-items:center;font-weight:900;font-size:1.2rem;transition:transform .25s}
+details.more[open] summary::after{transform:rotate(45deg);background:var(--pink);color:var(--ink)}
+details.more > *:not(summary){margin-top:12px}
+details.more p{font-size:.98rem;line-height:1.6}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(14px,2vw,24px)}
+.stat{padding:22px 20px 20px;border:3px solid var(--ink);border-radius:var(--r);box-shadow:6px 6px 0 var(--ink)}
+.stat:nth-child(odd){transform:rotate(-1.4deg)}
+.stat:nth-child(even){transform:rotate(1.2deg)}
+.js .stat.reveal.in:nth-child(odd){transform:rotate(-1.4deg)}
+.js .stat.reveal.in:nth-child(even){transform:rotate(1.2deg)}
+.stat .n{font-weight:900;font-stretch:68%;font-size:clamp(3rem,6.5vw,5.2rem);line-height:.9;display:flex;align-items:flex-start}
+.stat .n sup{font-size:.5em;margin-left:2px}
+.stat p{font-weight:800;text-transform:uppercase;font-stretch:85%;margin-top:8px;font-size:.95rem}
+.c-lime{background:var(--lime)} .c-pink{background:var(--pink)} .c-gold{background:var(--gold)} .c-blue{background:var(--blue)}
+
+/* ---------- quiz ---------- */
+.quiz{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.quiz button{font-weight:900;font-stretch:85%;text-transform:uppercase;font-size:clamp(1rem,2vw,1.2rem);padding:1rem 1.3rem;border-radius:999px;border:3px solid #fff;background:transparent;color:#fff;transition:transform .12s,background .15s,color .15s}
+.quiz button:hover{transform:translateY(-3px) rotate(-2deg);background:#fff;color:var(--ink)}
+.quiz button[aria-pressed="true"]{background:var(--pink);border-color:var(--pink);color:var(--ink)}
+.quiz-out{margin-top:30px;max-width:760px;padding:26px;background:var(--lime);color:var(--ink);border:3px solid var(--ink);border-radius:var(--r);box-shadow:7px 7px 0 #fff;animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+.quiz-out .rec{font:700 .78rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.quiz-out h3{margin:10px 0 10px}
+.quiz-out p{font-size:1.05rem;font-weight:600}
+.quiz-out .tags{margin:14px 0 18px}
+.quiz-out .btn{--shc:var(--ink)}
+
+/* ---------- about ---------- */
+.about{display:grid;grid-template-columns:5fr 7fr;gap:clamp(32px,5vw,72px);align-items:start}
+.about-photo{position:relative}
+.about-photo img{width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 30%;border:3px solid var(--ink);border-radius:var(--r);box-shadow:10px 10px 0 var(--pink);transform:rotate(-2deg)}
+.stk{position:absolute;font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1rem;padding:10px 14px;border:3px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);white-space:nowrap}
+.stk-1{background:var(--lime);top:18px;left:-14px;transform:rotate(-6deg)}
+.stk-2{background:var(--gold);bottom:56px;right:-14px;transform:rotate(5deg)}
+.stk-3{background:#fff;bottom:-14px;left:24px;transform:rotate(-3deg)}
+.facts{display:grid;gap:12px;margin-top:26px}
+.facts li{display:flex;gap:14px;align-items:flex-start;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:14px 16px;box-shadow:4px 4px 0 var(--ink);transition:transform .15s}
+.facts li:hover{transform:translateX(6px) rotate(-.6deg)}
+.facts i{font-style:normal;font-size:1.6rem;line-height:1}
+.facts b{font-weight:900}
+
+/* ---------- services ---------- */
+.svcs{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,3vw,34px);margin-top:40px}
+.svc{overflow:hidden;display:flex;flex-direction:column}
+.svc-img{position:relative;aspect-ratio:16/10;border-bottom:3px solid var(--ink);overflow:hidden;background:var(--gold)}
+.svc-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.svc:hover .svc-img img{transform:scale(1.06) rotate(1deg)}
+.svc-no{position:absolute;top:14px;left:14px;font-weight:900;font-stretch:70%;font-size:2.2rem;line-height:1;background:var(--lime);border:3px solid var(--ink);border-radius:12px;padding:6px 10px;transform:rotate(-5deg)}
+.svc-sticker{position:absolute;right:14px;bottom:14px;font-weight:900;font-stretch:65%;text-transform:uppercase;font-size:clamp(1.4rem,2.6vw,1.9rem);line-height:1;background:var(--ink);color:var(--lime);border:3px solid var(--lime);padding:7px 12px;border-radius:12px;transform:rotate(-4deg);box-shadow:4px 4px 0 var(--pink)}
+.svc-body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:12px;flex:1}
+.svc .one{font-size:1.12rem;font-weight:700}
+.svc .btn{align-self:flex-start;margin-top:auto;--shc:var(--ink)}
+.svc details.more{margin-top:4px}
+.minis{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(20px,3vw,34px);margin-top:clamp(20px,3vw,34px)}
+.mini{display:flex;gap:16px;align-items:flex-start;padding:20px 22px}
+.mini i{font-style:normal;font-size:2.2rem;line-height:1}
+.mini h3{font-size:1.5rem;margin-bottom:6px}
+.mini p{font-size:.98rem}
+
+/* ---------- pricing ---------- */
+.bars{margin-top:34px;padding:20px 22px;max-width:760px}
+.bars-t{font:700 .8rem/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.bar{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:center;margin:8px 0;font-weight:800;font-size:.95rem}
+.bar i{height:22px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);overflow:hidden;position:relative}
+.bar i::after{content:"";position:absolute;inset:0;width:var(--w);background:var(--c,var(--pink));border-right:2px solid var(--ink);border-radius:999px;transition:width 1.2s cubic-bezier(.2,1,.3,1) .2s}
+.js .bars:not(.in) .bar i::after{width:0}
+.prices{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,2.6vw,30px);margin-top:40px;align-items:stretch}
+.price{position:relative;padding:28px 24px 26px;display:flex;flex-direction:column}
+.price .badge{position:absolute;top:-18px;right:18px;font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:.95rem;background:var(--ink);color:var(--lime);padding:9px 13px;border-radius:12px;transform:rotate(4deg)}
+.price .sub{font-weight:700;margin:8px 0 18px;min-height:2.6em}
+.amount{display:flex;align-items:baseline;gap:8px;font-weight:900;font-stretch:65%;line-height:.9}
+.amount b{font-size:clamp(3.6rem,6vw,4.8rem)}
+.amount span{font-size:1.8rem}
+.per{font:700 .82rem/1.3 var(--mono);text-transform:uppercase;margin:10px 0 6px;display:inline-block;align-self:flex-start;background:var(--paper);border:2px solid var(--ink);border-radius:8px;padding:6px 9px}
+.price .check{margin:10px 0 22px;flex:1}
+.save{font-weight:900;font-stretch:80%;text-transform:uppercase;background:var(--gold);border:2px solid var(--ink);border-radius:10px;padding:8px 12px;margin-bottom:18px;transform:rotate(-1.2deg);align-self:flex-start}
+.price .btn{width:100%}
+.price.hot{background:var(--pink);transform:rotate(1deg) scale(1.02)}
+.js .price.hot.reveal.in{transform:rotate(1deg) scale(1.02)}
+.price.hot .per,.price.hot .tags li{background:#fff}
+.price.hot .badge{background:var(--lime);color:var(--ink);border:3px solid var(--ink);font-size:1.05rem}
+
+/* ---------- wheel of fortune ---------- */
+.wheel-teaser{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:34px;padding:18px 22px;background:var(--ink);color:#fff;border:3px solid var(--ink);border-radius:var(--r);box-shadow:7px 7px 0 var(--pink);text-decoration:none;font-weight:600;transition:transform .12s}
+.wheel-teaser:hover{transform:rotate(-1deg) scale(1.01)}
+.wt-ico{font-size:2.4rem;line-height:1;display:inline-block;animation:wiggle2 1.6s infinite}
+.wheel-teaser b{color:var(--lime);font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1.2rem;margin-right:6px}
+.wheel-teaser > span:nth-child(2){flex:1;min-width:200px}
+.wheel-teaser em{font-style:normal;font:700 .8rem/1 var(--mono);text-transform:uppercase;background:var(--lime);color:var(--ink);border-radius:999px;padding:9px 12px}
+.wheel-sec{background:radial-gradient(circle at 75% 45%,#2b1645 0,var(--ink) 62%)}
+.wheel-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"head wheel" "out wheel";gap:clamp(24px,4vw,64px);align-items:start}
+.w-head{grid-area:head}
+.w-wheel{grid-area:wheel;align-self:center}
+.w-out{grid-area:out}
+.t-lime{color:var(--lime)}
+.t-pink{color:var(--pink)}
+.pkg-pick{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.pkg-pick button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 16px;border-radius:16px;border:3px solid #fff;background:transparent;color:#fff;font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1.1rem;line-height:1;transition:transform .12s,background .15s}
+.pkg-pick small{font:700 .75rem/1 var(--mono);opacity:.85;text-transform:none}
+.pkg-pick button:hover{transform:translateY(-3px) rotate(-1.5deg)}
+.pkg-pick button[aria-checked="true"]{background:var(--lime);border-color:var(--lime);color:var(--ink)}
+.tokens{display:flex;align-items:center;gap:10px;font:700 .85rem/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.tok{font-size:1.7rem;display:inline-block;transition:opacity .3s,filter .3s,transform .3s}
+.tok.used{opacity:.25;filter:grayscale(1);transform:scale(.8)}
+.wheel-res{position:relative;margin-top:18px;padding:22px;animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+.wheel-res[hidden]{display:none}
+.wheel-res.good{background:var(--lime)}
+.wheel-res.bad{background:var(--pink)}
+.wheel-res.shake{animation:shake .5s}
+@keyframes shake{20%,60%{transform:translateX(-8px) rotate(-1deg)}40%,80%{transform:translateX(8px) rotate(1deg)}}
+.res-tag{font:700 .8rem/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.res-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px;margin:10px 0 6px;font-weight:900;font-stretch:65%;line-height:.9}
+.res-price s{font-size:1.6rem;opacity:.55}
+.res-price b{font-size:clamp(3rem,6vw,4.4rem)}
+.res-diff{font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1.2rem}
+.res-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.wheel-res .btn{--shc:var(--ink)}
+.fine{font-size:.85rem;opacity:.7;margin-top:16px;max-width:520px}
+.wheel-frame{--size:min(460px,calc(100vw - 52px));position:relative;width:var(--size);height:var(--size);margin-inline:auto;border-radius:50%;background:var(--ink);border:10px solid var(--gold);box-shadow:0 0 0 4px var(--ink),0 0 60px rgba(212,255,58,.3),10px 10px 0 4px var(--pink)}
+.wheel{position:absolute;top:28px;left:28px;width:calc(100% - 56px);height:calc(100% - 56px)}
+.seg-t{font:900 15px var(--font);font-stretch:70%;fill:var(--ink)}
+.seg-j{font-size:12px;fill:var(--ink)}
+.bulbs span{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:rgba(255,255,255,.35);transform:rotate(var(--a)) translateY(calc((var(--size) - 20px) / -2 + 14px))}
+.bulbs span:nth-child(odd){animation:blink 1s infinite}
+.bulbs span:nth-child(even){animation:blink 1s .5s infinite}
+.spinning .bulbs span{animation-duration:.3s}
+@keyframes blink{0%,49%{background:var(--gold);box-shadow:0 0 10px 2px var(--gold)}50%,100%{background:rgba(255,255,255,.35);box-shadow:none}}
+.pointer{position:absolute;top:-24px;left:50%;width:40px;height:52px;margin-left:-20px;z-index:3;transform-origin:50% 0;filter:drop-shadow(2px 0 0 var(--ink)) drop-shadow(-2px 0 0 var(--ink)) drop-shadow(0 3px 0 var(--ink))}
+.pointer::before{content:"";position:absolute;inset:0;background:var(--pink);clip-path:polygon(0 0,100% 0,50% 100%)}
+.spinning .pointer{animation:tick .12s infinite alternate}
+@keyframes tick{to{transform:rotate(-12deg)}}
+.hub{position:absolute;left:50%;top:50%;width:26%;height:26%;transform:translate(-50%,-50%);z-index:2;border-radius:50%;border:4px solid #fff;background:var(--ink);color:var(--lime);font-weight:900;font-stretch:70%;font-size:clamp(1.3rem,3.6vw,2rem);text-transform:uppercase;box-shadow:0 0 0 4px var(--ink);transition:transform .12s}
+.hub:not(:disabled){animation:pulse 1.4s infinite}
+.hub:hover:not(:disabled){transform:translate(-50%,-50%) scale(1.08) rotate(-4deg)}
+.hub:active:not(:disabled){transform:translate(-50%,-50%) scale(.95)}
+.hub:disabled{color:#888;cursor:not-allowed}
+.spinning .hub{color:var(--pink)}
+@keyframes pulse{50%{box-shadow:0 0 0 4px var(--ink),0 0 0 14px rgba(212,255,58,.35)}}
+@media (max-width:980px){
+  .wheel-grid{grid-template-columns:1fr;grid-template-areas:"head" "wheel" "out"}
+}
+
+/* ---------- memes (shared) ---------- */
+.cap{position:absolute;left:10px;right:10px;z-index:2;margin:0;text-align:center;font:400 clamp(1.7rem,3.4vw,2.6rem)/1.02 'Anton',Impact,'Arial Narrow',sans-serif;text-transform:uppercase;color:#fff;text-shadow:2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,0 2px 0 #000,2px 0 0 #000,0 -2px 0 #000,-2px 0 0 #000}
+.cap.top{top:12px}
+.cap.bot{bottom:12px}
+@keyframes gifloop{0%,100%{transform:scale(1.03)}25%{transform:scale(1.06) rotate(-.8deg)}50%{transform:scale(1.04) translateX(-1.2%)}75%{transform:scale(1.07) rotate(.8deg)}}
+
+/* ---------- gigachad ---------- */
+.chad{display:grid;grid-template-columns:5fr 7fr;gap:clamp(32px,5vw,72px);align-items:center}
+.chad-media{position:relative}
+.chad-photo{position:relative;aspect-ratio:4/5;overflow:hidden;background:#000;border:3px solid var(--ink);border-radius:var(--r);box-shadow:10px 10px 0 var(--ink);transform:rotate(-1.5deg)}
+.chad-photo img{width:100%;height:100%;object-fit:cover;object-position:60% 20%;filter:grayscale(1) contrast(1.5) brightness(.9);animation:chadzoom 6s ease-in-out infinite alternate}
+.chad-photo::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 45%,rgba(0,0,0,.75))}
+@keyframes chadzoom{to{transform:scale(1.08)}}
+.moai{position:absolute;z-index:3;right:-14px;top:40%;width:84px;height:84px;display:grid;place-items:center;font-size:3.2rem;line-height:1;background:var(--lime);border:3px solid var(--ink);border-radius:50%;box-shadow:4px 4px 0 var(--ink);animation:wiggle2 2s infinite}
+.vc{margin-top:26px;background:#fff;border:3px solid var(--ink);border-radius:var(--r);overflow:hidden;box-shadow:7px 7px 0 var(--ink)}
+.vc-h,.vc-r{display:grid;grid-template-columns:1fr 1fr}
+.vc-h span{padding:12px 16px;font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:1.15rem}
+.vc-h span:first-child{background:#e9e4da;color:#7a756a}
+.vc-h span:last-child{background:var(--ink);color:var(--lime)}
+.vc-r span{padding:11px 16px;border-top:2px solid var(--ink);font-weight:600}
+.vc-r span:first-child{background:#f6f2ea;color:#8a8578;text-decoration:line-through;text-decoration-thickness:2px}
+.vc-r span:last-child{background:#fff;border-left:2px solid var(--ink);font-weight:800;transition:background .15s}
+.vc-r:hover span:last-child{background:var(--lime)}
+.chad-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:28px}
+.chad-cta small{font:700 .75rem/1.35 var(--mono);text-transform:uppercase;opacity:.7}
+
+/* ---------- meme gifs ---------- */
+.memes{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(16px,2.4vw,28px);margin-top:40px}
+.meme-card{margin:0;display:flex;flex-direction:column;background:#000;border:3px solid #fff;border-radius:var(--r);overflow:hidden;box-shadow:7px 7px 0 var(--lime);transform:rotate(-1deg)}
+.meme-card:nth-child(even){box-shadow:7px 7px 0 var(--pink);transform:rotate(1deg)}
+.meme-img{position:relative;aspect-ratio:4/5;overflow:hidden}
+.meme-img img{width:100%;height:100%;object-fit:cover;animation:gifloop 1.6s steps(4) infinite}
+.meme-img .cap{font-size:clamp(1.3rem,2vw,1.75rem)}
+.meme-card figcaption{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-top:3px solid #fff;font:700 .72rem/1.2 var(--mono);text-transform:uppercase;color:var(--lime)}
+.meme-card figcaption b{background:var(--lime);color:var(--ink);padding:3px 6px;border-radius:5px}
+.drake{display:grid;grid-template-rows:1fr 1fr;background:#fff}
+.dk-row{display:grid;grid-template-columns:42% 1fr}
+.dk-row + .dk-row{border-top:3px solid var(--ink)}
+.dk-e{display:grid;place-items:center;background:var(--gold);border-right:3px solid var(--ink)}
+.dk-row + .dk-row .dk-e{background:var(--lime)}
+.dk-e i{font-style:normal;font-size:clamp(3.2rem,5.4vw,4.4rem);line-height:1;display:inline-block}
+.dk-e .no{animation:nope .9s ease-in-out infinite}
+.dk-e .yes{animation:yep 1.2s ease-in-out infinite}
+@keyframes nope{25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+@keyframes yep{50%{transform:translateY(-8px) scale(1.06)}}
+.dk-row p{display:grid;place-items:center;padding:10px;text-align:center;font:400 clamp(1.05rem,1.7vw,1.35rem)/1.05 'Anton',Impact,sans-serif;text-transform:uppercase;color:var(--ink)}
+.react{position:absolute;top:-16px;right:14px;font:400 1.15rem/1 'Anton',Impact,sans-serif;text-transform:uppercase;background:var(--ink);color:#fff;border:3px solid var(--ink);border-radius:10px;padding:7px 11px;transform:rotate(4deg)}
+@media (max-width:1080px){
+  .memes{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:900px){
+  .chad{grid-template-columns:1fr}
+  .chad-media{max-width:440px}
+}
+@media (max-width:700px){
+  .memes{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:78%;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 6px 18px;margin-inline:-6px}
+  .meme-card{scroll-snap-align:center}
+  .moai{right:6px}
+  .vc-h span,.vc-r span{padding:10px 12px;font-size:.92rem}
+}
+
+/* ---------- before / after ---------- */
+.ba{position:relative;max-width:820px;margin:40px auto 0;aspect-ratio:600/480;overflow:hidden;border:3px solid #fff;border-radius:var(--r);box-shadow:8px 8px 0 var(--lime);touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none}
+.ba:focus-within{outline:3px solid var(--blue);outline-offset:4px}
+.ba-layer{position:absolute;inset:0}
+.ba-layer svg{display:block;width:100%;height:100%}
+.ba-before{clip-path:inset(0 calc(100% - var(--pos)) 0 0)}
+.ba-handle{position:absolute;top:0;bottom:0;left:var(--pos);z-index:3;width:4px;margin-left:-2px;background:#fff;pointer-events:none}
+.ba-handle span{position:absolute;top:50%;left:50%;width:54px;height:54px;display:grid;place-items:center;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink);color:var(--lime);border:3px solid #fff;font:700 .8rem/1 var(--mono);box-shadow:0 0 0 5px rgba(0,0,0,.25)}
+.ba-tag{position:absolute;top:14px;z-index:4;padding:8px 12px;border:3px solid var(--ink);border-radius:12px;font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:1.1rem;color:var(--ink);pointer-events:none}
+.ba-tag-l{left:14px;background:#fff;transform:rotate(-4deg)}
+.ba-tag-r{right:14px;background:var(--pink);transform:rotate(4deg)}
+.ba-stats{position:absolute;bottom:14px;padding:10px 12px;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);font:700 .75rem/1.6 var(--mono);text-transform:uppercase}
+.ba-before .ba-stats{left:14px}
+.ba-after .ba-stats{right:14px}
+.ba-range{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;pointer-events:none}
+.ba-meta{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:28px}
+.ba-count{font:700 1rem/1 var(--mono);text-transform:uppercase;border:2px solid #fff;border-radius:999px;padding:12px 16px}
+.ba-count b{color:var(--lime);font-size:1.3rem}
+.ba-fine{text-align:center;margin-inline:auto}
+.af-hr{font:400 34px 'Anton',Impact,sans-serif;fill:#0d0d0d}
+.bf-head,.af-head{transform-box:fill-box;transform-origin:50% 100%}
+.bf-head{animation:droop 3s ease-in-out infinite}
+@keyframes droop{50%{transform:rotate(7deg) translateY(3px)}}
+.af-head{animation:chadnod 1.6s ease-in-out infinite}
+@keyframes chadnod{50%{transform:translateY(-5px) rotate(-3deg)}}
+.bf-rain line{animation:rain .9s linear infinite}
+.bf-rain line:nth-child(2){animation-delay:.3s}
+.bf-rain line:nth-child(3){animation-delay:.6s}
+.bf-rain line:nth-child(4){animation-delay:.45s}
+@keyframes rain{0%{transform:translateY(-10px);opacity:0}30%{opacity:1}100%{transform:translateY(40px);opacity:0}}
+.af-rays{transform-box:fill-box;transform-origin:center;animation:rot 30s linear infinite}
+.af-glint{animation:glint 2.2s infinite}
+@keyframes glint{0%,70%,100%{opacity:0}80%{opacity:1}}
+.af-bicep,.af-spark{transform-box:fill-box;transform-origin:center}
+.af-bicep{animation:pump 1.6s ease-in-out infinite}
+@keyframes pump{50%{transform:scale(1.18)}}
+.af-spark{animation:twinkle 1.4s ease-in-out infinite}
+g:nth-of-type(2n) > .af-spark{animation-delay:.6s}
+@keyframes twinkle{50%{transform:scale(.4) rotate(45deg);opacity:.4}}
+@media (max-width:700px){
+  .ba-stats{bottom:8px;padding:6px 8px;font-size:.58rem;line-height:1.5;box-shadow:3px 3px 0 var(--ink)}
+  .ba-before .ba-stats{left:8px}
+  .ba-after .ba-stats{right:8px}
+  .ba-tag{top:8px;padding:5px 8px;font-size:.85rem;border-width:2px}
+  .ba-tag-l{left:8px}
+  .ba-tag-r{right:8px}
+  .ba-handle span{width:44px;height:44px}
+}
+
+/* ---------- game layer ---------- */
+.hud{position:fixed;top:72px;left:0;right:0;z-index:49;background:rgba(13,13,13,.94);backdrop-filter:blur(8px);border-bottom:3px solid var(--pink);color:#fff;opacity:0;pointer-events:none;transform:translateY(-16px);transition:transform .3s,opacity .3s,border-color .1s}
+.hud.on{opacity:1;pointer-events:auto;transform:none}
+body.lock .hud{opacity:0;pointer-events:none}
+.hud-in{display:flex;align-items:center;gap:10px;height:40px}
+.boss{position:relative;flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+.boss-name{font-weight:900;font-stretch:75%;text-transform:uppercase;white-space:nowrap}
+.boss-bar{flex:1;min-width:60px;height:16px;overflow:hidden;background:#3a1020;border:2px solid #fff;border-radius:999px}
+.boss-bar i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#ff2e63,var(--pink));transition:width .25s}
+.boss-pct{min-width:3.4em;text-align:right;font:700 .8rem/1 var(--mono)}
+.boss.dead .boss-bar i{background:var(--lime)}
+.boss.dead .boss-name,.boss.dead .boss-pct{color:var(--lime)}
+.dmg{position:absolute;left:var(--x);top:-4px;z-index:2;font:400 1.15rem/1 'Anton',Impact,sans-serif;color:var(--pink);text-shadow:2px 2px 0 #000,-1px -1px 0 #000;white-space:nowrap;pointer-events:none;animation:dmg 1s ease-out forwards}
+.dmg.crit{color:var(--gold);font-size:1.45rem}
+@keyframes dmg{0%{transform:translate(-50%,0) scale(.6);opacity:0}20%{transform:translate(-50%,10px) scale(1.25);opacity:1}100%{transform:translate(-50%,40px);opacity:0}}
+.hud-btn{padding:7px 10px;font:700 .8rem/1 var(--mono);color:#fff;white-space:nowrap;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.35);border-radius:999px}
+.hud-btn b{color:var(--lime)}
+.hud-btn:hover{border-color:var(--lime)}
+.hud-btn.bump{animation:bump .5s}
+#music[aria-pressed="true"]{background:var(--pink);border-color:var(--pink);color:var(--ink)}
+.hdr .hr-logo{transition:transform .08s}
+.beat .hdr .hr-logo{transform:scale(1.15) rotate(-4deg)}
+.beat .hud{border-bottom-color:var(--lime)}
+.beat #progress{filter:brightness(1.5) saturate(1.4)}
+.quest{display:flex;align-items:flex-start;gap:8px;max-width:540px;margin-top:18px;padding:10px 14px;background:rgba(255,92,168,.18);border:2px solid var(--pink);border-radius:12px;font-weight:600;font-size:.95rem}
+.quest b{color:var(--pink);text-transform:uppercase;font-stretch:80%;font-weight:900}
+.horo{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;margin-top:clamp(28px,4vw,44px);padding:20px 22px;background:var(--ink);color:#fff;box-shadow:7px 7px 0 var(--pink)}
+.horo-ico{font-size:3rem;line-height:1;animation:wiggle2 2.4s infinite}
+.horo h3{font-size:1.5rem;color:var(--lime)}
+.horo p{margin-top:6px;font-weight:600}
+.horo .tags{margin-top:10px}
+.horo .tags li{background:transparent;color:#fff;border-color:#fff;text-transform:none}
+.mbox{display:inline-grid;place-items:center;width:1.9em;height:1.9em;margin-left:.35em;vertical-align:-.4em;padding:0;font-size:1em;line-height:1;background:transparent;border:2px dashed currentColor;border-radius:10px;animation:mboxwig 2.6s infinite}
+.mbox:hover{animation:none;transform:scale(1.2) rotate(-8deg)}
+.mbox.opened{border-style:solid;background:var(--lime);border-color:var(--ink)}
+@keyframes mboxwig{0%,80%,100%{transform:none}84%{transform:rotate(-14deg) scale(1.1)}88%{transform:rotate(12deg) scale(1.1)}92%{transform:rotate(-8deg)}}
+.next{display:flex;align-items:center;gap:12px;margin-top:clamp(36px,5vw,56px);padding:14px 18px;border:2px dashed currentColor;border-radius:16px;text-decoration:none;font-weight:700}
+.next span{padding:6px 9px;white-space:nowrap;font:700 .75rem/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;background:var(--pink);color:var(--ink);border-radius:999px}
+.next b{flex:1;font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1.05rem;filter:blur(5px);transition:filter .6s}
+.next.peek b,.next:hover b,.next:focus-visible b{filter:none}
+.next i{font-style:normal;font-size:1.3rem;animation:bounceY 1.2s infinite}
+@keyframes bounceY{50%{transform:translateY(5px)}}
+.pinkbg .next span{background:var(--ink);color:var(--pink)}
+.chest-wrap{display:flex;justify-content:center;margin-top:clamp(44px,6vw,64px)}
+.chest{display:flex;flex-direction:column;align-items:center;gap:8px;width:min(100%,400px);padding:26px 30px;text-align:center;background:var(--ink);color:#fff;border:3px solid var(--ink);border-radius:var(--r);box-shadow:8px 8px 0 var(--gold)}
+.chest-ico{font-size:4.4rem;line-height:1;filter:grayscale(1);opacity:.5}
+.chest b{font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:1.6rem;color:var(--gold)}
+.chest small{font:700 .78rem/1.35 var(--mono);text-transform:uppercase;opacity:.75}
+.chest .btn{margin-top:8px;--shc:var(--gold)}
+.chest .btn:disabled{background:#444;color:#aaa;cursor:not-allowed;transform:none}
+.chest.ready{box-shadow:8px 8px 0 var(--gold),0 0 50px rgba(255,181,46,.6)}
+.chest.ready .chest-ico{filter:none;opacity:1;animation:chestshake .6s infinite}
+.chest.open .chest-ico{filter:none;opacity:1;animation:wiggle2 1.6s infinite}
+@keyframes chestshake{25%{transform:rotate(-10deg) scale(1.08)}75%{transform:rotate(10deg) scale(1.08)}}
+.mascot{position:fixed;right:10px;bottom:16px;z-index:44;display:flex;flex-direction:row-reverse;align-items:flex-end;gap:8px;pointer-events:none;transform:translateX(160%);transition:transform .5s cubic-bezier(.3,1.5,.5,1)}
+.mascot.on{transform:none}
+.mascot-btn{flex-shrink:0;width:70px;height:70px;padding:0;overflow:hidden;pointer-events:auto;background:var(--lime);border:3px solid var(--ink);border-radius:50%;box-shadow:4px 4px 0 var(--ink);animation:mbob 2.4s ease-in-out infinite}
+.mascot-btn svg{display:block;width:100%;height:100%}
+@keyframes mbob{50%{transform:translateY(-6px) rotate(-4deg)}}
+.bubble{max-width:min(270px,calc(100vw - 110px));margin-bottom:40px;padding:10px 13px;pointer-events:auto;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:14px 14px 4px 14px;box-shadow:4px 4px 0 var(--ink);font-weight:700;font-size:.92rem;line-height:1.35;opacity:0;transform:scale(.6) translateY(10px);transform-origin:100% 100%;transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.bubble.show{opacity:1;transform:none}
+.calm .mascot{display:none}
+.r-common{--rc:#d9d9d9}
+.r-rare{--rc:#7b9bff}
+.r-epic{--rc:#b07cff}
+.r-legendary{--rc:#ffb52e}
+.drop{position:fixed;right:14px;top:46%;z-index:46;display:flex;align-items:center;gap:10px;padding:10px 14px 10px 10px;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 var(--ink);animation:dropin .6s cubic-bezier(.3,1.6,.5,1),glow 1s ease-in-out .6s infinite}
+.drop-ico{font-size:2rem;line-height:1;animation:wiggle2 .8s infinite}
+.drop-txt{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:1.2rem;line-height:1}
+.drop-txt small{padding:3px 6px;font:700 .65rem/1 var(--mono);background:var(--rc);border:2px solid var(--ink);border-radius:999px}
+.drop.out{animation:dropout .4s forwards}
+@keyframes dropin{from{transform:translateX(160%) rotate(20deg)}}
+@keyframes dropout{to{transform:translateX(160%);opacity:0}}
+@keyframes glow{50%{box-shadow:5px 5px 0 var(--ink),0 0 0 9px var(--rc)}}
+.loot-pop{position:fixed;left:50%;top:50%;z-index:75;width:min(360px,calc(100vw - 32px));padding:22px;text-align:center;background:#fff;color:var(--ink);border:4px solid var(--ink);border-radius:var(--r);box-shadow:8px 8px 0 var(--rc),0 0 0 100vmax rgba(13,13,13,.45);transform:translate(-50%,-50%);animation:lootin .5s cubic-bezier(.3,1.6,.5,1);cursor:pointer}
+.lp-r{display:inline-block;padding:6px 10px;font:700 .78rem/1 var(--mono);text-transform:uppercase;background:var(--rc);border:2px solid var(--ink);border-radius:999px}
+.loot-pop i{display:block;margin:12px 0 8px;font-style:normal;font-size:4rem;line-height:1}
+.loot-pop p{font-weight:700;font-size:1.05rem}
+.loot-pop small{display:block;margin-top:10px;font:700 .75rem/1 var(--mono);text-transform:uppercase;opacity:.7}
+@keyframes lootin{from{transform:translate(-50%,-50%) scale(.3) rotate(-12deg);opacity:0}}
+.panel{width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px);margin:auto;padding:0;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:var(--r);box-shadow:10px 10px 0 var(--lime)}
+.panel::backdrop{background:rgba(13,13,13,.7)}
+.panel-in{padding:22px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.panel-x{flex-shrink:0;width:42px;height:42px;background:var(--pink);border:3px solid var(--ink);border-radius:50%;font-weight:900}
+.panel-sum{margin-bottom:12px;font:700 .8rem/1.4 var(--mono);text-transform:uppercase}
+.slots{display:grid;gap:10px}
+.slot{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:#fff;border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--rc,#ccc);font-size:.95rem}
+.slot i{font-style:normal;font-size:1.8rem;line-height:1}
+.slot small{display:block;font:700 .68rem/1.4 var(--mono);text-transform:uppercase;opacity:.7}
+.slot.locked{opacity:.55;border-style:dashed;box-shadow:none}
+.moai-drop{position:fixed;top:-70px;z-index:79;font-size:var(--s,2.4rem);pointer-events:none;animation:moaifall var(--d,3s) linear forwards}
+@keyframes moaifall{to{transform:translateY(calc(100vh + 140px)) rotate(var(--r,180deg))}}
+.chadmode main,.chadmode .ftr{filter:grayscale(1) contrast(1.25)}
+@media (max-width:700px){
+  .hud{top:64px}
+  .hud-in{height:36px;gap:6px}
+  .boss{gap:6px}
+  .boss-name{font-size:.82rem}
+  .boss-pct{display:none}
+  .hud-btn{padding:6px 7px;font-size:.7rem}
+  .mascot{right:8px;bottom:78px}
+  .mascot-btn{width:56px;height:56px}
+  .bubble{margin-bottom:30px;font-size:.85rem}
+  .drop{right:10px;top:40%}
+  .horo{grid-template-columns:1fr;gap:8px}
+  .next{flex-wrap:wrap}
+}
+
+/* ---------- why ---------- */
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,2.6vw,30px);margin-top:40px}
+.why .card{padding:26px 24px}
+.why .emo{font-size:3rem;line-height:1;display:inline-block;margin-bottom:12px}
+.why .card:hover .emo{animation:wiggle2 .5s}
+@keyframes wiggle2{25%{transform:rotate(-14deg) scale(1.15)}75%{transform:rotate(10deg) scale(1.15)}}
+.why .one{font-size:1.1rem;font-weight:700;margin-top:10px}
+.why .tags{margin-top:14px}
+.why .tags li{text-transform:none}
+
+/* ---------- reviews ---------- */
+.revs{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(20px,3vw,34px);margin-top:40px}
+.rev{display:grid;grid-template-columns:150px 1fr;gap:20px;padding:22px}
+.rev img{width:150px;height:200px;object-fit:cover;border:3px solid var(--ink);border-radius:14px;transform:rotate(-3deg);box-shadow:4px 4px 0 var(--ink)}
+.rev:nth-child(2) img{transform:rotate(3deg)}
+.stars{color:var(--ink);letter-spacing:.1em;font-size:1.1rem}
+.rev blockquote{font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:clamp(1.5rem,2.6vw,2rem);line-height:1;margin:8px 0 10px}
+.rev .who{font:700 .8rem/1 var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.rev .tags{margin-top:12px}
+
+/* ---------- quote ---------- */
+.quote{position:relative;overflow:hidden;color:#fff;background:var(--ink)}
+.quote img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;opacity:.28}
+.quote .wrap{position:relative}
+.quote p.big{font-weight:900;font-stretch:68%;text-transform:uppercase;font-size:clamp(2.4rem,6.4vw,5.4rem);line-height:.95;max-width:16ch}
+.quote p.big span{color:var(--lime)}
+.quote p.small{max-width:560px;margin-top:22px;font-size:1.1rem;font-weight:600}
+.quote .sig{font:700 .85rem/1 var(--mono);text-transform:uppercase;margin-top:18px;color:var(--pink)}
+
+/* ---------- contact ---------- */
+.pick-note{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:32px;padding:18px 20px;background:var(--lime);animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+.pick-note[hidden]{display:none}
+.pick-note > span{font-size:2.2rem;line-height:1}
+.pick-note p{flex:1;min-width:220px;font-weight:600}
+.pick-note b{font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1.35rem}
+.pick-note small{font-size:.92rem}
+.socials-big{display:grid;grid-template-columns:3fr 2fr;gap:clamp(20px,3vw,34px);margin-top:44px}
+.soc{position:relative;padding:clamp(24px,3vw,36px);display:flex;flex-direction:column;gap:12px}
+.soc-ig{background:linear-gradient(135deg,var(--gold) 0%,var(--pink) 55%,#b07cff 100%)}
+.soc-fb{background:var(--blue)}
+.soc-logo{width:68px;height:68px;filter:drop-shadow(4px 4px 0 var(--ink))}
+.soc:hover .soc-logo{animation:wiggle2 .5s}
+.ico{width:22px;height:22px;flex-shrink:0}
+.ico-link{display:inline-flex;align-items:center;gap:8px}
+.soc h3{font-size:clamp(2.8rem,6vw,4.6rem)}
+.soc-handle{font:700 1rem/1 var(--mono);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:8px 12px;align-self:flex-start}
+.soc .txt{font-weight:600;font-size:1.08rem;max-width:44ch}
+.soc-btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:auto;padding-top:10px}
+.soc .btn{--shc:var(--ink)}
+.soc-badge{position:absolute;top:-18px;right:18px;font-weight:900;font-stretch:80%;text-transform:uppercase;background:var(--lime);border:3px solid var(--ink);border-radius:12px;padding:8px 12px;transform:rotate(4deg)}
+.direct{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,3vw,34px);margin-top:clamp(20px,3vw,34px)}
+.direct a{display:flex;align-items:center;gap:14px;text-decoration:none;padding:16px 18px;font-weight:800;font-size:1.05rem;word-break:break-word}
+.direct a i{font-style:normal;font-size:1.6rem;line-height:1;flex-shrink:0}
+.direct a small{display:block;font:700 .72rem/1.2 var(--mono);text-transform:uppercase;opacity:.65;letter-spacing:.06em}
+.direct a:hover{transform:translate(-2px,-2px) rotate(-.8deg);box-shadow:9px 9px 0 var(--ink)}
+.direct .card{transition:transform .12s,box-shadow .12s}
+.places{margin-top:clamp(40px,5vw,56px)}
+.places h3{font-size:clamp(1.8rem,3.4vw,2.4rem)}
+.places-sub{font-weight:600;margin:8px 0 16px}
+.places-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,22px)}
+.place{display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:18px;border:3px solid var(--ink);border-radius:16px;background:#fff;box-shadow:5px 5px 0 var(--ink)}
+.place b{display:block;font-weight:900;font-stretch:80%;text-transform:uppercase;font-size:1.35rem;line-height:1;margin-bottom:6px}
+.place span,.place small{display:block}
+.place span{font-weight:700}
+.place small{font-size:.88rem;margin-top:4px;opacity:.75}
+.place-links{display:flex;flex-wrap:wrap;gap:8px}
+.place-links a{font:700 .75rem/1 var(--mono);text-transform:uppercase;text-decoration:none;background:var(--lime);border:2px solid var(--ink);border-radius:999px;padding:8px 11px;white-space:nowrap;transition:background .12s,transform .12s}
+.place-links a:hover{background:var(--pink);transform:rotate(-3deg)}
+
+/* ---------- footer ---------- */
+.ftr{background:var(--ink);color:#fff;padding:64px 0 48px}
+.ftr .wrap{display:grid;grid-template-columns:2fr 1fr 1fr;gap:36px}
+.ftr h4{font-weight:900;font-stretch:75%;text-transform:uppercase;font-size:1.4rem;margin-bottom:12px}
+.ftr p,.ftr li{font-size:.98rem;opacity:.85}
+.ftr li{margin:6px 0}
+.ftr a{text-decoration:none}
+.ftr a:hover{color:var(--lime)}
+.ftr .copy{grid-column:1/-1;border-top:2px solid #333;padding-top:22px;font:600 .78rem/1.5 var(--mono);opacity:.6;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+
+/* ---------- floating bits ---------- */
+.bbar{display:none}
+#toast{position:fixed;left:50%;bottom:24px;z-index:70;transform:translate(-50%,160%);background:var(--ink);color:var(--lime);border:3px solid var(--lime);border-radius:999px;padding:12px 20px;font-weight:800;box-shadow:5px 5px 0 var(--pink);transition:transform .35s cubic-bezier(.3,1.5,.5,1),opacity .2s;width:max-content;max-width:calc(100vw - 32px);text-align:center;pointer-events:none;opacity:0}
+#toast.show{transform:translate(-50%,0);opacity:1}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80}
+
+/* ---------- calm mode ---------- */
+.calm *,.calm *::before,.calm *::after{animation:none!important;transition:none!important}
+.calm{scroll-behavior:auto}
+.calm .reveal{opacity:1!important;transform:none!important}
+.calm .stat:nth-child(odd),.calm .stat:nth-child(even),.calm .price.hot{transform:none!important}
+
+/* ---------- responsive ---------- */
+@media (max-width:1080px){
+  .nav{display:none}
+  #menu-btn{display:grid;place-items:center}
+  .hdr .tools{margin-left:auto}
+  .prices{grid-template-columns:1fr;max-width:560px}
+  .price.hot{order:-1}
+  .why{grid-template-columns:1fr}
+  .places-grid{grid-template-columns:1fr}
+  .svcs{grid-template-columns:1fr;max-width:620px}
+}
+@media (max-width:900px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .about{grid-template-columns:1fr}
+  .about-photo{max-width:440px}
+  .svcs,.minis,.revs,.socials-big,.direct{grid-template-columns:1fr}
+  .ftr .wrap{grid-template-columns:1fr 1fr}
+  .ftr .wrap > div:first-child{grid-column:1/-1}
+}
+@media (max-width:700px){
+  body{font-size:16px}
+  .hdr .wrap{height:64px;gap:8px}
+  .hdr .btn{display:none}
+  .logo span{display:none}
+  .pill{padding:8px 10px;font-size:.75rem}
+  #calm span{display:none}
+  .hero{padding:100px 0 110px;align-items:flex-end}
+  .hero-bg{object-position:66% 50%}
+  .hero::before{background:linear-gradient(0deg,rgba(13,13,13,.96) 0%,rgba(13,13,13,.62) 45%,rgba(13,13,13,.2) 100%)}
+  .spin{top:86px;right:16px;width:104px}
+  .cta-row .btn{flex:1 1 100%}
+  .tilt{margin-inline:-30px}
+  .stk-1{left:8px}
+  .stk-2{right:8px}
+  .bar{grid-template-columns:96px 1fr auto;font-size:.85rem}
+  .rev{grid-template-columns:1fr}
+  .rev img{width:120px;height:150px}
+  .bbar{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;position:fixed;left:12px;right:12px;bottom:12px;z-index:40;transition:transform .3s}
+  .bbar.hide{transform:translateY(150%)}
+  .bbar .btn{padding:.95rem .8rem;font-size:.95rem;box-shadow:3px 3px 0 var(--ink)}
+  #toast{bottom:auto;top:112px;transform:translate(-50%,-30px)}
+  #toast.show{transform:translate(-50%,0)}
+  #music span{display:none}
+  .ftr{padding-bottom:110px}
+  .ftr .wrap{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="ig-grad" cx=".3" cy="1.07" r="1.3">
+      <stop offset="0" stop-color="#fdf497"/><stop offset=".05" stop-color="#fdf497"/><stop offset=".45" stop-color="#fd5949"/><stop offset=".6" stop-color="#d6249f"/><stop offset=".9" stop-color="#285aeb"/>
+    </radialGradient>
+    <clipPath id="fb-clip"><circle cx="12" cy="12" r="12"/></clipPath>
+  </defs>
+  <symbol id="i-ig" viewBox="0 0 24 24">
+    <rect width="24" height="24" rx="6" fill="url(#ig-grad)"/>
+    <rect x="5" y="5" width="14" height="14" rx="4.2" fill="none" stroke="#fff" stroke-width="1.9"/>
+    <circle cx="12" cy="12" r="3.4" fill="none" stroke="#fff" stroke-width="1.9"/>
+    <circle cx="16.25" cy="7.75" r="1.1" fill="#fff"/>
+  </symbol>
+  <symbol id="i-fb" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="12" fill="#0866ff"/>
+    <path clip-path="url(#fb-clip)" fill="#fff" d="M9.1 24V15.71H6.63V12.04H9.1V10.46C9.1 6.38 10.95 4.49 14.96 4.49 15.72 4.49 16.55 4.58 17.07 4.75V8.07C16.65 8.05 16.2 8.04 15.6 8.04 13.6 8.04 12.7 8.8 12.7 10.6V12.04H16.62L15.95 15.71H12.7V24Z"/>
+  </symbol>
+</svg>
+
+<div id="progress" aria-hidden="true"></div>
+
+<header class="hdr" id="hdr">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Honza Růžek – na začátek"><svg class="hr-logo" viewBox="0 0 132 104" aria-hidden="true"><g class="hr-tile"><rect x="12" y="12" width="100" height="80" rx="18" fill="#ff5ca8" stroke="#0d0d0d" stroke-width="5"/><rect x="4" y="4" width="100" height="80" rx="18" fill="#d4ff3a" stroke="#0d0d0d" stroke-width="5"/><text class="hr-l hr-h" x="36" y="66" text-anchor="middle">H</text><text class="hr-l hr-r" x="72" y="66" text-anchor="middle">R</text></g><g class="hr-spark"><line x1="117" y1="12" x2="124" y2="2"/><line x1="119" y1="22" x2="130" y2="17"/><line x1="119" y1="32" x2="130" y2="34"/></g><g transform="translate(104 78)"><polygon class="hr-burst" points="0,-22 4.14,-15.45 11,-19.05 11.31,-11.31 19.05,-11 15.45,-4.14 22,0 15.45,4.14 19.05,11 11.31,11.31 11,19.05 4.14,15.45 0,22 -4.14,15.45 -11,19.05 -11.31,11.31 -19.05,11 -15.45,4.14 -22,0 -15.45,-4.14 -19.05,-11 -11.31,-11.31 -11,-19.05 -4.14,-15.45"/><text class="hr-n" y="7" text-anchor="middle">12</text></g></svg><span>Honza Růžek</span></a>
+    <nav class="nav" aria-label="Hlavní menu">
+      <a href="#kviz">Kvíz</a><a href="#o-mne">O mně</a><a href="#sluzby">Služby</a><a href="#cenik">Ceník</a><a href="#kolo">🎰 Kolo</a><a href="#reference">Reference</a><a href="#kontakt">Kontakt</a>
+    </nav>
+    <div class="tools" style="display:flex;gap:8px;align-items:center">
+      <span class="pill xp" title="Kolik sekcí jsi už prozkoumal(a)">⭐ <b id="xp">0</b>/<span id="xp-total">7</span></span>
+      <button class="pill" id="music" type="button" aria-pressed="false" title="Motivační hudba">🎵 <span>Hudba</span></button>
+      <button class="pill" id="calm" type="button" aria-pressed="false" title="Vypnout / zapnout animace">⚡ <span>Chaos</span></button>
+    </div>
+    <a class="btn btn-sm" href="#kontakt">💬 Napiš mi</a>
+    <button id="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<div class="hud" id="hud">
+  <div class="wrap hud-in">
+    <div class="boss" title="Scrolluj dolů a poraz lenost">
+      <span class="boss-name">👹 Lenost</span>
+      <span class="boss-bar" role="progressbar" aria-label="Zdraví bosse Lenost" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i id="boss-hp"></i></span>
+      <b class="boss-pct" id="boss-pct">100 %</b>
+    </div>
+    <button class="hud-btn" id="bag-btn" type="button" title="Batoh s lootem">🎒 <b id="bag-n">0</b>/12</button>
+    <button class="hud-btn" id="ach-btn" type="button" title="Achievementy">🏆 <b id="ach-n">0</b>/<span id="ach-total">10</span></button>
+  </div>
+</div>
+
+<nav class="menu" id="menu" aria-label="Mobilní menu">
+  <a href="#kviz">🎯 Kvíz</a><a href="#o-mne">👋 O mně</a><a href="#sluzby">💪 Služby</a><a href="#cenik">💸 Ceník</a><a href="#kolo">🎰 Kolo štěstí</a><a href="#reference">⭐ Reference</a><a href="#kontakt">📞 Kontakt</a>
+</nav>
+
+<main>
+<!-- HERO -->
+<section class="hero" id="top">
+  <img class="hero-bg" src="assets/hero.jpg" alt="Honza Růžek dřepuje se dvěma kettlebelly v posilovně" fetchpriority="high">
+  <div class="spin" aria-hidden="true">
+    <svg class="ring" viewBox="0 0 200 200"><defs><path id="circ" d="M100,100 m-76,0 a76,76 0 1,1 152,0 a76,76 0 1,1 -152,0"/></defs><circle cx="100" cy="100" r="99" fill="#d4ff3a" stroke="#0d0d0d" stroke-width="3"/><circle cx="100" cy="100" r="52" fill="#0d0d0d"/><text><textPath href="#circ" textLength="474" lengthAdjust="spacing">OSOBNÍ TRENÉR ✦ VÝŽIVOVÝ PORADCE ✦ PRAHA ✦</textPath></text></svg>
+    <svg class="hr-logo" viewBox="0 0 132 104"><g class="hr-tile"><rect x="12" y="12" width="100" height="80" rx="18" fill="#ff5ca8" stroke="#0d0d0d" stroke-width="5"/><rect x="4" y="4" width="100" height="80" rx="18" fill="#d4ff3a" stroke="#0d0d0d" stroke-width="5"/><text class="hr-l hr-h" x="36" y="66" text-anchor="middle">H</text><text class="hr-l hr-r" x="72" y="66" text-anchor="middle">R</text></g><g transform="translate(104 78)"><polygon class="hr-burst" points="0,-22 4.14,-15.45 11,-19.05 11.31,-11.31 19.05,-11 15.45,-4.14 22,0 15.45,4.14 19.05,11 11.31,11.31 11,19.05 4.14,15.45 0,22 -4.14,15.45 -11,19.05 -11.31,11.31 -19.05,11 -15.45,4.14 -22,0 -15.45,-4.14 -19.05,-11 -11.31,-11.31 -11,-19.05 -4.14,-15.45"/><text class="hr-n" y="7" text-anchor="middle">12</text></g></svg>
+  </div>
+  <div class="wrap hero-inner">
+    <p class="kicker" id="greet">👋 Vítej v síti Honzy Růžka</p>
+    <h1>Změň svůj život <span class="hl">už dnes!</span></h1>
+    <p class="rot">Chceš <span class="rot-word">víc síly</span>?</p>
+    <p class="tldr"><b>TL;DR</b> Osobní trenér a výživový poradce v Praze. Trénink na míru + jídelníček, který vydržíš. Od <b>850 Kč</b> za lekci.</p>
+    <div class="cta-row">
+      <a class="btn" href="#kontakt">⚡ Chci začít</a>
+      <a class="btn btn-ghost" href="#kviz">🎯 Co je pro mě?</a>
+    </div>
+    <p class="quest">🎁 <span><b>Quest:</b> poraz lenost (scrolluj až dolů) a na konci stránky tě čeká tajná odměna.</span></p>
+  </div>
+</section>
+
+<div class="ticker lime tilt" aria-hidden="true"><div class="ticker-track">
+  <span>Síla <i>✦</i> Kondice <i>✦</i> Hubnutí <i>✦</i> Svaly <i>✦</i> Výživa <i>✦</i> Mobilita <i>✦</i> Zdravá záda <i>✦</i> Fitness pobyty <i>✦</i> Evidence based <i>✦</i> Gigachad mode 🗿 <i>✦</i></span>
+  <span>Síla <i>✦</i> Kondice <i>✦</i> Hubnutí <i>✦</i> Svaly <i>✦</i> Výživa <i>✦</i> Mobilita <i>✦</i> Zdravá záda <i>✦</i> Fitness pobyty <i>✦</i> Evidence based <i>✦</i> Gigachad mode 🗿 <i>✦</i></span>
+</div></div>
+
+<!-- STATS -->
+<section class="sec paper" aria-label="Čísla" style="padding-top:clamp(56px,8vw,96px);padding-bottom:clamp(40px,6vw,72px)">
+  <div class="wrap stats">
+    <div class="stat c-lime reveal"><div class="n"><span data-count="3000">3 000</span><sup>+</sup></div><p>odcvičených hodin</p></div>
+    <div class="stat c-pink reveal"><div class="n"><span data-count="75">75</span><sup>+</sup></div><p>úspěšných příběhů</p></div>
+    <div class="stat c-gold reveal"><div class="n"><span data-count="6">6</span><sup>+</sup></div><p>let praxe</p></div>
+    <div class="stat c-blue reveal"><div class="n"><span data-count="8">8</span></div><p>certifikací</p></div>
+  </div>
+  <div class="wrap">
+    <div class="horo card reveal">
+      <span class="horo-ico" aria-hidden="true">🔮</span>
+      <div>
+        <h3>Fitness horoskop · <span id="horo-date">dnes</span></h3>
+        <p id="horo-text">Dnes je den nohou 🦵. Hvězdy říkají: žádné výmluvy.</p>
+        <ul class="tags" id="horo-tags"><li>Šťastný cvik: dřep</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="sec ink" id="kviz" data-xp="Kvíz">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Level 01</span><span class="time">⏱ 5 s</span></div>
+    <h2>Co chceš <em>změnit?</em></h2>
+    <p class="lead">Klikni na jednu věc. Hned ti řeknu, čím začít. Žádné dlouhé čtení.<button class="mbox" type="button" aria-label="Tajná krabička: náhodný fun fact">🎁</button></p>
+    <div class="quiz" role="group" aria-label="Vyber svůj cíl">
+      <button type="button" data-goal="hubnuti" aria-pressed="false">🔥 Zhubnout</button>
+      <button type="button" data-goal="svaly" aria-pressed="false">💪 Nabrat svaly</button>
+      <button type="button" data-goal="zada" aria-pressed="false">🦴 Bolí mě záda / klouby</button>
+      <button type="button" data-goal="energie" aria-pressed="false">⚡ Mít víc energie</button>
+      <button type="button" data-goal="zkusit" aria-pressed="false">🤔 Nevím, chci to zkusit</button>
+    </div>
+    <div class="quiz-out" id="quiz-out" aria-live="polite" hidden></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="sec paper" id="o-mne" data-xp="O mně">
+  <div class="wrap about">
+    <div class="about-photo reveal">
+      <img src="assets/selfie.jpg" alt="Honza Růžek v posilovně" loading="lazy" width="710" height="894">
+      <span class="stk stk-1">🎓 Mgr. FTVS UK</span>
+      <span class="stk stk-2">🌍 Trénoval v Dubaji</span>
+      <span class="stk stk-3">⏳ 6+ let praxe</span>
+    </div>
+    <div>
+      <div class="sec-head"><span class="lvl">Level 02</span><span class="time">⏱ 15 s</span></div>
+      <h2>Kdo je <em>Honza?</em></h2>
+      <p class="lead">Moje práce má skutečný dopad. Tady je to nejdůležitější v 5 bodech:<button class="mbox" type="button" aria-label="Tajná krabička: náhodný fun fact">🎁</button></p>
+      <ul class="facts">
+        <li class="reveal"><i>🏋️</i><span><b>Osobní trenér a výživový poradce.</b> Jmenuji se Jan Růžek a pomáhám lidem ke zdraví, kondici a lepšímu životnímu stylu.</span></li>
+        <li class="reveal"><i>🎓</i><span><b>Magistr z FTVS Univerzity Karlovy</b> – specializace sportovní trénink a pohybová diagnostika.</span></li>
+        <li class="reveal"><i>🌍</i><span><b>Víc než 6 let praxe</b> v Česku i v Dubaji, kde jsem trénoval klienty z celého světa.</span></li>
+        <li class="reveal"><i>🔬</i><span><b>Evidence based.</b> Vědecky podložená fakta + reálné zkušenosti z praxe = výsledky, které vydrží.</span></li>
+        <li class="reveal"><i>🗓️</i><span><b>Flexibilní.</b> Vím, že život je hektický. Plán se přizpůsobí tvým potřebám i času.</span></li>
+      </ul>
+      <details class="more">
+        <summary>📖 Celý příběh (1 min čtení)</summary>
+        <p>Už před lety jsem pochopil, že mou největší vášní je pomáhat lidem k lepšímu zdraví, kondici a životnímu stylu. Sportu se věnuji celý život a díky tomu jsem si vybudoval hluboké znalosti v oblasti síly, pohybu, výživy a regenerace.</p>
+        <p>Mám magisterský titul z Fakulty tělesné výchovy a sportu na Univerzitě Karlově, kde jsem se specializoval na sportovní trénink a pohybovou diagnostiku. Jako osobní trenér a výživový poradce působím už více než 6 let, a to nejen v České republice, ale i v Dubaji, kde jsem trénoval klienty z celého světa.</p>
+        <p>Mou práci stavím na vědecky podložených faktech, které propojuji s reálnými zkušenostmi z praxe. Díky tomuto Evidence Based přístupu mohu svým klientům nabízet efektivní a udržitelná řešení vedoucí k dlouhodobým výsledkům.</p>
+        <p><b>Udělejte změnu už dnes a pojďte se mnou přetvořit sny v realitu.</b></p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<div class="ticker pinkbg rev" aria-hidden="true"><div class="ticker-track">
+  <span>Žádné extrémy <i>✦</i> Žádné šablony <i>✦</i> Jen funkční řešení <i>✦</i> Plán na míru <i>✦</i> Výsledky, které vydrží <i>✦</i></span>
+  <span>Žádné extrémy <i>✦</i> Žádné šablony <i>✦</i> Jen funkční řešení <i>✦</i> Plán na míru <i>✦</i> Výsledky, které vydrží <i>✦</i></span>
+</div></div>
+
+<!-- SERVICES -->
+<section class="sec ink" id="sluzby" data-xp="Služby">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Level 03</span><span class="time">⏱ 20 s</span></div>
+    <h2>Co pro tebe <em>udělám</em></h2>
+    <p class="lead">3 služby, každá přizpůsobená tobě. Detaily se rozbalí po kliknutí.<button class="mbox" type="button" aria-label="Tajná krabička: náhodný fun fact">🎁</button></p>
+
+    <div class="svcs">
+      <article class="svc card reveal">
+        <div class="svc-img"><img src="assets/coaching.jpg" alt="Honza opravuje klientce techniku cviku" loading="lazy" style="object-position:50% 45%"><span class="svc-no">01</span></div>
+        <div class="svc-body">
+          <h3>Personalizované tréninky</h3>
+          <p class="one">Plán přesně pro tvoje tělo, cíl a diář.</p>
+          <ul class="tags"><li>síla</li><li>kondice</li><li>hubnutí</li><li>tvarování postavy</li><li>držení těla</li></ul>
+          <details class="more">
+            <summary>Co tě čeká?</summary>
+            <ul class="check">
+              <li><b>Program na míru</b> – podle tvých cílů, úrovně kondice, zdravotního stavu a času.</li>
+              <li><b>Zdraví a prevence</b> – při zdravotních potížích nebo svalových dysbalancích upravím trénink, aby byl bezpečný a zároveň efektivní.</li>
+              <li><b>Podpora a motivace</b> – vedu a motivuju tě celou cestu.</li>
+              <li><b>Dlouhodobé zlepšení</b> – trvalé výsledky a trénink, který tě pořád posouvá dál.</li>
+            </ul>
+          </details>
+          <a class="btn btn-sm" href="#kontakt" data-pick="personalizované tréninky">Mám zájem!</a>
+        </div>
+      </article>
+
+      <article class="svc card reveal">
+        <div class="svc-img"><img src="assets/vyziva.jpg" alt="Barevná miska s avokádem, cizrnou, cherry rajčaty a batáty" loading="lazy" width="1200" height="750"><b class="svc-sticker" aria-hidden="true">Jídlo = palivo</b><span class="svc-no">02</span></div>
+        <div class="svc-body">
+          <h3>Nutriční koučink &amp; poradenství</h3>
+          <p class="one">Jídelníček, který vydržíš. Žádné hladovky.</p>
+          <ul class="tags"><li>hubnutí</li><li>nabírání svalů</li><li>energie</li><li>zdravé návyky</li></ul>
+          <details class="more">
+            <summary>Co tě čeká?</summary>
+            <ul class="check">
+              <li><b>Individuální plán</b> – výživový plán šitý na míru tvým cílům a chutím.</li>
+              <li><b>Podpora a motivace</b> – pomůžu ti překonat výzvy, které se na cestě objeví.</li>
+              <li><b>Trvalé změny</b> – naučíš se, jak si zdravé návyky udržet dlouhodobě.</li>
+            </ul>
+          </details>
+          <a class="btn btn-sm" href="#kontakt" data-pick="nutriční koučink">Mám zájem!</a>
+        </div>
+      </article>
+
+      <article class="svc card reveal">
+        <div class="svc-img"><img src="assets/pobyty.jpg" alt="Skupina na fitness pobytu na horách" loading="lazy" style="object-position:50% 62%"><span class="svc-no">03</span></div>
+        <div class="svc-body">
+          <h3>Fitness pobyty</h3>
+          <p class="one">Pár dní tréninku, dobrého jídla, regenerace a skvělé party.</p>
+          <ul class="tags"><li>trénink</li><li>výživa</li><li>regenerace</li><li>parta</li></ul>
+          <details class="more">
+            <summary>Co tě čeká?</summary>
+            <ul class="check">
+              <li><b>Tréninkový plán na míru</b> – efektivní a zábavný, podle tvých cílů a kondice.</li>
+              <li><b>Výživové poradenství</b> – strava, která podpoří trénink, a návyky, které si odvezeš domů.</li>
+              <li><b>Regenerace a relaxace</b> – abys měl(a) energii po celý pobyt.</li>
+              <li><b>Motivace a podpora</b> – celý pobyt jsem tvůj průvodce.</li>
+            </ul>
+          </details>
+          <a class="btn btn-sm" href="#kontakt" data-pick="fitness pobyt">Mám zájem!</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="minis">
+      <div class="mini card reveal"><i>🧘</i><div><h3>+ Kompenzační cvičení</h3><p>Sedíš celý den v kanceláři, sportuješ naplno nebo se vracíš po zranění? Odstraníme dysbalance, zlepšíme mobilitu a stabilitu a předejdeme bolestem.</p></div></div>
+      <div class="mini card reveal"><i>📱</i><div><h3>+ Online coaching</h3><p>Tréninkový a výživový plán s průběžnou podporou na dálku. Pro ty, kdo chtějí výsledky i bez osobních tréninků.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GIGACHAD -->
+<section class="sec paper" id="gigachad" data-xp="Gigachad">
+  <div class="wrap chad">
+    <div class="chad-media reveal">
+      <div class="chad-photo">
+        <img src="assets/cable.jpg" alt="Honza Růžek při tréninku na kladkách, černobílá fotka v gigachad stylu" loading="lazy">
+        <p class="cap top" aria-hidden="true">Gigachad</p>
+        <p class="cap bot" aria-hidden="true">Mode: ON</p>
+      </div>
+      <span class="moai" aria-hidden="true">🗿</span>
+    </div>
+    <div>
+      <div class="sec-head"><span class="lvl">Bonus level 🗿</span><span class="time">⏱ 10 s</span></div>
+      <h2>Chceš se stát taky <em>gigachadem?</em></h2>
+      <p class="lead">Tak to jsi tu správně. 🗿 Žádná magie, jen plán, technika a jídlo, které dává smysl. Gigachadky vítány taky. 💅</p>
+      <div class="vc" role="table" aria-label="Virgin výmluvy proti Chad mindsetu">
+        <div class="vc-h" role="row"><span role="columnheader">😩 Virgin výmluvy</span><span role="columnheader">🗿 Chad mindset</span></div>
+        <div class="vc-r" role="row"><span role="cell">„Začnu od pondělí.“</span><span role="cell">Začíná dnes.</span></div>
+        <div class="vc-r" role="row"><span role="cell">„Nemám čas.“</span><span role="cell">Plán, který se vejde do diáře.</span></div>
+        <div class="vc-r" role="row"><span role="cell">Hladovka na 3 dny.</span><span role="cell">Jídelníček, který vydrží.</span></div>
+        <div class="vc-r" role="row"><span role="cell">„Bolí mě záda.“</span><span role="cell">Kompenzační cvičení a technika.</span></div>
+        <div class="vc-r" role="row"><span role="cell">Cvičí podle TikToku.</span><span role="cell">Trénink od magistra z FTVS.</span></div>
+      </div>
+      <div class="chad-cta">
+        <a class="btn" href="#kontakt" data-pick="TRANSFORMATION">🗿 Chci být gigachad</a>
+        <small>Sigma grindset<br>začíná první lekcí.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section class="sec ink" id="pred-po" data-xp="Před a po">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Před / Po</span><span class="time">⏱ 5 s tahání</span></div>
+    <h2>Před a po <em>Honzovi</em></h2>
+    <p class="lead">Chyť to a táhni ↔. Sleduj, co udělá 20 lekcí s hlavou.</p>
+    <div class="ba" id="ba" style="--pos:50%">
+      <div class="ba-layer ba-after">
+        <svg viewBox="0 0 600 480" aria-hidden="true">
+          <rect width="600" height="480" fill="#d4ff3a"/>
+          <defs><polygon id="ba-ray" points="300,170 262,-330 338,-330"/></defs>
+          <g class="af-rays" fill="#fff" opacity=".55">
+            <use href="#ba-ray"/><use href="#ba-ray" transform="rotate(45 300 170)"/><use href="#ba-ray" transform="rotate(90 300 170)"/><use href="#ba-ray" transform="rotate(135 300 170)"/><use href="#ba-ray" transform="rotate(180 300 170)"/><use href="#ba-ray" transform="rotate(225 300 170)"/><use href="#ba-ray" transform="rotate(270 300 170)"/><use href="#ba-ray" transform="rotate(315 300 170)"/>
+          </g>
+          <rect y="440" width="600" height="40" fill="#b6e52a"/>
+          <line x1="0" y1="440" x2="600" y2="440" stroke="#0d0d0d" stroke-width="4"/>
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M288 340L272 432M312 340L328 432M232 244L182 236L190 176M368 244L418 236L410 176" stroke="#0d0d0d" stroke-width="30"/>
+            <path d="M288 340L272 432M312 340L328 432M232 244L182 236L190 176M368 244L418 236L410 176" stroke="#fff7e8" stroke-width="18"/>
+          </g>
+          <rect x="252" y="428" width="36" height="16" rx="7" fill="#0d0d0d"/>
+          <rect x="312" y="428" width="36" height="16" rx="7" fill="#0d0d0d"/>
+          <polygon points="264,330 336,330 348,386 306,378 300,362 294,378 252,386" fill="#0d0d0d"/>
+          <rect x="285" y="200" width="30" height="44" fill="#fff7e8" stroke="#0d0d0d" stroke-width="6"/>
+          <path d="M224 236L376 236Q372 300 336 342L264 342Q228 300 224 236Z" fill="#ff5ca8" stroke="#0d0d0d" stroke-width="7" stroke-linejoin="round"/>
+          <path d="M262 262Q300 280 338 262" fill="none" stroke="#0d0d0d" stroke-width="4" stroke-linecap="round"/>
+          <text class="af-hr" x="300" y="320" text-anchor="middle">HR</text>
+          <circle class="af-bicep" cx="208" cy="226" r="19" fill="#fff7e8" stroke="#0d0d0d" stroke-width="6"/>
+          <circle class="af-bicep" cx="392" cy="226" r="19" fill="#fff7e8" stroke="#0d0d0d" stroke-width="6"/>
+          <circle cx="190" cy="168" r="16" fill="#fff7e8" stroke="#0d0d0d" stroke-width="6"/>
+          <circle cx="410" cy="168" r="16" fill="#fff7e8" stroke="#0d0d0d" stroke-width="6"/>
+          <g class="af-head">
+            <path d="M248 112Q248 84 300 84Q352 84 352 112L354 162Q354 198 322 212L278 212Q246 198 246 162Z" fill="#fff7e8" stroke="#0d0d0d" stroke-width="7" stroke-linejoin="round"/>
+            <path d="M246 120Q244 70 298 64Q350 60 354 112Q332 92 304 98Q276 90 246 120Z" fill="#0d0d0d"/>
+            <path d="M292 66Q318 36 352 52Q326 54 314 70Z" fill="#0d0d0d"/>
+            <rect x="252" y="124" width="96" height="7" fill="#0d0d0d"/>
+            <rect x="258" y="126" width="38" height="24" rx="4" fill="#0d0d0d"/>
+            <rect x="304" y="126" width="38" height="24" rx="4" fill="#0d0d0d"/>
+            <rect class="af-glint" x="264" y="132" width="8" height="6" fill="#fff"/>
+            <rect class="af-glint" x="310" y="132" width="8" height="6" fill="#fff"/>
+            <path d="M280 182Q304 196 324 174" fill="none" stroke="#0d0d0d" stroke-width="6" stroke-linecap="round"/>
+            <path d="M300 198L300 207" stroke="#0d0d0d" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <g transform="translate(150 110)"><path class="af-spark" d="M0-16L5-5L16 0L5 5L0 16L-5 5L-16 0L-5-5Z" fill="#fff" stroke="#0d0d0d" stroke-width="3"/></g>
+          <g transform="translate(452 100)"><path class="af-spark" d="M0-16L5-5L16 0L5 5L0 16L-5 5L-16 0L-5-5Z" fill="#fff" stroke="#0d0d0d" stroke-width="3"/></g>
+          <g transform="translate(470 286)"><path class="af-spark" d="M0-16L5-5L16 0L5 5L0 16L-5 5L-16 0L-5-5Z" fill="#fff" stroke="#0d0d0d" stroke-width="3"/></g>
+          <g transform="translate(132 296)"><path class="af-spark" d="M0-16L5-5L16 0L5 5L0 16L-5 5L-16 0L-5-5Z" fill="#fff" stroke="#0d0d0d" stroke-width="3"/></g>
+        </svg>
+        <div class="ba-stats">⚡ Energie: 100 %<br>🦴 Záda: 💪<br>🗿 Výmluvy: 0</div>
+      </div>
+      <div class="ba-layer ba-before">
+        <svg viewBox="0 0 600 480" aria-hidden="true">
+          <rect width="600" height="480" fill="#cfc9bd"/>
+          <rect y="440" width="600" height="40" fill="#b9b2a4"/>
+          <line x1="0" y1="440" x2="600" y2="440" stroke="#0d0d0d" stroke-width="4"/>
+          <g fill="#0d0d0d"><circle cx="270" cy="50" r="29"/><circle cx="305" cy="38" r="35"/><circle cx="342" cy="52" r="27"/><rect x="245" y="50" width="124" height="31" rx="15"/></g>
+          <g fill="#8d8a84"><circle cx="270" cy="50" r="24"/><circle cx="305" cy="38" r="30"/><circle cx="342" cy="52" r="22"/><rect x="250" y="55" width="114" height="21" rx="10"/></g>
+          <g class="bf-rain" stroke="#4d6fd8" stroke-width="4" stroke-linecap="round">
+            <line x1="268" y1="88" x2="264" y2="100"/><line x1="292" y1="90" x2="288" y2="102"/><line x1="316" y1="88" x2="312" y2="100"/><line x1="340" y1="90" x2="336" y2="102"/>
+          </g>
+          <g fill="none" stroke="#0d0d0d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M300 205Q286 270 304 332"/>
+            <path d="M300 228Q268 270 262 345"/>
+            <path d="M302 228Q332 275 340 330"/>
+            <path d="M304 330Q290 380 278 436L262 438"/>
+            <path d="M304 330Q318 385 326 436L342 438"/>
+          </g>
+          <ellipse cx="314" cy="292" rx="36" ry="40" fill="#efe9dd" stroke="#0d0d0d" stroke-width="7"/>
+          <g transform="translate(344 338)"><circle r="19" fill="#e0a25c" stroke="#0d0d0d" stroke-width="6"/><circle r="14" fill="#ff5ca8"/><circle r="6" fill="#cfc9bd" stroke="#0d0d0d" stroke-width="4"/></g>
+          <g class="bf-head">
+            <circle cx="300" cy="150" r="54" fill="#efe9dd" stroke="#0d0d0d" stroke-width="7"/>
+            <g fill="none" stroke="#0d0d0d" stroke-width="5" stroke-linecap="round">
+              <path d="M268 107q6-14 2-26"/><path d="M296 97q4-16-2-26"/><path d="M322 101q8-12 6-24"/>
+              <path d="M268 140L288 132"/><path d="M312 132L332 140"/>
+              <path d="M274 168q8 5 16 0"/><path d="M310 168q8 5 16 0"/>
+              <path d="M282 190Q300 176 318 190"/>
+            </g>
+            <circle cx="282" cy="155" r="5" fill="#0d0d0d"/><circle cx="318" cy="155" r="5" fill="#0d0d0d"/>
+            <path d="M352 116q9 12 0 19q-9-7 0-19z" fill="#7b9bff" stroke="#0d0d0d" stroke-width="3"/>
+          </g>
+        </svg>
+        <div class="ba-stats">⚡ Energie: 12 %<br>🦴 Záda: 💀<br>🍩 Výmluvy: 999+</div>
+      </div>
+      <div class="ba-handle" aria-hidden="true"><span>◀ ▶</span></div>
+      <span class="ba-tag ba-tag-l" aria-hidden="true">Před 😩</span>
+      <span class="ba-tag ba-tag-r" aria-hidden="true">Po 🗿</span>
+      <input class="ba-range" type="range" min="0" max="100" value="50" aria-label="Posuvník před a po: vlevo po, vpravo před">
+    </div>
+    <div class="ba-meta">
+      <span class="ba-count">Lekce <b id="ba-lesson">10</b>/20</span>
+      <a class="btn" href="#kontakt" data-pick="TRANSFORMATION">🗿 Chci taky takovou hlavu</a>
+    </div>
+    <p class="fine ba-fine">Ilustrační stickman. Skutečné výsledky se liší podle toho, jak moc makáš. 😏</p>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec lime" id="cenik" data-xp="Ceník">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Level 04</span><span class="time" style="border-color:var(--ink)">⏱ 10 s</span></div>
+    <h2>Kolik to <em style="color:var(--ink);background:#fff;padding:0 .12em;border-radius:10px">stojí?</em></h2>
+    <p class="lead">Investice do zdraví a kondice. Férově a dostupně pro každého.</p>
+
+    <div class="bars card reveal" role="img" aria-label="Cena za lekci: Single 1200 Kč, Starter 1000 Kč, Transformation 850 Kč">
+      <p class="bars-t">📉 Cena za 1 lekci – čím víc, tím levněji</p>
+      <div class="bar"><span>Single</span><i style="--w:100%;--c:var(--gold)"></i><b>1 200 Kč</b></div>
+      <div class="bar"><span>Starter</span><i style="--w:83%;--c:var(--blue)"></i><b>1 000 Kč</b></div>
+      <div class="bar"><span>Transformation</span><i style="--w:71%;--c:var(--pink)"></i><b>850 Kč</b></div>
+    </div>
+
+    <div class="prices">
+      <article class="price card reveal">
+        <span class="badge">🧪 Zkouška</span>
+        <h3>Single session</h3>
+        <p class="sub">Jednorázový trénink na míru</p>
+        <div class="amount"><b>1 200</b><span>Kč</span></div>
+        <span class="per">1 lekce · 60 min<br>= 1 200 Kč / lekce</span>
+        <ul class="check">
+          <li>60minutový osobní trénink zaměřený na tvůj cíl</li>
+          <li>Analýza techniky a postavení těla (oprava chyb, prevence zranění)</li>
+          <li>Doporučení pro další trénink (cviky, frekvence, objem)</li>
+          <li>Krátká konzultace stravy a regenerace</li>
+          <li>Možnost natočit techniku pro zpětnou kontrolu</li>
+        </ul>
+        <a class="btn btn-white" href="#kontakt" data-pick="SINGLE SESSION">Chci Single →</a>
+      </article>
+
+      <article class="price card reveal">
+        <span class="badge">🌱 Start</span>
+        <h3>Starter</h3>
+        <p class="sub">Pro začátečníky a rekreační sportovce</p>
+        <div class="amount"><b>10 000</b><span>Kč</span></div>
+        <span class="per">10 lekcí + úvodní zdarma<br>= 1 000 Kč / lekce</span>
+        <ul class="check">
+          <li><b>Úvodní diagnostika zdarma</b> – držení těla, pohybové vzorce, konzultace cílů</li>
+          <li><b>Individuální tréninkový plán</b> podle tvých potřeb</li>
+          <li><b>Správná technika</b> – naučíš se cvičit technicky správně</li>
+          <li><b>Základní výživová doporučení</b></li>
+          <li><b>Průběžné konzultace</b> a úpravy plánu podle pokroku</li>
+        </ul>
+        <span class="save">💰 Ušetříš 3 200 Kč</span>
+        <a class="btn btn-white" href="#kontakt" data-pick="STARTER">Chci Starter →</a>
+      </article>
+
+      <article class="price card hot reveal">
+        <span class="badge">🔥 Nejvýhodnější</span>
+        <h3>Transformation</h3>
+        <p class="sub">Pro ty, kdo chtějí výraznou změnu</p>
+        <div class="amount"><b>17 000</b><span>Kč</span></div>
+        <span class="per">20 lekcí + úvodní zdarma<br>= 850 Kč / lekce</span>
+        <ul class="check">
+          <li><b>Vše z balíčku Starter</b>, plus:</li>
+          <li><b>Pokročilé tréninkové techniky</b> pro maximální efektivitu</li>
+          <li><b>Detailní výživový plán</b> podle tvých cílů a chutí</li>
+          <li><b>Regenerační a relaxační techniky</b> pro zotavení a prevenci zranění</li>
+        </ul>
+        <span class="save">💰 Sleva 5 000 Kč oproti Starteru</span>
+        <a class="btn btn-ink" href="#kontakt" data-pick="TRANSFORMATION" style="--shc:var(--ink)">Chci Transformation →</a>
+      </article>
+    </div>
+
+    <a class="wheel-teaser reveal" href="#kolo"><span class="wt-ico">🎰</span><span><b>Cítíš štěstí?</b> Zatoč si kolem o cenu. Až −20 %… nebo +15 %. 😈</span><em>Jdu točit →</em></a>
+  </div>
+</section>
+
+<!-- WHEEL OF FORTUNE -->
+<section class="sec ink wheel-sec" id="kolo" data-xp="Kolo štěstí">
+  <div class="wrap wheel-grid">
+    <div class="w-head">
+      <div class="sec-head"><span class="lvl">Bonus level 🎰</span><span class="time">⏱ 10 s</span></div>
+      <h2>Kolo <em>štěstí</em></h2>
+      <p class="lead">Vyber balíček a zatoč. Můžeš vyhrát až <b class="t-lime">−20 %</b>… nebo si připlatit <b class="t-pink">+15 %</b>. Gamba je gamba. 😈</p>
+      <div class="pkg-pick" role="radiogroup" aria-label="Balíček pro kolo štěstí">
+        <button type="button" role="radio" aria-checked="false" data-pkg="SINGLE SESSION">Single<small>1 200 Kč</small></button>
+        <button type="button" role="radio" aria-checked="true" data-pkg="STARTER">Starter<small>10 000 Kč</small></button>
+        <button type="button" role="radio" aria-checked="false" data-pkg="TRANSFORMATION">Transformation<small>17 000 Kč</small></button>
+      </div>
+    </div>
+    <div class="w-wheel">
+      <div class="wheel-frame">
+        <div class="bulbs" aria-hidden="true"></div>
+        <div class="pointer" aria-hidden="true"></div>
+        <svg class="wheel" id="wheel" viewBox="-102 -102 204 204" role="img" aria-label="Kolo štěstí: slevy až 20 %, přirážky až 15 %"></svg>
+        <button class="hub" id="spin" type="button">Toč!</button>
+      </div>
+    </div>
+    <div class="w-out">
+      <p class="tokens">Žetony: <span id="tokens"></span></p>
+      <div class="wheel-res card" id="wheel-res" aria-live="polite" hidden></div>
+      <p class="fine">Máš 3 žetony a platí jen poslední zatočení – dobrý výsledek si radši hned vezmi. Tlačítko „Beru to!“ ti připraví zprávu pro Honzu. Platí 1× na osobu.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="sec paper" id="proc" data-xp="Proč já">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Level 05</span><span class="time">⏱ 10 s</span></div>
+    <h2>Proč zrovna <em>Honza?</em></h2>
+    <p class="lead">Osvědčená cesta k úspěchu. Ve třech bodech:<button class="mbox" type="button" aria-label="Tajná krabička: náhodný fun fact">🎁</button></p>
+    <div class="why">
+      <article class="card reveal">
+        <span class="emo">🎓</span>
+        <h3>8 certifikací</h3>
+        <p class="one">Síla, pohyb a výživa. Na papíře i v praxi.</p>
+        <ul class="tags">
+          <li>NASM: Understanding Fitness Programming</li>
+          <li>Coretraining: Silový trénink L1</li>
+          <li>Coretraining: Silový trénink L2</li>
+          <li>IQ Pohyb: stabilizace core</li>
+          <li>IQ Pohyb: diagnostika držení těla</li>
+          <li>IQ Pohyb: skolióza</li>
+          <li>Institut moderní výživy: efektivní hubnutí</li>
+        </ul>
+        <details class="more"><summary>Víc info</summary>
+          <p>Mám 8 certifikací z prestižních institucí, které potvrzují mou odbornost v oblasti síly, pohybu a výživy. Mezi ně patří NASM: Understanding Fitness Programming, Coretraining: Silový trénink Level 1 a 2, specializované kurzy od IQ Pohyb zaměřené na stabilizaci core, diagnostiku držení těla a skoliózu, a také certifikace z Institutu moderní výživy v oblasti efektivního hubnutí.</p>
+        </details>
+      </article>
+      <article class="card reveal">
+        <span class="emo">🎯</span>
+        <h3>Reálné výsledky</h3>
+        <p class="one">Žádné extrémy. Jen funkční řešení, která dávají smysl.</p>
+        <details class="more"><summary>Víc info</summary>
+          <p>Pomáhám klientům dosahovat výsledků v tréninku i stravování s důrazem na udržitelnost a reálné výsledky. Každý plán sestavuji na míru tak, aby respektoval vaše cíle i možnosti. Tréninky i stravu přizpůsobím vašemu životnímu stylu, aby pro vás změna byla přirozená a dlouhodobě udržitelná. Společně najdeme cestu, jak vás dostat k cíli.</p>
+        </details>
+      </article>
+      <article class="card reveal">
+        <span class="emo">🧩</span>
+        <h3>Individuální přístup</h3>
+        <p class="one">Žádné šablony. Plán podle tvého cíle, kondice, zdraví a denního režimu.</p>
+        <details class="more"><summary>Víc info</summary>
+          <p>Ke každému klientovi přistupuji individuálně. Při tvorbě tréninkového i stravovacího plánu beru v úvahu nejen váš cíl, ale i aktuální kondici, zdravotní stav a denní režim. Nejde o univerzální šablony, ale o řešení na míru, které zapadne do vašeho života a přinese dlouhodobé výsledky.</p>
+        </details>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- MEMES -->
+<section class="sec ink" id="memes" data-xp="Meme pauza">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Meme pauza 🧠</span><span class="time">⏱ 0 s přemýšlení</span></div>
+    <h2>Dopamin <em>pauza</em></h2>
+    <p class="lead">Mozek potřebuje odměnu. Tady máš. 👇<button class="mbox" type="button" aria-label="Tajná krabička: náhodný fun fact">🎁</button></p>
+    <div class="memes">
+      <figure class="meme-card">
+        <div class="meme-img">
+          <img src="assets/hero.jpg" alt="Honza dřepuje se dvěma kettlebelly" loading="lazy" style="object-position:52% 50%">
+          <p class="cap top">Nikdo:</p>
+          <p class="cap bot">Honza v 7 ráno:</p>
+        </div>
+        <figcaption><span>#ranní_rutina</span><b>GIF</b></figcaption>
+      </figure>
+      <figure class="meme-card">
+        <div class="meme-img">
+          <img src="assets/coaching.jpg" alt="Honza opravuje klientce techniku cviku" loading="lazy" style="object-position:50% 45%">
+          <p class="cap top">Když řekneš, že tě bolí záda</p>
+          <p class="cap bot">Honza: to spravíme 🔧</p>
+        </div>
+        <figcaption><span>#zdravá_záda</span><b>GIF</b></figcaption>
+      </figure>
+      <figure class="meme-card">
+        <div class="meme-img drake" role="img" aria-label="Meme: ne hladovkám a detox čajům, ano plánu na míru a jídelníčku, který vydržíš">
+          <div class="dk-row"><span class="dk-e"><i class="no">🙅</i></span><p>Hladovky, detox čaje a „od pondělí“</p></div>
+          <div class="dk-row"><span class="dk-e"><i class="yes">😎</i></span><p>Plán na míru a jídelníček, co vydržíš</p></div>
+        </div>
+        <figcaption><span>#výživa</span><b>GIF</b></figcaption>
+      </figure>
+      <figure class="meme-card">
+        <div class="meme-img">
+          <img src="assets/pobyty.jpg" alt="Parta z fitness pobytu na horách" loading="lazy" style="object-position:50% 62%">
+          <p class="cap top">Na pobyt přijedeš sám</p>
+          <p class="cap bot">Odjíždíš s partou</p>
+        </div>
+        <figcaption><span>#fitness_pobyty</span><b>GIF</b></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="sec pinkbg" id="reference" data-xp="Reference">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Level 06</span><span class="time" style="border-color:var(--ink)">⏱ 15 s</span></div>
+    <h2>Co říkají <em style="color:#fff">klienti</em></h2>
+    <p class="lead">Skutečné příběhy lidí, kteří se mnou dlouhodobě spolupracují.<button class="mbox" type="button" aria-label="Tajná krabička: náhodný fun fact">🎁</button></p>
+    <div class="revs">
+      <article class="rev card reveal">
+        <img src="assets/ondra.jpg" alt="Klient Ondra při tréninku s jednoručkami" loading="lazy">
+        <div>
+          <div class="stars" aria-label="5 hvězdiček">★★★★★</div>
+          <blockquote>„Honzu mohu jen a jen doporučit.“</blockquote>
+          <p class="who">— Ondra</p>
+          <ul class="tags"><li>revmatoidní artritida</li><li>endoprotéza kyčle i kolena</li><li>1 rok spolupráce</li></ul>
+          <details class="more"><summary>Celá recenze</summary>
+            <p>Honzu mohu jen a jen doporučit. Začal jsem s Honzou cvičit před rokem. Mám revmatoidní artritidu a endoprotézu kyčlí i kolena, přesto všechny tréninky naprosto odborně naplánoval, tak aby korespondovaly s možnostmi mého těla, a zároveň jsem se fyzicky i vzhledově posouval dále. Dále se mi líbí, že se člověku plně věnuje po celý čas tréninku. Takže doporučuji co nejdříve Honzu vyzkoušet.</p>
+          </details>
+        </div>
+      </article>
+      <article class="rev card reveal">
+        <img src="assets/ondrej.jpg" alt="Klient Ondřej při tlaku s jednoručkami na šikmé lavici" loading="lazy">
+        <div>
+          <div class="stars" aria-label="5 hvězdiček">★★★★★</div>
+          <blockquote>„S Honzou se zasmějete.“</blockquote>
+          <p class="who">— Ondřej</p>
+          <ul class="tags"><li>cvičení baví</li><li>reálné výsledky</li><li>pozitivní energie</li></ul>
+          <details class="more"><summary>Celá recenze</summary>
+            <p>Proč Honza? S Honzou vás cvičení bude bavit. S Honzou dosáhnete reálných výsledků. Honza vás nabije pozitivní energií. S Honzou se zasmějete. Hledal-li jsi profesionálního trenéra, tak už nemusíš. Našel/a jsi ho. Honza kombinuje vědecky podložené metody s individuálním přístupem, aby ti pomohl dosáhnout tvých cílů efektivně a bezpečně. Každý trénink s ním je krokem k lepší kondici, zdraví a sebevědomí.</p>
+          </details>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="sec quote" aria-label="Motto">
+  <img src="assets/cable.jpg" alt="" loading="lazy">
+  <div class="wrap reveal">
+    <p class="big">„Tělo není nástroj k dosažení cílů, ale <span>partner na cestě ke zdraví.</span>“</p>
+    <p class="small">Pečuj o něj, jelikož se nejedná o samozřejmost. Je odrazem psychické pohody, mentální síly a o tu je třeba se neustále starat.</p>
+    <p class="sig">— Honza Růžek</p>
+  </div>
+</section>
+
+<div class="ticker lime" aria-hidden="true"><div class="ticker-track">
+  <span>Jsi připraven(a)? <i>✦</i> Pojďme společně přetvořit sny v realitu <i>✦</i> Udělej další krok <i>✦</i></span>
+  <span>Jsi připraven(a)? <i>✦</i> Pojďme společně přetvořit sny v realitu <i>✦</i> Udělej další krok <i>✦</i></span>
+</div></div>
+
+<!-- CONTACT -->
+<section class="sec paper" id="kontakt" data-xp="Kontakt">
+  <div class="wrap">
+    <div class="sec-head"><span class="lvl">Level 07 · Final boss</span><span class="time">⏱ 5 s</span></div>
+    <h2>Pojďme <em>na to!</em></h2>
+    <p class="lead">Nejrychleji mě zastihneš na Instagramu. Nebo zavolej či napiš mail – ozvu se co nejdřív.</p>
+
+    <div class="pick-note card" id="pick-note" aria-live="polite" hidden>
+      <span>🎯</span>
+      <p>Tvoje volba: <b id="pick-name"></b><br><small>Napiš mi do zpráv, o co máš zájem, a domluvíme první trénink.</small></p>
+      <button class="btn btn-ink btn-sm" id="copy-msg" type="button" style="--shc:var(--ink)">📋 Zkopírovat zprávu</button>
+    </div>
+
+    <div class="socials-big">
+      <article class="soc soc-ig card reveal">
+        <span class="soc-badge">⚡ Nejrychlejší</span>
+        <svg class="soc-logo" aria-hidden="true"><use href="#i-ig"/></svg>
+        <h3>Instagram</h3>
+        <p class="soc-handle">@_honza_ruzek_</p>
+        <p class="txt">Napiš mi do zpráv – tady odpovídám nejrychleji.</p>
+        <div class="soc-btns">
+          <a class="btn btn-ink" href="https://ig.me/m/_honza_ruzek_" target="_blank" rel="noopener">💬 Napsat zprávu</a>
+          <a class="btn btn-white" href="https://www.instagram.com/_honza_ruzek_/" target="_blank" rel="noopener">Sledovat</a>
+        </div>
+      </article>
+      <article class="soc soc-fb card reveal">
+        <svg class="soc-logo" aria-hidden="true"><use href="#i-fb"/></svg>
+        <h3>Facebook</h3>
+        <p class="soc-handle">honza.ruzek</p>
+        <p class="txt">Klidně napiš i sem.</p>
+        <div class="soc-btns">
+          <a class="btn btn-white" href="https://www.facebook.com/honza.ruzek" target="_blank" rel="noopener">Otevřít profil →</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="direct">
+      <a class="card reveal" href="tel:+420775046906"><i>📞</i><span><small>Zavolej</small>+420 775 046 906</span></a>
+      <a class="card reveal" href="mailto:honzaruzek@seznam.cz"><i>✉️</i><span><small>Napiš mail</small>honzaruzek@seznam.cz</span></a>
+    </div>
+
+    <div class="places">
+      <h3>📍 Trénuju v Euforii</h3>
+      <p class="places-sub">Euforie Fitness &amp; Wellness – 3 posilovny v Praze. Vyber si, kam to máš nejblíž.</p>
+      <div class="places-grid">
+        <article class="place reveal">
+          <div><b>Euforie Smíchov</b><span>Štefánikova 43a, Praha 5</span><small>🚋 Arbesovo náměstí</small></div>
+          <div class="place-links"><a href="https://www.google.com/maps/search/?api=1&query=Euforie+fitness+%C5%A0tef%C3%A1nikova+43a+Praha+5" target="_blank" rel="noopener">Mapa →</a><a href="https://www.euforie.cz/cs/fitness/posilovna/posilovna-praha-5" target="_blank" rel="noopener">Posilovna →</a></div>
+        </article>
+        <article class="place reveal">
+          <div><b>Euforie Pankrác</b><span>Na Pankráci 1598/78, Praha 4</span><small>🚇 2 min od metra Pankrác</small></div>
+          <div class="place-links"><a href="https://www.google.com/maps/search/?api=1&query=Euforie+fitness+Na+Pankr%C3%A1ci+1598%2F78+Praha+4" target="_blank" rel="noopener">Mapa →</a><a href="https://www.euforie.cz/cs/fitness/posilovna/posilovna-praha-4" target="_blank" rel="noopener">Posilovna →</a></div>
+        </article>
+        <article class="place reveal">
+          <div><b>Euforie Karlín</b><span>Sokolovská 131/86, Praha 8</span><small>🚋 zastávka Křižíkova</small></div>
+          <div class="place-links"><a href="https://www.google.com/maps/search/?api=1&query=Euforie+fitness+Sokolovsk%C3%A1+131%2F86+Praha+8" target="_blank" rel="noopener">Mapa →</a><a href="https://www.euforie.cz/cs/fitness/posilovna/posilovna-praha-8" target="_blank" rel="noopener">Posilovna →</a></div>
+        </article>
+      </div>
+    </div>
+
+    <div class="chest-wrap">
+      <div class="chest" id="chest">
+        <span class="chest-ico" id="chest-ico" aria-hidden="true">🎁</span>
+        <b id="chest-title">Tajná odměna</b>
+        <small id="chest-hint">Poraz lenost (doscrolluj sem) a odemkni mě.</small>
+        <div id="chest-act"><button class="btn" type="button" disabled>🔒 Zamčeno</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="ftr">
+  <div class="wrap">
+    <div>
+      <a class="logo" href="#top" style="margin-bottom:16px"><svg class="hr-logo" viewBox="0 0 132 104" aria-hidden="true"><g class="hr-tile"><rect x="12" y="12" width="100" height="80" rx="18" fill="#ff5ca8" stroke="#0d0d0d" stroke-width="5"/><rect x="4" y="4" width="100" height="80" rx="18" fill="#d4ff3a" stroke="#0d0d0d" stroke-width="5"/><text class="hr-l hr-h" x="36" y="66" text-anchor="middle">H</text><text class="hr-l hr-r" x="72" y="66" text-anchor="middle">R</text></g><g class="hr-spark"><line x1="117" y1="12" x2="124" y2="2"/><line x1="119" y1="22" x2="130" y2="17"/><line x1="119" y1="32" x2="130" y2="34"/></g><g transform="translate(104 78)"><polygon class="hr-burst" points="0,-22 4.14,-15.45 11,-19.05 11.31,-11.31 19.05,-11 15.45,-4.14 22,0 15.45,4.14 19.05,11 11.31,11.31 11,19.05 4.14,15.45 0,22 -4.14,15.45 -11,19.05 -11.31,11.31 -19.05,11 -15.45,4.14 -22,0 -15.45,-4.14 -19.05,-11 -11.31,-11.31 -11,-19.05 -4.14,-15.45"/><text class="hr-n" y="7" text-anchor="middle">12</text></g></svg><span>Mgr. Jan Růžek</span></a>
+      <p>Mým cílem je pomáhat vám dosáhnout toho, co si přejete – ať už chcete zhubnout, nabrat svaly, nebo zlepšit své zdraví. Jsem tu pro vás, abych vás podpořil na každém kroku vaší cesty.</p>
+    </div>
+    <div>
+      <h4>Menu</h4>
+      <ul><li><a href="#kviz">Kvíz</a></li><li><a href="#o-mne">O mně</a></li><li><a href="#sluzby">Služby</a></li><li><a href="#cenik">Ceník</a></li><li><a href="#kolo">Kolo štěstí</a></li><li><a href="#reference">Reference</a></li><li><a href="#kontakt">Kontakt</a></li></ul>
+    </div>
+    <div>
+      <h4>Kontakt</h4>
+      <ul><li><a href="tel:+420775046906">+420 775 046 906</a></li><li><a href="mailto:honzaruzek@seznam.cz">honzaruzek@seznam.cz</a></li><li><a class="ico-link" href="https://www.instagram.com/_honza_ruzek_/" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-ig"/></svg>Instagram</a></li><li><a class="ico-link" href="https://www.facebook.com/honza.ruzek" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-fb"/></svg>Facebook</a></li></ul>
+    </div>
+    <div class="copy"><span>© 2026 Fitness trenér – Praha · Honza Růžek</span><span>Postaveno pro mozky, které nečtou dlouhé texty ⚡</span></div>
+  </div>
+</footer>
+
+<div class="bbar" id="bbar">
+  <a class="btn btn-white" href="tel:+420775046906">📞 Volat</a>
+  <a class="btn" href="https://www.instagram.com/_honza_ruzek_/" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-ig"/></svg> Instagram</a>
+</div>
+<div class="mascot" id="mascot">
+  <button class="mascot-btn" type="button" aria-label="Mini Honza – klikni pro hlášku">
+    <svg viewBox="232 28 136 190" aria-hidden="true"><path d="M248 112Q248 84 300 84Q352 84 352 112L354 162Q354 198 322 212L278 212Q246 198 246 162Z" fill="#fff7e8" stroke="#0d0d0d" stroke-width="7" stroke-linejoin="round"/><path d="M246 120Q244 70 298 64Q350 60 354 112Q332 92 304 98Q276 90 246 120Z" fill="#0d0d0d"/><path d="M292 66Q318 36 352 52Q326 54 314 70Z" fill="#0d0d0d"/><rect x="252" y="124" width="96" height="7" fill="#0d0d0d"/><rect x="258" y="126" width="38" height="24" rx="4" fill="#0d0d0d"/><rect x="304" y="126" width="38" height="24" rx="4" fill="#0d0d0d"/><rect class="af-glint" x="264" y="132" width="8" height="6" fill="#fff"/><rect class="af-glint" x="310" y="132" width="8" height="6" fill="#fff"/><path d="M280 182Q304 196 324 174" fill="none" stroke="#0d0d0d" stroke-width="6" stroke-linecap="round"/></svg>
+  </button>
+  <p class="bubble" id="bubble" role="status" aria-live="polite"></p>
+</div>
+<dialog class="panel" id="panel" aria-labelledby="panel-t">
+  <div class="panel-in">
+    <div class="panel-head"><h3 id="panel-t">Batoh</h3><button class="panel-x" type="button" aria-label="Zavřít">✕</button></div>
+    <div id="panel-body"></div>
+  </div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+(() => {
+  const $ = (s, c = document) => c.querySelector(s);
+  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+  const root = document.documentElement;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  /* ---- toast ---- */
+  // queued, so XP, loot and achievements popping at once all get seen
+  const toastEl = $('#toast'), toastQ = [];
+  let toastBusy = false;
+  function toast(msg) {
+    if (toastQ.length > 3) toastQ.shift();
+    toastQ.push(msg);
+    if (!toastBusy) nextToast();
+  }
+  function nextToast() {
+    const msg = toastQ.shift();
+    if (!msg) { toastBusy = false; return; }
+    toastBusy = true;
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => {
+      toastEl.classList.remove('show');
+      setTimeout(nextToast, 260);
+    }, 2100);
+  }
+
+  /* ---- calm / chaos mode ---- */
+  const calmBtn = $('#calm');
+  const isCalm = () => root.classList.contains('calm');
+  function setCalm(on) {
+    root.classList.toggle('calm', on);
+    calmBtn.setAttribute('aria-pressed', on);
+    calmBtn.innerHTML = on ? '🧘 <span>Klid</span>' : '⚡ <span>Chaos</span>';
+  }
+  const savedCalm = store.get('calm');
+  setCalm(savedCalm !== null ? savedCalm === '1' : matchMedia('(prefers-reduced-motion: reduce)').matches);
+  calmBtn.addEventListener('click', () => {
+    const on = !isCalm();
+    setCalm(on);
+    store.set('calm', on ? '1' : '0');
+    toast(on ? '🧘 Klidový režim – animace vypnuté' : '⚡ Chaos režim zapnutý!');
+    if (!on) confetti(innerWidth - 120, 60);
+  });
+
+  /* ---- confetti ---- */
+  const cv = $('#confetti'), ctx = cv.getContext('2d');
+  const COLORS = ['#d4ff3a', '#ff5ca8', '#ffb52e', '#7b9bff', '#ffffff'];
+  let parts = [], raf = 0;
+  function sizeCanvas() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+  addEventListener('resize', sizeCanvas);
+  sizeCanvas();
+  function confetti(x = innerWidth / 2, y = innerHeight / 3) {
+    if (isCalm()) return;
+    const d = devicePixelRatio;
+    for (let i = 0; i < 90; i++) {
+      const a = Math.random() * Math.PI * 2, s = 4 + Math.random() * 9;
+      parts.push({ x: x * d, y: y * d, vx: Math.cos(a) * s * d, vy: (Math.sin(a) * s - 6) * d,
+        r: Math.random() * 6, vr: (Math.random() - .5) * .4,
+        w: (6 + Math.random() * 6) * d, h: (4 + Math.random() * 4) * d,
+        c: COLORS[i % COLORS.length], life: 90 + Math.random() * 40 });
+    }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    const d = devicePixelRatio;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter(p => p.life-- > 0);
+    for (const p of parts) {
+      p.vy += .35 * d; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    raf = parts.length ? requestAnimationFrame(tick) : 0;
+  }
+
+  /* ---- scroll progress, header, bottom bar ---- */
+  const bar = $('#progress'), hdr = $('#hdr'), bbar = $('#bbar'), contact = $('#kontakt');
+  function onScroll() {
+    const h = root.scrollHeight - innerHeight;
+    bar.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`;
+    hdr.classList.toggle('scrolled', scrollY > 20);
+    const r = contact.getBoundingClientRect();
+    bbar.classList.toggle('hide', r.top < innerHeight * .6 && r.bottom > 0);
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---- mobile menu ---- */
+  const menuBtn = $('#menu-btn'), menu = $('#menu');
+  function setMenu(open) {
+    menu.classList.toggle('open', open);
+    menuBtn.setAttribute('aria-expanded', open);
+    menuBtn.textContent = open ? '✕' : '☰';
+    document.body.classList.toggle('lock', open);
+  }
+  menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('open')));
+  $$('a', menu).forEach(a => a.addEventListener('click', () => setMenu(false)));
+  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+
+  /* ---- hero word rotator ---- */
+  const words = ['víc síly', 'míň kil', 'zdravá záda', 'víc energie', 'lepší postavu', 'svaly'];
+  const rotWord = $('.rot-word');
+  let wi = 0;
+  setInterval(() => {
+    if (isCalm() || document.hidden) return;
+    wi = (wi + 1) % words.length;
+    rotWord.classList.remove('pop');
+    void rotWord.offsetWidth;
+    rotWord.textContent = words[wi];
+    rotWord.classList.add('pop');
+  }, 1800);
+
+  /* ---- reveal on scroll ---- */
+  const revealIO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in');
+    revealIO.unobserve(e.target);
+  }), { threshold: .12 });
+  $$('.reveal').forEach(el => revealIO.observe(el));
+
+  /* ---- count-up stats ---- */
+  const fmt = n => n.toLocaleString('cs-CZ');
+  function countUp(el) {
+    const to = +el.dataset.count;
+    if (isCalm()) { el.textContent = fmt(to); return; }
+    const t0 = performance.now(), dur = 1400;
+    (function step(t) {
+      const p = Math.min(1, (t - t0) / dur);
+      el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  const countIO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    countUp(e.target);
+    countIO.unobserve(e.target);
+  }), { threshold: .6 });
+  $$('[data-count]').forEach(el => countIO.observe(el));
+
+  /* ---- XP for explored sections ---- */
+  const xpSecs = $$('[data-xp]'), seen = new Set(), xpEl = $('#xp'), xpPill = $('.xp');
+  $('#xp-total').textContent = xpSecs.length;
+  const xpIO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const name = e.target.dataset.xp;
+    seen.add(name);
+    xpIO.unobserve(e.target);
+    xpEl.textContent = seen.size;
+    xpPill.classList.remove('bump'); void xpPill.offsetWidth; xpPill.classList.add('bump');
+    if (seen.size === xpSecs.length) { toast('🏆 Všechno prozkoumáno! Teď už jen napsat Honzovi 😉'); confetti(); }
+    else toast(`+1 XP · Odemčeno: ${name}`);
+  }), { rootMargin: '0px 0px -45% 0px' });
+  xpSecs.forEach(s => xpIO.observe(s));
+
+  /* ---- chosen package / service -> contact ---- */
+  const pickNote = $('#pick-note'), pickName = $('#pick-name');
+  let pickMsg = '';
+  document.addEventListener('click', e => {
+    const pick = e.target.closest('[data-pick]');
+    if (!pick) return;
+    e.preventDefault();
+    const label = pick.dataset.pick;
+    pickName.textContent = label;
+    pickMsg = `Ahoj Honzo, mám zájem o ${label}. Kdy by se ti to hodilo?`;
+    pickNote.hidden = false;
+    toast(`✅ Vybráno: ${label}`);
+    confetti(e.clientX, e.clientY);
+    contact.scrollIntoView({ behavior: isCalm() ? 'auto' : 'smooth' });
+  });
+  $('#copy-msg').addEventListener('click', async e => {
+    try {
+      await navigator.clipboard.writeText(pickMsg);
+      toast('📋 Zkopírováno – vlož to do zprávy na IG');
+      confetti(e.clientX, e.clientY);
+    } catch (err) {
+      toast(`Napiš: „${pickMsg}“`);
+    }
+  });
+
+  /* ---- quiz ---- */
+  const RESULTS = {
+    hubnuti: { pkg: 'TRANSFORMATION', title: 'Transformation 🔥', text: 'Trénink + detailní výživový plán. Tuk jde dolů a zůstane dole – bez hladovek a extrémů.', tags: ['personalizované tréninky', 'nutriční koučink', '850 Kč/lekce'] },
+    svaly: { pkg: 'TRANSFORMATION', title: 'Transformation 💪', text: 'Pokročilé tréninkové techniky a jídelníček na nabírání. 20 lekcí = dost času na viditelnou změnu.', tags: ['pokročilé techniky', 'výživový plán', 'regenerace'] },
+    zada: { pkg: 'STARTER', title: 'Starter 🦴', text: 'Začneme úvodní diagnostikou držení těla (zdarma) a kompenzačním cvičením, které srovná svalové dysbalance.', tags: ['diagnostika zdarma', 'kompenzační cvičení', 'zdravá záda'] },
+    energie: { pkg: 'STARTER', title: 'Starter ⚡', text: 'Pravidelný pohyb, základní výživová doporučení a plán, který se vejde do tvého diáře.', tags: ['plán na míru', 'základy výživy', 'flexibilní termíny'] },
+    zkusit: { pkg: 'SINGLE SESSION', title: 'Single session 🤔', text: 'Jedna hodina, analýza techniky a doporučení, jak dál. Bez závazků – prostě to zkus.', tags: ['60 min', 'analýza techniky', 'bez závazků'] }
+  };
+  const out = $('#quiz-out');
+  $$('.quiz button').forEach(b => b.addEventListener('click', e => {
+    $$('.quiz button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    const r = RESULTS[b.dataset.goal];
+    out.hidden = false;
+    out.style.animation = 'none'; void out.offsetWidth; out.style.animation = '';
+    out.innerHTML = `<p class="rec">🎯 Doporučuju</p><h3>${r.title}</h3><p>${r.text}</p>`
+      + `<ul class="tags">${r.tags.map(t => `<li>${t}</li>`).join('')}</ul>`
+      + `<a class="btn btn-ink" href="#kontakt" data-pick="${r.pkg}">Chci ${r.pkg} →</a>`;
+    const rect = b.getBoundingClientRect();
+    confetti(rect.left + rect.width / 2, rect.top);
+  }));
+
+  /* ---- wheel of fortune ---- */
+  // m = price modifier; edit these to change the odds (each segment is equally likely)
+  const PRICES = { 'SINGLE SESSION': 1200, 'STARTER': 10000, 'TRANSFORMATION': 17000 };
+  const WHEEL = [
+    { m: -.20, label: '−20 %', c: '#ffb52e', jackpot: true },
+    { m: +.10, label: '+10 %', c: '#ff5ca8' },
+    { m: -.05, label: '−5 %', c: '#d4ff3a' },
+    { m: -.10, label: '−10 %', c: '#ffffff' },
+    { m: +.05, label: '+5 %', c: '#ff5ca8' },
+    { m: -.15, label: '−15 %', c: '#d4ff3a' },
+    { m: 0, label: '±0', c: '#7b9bff' },
+    { m: +.15, label: '+15 %', c: '#ff5ca8' },
+    { m: -.10, label: '−10 %', c: '#ffffff' },
+    { m: -.05, label: '−5 %', c: '#d4ff3a' }
+  ];
+  const TOKENS = 3, SEG = 360 / WHEEL.length;
+  const wheelEl = $('#wheel'), spinBtn = $('#spin'), resEl = $('#wheel-res'), tokEl = $('#tokens'), frame = $('.wheel-frame');
+  const kc = n => `${fmt(n)} Kč`;
+  const rand = () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+
+  const wheelState = { tokens: TOKENS, idx: null, pkg: 'STARTER' };
+  try { Object.assign(wheelState, JSON.parse(store.get('wheel')) || {}); } catch (e) {}
+  if (!WHEEL[wheelState.idx]) wheelState.idx = null;
+  if (!PRICES[wheelState.pkg]) wheelState.pkg = 'STARTER';
+  // +2 headroom for bonus tokens from the chest and the legendary loot drop
+  wheelState.tokens = Math.max(0, Math.min(TOKENS + 2, +wheelState.tokens || 0));
+  const saveWheel = () => store.set('wheel', JSON.stringify(wheelState));
+  function grantToken() {
+    wheelState.tokens = Math.min(TOKENS + 2, wheelState.tokens + 1);
+    saveWheel();
+    renderTokens();
+    renderResult(false);
+  }
+  let wheelRot = 0, spinning = false;
+
+  const pt = (deg, r) => [r * Math.sin(deg * Math.PI / 180), -r * Math.cos(deg * Math.PI / 180)].map(v => v.toFixed(2));
+  wheelEl.innerHTML = WHEEL.map((s, i) => {
+    const [x1, y1] = pt(i * SEG, 100), [x2, y2] = pt((i + 1) * SEG, 100), mid = (i + .5) * SEG;
+    return `<path d="M0 0L${x1} ${y1}A100 100 0 0 1 ${x2} ${y2}Z" fill="${s.c}" stroke="#0d0d0d" stroke-width="1.5"/>`
+      + `<text class="seg-t" transform="rotate(${mid}) translate(0 -64)" text-anchor="middle" dominant-baseline="middle">${s.label}</text>`
+      + (s.jackpot ? `<text class="seg-j" transform="rotate(${mid}) translate(0 -86)" text-anchor="middle" dominant-baseline="middle">★</text>` : '');
+  }).join('') + '<circle r="100" fill="none" stroke="#0d0d0d" stroke-width="3"/>';
+  $('.bulbs').innerHTML = Array.from({ length: 24 }, (_, i) => `<span style="--a:${i * 15}deg"></span>`).join('');
+
+  function renderTokens() {
+    tokEl.innerHTML = Array.from({ length: Math.max(TOKENS, wheelState.tokens) }, (_, i) => `<span class="tok${i < wheelState.tokens ? '' : ' used'}">🪙</span>`).join('');
+    tokEl.setAttribute('aria-label', `Zbývá žetonů: ${wheelState.tokens}`);
+    spinBtn.disabled = spinning || wheelState.tokens <= 0;
+    spinBtn.textContent = wheelState.tokens > 0 || spinning ? 'Toč!' : 'Konec';
+  }
+
+  function renderResult(fresh) {
+    if (wheelState.idx === null) { resEl.hidden = true; return; }
+    const s = WHEEL[wheelState.idx], base = PRICES[wheelState.pkg];
+    const price = Math.round(base * (1 + s.m) / 10) * 10, diff = price - base;
+    resEl.hidden = false;
+    resEl.className = `wheel-res card ${diff < 0 ? 'good' : diff > 0 ? 'bad' : 'even'}`;
+    resEl.innerHTML = `<span class="react" aria-hidden="true">${diff < 0 ? '📈 Stonks' : diff > 0 ? '💀 Emotional damage' : '🗿 Ok'}</span>`
+      + `<p class="res-tag">${s.jackpot ? '⭐ Jackpot · ' : ''}Padlo ${s.label} · ${wheelState.pkg}</p>`
+      + `<p class="res-price">${diff ? `<s>${kc(base)}</s>` : ''}<b>${kc(price)}</b></p>`
+      + `<p class="res-diff">${diff < 0 ? `Ušetříš ${kc(-diff)} 🎉` : diff > 0 ? `Au, +${kc(diff)} 😬` : 'Beze změny. Nuda. 😐'}</p>`
+      + `<div class="res-btns"><a class="btn${diff > 0 ? ' btn-white' : ''}" href="#kontakt" data-pick="${wheelState.pkg} za ${kc(price)} (kolo štěstí ${s.label})">${diff > 0 ? '😅 Beru i tak' : '✅ Beru to!'}</a>`
+      + (wheelState.tokens > 0 ? `<button class="btn btn-ghost" type="button" data-respin>🎰 Risknout znovu</button>` : '')
+      + '</div>';
+    if (!fresh) return;
+    resEl.style.animation = 'none'; void resEl.offsetWidth; resEl.style.animation = '';
+    if (diff > 0) resEl.classList.add('shake');
+    const r = resEl.getBoundingClientRect();
+    if (diff < 0) {
+      confetti(r.left + r.width / 2, r.top);
+      if (s.jackpot) setTimeout(() => confetti(r.left + r.width / 2, r.top + 60), 300);
+      toast(s.jackpot ? '⭐ JACKPOT! −20 %!' : `🎉 Ušetříš ${kc(-diff)}!`);
+    } else {
+      toast(diff > 0 ? (wheelState.tokens ? '😬 Au. Riskneš to znovu?' : '😬 Au. Žetony došly.') : '😐 Beze změny');
+    }
+    resEl.scrollIntoView({ block: 'nearest', behavior: isCalm() ? 'auto' : 'smooth' });
+  }
+
+  function spin() {
+    if (spinning || wheelState.tokens <= 0) return;
+    spinning = true;
+    const idx = Math.floor(rand() * WHEEL.length);
+    wheelState.tokens--;
+    wheelState.idx = idx;
+    saveWheel();
+    renderTokens();
+    resEl.hidden = true;
+    // the pointer sits at 0° (top), so rotate the wheel until the chosen segment is under it
+    const target = (idx + .5) * SEG + (rand() - .5) * SEG * .7;
+    const dur = isCalm() ? 0 : 5200;
+    wheelRot = wheelRot - (wheelRot % 360) + 360 * 7 + (360 - target);
+    frame.classList.add('spinning');
+    wheelEl.style.transition = dur ? `transform ${dur}ms cubic-bezier(.12,.7,.12,1)` : 'none';
+    wheelEl.style.transform = `rotate(${wheelRot}deg)`;
+    setTimeout(() => {
+      spinning = false;
+      frame.classList.remove('spinning');
+      renderTokens();
+      renderResult(true);
+      if (!wheelState.tokens) unlock('gambler');
+    }, dur + 150);
+  }
+
+  $$('.pkg-pick button').forEach(b => {
+    b.setAttribute('aria-checked', b.dataset.pkg === wheelState.pkg);
+    b.addEventListener('click', () => {
+      wheelState.pkg = b.dataset.pkg;
+      saveWheel();
+      $$('.pkg-pick button').forEach(x => x.setAttribute('aria-checked', x === b));
+      renderResult(false);
+    });
+  });
+  spinBtn.addEventListener('click', spin);
+  resEl.addEventListener('click', e => { if (e.target.closest('[data-respin]')) spin(); });
+
+  if (wheelState.idx !== null) {
+    wheelRot = 360 - (wheelState.idx + .5) * SEG;
+    wheelEl.style.transform = `rotate(${wheelRot}deg)`;
+  }
+  renderTokens();
+  renderResult(false);
+
+  /* ---- before / after slider ---- */
+  const ba = $('#ba'), baRange = $('.ba-range', ba), baLesson = $('#ba-lesson');
+  let baDrag = false, baTouched = false;
+  function setBa(p) {
+    p = Math.max(0, Math.min(100, p));
+    ba.style.setProperty('--pos', `${p}%`);
+    baRange.value = Math.round(p);
+    baLesson.textContent = Math.round((1 - p / 100) * 20);
+  }
+  const baFromEvent = e => { const r = ba.getBoundingClientRect(); setBa((e.clientX - r.left) / r.width * 100); };
+  ba.addEventListener('pointerdown', e => {
+    baDrag = baTouched = true;
+    ba.setPointerCapture(e.pointerId);
+    // on touch, wait for an actual drag so a page scroll does not jump the handle
+    if (e.pointerType === 'mouse') baFromEvent(e);
+  });
+  ba.addEventListener('pointermove', e => { if (baDrag) baFromEvent(e); });
+  ba.addEventListener('pointerup', () => { baDrag = false; });
+  ba.addEventListener('pointercancel', () => { baDrag = false; });
+  baRange.addEventListener('input', () => { baTouched = true; setBa(+baRange.value); });
+
+  // wiggle the handle once when the slider first shows up, so people see it moves
+  const baIO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    baIO.disconnect();
+    if (isCalm()) return;
+    const keys = [50, 20, 80, 50], segMs = 650, t0 = performance.now();
+    (function step(t) {
+      if (baTouched) return;
+      const k = Math.min((t - t0) / segMs, keys.length - 1), i = Math.min(Math.floor(k), keys.length - 2), f = k - i;
+      const ease = f < .5 ? 2 * f * f : 1 - (-2 * f + 2) ** 2 / 2;
+      setBa(keys[i] + (keys[i + 1] - keys[i]) * ease);
+      if (k < keys.length - 1) requestAnimationFrame(step);
+    })(t0);
+  }), { threshold: .6 });
+  baIO.observe(ba);
+
+  /* ================= game layer ================= */
+  const gameState = { loot: [], ach: [], chest: false, boxes: 0, details: 0 };
+  try { Object.assign(gameState, JSON.parse(store.get('game')) || {}); } catch (e) {}
+  ['loot', 'ach'].forEach(k => { if (!Array.isArray(gameState[k])) gameState[k] = []; });
+  const saveGame = () => store.set('game', JSON.stringify(gameState));
+  const pickOne = a => a[Math.floor(rand() * a.length)];
+  const bump = el => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
+
+  /* ---- achievements ---- */
+  const ACH = {
+    owl: ['🦉', 'Noční sova', 'Návštěva mezi 22:00 a 5:00'],
+    bird: ['🐦', 'Ranní ptáče', 'Návštěva mezi 5:00 a 8:00'],
+    slayer: ['👹', 'Boss slayer', 'Poražená lenost'],
+    speed: ['⚡', 'Speedrun', 'Lenost poražená do 40 vteřin'],
+    detective: ['🧐', 'Detektiv', '5× otevřené „Víc info“'],
+    gambler: ['🎰', 'Gambler', 'Utracené všechny žetony'],
+    collector: ['🎒', 'Sběratel', 'Plný batoh 12/12'],
+    memelord: ['🧠', 'Meme lord', '5 otevřených tajných krabiček'],
+    dj: ['🎵', 'DJ', 'Rozjetý motivační beat'],
+    sigma: ['🗿', 'Sigma', 'Nalezený easter egg']
+  };
+  const achBtn = $('#ach-btn'), bagBtn = $('#bag-btn');
+  function renderHud() {
+    $('#ach-n').textContent = gameState.ach.length;
+    $('#bag-n').textContent = gameState.loot.length;
+  }
+  function unlock(id) {
+    if (!ACH[id] || gameState.ach.includes(id)) return;
+    gameState.ach.push(id);
+    saveGame();
+    renderHud();
+    bump(achBtn);
+    toast(`🏆 Achievement: ${ACH[id][0]} ${ACH[id][1]}`);
+    if (gameState.ach.length === Object.keys(ACH).length) toast('👑 Všechny achievementy! Jsi legenda.');
+  }
+  $('#ach-total').textContent = Object.keys(ACH).length;
+
+  /* ---- mini Honza mascot ---- */
+  const mascot = $('#mascot'), bubble = $('#bubble');
+  let sayTimer;
+  function say(msg, ms = 3800, important = false) {
+    if (isCalm()) { if (important) toast(msg); return; }
+    bubble.textContent = msg;
+    bubble.classList.add('show');
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => bubble.classList.remove('show'), ms);
+  }
+  setTimeout(() => { mascot.classList.add('on'); say('Čau! Jsem mini Honza. 👋 Scrolluj a poraz lenost!', 4500); }, 2500);
+  const QUIPS = ['Dřep je král cviků. 👑', 'Voda. Pij vodu. 💧', 'Dneska nohy? Dneska nohy. 🦵', 'Výmluvy nespalujou kalorie. 🔥', 'Klikni ještě jednou a udělám kliky. (Neudělám.)', 'Sigma grindset. 🗿', 'Technika první, ego počká. 🎯'];
+  $('.mascot-btn').addEventListener('click', () => say(pickOne(QUIPS)));
+  const LINES = {
+    kviz: 'Klikni na cíl, nekoušu. 🎯',
+    'o-mne': 'To jsem já. Teda… velký já. 😎',
+    sluzby: 'Rozklikni „Co tě čeká?“ 👇',
+    gigachad: '🗿🗿🗿',
+    'pred-po': 'Táhni to! To jsem já před a po. 😂',
+    cenik: 'Psst… o kus níž je kolo štěstí. 😏',
+    kolo: 'Gamba je gamba. Hodně štěstí! 🍀',
+    proc: '8 certifikátů. Žádný flex… dobře, trochu flex. 💪',
+    memes: 'Dopamin doručen. 📦',
+    reference: 'Ondra je legenda. 🙌',
+    kontakt: 'Final boss! Napiš mi na IG. 💬'
+  };
+  const mascotIO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    mascotIO.unobserve(e.target);
+    say(LINES[e.target.id]);
+  }), { rootMargin: '0px 0px -55% 0px' });
+  Object.keys(LINES).forEach(id => { const s = document.getElementById(id); if (s) mascotIO.observe(s); });
+  let idleTimer, idleSaid = 0;
+  function idleReset() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (idleSaid++ < 2) say(bossDead ? 'Hej, odměna dole pořád čeká! 🎁' : 'Hej, ještě tam jsi? Dole čeká 🎁', 5000);
+    }, 20000);
+  }
+  ['pointermove', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, idleReset, { passive: true }));
+
+  /* ---- greeting + daily fitness horoscope ---- */
+  const hr = new Date().getHours();
+  $('#greet').textContent = hr < 5 || hr >= 22 ? '🦉 Je noc a ty jsi tu? Respekt' : hr < 9 ? '☀️ Dobré ráno, ranní ptáče' : hr < 12 ? '👋 Dobré dopoledne' : hr < 17 ? '💪 Dobré odpoledne' : '🌆 Dobrý večer';
+  if (hr >= 22 || hr < 5) setTimeout(() => unlock('owl'), 4000);
+  if (hr >= 5 && hr < 8) setTimeout(() => unlock('bird'), 4000);
+  const today = new Date();
+  let seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  // mulberry32: same horoscope for everyone on the same day
+  const daily = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const dailyPick = a => a[Math.floor(daily() * a.length)];
+  const DAYS = ['den nohou 🦵', 'den zad 🔙', 'den kardia 🫀', 'den regenerace 🧘', 'den osobních rekordů 🏆', 'den mobility 🤸', 'den rukou 💪'];
+  const STARS = ['Hvězdy říkají: žádné výmluvy.', 'Merkur je retrográdní, ale tvoje činka ne.', 'Venuše přeje bílkovinám.', 'Mars ti dodá sílu na poslední sérii.', 'Saturn doporučuje vypít 2 litry vody.', 'Jupiter tvrdí, že dneska to dáš.', 'Měsíc radí: nezapomeň se protáhnout.'];
+  const MOVES = ['dřep', 'mrtvý tah', 'plank', 'výpady', 'shyby', 'kliky', 'farmářská chůze', 'hip thrust'];
+  $('#horo-date').textContent = today.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' });
+  $('#horo-text').textContent = `Dnes je ${dailyPick(DAYS)}. ${dailyPick(STARS)}`;
+  $('#horo-tags').innerHTML = [`Šťastný cvik: ${dailyPick(MOVES)}`, `Šťastné číslo: ${8 + Math.floor(daily() * 13)} opakování`, `Energie dne: ${60 + Math.floor(daily() * 41)} %`].map(t => `<li>${t}</li>`).join('');
+
+  /* ---- "next up" cliffhangers ---- */
+  const TEASERS = [
+    ['kviz', 'Kdo je ten týpek s kettlebellama?', 'o-mne'],
+    ['o-mne', '3 služby, které ti změní tělo', 'sluzby'],
+    ['sluzby', 'Gigachad level odemčen 🗿', 'gigachad'],
+    ['gigachad', 'Stickman, který se změnil k nepoznání', 'pred-po'],
+    ['pred-po', 'Kolik to stojí (a jak to srazit o 20 %)', 'cenik'],
+    ['kolo', 'Proč zrovna Honza? 3 důvody', 'proc'],
+    ['proc', 'Meme pauza. Mozek si zaslouží odměnu 🧠', 'memes'],
+    ['memes', 'Co o Honzovi říkají klienti', 'reference'],
+    ['reference', 'Final boss 👹 a tajná odměna 🎁', 'kontakt']
+  ];
+  const peekIO = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    peekIO.unobserve(e.target);
+    setTimeout(() => e.target.classList.add('peek'), 900);
+  }), { threshold: 1 });
+  TEASERS.forEach(([from, text, to]) => {
+    const sec = document.getElementById(from);
+    if (!sec) return;
+    const w = document.createElement('div');
+    w.className = 'wrap';
+    w.innerHTML = `<a class="next" href="#${to}"><span>👀 Příště</span><b>${text}</b><i aria-hidden="true">↓</i></a>`;
+    sec.append(w);
+    peekIO.observe(w.firstChild);
+  });
+
+  /* ---- mystery boxes ---- */
+  const FACTS = [
+    'Sval neví, jestli zvedáš činku, nebo tašku s nákupem. Zátěž je zátěž.',
+    'Trávení bílkovin spálí víc energie než trávení sacharidů nebo tuků.',
+    'Svalová paměť existuje: po pauze nabereš sílu zpátky rychleji než poprvé.',
+    'Dřep zapojí víc svalů najednou než skoro jakýkoli jiný cvik.',
+    'Na hubnutí nemusíš hladovět. Stačí mírný deficit a trpělivost.',
+    'Tuk z břicha cvičením břicha nespálíš. Ubývá z celého těla najednou.',
+    'Pár minut chůze po jídle pomáhá s hladinou cukru v krvi.',
+    'Svaly rostou hlavně během odpočinku, ne během tréninku.',
+    'Kreatin patří k nejprozkoumanějším doplňkům vůbec.',
+    'Srdce je taky sval. Kardio = trénink srdce.'
+  ];
+  $$('.mbox').forEach(b => b.addEventListener('click', () => {
+    b.classList.add('opened');
+    b.textContent = '✨';
+    say(`🧠 Fun fact: ${pickOne(FACTS)}`, 6500, true);
+    gameState.boxes = (gameState.boxes || 0) + 1;
+    saveGame();
+    if (gameState.boxes >= 5) unlock('memelord');
+    const r = b.getBoundingClientRect();
+    confetti(r.left + r.width / 2, r.top);
+  }));
+  document.addEventListener('toggle', e => {
+    if (!e.target.matches?.('details.more') || !e.target.open) return;
+    gameState.details = (gameState.details || 0) + 1;
+    saveGame();
+    if (gameState.details >= 5) unlock('detective');
+  }, true);
+
+  /* ---- loot drops ---- */
+  const RARITY = { common: ['⚪', 'Běžný', 60], rare: ['🔵', 'Vzácný', 25], epic: ['🟣', 'Epický', 12], legendary: ['🟡', 'Legendární', 3] };
+  const LOOT = [
+    { id: 'water', r: 'common', e: '💧', t: 'Tip: sklenice vody před jídlem. Žízeň se ráda převléká za hlad.' },
+    { id: 'steps', r: 'common', e: '🚶', t: 'Tip: kroky se počítají. 8 000 denně je skvělý základ.' },
+    { id: 'sleep', r: 'common', e: '😴', t: 'Tip: spánek je nejlevnější suplement. Miř na 7–9 hodin.' },
+    { id: 'breakfast', r: 'common', e: '🥚', t: 'Tip: bílkoviny ke snídani = míň chuti na sladké odpoledne.' },
+    { id: 'squats', r: 'common', e: '🪑', t: 'Tip: sedíš celý den? Každou hodinu 10 dřepů.' },
+    { id: 'technique', r: 'rare', e: '🎯', t: 'Gym moudro: technika první, váhy potom. Ego počká.' },
+    { id: 'noextremes', r: 'rare', e: '🧭', t: 'Honza: „Žádné extrémy, jen funkční řešení, která dávají smysl.“' },
+    { id: 'partner', r: 'rare', e: '🤝', t: 'Honza: „Tělo není nástroj k dosažení cílů, ale partner na cestě ke zdraví.“' },
+    { id: 'moai', r: 'epic', e: '🗿', t: 'Meme: Nikdo: … Tvoje záda po 20 lekcích: 🗿' },
+    { id: 'stonks', r: 'epic', e: '📈', t: 'Meme: tvoje forma po měsíci s Honzou: STONKS.' },
+    { id: 'donut', r: 'epic', e: '🍩', t: 'Meme: donut v ruce, výmluva v hlavě. Vyhoď aspoň jedno.' },
+    { id: 'token', r: 'legendary', e: '🪙', t: 'Legendární drop! +1 žeton do kola štěstí.' }
+  ];
+  function rollLoot() {
+    const left = LOOT.filter(l => !gameState.loot.includes(l.id));
+    if (!left.length) return null;
+    const pool = Object.keys(RARITY).filter(r => left.some(l => l.r === r));
+    let roll = rand() * pool.reduce((sum, r) => sum + RARITY[r][2], 0);
+    const rarity = pool.find(r => (roll -= RARITY[r][2]) < 0) || pool[pool.length - 1];
+    return pickOne(left.filter(l => l.r === rarity));
+  }
+  let dropEl = null, lootPop = null;
+  function removeDrop(el) {
+    if (dropEl === el) dropEl = null;
+    if (!el.isConnected) return;
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 400);
+  }
+  function spawnDrop() {
+    const item = rollLoot();
+    if (!item) return;
+    const el = dropEl = document.createElement('button');
+    el.type = 'button';
+    el.className = `drop r-${item.r}`;
+    el.setAttribute('aria-label', `Sebrat loot: ${RARITY[item.r][1]}`);
+    el.innerHTML = `<span class="drop-ico" aria-hidden="true">🎁</span><span class="drop-txt">Loot!<small>${RARITY[item.r][0]} ${RARITY[item.r][1]}</small></span>`;
+    el.addEventListener('click', () => { collect(item); removeDrop(el); });
+    document.body.append(el);
+    say('Loot! Seber ho, než zmizí! 👉');
+    setTimeout(() => removeDrop(el), 7000);
+  }
+  function collect(item) {
+    if (gameState.loot.includes(item.id)) return;
+    gameState.loot.push(item.id);
+    saveGame();
+    renderHud();
+    bump(bagBtn);
+    if (item.id === 'token') grantToken();
+    lootPop?.remove();
+    const el = lootPop = document.createElement('div');
+    el.className = `loot-pop r-${item.r}`;
+    el.setAttribute('role', 'status');
+    el.innerHTML = `<span class="lp-r">${RARITY[item.r][0]} ${RARITY[item.r][1]} drop</span><i aria-hidden="true">${item.e}</i><p>${item.t}</p><small>Uloženo do batohu 🎒 ${gameState.loot.length}/${LOOT.length}</small>`;
+    el.addEventListener('click', () => el.remove());
+    document.body.append(el);
+    setTimeout(() => el.remove(), 4500);
+    confetti(innerWidth / 2, innerHeight / 2);
+    if (item.r === 'legendary') setTimeout(() => confetti(innerWidth / 2, innerHeight / 2), 300);
+    if (gameState.loot.length === LOOT.length) unlock('collector');
+  }
+
+  /* ---- bag / achievements panel ---- */
+  const panel = $('#panel'), panelT = $('#panel-t'), panelBody = $('#panel-body');
+  function openPanel(kind) {
+    if (kind === 'bag') {
+      panelT.textContent = `🎒 Batoh ${gameState.loot.length}/${LOOT.length}`;
+      panelBody.innerHTML = '<p class="panel-sum">Loot padá náhodně při scrollování. Legendární šance: cca 3 %.</p><ul class="slots">'
+        + LOOT.map(l => gameState.loot.includes(l.id)
+          ? `<li class="slot r-${l.r}"><i>${l.e}</i><span><small>${RARITY[l.r][0]} ${RARITY[l.r][1]}</small>${l.t}</span></li>`
+          : `<li class="slot locked r-${l.r}"><i>❓</i><span><small>${RARITY[l.r][0]} ${RARITY[l.r][1]}</small>Zatím nenalezeno</span></li>`).join('') + '</ul>';
+    } else {
+      const ids = Object.keys(ACH);
+      panelT.textContent = `🏆 Achievementy ${gameState.ach.length}/${ids.length}`;
+      panelBody.innerHTML = '<p class="panel-sum">Většina je skrytá. Hledej. 🕵️</p><ul class="slots">'
+        + ids.map(id => gameState.ach.includes(id)
+          ? `<li class="slot r-legendary"><i>${ACH[id][0]}</i><span><small>Odemčeno</small><b>${ACH[id][1]}</b> – ${ACH[id][2]}</span></li>`
+          : '<li class="slot locked"><i>🔒</i><span><small>Skrytý</small>???</span></li>').join('') + '</ul>';
+    }
+    panel.showModal();
+  }
+  bagBtn.addEventListener('click', () => openPanel('bag'));
+  achBtn.addEventListener('click', () => openPanel('ach'));
+  $('.panel-x').addEventListener('click', () => panel.close());
+  panel.addEventListener('click', e => { if (e.target === panel) panel.close(); });
+
+  /* ---- reward chest ---- */
+  const chest = $('#chest'), chestAct = $('#chest-act');
+  function chestOpened() {
+    chest.className = 'chest open';
+    $('#chest-ico').textContent = '🪙';
+    $('#chest-title').textContent = '+1 žeton do kola!';
+    $('#chest-hint').textContent = 'Žeton už čeká v kole štěstí.';
+    chestAct.innerHTML = '<a class="btn" href="#kolo">🎰 Jdu točit</a>';
+  }
+  function chestReady() {
+    if (gameState.chest) return;
+    chest.className = 'chest ready';
+    $('#chest-hint').textContent = 'Odemčeno! Klikni a otevři. 👆';
+    chestAct.innerHTML = '<button class="btn" type="button">🎁 Otevřít!</button>';
+    $('button', chestAct).addEventListener('click', () => {
+      gameState.chest = true;
+      saveGame();
+      grantToken();
+      const r = chest.getBoundingClientRect();
+      confetti(r.left + r.width / 2, r.top + 40);
+      setTimeout(() => confetti(r.left + r.width / 2, r.top + 40), 250);
+      toast('🪙 +1 žeton do kola štěstí!');
+      chestOpened();
+    });
+  }
+  if (gameState.chest) chestOpened();
+
+  /* ---- boss "Lenost" + loot spawning on scroll ---- */
+  const hud = $('#hud'), bossEl = $('.boss'), bossBar = $('.boss-bar'), hpBar = $('#boss-hp'), hpPct = $('#boss-pct');
+  const loadT = performance.now();
+  let minHp = 100, lastPopHp = 100, bossDead = false;
+  let lastY = scrollY, lastT = performance.now(), fastCool = 0, scrollAcc = 0, nextDropAt = 700 + rand() * 700;
+  function popDamage(d) {
+    if (isCalm()) return;
+    const crit = rand() < .15, el = document.createElement('span');
+    el.className = `dmg${crit ? ' crit' : ''}`;
+    el.textContent = `${crit ? 'KRIT! ' : ''}−${Math.max(1, Math.round(d))}`;
+    el.style.setProperty('--x', `${30 + rand() * 50}%`);
+    bossEl.append(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+  function defeatBoss() {
+    bossDead = true;
+    bossEl.classList.add('dead');
+    $('.boss-name').textContent = '✅ Lenost';
+    hpPct.textContent = 'K.O.';
+    toast('👹 LENOST PORAŽENA! Dole tě čeká odměna 🎁');
+    confetti(innerWidth / 2, 110);
+    unlock('slayer');
+    if (performance.now() - loadT < 40000) unlock('speed');
+    say('GG! 🗿 Otevři odměnu dole!', 4500);
+    chestReady();
+  }
+  function onGameScroll() {
+    const y = scrollY, now = performance.now();
+    hud.classList.toggle('on', y > 150);
+    if (!bossDead) {
+      const end = Math.max(400, contact.offsetTop - innerHeight * .4);
+      const hp = Math.max(0, Math.min(100, 100 * (1 - y / end)));
+      if (hp < minHp) {
+        minHp = hp;
+        hpBar.style.width = `${minHp}%`;
+        hpPct.textContent = `${Math.ceil(minHp)} %`;
+        bossBar.setAttribute('aria-valuenow', Math.ceil(minHp));
+        if (lastPopHp - minHp >= 4) { popDamage(lastPopHp - minHp); lastPopHp = minHp; }
+        if (minHp <= 0) defeatBoss();
+      }
+    }
+    const dy = Math.abs(y - lastY), speed = dy / Math.max(16, now - lastT) * 1000;
+    lastY = y;
+    lastT = now;
+    if (speed > 5000 && now > fastCool) { fastCool = now + 10000; say('Pomaleji, nestíhám! 😵‍💫'); }
+    scrollAcc += dy;
+    if (scrollAcc > nextDropAt && !dropEl && !isCalm()) {
+      scrollAcc = 0;
+      nextDropAt = 900 + rand() * 900;
+      spawnDrop();
+    }
+    idleReset();
+  }
+  addEventListener('scroll', onGameScroll, { passive: true });
+  onGameScroll();
+  renderHud();
+
+  /* ---- easter egg: konami code or 5 quick taps on the logo ---- */
+  const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+  let kIdx = 0, logoTaps = [];
+  function moaiRain() {
+    if (isCalm()) return;
+    for (let i = 0; i < 28; i++) {
+      const m = document.createElement('span');
+      m.className = 'moai-drop';
+      m.textContent = '🗿';
+      m.style.cssText = `left:${rand() * 94}vw;--d:${2 + rand() * 2.5}s;--s:${1.6 + rand() * 2.4}rem;--r:${(rand() - .5) * 720}deg;animation-delay:${rand() * 1.2}s`;
+      document.body.append(m);
+      setTimeout(() => m.remove(), 5200);
+    }
+  }
+  function chadMode() {
+    const on = root.classList.toggle('chadmode');
+    toast(on ? '🗿 GIGACHAD MODE ACTIVATED' : '🌈 Barvy jsou zpátky');
+    if (!on) return;
+    unlock('sigma');
+    say('🗿🗿🗿', 3000);
+    moaiRain();
+  }
+  addEventListener('keydown', e => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    kIdx = k === KONAMI[kIdx] ? kIdx + 1 : (k === KONAMI[0] ? 1 : 0);
+    if (kIdx === KONAMI.length) { kIdx = 0; chadMode(); }
+  });
+  $('.hdr .logo').addEventListener('click', () => {
+    const t = performance.now();
+    logoTaps = logoTaps.filter(x => t - x < 2500);
+    logoTaps.push(t);
+    if (logoTaps.length >= 5) { logoTaps = []; chadMode(); }
+  });
+
+  /* ---- motivational music, synthesized live (no audio files, no licensing) ---- */
+  const Music = (() => {
+    const BPM = 124, STEP = 60 / BPM / 4;
+    const ROOTS = [45, 41, 36, 43];  // bass A F C G
+    const CHORDS = [[69, 72, 76], [65, 69, 72], [64, 67, 72], [67, 71, 74]];  // Am F C G
+    const hz = m => 440 * 2 ** ((m - 69) / 12);
+    let ctx, out, echo, noise, timer, next = 0, step = 0, playing = false;
+    function init() {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = ctx.createDynamicsCompressor();
+      out = ctx.createGain();
+      out.gain.value = 0;
+      out.connect(comp).connect(ctx.destination);
+      echo = ctx.createDelay(1);
+      echo.delayTime.value = STEP * 3;
+      const fb = ctx.createGain(), wet = ctx.createGain();
+      fb.gain.value = .32;
+      wet.gain.value = .22;
+      echo.connect(fb).connect(echo);
+      echo.connect(wet).connect(out);
+      noise = ctx.createBuffer(1, ctx.sampleRate / 2, ctx.sampleRate);
+      const data = noise.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    }
+    function env(g, t, peak, len) {
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + .005);
+      g.gain.exponentialRampToValueAtTime(.0001, t + len);
+    }
+    function kick(t) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(160, t);
+      o.frequency.exponentialRampToValueAtTime(42, t + .14);
+      env(g, t, 1, .38);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + .4);
+    }
+    function hit(t, type, freq, peak, len) {
+      const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = noise;
+      f.type = type;
+      f.frequency.value = freq;
+      env(g, t, peak, len);
+      s.connect(f).connect(g).connect(out);
+      s.start(t);
+      s.stop(t + len + .02);
+    }
+    function synth(t, midi, type, cutoff, peak, len, toEcho) {
+      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = type;
+      o.frequency.value = hz(midi);
+      f.type = 'lowpass';
+      f.Q.value = 5;
+      f.frequency.setValueAtTime(cutoff, t);
+      f.frequency.exponentialRampToValueAtTime(cutoff / 4, t + len);
+      env(g, t, peak, len);
+      o.connect(f).connect(g).connect(out);
+      if (toEcho) g.connect(echo);
+      o.start(t);
+      o.stop(t + len + .02);
+    }
+    function pulse(t) {
+      if (isCalm()) return;
+      setTimeout(() => {
+        root.classList.add('beat');
+        setTimeout(() => root.classList.remove('beat'), 110);
+      }, Math.max(0, (t - ctx.currentTime) * 1000));
+    }
+    function tick() {
+      while (next < ctx.currentTime + .12) {
+        const bar = Math.floor(step / 16) % 4, s = step % 16, full = step >= 32;  // 2 intro bars of kick + bass
+        if (s % 4 === 0) { kick(next); pulse(next); }
+        if (full && s % 4 === 2) hit(next, 'highpass', 7000, .22, .09);
+        if (full && s % 2 === 1) hit(next, 'highpass', 9000, .06, .03);
+        if (full && (s === 4 || s === 12)) hit(next, 'bandpass', 1600, .45, .16);
+        if (s % 2 === 0) synth(next, ROOTS[bar] + (s % 8 === 6 ? 12 : 0), 'sawtooth', 900, .32, STEP * 1.8);
+        if (full) synth(next, CHORDS[bar][[0, 1, 2, 1][s % 4]] + (Math.floor(step / 64) % 2 ? 12 : 0), 'square', 2400, .055, STEP * .9, true);
+        next += STEP;
+        step++;
+      }
+    }
+    return {
+      get playing() { return playing; },
+      start() {
+        if (!ctx) init();
+        ctx.resume();
+        playing = true;
+        const now = ctx.currentTime;
+        out.gain.cancelScheduledValues(now);
+        out.gain.setValueAtTime(out.gain.value, now);
+        out.gain.linearRampToValueAtTime(.3, now + 1.5);
+        next = now + .06;
+        step = 0;
+        clearInterval(timer);
+        timer = setInterval(tick, 25);
+      },
+      stop() {
+        playing = false;
+        clearInterval(timer);
+        const now = ctx.currentTime;
+        out.gain.cancelScheduledValues(now);
+        out.gain.setValueAtTime(out.gain.value, now);
+        out.gain.linearRampToValueAtTime(0, now + .3);
+        setTimeout(() => { if (!playing) ctx.suspend(); }, 350);
+      },
+      pause(hidden) { if (ctx && playing) hidden ? ctx.suspend() : ctx.resume(); }
+    };
+  })();
+  // on by default; browsers only allow audio after a user gesture, so it kicks in on the first click / tap / key
+  const musicBtn = $('#music'), GESTURES = ['pointerdown', 'keydown', 'touchend'];
+  let musicWanted = store.get('music') !== '0';
+  const setMusicUi = on => {
+    musicBtn.setAttribute('aria-pressed', on);
+    musicBtn.innerHTML = `${on ? '🔊' : '🎵'} <span>Hudba</span>`;
+  };
+  function autoStart() {
+    GESTURES.forEach(ev => removeEventListener(ev, autoStart, true));
+    if (!musicWanted || Music.playing) return;
+    Music.start();
+    unlock('dj');
+    say('Beat jede! 🎧 Vypnout můžeš nahoře.');
+  }
+  setMusicUi(musicWanted);
+  if (musicWanted) {
+    GESTURES.forEach(ev => addEventListener(ev, autoStart, true));
+    setTimeout(() => { if (musicWanted && !Music.playing) say('Klikni kamkoli a pustím ti beat. 🎧', 4500); }, 7500);
+  }
+  musicBtn.addEventListener('click', () => {
+    const on = !Music.playing;
+    musicWanted = on;
+    store.set('music', on ? '1' : '0');
+    on ? Music.start() : Music.stop();
+    setMusicUi(on);
+    toast(on ? '🎵 Motivační beat ON · 124 BPM 💪' : '🔇 Hudba vypnutá');
+    if (on) unlock('dj');
+  });
+  document.addEventListener('visibilitychange', () => Music.pause(document.hidden));
+})();
+</script>
+</body>
 </html>
