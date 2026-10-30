@@ -70,10 +70,15 @@ jobs:
       - name: Worker bundle dry run
         run: pnpm --filter @windowling/web exec wrangler deploy --dry-run --outdir dist-worker
 
-  e2e:
-    name: E2E (Playwright on workerd)
+  # Four shards in parallel, each with its own Postgres and Worker (~3 min instead of ~10).
+  e2e-shard:
+    name: E2E shard ${{ matrix.shard }}/4
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     services:
       postgres:
         image: postgres:18-alpine
@@ -99,10 +104,20 @@ jobs:
       - name: Run E2E
         env:
           PLAYWRIGHT_CHANNEL: chrome
-        run: pnpm test:e2e
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/4
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: apps/web/playwright-report
           retention-days: 7
+
+  # One check under the old name, so branch protection keeps requiring a single E2E result.
+  e2e:
+    name: E2E (Playwright on workerd)
+    needs: e2e-shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: All shards passed
+        run: test "${{ needs.e2e-shard.result }}" = success
