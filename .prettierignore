@@ -12,5 +12,7 @@ apps/web/src/worker-configuration.d.ts
 
 # Games are self-contained static web games, kept as their authors wrote them.
 apps/web/static/games/
+# The hidden page /tajne/ruzek is shipped as its author wrote it.
+apps/web/static/tajne/
 # The center's stylesheet keeps its compact, hand-written layout.
 apps/web/src/lib/hub/hub.css

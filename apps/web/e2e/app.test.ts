@@ -340,10 +340,10 @@ test.describe('without the site password', () => {
 		await expect(page).toHaveTitle('Windowling Game Center');
 	});
 
-	test('the hidden corner /tajne/ruzek opens without the password', async ({ page }) => {
+	test('the hidden page /tajne/ruzek opens without the password', async ({ page }) => {
 		await page.goto('/tajne/ruzek');
 		await expect(page).toHaveURL(/\/tajne\/ruzek\/?$/);
-		await expect(page).toHaveTitle('Růžek');
+		await expect(page).toHaveTitle(/Honza Růžek/);
 	});
 });
 
@@ -428,14 +428,14 @@ test('/favicon.ico points browsers at the SVG icon', async ({ request }) => {
 	expect(res.headers().location).toBe('/favicon.svg');
 });
 
-test('the hidden corner opens at /tajne/ruzek, unlinked and kept out of search engines', async ({
+test('the hidden page opens at /tajne/ruzek, unlinked and kept out of search engines', async ({
 	page,
 }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
 	await page.goto('/tajne/ruzek');
 	await expect(page).toHaveURL(/\/tajne\/ruzek\/?$/);
-	await expect(page).toHaveTitle('Růžek');
+	await expect(page).toHaveTitle(/Honza Růžek/);
 	await expect(page.locator('meta[name=robots]')).toHaveAttribute('content', 'noindex, nofollow');
 	expect(errors).toEqual([]);
 	// Nothing in the center points to it.
