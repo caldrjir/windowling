@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="cs">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- Skrytá stránka: nikde na ni nevede odkaz a vyhledávače ji nemají indexovat. -->
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="theme-color" content="#14110f" />
+		<title>Růžek</title>
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #14110f;
+				--ink: #f3ece4;
+				--soft: #b8aa9a;
+				--accent: #e8a87c;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			html,
+			body {
+				margin: 0;
+				min-height: 100%;
+			}
+			body {
+				min-height: 100vh;
+				min-height: 100dvh;
+				display: grid;
+				place-items: center;
+				padding: 24px 16px;
+				background: radial-gradient(ellipse at 50% 30%, #2a211b, var(--bg) 70%);
+				color: var(--ink);
+				font:
+					400 17px/1.6 system-ui,
+					-apple-system,
+					'Segoe UI',
+					Roboto,
+					sans-serif;
+			}
+			main {
+				max-width: 520px;
+				text-align: center;
+			}
+			h1 {
+				margin: 0 0 8px;
+				font:
+					600 clamp(32px, 9vw, 48px)/1.1 Georgia,
+					'Times New Roman',
+					serif;
+				letter-spacing: 0.01em;
+			}
+			h1::after {
+				content: '';
+				display: block;
+				width: 48px;
+				height: 2px;
+				margin: 18px auto 0;
+				background: var(--accent);
+				border-radius: 2px;
+			}
+			p {
+				margin: 16px 0 0;
+				color: var(--soft);
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Růžek</h1>
+			<p>Tady brzy něco bude.</p>
+		</main>
+	</body>
+</html>
