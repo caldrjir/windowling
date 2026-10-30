@@ -35,7 +35,8 @@
 - `static/service-worker.js` - kill switch for the old app's service worker: clears caches,
   unregisters, reloads open tabs once.
 - `static/tajne/ruzek/index.html` - a hidden single page at `/tajne/ruzek`: nothing links to
-  it and it is `noindex`. It sits behind the site gate like everything else.
+  it and it is `noindex`. It is open without the site password (gate `OPEN_PATHS`), so it can
+  be shown to friends; files it needs go under `/tajne/ruzek/`.
 
 ### Games - `apps/web/static/games/<id>/`
 

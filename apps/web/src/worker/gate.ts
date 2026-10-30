@@ -21,7 +21,8 @@ const PASS_DAYS = 30;
 const WRONG_PASSWORD_DELAY_MS = 1000;
 
 /** Served without the password: the gate itself, the deploy smoke test and files a
- * browser fetches without cookies or that must reach old visitors (SW kill switch). */
+ * browser fetches without cookies or that must reach old visitors (SW kill switch), and the
+ * hidden page /tajne/ruzek, which is shown to friends who don't have the password. */
 const OPEN_PATHS = new Set([
 	GATE_PATH,
 	'/api/health',
@@ -30,8 +31,9 @@ const OPEN_PATHS = new Set([
 	'/robots.txt',
 	'/manifest.webmanifest',
 	'/service-worker.js',
+	'/tajne/ruzek',
 ]);
-const OPEN_PREFIXES = ['/icons/'];
+const OPEN_PREFIXES = ['/icons/', '/tajne/ruzek/'];
 
 const encoder = new TextEncoder();
 

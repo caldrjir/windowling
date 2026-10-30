@@ -323,7 +323,6 @@ test.describe('without the site password', () => {
 		await expect(page.locator('input[type=password]')).toBeVisible();
 		expect((await request.get('/games/voidborn/js/game.js')).status()).toBe(401);
 		expect((await request.get('/api/auth/get-session')).status()).toBe(401);
-		expect((await request.get('/tajne/ruzek/')).status()).toBe(401);
 		// The deploy smoke test still works.
 		expect((await request.get('/api/health')).ok()).toBe(true);
 	});
@@ -339,6 +338,12 @@ test.describe('without the site password', () => {
 		await expect(page).toHaveTitle('VOIDBORN');
 		await page.goto('/');
 		await expect(page).toHaveTitle('Windowling Game Center');
+	});
+
+	test('the hidden corner /tajne/ruzek opens without the password', async ({ page }) => {
+		await page.goto('/tajne/ruzek');
+		await expect(page).toHaveURL(/\/tajne\/ruzek\/?$/);
+		await expect(page).toHaveTitle('Růžek');
 	});
 });
 
