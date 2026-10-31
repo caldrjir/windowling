@@ -80,6 +80,8 @@ const Drops = (() => {
     },
     clear() { for (const d of this.list.slice()) this.remove(d.id); this.list = []; },
 
+    // Položit předmět na zem (v multiplayeru rozhodne server).
+    put(item, x, z) { x = +x.toFixed(2); z = +z.toFixed(2); if (this.net) this.net.drop(item, x, z); else this.spawn(item, x, z); },
     // Vyhodit n kusů ze slotu i (výchozí: vybraný slot v liště).
     dropSlot(i, n) {
       const s = Inv.slots[i], P = Player.P;

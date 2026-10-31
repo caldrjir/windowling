@@ -390,20 +390,31 @@ const ACTION_GAMES: Game[] = [
 		title: 'DRIFTWOOD',
 		tagline: 'Přežij na opuštěném ostrově.',
 		description:
-			'Survival z pohledu první osoby. Kácej stromy, těž kámen a železo, lov a vař, staň si přístřešek a přečkej noci plné vlků. Každý ostrov je jiný – a jediná cesta domů vede přes moře.',
+			'Survival z pohledu první osoby. Kácej, těž, ryb a lov lukem, postav si osadu se zahrádkou a truhlami a přečkej bouřky i noci plné vlků. Příběh ve čtyřech kapitolách tě vede ke třem ruinám a medvědovi z hor – jediná cesta domů vede přes moře.',
 		genres: ['Survival', '3D', 'Crafting'],
-		features: ['Procedurální ostrovy', 'Den a noc', '18 receptů', '3 obtížnosti'],
+		features: [
+			'Příběh ve 4 kapitolách',
+			'Rybaření a luk',
+			'Počasí a bouřky',
+			'Dovednosti a denní úkoly',
+		],
 		en: {
 			tagline: 'Survive the forsaken island.',
 			description:
-				'First-person survival. Fell trees, mine stone and iron, hunt and cook, build a shelter and outlast nights full of wolves. Every island is different – and the only way home is across the sea.',
+				'First-person survival. Chop, mine, fish and hunt with a bow, build a settlement with a garden and chests, and weather storms and nights full of wolves. A story in four chapters leads you to three ruins and the mountain bear – and the only way home is across the sea.',
 			genres: ['Survival', '3D', 'Crafting'],
-			features: ['Procedural islands', 'Day & night cycle', '18 recipes', '3 difficulties'],
+			features: [
+				'Story in 4 chapters',
+				'Fishing & archery',
+				'Weather & storms',
+				'Skills & daily tasks',
+			],
 		},
 		statLabels: {
 			best: ['Nejvíc přežitých dní', 'Most days survived'],
 			escapes: ['Útěky z ostrova', 'Escapes'],
 			wolves: ['Zabití vlci', 'Wolves slain'],
+			fish: ['Chycené ryby', 'Fish caught'],
 			achievements: ['Úspěchy', 'Achievements'],
 		},
 		path: '/games/driftwood/index.html',

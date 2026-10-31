@@ -50,6 +50,34 @@ const ICONS = {
   wolf: '<path d="M4 4l4 5h8l4-5v9l-3 4-5 4-5-4-3-4z"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>',
   deer: '<path d="M8 2v4l-3 2M8 6l2 1M16 2v4l3 2M16 6l-2 1"/><path d="M9 8h6l1 6-4 6-4-6z"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10.5" rx="2"/><path d="M8 10.5V7a4 4 0 018 0v3.5"/>',
+  fish: '<path d="M3 12c3-5 9-6 14-2l4-3v10l-4-3c-5 4-11 3-14-2z"/><circle cx="8" cy="11" r="1"/>',
+  fishc: '<path d="M3 12c3-5 9-6 14-2l4-3v10l-4-3c-5 4-11 3-14-2z"/><path d="M9 9l3 6M13 9l2 5"/>',
+  bowl: '<path d="M3 11h18a9 9 0 01-18 0z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4"/>',
+  rod: '<path d="M4 20L18 4"/><path d="M18 4c2 4 2 9 0 13"/><circle cx="18" cy="18.5" r="1.5"/><path d="M6 17l2 2"/>',
+  bow: '<path d="M7 3c7 2 11 8 11 18"/><path d="M7 3l11 18"/><path d="M4 15l9-5M13 10l-3 .2M13 10l-1.4 2.6"/>',
+  arrow: '<path d="M4 20L18 6"/><path d="M18 6l-5 1M18 6l-1 5"/><path d="M4 20l1-4M4 20l4-1M6 18l1-3M6 18l3-1"/>',
+  fur: '<path d="M5 5c3 1 4-1 7-1s4 2 7 1c-1 3 1 5 0 8s-3 2-3 6c-3-1-5 1-8 0 0-4-2-3-3-6s1-5 0-8z"/><path d="M9 9l1 2M13 8l1 2M11 13l1 2M15 12l1 2"/>',
+  coat: '<path d="M8 3l4 3 4-3 4 4-2 3v11H6V10L4 7z"/><path d="M12 6v15M9 13h1M14 13h1"/>',
+  chest: '<rect x="3" y="9" width="18" height="11" rx="1.5"/><path d="M3 9c0-3 2-5 4-5h10c2 0 4 2 4 5"/><path d="M11 12h2v3h-2z"/>',
+  garden: '<path d="M3 15h18v5H3z"/><path d="M8 15c0-4 1-6 4-8 3 2 4 4 4 8"/><path d="M12 7v8"/>',
+  scroll: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 9l3 2 2-3 3 4M8 15h8"/>',
+  chart: '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M7 12l3-2 3 3 4-4"/><circle cx="17" cy="9" r="1"/>',
+  sail: '<path d="M6 3v18"/><path d="M6 4c7 3 11 8 12 15H6"/>',
+  book: '<path d="M4 4h7a2 2 0 012 2v14a2 2 0 00-2-2H4z"/><path d="M20 4h-7a2 2 0 00-2 2v14a2 2 0 012-2h7z"/>',
+  note: '<path d="M9 2h6v4l3 3v11a2 2 0 01-2 2H8a2 2 0 01-2-2V9l3-3z"/><path d="M9 12h6M9 15h6M9 18h4"/>',
+  star: '<path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6L3.3 9.2l6.1-.6z"/>',
+  cloud: '<path d="M7 18h10a4 4 0 000-8 5.5 5.5 0 00-10.6-1.5A4.5 4.5 0 007 18z"/>',
+  rain: '<path d="M7 14h10a4 4 0 000-8 5.5 5.5 0 00-10.6-1.5A4.5 4.5 0 007 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
+  storm: '<path d="M7 14h10a4 4 0 000-8 5.5 5.5 0 00-10.6-1.5A4.5 4.5 0 007 14z"/><path d="M12 14l-2 4h3l-2 4"/>',
+  bear: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M5 13a7 7 0 0114 0c0 4-3 7-7 7s-7-3-7-7z"/><circle cx="9.5" cy="12" r="1"/><circle cx="14.5" cy="12" r="1"/><path d="M11 16h2"/>',
+  ruin: '<path d="M4 21V9h4v12M10 21V5h4v16M16 21v-9h4v9"/><path d="M2 21h20"/>',
+  crate: '<rect x="4" y="6" width="16" height="13" rx="1"/><path d="M4 10h16M9 6v13M15 6v13"/>',
+  pin: '<path d="M6 21V4"/><path d="M6 4h11l-2 4 2 4H6"/>',
+  up: '<path d="M12 4l7 7h-4v8H9v-8H5z"/>',
+  sick: '<circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01M8.5 15.5c2-1.5 5-1.5 7 0"/>',
+  cold: '<path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/><path d="M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+  bag: '<path d="M6 8h12l1 13H5z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
 };
 const icon = (id, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[id] || ICONS.stone}</svg>`;
 
@@ -81,30 +109,76 @@ const ITEMS = {
   workbench: { name: L('Pracovní stůl', 'Workbench'), icon: 'bench', color: '#c08a52', stack: 1, place: 'workbench' },
   furnace: { name: L('Pec', 'Furnace'), icon: 'furnace', color: '#9a9aa2', stack: 1, place: 'furnace' },
   shelter: { name: L('Přístřešek', 'Shelter'), icon: 'tent', color: '#d8b07a', stack: 1, place: 'shelter' },
-  raft: { name: L('Vor', 'Raft'), icon: 'raft', color: '#e0c38a', stack: 1, place: 'raft' },
+  raft: { name: L('Vor', 'Raft'), icon: 'raft', color: '#e0c38a', stack: 1, place: 'raft', desc: L('Spusť ho na moře u břehu a vypluj domů.', 'Launch it into the sea by the shore and sail home.') },
+  // ── Velká aktualizace: rybaření, lov lukem, osada a cesta domů ──
+  rawFish: { name: L('Syrová ryba', 'Raw Fish'), icon: 'fish', color: '#8fc0d0', stack: 10, food: { hunger: 8, health: -3, sick: 20 } },
+  cookedFish: { name: L('Pečená ryba', 'Grilled Fish'), icon: 'fishc', color: '#e0a060', stack: 10, food: { hunger: 28, thirst: 4, health: 5 } },
+  stew: { name: L('Dušené maso', 'Hearty Stew'), icon: 'bowl', color: '#d0703a', stack: 5, food: { hunger: 55, thirst: 18, health: 12, fed: 240 }, desc: L('Zasytí na dlouho: pomalejší hlad a rychlejší dech.', 'Keeps you full: slower hunger and faster stamina.') },
+  fishingRod: { name: L('Rybářský prut', 'Fishing Rod'), icon: 'rod', color: '#c9a77a', stack: 1, tool: { type: 'rod', power: 0, dmg: 2, reach: 3, dur: 40 }, desc: L('Nahoď do moře nebo jezírka a sekni, až se splávek potopí.', 'Cast into the sea or a pond and strike when the float dips.') },
+  bow: { name: L('Luk', 'Bow'), icon: 'bow', color: '#d8a868', stack: 1, tool: { type: 'bow', power: 0, dmg: 3, reach: 3, dur: 120 }, desc: L('Drž levé tlačítko pro natažení, pusť pro výstřel. Potřebuješ šípy.', 'Hold the left button to draw, release to shoot. Needs arrows.') },
+  arrow: { name: L('Šíp', 'Arrow'), icon: 'arrow', color: '#e8d8b0', stack: 40, desc: L('Střelivo do luku. Netrefené šípy se často dají sebrat.', 'Ammunition for the bow. Missed arrows can often be picked up.') },
+  fur: { name: L('Medvědí kožešina', 'Bear Fur'), icon: 'fur', color: '#8a6040', stack: 10 },
+  furCoat: { name: L('Kožich', 'Fur Coat'), icon: 'coat', color: '#a87850', stack: 1, armor: true, use: L('Obléct', 'Wear'), desc: L('Nejteplejší oblečení na ostrově: −50 % poškození.', 'The warmest clothing on the island: −50% damage.') },
+  chest: { name: L('Truhla', 'Chest'), icon: 'chest', color: '#b07a44', stack: 2, place: 'chest', desc: L('16 míst na zásoby. Otevřeš ji klávesou E.', '16 slots of storage. Open it with E.') },
+  garden: { name: L('Záhon', 'Garden Bed'), icon: 'garden', color: '#8ac060', stack: 3, place: 'garden', desc: L('Zasaď do něj bobule (E) a za den sklidíš úrodu.', 'Plant berries in it (E) and harvest a crop a day later.') },
+  sail: { name: L('Plachta', 'Sail'), icon: 'sail', color: '#efe6d2', stack: 1 },
+  mapPiece: { name: L('Úlomek mapy', 'Map Fragment'), icon: 'scroll', color: '#e8c87a', stack: 3, desc: L('Kus staré námořní mapy z ruin. Tři úlomky dají celou mapu.', 'A piece of an old sea chart from the ruins. Three make the whole chart.') },
+  seaChart: { name: L('Námořní mapa', 'Sea Chart'), icon: 'chart', color: '#ffd88a', stack: 1, desc: L('Ukazuje cestu přes útesy na volné moře. Bez ní vor neodpluje.', 'Shows the way past the reefs to the open sea. The raft cannot sail without it.') },
 };
+// popisy výchozích předmětů (tooltipy)
+Object.assign(ITEMS.waterskin, { desc: L('4 doušky vody. Naplníš ho u jezírka nebo v dešti.', '4 sips of water. Refill it at a pond or in the rain.') });
+Object.assign(ITEMS.bandage, { desc: L('Obváže rány: +25 zdraví.', 'Dresses wounds: +25 health.') });
+Object.assign(ITEMS.hideArmor, { desc: L('Kožená zbroj: −35 % poškození a víc tepla v noci.', 'Hide armor: −35% damage and more warmth at night.') });
+Object.assign(ITEMS.torch, { desc: L('Svítí, hřeje a drží vlky trochu dál.', 'Lights the way, warms you and keeps wolves a little further away.') });
+Object.assign(ITEMS.campfire, { desc: L('Hřeje, plaší vlky a dá se u něj vařit.', 'Warms you, scares wolves away and lets you cook.') });
+Object.assign(ITEMS.workbench, { desc: L('Odemkne pokročilou výrobu.', 'Unlocks advanced crafting.') });
+Object.assign(ITEMS.furnace, { desc: L('Taví železnou rudu na ingoty.', 'Smelts iron ore into ingots.') });
+Object.assign(ITEMS.shelter, { desc: L('Přespíš v něm noc (E) a stane se tvým domovem.', 'Sleep through the night in it (E); it becomes your home.') });
+Object.assign(ITEMS.rawMeat, { food: { hunger: 10, health: -4, sick: 25 } });
+
+// zbroj: kolik poškození projde, kolik nočního chladu ubere, rychlost
+const ARMORS = {
+  hideArmor: { dmg: 0.65, cold: 35, speed: 0.95 },
+  furCoat: { dmg: 0.5, cold: 14, speed: 0.93 },
+};
+const armorOf = P => (P.armor === true ? ARMORS.hideArmor : ARMORS[P.armor] || null);
 
 // ── Recepty ─────────────────────────────────────────────────────────────────
 // at: potřebná stanice v dosahu (null = z ruky)
+// cat: kategorie ve výrobě (tools, survival, food, build, mats)
 const RECIPES = [
-  { out: 'stoneAxe', n: 1, cost: { wood: 3, stone: 3, fiber: 2 }, at: null },
-  { out: 'stonePick', n: 1, cost: { wood: 3, stone: 4, fiber: 2 }, at: null },
-  { out: 'spear', n: 1, cost: { wood: 4, stone: 1, fiber: 2 }, at: null },
-  { out: 'torch', n: 1, cost: { wood: 2, fiber: 1 }, at: null },
-  { out: 'campfire', n: 1, cost: { wood: 6, stone: 4 }, at: null },
-  { out: 'bandage', n: 1, cost: { fiber: 4 }, at: null },
-  { out: 'workbench', n: 1, cost: { wood: 14, stone: 6 }, at: null },
-  { out: 'cookedMeat', n: 1, cost: { rawMeat: 1 }, at: 'campfire' },
-  { out: 'rope', n: 1, cost: { fiber: 3 }, at: 'workbench' },
-  { out: 'waterskin', n: 1, cost: { hide: 2, fiber: 2 }, at: 'workbench' },
-  { out: 'hideArmor', n: 1, cost: { hide: 5, fiber: 4 }, at: 'workbench' },
-  { out: 'shelter', n: 1, cost: { wood: 25, fiber: 10, hide: 2 }, at: 'workbench' },
-  { out: 'furnace', n: 1, cost: { stone: 20, wood: 4 }, at: 'workbench' },
-  { out: 'iron', n: 1, cost: { ironOre: 2, wood: 2 }, at: 'furnace' },
-  { out: 'ironAxe', n: 1, cost: { wood: 2, iron: 3, rope: 1 }, at: 'workbench' },
-  { out: 'ironPick', n: 1, cost: { wood: 2, iron: 3, rope: 1 }, at: 'workbench' },
-  { out: 'ironSpear', n: 1, cost: { wood: 3, iron: 2, rope: 1 }, at: 'workbench' },
-  { out: 'raft', n: 1, cost: { wood: 60, rope: 15, hide: 6, iron: 4 }, at: 'workbench' },
+  { out: 'stoneAxe', n: 1, cost: { wood: 3, stone: 3, fiber: 2 }, at: null, cat: 'tools' },
+  { out: 'stonePick', n: 1, cost: { wood: 3, stone: 4, fiber: 2 }, at: null, cat: 'tools' },
+  { out: 'spear', n: 1, cost: { wood: 4, stone: 1, fiber: 2 }, at: null, cat: 'tools' },
+  { out: 'torch', n: 1, cost: { wood: 2, fiber: 1 }, at: null, cat: 'tools' },
+  { out: 'fishingRod', n: 1, cost: { wood: 3, fiber: 4 }, at: null, cat: 'tools' },
+  { out: 'arrow', n: 4, cost: { wood: 2, stone: 1, fiber: 1 }, at: null, cat: 'tools' },
+  { out: 'campfire', n: 1, cost: { wood: 6, stone: 4 }, at: null, cat: 'build' },
+  { out: 'bandage', n: 1, cost: { fiber: 4 }, at: null, cat: 'survival' },
+  { out: 'workbench', n: 1, cost: { wood: 14, stone: 6 }, at: null, cat: 'build' },
+  { out: 'cookedMeat', n: 1, cost: { rawMeat: 1 }, at: 'campfire', cat: 'food' },
+  { out: 'cookedFish', n: 1, cost: { rawFish: 1 }, at: 'campfire', cat: 'food' },
+  { out: 'stew', n: 1, cost: { rawMeat: 1, berries: 3, coconut: 1 }, at: 'campfire', cat: 'food' },
+  { out: 'rope', n: 1, cost: { fiber: 3 }, at: 'workbench', cat: 'mats' },
+  { out: 'waterskin', n: 1, cost: { hide: 2, fiber: 2 }, at: 'workbench', cat: 'survival' },
+  { out: 'hideArmor', n: 1, cost: { hide: 5, fiber: 4 }, at: 'workbench', cat: 'survival' },
+  { out: 'chest', n: 1, cost: { wood: 16, fiber: 6 }, at: 'workbench', cat: 'build' },
+  { out: 'garden', n: 1, cost: { wood: 8, fiber: 6, stone: 4 }, at: 'workbench', cat: 'build' },
+  { out: 'bow', n: 1, cost: { wood: 5, rope: 2 }, at: 'workbench', cat: 'tools' },
+  { out: 'shelter', n: 1, cost: { wood: 25, fiber: 10, hide: 2 }, at: 'workbench', cat: 'build' },
+  { out: 'furnace', n: 1, cost: { stone: 20, wood: 4 }, at: 'workbench', cat: 'build' },
+  { out: 'iron', n: 1, cost: { ironOre: 2, wood: 2 }, at: 'furnace', cat: 'mats' },
+  { out: 'ironAxe', n: 1, cost: { wood: 2, iron: 3, rope: 1 }, at: 'workbench', cat: 'tools' },
+  { out: 'ironPick', n: 1, cost: { wood: 2, iron: 3, rope: 1 }, at: 'workbench', cat: 'tools' },
+  { out: 'ironSpear', n: 1, cost: { wood: 3, iron: 2, rope: 1 }, at: 'workbench', cat: 'tools' },
+  { out: 'furCoat', n: 1, cost: { fur: 3, hide: 2, rope: 2 }, at: 'workbench', cat: 'survival' },
+  { out: 'sail', n: 1, cost: { hide: 4, rope: 4, fiber: 6 }, at: 'workbench', cat: 'mats' },
+  { out: 'seaChart', n: 1, cost: { mapPiece: 3 }, at: 'workbench', cat: 'mats' },
+  { out: 'raft', n: 1, cost: { wood: 60, rope: 15, iron: 4, sail: 1, seaChart: 1 }, at: 'workbench', cat: 'build' },
+];
+const RECIPE_CATS = [
+  ['all', L('Vše', 'All')], ['tools', L('Nástroje', 'Tools')], ['survival', L('Přežití', 'Survival')],
+  ['food', L('Jídlo', 'Food')], ['build', L('Stavby', 'Building')], ['mats', L('Materiály', 'Materials')],
 ];
 
 const STRUCTURES = {
@@ -113,6 +187,8 @@ const STRUCTURES = {
   furnace: { r: 0.9, solid: true, light: true, warmth: 5 },
   shelter: { r: 1.6, solid: false, warmth: 5 },
   raft: { r: 2, solid: false },
+  chest: { r: 0.6, solid: true },
+  garden: { r: 0.95, solid: false },
 };
 const STATION_NAME = { campfire: L('u táboráku', 'at a campfire'), workbench: L('u pracovního stolu', 'at a workbench'), furnace: L('u pece', 'at a furnace') };
 
@@ -135,6 +211,7 @@ const ANIMALS = {
   rabbit: { name: L('Zajíc', 'Rabbit'), hp: 12, speed: 6.5, flee: true, drops: [['rawMeat', 1, 1], ['hide', 0, 1]], color: '#c9b49a', size: 0.45 },
   deer: { name: L('Jelen', 'Deer'), hp: 40, speed: 7.5, flee: true, drops: [['rawMeat', 2, 3], ['hide', 2, 2]], color: '#a8743f', size: 1.2 },
   wolf: { name: L('Vlk', 'Wolf'), hp: 45, speed: 6.8, flee: false, dmg: 11, drops: [['rawMeat', 1, 2], ['hide', 1, 2]], color: '#4a4c55', size: 1 },
+  bear: { name: L('Medvěd', 'Bear'), hp: 160, speed: 6.1, flee: false, dmg: 24, drops: [['rawMeat', 3, 4], ['fur', 2, 3], ['hide', 1, 2]], color: '#5c4030', size: 1.6 },
 };
 
 // ── Úspěchy ─────────────────────────────────────────────────────────────────
@@ -154,11 +231,29 @@ const ACHIEVEMENTS = [
   { id: 'rocks100', name: L('Horník', 'Miner'), desc: L('Vytěž 100 skal.', 'Mine 100 rocks.'), icon: 'pick', prog: S => [S.stats.rocks, 100] },
   { id: 'escape', name: L('Na volné moře', 'To the Open Sea'), desc: L('Unikni z ostrova na voru.', 'Escape the island on a raft.'), icon: 'raft', prog: S => [S.stats.escapes, 1] },
   { id: 'escapeHard', name: L('Nezlomný', 'Unbroken'), desc: L('Unikni v drsném režimu.', 'Escape in Harsh mode.'), icon: 'raft', prog: S => [S.stats.hardEscapes, 1] },
-  { id: 'fast', name: L('Rychlý útěk', 'Swift Escape'), desc: L('Unikni do 5. dne.', 'Escape before day 5.'), icon: 'bolt', prog: S => [S.stats.fastEscape, 1] },
+  { id: 'fast', name: L('Rychlý útěk', 'Swift Escape'), desc: L('Unikni do 8. dne.', 'Escape before day 8.'), icon: 'bolt', prog: S => [S.stats.fastEscape, 1] },
+  { id: 'fish', name: L('Rybář', 'Angler'), desc: L('Chyť rybu.', 'Catch a fish.'), icon: 'fish', prog: S => [S.stats.fish, 1] },
+  { id: 'fish25', name: L('Mořský vlk', 'Old Salt'), desc: L('Chyť 25 ryb.', 'Catch 25 fish.'), icon: 'fish', prog: S => [S.stats.fish, 25] },
+  { id: 'archer', name: L('Lučištník', 'Archer'), desc: L('Skol 10 zvířat šípem.', 'Take down 10 animals with arrows.'), icon: 'bow', prog: S => [S.stats.bowKills, 10] },
+  { id: 'bear', name: L('Starý Šedák', 'Old Grey'), desc: L('Poraz medvěda.', 'Defeat a bear.'), icon: 'bear', prog: S => [S.stats.bears, 1] },
+  { id: 'garden', name: L('Zahradník', 'Gardener'), desc: L('Sklidíš 5 úrod.', 'Harvest 5 crops.'), icon: 'garden', prog: S => [S.stats.harvests, 5] },
+  { id: 'notes', name: L('Archivář', 'Archivist'), desc: L('Najdi všech 8 vzkazů.', 'Find all 8 messages.'), icon: 'note', prog: S => [Object.keys(S.notes || {}).length, 8] },
+  { id: 'chart', name: L('Kartograf', 'Cartographer'), desc: L('Slož námořní mapu.', 'Assemble the sea chart.'), icon: 'chart', prog: S => [S.stats.charts, 1] },
+  { id: 'daily10', name: L('Pracant', 'Hard Worker'), desc: L('Splň 10 denních úkolů.', 'Complete 10 daily tasks.'), icon: 'star', prog: S => [S.stats.dailies, 10] },
+  { id: 'master', name: L('Mistr ostrova', 'Island Master'), desc: L('Dosáhni 10. úrovně v dovednosti.', 'Reach level 10 in a skill.'), icon: 'up', prog: S => [S.stats.maxSkill, 10] },
 ];
+
+// ── Dovednosti: zkušenosti za práci, úrovně 1–10 a jejich bonusy ────────────
+const SKILL_MAX = 10;
+const SKILLS = {
+  gather: { name: L('Těžba', 'Gathering'), icon: 'axe', color: '#ffb347', perks: l => [L(`+${(l - 1) * 10} % síla úderu`, `+${(l - 1) * 10}% strike power`), L(`${(l - 1) * 4} % šance na surovinu navíc`, `${(l - 1) * 4}% chance of extra yield`)] },
+  hunt: { name: L('Lov', 'Hunting'), icon: 'bow', color: '#ff7a6a', perks: l => [L(`+${(l - 1) * 7} % poškození zbraní`, `+${(l - 1) * 7}% weapon damage`), L(`o ${(l - 1) * 6} % rychlejší záběr a nátah`, `${(l - 1) * 6}% faster bites and draws`)] },
+  survive: { name: L('Přežití', 'Survival'), icon: 'fire', color: '#7fe0d0', perks: l => [L(`o ${(l - 1) * 4} % pomalejší hlad a žízeň`, `${(l - 1) * 4}% slower hunger and thirst`), L(`${(l - 1) * 5} % šance, že se nástroj neopotřebí`, `${(l - 1) * 5}% chance tools don't wear`)] },
+};
+const xpNeed = l => Math.round(30 * Math.pow(l, 1.55));
 
 const MODES = {
   calm: { name: L('Klidný', 'Calm'), desc: L('Pomalejší hlad a žízeň, méně vlků. Po smrti se probudíš u přístřešku.', 'Slower hunger and thirst, fewer wolves. Respawn at your shelter after death.'), drain: 0.6, wolves: 0.5, perma: false },
-  normal: { name: L('Normální', 'Normal'), desc: L('Vyvážené přežití. Po smrti ztratíš inventář, ale ostrov zůstane.', 'Balanced survival. Death costs your inventory, but the island remains.'), drain: 1, wolves: 1, perma: false, dropInv: true },
+  normal: { name: L('Normální', 'Normal'), desc: L('Vyvážené přežití. Po smrti zůstane inventář ležet tam, kde jsi padl.', 'Balanced survival. On death your inventory stays where you fell.'), drain: 1, wolves: 1, perma: false, dropInv: true },
   harsh: { name: L('Drsný', 'Harsh'), desc: L('Rychlejší hlad, smečky vlků a jen jeden život.', 'Faster hunger, wolf packs, and only one life.'), drain: 1.35, wolves: 1.6, perma: true },
 };

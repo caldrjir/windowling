@@ -1,6 +1,6 @@
 'use strict';
 // ── Svět: terén, voda, obloha, suroviny, stavby ─────────────────────────────
-const SIZE = 460, SEG = 230, HALF = SIZE / 2, CELL = SIZE / SEG, ISLAND_R = 190;
+const SIZE = 460, SEG = 230, HALF = SIZE / 2, CELL = SIZE / SEG, ISLAND_R = 190, CHEST_SIZE = 16;
 const col = (hex) => new THREE.Color(hex).convertSRGBToLinear();
 
 // Spojí geometrie do jedné ne-indexované s barvami po plochách
@@ -41,6 +41,76 @@ function deform(g, amt, rnd) {
     const s = m.get(k); p.setXYZ(i, p.getX(i) * s, p.getY(i) * s, p.getZ(i) * s);
   }
   return g;
+}
+
+// ── Vítr: vrcholky stromů, keřů a trávy se kývou (posun vrcholů v shaderu) ──
+const SWAY = { time: { value: 0 }, wind: { value: 0.2 } };
+function swayMat(amp, base = 0.3) {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: true });
+  if (!amp) return m;
+  m.onBeforeCompile = sh => {
+    sh.uniforms.uTime = SWAY.time; sh.uniforms.uWind = SWAY.wind;
+    sh.vertexShader = 'uniform float uTime; uniform float uWind;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      #ifdef USE_INSTANCING
+        vec3 ip = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2]);
+      #else
+        vec3 ip = vec3(0.0);
+      #endif
+      float hh = max(0.0, transformed.y - ${base.toFixed(2)});
+      float ph = ip.x * 0.17 + ip.z * 0.13, gust = 0.45 + uWind * 1.4;
+      transformed.x += (sin(uTime * 1.7 + ph) * 0.65 + sin(uTime * 3.1 + ph * 1.7) * 0.35) * gust * ${amp.toFixed(4)} * hh * hh;
+      transformed.z += cos(uTime * 1.3 + ph) * gust * ${(amp * 0.55).toFixed(4)} * hh * hh;`);
+  };
+  m.customProgramCacheKey = () => `sway${amp}_${base}`;
+  return m;
+}
+const SWAY_AMP = { tree: 0.0045, pine: 0.003, palm: 0.0065, bush: 0.02, plant: 0.09, grass: 0.4 };
+
+// Voda: vlny ve vertex shaderu, barva podle hloubky (výšková mapa), pěna u břehu, odlesk slunce
+const WATER_VS = `uniform float uTime; uniform float uAmp; varying vec3 vW; varying vec3 vN;
+  #include <fog_pars_vertex>
+  float wave(vec2 p) { return sin(p.x * 0.18 + uTime * 1.1) * 0.12 + cos(p.y * 0.21 + uTime * 0.9) * 0.1 + sin((p.x + p.y) * 0.07 + uTime * 0.6) * 0.15; }
+  void main() {
+    vec4 w = modelMatrix * vec4(position, 1.0);
+    float h = wave(w.xz) * uAmp, e = 0.6;
+    vN = normalize(vec3(-(wave(w.xz + vec2(e, 0.0)) * uAmp - h) / e, 1.0, -(wave(w.xz + vec2(0.0, e)) * uAmp - h) / e));
+    w.y += h; vW = w.xyz;
+    vec4 mvPosition = viewMatrix * w;
+    gl_Position = projectionMatrix * mvPosition;
+    #include <fog_vertex>
+  }`;
+const WATER_FS = `uniform float uTime; uniform sampler2D uDepth; uniform float uLevel; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uSky;
+  uniform vec3 uShallow; uniform vec3 uDeep; uniform float uFoam; varying vec3 vW; varying vec3 vN;
+  #include <fog_pars_fragment>
+  void main() {
+    vec2 uv = (vW.xz + ${HALF.toFixed(1)}) / ${SIZE.toFixed(1)};
+    float th = texture2D(uDepth, uv).r * 30.0 - 20.0;
+    float depth = (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) ? 20.0 : max(0.0, uLevel - th);
+    vec3 N = normalize(vN), V = normalize(cameraPosition - vW), S = normalize(uSunDir);
+    vec3 base = mix(uShallow, uDeep, smoothstep(0.2, 9.0, depth));
+    float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+    vec3 c = base * (uSky * 0.85 + uSunCol * max(dot(N, S), 0.0) * 0.5);
+    c = mix(c, uSky * 1.15, fres * 0.5);
+    c += uSunCol * pow(max(dot(N, normalize(S + V)), 0.0), 140.0) * 1.4;
+    float n = sin(vW.x * 0.9 + uTime * 0.7) * sin(vW.z * 0.8 - uTime * 0.6) * 0.5 + 0.5;
+    float rim = smoothstep(1.0, 0.0, depth) * (0.55 + 0.45 * n);
+    float surf = smoothstep(0.6, 0.95, sin(depth * 4.5 - uTime * 1.7) * 0.5 + 0.5) * smoothstep(1.8, 0.3, depth);
+    float foam = clamp((rim + surf * 0.6) * uFoam, 0.0, 1.0);
+    c = mix(c, (uSky * 0.9 + uSunCol * 0.6) * 1.1, foam * 0.85);
+    gl_FragColor = vec4(c, clamp(mix(0.5, 0.93, smoothstep(0.0, 3.0, depth)) + foam * 0.25, 0.0, 1.0));
+    #include <tonemapping_fragment>
+    #include <encodings_fragment>
+    #include <fog_fragment>
+  }`;
+function waterMat(depthTex, o) {
+  return new THREE.ShaderMaterial({
+    vertexShader: WATER_VS, fragmentShader: WATER_FS, transparent: true, fog: true,
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
+      uTime: { value: 0 }, uAmp: { value: o.amp }, uLevel: { value: o.level }, uFoam: { value: o.foam }, uDepth: { value: null },
+      uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 1, 1) }, uSky: { value: new THREE.Color(0.5, 0.6, 0.7) },
+      uShallow: { value: col(o.shallow) }, uDeep: { value: col(o.deep) },
+    }]),
+  });
 }
 
 // ── Modely ──────────────────────────────────────────────────────────────────
@@ -115,10 +185,12 @@ function buildStructure(type) {
     for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; parts.push([T(deform(new THREE.DodecahedronGeometry(0.17, 0), 0.3, r), Math.cos(a) * 0.55, 0.1, Math.sin(a) * 0.55), '#8f949a', 0.1]); }
     for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2; parts.push([T(new THREE.CylinderGeometry(0.07, 0.08, 0.9, 5), Math.cos(a) * 0.15, 0.22, Math.sin(a) * 0.15, 0, a, 0.9), '#6a4428']); }
     add(mergeParts(parts));
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.8, 6), new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.9 }));
-    flame.position.y = 0.55; g.add(flame); g.userData.flame = flame;
-    const inner = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.5, 6), new THREE.MeshBasicMaterial({ color: 0xfff0a0 }));
-    inner.position.y = 0.45; g.add(inner); g.userData.inner = inner;
+    // plameny kreslí částice (FX); tady jen žhavé jádro a záře
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.45, 6), new THREE.MeshBasicMaterial({ color: 0xff8a30, transparent: true, opacity: 0.85 }));
+    flame.position.y = 0.32; g.add(flame); g.userData.flame = flame;
+    const inner = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 6), new THREE.MeshBasicMaterial({ color: 0xfff0a0 }));
+    inner.position.y = 0.28; g.add(inner); g.userData.inner = inner;
+    const glow = FX.glowSprite(0xff9a40, 2.6, 0.5); glow.position.y = 0.6; g.add(glow); g.userData.glow = glow;
   } else if (type === 'workbench') {
     add(mergeParts([
       [T(new THREE.BoxGeometry(1.8, 0.12, 0.9), 0, 0.9), '#a2703f'],
@@ -144,6 +216,29 @@ function buildStructure(type) {
     parts.push([T(new THREE.CylinderGeometry(0.08, 0.08, 3, 5), 0, 2.15, 0, Math.PI / 2), '#6a4428']);
     parts.push([T(new THREE.BoxGeometry(1.2, 0.12, 2), 0, 0.06, 0), '#c9a77a']);
     add(mergeParts(parts));
+  } else if (type === 'chest') {
+    add(mergeParts([
+      [T(new THREE.BoxGeometry(1.0, 0.55, 0.62), 0, 0.3, 0), '#a2703f', 0.06],
+      [T(new THREE.BoxGeometry(1.04, 0.07, 0.66), 0, 0.08, 0), '#6a4428'], [T(new THREE.BoxGeometry(1.04, 0.07, 0.66), 0, 0.5, 0), '#6a4428'],
+      [T(new THREE.BoxGeometry(1.02, 0.18, 0.64), 0, 0.66, 0), '#8a5c34', 0.06],
+      [T(new THREE.CylinderGeometry(0.32, 0.32, 1.02, 8, 1, false, 0, Math.PI), 0, 0.66, 0, 0, 0, Math.PI / 2, 1, 1, 0.98), '#8a5c34', 0.06],
+      [T(new THREE.BoxGeometry(0.12, 0.16, 0.05), 0, 0.58, 0.34), '#d8c08a'],
+    ]));
+  } else if (type === 'garden') {
+    add(mergeParts([
+      [T(new THREE.BoxGeometry(1.7, 0.22, 1.7), 0, 0.08, 0), '#5a3f28', 0.05],
+      [T(new THREE.BoxGeometry(1.86, 0.3, 0.12), 0, 0.15, 0.87), '#8a5c34'], [T(new THREE.BoxGeometry(1.86, 0.3, 0.12), 0, 0.15, -0.87), '#8a5c34'],
+      [T(new THREE.BoxGeometry(0.12, 0.3, 1.62), 0.87, 0.15, 0), '#9a6b3e'], [T(new THREE.BoxGeometry(0.12, 0.3, 1.62), -0.87, 0.15, 0), '#9a6b3e'],
+    ]));
+    const crop = new THREE.Group(); crop.position.y = 0.2; g.add(crop); g.userData.crop = crop;
+    const r2 = mulberry32(17), leaves = [], berries = [];
+    for (const [x, z] of [[-0.45, -0.45], [0.45, -0.45], [0, 0], [-0.45, 0.45], [0.45, 0.45]]) {
+      leaves.push([T(deform(new THREE.IcosahedronGeometry(0.3, 0), 0.3, r2), x, 0.25, z), '#3f8a34', 0.12, r2]);
+      for (let i = 0; i < 4; i++) { const a = r2() * 6.28; berries.push([T(new THREE.IcosahedronGeometry(0.06, 0), x + Math.cos(a) * 0.26, 0.3 + r2() * 0.15, z + Math.sin(a) * 0.26), '#e0284f']); }
+    }
+    const lm = new THREE.Mesh(mergeParts(leaves), mat); lm.castShadow = true; crop.add(lm);
+    const bm = new THREE.Mesh(mergeParts(berries), mat); crop.add(bm); g.userData.berries = bm;
+    crop.visible = false;
   } else if (type === 'raft') {
     const parts = [];
     for (let i = 0; i < 8; i++) parts.push([T(new THREE.CylinderGeometry(0.2, 0.2, 4, 6), -1.4 + i * 0.4, 0.2, 0, Math.PI / 2), i % 2 ? '#9a6b3e' : '#a87a48', 0.08]);
@@ -207,15 +302,17 @@ const World = {
     this.buildTerrain();
     this.buildWater();
     this.buildSky();
+    Sites.generate(scene, mulberry32(seed + 101));
     this.placeNodes(rnd);
     this.buildGrass(rnd);
     this.buildClouds(rnd);
+    FX.init(scene);
   },
 
   buildTerrain() {
     const W = SEG + 1, H = this.heights, N = this.noise;
     const pos = [], cols = [];
-    const C = { sand: col('#e3cf98'), wetSand: col('#c9b07a'), grass: col('#6aa647'), grass2: col('#4d8a39'), forest: col('#3f7432'), rock: col('#8a8780'), rock2: col('#6f6c66'), snow: col('#eef2f6'), deep: col('#6f7d6a') };
+    const C = { sand: col('#e8d5a0'), wetSand: col('#cdb47e'), grass: col('#7aae52'), grass2: col('#5e9443'), forest: col('#4a7c3a'), rock: col('#8c8a83'), rock2: col('#73706a'), snow: col('#eef2f6'), deep: col('#6f7d6a') };
     const tmpC = new THREE.Color();
     const v = (ix, iz) => [-HALF + ix * CELL, H[iz * W + ix], -HALF + iz * CELL];
     for (let iz = 0; iz < SEG; iz++) for (let ix = 0; ix < SEG; ix++) {
@@ -250,28 +347,28 @@ const World = {
   },
 
   buildWater() {
-    const geo = new THREE.PlaneGeometry(320, 320, 80, 80); geo.rotateX(-Math.PI / 2);
-    const mat = new THREE.MeshStandardMaterial({ color: col('#1f7f96'), roughness: 0.12, metalness: 0.15, transparent: true, opacity: 0.86, flatShading: true });
-    this.waves = new THREE.Mesh(geo, mat);
-    this.waves.userData.base = geo.attributes.position.array.slice();
+    // výšková mapa pro barvu vody podle hloubky a pěnu u břehu
+    const W = SEG + 1, data = new Uint8Array(W * W * 4);
+    for (let i = 0; i < W * W; i++) { const v = clamp((this.heights[i] + 20) / 30, 0, 1) * 255; data[i * 4] = v; data[i * 4 + 3] = 255; }
+    const tex = new THREE.DataTexture(data, W, W, THREE.RGBAFormat);
+    tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true;
+    this.waterMats = [];
+    const mk = o => { const m = waterMat(tex, o); m.uniforms.uDepth.value = tex; this.waterMats.push(m); return m; };
+    const geo = new THREE.PlaneGeometry(320, 320, 96, 96); geo.rotateX(-Math.PI / 2);
+    this.waves = new THREE.Mesh(geo, mk({ amp: 1, level: 0, foam: 1, shallow: '#5fd6c8', deep: '#0e4a72' }));
+    this.waves.frustumCulled = false;
     this.scene.add(this.waves);
-    const far = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: col('#1a6f86'), roughness: 0.2, metalness: 0.1 }));
-    far.position.y = -0.25; this.scene.add(far); this.farWater = far;
+    const far = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000).rotateX(-Math.PI / 2), mk({ amp: 0, level: 0, foam: 0, shallow: '#0e4a72', deep: '#0e4a72' }));
+    far.position.y = -0.45; this.scene.add(far); this.farWater = far;
     for (const p of this.ponds) {
-      const pm = new THREE.Mesh(new THREE.CircleGeometry(p.r * 1.3, 28).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: col('#3aa6c4'), roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.85 }));
+      const pm = new THREE.Mesh(new THREE.CircleGeometry(p.r * 1.3, 32).rotateX(-Math.PI / 2), mk({ amp: 0.12, level: p.level, foam: 0.35, shallow: '#7fe0d8', deep: '#1e6f8a' }));
       pm.position.set(p.x, p.level, p.z); this.scene.add(pm);
     }
   },
   updateWater(t, cx, cz) {
-    const w = this.waves, sx = Math.round(cx / 4) * 4, sz = Math.round(cz / 4) * 4;
-    w.position.set(sx, 0, sz);
-    const a = w.geometry.attributes.position, base = w.userData.base;
-    for (let i = 0; i < a.count; i++) {
-      const x = base[i * 3] + sx, z = base[i * 3 + 2] + sz;
-      a.array[i * 3 + 1] = Math.sin(x * 0.18 + t * 1.1) * 0.12 + Math.cos(z * 0.21 + t * 0.9) * 0.1 + Math.sin((x + z) * 0.07 + t * 0.6) * 0.15;
-    }
-    a.needsUpdate = true;
-    w.geometry.computeVertexNormals();
+    this.waves.position.set(Math.round(cx / 4) * 4, 0, Math.round(cz / 4) * 4);
+    for (const m of this.waterMats) m.uniforms.uTime.value = t;
+    SWAY.time.value = t; SWAY.wind.value = Weather.cur.wind;
   },
 
   buildSky() {
@@ -284,7 +381,10 @@ const World = {
         void main(){ vec3 d = normalize(vP); float h = clamp(d.y*1.6+0.15, 0.0, 1.0); vec3 c = mix(bottom, top, pow(h, 0.8));
           float s = max(dot(d, normalize(sunDir)), 0.0); c += sunCol * (pow(s, 600.0)*6.0 + pow(s, 12.0)*0.35);
           float m = max(dot(d, normalize(moonDir)), 0.0); c += vec3(0.75,0.8,0.9) * pow(m, 900.0) * 3.0;
-          gl_FragColor = vec4(c, 1.0); }`,
+          gl_FragColor = vec4(c, 1.0);
+          #include <tonemapping_fragment>
+          #include <encodings_fragment>
+        }`,
     });
     this.sky = new THREE.Mesh(geo, mat);
     this.scene.add(this.sky);
@@ -315,29 +415,44 @@ const World = {
     const S = this.sky.material.uniforms;
     const dayTop = col('#3d86d6'), dayBot = col('#bfe0f5'), duskTop = col('#2c3a78'), duskBot = col('#ff9460'), nightTop = col('#03060f'), nightBot = col('#0b1630');
     const top = nightTop.clone().lerp(dayTop, day).lerp(duskTop, dusk * 0.7), bot = nightBot.clone().lerp(dayBot, day).lerp(duskBot, dusk * 0.85);
+    // počasí: zatažená obloha šedne, blesk ji na okamžik rozsvítí
+    const Wc = Weather.cur, cl = Wc.cloud, fl = Weather.flash;
+    const grey = col('#7d8792').multiplyScalar(0.25 + 0.75 * day);
+    top.lerp(grey, cl * 0.72); bot.lerp(grey.clone().multiplyScalar(1.15), cl * 0.62);
+    if (fl > 0) { top.lerp(col('#dfe6ff'), fl * 0.6); bot.lerp(col('#dfe6ff'), fl * 0.5); }
     S.top.value.copy(top); S.bottom.value.copy(bot);
-    S.sunDir.value.copy(dir); S.sunCol.value.copy(col('#fff2c0').lerp(col('#ff8a40'), dusk)).multiplyScalar(sy > -0.1 ? 1 : 0);
+    S.sunDir.value.copy(dir); S.sunCol.value.copy(col('#fff2c0').lerp(col('#ff8a40'), dusk)).multiplyScalar(sy > -0.1 ? 1 - cl * 0.85 : 0);
     S.moonDir.value.set(-dir.x, -dir.y, -dir.z);
-    this.stars.material.opacity = clamp(1 - day * 1.6, 0, 1) * 0.9;
+    this.stars.material.opacity = clamp(1 - day * 1.6, 0, 1) * 0.9 * (1 - cl);
     this.sun.position.set(px + dir.x * 120, Math.max(5, dir.y * 120), pz + dir.z * 120);
     this.sun.target.position.set(px, 0, pz);
-    this.sun.intensity = 1.7 * clamp(sy * 2.5, 0, 1);
+    this.sun.intensity = 1.7 * clamp(sy * 2.5, 0, 1) * (1 - cl * 0.72);
     this.sun.color.copy(col('#fff4dc').lerp(col('#ffb070'), dusk));
     this.moon.position.set(px - dir.x * 100, Math.max(10, -dir.y * 100), pz - dir.z * 100);
     this.moon.target.position.set(px, 0, pz);
-    this.moon.intensity = 0.32 * clamp(-sy * 3, 0, 1);
-    this.hemi.intensity = 0.18 + 0.55 * day;
+    this.moon.intensity = 0.32 * clamp(-sy * 3, 0, 1) * (1 - cl * 0.6);
+    this.hemi.intensity = (0.2 + 0.55 * day) * (1 - cl * 0.2) + fl * 2.2;
     this.hemi.color.copy(bot);
-    this.scene.fog.color.copy(bot);
-    this.scene.fog.density = lerp(0.011, 0.0055, day);
+    // mlha se míchá ve výstupním prostoru (jako obloha), proto barva v sRGB
+    this.scene.fog.color.copy(bot).convertLinearToSRGB();
+    this.scene.fog.density = lerp(0.011, 0.0052, day) + cl * 0.004 + Wc.rain * 0.009;
     this.sky.position.set(px, 0, pz);
     this.stars.position.set(px, 0, pz);
+    // mraky: bílé ve dne, růžové za soumraku, tmavé v noci a v bouřce
+    if (this.cloudMat) {
+      const c = col('#2a3046').lerp(col('#ffffff'), day).lerp(col('#ffc0a0'), dusk * 0.6).lerp(col('#8a929c').multiplyScalar(0.3 + 0.7 * day), cl * 0.65);
+      if (fl > 0) c.lerp(col('#ffffff'), fl * 0.7);
+      this.cloudMat.color.copy(c); this.cloudMat.emissive.copy(c).multiplyScalar(0.55); this.cloudMat.opacity = 0.8 + cl * 0.18;
+    }
+    // voda
+    const sunCol = this.sun.color.clone().multiplyScalar(this.sun.intensity * 0.75 + this.moon.intensity * 0.6);
+    for (const m of this.waterMats || []) { const u = m.uniforms; u.uSunDir.value.copy(sy > -0.05 ? dir : this.moon.position.clone().sub(this.moon.target.position).normalize()); u.uSunCol.value.copy(sunCol); u.uSky.value.copy(bot).multiplyScalar(0.35 + 0.65 * day).lerp(top, 0.25); }
     return { day, dusk, night: 1 - day };
   },
 
   buildClouds(rnd) {
-    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true, transparent: true, opacity: 0.92 });
-    for (let i = 0; i < 26; i++) {
+    const mat = this.cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x000000, roughness: 1, flatShading: true, transparent: true, opacity: 0.92, fog: false });
+    for (let i = 0; i < 30; i++) {
       const parts = [];
       const n = 3 + Math.floor(rnd() * 4);
       for (let k = 0; k < n; k++) parts.push([T(new THREE.IcosahedronGeometry(6 + rnd() * 6, 0), k * 7 - n * 3.5, rnd() * 3, rnd() * 6 - 3, 0, 0, 0, 1, 0.55, 1), '#ffffff', 0.04, rnd]);
@@ -376,6 +491,7 @@ const World = {
         const h = this.height(x, z);
         const f = N.fbm(x * 0.012 + 50, z * 0.012, 3);
         if (!okFor(k, x, z, h, f)) continue;
+        if (Sites.list.some(st => Math.hypot(st.x - x, st.z - z) < (st.kind === 'ruin' ? 5.5 : 2.5))) continue;
         // sklon – žádné stromy na útesech
         const sl = Math.abs(this.height(x + 1, z) - this.height(x - 1, z)) + Math.abs(this.height(x, z + 1) - this.height(x, z - 1));
         if (sl > (k === 'rock' || k === 'ironRock' ? 3 : 1.6)) continue;
@@ -385,11 +501,10 @@ const World = {
     }
     // zajistit pár bobulí a větví poblíž startu
     this.nodes = list;
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, flatShading: true });
     const dummy = new THREE.Object3D();
     for (const k in list) {
       const geo = MODELS[k](mulberry32(this.seed + k.length * 13));
-      const im = new THREE.InstancedMesh(geo, mat, list[k].length);
+      const im = new THREE.InstancedMesh(geo, swayMat(SWAY_AMP[k] || 0, k === 'plant' ? 0 : 0.3), list[k].length);
       im.castShadow = !['plant', 'stick', 'pebble'].includes(k);
       im.receiveShadow = true;
       im.userData.kind = k;
@@ -433,12 +548,13 @@ const World = {
   buildGrass(rnd) {
     const geo = MODELS.grass(mulberry32(3));
     const count = 22000;
-    const im = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }), count);
+    const im = new THREE.InstancedMesh(geo, swayMat(SWAY_AMP.grass, 0), count);
     const d = new THREE.Object3D();
     let n = 0;
     for (let t = 0; t < count * 6 && n < count; t++) {
       const x = (rnd() * 2 - 1) * ISLAND_R, z = (rnd() * 2 - 1) * ISLAND_R, h = this.height(x, z);
       if (h < 1.6 || h > 22 || this.isFreshWater(x, z)) continue;
+      if (Sites.list.some(st => st.kind === 'ruin' && Math.hypot(st.x - x, st.z - z) < 4)) continue;
       const sl = Math.abs(this.height(x + 1, z) - h) + Math.abs(this.height(x, z + 1) - h);
       if (sl > 0.9) continue;
       d.position.set(x, h - 0.05, z); d.rotation.set(0, rnd() * 6.28, 0); const s = 0.55 + rnd() * 0.55; d.scale.set(s, s * (0.8 + rnd() * 0.5), s);
@@ -456,6 +572,8 @@ const World = {
     const y = type === 'raft' ? 0.05 : this.height(x, z);
     g.position.set(x, y, z); g.rotation.y = rot;
     const s = { type, x, y, z, rot, mesh: g };
+    if (type === 'chest') s.items = new Array(CHEST_SIZE).fill(null);
+    if (type === 'garden') s.crop = null;
     g.userData.structure = s;
     if (STRUCTURES[type].light) {
       const l = new THREE.PointLight(0xff8a3d, 2.2, type === 'campfire' ? 16 : 9, 2);
@@ -475,8 +593,16 @@ const World = {
         const k = 1 + Math.sin(t * 13 + s.x) * 0.08 + Math.sin(t * 23 + s.z) * 0.06;
         if (s.type === 'campfire') { f.scale.set(k, 1 + Math.sin(t * 9 + s.x) * 0.15, k); s.mesh.userData.inner.scale.setScalar(k); }
         if (s.light) s.light.intensity = (s.type === 'campfire' ? 2.4 : 1.4) * k;
+        if (s.mesh.userData.glow) s.mesh.userData.glow.material.opacity = 0.42 + (k - 1) * 1.5;
+      }
+      if (s.type === 'garden') {
+        const U = s.mesh.userData, gr = this.cropGrowth(s);
+        U.crop.visible = gr >= 0;
+        if (gr >= 0) { U.crop.scale.setScalar(0.2 + 0.8 * Math.min(1, gr)); U.berries.visible = gr >= 1; }
       }
     }
   },
+  // úroda na záhonu: -1 = prázdný, 0..1 roste, ≥1 zralá (18 herních hodin)
+  cropGrowth(s) { return s.crop ? ((G.day * 24 + G.hour) - s.crop.at) / 18 : -1; },
 };
 function smoothstep(a, b, x) { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }

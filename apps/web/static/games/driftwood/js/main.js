@@ -4,9 +4,10 @@ const SAVE_KEY = 'driftwood.save.v1';
 const HUB_KEY = 'gamecenter.stats.driftwood';
 function loadSave() {
   const d = {
-    v: 1, achievements: {}, world: null,
-    stats: { tools: 0, fires: 0, bestDays: 0, wolves: 0, deer: 0, iron: 0, shelters: 0, trees: 0, rocks: 0, escapes: 0, hardEscapes: 0, fastEscape: 0, eaten: 0, worlds: 0, deaths: 0, time: 0 },
-    settings: { sfx: 0.7, music: 0.5, sens: 1, fov: 75, shadows: true, view: 1, look: null },
+    v: 1, achievements: {}, world: null, notes: {},
+    stats: { tools: 0, fires: 0, bestDays: 0, wolves: 0, deer: 0, iron: 0, shelters: 0, trees: 0, rocks: 0, escapes: 0, hardEscapes: 0, fastEscape: 0, eaten: 0, worlds: 0, deaths: 0, time: 0,
+      fish: 0, bears: 0, bowKills: 0, charts: 0, maxSkill: 1, dailies: 0, harvests: 0 },
+    settings: { sfx: 0.7, music: 0.5, sens: 1, fov: 75, shadows: true, view: 1, look: null, invertY: false, bob: true, toggleSprint: false },
   };
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) for (const k in s) d[k] = d[k] && typeof d[k] === 'object' && !Array.isArray(d[k]) && s[k] ? Object.assign(d[k], s[k]) : s[k]; } catch (e) { /* poškozený save */ }
   return d;
@@ -17,13 +18,13 @@ function persist() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
     localStorage.setItem(HUB_KEY, JSON.stringify({
       playTime: SAVE.stats.time, lastPlayed: Date.now(), progress: Object.keys(SAVE.achievements).length / ACHIEVEMENTS.length,
-      stats: { best: SAVE.stats.bestDays, escapes: SAVE.stats.escapes, wolves: SAVE.stats.wolves, achievements: `${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}` },
+      stats: { best: SAVE.stats.bestDays, escapes: SAVE.stats.escapes, wolves: SAVE.stats.wolves, fish: SAVE.stats.fish, achievements: `${Object.keys(SAVE.achievements).length} / ${ACHIEVEMENTS.length}` },
     }));
   } catch (e) { /* bez úložiště */ }
 }
 
 // ── Stav hry ────────────────────────────────────────────────────────────────
-const G = { mode: 'normal', seed: 1, hour: 8, day: 1, flags: {}, playing: false, menuT: 0, shake: 0, sleepT: 0, won: false };
+const G = { mode: 'normal', seed: 1, hour: 8, day: 1, flags: {}, run: null, playing: false, menuT: 0, shake: 0, sleepT: 0, won: false };
 
 const Game = {
   renderer: null, scene: null, cam: null, torchLight: null, playing: false, locked: false, last: 0, saveT: 0, char: null,
@@ -68,6 +69,7 @@ const Game = {
     World.generate(seed, this.scene);
     Animals.init(this.scene);
     Particles.init(this.scene);
+    Projectiles.init(this.scene);
     this.scene.add(this.cam);
     this.cam.add(this.torchLight);
     this.char = new Character(SAVE.settings.look || defaultLook());
@@ -91,7 +93,7 @@ const Game = {
     document.addEventListener('mousemove', e => {
       if (!this.locked) return;
       const s = 0.0022 * SAVE.settings.sens, P = Player.P;
-      P.yaw -= e.movementX * s; P.pitch = clamp(P.pitch - e.movementY * s, -1.5, 1.5);
+      P.yaw -= e.movementX * s; P.pitch = clamp(P.pitch - e.movementY * s * (SAVE.settings.invertY ? -1 : 1), -1.5, 1.5);
     });
     document.addEventListener('mousedown', e => {
       if (!this.locked) return;
@@ -104,6 +106,12 @@ const Game = {
       if (!this.playing) return;
       if (e.code === 'Tab') { e.preventDefault(); if (!Player.P.dead) UI.toggleInv(); return; }
       if (e.code === 'Escape' && UI.invOpen) { UI.toggleInv(false, null, false); return; }
+      // M mapa, J deník (i z otevřeného inventáře)
+      if ((e.code === 'KeyM' || e.code === 'KeyJ') && !Player.P.dead && (this.locked || UI.invOpen) && $('#overlay').hidden && !(MP.state && MP.state.chatOpen)) {
+        const tab = e.code === 'KeyM' ? 'map' : 'journal';
+        if (UI.invOpen && UI.tab === tab) UI.toggleInv(false); else UI.openTab(tab);
+        return;
+      }
       // Esc mimo zamčenou myš (po zavření inventáře) otevře menu
       if (e.code === 'Escape' && !this.locked && !Player.P.dead && $('#screen').hidden && $('#overlay').hidden) { UI.pause(); return; }
       if (!this.locked) return;
@@ -111,8 +119,11 @@ const Game = {
       if (e.code === 'KeyE') Player.interact(this.env);
       if (e.code === 'KeyV') this.toggleView();
       if (e.code === 'KeyQ') Drops.dropSlot(Player.P.sel, e.shiftKey ? 0 : 1);
-      const n = '123456'.indexOf(e.key);
-      if (n >= 0) { Player.P.sel = n; UI.renderHotbar(); }
+      if (e.code === 'KeyF') Player.quickEat(this.env);
+      if (e.code === 'KeyR' && Player.ghost) { Player.ghostRot = (Player.ghostRot + Math.PI / 4) % (Math.PI * 2); Sound.play.ui(); }
+      if (e.code === 'ShiftLeft' && SAVE.settings.toggleSprint) Player.sprintOn = !Player.sprintOn;
+      const n = '12345678'.indexOf(e.key);
+      if (n >= 0 && e.key !== '') { Player.P.sel = n; UI.renderHotbar(); }
       if (e.code === 'Space') e.preventDefault();
     });
     window.addEventListener('keyup', e => Player.keys.delete(e.code));
@@ -143,11 +154,15 @@ const Game = {
     if (!seedTxt || isNaN(seed)) seed = seedTxt ? [...seedTxt].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) : (Math.random() * 1e9) | 0;
     this.built = false;
     this.buildWorld(seed);
-    Object.assign(G, { mode, hour: 8, day: 1, flags: {}, won: false });
+    Object.assign(G, { mode, hour: 8, day: 1, flags: {}, run: newRun(), won: false });
     Player.init();
     Inv.reset();
     Drops.clear();
+    Explore.load(null);
+    Sites.refresh();
     Player.spawnOnBeach(mulberry32(seed + 3));
+    Explore.mark(Player.P.x, Player.P.z, 3);
+    Story.sync();
     SAVE.stats.worlds++;
     this.playing = true; this.playStart();
     this.save();
@@ -159,11 +174,14 @@ const Game = {
     Sound.init();
     this.built = G.seed === W.seed && this.built;
     this.buildWorld(W.seed);
-    Object.assign(G, { mode: W.mode, hour: W.hour, day: W.day, flags: W.flags || {}, won: false });
+    Object.assign(G, { mode: W.mode, hour: W.hour, day: W.day, flags: W.flags || {}, run: Object.assign(newRun(), W.run || {}), won: false });
     Player.init();
     Object.assign(Player.P, W.P);
     Inv.slots = W.inv.concat(new Array(INV_SIZE).fill(null)).slice(0, INV_SIZE);
-    for (const s of W.structures) World.addStructure(s.type, s.x, s.z, s.rot);
+    for (const s of W.structures) { const st = World.addStructure(s.type, s.x, s.z, s.rot); if (s.items) st.items = s.items.concat(new Array(CHEST_SIZE).fill(null)).slice(0, CHEST_SIZE); if (s.crop) st.crop = s.crop; }
+    Explore.load(G.flags.ex);
+    Sites.refresh();
+    Story.sync();
     Drops.clear(); Drops.load(W.drops);
     for (const [k, list] of Object.entries(W.dead || {})) for (const [i, left] of list) { const o = World.nodes[k][i]; if (o) { o.alive = false; o.respawn = left; World.refreshNode(o); } }
     this.playing = true; this.playStart();
@@ -171,6 +189,8 @@ const Game = {
   playStart() {
     UI.hideScreen(); UI.hud();
     Animals.clear();
+    Projectiles.clear();
+    FX.clear();
     this.lock();
   },
   save() {
@@ -180,14 +200,22 @@ const Game = {
     const P = Player.P;
     SAVE.world = {
       seed: G.seed, mode: G.mode, hour: G.hour, day: G.day, flags: G.flags,
-      P: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: Math.max(1, P.hp), hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, stamina: P.stamina, armor: P.armor, spawn: P.spawn, sel: P.sel },
-      inv: Inv.slots, structures: World.structures.filter(s => s.type !== 'raft').map(s => ({ type: s.type, x: s.x, z: s.z, rot: s.rot })), dead,
+      P: this.saveP(), run: G.run,
+      inv: Inv.slots, structures: World.structures.filter(s => s.type !== 'raft').map(s => Object.assign({ type: s.type, x: s.x, z: s.z, rot: s.rot }, s.items ? { items: s.items } : {}, s.crop ? { crop: s.crop } : {})), dead,
       drops: Drops.save(),
     };
     persist();
   },
+  // stav hráče k uložení (sólo i multiplayer)
+  saveP() {
+    const P = Player.P;
+    return { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: Math.max(1, P.hp), hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, stamina: P.stamina, armor: P.armor, spawn: P.spawn, sel: P.sel, skills: P.skills, buffs: P.buffs, wet: P.wet };
+  },
   toMenu() {
     this.playing = false;
+    Player.reel(false);
+    Projectiles.clear();
+    FX.clear();
     if (this.char) this.char.root.visible = false;
     UI.hideOverlay(); if (UI.invOpen) { UI.invOpen = false; $('#inv').hidden = true; }
     this.unlock(true);
@@ -203,7 +231,8 @@ const Game = {
   hurt(d, src, silent) {
     const P = Player.P;
     if (P.dead || G.won) return;
-    if (P.armor && src) d *= 0.65;
+    const arm = armorOf(P);
+    if (arm && src) d *= arm.dmg;
     P.hp -= d;
     if (!silent || d > 3) { UI.hurt(Math.min(0.8, 0.25 + d / 25)); Sound.play.hurt(); G.shake = Math.max(G.shake, 0.35); }
     if (src && src.mesh) Sound.play.growl();
@@ -212,21 +241,32 @@ const Game = {
   die() {
     const P = Player.P;
     P.hp = 0; P.dead = true;
+    P.draw = 0; Player.reel(false);
     SAVE.stats.deaths++;
+    G.flags.death = { x: +P.x.toFixed(1), z: +P.z.toFixed(1) };
     Sound.play.death();
     this.unlock(true);
     const M = MODES[G.mode];
     if (M.perma) {
       const days = G.day;
       SAVE.world = null; persist();
-      UI.overlay(`<div class="end lose"><h1>${L('Ostrov tě pohltil', 'The Island Claimed You')}</h1><p>${L(`Přežil jsi ${days} ${plural(days, 'den', 'dny', 'dní')}.`, `You survived ${days} day${days > 1 ? 's' : ''}.`)}</p><div class="row"><button class="btn primary" data-act="toMenu">${L('Do menu', 'Main menu')}</button></div></div>`);
+      UI.overlay(`<div class="end lose"><h1>${L('Ostrov tě pohltil', 'The Island Claimed You')}</h1><p>${L(`Přežil jsi ${days} ${plural(days, 'den', 'dny', 'dní')}.`, `You survived ${days} day${days > 1 ? 's' : ''}.`)}</p>${UI.runStats()}<div class="row"><button class="btn primary" data-act="toMenu">${L('Do menu', 'Main menu')}</button></div></div>`);
     } else {
-      UI.overlay(`<div class="end lose"><h1>${L('Upadl jsi do bezvědomí', 'You Passed Out')}</h1><p>${M.dropInv ? L('Tvůj inventář je pryč. Probudíš se u přístřešku nebo na pláži.', 'Your inventory is lost. You will wake at your shelter or on the beach.') : L('Probudíš se u přístřešku nebo na pláži.', 'You will wake at your shelter or on the beach.')}</p><div class="row"><button class="btn primary" data-act="respawn">${L('Probudit se', 'Wake up')}</button></div></div>`);
+      UI.overlay(`<div class="end lose"><h1>${L('Upadl jsi do bezvědomí', 'You Passed Out')}</h1><p>${M.dropInv ? L('Tvé věci zůstaly ležet tam, kde jsi padl – na kompasu to místo ukazuje lebka. Probudíš se u přístřešku nebo na pláži.', 'Your belongings stay where you fell – a skull marks the spot on your compass. You will wake at your shelter or on the beach.') : L('Probudíš se u přístřešku nebo na pláži.', 'You will wake at your shelter or on the beach.')}</p><div class="row"><button class="btn primary" data-act="respawn">${L('Probudit se', 'Wake up')}</button></div></div>`);
     }
   },
   respawn() {
     const P = Player.P, sp = P.spawn || { x: 0, z: 0 };
-    if (MODES[G.mode].dropInv) Inv.reset();
+    if (MODES[G.mode].dropInv) {
+      // věci zůstanou v kruhu na místě smrti
+      let k = 0;
+      Inv.slots.forEach(s => {
+        if (!s) return;
+        const a = k++ * 2.4, r = 0.6 + 0.12 * k;
+        Drops.put(Drops.item(s, s.n), P.x + Math.cos(a) * r, P.z + Math.sin(a) * r);
+      });
+      Inv.reset();
+    }
     Object.assign(P, { x: sp.x + 1.5, z: sp.z + 1.5, hp: 60, hunger: Math.max(P.hunger, 50), thirst: Math.max(P.thirst, 50), warmth: 70, stamina: 100, dead: false, vy: 0 });
     P.y = World.height(P.x, P.z);
     for (const a of Animals.list.filter(a => a.type === 'wolf')) Animals.remove(a);
@@ -261,26 +301,56 @@ const Game = {
   askEscape(s) {
     this.raft = s;
     this.unlock(true);
-    UI.overlay(`<div class="end"><h1>${L('Vyplout na moře?', 'Set Sail?')}</h1><p>${L('Vor je připravený. Až vyplouváš, není cesty zpět.', 'The raft is ready. Once you sail, there is no way back.')}</p><div class="row"><button class="btn" data-act="escapeNo">${L('Ještě ne', 'Not yet')}</button><button class="btn primary" data-act="escapeYes">${icon('raft')} ${L('Vyplout', 'Set sail')}</button></div></div>`);
+    // na cestu přes moře jsou potřeba zásoby
+    const food = cookedFood(), water = skinFull();
+    if (food < 3 || !water) {
+      UI.overlay(`<div class="end"><h1>${L('Ještě nejsi připravený', 'Not Ready Yet')}</h1><p>${L('Cesta přes moře potrvá dny. Vezmi si s sebou:', 'The crossing will take days. Bring along:')}</p>
+        <ul class="need"><li class="${food >= 3 ? 'ok' : ''}">${icon('cooked')} ${L('3 vařená jídla', '3 cooked meals')} (${Math.min(food, 3)}/3)</li><li class="${water ? 'ok' : ''}">${icon('bottle')} ${L('měch s vodou', 'a waterskin with water')}</li></ul>
+        <div class="row"><button class="btn primary" data-act="escapeNo">${L('Rozumím', 'Got it')}</button></div></div>`);
+      return;
+    }
+    UI.overlay(`<div class="end"><h1>${L('Vyplout na moře?', 'Set Sail?')}</h1><p>${L('Vor je připravený a mapa ukazuje průliv v útesech. Až vyplouváš, není cesty zpět.', 'The raft is ready and the chart shows the passage through the reefs. Once you sail, there is no way back.')}</p><div class="row"><button class="btn" data-act="escapeNo">${L('Ještě ne', 'Not yet')}</button><button class="btn primary" data-act="escapeYes">${icon('raft')} ${L('Vyplout', 'Set sail')}</button></div></div>`);
   },
   victory() {
     G.won = true;
     UI.hideOverlay();
     SAVE.stats.escapes++;
     if (G.mode === 'harsh') SAVE.stats.hardEscapes++;
-    if (G.day <= 5) SAVE.stats.fastEscape = 1;
+    if (G.day <= 8) SAVE.stats.fastEscape = 1;
     SAVE.world = null;
     this.checkAch();
     persist();
     Sound.play.victory();
     this.cine = { t: 0, s: this.raft };
     $('#hud').hidden = true;
-    setTimeout(() => UI.overlay(`<div class="end win"><h1>${L('Unikl jsi z ostrova', 'You Escaped the Island')}</h1><p>${L(`Po ${G.day} ${plural(G.day, 'dni', 'dnech', 'dnech')} na ostrově tě vlny nesou k obzoru.`, `After ${G.day} day${G.day > 1 ? 's' : ''} on the island, the waves carry you to the horizon.`)}</p><p class="muted">${MODES[G.mode].name}</p><div class="row"><button class="btn primary" data-act="toMenu">${L('Do menu', 'Main menu')}</button></div></div>`), 5500);
+    const stats = UI.runStats();
+    setTimeout(() => UI.overlay(`<div class="end win"><h1>${L('Unikl jsi z ostrova', 'You Escaped the Island')}</h1><p>${L(`Po ${G.day} ${plural(G.day, 'dni', 'dnech', 'dnech')} na ostrově tě vlny nesou k obzoru. Tomášova mapa tě provedla útesy.`, `After ${G.day} day${G.day > 1 ? 's' : ''} on the island, the waves carry you to the horizon. Thomas's chart guided you past the reefs.`)}</p><p class="muted">${MODES[G.mode].name}</p>${stats}<div class="row"><button class="btn primary" data-act="toMenu">${L('Do menu', 'Main menu')}</button></div></div>`), 5500);
   },
 
   newDay() {
     if (G.day > SAVE.stats.bestDays) SAVE.stats.bestDays = G.day;
     this.checkAch();
+    Story.update();
+  },
+  // skolené zvíře (zbraní z ruky nebo šípem): statistiky, zkušenosti, kořist
+  killed(a, how) {
+    const r = runStats();
+    r.kills++;
+    if (a.type === 'wolf') { SAVE.stats.wolves++; r.wolves++; }
+    if (a.type === 'deer') SAVE.stats.deer++;
+    if (a.type === 'bear') { SAVE.stats.bears = (SAVE.stats.bears || 0) + 1; r.bears++; G.flags.bear = true; G.flags.bearT = G.day * 24 + G.hour + 48; UI.msg(L('Starý Šedák padl!', 'Old Grey has fallen!')); }
+    if (how === 'arrow') { SAVE.stats.bowKills = (SAVE.stats.bowKills || 0) + 1; r.bowKills++; }
+    Skills.add('hunt', { rabbit: 6, deer: 12, wolf: 15, bear: 50 }[a.type] || 6);
+    Sound.play.kill();
+    if (how === 'arrow') {
+      // kořist zůstane u zvířete
+      for (const [id, lo, hi] of a.d.drops) {
+        const n = randi(lo, hi); if (n <= 0) continue;
+        Drops.put({ id, n }, a.x + rand(-0.6, 0.6), a.z + rand(-0.6, 0.6));
+      }
+    } else Player.giveDrops(a.d.drops, this.env, 0);
+    this.checkAch();
+    Story.update();
   },
   checkAch() {
     for (const a of ACHIEVEMENTS) {
@@ -297,7 +367,7 @@ const Game = {
     if (!c.root.visible) return;
     const sp = Math.hypot(P.vx || 0, P.vz || 0);
     // ve 3. osobě se postava natáčí do směru chůze, při práci k cíli
-    const want = P.swing > 0 || Player.ghost || sp < 0.5 ? P.yaw : Math.atan2(-P.vx, -P.vz);
+    const want = P.swing > 0 || P.draw > 0 || Player.fish || Player.ghost || sp < 0.5 ? P.yaw : Math.atan2(-P.vx, -P.vz);
     let d = want - c.yaw; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
     c.yaw += d * Math.min(1, dt * 10);
     c.root.position.set(P.x, P.y, P.z);
@@ -340,7 +410,10 @@ const Game = {
         Player.update(dt, this.cam, this.env);
         Animals.populate(P.x, P.z, this.nightF > 0.5, G.day, G.mode);
         Animals.update(dt, P, this.nightF > 0.5, (d, a) => this.hurt(d, a));
+        Projectiles.update(dt);
         World.updateNodes(dt);
+        this.slowT = (this.slowT || 0) + dt;
+        if (this.slowT > 0.5) { this.slowT = 0; Explore.mark(P.x, P.z); Story.update(); }
         SAVE.stats.time += dt;
         this.saveT += dt;
         if (this.saveT > 30) { this.saveT = 0; this.save(); }
@@ -352,6 +425,11 @@ const Game = {
       this.updateChar(dt);
       UI.updateHud(P);
       const h = $('#hurt'); h.style.opacity = Math.max(0, parseFloat(h.style.opacity || 0) - dt * 1.2) + (P.hp < 25 ? 0.25 + Math.sin(t * 5) * 0.1 : 0);
+      // při nátahu luku se pohled mírně přiblíží; při nízkém zdraví barvy blednou
+      const fov = SAVE.settings.fov - (P.draw || 0) * 10;
+      if (Math.abs(this.cam.fov - fov) > 0.05) { this.cam.fov += (fov - this.cam.fov) * Math.min(1, dt * 10); this.cam.updateProjectionMatrix(); }
+      const gray = P.hp < 30 ? Math.round((1 - P.hp / 30) * 60) : 0;
+      if (gray !== this._gray) { this._gray = gray; $('#gl').style.filter = gray ? `saturate(${1 - gray / 100})` : ''; }
     } else {
       // menu: kamera krouží kolem ostrova
       G.menuT += dt * 0.03;
@@ -361,8 +439,10 @@ const Game = {
       if (!this.playing) G.hour = 16.6 + Math.sin(G.menuT * 0.5) * 1.6;
       cx = this.cam.position.x * 0.5; cz = this.cam.position.z * 0.5;
     }
+    Weather.update(dt, this.playing && !G.won);
     const L0 = World.setTime(G.hour, cx, cz);
     this.nightF = L0.night;
+    FX.update(dt, t, this.cam, L0.night);
     World.updateWater(t, this.playing ? cx : 0, this.playing ? cz : 0);
     World.updateStructures(t);
     Drops.update(t);
@@ -374,7 +454,10 @@ const Game = {
     if (Sound.ready) {
       const shore = this.playing ? clamp(1 - Math.abs(World.height(cx, cz)) / 6, 0, 1) : 0.6;
       const fire = this.playing ? World.structures.filter(s => s.type === 'campfire').reduce((m, s) => Math.max(m, clamp(1 - Math.hypot(s.x - cx, s.z - cz) / 14, 0, 1)), 0) : 0;
-      Sound.ambience({ wind: clamp((P.y || 0) / 30, 0, 1) + 0.2, ocean: shore, fire, birds: this.playing ? L0.day : 0.5, crickets: L0.night, night: L0.night, under: this.cam.position.y < World.waterLevelAt(this.cam.position.x, this.cam.position.z) ? 1 : 0 });
+      const pond = this.playing ? World.ponds.reduce((m, p) => Math.max(m, clamp(1 - (Math.hypot(p.x - cx, p.z - cz) - p.r) / 25, 0, 1)), 0) : 0;
+      const danger = this.playing && !P.dead ? Animals.list.reduce((m, a) => Math.max(m, !a.dead && a.state === 'chase' ? clamp(1 - Math.hypot(a.x - cx, a.z - cz) / 45, 0, 1) : 0), 0) : 0;
+      Sound.ambience({ wind: clamp((P.y || 0) / 30, 0, 1) + 0.2 + Weather.cur.wind * 0.5, ocean: shore, fire, birds: this.playing ? L0.day * (1 - Weather.cur.rain) : 0.5, crickets: L0.night * (1 - Weather.cur.rain), night: L0.night, under: this.cam.position.y < World.waterLevelAt(this.cam.position.x, this.cam.position.z) ? 1 : 0,
+        rain: Weather.cur.rain, storm: Weather.cur.storm, pond, danger, wolves: Animals.count('wolf'), dawn: G.hour > 5 && G.hour < 8.5 ? 1 : 0 });
     }
     // render
     const r = this.renderer;
