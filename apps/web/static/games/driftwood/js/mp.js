@@ -136,13 +136,14 @@ const MP = (() => {
     Sound.init();
     Game.built = false;
     Game.buildWorld(meta.seed);
-    Object.assign(G, { mode: MODES[meta.mode] ? meta.mode : 'normal', hour: m.clock ? m.clock.hour : 8, day: m.clock ? m.clock.day : 1, flags: {}, won: false });
+    Object.assign(G, { mode: MODES[meta.mode] ? meta.mode : 'normal', hour: m.clock ? m.clock.hour : 8, day: m.clock ? m.clock.day : 1, flags: {}, run: newRun(), won: false });
     Player.init();
     const mine = read(ROOM_KEY(meta.code), null);
     if (mine && mine.P) {
       Object.assign(Player.P, mine.P);
       Inv.slots = mine.inv.concat(new Array(INV_SIZE).fill(null)).slice(0, INV_SIZE);
       G.flags = mine.flags || {};
+      G.run = Object.assign(newRun(), mine.run || {});
     } else {
       Inv.reset();
       Player.spawnOnBeach(mulberry32(meta.seed + 3));
@@ -151,6 +152,16 @@ const MP = (() => {
     for (const s of m.structures) applyBuild(s, false);
     for (const [key, left] of m.nodes) { const [k, i] = key.split(':'); applyNode(k, +i, left, false); }
     st.applying = false;
+    // obsah truhel a úroda na záhonech jsou osobní (ukládají se u hráče)
+    for (const o of (mine && mine.local) || []) {
+      const s = World.structures.find(x => x.type === o.type && Math.abs(x.x - o.x) < 0.01 && Math.abs(x.z - o.z) < 0.01);
+      if (!s) continue;
+      if (o.items && s.items) s.items = o.items.concat(new Array(CHEST_SIZE).fill(null)).slice(0, CHEST_SIZE);
+      if (o.crop && s.type === 'garden') s.crop = o.crop;
+    }
+    Explore.load(G.flags.ex);
+    Sites.refresh();
+    Story.sync();
     st.active = true;
     Drops.net = net;
     syncDrops(m.drops);
@@ -314,8 +325,8 @@ const MP = (() => {
     if (!st.code || !P) return;
     if (P.dead && MODES[G.mode].perma) { try { localStorage.removeItem(ROOM_KEY(st.code)); } catch (e) { /* */ } return; }
     write(ROOM_KEY(st.code), {
-      P: { x: P.x, y: P.y, z: P.z, yaw: P.yaw, pitch: P.pitch, hp: Math.max(1, P.hp), hunger: P.hunger, thirst: P.thirst, warmth: P.warmth, stamina: P.stamina, armor: P.armor, spawn: P.spawn, sel: P.sel },
-      inv: Inv.slots, flags: G.flags,
+      P: Game.saveP(), inv: Inv.slots, flags: G.flags, run: G.run,
+      local: World.structures.filter(s => (s.items && s.items.some(Boolean)) || s.crop).map(s => ({ type: s.type, x: s.x, z: s.z, items: s.items, crop: s.crop })),
     });
   }
   function leave() {

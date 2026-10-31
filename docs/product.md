@@ -18,11 +18,11 @@ follow the player; later, some games are played together (multiplayer).
 
 ## Library
 
-| Game      | Genre                            | Status                    |
-| --------- | -------------------------------- | ------------------------- |
-| VOIDBORN  | Roguelite, bullet heaven         | Released                  |
-| STARSPIRE | Deckbuilder, roguelike, strategy | Released                  |
-| DRIFTWOOD | First-person survival, 3D, co-op | Released (computers only) |
+| Game      | Genre                                                                        | Status                    |
+| --------- | ---------------------------------------------------------------------------- | ------------------------- |
+| VOIDBORN  | Roguelite, bullet heaven                                                     | Released                  |
+| STARSPIRE | Deckbuilder, roguelike, strategy                                             | Released                  |
+| DRIFTWOOD | First-person survival, 3D, co-op: story in 4 chapters, fishing, bow, weather | Released (computers only) |
 
 **Puzzles** (the library below them, phones and computers): Sudoku, Nonograms, Kakuro, Souhvězdí
 (Hashi), Pulsar (falling blocks), Fúze (2048 with cosmic bodies), Miny (no-guess minesweeper) and

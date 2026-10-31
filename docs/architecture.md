@@ -193,8 +193,23 @@ SvelteKit cannot hand a WebSocket to a Durable Object.
   harvesting, building, saving, menus) without changing the game logic. Nickname in
   `driftwood.nick`, the player's own state per world in `driftwood.mp.<code>`; the solo save
   `driftwood.save.v1` is never touched by a multiplayer session.
-- Per player (not shared): inventory, health, animals. Time is shared (sleeping moves it
-  for everybody). `pnpm dev` has no Durable Objects - use `pnpm preview`.
+- Per player (not shared): inventory, health, animals, skills, quests, explored map, chest
+  contents and garden crops (kept in `driftwood.mp.<code>`), arrows in flight and fishing.
+  Time is shared (sleeping moves it for everybody) and so is the weather, which is derived
+  from the seed and the clock. New items and structures need no server change: the protocol
+  only checks the shape of ids. `pnpm dev` has no Durable Objects - use `pnpm preview`.
+
+## DRIFTWOOD game - `static/games/driftwood`
+
+Plain scripts on Three.js r128 (`vendor/three.min.js`), loaded in order by `index.html`:
+`data.js` (items, recipes, animals, skills, achievements), `world.js` (terrain, water and
+vegetation shaders, sky, structures), `fx.js` (fire, smoke, fireflies, rain, weather),
+`entities.js` (animals including the bear, arrows), `player.js` (movement, needs, fishing,
+the bow, building), `quests.js` (4 story chapters, daily tasks, skills, ruins / wrecks /
+bottles, explored map), `audio.js` (procedural sound and generative music), `ui.js`, `main.js`
+(loop, saving), `drops.js`, `mp.js`. The solo save stays `driftwood.save.v1`: new fields are
+merged into old saves, finished story steps are recognised from the old flags. E2E drives the
+real game in a software WebGL renderer (`e2e/driftwood.test.ts`).
 
 ## Online puzzles - `apps/web/src/worker/duel`
 

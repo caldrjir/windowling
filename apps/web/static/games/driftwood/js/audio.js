@@ -33,6 +33,8 @@ const Sound = (() => {
     bed('ocean', brown, 'lowpass', 900, 0.5);
     bed('fire', noise, 'highpass', 2500, 0.7);
     bed('water', noise, 'lowpass', 400, 1);
+    bed('rain', noise, 'highpass', 1600, 0.4);
+    bed('rainLow', brown, 'lowpass', 900, 0.5);
     apply();
     setInterval(tickAmbient, 120);
   }
@@ -62,7 +64,13 @@ const Sound = (() => {
     s.start(t0, Math.random()); s.stop(t0 + o.dur + 0.05);
   }
   const S = {
-    step() { if (ok('step', 0.2)) nz({ f: rand(300, 500), dur: 0.12, vol: 0.12, q: 0.8, brown: true }); },
+    // kroky podle povrchu: tráva šustí, písek křupe, kámen cvaká
+    step(surf = 'grass') {
+      if (!ok('step', 0.2)) return;
+      if (surf === 'sand') { nz({ f: rand(2200, 2800), dur: 0.08, vol: 0.05, q: 0.6, ft: 'highpass' }); nz({ f: 600, dur: 0.1, vol: 0.07, brown: true }); }
+      else if (surf === 'stone') { tone({ f: rand(150, 190), f2: 100, dur: 0.05, vol: 0.08, a: 0.002 }); nz({ f: rand(1600, 2200), dur: 0.04, vol: 0.12, q: 2 }); }
+      else { nz({ f: rand(300, 480), dur: 0.11, vol: 0.11, q: 0.8, brown: true }); nz({ f: 3200, dur: 0.05, vol: 0.025, q: 1 }); }
+    },
     splash() { if (ok('step', 0.2)) nz({ f: 1200, f2: 400, dur: 0.25, vol: 0.12, q: 0.6 }); },
     swim() { if (ok('swim', 0.4)) nz({ f: 800, f2: 300, dur: 0.5, vol: 0.12, q: 0.5 }); },
     jump() { nz({ f: 400, dur: 0.1, vol: 0.08, brown: true }); },
@@ -124,37 +132,88 @@ const Sound = (() => {
     victory() { [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => tone({ type: 'triangle', f: 262 * 2 ** (s / 12), dur: 1.6, vol: 0.06, delay: i * 0.15, rev: true })); },
     death() { [0, -3, -7, -12].forEach((s, i) => tone({ f: 330 * 2 ** (s / 12), dur: 2, vol: 0.06, delay: i * 0.35, rev: true })); },
     achieve() { [0, 7, 12].forEach((s, i) => tone({ type: 'triangle', f: 660 * 2 ** (s / 12), dur: 0.4, vol: 0.05, delay: i * 0.08, rev: true })); },
+    // ── velká aktualizace ──
+    thunder(delay = 1) {
+      if (delay < 1) nz({ f: 3000, dur: 0.3, vol: 0.32, q: 0.5, delay });
+      nz({ f: 260, f2: 70, dur: 3.8, vol: 0.55, brown: true, ft: 'lowpass', delay, rev: true });
+      nz({ f: 140, f2: 60, dur: 2.6, vol: 0.4, brown: true, ft: 'lowpass', delay: delay + 0.35 });
+    },
+    cast() { nz({ f: 500, f2: 2600, dur: 0.28, vol: 0.07, q: 1.5 }); tone({ f: 1400, f2: 600, dur: 0.25, vol: 0.015 }); },
+    plop() { tone({ f: 520, f2: 180, dur: 0.12, vol: 0.09 }); nz({ f: 1200, dur: 0.08, vol: 0.07 }); },
+    bite() { for (let i = 0; i < 2; i++) { tone({ f: 600, f2: 200, dur: 0.1, vol: 0.12, delay: i * 0.13 }); nz({ f: 1500, dur: 0.07, vol: 0.09, delay: i * 0.13 }); } },
+    reel() { for (let i = 0; i < 9; i++) tone({ type: 'square', f: 2200, dur: 0.012, vol: 0.015, lp: 4000, delay: i * 0.035 }); },
+    catchFish() { nz({ f: 1500, f2: 500, dur: 0.35, vol: 0.18, q: 0.7 }); [0, 4, 9].forEach((s, i) => tone({ type: 'triangle', f: 660 * 2 ** (s / 12), dur: 0.18, vol: 0.04, delay: 0.15 + i * 0.07 })); },
+    bowDraw() { tone({ type: 'sawtooth', f: 70, f2: 115, glide: 0.8, dur: 0.85, vol: 0.035, lp: 500, a: 0.05 }); },
+    bowShot() { tone({ type: 'triangle', f: 190, f2: 150, dur: 0.35, vol: 0.14, a: 0.002 }); nz({ f: 2500, f2: 800, dur: 0.22, vol: 0.08, q: 1 }); },
+    arrowHit() { tone({ f: 150, f2: 70, dur: 0.12, vol: 0.25 }); nz({ f: 400, dur: 0.1, vol: 0.2, brown: true }); },
+    thunk() { tone({ f: 320, f2: 120, dur: 0.08, vol: 0.14, a: 0.002 }); nz({ f: 1500, dur: 0.05, vol: 0.09, q: 1.5 }); },
+    roar() {
+      if (!ok('roar', 3)) return;
+      tone({ type: 'sawtooth', f: 140, f2: 68, glide: 1.2, dur: 1.4, vol: 0.13, lp: 650, a: 0.08, rev: true });
+      tone({ type: 'sawtooth', f: 147, f2: 72, glide: 1.2, dur: 1.4, vol: 0.09, lp: 500, a: 0.1 });
+      nz({ f: 380, f2: 160, dur: 1.2, vol: 0.22, brown: true, ft: 'lowpass' });
+    },
+    chest() { tone({ type: 'sawtooth', f: 200, f2: 270, dur: 0.32, vol: 0.035, lp: 900, a: 0.03 }); nz({ f: 400, dur: 0.12, vol: 0.18, brown: true, delay: 0.3 }); },
+    plant() { for (let i = 0; i < 2; i++) nz({ f: 320, dur: 0.18, vol: 0.2, brown: true, delay: i * 0.18 }); },
+    page() { for (let i = 0; i < 2; i++) nz({ f: rand(2600, 3600), dur: 0.2, vol: 0.05, q: 0.7, delay: i * 0.16 }); },
+    ruin() { [0, 7, 12, 19].forEach((s, i) => tone({ f: 392 * 2 ** (s / 12), dur: 2.4, vol: 0.05, a: 0.3, delay: i * 0.22, rev: true })); nz({ f: 6000, dur: 1.4, vol: 0.03, q: 0.5, ft: 'highpass', rev: true }); },
+    quest() { [0, 7, 12].forEach((s, i) => tone({ type: 'triangle', f: 784 * 2 ** (s / 12), dur: 0.35, vol: 0.05, delay: i * 0.09, rev: true })); },
+    levelUp() { [0, 4, 7, 12, 16].forEach((s, i) => tone({ type: 'triangle', f: 523 * 2 ** (s / 12), dur: 0.5, vol: 0.055, delay: i * 0.07, rev: true })); nz({ f: 7000, dur: 0.8, vol: 0.03, ft: 'highpass', delay: 0.3, rev: true }); },
   };
   // ── Ambient ──
-  const A = { wind: 0, ocean: 0, fire: 0, water: 0, birds: 0, crickets: 0, under: 0, night: 0 };
+  const A = { wind: 0, ocean: 0, fire: 0, water: 0, birds: 0, crickets: 0, under: 0, night: 0, rain: 0, storm: 0, pond: 0, danger: 0, wolves: 0, dawn: 0 };
   function ambience(o) { Object.assign(A, o); }
-  let musT = 20;
   function tickAmbient() {
     if (!ctx) return;
     const t = ctx.currentTime;
     const set = (n, v) => beds[n].g.gain.setTargetAtTime(v, t, 0.6);
-    set('wind', 0.06 + A.wind * 0.12);
-    set('ocean', A.ocean * 0.35 * (0.6 + 0.4 * Math.sin(t * 0.5)));
+    set('wind', 0.06 + A.wind * 0.12 + A.storm * 0.1);
+    set('ocean', A.ocean * (0.35 + A.storm * 0.2) * (0.6 + 0.4 * Math.sin(t * 0.5)));
     set('fire', A.fire * 0.05 * (0.5 + Math.random()));
     set('water', A.under * 0.4);
+    set('rain', A.rain * 0.16 * (1 - A.under * 0.7));
+    set('rainLow', A.rain * (0.12 + A.storm * 0.2) * (1 - A.under * 0.7));
     beds.wind.fl.frequency.setTargetAtTime(400 + 300 * Math.sin(t * 0.13), t, 1);
-    // ptáci a cvrčci
-    if (A.birds > 0.3 && Math.random() < 0.06 * A.birds) {
+    // racci u moře, sovy a žáby v noci, vytí vlků
+    if (A.ocean > 0.45 && A.birds > 0.4 && A.rain < 0.3 && Math.random() < 0.015) for (let i = 0; i < randi(1, 3); i++) tone({ type: 'sawtooth', f: rand(1300, 1600), f2: rand(800, 1000), dur: 0.26, vol: 0.012, lp: 2600, delay: i * 0.32, bus: amb, rev: true });
+    if (A.night > 0.6 && A.rain < 0.3 && Math.random() < 0.006) { tone({ f: 390, dur: 0.32, vol: 0.022, a: 0.04, bus: amb, rev: true }); tone({ f: 350, dur: 0.55, vol: 0.02, a: 0.06, delay: 0.45, bus: amb, rev: true }); }
+    if (A.pond > 0.25 && A.night > 0.5 && Math.random() < 0.12 * A.pond) for (let i = 0; i < 3; i++) tone({ type: 'square', f: rand(120, 160), dur: 0.06, vol: 0.016 * A.pond, lp: 600, delay: i * 0.08, bus: amb });
+    if (A.wolves > 0 && A.night > 0.6 && Math.random() < 0.004) tone({ f: 360, f2: 600, glide: 0.9, dur: 2.4, vol: 0.035, a: 0.3, rev: true, lp: 1600, bus: amb });
+    // ptáci (ráno nejvíc) a cvrčci
+    if (A.birds > 0.3 && A.rain < 0.4 && Math.random() < 0.06 * A.birds * (1 + A.dawn * 1.5)) {
       const f = rand(2200, 4200), n = randi(2, 5);
       for (let i = 0; i < n; i++) tone({ f, f2: f * rand(1.1, 1.5), dur: 0.08, vol: 0.02 * A.birds, delay: i * 0.11, bus: amb, rev: true });
     }
     if (A.crickets > 0.3 && Math.random() < 0.25) for (let i = 0; i < 3; i++) tone({ type: 'square', f: 4300, dur: 0.03, vol: 0.006 * A.crickets, delay: i * 0.05, bus: amb, lp: 6000 });
     if (A.fire > 0.2 && Math.random() < 0.3 * A.fire) nz({ f: rand(2000, 5000), dur: 0.02, vol: 0.05 * A.fire, q: 4, bus: amb });
-    // jemná hudba – občasné akordy
-    musT -= 0.12;
-    if (musT <= 0) {
-      musT = rand(25, 55);
-      const roots = A.night > 0.5 ? [-5, -9, -2] : [0, 5, 7, -3];
-      const r = pick(roots);
-      const chord = A.night > 0.5 ? [0, 3, 7, 10] : [0, 4, 7, 11];
-      chord.forEach((s, i) => tone({ f: 220 * 2 ** ((r + s) / 12), dur: 6, vol: 0.025, a: 1.5, delay: i * 0.4, bus: mus, rev: true }));
-      for (let i = 0; i < 5; i++) tone({ f: 440 * 2 ** ((r + pick(chord) + 12 * (i % 2)) / 12), dur: 2.5, vol: 0.018, delay: 2 + i * 0.7, bus: mus, rev: true });
+    music(t);
+  }
+  // ── Generativní hudba: fráze po 16 taktech, pak ticho; v noci moll, při honičce napětí ──
+  const M = { next: 0, bar: 0, rest: 0 };
+  const BAR = 3.43;
+  function music(t) {
+    if (!M.next) M.next = t + 5;
+    if (t < M.next - 0.3) return;
+    const at = Math.max(0, M.next - t), danger = A.danger > 0.3, night = A.night > 0.5;
+    if (M.rest > 0 && !danger) { M.rest--; M.next += BAR; return; }
+    const base = night ? 196 : 220, prog = night ? [0, -4, -2, -5] : [0, 5, -3, 7], root = prog[M.bar % 4];
+    const chord = night ? [0, 3, 7] : [0, 4, 7], scale = night ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9], soft = 1 - A.rain * 0.3;
+    const hz = s => base * 2 ** (s / 12);
+    chord.forEach(c => tone({ f: hz(root + c), dur: BAR + 0.4, vol: 0.016 * soft, a: 1.1, delay: at, bus: mus, rev: true }));
+    tone({ type: 'triangle', f: hz(root - 12), dur: 1.8, vol: 0.026 * soft, a: 0.02, delay: at, bus: mus, lp: 500 });
+    // melodie: pár drnknutí z pentatoniky (v noci řidší)
+    const notes = night ? randi(1, 3) : randi(2, 5);
+    for (let i = 0; i < notes; i++) {
+      const beat = randi(0, 7) * (BAR / 8);
+      tone({ type: 'triangle', f: hz(root + pick(scale) + 12), dur: 0.9, vol: 0.022 * soft, a: 0.005, delay: at + beat, bus: mus, rev: true, lp: 3000 });
     }
+    if (danger) {
+      for (let b = 0; b < 4; b++) tone({ f: 55, f2: 45, dur: 0.3, vol: 0.06 * A.danger, delay: at + b * BAR / 4, bus: mus });
+      tone({ type: 'sawtooth', f: hz(root - 24 + 1), dur: BAR, vol: 0.02 * A.danger, a: 0.5, delay: at, bus: mus, lp: 380 });
+    }
+    M.bar++;
+    if (M.bar % 16 === 0 && !danger) M.rest = randi(6, 14);
+    M.next += BAR;
   }
   const play = new Proxy(S, { get: (o, k) => (...a) => { if (ctx && o[k]) o[k](...a); } });
   return { init, setVolume, play, ambience, get ready() { return !!ctx; } };

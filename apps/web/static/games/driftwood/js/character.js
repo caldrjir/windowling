@@ -28,6 +28,19 @@ function buildToolGeo(id) {
     if (!iron) parts.push([T(new THREE.CylinderGeometry(0.045, 0.045, 0.09, 6), 0, 0.6, 0), '#c9a77a']);
   } else if (type === 'weapon') {
     parts.push([T(new THREE.CylinderGeometry(0.025, 0.03, 1.5, 5), 0, 0.2, 0), '#8a5c34'], [T(new THREE.ConeGeometry(0.05, 0.26, 4), 0, 1.07, 0), metal]);
+  } else if (type === 'rod') {
+    // dlouhý pružný prut s navijákem
+    parts.push([T(new THREE.CylinderGeometry(0.01, 0.022, 1.4, 5), 0, 0.62, 0), '#8a5c34']);
+    parts.push([T(new THREE.CylinderGeometry(0.035, 0.035, 0.18, 6), 0, 0.05, 0), '#5a3a22']);
+    parts.push([T(new THREE.CylinderGeometry(0.05, 0.05, 0.04, 8), 0.05, 0.22, 0, 0, 0, Math.PI / 2), '#9aa0a6']);
+  } else if (type === 'bow') {
+    // luk ve svislé rovině: rukojeť v počátku, ramena se ohýbají dopředu (-z), tětiva vzadu
+    const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, -0.46, 0.04), new THREE.Vector3(0, 0, -0.26), new THREE.Vector3(0, 0.46, 0.04));
+    parts.push([new THREE.TubeGeometry(curve, 14, 0.017, 5, false), '#a8763f']);
+    parts.push([T(new THREE.BoxGeometry(0.045, 0.14, 0.05), 0, 0, -0.12), '#5a3a22']);
+    parts.push([T(new THREE.BoxGeometry(0.005, 0.92, 0.005), 0, 0, 0.04), '#f0e8d8']);
+  } else if (id === 'arrow') {
+    parts.push([T(new THREE.CylinderGeometry(0.01, 0.01, 0.7, 4), 0, 0.3, 0), '#c9a77a'], [T(new THREE.ConeGeometry(0.025, 0.08, 4), 0, 0.68, 0), '#9aa0a6']);
   } else if (id === 'torch') {
     parts.push([T(new THREE.CylinderGeometry(0.03, 0.04, 0.6, 5), 0, 0.22, 0), '#6a4428'], [T(new THREE.CylinderGeometry(0.06, 0.05, 0.12, 6), 0, 0.55, 0), '#3a2a1a']);
   } else parts.push([T(new THREE.IcosahedronGeometry(0.09, 0), 0, 0.1, -0.02), it.color]);
@@ -113,6 +126,8 @@ class Character {
       const a = 0.9;
       m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, Math.cos(a), -Math.sin(a)), new THREE.Vector3(0, -Math.sin(a), -Math.cos(a)), new THREE.Vector3(-1, 0, 0)));
     } else if (t.type === 'weapon') m.rotation.x = -Math.PI / 2 - 0.6;
+    else if (t.type === 'rod') m.rotation.x = -Math.PI / 2 - 0.4;
+    else if (t.type === 'bow') m.rotation.set(-Math.PI / 2, 0, 0);
     else if (t.torch) m.rotation.x = -0.6;
     m.position.set(0, -0.02, -0.02);
     if (t.torch) m.add(torchFlame());
