@@ -79,10 +79,10 @@ for (const id of PUZZLES) {
 		await page.locator('#kHome').click();
 		await expect(page.locator('.k-hero h1')).toBeVisible();
 
-		// The center shows the stats the puzzle wrote.
+		// The center selects the game played last and shows the stats it wrote. (Clicking the
+		// selected card would launch the game, so the test only checks the selection.)
 		await page.goto('/');
-		const card = page.locator(`.gslot[data-game="${id}"] .gcard`).first();
-		await card.click();
+		await expect(page.locator(`.gslot[data-game="${id}"] .gcard`).first()).toHaveClass(/\bsel\b/);
 		// Puzzles count solves, board games wins and arcade games finished runs.
 		await expect(page.locator('.stats')).toContainText(/Vyřešeno|Výhry|Dokončeno/);
 		expect(errors).toEqual([]);
@@ -901,19 +901,29 @@ test('mrakodrap drops floors onto the tower and scores', async ({ page }) => {
 	await startFree(page, 'mrakodrap', 'lehka');
 	const cv = page.locator('.md-cv');
 	await expect(cv).toBeVisible();
-	// The first tap drops the first floor.
-	await cv.click();
-	await expect
-		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { phase: string }).phase)
-		.not.toBe('ready');
-	// The autopilot drops the next floors precisely.
+	const state = () =>
+		page.evaluate('Kit._test.inst._state()') as Promise<{
+			phase: string;
+			floors: number;
+			lives: number;
+		}>;
+	// The autopilot drops floors precisely. (A tap at a random moment may land a floor so far
+	// off-centre that the tower falls at once, so the tower is built first.)
 	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
+	await expect.poll(async () => (await state()).floors, { timeout: 20_000 }).toBeGreaterThan(3);
+	// A tap drops the hanging floor: it lands, falls off (a life) or topples the tower.
+	await page.evaluate('Kit._test.inst._auto(false)');
+	const before = await state();
 	await expect
 		.poll(
-			async () => ((await page.evaluate('Kit._test.inst._state()')) as { floors: number }).floors,
-			{ timeout: 20_000 },
+			async () => {
+				await cv.click();
+				const s = await state();
+				return s.floors !== before.floors || s.lives < before.lives || s.phase === 'end';
+			},
+			{ timeout: 10_000 },
 		)
-		.toBeGreaterThan(3);
+		.toBe(true);
 });
 
 test("vlak plays the first original scene with the author's solution", async ({ page }) => {
