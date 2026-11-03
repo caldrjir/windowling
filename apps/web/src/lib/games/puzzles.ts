@@ -77,6 +77,16 @@ function osadniciCover(): HTMLImageElement | null {
 	return osScene;
 }
 
+// VESNIČKA cover art: the game's own village at the end of a summer day (static/games/vesnicka/cover)
+let vsScene: HTMLImageElement | null = null;
+function vesnickaCover(): HTMLImageElement | null {
+	if (!vsScene && typeof Image !== 'undefined') {
+		vsScene = new Image();
+		vsScene.src = '/games/vesnicka/cover/scene.webp';
+	}
+	return vsScene;
+}
+
 // MRAKODRAP cover art: the game's sunset background and tower/floor images rendered from its
 // art.js (static/games/mrakodrap), loaded once on the client
 let mdImages: { bg: HTMLImageElement; tower: HTMLImageElement; floor: HTMLImageElement } | null =
@@ -4802,6 +4812,47 @@ export const PUZZLE_GAMES: Game[] = [
 			if (!img || !img.complete || img.naturalWidth === 0) return;
 			const s = Math.max(w / 1200, h / 800) * (1.04 + Math.sin(t * 0.5) * 0.02),
 				bx = (w - 1200 * s) / 2,
+				by = (h - 800 * s) / 2;
+			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
+		},
+	},
+	{
+		id: 'vesnicka',
+		title: 'VESNIČKA',
+		group: 'puzzle',
+		category: 'relax',
+		tagline: 'Vesnice, která roste, i když spíš.',
+		description:
+			'Idle budovatelská hra z české pohádkové vesnice. Klepej, stav řemesla od políčka po orloj a vydělávej groše i ve chvílích, kdy zrovna nehraješ. Střídají se roční období, ve vsi se zjevují bludičky, vodník, čert i Krakonoš a s vydělaným jměním předáš vesnici dalšímu pokolení. Pověsti o ní pak zrychlí všechno další.',
+		genres: ['Idle', 'Budování', 'Relax'],
+		features: ['14 řemesel', 'Pohádkové bytosti', 'Roční období', 'Pověsti a kronika'],
+		en: {
+			tagline: 'A village that grows while you sleep.',
+			description:
+				'An idle building game set in a Czech fairy-tale village. Tap, build trades from a field to an astronomical clock and keep earning groschen even while you are away. The seasons change, will-o’-wisps, a water goblin, a devil and the mountain spirit Krakonoš drop by, and once you have made a fortune you pass the village on to the next generation. Its legends then speed everything up.',
+			genres: ['Idle', 'Building', 'Relax'],
+			features: ['14 trades', 'Fairy-tale creatures', 'Seasons', 'Legends & chronicle'],
+		},
+		statLabels: {
+			legends: ['Pověsti', 'Legends'],
+			generation: ['Pokolení', 'Generation'],
+			buildings: ['Budovy', 'Buildings'],
+			earned: ['Vyděláno celkem', 'Earned in total'],
+			creatures: ['Chycené bytosti', 'Creatures caught'],
+			achievements: ['Úspěchy', 'Achievements'],
+		},
+		record: { board: 'best:score', label: ['Nejvíc pověstí', 'Most legends'] },
+		path: '/games/vesnicka/index.html',
+		colors: ['#f2c14e', '#4f9a3a', '#c4553e'],
+		statsKey: 'gamecenter.stats.vesnicka',
+		cover(ctx, w, h, t) {
+			// the game's own village (1200×800), slowly drifting along the road
+			ctx.fillStyle = '#69b3e6';
+			ctx.fillRect(0, 0, w, h);
+			const img = vesnickaCover();
+			if (!img || !img.complete || img.naturalWidth === 0) return;
+			const s = Math.max(w / 1200, h / 800) * (1.06 + Math.sin(t * 0.4) * 0.02),
+				bx = (w - 1200 * s) / 2 + Math.sin(t * 0.25) * w * 0.02,
 				by = (h - 800 * s) / 2;
 			ctx.drawImage(img, bx, by, 1200 * s, 800 * s);
 		},
