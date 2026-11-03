@@ -87,6 +87,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Rally Master Pro – top-down / behind-the-car rally on stages
 - [ ] Asphalt (series) – arcade street racing with nitro
 - [ ] Townsmen – medieval town builder
+- [x] Idle village – tap and build trades that earn while you are away, seasons, fairy-tale creatures, legends as prestige (Vesnička)
 - [ ] Prince of Persia (Sands of Time / Warrior Within) – acrobatic platformer with traps and sword fights
 - [ ] Diamond Rush – maze adventure, collect diamonds, push boulders
 - [ ] Bounce / Bounce Tales – rolling red ball platformer

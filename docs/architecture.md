@@ -211,6 +211,20 @@ bottles, explored map), `audio.js` (procedural sound and generative music), `ui.
 merged into old saves, finished story steps are recognised from the old flags. E2E drives the
 real game in a software WebGL renderer (`e2e/driftwood.test.ts`).
 
+## Vesnička - `static/games/vesnicka`
+
+An idle game outside the puzzle kit, plain scripts loaded by `index.html`: `data.js` (trades,
+upgrades, creatures, perks, achievements, number formatting), `econ.js` (state, income, buying,
+offline earnings, prestige, daily tasks, save; no DOM, so the balance can be simulated in Node),
+`scene.js` (the village on a 2D canvas: parallax panorama, seasons, day and night by the
+player's clock, buildings that grow with their count, creatures), `audio.js` (Web Audio
+effects; the music is the generated playlist from `music.js`), `ui.js` and `main.js` (loop,
+saving every 5 s and on leaving). Save `vesnicka.save.v1`, stats `gamecenter.stats.vesnicka`.
+Time away is paid out when the game starts or the tab returns: `Econ.advance` integrates
+income piecewise between season changes and spell ends, up to the offline cap. Seasons come
+from the wall clock (`floor(now / 5 min) % 4`), so all players share them. The save's `lb`
+holds the legends for the `best:score` board.
+
 ## Online puzzles - `apps/web/src/worker/duel`
 
 Every puzzle can be played online, served by the Worker entry like DRIFTWOOD multiplayer.
@@ -270,7 +284,8 @@ Signed-in players keep their progress in their account; anonymous play is unchan
   `daily:<date>:time` (the same daily puzzle), `level:<n>:time` (the same Path level),
   `free:<diff>:time|score` (free play only in modes with fixed rules: `metric: 'score'` or
   `ranked: true` diffs), `online:wins`, `best:survive|floor|days` (VOIDBORN, STARSPIRE,
-  DRIFTWOOD records) and `total:played` (play time of every game). Time is better when lower,
+  DRIFTWOOD records), `best:score` (Vesnička's legends) and `total:played` (play time of every
+  game). Time is better when lower,
   everything else when higher.
 - The puzzle kit keeps its best result per board in its save (`lb`); `sync.js` sends changed
   results of all games (`lb`, the action games' records, `playTime`) to `POST /api/scores`

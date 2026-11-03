@@ -33,6 +33,15 @@ the quests and keep a who-beat-whom score instead, in their own look. **Online**
 against a live opponent, and races of up to 8 players on the same puzzle in every other game
 (join by a code, a link or the list of open games).
 
+**Vesnička** sits on the Relax shelf without the puzzle kit: an idle game in a Czech fairy-tale
+village. Tapping and 14 trades (field to astronomical clock) earn groschen, also while the game
+is closed (8 hours, more with upgrades and legends); masteries, upgrades, seasons that change
+every 5 minutes for everyone, creatures from Czech tales as random events (will-o'-wisp, water
+goblin, devil, Krakonoš, house sprite), daily tasks, 51 achievements, and prestige: passing the
+village to the next generation turns earnings into legends (+5 % each) that unlock a family
+chronicle of lasting perks. Day and night follow the player's clock. Its leaderboard is the
+number of legends.
+
 ## What the hub shows
 
 - Hero with the selected game: cover, description, tags, play / continue button.
