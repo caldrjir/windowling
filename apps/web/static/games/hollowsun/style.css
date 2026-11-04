@@ -104,3 +104,11 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #inv .attrs b { font-family: var(--f-mono); text-align: right; }
 #inv .attrs button { font: 600 12px/1 var(--f-mono); color: var(--gold); background: none; border: 1px solid var(--bronze); width: 22px; height: 20px; cursor: pointer; }
 #inv .attrs button:disabled { opacity: .3; cursor: default; }
+/* P1: boss Kiln Warden */
+#bossbar { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); width: min(620px, 70vw); display: grid; gap: 4px; }
+#bossbar .bn { display: flex; justify-content: space-between; align-items: baseline; font: 600 18px/1 var(--f-display); color: var(--ember); text-shadow: 0 1px 2px #000; }
+#bossbar .bn span { font: 600 11px/1 var(--f-mono); color: var(--gold); }
+#bossbar .bb { position: relative; height: 14px; background: #1a1f2c; border: 1px solid #7a3a1a; overflow: hidden; }
+#bossbar .bb i { position: absolute; inset: 0 auto 0 0; display: block; background: linear-gradient(#ff7a2a, #9a2a10); transition: width .15s; }
+#bossbar .bb em { position: absolute; top: 0; bottom: 0; width: 2px; background: #f2efe6aa; }
+#bossbar.immune .bb i { background: linear-gradient(#cfcfcf, #6a6a6a); }

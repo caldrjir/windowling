@@ -274,6 +274,32 @@ level 8 character they effectively had, so their gear stays usable. The progress
 (`progress` in the loot fixtures) check the XP formulas, the character with its own allocation and
 the Bulwark buff, the barrier and the new skills against the Bible.
 
+Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
+and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three
+kilns on the edge. The boss comes from the exported Bible data (`bosses.bo_kiln`: level 12, HP ×60,
+damage ×2.2, resistances, phases, abilities, mechanics, enrage, unique pool) and `refEnemy` gives
+its stats.
+
+- Phases by HP: 100–60 %, 60–25 % (3 s immune, the kilns ignite, smouldering ground shrinks the
+  arena to Ø 16 m) and 25–0 % (−30 % armour, +25 % speed).
+- Abilities, gated by phase and on their own cooldowns:
+  - Hammerfall: a 3 m circle in front of the boss.
+  - Bellows Breath: a 60° × 10 m cone for 2 s.
+  - Anvil Toss: a 4 m circle on the player.
+  - Stoke the Kilns: 90° × 12 m cones from the kilns.
+  - Molten Spawn: four Ember Wisps, the Bible's suicide swarm.
+  - Quench Slam: the whole arena except three steam circles.
+- The anvil blocks the cones (a line test). Standing by a burning kiln for 1.5 s quenches it.
+- After 240 s the boss enrages: the kilns burn for good and damage is +50 %.
+- The kill drops 3 Magic + 2 Rare plus a unique from the boss pool (25 %, 100 % on the first kill).
+  The first kill also pays the XP of quest q1_04. The renderer slows to 30 % for 4 s.
+
+Where the Bible gives no number, the prototype picks one and marks it in `sim.js` (`BOSS`): the
+steam circle radius, the smouldering-ground burn, the boss speed, and the boss XP of 10 normal
+enemies of its level. The save keeps `bossKills` and `bossBest`. `hollowsun-loot.test.ts` checks the
+boss and wisp stats and the skills against the boss (also with phase 3 armour) against the Bible,
+plus the phases, immunity, Quench Slam, quenching, enrage and the boss loot in the simulation.
+
 Asset pipeline (P0): `pnpm --filter @windowling/web hollowsun:assets` runs
 `scripts/blender/hollowsun_assets.py` in Blender without a window (`scripts/hollowsun-assets.mjs`
 finds it through `BLENDER`, the PATH or the default install folders) and exports raw GLB files:

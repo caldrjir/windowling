@@ -3894,5 +3894,129 @@
 				]
 			}
 		]
+	},
+	"boss": {
+		"enemies": [
+			{
+				"level": 8,
+				"id": "bo_kiln",
+				"hp": 4248,
+				"armor": 110,
+				"eva": 34,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 32
+			},
+			{
+				"level": 8,
+				"id": "en_wisp",
+				"hp": 25,
+				"armor": 0,
+				"eva": 34,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 29.1
+			},
+			{
+				"level": 12,
+				"id": "bo_kiln",
+				"hp": 5888,
+				"armor": 154,
+				"eva": 46,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 39.6
+			},
+			{
+				"level": 12,
+				"id": "en_wisp",
+				"hp": 34,
+				"armor": 0,
+				"eva": 46,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 36
+			}
+		],
+		"hits": [
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"sl": 3,
+				"final": 14,
+				"perHit": 18.453091220982337,
+				"dot": 0,
+				"hitChance": 0.7492424242424242,
+				"dps": 16.707143607340353
+			},
+			{
+				"level": 8,
+				"skill": "ak_brand",
+				"sl": 3,
+				"final": 13,
+				"perHit": 16.83395401594006,
+				"dot": 0,
+				"hitChance": 0.7492424242424242,
+				"dps": 15.241201804924609
+			},
+			{
+				"level": 8,
+				"skill": "ak_slam",
+				"sl": 1,
+				"final": 12,
+				"perHit": 15.787739373840004,
+				"dot": 6.315095749536002,
+				"hitChance": 0.7492424242424242,
+				"dps": 12.574139504106277
+			},
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"armor70": true,
+				"sl": 3,
+				"final": 15,
+				"perHit": 19.63532269196449,
+				"dot": 0,
+				"hitChance": 0.7492424242424242,
+				"dps": 17.777517710317586
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"sl": 4,
+				"final": 17,
+				"perHit": 20.284535298935594,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 20.104327487339848
+			},
+			{
+				"level": 12,
+				"skill": "ak_brand",
+				"sl": 4,
+				"final": 15,
+				"perHit": 18.262002199685128,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 18.099762572143124
+			},
+			{
+				"level": 12,
+				"skill": "ak_slam",
+				"sl": 3,
+				"final": 14,
+				"perHit": 16.784584265779202,
+				"dot": 6.71383370631168,
+				"hitChance": 0.819375,
+				"dps": 14.47497382593332
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"armor70": true,
+				"sl": 4,
+				"final": 17,
+				"perHit": 21.323609490195103,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 21.13417054348421
+			}
+		]
 	}
 }

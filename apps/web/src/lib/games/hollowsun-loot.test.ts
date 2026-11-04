@@ -42,7 +42,10 @@ interface Core {
 		alloc?: Record<string, number>,
 		extra?: Record<string, number>,
 	): Char & { A: Record<string, number> };
-	refEnemy(level: number, id: string): unknown;
+	refEnemy(
+		level: number,
+		id: string,
+	): { hp: number; armor: number; eva: number; res: Record<string, number> };
 	skill(id: string): { req: number };
 	computeHit(sk: unknown, sl: number, ch: Char, en: unknown): Hit;
 	F: {
@@ -390,5 +393,162 @@ describe('HOLLOW SUN progression in the simulation', () => {
 		expect(c.alloc).toEqual({ str: 12 });
 		expect(c.points).toBe(0);
 		expect(c.xp).toBeLessThan(3340);
+	});
+});
+
+describe('HOLLOW SUN Kiln Warden = Game Design Bible', () => {
+	const HS = load() as Core & {
+		F: { enemyDmg(level: number, mul: number): number };
+		D: { enemies: { id: string; dmgMul: number }[] };
+	};
+	const B = fixtures.boss;
+
+	it('boss and wisp stats', () => {
+		for (const r of B.enemies) {
+			const e = HS.refEnemy(r.level, r.id);
+			expect([e.hp, e.armor, e.eva]).toEqual([r.hp, r.armor, r.eva]);
+			expect(plain(e.res)).toEqual(r.res);
+			const dm = HS.D.enemies.find((x) => x.id === r.id)?.dmgMul ?? 0;
+			expect(HS.F.enemyDmg(r.level, dm)).toBe(r.dmg);
+		}
+	});
+
+	it('skills against the boss, also with phase 3 armour (-30 %)', () => {
+		for (const h of B.hits) {
+			const ch = HS.calcChar(h.level, [{ base: 'wb_mace', tier: 0, affixes: [], rar: 'common' }]);
+			const en = HS.refEnemy(12, 'bo_kiln');
+			if (h.armor70) en.armor = Math.round(en.armor * 0.7);
+			const got = HS.computeHit(HS.skill(h.skill), h.sl, ch, en);
+			for (const k of ['perHit', 'dot', 'hitChance', 'dps'] as const)
+				expect(got[k], `${h.skill} L${h.level} ${k}`).toBeCloseTo(h[k], 6);
+			expect(got.final).toBe(h.final);
+		}
+	});
+});
+
+describe('HOLLOW SUN Kiln Warden in the simulation', () => {
+	const { HSim } = loadAll();
+	interface Boss {
+		id: number;
+		phase: number;
+		invuln: number;
+		enrage: boolean;
+		t: number;
+		ground: number;
+		act: { n: string; t: number; tele: number; safe?: number[][] } | null;
+		kilns: { x: number; z: number; alive: boolean; q: number }[];
+	}
+	type BossState = SimState & {
+		boss: Boss;
+		won: boolean;
+		bossKills: number;
+		stats: { taken: number };
+	};
+	type E = SimState['enemies'][number] & {
+		id: number;
+		hp: number;
+		hpMax: number;
+		armorMul?: number;
+		atk: unknown;
+	};
+	const make = (bossKills = 0) =>
+		HSim.create({
+			mode: 'boss',
+			seed: 'kiln',
+			char: { level: 12, xp: 0, alloc: {} },
+			bossKills,
+		}) as BossState;
+	const bossOf = (s: BossState) => s.enemies.find((e) => (e as E).id === s.boss.id) as E;
+
+	it('phases follow HP: 60 % brings 3 s of immunity, 25 % strips armour', () => {
+		const s = make();
+		s.player.invuln = true;
+		const b = bossOf(s);
+		b.hp = b.hpMax * 0.59;
+		HSim.step(s, {});
+		expect(s.boss.phase).toBe(2);
+		expect(s.boss.invuln).toBeGreaterThan(2.9);
+		const hp = b.hp;
+		s.player.x = b.x;
+		s.player.z = b.z + 2.5;
+		for (let i = 0; i < 30; i++) HSim.step(s, { hold: true, aim: [b.x, b.z] });
+		expect(b.hp).toBe(hp);
+		b.hp = b.hpMax * 0.24;
+		for (let i = 0; i < 30 * 4; i++) HSim.step(s, {});
+		expect(s.boss.phase).toBe(3);
+		expect(b.armorMul).toBe(0.7);
+	});
+
+	it('Quench Slam spares the steam circles only', () => {
+		for (const inSafe of [true, false]) {
+			const s = make();
+			const b = bossOf(s);
+			b.hp = b.hpMax * 0.2;
+			for (let i = 0; i < 30 * 60 && s.boss.act?.n !== 'Quench Slam'; i++) {
+				s.player.hp = s.player.hpMax;
+				HSim.step(s, {});
+			}
+			const act = s.boss.act;
+			if (!act?.safe) throw new Error('no Quench Slam');
+			const safe = act.safe[0] ?? [0, 0];
+			s.player.x = inSafe ? (safe[0] ?? 0) : 50;
+			s.player.z = inSafe ? (safe[1] ?? 0) : 50;
+			const taken = s.stats.taken;
+			let quench: { safe?: boolean } | undefined;
+			for (let i = 0; i < 60 && s.boss.act; i++) {
+				if (inSafe) {
+					s.player.x = safe[0] ?? 0;
+					s.player.z = safe[1] ?? 0;
+				}
+				HSim.step(s, {});
+				quench =
+					quench ?? (s.events.find((e) => e.t === 'quench') as { safe?: boolean } | undefined);
+			}
+			expect(quench?.safe).toBe(inSafe);
+			if (!inSafe) expect(s.stats.taken).toBeGreaterThan(taken);
+		}
+	});
+
+	it('standing by a burning kiln quenches it; enrage comes at 240 s', () => {
+		const s = make();
+		s.player.invuln = true;
+		const b = bossOf(s);
+		b.hp = b.hpMax * 0.5;
+		HSim.step(s, {});
+		const k = s.boss.kilns[0];
+		if (!k) throw new Error('no kiln');
+		for (let i = 0; i < 30 * 2 && k.alive; i++) {
+			s.player.x = k.x * 0.85;
+			s.player.z = k.z * 0.85;
+			HSim.step(s, {});
+		}
+		expect(k.alive).toBe(false);
+		s.boss.t = 239.9;
+		for (let i = 0; i < 5; i++) HSim.step(s, {});
+		expect(s.boss.enrage).toBe(true);
+	});
+
+	it('the boss drops 3 magic + 2 rare and a unique on the first kill, and pays the quest XP', () => {
+		const first = make(0);
+		const xp0 = first.char.xp;
+		const b = bossOf(first);
+		b.hp = 1;
+		first.player.x = b.x;
+		first.player.z = b.z + 2.6;
+		for (let i = 0; i < 30 * 20 && !first.won; i++)
+			HSim.step(first, { hold: true, aim: [b.x, b.z] });
+		expect(first.won).toBe(true);
+		const rars = first.drops.map((d) => String(d.item.rar)).sort();
+		expect(rars).toEqual(['magic', 'magic', 'magic', 'rare', 'rare', 'unique']);
+		expect(first.char.level > 12 || first.char.xp > xp0 + 6000).toBe(true);
+		const again = make(1);
+		const b2 = bossOf(again);
+		b2.hp = 1;
+		again.player.x = b2.x;
+		again.player.z = b2.z + 2.6;
+		for (let i = 0; i < 30 * 20 && !again.won; i++)
+			HSim.step(again, { hold: true, aim: [b2.x, b2.z] });
+		expect(again.drops.length).toBeGreaterThanOrEqual(5);
+		expect(again.drops.filter((d) => d.item.rar === 'magic')).toHaveLength(3);
 	});
 });

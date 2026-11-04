@@ -8,7 +8,7 @@
   const PLAYER_R = 0.5, PLAYER_SPEED = 5.2, PICK_R = 1.3;
   const DODGE = { dist: 5.5, time: 0.3, iframes: 0.25, cd: 0.9 };
   const WINDUP = 0.4; // zásah přichází po 40 % času akce (Casting Lifecycle v Bible)
-  const ER = { en_thrall: 0.45, en_brute: 0.95 };
+  const ER = { en_thrall: 0.45, en_brute: 0.95, en_wisp: 0.35, bo_kiln: 1.6 };
 
   function rng(seed) {
     let h = 1779033703 ^ String(seed).length;
@@ -42,8 +42,10 @@
   }
   // zásah skillu proti konkrétnímu nepříteli (jeho level; cejch Brand přidá +10 % increased Fire)
   function hitFor(s, slot, e) {
-    const br = e.brand > 0; const key = slot.sk.id + '|' + e.type + '|' + e.L + (br ? '|b' : '');
-    return s.hitCache[key] || (s.hitCache[key] = HS.computeHit(slot.sk, slot.sl, br ? s.chBrand : s.ch, HS.refEnemy(e.L, e.type)));
+    const br = e.brand > 0; const am = e.armorMul || 1; const key = slot.sk.id + '|' + e.type + '|' + e.L + (br ? '|b' : '') + (am !== 1 ? '|a' + am : '');
+    if (s.hitCache[key]) return s.hitCache[key];
+    const en = HS.refEnemy(e.L, e.type); if (am !== 1) en.armor = Math.round(en.armor * am); // F3 Kiln Wardena: −30 % armor
+    return (s.hitCache[key] = HS.computeHit(slot.sk, slot.sl, br ? s.chBrand : s.ch, en));
   }
 
   /* ---------- postup postavy (P1): XP, levely, body atributů ---------- */
@@ -59,11 +61,15 @@
   }
   // úroveň nepřátel v aréně prototypu (Bible ji pro arénu neurčuje): level hráče − 1 + každá druhá vlna, strop konce Act I
   const ACT1_MAX = Math.max(...HS.D.areas.map((a) => a.lv[1]));
-  function monsterLevel(s) { return s.mode === 'arena' ? Math.max(1, Math.min(ACT1_MAX, s.L - 1 + Math.floor((s.wave - 1) / 2))) : s.L; }
-  function gainXp(s, e) {
-    if (s.mode !== 'arena' || !s.progress) return;
-    const c = s.char; const xp = Math.max(1, Math.round(HS.F.monsterXp(e.L, e.def.xpMul) * HS.F.xpPenalty(s.L, e.L)));
-    c.xp += xp; s.events.push({ t: 'xp', xp, x: e.x, z: e.z });
+  const KB_LV = HS.D.bosses.bo_kiln.lv; // Kiln Warden: level 12
+  function monsterLevel(s) { if (s.mode === 'boss') return KB_LV; return s.mode === 'arena' ? Math.max(1, Math.min(ACT1_MAX, s.L - 1 + Math.floor((s.wave - 1) / 2))) : s.L; }
+  function gainXp(s, e, mul) {
+    if (!s.progress) return;
+    grantXp(s, Math.max(1, Math.round(HS.F.monsterXp(e.L, mul || e.def.xpMul) * HS.F.xpPenalty(s.L, e.L))), e);
+  }
+  function grantXp(s, xp, e) {
+    if (!s.progress) return;
+    const c = s.char; c.xp += xp; s.events.push({ t: 'xp', xp, x: e.x, z: e.z });
     let up = false;
     while (c.level < HS.B.levelCap && c.xp >= HS.F.xpToNext(c.level)) { c.xp -= HS.F.xpToNext(c.level); c.level++; c.points += HS.B.freeAttrPerLevel; up = true; s.events.push({ t: 'levelup', level: c.level }); }
     if (up) { s.L = c.level; refreshChar(s, true); for (const id in s.skills) if (s.skills[id].sk.req === s.L) s.events.push({ t: 'unlock', skill: id }); }
@@ -151,13 +157,15 @@
     const gear = sanitizeGear(opts.gear, L);
     const s = {
       L, char, progress: !fixed, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
-      loot: opts.loot != null ? !!opts.loot : (opts.mode || 'arena') === 'arena', lootN: 0, sinceU: opts.sinceU || 0, drops: [],
+      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss'].includes(opts.mode || 'arena'), lootN: 0, sinceU: opts.sinceU || 0, drops: [],
       player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
     refreshChar(s);
     const S = s.ch.S;
     s.player = { x: 0, z: 0, face: 0, hp: S.hp, hpMax: S.hp, res: 30, resMax: S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, pick: null, barrier: 0, bulwark: 0, invuln: !!opts.invuln, dmgTaken: 0 };
-    if (s.mode === 'bench') spawnBench(s, opts.benchCount || 50); else nextWave(s);
+    if (s.mode === 'bench') spawnBench(s, opts.benchCount || 50);
+    else if (s.mode === 'boss') { s.arenaR = BOSS.R; s.pillars = [BOSS.anvil, ...BOSS.kilns.map(([x, z]) => [x, z, BOSS.kilnR])]; s.bossKills = opts.bossKills || 0; s.player.x = 0; s.player.z = 9; spawnBoss(s); }
+    else nextWave(s);
     return s;
   }
   function spawn(s, id, x, z) {
@@ -179,8 +187,104 @@
     s.events.push({ t: 'wave', wave: 0, n });
   }
 
+
+  /* ---------- boss: The Kiln Warden (P1, data z Bible: fáze, schopnosti, mechaniky, enrage, loot) ---------- */
+  // Geometrie útoků je převedená z popisu v Bible („kruh 3 m před ním“, „kužel 60° × 10 m, 2 s“…). Tam, kde
+  // Bible číslo neuvádí, je hodnota prototypu označená v komentáři.
+  const KB = HS.D.bosses.bo_kiln;
+  const BOSS = {
+    R: 15, // „Kruhová kovárna Ø 30 m“
+    anvil: [0, 0, 1.4], // centrální kovadlina (krytí): blokuje kužely a projektily
+    kilns: [90, 210, 330].map((deg) => { const a = (deg * Math.PI) / 180; return [Math.cos(a) * 13.6, Math.sin(a) * 13.6]; }), // 3 pece na obvodu
+    kilnR: 1.1, quenchR: 2.4, quenchT: 1.5, // „interakce 1,5 s“
+    groundMin: 8, groundRate: 1 / 20, // „−2 m/20 s“ (průměr) → poloměr −1 m za 20 s, min Ø 16 m
+    groundBurn: 0.25, // prototyp: doutnající zem pálí 0,25× damage bosse za sekundu
+    safeR: 2.6, // prototyp: poloměr bezpečného kruhu (pára) u Quench Slam
+    speed: 2.6, r: 1.6, // prototyp: rychlost a poloměr bosse
+    xpMul: 10, // prototyp: XP za zabití jako 10 běžných nepřátel jeho levelu (Bible XP bosse neuvádí); 1. zabití + XP questu q1_04
+  };
+  const ABIL = Object.fromEntries(KB.abil.map((a) => [a.n, a]));
+  const abilOn = (b, n) => ABIL[n] && ABIL[n].ph.includes(b.phase);
+  // úsečka zdroj → hráč protíná kovadlinu? (krytí)
+  function behindAnvil(sx, sz, px, pz) {
+    const [ax, az, ar] = BOSS.anvil; const dx = px - sx, dz = pz - sz; const l2 = dx * dx + dz * dz || 1;
+    const t = Math.max(0, Math.min(1, ((ax - sx) * dx + (az - sz) * dz) / l2)); return len(sx + dx * t - ax, sz + dz * t - az) < ar;
+  }
+  const inCone = (sx, sz, face, w, R, px, pz) => len(px - sx, pz - sz) <= R + PLAYER_R && angDiff(Math.atan2(pz - sz, px - sx), face) <= ((w / 2) * Math.PI) / 180;
+  function bossHurt(s, e, mul, stun) { const b = s.boss; hurtPlayer(s, e, { mul: mul * (b.enrage ? 1.5 : 1), stun }); }
+  function spawnBoss(s) {
+    const e = spawn(s, 'bo_kiln', 0, -7); e.r = BOSS.r; e.heavy = true; e.speed = BOSS.speed; e.face = Math.PI / 2;
+    s.boss = { id: e.id, phase: 1, t: 0, invuln: 0, enrage: false, ground: BOSS.R, cds: Object.fromEntries(KB.abil.map((a) => [a.n, 2 + s.rnd() * 2])), act: null, breath: null, kilns: BOSS.kilns.map(([x, z]) => ({ x, z, face: Math.atan2(-z, -x), alive: true, q: 0 })), stoke: 0 };
+    s.events.push({ t: 'boss', id: e.id, n: KB.n });
+  }
+  function bossAct(s, e, n) {
+    const p = s.player; const a = ABIL[n]; const b = s.boss; const act = { n, t: 0, tele: a.tele };
+    if (n === 'Hammerfall') { act.x = e.x + Math.cos(e.face) * 2; act.z = e.z + Math.sin(e.face) * 2; act.r = 3; s.events.push({ t: 'tele', id: e.id, shape: 'circle', x: act.x, z: act.z, face: 0, r: 3, w: 360, dur: a.tele }); }
+    else if (n === 'Bellows Breath') { act.face = e.face; s.events.push({ t: 'tele', id: e.id, shape: 'cone', x: e.x, z: e.z, face: e.face, r: 10, w: 60, dur: a.tele }); }
+    else if (n === 'Anvil Toss') { act.x = p.x; act.z = p.z; act.r = 4; s.events.push({ t: 'tele', id: e.id, shape: 'circle', x: p.x, z: p.z, face: 0, r: 4, w: 360, dur: a.tele }); }
+    else if (n === 'Stoke the Kilns') { for (const k of b.kilns) if (k.alive) s.events.push({ t: 'tele', id: e.id, shape: 'cone', x: k.x, z: k.z, face: k.face, r: 12, w: 90, dur: a.tele }); }
+    else if (n === 'Quench Slam') {
+      // 3 bezpečné kruhy (pára) uvnitř zmenšené arény; seedované
+      act.safe = []; for (let i = 0; i < 3; i++) { const ang = s.rnd() * Math.PI * 2, rr = 2 + s.rnd() * Math.max(1, b.ground - 4); act.safe.push([Math.cos(ang) * rr, Math.sin(ang) * rr]); }
+      s.events.push({ t: 'qslam', id: e.id, r: b.ground, safe: act.safe, sr: BOSS.safeR, dur: a.tele });
+    } else if (n === 'Molten Spawn') s.events.push({ t: 'tele', id: e.id, shape: 'circle', x: e.x, z: e.z, face: 0, r: 2, w: 360, dur: a.tele });
+    b.act = act; e.atk = { def: { tele: a.tele }, t: 0, boss: true }; // e.atk drží telegraphy v rendereru
+    b.cds[n] = a.cd; s.events.push({ t: 'bossact', n });
+  }
+  function bossResolve(s, e, act) {
+    const p = s.player; const a = ABIL[act.n]; const b = s.boss;
+    if (act.n === 'Hammerfall' || act.n === 'Anvil Toss') { if (len(p.x - act.x, p.z - act.z) <= act.r + PLAYER_R) bossHurt(s, e, a.dmg, act.n === 'Hammerfall' ? 0.3 : 0); s.events.push({ t: 'slam', x: act.x, z: act.z, r: act.r, hits: 0 }); s.events.push({ t: 'shake', amp: 0.4 }); }
+    else if (act.n === 'Bellows Breath') { b.breath = { t: 0, face: act.face, tick: 0 }; s.events.push({ t: 'breath', x: e.x, z: e.z, face: act.face, r: 10, w: 60, dur: 2 }); }
+    else if (act.n === 'Stoke the Kilns') { for (const k of b.kilns) { if (!k.alive) continue; s.events.push({ t: 'kilnfire', x: k.x, z: k.z, face: k.face, r: 12, w: 90 }); if (inCone(k.x, k.z, k.face, 90, 12, p.x, p.z) && !behindAnvil(k.x, k.z, p.x, p.z)) bossHurt(s, e, a.dmg); } }
+    else if (act.n === 'Quench Slam') { const safe = act.safe.some(([x, z]) => len(p.x - x, p.z - z) <= BOSS.safeR); s.events.push({ t: 'quench', safe }); s.events.push({ t: 'shake', amp: 0.6 }); if (!safe) bossHurt(s, e, a.dmg); }
+    else if (act.n === 'Molten Spawn') { for (let i = 0; i < 4; i++) { const ang = (i / 4) * Math.PI * 2 + s.rnd(); const w = spawn(s, 'en_wisp', e.x + Math.cos(ang) * 2.5, e.z + Math.sin(ang) * 2.5); w.L = e.L; w.noLoot = true; } }
+  }
+  function updateBoss(s) {
+    const b = s.boss; if (!b) return; const e = s.enemies.find((x) => x.id === b.id); if (!e || e.dead) return;
+    const dt = TICK; const p = s.player; b.t += dt;
+    if (!b.enrage && b.t >= 240) { b.enrage = true; s.events.push({ t: 'enrage' }); } // „Po 240 s: všechny pece permanentně aktivní, +50 % damage“
+    // přechody fází podle HP (Bible: 100–60 / 60–25 / 25–0)
+    const hpPct = (e.hp / e.hpMax) * 100;
+    if (b.phase === 1 && hpPct <= KB.phases[1].hp[0]) { b.phase = 2; b.invuln = 3; b.act = null; e.atk = null; s.events.push({ t: 'phase', phase: 2 }); } // „3 s nezranitelný, výkřik, pece vzplanou“
+    else if (b.phase === 2 && hpPct <= KB.phases[2].hp[0]) { b.phase = 3; e.armorMul = 0.7; e.speed = BOSS.speed * 1.25; s.events.push({ t: 'phase', phase: 3 }); } // „−30 % armor, +25 % speed“
+    // doutnající zem ve F2 zmenšuje arénu; mimo ni hoří
+    if (b.phase >= 2) b.ground = Math.max(BOSS.groundMin, b.ground - BOSS.groundRate * dt);
+    if (len(p.x, p.z) > b.ground && p.hp > 0) { b.burnAcc = (b.burnAcc || 0) + dt; if (b.burnAcc >= 1) { b.burnAcc -= 1; bossHurt(s, e, BOSS.groundBurn); } } else b.burnAcc = 0;
+    // pece: hráč u živé pece bez akce 1,5 s → uhasí ji (jen jednou; ve F2+ kdy hoří)
+    for (const k of b.kilns) {
+      if (!k.alive || b.phase < 2 || b.enrage) { k.q = 0; continue; }
+      if (len(p.x - k.x, p.z - k.z) <= BOSS.quenchR && !p.act && !p.dodge) { k.q += dt; if (k.q >= BOSS.quenchT) { k.alive = false; s.events.push({ t: 'quenched', x: k.x, z: k.z }); } } else k.q = 0;
+    }
+    // enrage: pece chrlí trvale (zásah každou sekundu)
+    if (b.enrage) { b.stoke += dt; if (b.stoke >= 1) { b.stoke -= 1; for (const k of b.kilns) { s.events.push({ t: 'kilnfire', x: k.x, z: k.z, face: k.face, r: 12, w: 90 }); if (inCone(k.x, k.z, k.face, 90, 12, p.x, p.z) && !behindAnvil(k.x, k.z, p.x, p.z)) bossHurt(s, e, ABIL['Stoke the Kilns'].dmg); } } }
+    // Bellows Breath: kužel 2 s, zásah každých 0,5 s
+    if (b.breath) { b.breath.t += dt; b.breath.tick += dt; if (b.breath.tick >= 0.5) { b.breath.tick -= 0.5; if (inCone(e.x, e.z, b.breath.face, 60, 10, p.x, p.z) && !behindAnvil(e.x, e.z, p.x, p.z)) bossHurt(s, e, ABIL['Bellows Breath'].dmg); } if (b.breath.t >= 2) b.breath = null; }
+    for (const n in b.cds) b.cds[n] = Math.max(0, b.cds[n] - dt);
+    if (b.invuln > 0) { b.invuln -= dt; return; }
+    if (b.act) { b.act.t += dt; if (e.atk) e.atk.t = b.act.t; if (b.act.t >= b.act.tele) { const act = b.act; b.act = null; e.atk = null; bossResolve(s, e, act); e.recover = 0.5; } return; }
+    if (e.recover > 0) { e.recover -= dt; return; }
+    if (s.over || b.breath) return;
+    const d = len(p.x - e.x, p.z - e.z); e.face = Math.atan2(p.z - e.z, p.x - e.x);
+    // priorita: naučné mechaniky → dálkové útoky → úder zblízka
+    const order = ['Quench Slam', 'Stoke the Kilns', 'Molten Spawn', 'Anvil Toss', 'Bellows Breath', 'Hammerfall'];
+    for (const n of order) {
+      if (!abilOn(b, n) || b.cds[n] > 0) continue;
+      if (n === 'Hammerfall' && d > 4.5) continue; if (n === 'Bellows Breath' && d > 9) continue; if (n === 'Stoke the Kilns' && !b.kilns.some((k) => k.alive)) continue;
+      bossAct(s, e, n); return;
+    }
+    if (d > e.r + PLAYER_R + 1.2) move(s, e, ((p.x - e.x) / d) * e.speed * dt, ((p.z - e.z) / d) * e.speed * dt, e.r);
+  }
+  // loot bosse (lt_bo_kiln): 3 Magic + 2 Rare garantované; unikát z poolu bosse 25 %, při prvním zabití 100 %
+  function bossLoot(s, e) {
+    const r = HS.rng(s.seed + '#boss#' + s.bossKills); const out = [];
+    for (const rar of ['magic', 'magic', 'magic', 'rare', 'rare']) out.push(HS.genItem(r, e.L, HS.D.cls.id, rar));
+    if (s.bossKills === 0 || r() < 0.25) { const u = HS.get(r.pick(KB.uniques)); if (u) out.push({ base: u.base, tier: Math.max(u.tier, HS.F.itemTierFor(e.L)), unique: u.id, affixes: [], rar: 'unique', q: Math.round(r() * 100) / 100 }); }
+    out.forEach((item, i) => { const ang = (i / out.length) * Math.PI * 2; const d = { id: s.nextId++, x: e.x + Math.cos(ang) * 2.2, z: e.z + Math.sin(ang) * 2.2, item }; s.drops.push(d); s.events.push({ t: 'drop', id: d.id, x: d.x, z: d.z, rar: item.rar }); });
+  }
+
   /* hráč zasáhne nepřítele: hod na zásah a crit, poškození z computeHit (bez očekávaného critu) */
   function strike(s, e, slot, mult) {
+    if (s.boss && e.id === s.boss.id && s.boss.invuln > 0) { s.events.push({ t: 'immune', x: e.x, z: e.z }); return false; }
     const h = hitFor(s, slot, e); const sk = slot.sk;
     if (s.rnd() > h.hitChance) { s.events.push({ t: 'miss', x: e.x, z: e.z }); return false; }
     const crit = s.rnd() < h.critChance; const S = s.ch.S;
@@ -190,12 +294,16 @@
     // Searing Slam proti cíli s cejchem Brand: Burn trvá 6 s (ix v Bible), tempo hoření stejné
     if (sk.dot) e.burn.push({ left: sk.id === 'ak_slam' && e.brand > 0 ? 6 : sk.dot.dur, dps: (h.dot / h.hitChance) / sk.dot.dur });
     const kb = sk.id === 'ak_slam' ? 1.4 : sk.id === 'ak_charge' ? 2 : 0.6; const d = len(e.x - s.player.x, e.z - s.player.z) || 1;
-    if (e.type !== 'en_brute') { e.push[0] += ((e.x - s.player.x) / d) * kb; e.push[1] += ((e.z - s.player.z) / d) * kb; }
+    if (e.type !== 'en_brute' && !e.heavy) { e.push[0] += ((e.x - s.player.x) / d) * kb; e.push[1] += ((e.z - s.player.z) / d) * kb; }
     s.events.push({ t: 'hit', id: e.id, x: e.x, z: e.z, dmg, crit, skill: sk.id, type: sk.conv ? 'fire' : 'phys', brand: e.brand > 0 });
     if (e.hp <= 0) kill(s, e);
     return true;
   }
-  function kill(s, e) { if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type }); rollDrop(s, e); gainXp(s, e); }
+  function kill(s, e) {
+    if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type });
+    if (s.boss && e.id === s.boss.id) { bossLoot(s, e); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
+    if (!e.noLoot) rollDrop(s, e); gainXp(s, e);
+  }
 
   function startSkill(s, id, aim) {
     const p = s.player; const slot = s.skills[id]; if (!slot || p.act || p.dodge || p.stun > 0) return false;
@@ -234,7 +342,7 @@
     } else if (sk.id === 'ak_warcry') {
       // Cry of the Pyre: kruh 7 m – přitáhne nepřátele, −15 % jejich poškození na 6 s, taunt 4 s; +40 Cinders
       const R = 7; p.res = Math.min(p.resMax, p.res - act.slot.hit.en_thrall.cost);
-      for (const e of s.enemies) { if (e.dead) continue; const dx = p.x - e.x, dz = p.z - e.z; const d = len(dx, dz); if (d - e.r > R) continue; hits++; e.weak = sk.du; e.taunt = 4; e.recover = 0; if (d > 1.6 && e.type !== 'en_brute') { e.push[0] += (dx / d) * Math.min(3, d - 1.2); e.push[1] += (dz / d) * Math.min(3, d - 1.2); } }
+      for (const e of s.enemies) { if (e.dead) continue; const dx = p.x - e.x, dz = p.z - e.z; const d = len(dx, dz); if (d - e.r > R) continue; hits++; e.weak = sk.du; e.taunt = 4; if (!e.heavy) e.recover = 0; if (d > 1.6 && e.type !== 'en_brute' && !e.heavy) { e.push[0] += (dx / d) * Math.min(3, d - 1.2); e.push[1] += (dz / d) * Math.min(3, d - 1.2); } }
       s.events.push({ t: 'warcry', x: p.x, z: p.z, r: R, hits }); s.events.push({ t: 'shake', amp: 0.2 });
     }
     return hits;
@@ -267,7 +375,7 @@
       const a = p.act; a.t += dt;
       if (a.id === 'ak_charge') {
         const k = Math.min(1, a.t / a.dur); const nx = a.from[0] + (a.to[0] - a.from[0]) * k, nz = a.from[1] + (a.to[1] - a.from[1]) * k; move(s, p, nx - p.x, nz - p.z, PLAYER_R);
-        for (const e of s.enemies) { if (e.dead || a.hitIds.has(e.id)) continue; if (len(e.x - p.x, e.z - p.z) - e.r > 0.75 + PLAYER_R) continue; a.hitIds.add(e.id); if (strike(s, e, a.slot) && !a.stunned && e.type !== 'en_brute') { e.stun = 0.6; e.atk = null; a.stunned = true; } }
+        for (const e of s.enemies) { if (e.dead || a.hitIds.has(e.id)) continue; if (len(e.x - p.x, e.z - p.z) - e.r > 0.75 + PLAYER_R) continue; a.hitIds.add(e.id); if (strike(s, e, a.slot) && !a.stunned && e.type !== 'en_brute' && !e.heavy) { e.stun = 0.6; e.atk = null; a.stunned = true; } }
         if (k >= 1) { if (a.hitIds.size) { a.slot.cd = Math.max(0, a.slot.cd - 0.5 * a.hitIds.size); s.events.push({ t: 'hitstop', ms: 60 }); } p.act = null; }
         return;
       }
@@ -286,7 +394,7 @@
   function move(s, o, dx, dz, r) {
     o.x += dx; o.z += dz;
     for (const [px, pz, pr] of s.pillars) { const ddx = o.x - px, ddz = o.z - pz; const d = len(ddx, ddz); const min = pr + r; if (d < min && d > 1e-6) { o.x = px + (ddx / d) * min; o.z = pz + (ddz / d) * min; } }
-    const d = len(o.x, o.z); if (d > ARENA - r) { o.x *= (ARENA - r) / d; o.z *= (ARENA - r) / d; }
+    const R = s.arenaR || ARENA; const d = len(o.x, o.z); if (d > R - r) { o.x *= (R - r) / d; o.z *= (R - r) / d; }
   }
   function inShape(s, e, atk, tx, tz) {
     const p = s.player; const a = atk.def;
@@ -310,6 +418,7 @@
   function updateEnemies(s) {
     const dt = TICK; const p = s.player; const alive = s.enemies.filter((e) => !e.dead);
     for (const e of alive) {
+      if (s.boss && e.id === s.boss.id) { e.flash = Math.max(0, e.flash - dt); if (e.brand > 0) e.brand -= dt; if (e.weak > 0) e.weak -= dt; continue; }
       e.flash = Math.max(0, e.flash - dt); if (e.brand > 0) e.brand -= dt; if (e.weak > 0) e.weak -= dt; if (e.taunt > 0) e.taunt -= dt;
       if (e.burn.length) { let bd = 0; for (const b of e.burn) { const t = Math.min(dt, b.left); bd += b.dps * t; b.left -= dt; } e.burn = e.burn.filter((b) => b.left > 0); e.burnAcc = (e.burnAcc || 0) + bd; if (e.burnAcc >= 1) { const d = Math.floor(e.burnAcc); e.burnAcc -= d; e.hp -= d; s.stats.dmg += d; if (s.tick % 10 === 0) s.events.push({ t: 'burn', id: e.id, x: e.x, z: e.z, dmg: d }); if (e.hp <= 0) { kill(s, e); continue; } } }
       // odstrčení se tlumí
@@ -319,7 +428,7 @@
       const dx = p.x - e.x, dz = p.z - e.z; const d = len(dx, dz);
       if (e.atk) {
         e.atk.t += dt;
-        if (e.atk.t >= e.atk.def.tele) { if (p.hp > 0 && inShape(s, e, e.atk, e.atk.tx, e.atk.tz)) hurtPlayer(s, e, e.atk.def); e.cds[e.atk.i] = e.atk.def.cd; e.atk = null; e.recover = 0.35; }
+        if (e.atk.t >= e.atk.def.tele) { if (p.hp > 0 && inShape(s, e, e.atk, e.atk.tx, e.atk.tz)) hurtPlayer(s, e, e.atk.def); e.cds[e.atk.i] = e.atk.def.cd; const sui = e.atk.def.suicide; e.atk = null; e.recover = 0.35; if (sui) { e.noLoot = true; s.events.push({ t: 'slam', x: e.x, z: e.z, r: 2.5, hits: 0 }); kill(s, e); } }
         continue;
       }
       if (e.recover > 0) { e.recover -= dt; continue; }
@@ -342,6 +451,7 @@
     s.tick++; s.t += TICK;
     updatePlayer(s, inp || {});
     updateEnemies(s);
+    if (s.mode === 'boss') updateBoss(s);
     if (s.enemies.length > 300) s.enemies = s.enemies.filter((e) => !e.dead);
     if (s.mode === 'arena' && !s.over && s.enemies.every((e) => e.dead)) { s.enemies = []; nextWave(s); }
     if (s.drops.length > 60) s.drops.splice(0, s.drops.length - 60);

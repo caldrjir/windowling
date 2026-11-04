@@ -403,6 +403,149 @@ window.HS_DATA = {
    "enemies": []
   }
  ],
+ "bosses": {
+  "bo_kiln": {
+   "id": "bo_kiln",
+   "n": "The Kiln Warden (Brother Aldric)",
+   "lv": 12,
+   "hpMul": 60,
+   "dmgMul": 2.2,
+   "armorMul": 1.2,
+   "res": {
+    "fire": 60,
+    "cold": -20,
+    "light": 0,
+    "nec": 0,
+    "rad": 20
+   },
+   "ttk": 150,
+   "arena": "Kruhová kovárna Ø 30 m; 3 pece na obvodu; centrální kovadlina (krytí).",
+   "phases": [
+    {
+     "n": "Fáze 1 — Kovář",
+     "hp": [
+      100,
+      60
+     ],
+     "d": "Melee kombinace s kladivem, telegraphy 0,8–1,0 s."
+    },
+    {
+     "n": "Fáze 2 — Pec",
+     "hp": [
+      60,
+      25
+     ],
+     "d": "Rozpálí pece; aréna se zmenšuje doutnající zemí (−2 m/20 s).",
+     "trans": "Při 60 %: 3 s nezranitelný, výkřik, pece vzplanou."
+    },
+    {
+     "n": "Fáze 3 — Roztavený",
+     "hp": [
+      25,
+      0
+     ],
+     "d": "Rychlejší (+25 % speed), přivolává Ember Wispy.",
+     "trans": "Při 25 %: zbroj odpadne, −30 % armor, +25 % speed."
+    }
+   ],
+   "abil": [
+    {
+     "n": "Hammerfall",
+     "ph": [
+      1,
+      2,
+      3
+     ],
+     "cd": 6,
+     "tele": 0.9,
+     "dmg": 1.4,
+     "shape": "kruh 3 m před ním",
+     "d": "Úder kladivem do země."
+    },
+    {
+     "n": "Bellows Breath",
+     "ph": [
+      1,
+      2,
+      3
+     ],
+     "cd": 12,
+     "tele": 1.2,
+     "dmg": 0.5,
+     "shape": "kužel 60° × 10 m, 2 s",
+     "d": "Fire DoT kužel; uhnout do strany."
+    },
+    {
+     "n": "Anvil Toss",
+     "ph": [
+      1,
+      3
+     ],
+     "cd": 15,
+     "tele": 1.5,
+     "dmg": 2.2,
+     "shape": "kruh 4 m kdekoli",
+     "d": "Hodí kovadlinu na pozici hráče."
+    },
+    {
+     "n": "Stoke the Kilns",
+     "ph": [
+      2
+     ],
+     "cd": 20,
+     "tele": 2,
+     "dmg": 0.8,
+     "shape": "3 pece: kužely 90° × 12 m",
+     "d": "Pece chrlí oheň; schovat se za kovadlinu."
+    },
+    {
+     "n": "Molten Spawn",
+     "ph": [
+      3
+     ],
+     "cd": 18,
+     "tele": 1,
+     "dmg": 0,
+     "shape": "4 Ember Wispy",
+     "d": "Přivolání wispů (summon phase)."
+    },
+    {
+     "n": "Quench Slam",
+     "ph": [
+      3
+     ],
+     "cd": 24,
+     "tele": 1.6,
+     "dmg": 3,
+     "shape": "celá aréna mimo 3 bezpečné kruhy",
+     "d": "Hlavní „naučná“ mechanika: najít bezpečné kruhy (páru)."
+    }
+   ],
+   "mech": [
+    "Pece (3): v F2 aktivní, hráč je může 1× uhasit (interakce 1,5 s) → −1 kužel.",
+    "Kovadlina: blokuje projektily a kužely.",
+    "Doutnající zem zmenšuje arénu v F2 (min Ø 16 m)."
+   ],
+   "enrage": "Po 240 s: všechny pece permanentně aktivní, +50 % damage.",
+   "death": "Padne na kolena, kladivo se roztaví; ozvěna Aldrika promluví (volba q1_04). 4 s slow-mo.",
+   "lt": "lt_bo_kiln",
+   "uniques": [
+    "un_ashfather",
+    "un_kilnbrand",
+    "un_kindling_belt"
+   ],
+   "echo": "ec_kiln"
+  }
+ },
+ "bossLoot": {
+  "id": "lt_bo_kiln",
+  "items": "3 Magic + 2 Rare garantované; unikát 25 % (1. zabití 100 %)"
+ },
+ "bossQuest": {
+  "id": "q1_04",
+  "n": "The Kiln Warden",
+  "xp": 6500
+ },
  "enemies": [
   {
    "id": "en_thrall",
@@ -454,6 +597,121 @@ window.HS_DATA = {
    "eva": 0,
    "xpMul": 2.4,
    "lt": "lt_normal"
+  },
+  {
+   "id": "en_wisp",
+   "n": "Ember Wisp",
+   "arche": "Suicide swarm",
+   "lv": [
+    2,
+    12
+   ],
+   "hpMul": 0.35,
+   "dmgMul": 2,
+   "aps": 0,
+   "ms": 5,
+   "armorMul": 0,
+   "res": {
+    "fire": 75,
+    "cold": -30
+   },
+   "abil": [
+    "Exploze 2,5 m (2,0×, telegraph 0,8 s)"
+   ],
+   "pattern": "Přiletí a vybuchne; lze zabít ranou.",
+   "eva": 0,
+   "xpMul": 0.5,
+   "lt": "lt_normal"
+  },
+  {
+   "id": "bo_kiln",
+   "n": "The Kiln Warden (Brother Aldric)",
+   "lv": 12,
+   "hpMul": 60,
+   "dmgMul": 2.2,
+   "armorMul": 1.2,
+   "res": {
+    "fire": 60,
+    "cold": -20,
+    "light": 0,
+    "nec": 0,
+    "rad": 20
+   },
+   "abil": [
+    {
+     "n": "Hammerfall",
+     "ph": [
+      1,
+      2,
+      3
+     ],
+     "cd": 6,
+     "tele": 0.9,
+     "dmg": 1.4,
+     "shape": "kruh 3 m před ním",
+     "d": "Úder kladivem do země."
+    },
+    {
+     "n": "Bellows Breath",
+     "ph": [
+      1,
+      2,
+      3
+     ],
+     "cd": 12,
+     "tele": 1.2,
+     "dmg": 0.5,
+     "shape": "kužel 60° × 10 m, 2 s",
+     "d": "Fire DoT kužel; uhnout do strany."
+    },
+    {
+     "n": "Anvil Toss",
+     "ph": [
+      1,
+      3
+     ],
+     "cd": 15,
+     "tele": 1.5,
+     "dmg": 2.2,
+     "shape": "kruh 4 m kdekoli",
+     "d": "Hodí kovadlinu na pozici hráče."
+    },
+    {
+     "n": "Stoke the Kilns",
+     "ph": [
+      2
+     ],
+     "cd": 20,
+     "tele": 2,
+     "dmg": 0.8,
+     "shape": "3 pece: kužely 90° × 12 m",
+     "d": "Pece chrlí oheň; schovat se za kovadlinu."
+    },
+    {
+     "n": "Molten Spawn",
+     "ph": [
+      3
+     ],
+     "cd": 18,
+     "tele": 1,
+     "dmg": 0,
+     "shape": "4 Ember Wispy",
+     "d": "Přivolání wispů (summon phase)."
+    },
+    {
+     "n": "Quench Slam",
+     "ph": [
+      3
+     ],
+     "cd": 24,
+     "tele": 1.6,
+     "dmg": 3,
+     "shape": "celá aréna mimo 3 bezpečné kruhy",
+     "d": "Hlavní „naučná“ mechanika: najít bezpečné kruhy (páru)."
+    }
+   ],
+   "eva": 0,
+   "lt": "lt_bo_kiln"
   }
  ],
  "attacks": {
@@ -487,7 +745,19 @@ window.HS_DATA = {
     "cd": 7,
     "stun": 0.5
    }
-  ]
+  ],
+  "en_wisp": [
+   {
+    "n": "Exploze",
+    "mul": 2,
+    "tele": 0.8,
+    "range": 2.5,
+    "shape": "circle",
+    "cd": 99,
+    "suicide": true
+   }
+  ],
+  "bo_kiln": []
  },
  "loot": {
   "slots": [

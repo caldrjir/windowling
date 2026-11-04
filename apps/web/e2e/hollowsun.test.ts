@@ -197,3 +197,35 @@ test('HOLLOW SUN: loot drops, pick-up and the inventory', async ({ page }, info)
 	expect(await run<string>(page, 'return HSGame.mode;')).toBe('play');
 	expect(errors).toEqual([]);
 });
+
+test('HOLLOW SUN: the Kiln Warden fight, phases and boss loot', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
+	test.setTimeout(120_000);
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto('/games/hollowsun/index.html');
+	await page.locator('button#b-boss').click();
+	await expect(page.locator('#bossbar')).toBeVisible();
+	// Phase 2 at 60 % HP with 3 s of immunity, then the kill and the guaranteed loot.
+	const phase = await run<number>(
+		page,
+		`const s = HSGame.state; s.player.invuln = true; const b = s.enemies.find((e) => e.id === s.boss.id);
+		b.hp = b.hpMax * 0.55; HSGame.step(2, true); return s.boss.phase;`,
+	);
+	expect(phase).toBe(2);
+	const won = await run<{ won: boolean; drops: number }>(
+		page,
+		`const s = HSGame.state; const b = s.enemies.find((e) => e.id === s.boss.id); s.boss.invuln = 0; b.hp = 1;
+		for (let i = 0; i < 30 * 30 && !s.won; i++) { s.player.x = b.x; s.player.z = b.z + 2.6; HSGame.step(1, false, { hold: true, aim: [b.x, b.z] }); }
+		return { won: !!s.won, drops: s.drops.length };`,
+	);
+	expect(won.won).toBe(true);
+	expect(won.drops).toBeGreaterThanOrEqual(5);
+	await expect(page.locator('.drop').first()).toBeVisible();
+	const saved = await run<{ bossKills: number }>(
+		page,
+		`return JSON.parse(localStorage.getItem('hollowsun.save.v1'));`,
+	);
+	expect(saved.bossKills).toBe(1);
+	expect(errors).toEqual([]);
+});

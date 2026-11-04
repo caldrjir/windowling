@@ -14,6 +14,7 @@
       benchRun: 'Benchmark běží… autopilot bojuje s 50 nepřáteli', benchDone: 'Výsledek benchmarku', avg: 'Průměr FPS', low: '1 % nejhorších snímků', p95: '95. percentil snímku', simMs: 'Simulace na krok', entities: 'Nepřátel ve scéně', target: 'Cíl P0: 60 FPS s 50 nepřáteli', pass: 'splněno', fail: 'nesplněno', note: 'Měřeno v tomto prohlížeči a na tomto počítači.',
       hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (odemykají se s úrovní)', lvlUp: 'Úroveň', xpShort: 'XP', locked: 'Odemkne se na úrovni', unlocked: 'Nový skill', attrs: 'Atributy', points: 'Volné body', autoAlloc: 'Rozdělit automaticky', brandTxt: 'Cejch', absorbTxt: 'Štít', attrN: { str: 'Síla (STR)', dex: 'Obratnost (DEX)', int: 'Intelekt (INT)', wil: 'Vůle (WIL)', vit: 'Vitalita (VIT)' },
+      boss: 'Boss: Kiln Warden', bossRec: 'doporučeno L12', bossHint: 'Uhni telegraphům. Před kužely se schovej za kovadlinu. Při Quench Slam najdi páru (zelené kruhy). U hořící pece stůj 1,5 s a uhasíš ji.', phaseN: ['', 'Fáze 1 — Kovář', 'Fáze 2 — Pec', 'Fáze 3 — Roztavený'], enrageT: 'Enrage', enraged: 'Kiln Warden zuří: pece hoří trvale, +50 % damage', immune: 'Nezranitelný', quenchedT: 'Pec uhašena', safeT: 'V páře', victory: 'Kiln Warden poražen', victoryT: 'Čas', lootHint: 'Sesbírej loot a vrať se do menu.', collect: 'Sbírat loot', bossKills: 'Bossové',
       inv: 'Inventář', invBtn: 'I · Inventář', invHint: 'Klik na předmět v batohu = nasadit · klik na nasazený = sundat · Shift + klik = zahodit · I / Esc zavře.', invStats: 'Postava', invEmpty: 'prázdné', cmp: 'Proti nasazenému', reqs: 'Požadavky', lvl: 'Úroveň', picked: 'Sebráno', invFull: 'Batoh je plný', why: { class: 'Ash Knight tuhle zbraň nepoužívá', level: 'Vyšší úroveň postavy', twohand: 'Obouruční zbraň zabírá i druhou ruku', base: 'Neznámý předmět' }, whyAttr: 'Chybí', stHp: 'Zdraví', stArmor: 'Armor (redukce)', stEva: 'Šance uhnout', stDps: 'Cleave DPS (thrall)', stAs: 'Útoky za sekundu', stMs: 'Rychlost pohybu', keysInv: 'I – inventář, klik na předmět na zemi = sebrat', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
       feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
@@ -27,6 +28,7 @@
       benchRun: 'Benchmark running… the autopilot fights 50 enemies', benchDone: 'Benchmark result', avg: 'Average FPS', low: '1 % low', p95: '95th percentile frame', simMs: 'Simulation per step', entities: 'Enemies in the scene', target: 'P0 target: 60 FPS with 50 enemies', pass: 'met', fail: 'not met', note: 'Measured in this browser on this computer.',
       hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (unlock with level)', lvlUp: 'Level', xpShort: 'XP', locked: 'Unlocks at level', unlocked: 'New skill', attrs: 'Attributes', points: 'Unspent points', autoAlloc: 'Distribute automatically', brandTxt: 'Brand', absorbTxt: 'Shield', attrN: { str: 'Strength (STR)', dex: 'Dexterity (DEX)', int: 'Intelligence (INT)', wil: 'Willpower (WIL)', vit: 'Vitality (VIT)' },
+      boss: 'Boss: Kiln Warden', bossRec: 'level 12 recommended', bossHint: 'Dodge the telegraphs. Hide behind the anvil from cones. On Quench Slam find the steam (green circles). Stand by a burning kiln for 1.5 s to quench it.', phaseN: ['', 'Phase 1 — The Smith', 'Phase 2 — The Kiln', 'Phase 3 — Molten'], enrageT: 'Enrage', enraged: 'The Kiln Warden rages: kilns burn for good, +50 % damage', immune: 'Immune', quenchedT: 'Kiln quenched', safeT: 'In the steam', victory: 'Kiln Warden defeated', victoryT: 'Time', lootHint: 'Collect the loot and return to the menu.', collect: 'Collect loot', bossKills: 'Bosses',
       inv: 'Inventory', invBtn: 'I · Inventory', invHint: 'Click an item in the bag = equip · click an equipped one = take off · Shift + click = discard · I / Esc closes.', invStats: 'Character', invEmpty: 'empty', cmp: 'Against equipped', reqs: 'Requirements', lvl: 'Level', picked: 'Picked up', invFull: 'The bag is full', why: { class: 'The Ash Knight does not use this weapon', level: 'Higher character level needed', twohand: 'A two-handed weapon takes the off hand too', base: 'Unknown item' }, whyAttr: 'Missing', stHp: 'Health', stArmor: 'Armor (reduction)', stEva: 'Evade chance', stDps: 'Cleave DPS (thrall)', stAs: 'Attacks per second', stMs: 'Movement speed', keysInv: 'I – inventory, click an item on the ground = pick up', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
       feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
@@ -37,7 +39,7 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 3, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null };
+  const DEF = { v: 3, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
   // načtení s migrací (HSim.migrateSave: v1 z P0 → v2 s výbavou)
   let SAVE = (() => { try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return Object.assign({}, DEF, raw ? window.HSim.migrateSave(raw) : {}); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
@@ -103,8 +105,9 @@
 
   // scéna
   ent('plane', M.ground, [0, 0, 0], [SIM.ARENA * 2.4, 1, SIM.ARENA * 2.4], null, false);
-  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; const r = SIM.ARENA + 0.6; const b = ent('box', M.rim, [Math.cos(a) * r, 0.5 + (i % 3) * 0.25, Math.sin(a) * r], [1.6, 1 + (i % 3) * 0.5, 0.8]); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
-  for (const [x, z, r] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) ent('cylinder', M.pillar, [x, 1.25, z], [r * 2, 2.5, r * 2]);
+  const ARENA_G = new pc.Entity(); app.root.addChild(ARENA_G); // aréna vln; boss má vlastní kovárnu (BOSS_G)
+  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; const r = SIM.ARENA + 0.6; const b = ent('box', M.rim, [Math.cos(a) * r, 0.5 + (i % 3) * 0.25, Math.sin(a) * r], [1.6, 1 + (i % 3) * 0.5, 0.8], ARENA_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
+  for (const [x, z, r] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) ent('cylinder', M.pillar, [x, 1.25, z], [r * 2, 2.5, r * 2], ARENA_G);
   const sun = new pc.Entity(); sun.addComponent('light', { type: 'directional', color: new pc.Color(1, 0.82, 0.62), intensity: 1.4, castShadows: true, shadowDistance: 45, shadowResolution: 2048, shadowBias: 0.3, normalOffsetBias: 0.05 });
   sun.setLocalEulerAngles(68, 35, 0); app.root.addChild(sun);
   const glow = new pc.Entity(); glow.addComponent('light', { type: 'omni', color: new pc.Color(1, 0.45, 0.15), intensity: 1.2, range: 9, castShadows: false }); app.root.addChild(glow);
@@ -194,8 +197,9 @@
   /* ---------- postavy z asset pipeline: rytíř se skinem a animacemi (CH_ak_body) ---------- */
   // Simulace určuje pozici i načasování; animace se jí přizpůsobí (root motion útoku se vynuluje).
   const CH = { res: null, gray: /[?&]gray\b/.test(location.search) };
-  const CH_SETS = { en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace } };
-  const CH_SCALE = { en_thrall: 1, en_brute: 1.45 };
+  const M_BOSS = mat('#2a1d18', { gloss: 0.5, emissive: '#3a1206' });
+  const CH_SETS = { en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace }, bo_kiln: { M_ak_steel: M_BOSS, M_ak_ember: M.furnace } };
+  const CH_SCALE = { en_thrall: 1, en_brute: 1.45, bo_kiln: 2.3 };
   const SWING = 0.47; // s: švih v klipu AN_hero_attack (snímek 14 z 27)
   function charVisual(parent, set, scale) {
     const holder = new pc.Entity(); holder.setLocalEulerAngles(0, 90, 0); if (scale) holder.setLocalScale(scale, scale, scale); parent.addChild(holder); // model hledí na +Z, simulace na +X
@@ -233,6 +237,7 @@
   /* ---------- vizuály nepřátel, telegraphy, efekty ---------- */
   const EV = new Map(); // id → vizuál nepřítele
   function enemyVisual(e) {
+    if (e.type === 'en_wisp') { const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z); const body = ent('sphere', M.furnace, [0, 1.1, 0], [0.55, 0.55, 0.55], root, false); ent('sphere', M.ghost, [0, 1.1, 0], [1.1, 1.1, 1.1], root, false); const v = { root, body, base: M.furnace, wisp: true, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v; }
     if (CH.res && !CH.gray) {
       const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z);
       const v = { root, c: charVisual(root, CH_SETS[e.type] || CH_SETS.en_thrall, CH_SCALE[e.type] || 1), dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v;
@@ -250,6 +255,37 @@
     TELES.push({ id: ev.id, line, fill, r: ev.r, dur: ev.dur, t: 0 });
   }
   function fx(entity, life, upd) { FXS.push({ e: entity, life, t: 0, upd }); }
+  // Quench Slam: celá zmenšená aréna rudě, 3 bezpečné kruhy (pára) zeleně
+  const M_SAFE = mat('#6fd18a', { unlit: true, opacity: 0.55, twoSided: true });
+  function qslamVisual(ev) {
+    teleVisual({ id: ev.id, shape: 'circle', x: 0, z: 0, face: 0, r: ev.r, w: 360, dur: ev.dur });
+    for (const [x, z] of ev.safe) { const e = flat(meshFor('disc', 0, 1, 360), M_SAFE, x, z, 0, ev.sr, 0.04); fx(e, ev.dur + 0.2, () => {}); }
+  }
+  // kovárna Kiln Wardena: zeď Ø 30 m, kovadlina uprostřed, 3 pece; doutnající zem jako prstenec
+  let BOSS_G = null, smold = null, smoldKey = '';
+  const M_KILN = mat('#ff6a1a', { unlit: true }), M_KILN_OFF = mat('#3a3330');
+  const M_SMOLD = mat('#ff4a10', { unlit: true, opacity: 0.35, add: true, twoSided: true });
+  function bossScene(on) {
+    ARENA_G.enabled = !on; if (BOSS_G) { BOSS_G.destroy(); BOSS_G = null; smold = null; smoldKey = ''; } if (!on) return;
+    BOSS_G = new pc.Entity(); app.root.addChild(BOSS_G); const R = S.arenaR;
+    for (let i = 0; i < 34; i++) { const a = (i / 34) * Math.PI * 2; const b = ent('box', M.rim, [Math.cos(a) * (R + 0.6), 1, Math.sin(a) * (R + 0.6)], [2.9, 2 + (i % 2) * 0.6, 0.9], BOSS_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
+    const [ax, az, ar] = S.pillars[0]; ent('box', M.steel, [ax, 0.6, az], [ar * 1.9, 1.2, ar * 1.2], BOSS_G); ent('box', M.steel, [ax, 1.35, az], [ar * 2.2, 0.35, ar * 0.9], BOSS_G);
+    S.kilnE = S.boss.kilns.map((k) => { const g = new pc.Entity(); g.setLocalPosition(k.x, 0, k.z); BOSS_G.addChild(g); ent('cylinder', M.pillar, [0, 1.2, 0], [2.2, 2.4, 2.2], g); const mouth = ent('box', M_KILN, [0, 0.9, 0], [1.0, 0.8, 1.0], g, false); return { k, mouth, on: true }; });
+  }
+  function syncBoss() {
+    const b = S.boss; if (!b || !BOSS_G) return; const e = S.enemies.find((x) => x.id === b.id);
+    if (e) { document.getElementById('boss-fill').style.width = Math.max(0, (e.hp / e.hpMax) * 100).toFixed(1) + '%'; }
+    document.getElementById('bossbar').classList.toggle('immune', b.invuln > 0);
+    document.getElementById('boss-ph').textContent = `${t('phaseN')[b.phase]} · ${Math.floor(b.t)} s${b.enrage ? ' · ' + t('enrageT') : ' / 240 s'}`;
+    for (const k of S.kilnE || []) { const lit = k.k.alive && (b.phase >= 2 || b.enrage); if (lit !== k.on) { k.mouth.render.material = lit ? M_KILN : M_KILN_OFF; k.on = lit; } }
+    const key = b.ground.toFixed(1); if (key !== smoldKey && b.ground < S.arenaR - 0.05) { if (smold) smold.destroy(); smold = flat(meshFor('smold' + key, b.ground / S.arenaR, 1, 360), M_SMOLD, 0, 0, 0, S.arenaR, 0.03); smold.reparent(BOSS_G); smoldKey = key; }
+  }
+  let slowmo = 0;
+  function victory(ev) {
+    slowmo = 4; SAVE.bossKills = (SAVE.bossKills || 0) + 1; SAVE.bossBest = SAVE.bossBest ? Math.min(SAVE.bossBest, Math.round(ev.time)) : Math.round(ev.time); saveChar(); persist();
+    document.getElementById('bossbar').hidden = true; tone(196, 392, 1.2, 0.3, 'triangle'); tone(294, 587, 1.4, 0.2, 'sine');
+    setTimeout(() => { if (!S || !S.won || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${t('victory')}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time)} s</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('bossKills')}</td><td class="n">${SAVE.bossKills}</td></tr></table><p class="muted">${t('lootHint')}</p><div class="row"><button class="btn" id="b-collect">${t('collect')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-collect').onclick = () => { screen.innerHTML = ''; mode = 'play'; acc = 0; }; document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu; }, 4200);
+  }
   const fxLayer = document.getElementById('fx'); const NUMS = [];
   function num(x, z, text, cls, h) {
     const d = document.createElement('div'); d.className = 'dmg ' + (cls || ''); d.textContent = text; fxLayer.appendChild(d);
@@ -274,6 +310,15 @@
         case 'nores': flashSkill(ev.skill); break;
         case 'death': { const v = EV.get(ev.id); if (v) { v.dying = 0.001; if (v.c) { charMat(v.c, null); charClip(v.c, 'death', 1, 0.08); } } SFX.death(); break; }
         case 'over': gameOver(); break;
+        case 'boss': document.getElementById('bossbar').hidden = false; document.getElementById('boss-n').textContent = ev.n; break;
+        case 'phase': num(S.player.x, S.player.z, t('phaseN')[ev.phase], 'lvl', 3); toast(t('phaseN')[ev.phase]); shake = Math.max(shake, 0.5); tone(110, 55, 0.9, 0.6, 'sawtooth'); break;
+        case 'enrage': toast(t('enraged')); tone(90, 60, 1.2, 0.6, 'sawtooth'); break;
+        case 'immune': num(ev.x, ev.z, t('immune'), 'info', 3.4); break;
+        case 'quenched': toast(t('quenchedT')); noise(0.8, 2000, 200, 0.4, 'highpass'); break;
+        case 'quench': if (ev.safe) num(S.player.x, S.player.z, t('safeT'), 'info', 2.6); break;
+        case 'qslam': qslamVisual(ev); break;
+        case 'breath': case 'kilnfire': { const e = flat(meshFor('cone' + ev.w, 0, 1, ev.w), M.swing, ev.x, ev.z, ev.face, ev.r, 0.05); fx(e, ev.dur || 0.5, (f, k) => f.e.setLocalScale(ev.r * (0.3 + 0.7 * Math.min(1, k * 3)), 1, ev.r * (0.3 + 0.7 * Math.min(1, k * 3)))); noise(ev.dur || 0.5, 600, 200, 0.3, 'lowpass'); break; }
+        case 'victory': victory(ev); break;
         case 'drop': tone(ev.rar === 'unique' ? 660 : ev.rar === 'rare' ? 520 : 380, 760, 0.18, ev.rar === 'common' ? 0.05 : 0.12, 'triangle'); break;
         case 'pickup': { const d = HS.describe(ev.item); num(S.player.x, S.player.z, t('picked') + ': ' + d.name, 'info r-' + d.rar, 2.6); SAVE.items = (SAVE.items || 0) + 1; saveGear(); break; }
         case 'equip': case 'unequip': case 'discard': saveGear(); break;
@@ -385,7 +430,7 @@
     const p = S.player;
     document.getElementById('b-hp').style.width = ((p.hp / p.hpMax) * 100).toFixed(1) + '%'; document.getElementById('t-hp').textContent = Math.ceil(p.hp) + ' / ' + p.hpMax;
     document.getElementById('b-res').style.width = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' Cinders';
-    document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : t('wave') + ' ' + S.wave;
+    document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : S.mode === 'boss' ? 'The Great Kiln' : t('wave') + ' ' + S.wave;
     document.getElementById('kills').textContent = t('kills') + ' ' + S.kills;
     const need = HS.F.xpToNext(S.L); const xpOn = S.progress; document.getElementById('xpbar').hidden = !xpOn;
     if (xpOn) { document.getElementById('b-xp').style.width = ((S.char.xp / need) * 100).toFixed(1) + '%'; document.getElementById('t-xp').textContent = `L${S.L} · ${S.char.xp} / ${need} ${t('xpShort')}${S.char.points ? ' · +' + S.char.points : ''}`; }
@@ -484,21 +529,23 @@
   const opt = () => `<label class="opt" for="o-click"><input type="checkbox" id="o-click" ${SAVE.clickMove ? 'checked' : ''}> ${t('clickMove')}</label>`;
   function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
   function menu() {
+    if (typeof bossScene === 'function' && BOSS_G) bossScene(false); document.getElementById('bossbar').hidden = true;
     mode = 'menu'; document.getElementById('hud').hidden = true;
     screen.innerHTML = `<div class="panel"><span class="muted">ECHOES OF THE HOLLOW SUN · ${t('sub')}</span><h1>Hollow Sun</h1><p>${t('pitch')}</p>${keysHtml()}${opt()}
-      <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
-      <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}${SAVE.latency ? ' · ' + t('latency') + ': p95 ' + SAVE.latency.presentP95 + ' ms' : ''}</span></div>`;
-    document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; document.getElementById('b-lat').onclick = () => start('latency'); document.getElementById('b-feel').onclick = feelForm; bindOpt();
+      <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-boss" title="${t('bossRec')}">${t('boss')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
+      <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bossKills ? ' · ' + t('bossKills') + ': ' + SAVE.bossKills + ' (' + SAVE.bossBest + ' s)' : ''}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}${SAVE.latency ? ' · ' + t('latency') + ': p95 ' + SAVE.latency.presentP95 + ' ms' : ''}</span></div>`;
+    document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-boss').onclick = () => start('boss'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; document.getElementById('b-lat').onclick = () => start('latency'); document.getElementById('b-feel').onclick = feelForm; bindOpt();
   }
   function clearWorld() { clearDrops(); for (const v of EV.values()) v.root.destroy(); EV.clear(); for (const te of TELES) { te.line.destroy(); te.fill.destroy(); } TELES.length = 0; for (const f of FXS) f.e.destroy(); FXS.length = 0; for (const n of NUMS) n.d.remove(); NUMS.length = 0; }
   let bench = null;
   function start(m) {
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
-    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena', char: m === 'arena' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
+    S = SIM.create({ mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss', char: m === 'arena' || m === 'boss' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
     if (S.progress) saveChar();
+    document.getElementById('bossbar').hidden = !S.boss; bossScene(!!S.boss); slowmo = 0;
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
-    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : t('hint');
+    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : m === 'boss' ? t('bossHint') : t('hint');
     bench = m === 'bench' ? { t0: performance.now(), frames: [], cpu: [], simMs: 0, steps: 0, last: performance.now() } : null;
     GT.on = m === 'bench'; GT.ms = [];
   }
@@ -613,7 +660,7 @@
     mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; saveChar(); persist();
     const st = S.stats;
     screen.innerHTML = `<div class="panel"><h2>${t('over')}</h2><table class="res"><tr><td>${t('wave')}</td><td class="n">${S.wave}</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('dmgDealt')}</td><td class="n">${st.dmg}</td></tr><tr><td>${t('hits')}</td><td class="n">${st.hits}</td></tr><tr><td>${t('dodges')}</td><td class="n">${st.dodged}</td></tr><tr><td>${t('taken')}</td><td class="n">${st.taken}</td></tr></table><div class="row"><button class="btn" id="b-again">${t('restart')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
-    document.getElementById('b-again').onclick = () => start('arena'); document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu;
+    document.getElementById('b-again').onclick = () => start(S.mode === 'boss' ? 'boss' : 'arena'); document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu;
   }
   function benchDone() {
     const f = bench.frames.slice(30).sort((a, b) => a - b); const n = f.length || 1; const sum = f.reduce((a, b) => a + b, 0);
@@ -629,7 +676,7 @@
   /* ---------- smyčka ---------- */
   let playAcc = 0;
   app.on('update', (dtRaw) => {
-    const dt = Math.min(dtRaw, 0.1);
+    let dt = Math.min(dtRaw, 0.1); if (slowmo > 0) { slowmo -= dtRaw; dt *= 0.3; } // zpomalení po pádu bosse (Bible: 4 s slow-mo)
     if (bench && mode === 'bench') { const now = performance.now(); bench.frames.push(now - bench.last); bench.last = now; const fs = app.stats.frame; bench.cpu.push(fs.updateTime + fs.renderTime); if (now - bench.t0 > 20000) benchDone(); }
     if (S && (mode === 'play' || mode === 'bench')) {
       aimPt = groundAt(mouse[0], mouse[1]);
@@ -694,9 +741,10 @@
         continue;
       }
       const m = e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : v.base; if (v.body.render.material !== m) v.body.render.material = m;
+      if (v.wisp) { v.body.setLocalPosition(0, 1.1 + Math.sin(renderT * 6 + e.id) * 0.15, 0); const k = e.atk ? 1 + Math.min(1, e.atk.t / e.atk.def.tele) * 0.6 : 1; v.body.setLocalScale(0.55 * k, 0.55 * k, 0.55 * k); continue; }
       const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
     }
-    syncDrops();
+    syncDrops(); syncBoss();
     for (let i = TELES.length - 1; i >= 0; i--) {
       const te = TELES[i]; te.t += dt; const owner = S.enemies.find((e) => e.id === te.id); const k = Math.min(1, te.t / te.dur);
       te.fill.setLocalScale(te.r * k, 1, te.r * k);
@@ -713,7 +761,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get boss() { return S && S.boss; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();
