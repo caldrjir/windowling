@@ -24,6 +24,10 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 	await page.goto('/games/hollowsun/index.html');
 	await expect(page.locator('.panel h1')).toHaveText('Hollow Sun', { timeout: 30_000 });
 	await expect(page.locator('#b-arena')).toBeVisible();
+	// The skinned knight (asset pipeline) replaces the grey boxes once it has loaded.
+	await expect
+		.poll(() => run<boolean>(page, 'return HSGame.chars.ready;'), { timeout: 30_000 })
+		.toBe(true);
 
 	await page.locator('#b-arena').click();
 	await expect(page.locator('#hud')).toBeVisible();
@@ -42,7 +46,12 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 	expect(result.kills).toBeGreaterThan(5);
 	// A few rendered frames with the new state (telegraphs, effects, damage numbers).
 	await page.waitForTimeout(500);
-	await expect(page.locator('#kills')).toContainText(String(result.kills));
+	// the arena keeps running in real time (burns can still kill), so at least the stepped kills
+	const shown = Number((await page.locator('#kills').innerText()).replace(/\D+/g, ''));
+	expect(shown).toBeGreaterThanOrEqual(result.kills);
+	const chars = await run<{ enemies: number; clip: string }>(page, 'return HSGame.chars;');
+	expect(chars.enemies).toBeGreaterThan(0);
+	expect(['idle', 'run', 'attack']).toContain(chars.clip);
 
 	// Stats for the center are written in the shared format.
 	const stats = await run<{ playTime: number; stats: Record<string, number> }>(
@@ -84,14 +93,10 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 	]);
 	await page.locator('[data-clip="attack"]').click();
 	await expect
-		.poll(
-			() =>
-				run<number>(
-					page,
-					"return pc.Application.getApplication().root.findByName('root').getPosition().z;",
-				),
-			{ timeout: 10_000, intervals: [50] },
-		)
+		.poll(() => run<number>(page, 'return HSGame.assetRootZ();'), {
+			timeout: 10_000,
+			intervals: [50],
+		})
 		.toBeGreaterThan(0.3);
 	await expect.poll(() => run<string>(page, 'return HSGame.assets.clip;')).toBe('idle');
 
