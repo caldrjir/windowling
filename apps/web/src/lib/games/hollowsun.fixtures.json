@@ -1,0 +1,384 @@
+{
+	"source": "Echoes of the Hollow Sun – Game Design Bible v16 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
+	"note": "Hodnoty computeHit a calcChar z Game Design Bible – test parity jádra hry (P0).",
+	"rows": [
+		{
+			"level": 4,
+			"enemy": "en_thrall",
+			"skill": "ak_cleave",
+			"sl": 2,
+			"final": 17,
+			"perHit": 20.3946,
+			"dot": 0,
+			"critChance": 0.0512,
+			"actTime": 0.828363,
+			"cd": 0,
+			"cost": -8,
+			"dps": 20.5273,
+			"hitChance": 0.83375
+		},
+		{
+			"level": 4,
+			"enemy": "en_thrall",
+			"skill": "ak_charge",
+			"sl": 1,
+			"final": 13,
+			"perHit": 15.733,
+			"dot": 0,
+			"critChance": 0.0512,
+			"actTime": 0.45,
+			"cd": 5.876591576885407,
+			"cost": 20,
+			"dps": 2.2321,
+			"hitChance": 0.83375
+		},
+		{
+			"level": 4,
+			"enemy": "en_thrall",
+			"skill": "ak_slam",
+			"sl": 1,
+			"final": 25,
+			"perHit": 30.4474,
+			"dot": 12.179,
+			"critChance": 0.06144,
+			"actTime": 1.076872,
+			"cd": 0,
+			"cost": 35,
+			"dps": 26.6181,
+			"hitChance": 0.83375
+		},
+		{
+			"level": 4,
+			"enemy": "en_thrall",
+			"enemyStats": {
+				"hp": 51,
+				"armor": 34,
+				"eva": 22,
+				"dmg": 11.7
+			}
+		},
+		{
+			"level": 4,
+			"enemy": "en_brute",
+			"skill": "ak_cleave",
+			"sl": 2,
+			"final": 15,
+			"perHit": 18.1983,
+			"dot": 0,
+			"critChance": 0.0512,
+			"actTime": 0.828363,
+			"cd": 0,
+			"cost": -8,
+			"dps": 18.3166,
+			"hitChance": 0.83375
+		},
+		{
+			"level": 4,
+			"enemy": "en_brute",
+			"skill": "ak_charge",
+			"sl": 1,
+			"final": 12,
+			"perHit": 14.0387,
+			"dot": 0,
+			"critChance": 0.0512,
+			"actTime": 0.45,
+			"cd": 5.876591576885407,
+			"cost": 20,
+			"dps": 1.9918,
+			"hitChance": 0.83375
+		},
+		{
+			"level": 4,
+			"enemy": "en_brute",
+			"skill": "ak_slam",
+			"sl": 1,
+			"final": 22,
+			"perHit": 26.6415,
+			"dot": 10.6566,
+			"critChance": 0.06144,
+			"actTime": 1.076872,
+			"cd": 0,
+			"cost": 35,
+			"dps": 23.2908,
+			"hitChance": 0.83375
+		},
+		{
+			"level": 4,
+			"enemy": "en_brute",
+			"enemyStats": {
+				"hp": 133,
+				"armor": 90,
+				"eva": 22,
+				"dmg": 18.8
+			}
+		},
+		{
+			"level": 4,
+			"player": {
+				"hp": 276,
+				"armor": 86,
+				"eva": 46,
+				"acc": 58,
+				"critMult": 1.506,
+				"asInc": 0.006,
+				"res": 100,
+				"cinderOnHit": 1,
+				"dr": 0.166667,
+				"evade": 0.1133,
+				"weaponAvg": 9
+			}
+		},
+		{
+			"level": 8,
+			"enemy": "en_thrall",
+			"skill": "ak_cleave",
+			"sl": 3,
+			"final": 17,
+			"perHit": 21.2002,
+			"dot": 0,
+			"critChance": 0.0514,
+			"actTime": 0.827541,
+			"cd": 0,
+			"cost": -8,
+			"dps": 21.1138,
+			"hitChance": 0.824167
+		},
+		{
+			"level": 8,
+			"enemy": "en_thrall",
+			"skill": "ak_charge",
+			"sl": 2,
+			"final": 13,
+			"perHit": 16.3232,
+			"dot": 0,
+			"critChance": 0.0514,
+			"actTime": 0.45,
+			"cd": 5.850804485616772,
+			"cost": 21,
+			"dps": 2.2993,
+			"hitChance": 0.824167
+		},
+		{
+			"level": 8,
+			"enemy": "en_thrall",
+			"skill": "ak_slam",
+			"sl": 1,
+			"final": 26,
+			"perHit": 31.5755,
+			"dot": 12.6302,
+			"critChance": 0.06168,
+			"actTime": 1.075803,
+			"cd": 0,
+			"cost": 35,
+			"dps": 27.3474,
+			"hitChance": 0.824167
+		},
+		{
+			"level": 8,
+			"enemy": "en_thrall",
+			"enemyStats": {
+				"hp": 71,
+				"armor": 55,
+				"eva": 34,
+				"dmg": 14.5
+			}
+		},
+		{
+			"level": 8,
+			"enemy": "en_brute",
+			"skill": "ak_cleave",
+			"sl": 3,
+			"final": 15,
+			"perHit": 18.6237,
+			"dot": 0,
+			"critChance": 0.0514,
+			"actTime": 0.827541,
+			"cd": 0,
+			"cost": -8,
+			"dps": 18.5478,
+			"hitChance": 0.824167
+		},
+		{
+			"level": 8,
+			"enemy": "en_brute",
+			"skill": "ak_charge",
+			"sl": 2,
+			"final": 12,
+			"perHit": 14.3394,
+			"dot": 0,
+			"critChance": 0.0514,
+			"actTime": 0.45,
+			"cd": 5.850804485616772,
+			"cost": 21,
+			"dps": 2.0199,
+			"hitChance": 0.824167
+		},
+		{
+			"level": 8,
+			"enemy": "en_brute",
+			"skill": "ak_slam",
+			"sl": 1,
+			"final": 23,
+			"perHit": 27.6285,
+			"dot": 11.0514,
+			"critChance": 0.06168,
+			"actTime": 1.075803,
+			"cd": 0,
+			"cost": 35,
+			"dps": 23.9289,
+			"hitChance": 0.824167
+		},
+		{
+			"level": 8,
+			"enemy": "en_brute",
+			"enemyStats": {
+				"hp": 184,
+				"armor": 147,
+				"eva": 34,
+				"dmg": 23.3
+			}
+		},
+		{
+			"level": 8,
+			"player": {
+				"hp": 398,
+				"armor": 114,
+				"eva": 62,
+				"acc": 86,
+				"critMult": 1.507,
+				"asInc": 0.007,
+				"res": 100,
+				"cinderOnHit": 1,
+				"dr": 0.157459,
+				"evade": 0.106529,
+				"weaponAvg": 9
+			}
+		},
+		{
+			"level": 12,
+			"enemy": "en_thrall",
+			"skill": "ak_cleave",
+			"sl": 4,
+			"final": 18,
+			"perHit": 22.086,
+			"dot": 0,
+			"critChance": 0.0516,
+			"actTime": 0.82672,
+			"cd": 0,
+			"cost": -8,
+			"dps": 21.8898,
+			"hitChance": 0.819375
+		},
+		{
+			"level": 12,
+			"enemy": "en_thrall",
+			"skill": "ak_charge",
+			"sl": 3,
+			"final": 14,
+			"perHit": 16.9735,
+			"dot": 0,
+			"critChance": 0.0516,
+			"actTime": 0.45,
+			"cd": 5.825242718446602,
+			"cost": 22,
+			"dps": 2.3875,
+			"hitChance": 0.819375
+		},
+		{
+			"level": 12,
+			"enemy": "en_thrall",
+			"skill": "ak_slam",
+			"sl": 3,
+			"final": 28,
+			"perHit": 33.5692,
+			"dot": 13.4277,
+			"critChance": 0.06192,
+			"actTime": 1.074735,
+			"cd": 0,
+			"cost": 38,
+			"dps": 28.9499,
+			"hitChance": 0.819375
+		},
+		{
+			"level": 12,
+			"enemy": "en_thrall",
+			"enemyStats": {
+				"hp": 98,
+				"armor": 77,
+				"eva": 46,
+				"dmg": 18
+			}
+		},
+		{
+			"level": 12,
+			"enemy": "en_brute",
+			"skill": "ak_cleave",
+			"sl": 4,
+			"final": 16,
+			"perHit": 19.2448,
+			"dot": 0,
+			"critChance": 0.0516,
+			"actTime": 0.82672,
+			"cd": 0,
+			"cost": -8,
+			"dps": 19.0739,
+			"hitChance": 0.819375
+		},
+		{
+			"level": 12,
+			"enemy": "en_brute",
+			"skill": "ak_charge",
+			"sl": 3,
+			"final": 12,
+			"perHit": 14.79,
+			"dot": 0,
+			"critChance": 0.0516,
+			"actTime": 0.45,
+			"cd": 5.825242718446602,
+			"cost": 22,
+			"dps": 2.0804,
+			"hitChance": 0.819375
+		},
+		{
+			"level": 12,
+			"enemy": "en_brute",
+			"skill": "ak_slam",
+			"sl": 3,
+			"final": 24,
+			"perHit": 29.373,
+			"dot": 11.7492,
+			"critChance": 0.06192,
+			"actTime": 1.074735,
+			"cd": 0,
+			"cost": 38,
+			"dps": 25.3312,
+			"hitChance": 0.819375
+		},
+		{
+			"level": 12,
+			"enemy": "en_brute",
+			"enemyStats": {
+				"hp": 255,
+				"armor": 205,
+				"eva": 46,
+				"dmg": 28.8
+			}
+		},
+		{
+			"level": 12,
+			"player": {
+				"hp": 520,
+				"armor": 142,
+				"eva": 78,
+				"acc": 114,
+				"critMult": 1.508,
+				"asInc": 0.008,
+				"res": 100,
+				"cinderOnHit": 1,
+				"dr": 0.152361,
+				"evade": 0.102902,
+				"weaponAvg": 9
+			}
+		}
+	]
+}
