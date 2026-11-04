@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<script src="../sync.js"></script>
+<script src="../music.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOLLOW SUN</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script src="js/desktop-only.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="fx"></div>
+<div id="hud" hidden>
+  <div id="topbar"><span id="wave"></span><span id="kills"></span><span id="fps" hidden></span></div>
+  <div id="orbs">
+    <div class="bar hp"><i id="b-hp"></i><span id="t-hp"></span></div>
+    <div class="bar res"><i id="b-res"></i><span id="t-res"></span></div>
+  </div>
+  <div id="skills"></div>
+  <div id="hint"></div>
+</div>
+<div id="screen"></div>
+<script src="vendor/playcanvas.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/game.js"></script>
+<script src="../presence.js"></script>
+</body>
+</html>

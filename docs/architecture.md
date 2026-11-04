@@ -211,6 +211,21 @@ bottles, explored map), `audio.js` (procedural sound and generative music), `ui.
 merged into old saves, finished story steps are recognised from the old flags. E2E drives the
 real game in a software WebGL renderer (`e2e/driftwood.test.ts`).
 
+## HOLLOW SUN prototype - `static/games/hollowsun`
+
+The P0 prototype of _Echoes of the Hollow Sun_, an isometric dark fantasy ARPG designed in a
+separate Game Design Bible (a claude.ai artifact). Plain scripts on PlayCanvas 2.23.3
+(`vendor/playcanvas.min.js`, MIT, licence beside it), loaded in order by `index.html`:
+`data.js` (generated from the Bible – Ash Knight, three skills, two Act I enemies, balance
+constants; never edited by hand), `core.js` (the Bible's formulas: character stats, weapon,
+`computeHit` with conversion, crit, armour/resistance and hit chance), `sim.js` (combat at a
+fixed 30 Hz with a seeded RNG and commands as input, no rendering - the GDD's multiplayer
+preparation) and `game.js` (PlayCanvas scene, isometric camera, click-to-move or WASD, telegraphs,
+hit-stop, HUD, a 20 s benchmark with 50 enemies). Save `hollowsun.save.v1`, stats
+`gamecenter.stats.hollowsun`. `src/lib/games/hollowsun.test.ts` checks the core against values
+exported from the Bible (`hollowsun.fixtures.json`) and runs the simulation headless;
+`e2e/hollowsun.test.ts` drives the real page in a software WebGL renderer.
+
 ## Vesnička - `static/games/vesnicka`
 
 An idle game outside the puzzle kit, plain scripts loaded by `index.html`: `data.js` (trades,
@@ -316,4 +331,5 @@ Signed-in players keep their progress in their account; anonymous play is unchan
 | 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |
 | 2026-10-23 | Online puzzles: one generic room DO for turns and races | One server for 13 games; the room enforces turn order and timing, the games keep rules.     |
 | 2026-10-23 | Cloud saves mirror localStorage keys, newest write wins | Games stay untouched; one generic sync script for all games; per-key time stamps.           |
+| 2026-11-04 | HOLLOW SUN on PlayCanvas, vendored like Three.js        | Engine chosen in the GDD (D09); no build step, self-contained static game, MIT licence.     |
 | 2026-10-23 | Leaderboards per comparable board only                  | Fair rankings: same daily puzzle, same level, same rules; client-reported, range-checked.   |

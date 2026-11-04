@@ -13,8 +13,10 @@ test('the game center opens with its library', async ({ page }) => {
 	await expect(page).toHaveTitle('Windowling Game Center');
 	await expect(page.locator('.brand')).toContainText('WINDOWLING');
 	await expect(page.locator('.hero-title')).toHaveText('VOIDBORN');
-	// The three big games on top, no empty slots.
-	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(3);
+	// The big games on top, no empty slots.
+	await expect(page.getByTestId('shelf').locator('.gcard')).toHaveCount(
+		GAMES.filter((g) => (g.group ?? 'action') === 'action').length,
+	);
 	// The rest of the library, sorted into genre shelves.
 	const library = page.getByTestId('library');
 	await expect(library.locator('.gcard')).toHaveCount(
@@ -418,6 +420,39 @@ test('DRIFTWOOD runs on computers and is blocked on phones', async ({
 		await page.getByTestId('play').click();
 		await page.waitForURL('**/games/driftwood/**');
 		await expect(page).toHaveTitle('DRIFTWOOD');
+	}
+	expect(errors).toEqual([]);
+});
+
+test('HOLLOW SUN runs on computers and is blocked on phones', async ({
+	page,
+	request,
+	isMobile,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	const card = page.getByTestId('shelf').locator('.gcard').nth(3);
+	await card.click();
+	await expect(page.locator('.hero-title')).toHaveText('HOLLOW SUN');
+	await expect(card.locator('.gc-badges span').first()).toHaveText('PC');
+
+	if (isMobile) {
+		await expect(page.getByTestId('play')).toBeDisabled();
+		await page.goto('/games/hollowsun/index.html');
+		await page.waitForURL((url) => url.pathname === '/');
+		await expect(page).toHaveTitle('Windowling Game Center');
+	} else {
+		// The WebGL game itself is covered by e2e/hollowsun.test.ts (software renderer).
+		const game = await request.get('/games/hollowsun/index.html');
+		expect(game.ok()).toBe(true);
+		expect(await game.text()).toContain('<title>HOLLOW SUN</title>');
+		await page.route('**/games/hollowsun/**', (route) =>
+			route.fulfill({ contentType: 'text/html', body: '<title>HOLLOW SUN</title>' }),
+		);
+		await page.getByTestId('play').click();
+		await page.waitForURL('**/games/hollowsun/**');
+		await expect(page).toHaveTitle('HOLLOW SUN');
 	}
 	expect(errors).toEqual([]);
 });

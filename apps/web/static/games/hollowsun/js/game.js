@@ -1,0 +1,338 @@
+'use strict';
+// Echoes of the Hollow Sun – P0 prototyp: vykreslení (PlayCanvas), vstup, HUD, menu a benchmark.
+// Simulaci (sim.js) jen čte a posílá jí příkazy; šedý box bez finálních assetů.
+(function () {
+  const HS = window.HS, SIM = window.HSim;
+  const LANG = (() => { try { return localStorage.getItem('gamecenter.lang') === 'en' ? 'en' : 'cs'; } catch (e) { return 'cs'; } })();
+  const T = {
+    cs: {
+      sub: 'Prototyp P0 · šedý box', pitch: 'Ash Knight proti hordám popela. Ověřujeme, jestli je souboj cítit a jestli prohlížeč utáhne 50 nepřátel v 60 FPS.',
+      arena: 'Aréna (vlny)', bench: 'Benchmark: 50 nepřátel', back: 'Zpět do centra', resume: 'Pokračovat', restart: 'Znovu', menu: 'Hlavní menu',
+      wave: 'Vlna', kills: 'Zabití', paused: 'Pauza', over: 'Ozvěna se rozpadla', best: 'Nejlepší vlna', clickMove: 'Pohyb kliknutím (jinak WASD)',
+      cleave: 'Cleave', slam: 'Searing Slam', charge: 'Ember Charge', dodge: 'Úhyb', nores: 'Málo Cinders', miss: 'Vedle', evade: 'Úhyb!', dodged: 'Vyhnuto',
+      keysMove: 'Pohyb', keysMoveClick: 'levé tlačítko na zem (nebo WASD)', keysMoveWasd: 'WASD', keysCleave: 'levé tlačítko (držet) – generuje Cinders', keysSlam: 'pravé tlačítko – AoE, oheň, stojí Cinders', keysCharge: 'Q – výpad, omráčí', keysDodge: 'mezerník – úhyb s nezranitelností', keysMisc: 'Esc pauza · F počítadlo FPS · kolečko zoom',
+      benchRun: 'Benchmark běží… autopilot bojuje s 50 nepřáteli', benchDone: 'Výsledek benchmarku', avg: 'Průměr FPS', low: '1 % nejhorších snímků', p95: '95. percentil snímku', simMs: 'Simulace na krok', entities: 'Nepřátel ve scéně', target: 'Cíl P0: 60 FPS s 50 nepřáteli', pass: 'splněno', fail: 'nesplněno', note: 'Měřeno v tomto prohlížeči a na tomto počítači.',
+      hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
+    },
+    en: {
+      sub: 'Prototype P0 · grey box', pitch: 'An Ash Knight against hordes of ash. We are testing whether combat feels right and whether the browser holds 60 FPS with 50 enemies.',
+      arena: 'Arena (waves)', bench: 'Benchmark: 50 enemies', back: 'Back to the center', resume: 'Resume', restart: 'Restart', menu: 'Main menu',
+      wave: 'Wave', kills: 'Kills', paused: 'Paused', over: 'Your echo has shattered', best: 'Best wave', clickMove: 'Click to move (otherwise WASD)',
+      cleave: 'Cleave', slam: 'Searing Slam', charge: 'Ember Charge', dodge: 'Dodge', nores: 'Not enough Cinders', miss: 'Miss', evade: 'Evade!', dodged: 'Dodged',
+      keysMove: 'Move', keysMoveClick: 'left click on the ground (or WASD)', keysMoveWasd: 'WASD', keysCleave: 'left button (hold) – builds Cinders', keysSlam: 'right button – AoE fire, costs Cinders', keysCharge: 'Q – dash, stuns', keysDodge: 'space – dodge with i-frames', keysMisc: 'Esc pause · F FPS counter · wheel zoom',
+      benchRun: 'Benchmark running… the autopilot fights 50 enemies', benchDone: 'Benchmark result', avg: 'Average FPS', low: '1 % low', p95: '95th percentile frame', simMs: 'Simulation per step', entities: 'Enemies in the scene', target: 'P0 target: 60 FPS with 50 enemies', pass: 'met', fail: 'not met', note: 'Measured in this browser on this computer.',
+      hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
+    },
+  };
+  const t = (k) => (T[LANG][k] != null ? T[LANG][k] : T.cs[k]);
+  document.documentElement.lang = LANG;
+
+  /* ---------- uložení a statistiky pro centrum ---------- */
+  const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
+  const DEF = { v: 1, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null };
+  let SAVE = (() => { try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) { return Object.assign({}, DEF); } })();
+  function persist() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
+      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: Math.min(1, SAVE.bestWave / 10), stats: { bestWave: SAVE.bestWave, kills: SAVE.kills, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
+    } catch (e) { /* bez úložiště */ }
+  }
+
+  /* ---------- PlayCanvas ---------- */
+  const canvas = document.getElementById('gl');
+  const app = new pc.Application(canvas, { mouse: new pc.Mouse(canvas), keyboard: new pc.Keyboard(window), graphicsDeviceOptions: { antialias: true, powerPreference: 'high-performance' } });
+  app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+  app.setCanvasResolution(pc.RESOLUTION_AUTO);
+  window.addEventListener('resize', () => app.resizeCanvas());
+  app.scene.ambientLight = new pc.Color(0.32, 0.3, 0.33);
+  try { app.scene.fog.type = pc.FOG_LINEAR; app.scene.fog.color = new pc.Color(0.04, 0.045, 0.06); app.scene.fog.start = 32; app.scene.fog.end = 70; } catch (e) { /* bez mlhy */ }
+
+  const col = (h) => { const n = parseInt(h.slice(1), 16); return new pc.Color(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255); };
+  function mat(hex, o) {
+    o = o || {}; const m = new pc.StandardMaterial();
+    m.diffuse = col(hex); m.gloss = o.gloss != null ? o.gloss : 0.25;
+    if (o.emissive) m.emissive = col(o.emissive);
+    if (o.unlit) { m.useLighting = false; m.diffuse = new pc.Color(0, 0, 0); m.emissive = col(hex); }
+    if (o.opacity != null) { m.blendType = o.add ? pc.BLEND_ADDITIVE : pc.BLEND_NORMAL; m.opacity = o.opacity; m.depthWrite = false; }
+    if (o.twoSided) m.cull = pc.CULLFACE_NONE;
+    m.update(); return m;
+  }
+  const M = {
+    ground: null, rim: mat('#3a2f2a'), pillar: mat('#4a4440'), steel: mat('#3a3f4a', { gloss: 0.55 }), trim: mat('#ec7a3a', { emissive: '#7a2e0c' }), blade: mat('#c9c6bd', { gloss: 0.8, emissive: '#3a1a08' }),
+    thrall: mat('#6b625a'), brute: mat('#4a3a33'), eyes: mat('#ff8a3a', { unlit: true }), furnace: mat('#ff6a1a', { unlit: true }), flash: mat('#ffd2a6', { unlit: true }), stun: mat('#9fd0ff', { unlit: true }),
+    teleLine: mat('#ff3a3a', { unlit: true, opacity: 0.85, twoSided: true }), teleFill: mat('#c21a1a', { unlit: true, opacity: 0.35, twoSided: true }),
+    swing: mat('#ffb15c', { unlit: true, opacity: 0.55, add: true, twoSided: true }), slam: mat('#ff7a2a', { unlit: true, opacity: 0.7, add: true, twoSided: true }), ghost: mat('#ec7a3a', { unlit: true, opacity: 0.35, add: true }), marker: mat('#e3b964', { unlit: true, opacity: 0.6, twoSided: true }),
+  };
+  // podlaha: procedurální textura mřížky 2 m (šedý box)
+  (function () {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#26262b'; g.fillRect(0, 0, 256, 256); g.strokeStyle = '#34343b'; g.lineWidth = 2;
+    for (let i = 0; i <= 256; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 256); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(256, i); g.stroke(); }
+    const tex = new pc.Texture(app.graphicsDevice, { width: 256, height: 256, addressU: pc.ADDRESS_REPEAT, addressV: pc.ADDRESS_REPEAT, mipmaps: true });
+    tex.setSource(c);
+    const m = new pc.StandardMaterial(); m.diffuseMap = tex; m.diffuseMapTiling = new pc.Vec2(SIM.ARENA / 2, SIM.ARENA / 2); m.gloss = 0.1; m.update(); M.ground = m;
+  })();
+
+  function ent(type, m, pos, scale, parent, shadows) {
+    const e = new pc.Entity(); e.addComponent('render', { type, material: m, castShadows: shadows !== false, receiveShadows: true });
+    if (pos) e.setLocalPosition(pos[0], pos[1], pos[2]); if (scale) e.setLocalScale(scale[0], scale[1], scale[2]);
+    (parent || app.root).addChild(e); return e;
+  }
+  function sectorMesh(r0, r1, deg, seg) {
+    const pos = [], nor = [], idx = []; const half = ((deg / 2) * Math.PI) / 180;
+    for (let i = 0; i <= seg; i++) { const a = -half + (2 * half * i) / seg; const c = Math.cos(a), s = Math.sin(a); pos.push(c * r0, 0, s * r0, c * r1, 0, s * r1); nor.push(0, 1, 0, 0, 1, 0); }
+    for (let i = 0; i < seg; i++) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    const mesh = new pc.Mesh(app.graphicsDevice); mesh.setPositions(pos); mesh.setNormals(nor); mesh.setIndices(idx); mesh.update(pc.PRIMITIVE_TRIANGLES); return mesh;
+  }
+  const MESH = {};
+  // sdílené meshe drží jednu referenci navíc, aby je zničení efektu neuvolnilo (PlayCanvas počítá reference)
+  const meshFor = (key, r0, r1, deg) => { if (!MESH[key]) { MESH[key] = sectorMesh(r0, r1, deg, Math.max(8, Math.round(deg / 6))); MESH[key].incRefCount(); } return MESH[key]; };
+  function flat(mesh, m, x, z, face, scale, y) {
+    const e = new pc.Entity(); e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, m)], castShadows: false, receiveShadows: false });
+    e.setLocalPosition(x, y || 0.03, z); e.setLocalEulerAngles(0, (-face * 180) / Math.PI, 0); if (scale) e.setLocalScale(scale, 1, scale); app.root.addChild(e); return e;
+  }
+
+  // scéna
+  ent('plane', M.ground, [0, 0, 0], [SIM.ARENA * 2.4, 1, SIM.ARENA * 2.4], null, false);
+  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; const r = SIM.ARENA + 0.6; const b = ent('box', M.rim, [Math.cos(a) * r, 0.5 + (i % 3) * 0.25, Math.sin(a) * r], [1.6, 1 + (i % 3) * 0.5, 0.8]); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
+  for (const [x, z, r] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) ent('cylinder', M.pillar, [x, 1.25, z], [r * 2, 2.5, r * 2]);
+  const sun = new pc.Entity(); sun.addComponent('light', { type: 'directional', color: new pc.Color(1, 0.82, 0.62), intensity: 1.4, castShadows: true, shadowDistance: 45, shadowResolution: 2048, shadowBias: 0.3, normalOffsetBias: 0.05 });
+  sun.setLocalEulerAngles(68, 35, 0); app.root.addChild(sun);
+  const glow = new pc.Entity(); glow.addComponent('light', { type: 'omni', color: new pc.Color(1, 0.45, 0.15), intensity: 1.2, range: 9, castShadows: false }); app.root.addChild(glow);
+
+  // kamera: izometrická, pitch 50°, yaw 45°, zoom 14–22 m (D11)
+  const cam = new pc.Entity(); cam.addComponent('camera', { clearColor: new pc.Color(0.04, 0.045, 0.06), fov: 46, nearClip: 0.5, farClip: 140 }); app.root.addChild(cam);
+  const YAW = (45 * Math.PI) / 180, PITCH = (50 * Math.PI) / 180; let zoom = 18; const camT = new pc.Vec3(); let shake = 0;
+  function placeCamera(dt) {
+    const p = S ? S.player : { x: 0, z: 0 }; camT.lerp(camT, new pc.Vec3(p.x, 0, p.z), Math.min(1, dt * 8));
+    const off = new pc.Vec3(Math.sin(YAW) * Math.cos(PITCH) * zoom, Math.sin(PITCH) * zoom, Math.cos(YAW) * Math.cos(PITCH) * zoom);
+    shake = Math.max(0, shake - dt * 1.6); const sx = (Math.random() - 0.5) * shake, sz = (Math.random() - 0.5) * shake;
+    cam.setPosition(camT.x + off.x + sx, off.y, camT.z + off.z + sz); cam.lookAt(camT.x + sx, 0, camT.z + sz);
+  }
+  // pohyb WASD vůči kameře
+  const FWD = [-Math.sin(YAW), -Math.cos(YAW)], RIGHT = [Math.cos(YAW), -Math.sin(YAW)];
+
+  /* ---------- hráč ---------- */
+  const P = new pc.Entity(); app.root.addChild(P);
+  ent('capsule', M.steel, [0, 0.9, 0], [0.9, 0.9, 0.9], P);
+  ent('cylinder', M.trim, [0, 1.25, 0], [0.95, 0.12, 0.95], P);
+  ent('box', M.trim, [0.38, 1.45, 0], [0.22, 0.12, 0.5], P, false); // „zorník“ ukazuje směr
+  const pivot = new pc.Entity(); pivot.setLocalPosition(0, 1.1, 0); P.addChild(pivot);
+  ent('box', M.blade, [0.9, 0, 0], [1.3, 0.12, 0.18], pivot); ent('box', M.steel, [0.25, 0, 0], [0.3, 0.2, 0.2], pivot);
+  const ring = flat(meshFor('ring', 0.62, 0.72, 360), M.marker, 0, 0, 0, 1, 0.02); ring.reparent(P);
+
+  /* ---------- stav a vstup ---------- */
+  let S = null, mode = 'menu', acc = 0, hitstop = 0, renderT = 0, lastEvents = [];
+  const keys = {}; let mouse = [innerWidth / 2, innerHeight / 2], lmb = false, aimPt = [0, 0];
+  const pend = { cast: null, dodge: false, moveTo: null };
+  function groundAt(mx, my) {
+    const c = cam.camera; const a = c.screenToWorld(mx, my, c.nearClip), b = c.screenToWorld(mx, my, c.farClip);
+    const k = a.y / (a.y - b.y || 1e-6); return [a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k];
+  }
+  function enemyNear(pt, rad) { let best = null, bd = rad; for (const e of S.enemies) { if (e.dead) continue; const d = Math.hypot(e.x - pt[0], e.z - pt[1]) - e.r; if (d < bd) { bd = d; best = e; } } return best; }
+  function readInput() {
+    const inp = { aim: aimPt.slice() };
+    let mx = 0, mz = 0; if (keys.w) { mx += FWD[0]; mz += FWD[1]; } if (keys.s) { mx -= FWD[0]; mz -= FWD[1]; } if (keys.d) { mx += RIGHT[0]; mz += RIGHT[1]; } if (keys.a) { mx -= RIGHT[0]; mz -= RIGHT[1]; }
+    if (mx || mz) inp.move = [mx, mz];
+    if (lmb) {
+      if (SAVE.clickMove) {
+        const e = enemyNear(aimPt, 1.2);
+        if (e) { const d = Math.hypot(e.x - S.player.x, e.z - S.player.z); if (d <= S.skills.ak_cleave.sk.r + e.r) { inp.hold = true; inp.aim = [e.x, e.z]; } else inp.moveTo = [e.x, e.z]; }
+        else if (!inp.move) inp.moveTo = aimPt.slice();
+      } else inp.hold = true;
+    }
+    if (pend.cast) { inp.cast = pend.cast; pend.cast = null; }
+    if (pend.dodge) { inp.dodge = true; pend.dodge = false; if (!inp.move) inp.move = [aimPt[0] - S.player.x, aimPt[1] - S.player.z]; }
+    return inp;
+  }
+  app.mouse.disableContextMenu();
+  app.mouse.on(pc.EVENT_MOUSEMOVE, (e) => { mouse = [e.x, e.y]; });
+  app.mouse.on(pc.EVENT_MOUSEDOWN, (e) => { if (mode !== 'play') return; audioInit(); mouse = [e.x, e.y]; aimPt = groundAt(e.x, e.y); if (e.button === pc.MOUSEBUTTON_LEFT) lmb = true; if (e.button === pc.MOUSEBUTTON_RIGHT) pend.cast = 'ak_slam'; });
+  app.mouse.on(pc.EVENT_MOUSEUP, (e) => { if (e.button === pc.MOUSEBUTTON_LEFT) lmb = false; });
+  app.mouse.on(pc.EVENT_MOUSEWHEEL, (e) => { zoom = Math.max(14, Math.min(22, zoom + (e.wheelDelta > 0 ? 1 : -1))); });
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase(); keys[k] = true;
+    if (k === 'escape') { if (mode === 'play') pause(); else if (mode === 'paused') resume(); return; }
+    if (k === 'f') { fpsOn = !fpsOn; document.getElementById('fps').hidden = !fpsOn; }
+    if (mode !== 'play') return; audioInit();
+    if (k === ' ') { pend.dodge = true; e.preventDefault(); }
+    if (k === 'q' || k === '3') pend.cast = 'ak_charge';
+    if (k === '2' || k === 'e') pend.cast = 'ak_slam';
+  });
+  window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+  window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; lmb = false; if (mode === 'play') pause(); });
+
+  /* ---------- zvuk: krátké procedurální efekty (Web Audio) ---------- */
+  let AC = null, master = null;
+  function audioInit() { if (AC) return; try { AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0.35; master.connect(AC.destination); } catch (e) { AC = null; } }
+  function noise(dur, f0, f1, vol, type) {
+    if (!AC) return; const n = AC.createBufferSource(); const len = Math.floor(AC.sampleRate * dur); const buf = AC.createBuffer(1, len, AC.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    n.buffer = buf; const f = AC.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.setValueAtTime(f0, AC.currentTime); f.frequency.exponentialRampToValueAtTime(f1, AC.currentTime + dur); const g = AC.createGain(); g.gain.value = vol; n.connect(f).connect(g).connect(master); n.start();
+  }
+  function tone(f0, f1, dur, vol, type) { if (!AC) return; const o = AC.createOscillator(); o.type = type || 'sine'; o.frequency.setValueAtTime(f0, AC.currentTime); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), AC.currentTime + dur); const g = AC.createGain(); g.gain.setValueAtTime(vol, AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur); o.connect(g).connect(master); o.start(); o.stop(AC.currentTime + dur); }
+  const SFX = { swing: () => noise(0.14, 2400, 600, 0.5), hit: (c) => { tone(c ? 180 : 120, 50, 0.12, 0.6, 'triangle'); noise(0.05, 3000, 1500, 0.4); }, slam: () => { tone(90, 30, 0.45, 0.9); noise(0.35, 900, 120, 0.6, 'lowpass'); }, hurt: () => tone(320, 140, 0.18, 0.35, 'sawtooth'), dodge: () => noise(0.18, 600, 2400, 0.25), tele: () => tone(520, 480, 0.08, 0.08, 'square'), death: () => noise(0.25, 700, 150, 0.3, 'lowpass') };
+
+  /* ---------- vizuály nepřátel, telegraphy, efekty ---------- */
+  const EV = new Map(); // id → vizuál nepřítele
+  function enemyVisual(e) {
+    const root = new pc.Entity(); app.root.addChild(root); const big = e.type === 'en_brute';
+    const body = ent('capsule', big ? M.brute : M.thrall, [0, big ? 1.25 : 0.85, 0], big ? [1.9, 1.25, 1.9] : [0.9, 0.85, 0.9], root);
+    ent('box', big ? M.furnace : M.eyes, big ? [0.75, 1.5, 0] : [0.38, 1.35, 0], big ? [0.35, 0.6, 0.9] : [0.12, 0.08, 0.4], root, false);
+    const v = { root, body, base: big ? M.brute : M.thrall, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); root.setLocalPosition(e.x, 0, e.z); return v;
+  }
+  const TELES = []; const FXS = [];
+  function teleVisual(ev) {
+    const isC = ev.shape === 'circle'; const key = isC ? 'c' : 'cone' + ev.w;
+    const line = flat(isC ? meshFor('ringT', 0.93, 1, 360) : meshFor(key + 'L', 0.93, 1, ev.w), M.teleLine, ev.x, ev.z, ev.face, ev.r);
+    const fill = flat(isC ? meshFor('disc', 0, 1, 360) : meshFor(key, 0, 1, ev.w), M.teleFill, ev.x, ev.z, ev.face, 0.01, 0.025);
+    TELES.push({ id: ev.id, line, fill, r: ev.r, dur: ev.dur, t: 0 });
+  }
+  function fx(entity, life, upd) { FXS.push({ e: entity, life, t: 0, upd }); }
+  const fxLayer = document.getElementById('fx'); const NUMS = [];
+  function num(x, z, text, cls, h) {
+    const d = document.createElement('div'); d.className = 'dmg ' + (cls || ''); d.textContent = text; fxLayer.appendChild(d);
+    NUMS.push({ d, x: x + (Math.random() - 0.5) * 0.6, z, y: h || 2, t: 0 });
+  }
+  function handle(evs) {
+    for (const ev of evs) {
+      switch (ev.t) {
+        case 'hit': num(ev.x, ev.z, ev.dmg, (ev.crit ? 'crit ' : '') + (ev.type === 'fire' ? 'fire' : '')); SFX.hit(ev.crit); break;
+        case 'burn': num(ev.x, ev.z, ev.dmg, 'fire', 1.6); break;
+        case 'miss': num(ev.x, ev.z, t('miss'), 'info'); break;
+        case 'swing': { const e = flat(meshFor('swing', 0.6, ev.r, ev.w), M.swing, ev.x, ev.z, ev.face, 1, 0.6); fx(e, 0.14, (f, k) => f.e.setLocalScale(0.85 + k * 0.2, 1, 0.85 + k * 0.2)); SFX.swing(); break; }
+        case 'slam': { const e = flat(meshFor('ringS', 0.75, 1, 360), M.slam, ev.x, ev.z, 0, 0.5, 0.05); fx(e, 0.35, (f, k) => f.e.setLocalScale(ev.r * (0.3 + k), 1, ev.r * (0.3 + k))); SFX.slam(); break; }
+        case 'cast': if (ev.skill === 'ak_charge') { const g = ent('capsule', M.ghost, [ev.x, 0.9, ev.z], [0.9, 0.9, 0.9], null, false); fx(g, 0.35, () => {}); } break;
+        case 'dodge': { const g = ent('capsule', M.ghost, [ev.x, 0.9, ev.z], [0.9, 0.9, 0.9], null, false); fx(g, 0.25, () => {}); SFX.dodge(); break; }
+        case 'tele': teleVisual(ev); SFX.tele(); break;
+        case 'hitstop': hitstop = Math.min(120, Math.max(hitstop, ev.ms)); break;
+        case 'shake': shake = Math.max(shake, ev.amp); break;
+        case 'hurt': num(ev.x, ev.z, '-' + ev.dmg, 'hurt', 2.4); SFX.hurt(); break;
+        case 'evade': num(ev.x, ev.z, t('evade'), 'info', 2.4); break;
+        case 'dodged': num(ev.x, ev.z, t('dodged'), 'info', 2.4); break;
+        case 'nores': flashSkill(ev.skill); break;
+        case 'death': { const v = EV.get(ev.id); if (v) v.dying = 0.001; SFX.death(); break; }
+        case 'over': gameOver(); break;
+        default: break;
+      }
+    }
+  }
+
+  /* ---------- HUD ---------- */
+  const SK = [['ak_cleave', 'LMB', 'cleave'], ['ak_slam', 'RMB', 'slam'], ['ak_charge', 'Q', 'charge'], ['dodge', '␣', 'dodge']];
+  const skillsEl = document.getElementById('skills');
+  skillsEl.innerHTML = SK.map(([id, key, nm]) => `<div class="sk" id="sk-${id}"><span class="key">${key}</span><b>${t(nm)}</b><span class="cost"></span><div class="cd"></div></div>`).join('');
+  function flashSkill(id) { const el = document.getElementById('sk-' + id); if (!el) return; el.classList.add('no'); setTimeout(() => el.classList.remove('no'), 250); num(S.player.x, S.player.z, t('nores'), 'info', 2.6); }
+  let fpsOn = false;
+  function hud() {
+    const p = S.player;
+    document.getElementById('b-hp').style.width = ((p.hp / p.hpMax) * 100).toFixed(1) + '%'; document.getElementById('t-hp').textContent = Math.ceil(p.hp) + ' / ' + p.hpMax;
+    document.getElementById('b-res').style.width = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' Cinders';
+    document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : t('wave') + ' ' + S.wave;
+    document.getElementById('kills').textContent = t('kills') + ' ' + S.kills;
+    for (const [id] of SK) {
+      const el = document.getElementById('sk-' + id); if (!el) continue;
+      if (id === 'dodge') { el.querySelector('.cd').style.height = ((p.dodgeCd / SIM.DODGE.cd) * 100).toFixed(0) + '%'; continue; }
+      const sl = S.skills[id]; const h = sl.hit.en_thrall; const cdMax = h.cd || 0;
+      el.querySelector('.cd').style.height = cdMax ? ((sl.cd / cdMax) * 100).toFixed(0) + '%' : '0%';
+      el.querySelector('.cost').textContent = h.cost > 0 ? h.cost : '+' + -h.cost;
+      el.style.opacity = h.cost > 0 && p.res < h.cost ? 0.55 : 1;
+    }
+  }
+
+  /* ---------- obrazovky ---------- */
+  const screen = document.getElementById('screen');
+  const keysHtml = () => `<div class="keys"><kbd>${t('keysMove')}</kbd><span>${SAVE.clickMove ? t('keysMoveClick') : t('keysMoveWasd')}</span><kbd>Cleave</kbd><span>${t('keysCleave')}</span><kbd>Slam</kbd><span>${t('keysSlam')}</span><kbd>Charge</kbd><span>${t('keysCharge')}</span><kbd>${t('dodge')}</kbd><span>${t('keysDodge')}</span><kbd>…</kbd><span>${t('keysMisc')}</span></div>`;
+  const opt = () => `<label class="opt" for="o-click"><input type="checkbox" id="o-click" ${SAVE.clickMove ? 'checked' : ''}> ${t('clickMove')}</label>`;
+  function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
+  function menu() {
+    mode = 'menu'; document.getElementById('hud').hidden = true;
+    screen.innerHTML = `<div class="panel"><span class="muted">ECHOES OF THE HOLLOW SUN · ${t('sub')}</span><h1>Hollow Sun</h1><p>${t('pitch')}</p>${keysHtml()}${opt()}
+      <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-bench">${t('bench')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
+      <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}</span></div>`;
+    document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-bench').onclick = () => start('bench'); bindOpt();
+  }
+  function clearWorld() { for (const v of EV.values()) v.root.destroy(); EV.clear(); for (const te of TELES) { te.line.destroy(); te.fill.destroy(); } TELES.length = 0; for (const f of FXS) f.e.destroy(); FXS.length = 0; for (const n of NUMS) n.d.remove(); NUMS.length = 0; }
+  let bench = null;
+  function start(m) {
+    audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
+    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' });
+    camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
+    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : t('hint');
+    bench = m === 'bench' ? { t0: performance.now(), frames: [], simMs: 0, steps: 0, last: performance.now() } : null;
+  }
+  function pause() { mode = 'paused'; screen.innerHTML = `<div class="panel"><h2>${t('paused')}</h2>${keysHtml()}${opt()}<div class="row"><button class="btn" id="b-res">${t('resume')}</button><button class="btn dim" id="b-rst">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-res').onclick = resume; document.getElementById('b-rst').onclick = () => start('arena'); document.getElementById('b-menu').onclick = menu; bindOpt(); }
+  function resume() { screen.innerHTML = ''; mode = 'play'; acc = 0; }
+  function gameOver() {
+    mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; persist();
+    const st = S.stats;
+    screen.innerHTML = `<div class="panel"><h2>${t('over')}</h2><table class="res"><tr><td>${t('wave')}</td><td class="n">${S.wave}</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('dmgDealt')}</td><td class="n">${st.dmg}</td></tr><tr><td>${t('hits')}</td><td class="n">${st.hits}</td></tr><tr><td>${t('dodges')}</td><td class="n">${st.dodged}</td></tr><tr><td>${t('taken')}</td><td class="n">${st.taken}</td></tr></table><div class="row"><button class="btn" id="b-again">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
+    document.getElementById('b-again').onclick = () => start('arena'); document.getElementById('b-menu').onclick = menu;
+  }
+  function benchDone() {
+    const f = bench.frames.slice(30).sort((a, b) => a - b); const n = f.length || 1; const sum = f.reduce((a, b) => a + b, 0);
+    const res = { avg: Math.round((1000 * n) / sum), low1: Math.round(1000 / f[Math.floor(n * 0.99)]), p95: +f[Math.floor(n * 0.95)].toFixed(1), simMs: +(bench.simMs / Math.max(1, bench.steps)).toFixed(3), enemies: S.enemies.filter((e) => !e.dead).length, at: Date.now() };
+    SAVE.bench = res; persist(); window.HSGame.lastBench = res; mode = 'over';
+    const ok = res.avg >= 58 && res.p95 <= 20;
+    screen.innerHTML = `<div class="panel"><h2>${t('benchDone')}</h2><table class="res"><tr><td>${t('avg')}</td><td class="n">${res.avg}</td></tr><tr><td>${t('low')}</td><td class="n">${res.low1} FPS</td></tr><tr><td>${t('p95')}</td><td class="n">${res.p95} ms</td></tr><tr><td>${t('simMs')}</td><td class="n">${res.simMs} ms</td></tr><tr><td>${t('entities')}</td><td class="n">${res.enemies}</td></tr></table><p>${t('target')}: <b class="${ok ? 'ok' : 'bad'}">${ok ? t('pass') : t('fail')}</b></p><span class="muted">${t('note')}</span><div class="row"><button class="btn" id="b-again">${t('bench')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
+    document.getElementById('b-again').onclick = () => start('bench'); document.getElementById('b-menu').onclick = menu;
+  }
+
+  /* ---------- smyčka ---------- */
+  let playAcc = 0;
+  app.on('update', (dtRaw) => {
+    const dt = Math.min(dtRaw, 0.1);
+    if (bench && mode === 'bench') { const now = performance.now(); bench.frames.push(now - bench.last); bench.last = now; if (now - bench.t0 > 20000) benchDone(); }
+    if (S && (mode === 'play' || mode === 'bench')) {
+      aimPt = groundAt(mouse[0], mouse[1]);
+      playAcc += dt; if (playAcc >= 5 && mode === 'play') { SAVE.playTime += playAcc; playAcc = 0; persist(); }
+      if (hitstop > 0) hitstop -= dt * 1000;
+      else {
+        acc += dt;
+        while (acc >= SIM.TICK) {
+          const t0 = performance.now(); const inp = mode === 'bench' ? SIM.autopilot(S) : readInput(); SIM.step(S, inp);
+          if (bench) { bench.simMs += performance.now() - t0; bench.steps++; }
+          lastEvents = S.events.slice(); handle(lastEvents); acc -= SIM.TICK; if (mode !== 'play' && mode !== 'bench') break;
+        }
+        renderT += dt;
+      }
+      syncWorld(hitstop > 0 ? 0 : dt);
+      hud();
+    }
+    placeCamera(dt); updateNums(dt);
+    if (fpsOn) document.getElementById('fps').textContent = Math.round(1 / Math.max(1e-3, dtRaw)) + ' FPS';
+  });
+  function syncWorld(dt) {
+    const p = S.player;
+    P.setLocalPosition(p.x, 0, p.z); P.setLocalEulerAngles(0, (-p.face * 180) / Math.PI, 0); glow.setLocalPosition(p.x, 2.2, p.z);
+    // švih zbraně podle rozpracované akce
+    if (p.act && p.act.id !== 'ak_charge') { const k = Math.min(1, p.act.t / p.act.dur); const sw = p.act.id === 'ak_slam' ? -100 + 190 * Math.min(1, k / 0.4) : -75 + 150 * Math.min(1, k / 0.45); pivot.setLocalEulerAngles(p.act.id === 'ak_slam' ? 0 : 0, sw, p.act.id === 'ak_slam' ? Math.max(-80, sw * 0.6) : 0); }
+    else pivot.setLocalEulerAngles(0, -35, 0);
+    P.setLocalScale(1, p.dodge ? 0.75 : 1, 1);
+    for (const e of S.enemies) {
+      let v = EV.get(e.id); if (!v) { if (e.dead) continue; v = enemyVisual(e); }
+      if (v.dying > 0) { v.dying += dt; const k = Math.min(1, v.dying / 0.4); v.root.setLocalScale(1 - k * 0.7, 1 - k, 1 - k * 0.7); if (k >= 1) { v.root.destroy(); EV.delete(e.id); v.dying = -1; } continue; }
+      if (v.dying < 0) continue;
+      v.x += (e.x - v.x) * Math.min(1, dt * 18); v.z += (e.z - v.z) * Math.min(1, dt * 18);
+      v.root.setLocalPosition(v.x, 0, v.z); v.root.setLocalEulerAngles(0, (-e.face * 180) / Math.PI, 0);
+      const m = e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : v.base; if (v.body.render.material !== m) v.body.render.material = m;
+      const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
+    }
+    for (let i = TELES.length - 1; i >= 0; i--) {
+      const te = TELES[i]; te.t += dt; const owner = S.enemies.find((e) => e.id === te.id); const k = Math.min(1, te.t / te.dur);
+      te.fill.setLocalScale(te.r * k, 1, te.r * k);
+      if (k >= 1 || !owner || owner.dead || !owner.atk) { te.line.destroy(); te.fill.destroy(); TELES.splice(i, 1); }
+    }
+    for (let i = FXS.length - 1; i >= 0; i--) { const f = FXS[i]; f.t += dt; const k = Math.min(1, f.t / f.life); f.upd(f, k); if (k >= 1) { f.e.destroy(); FXS.splice(i, 1); } }
+  }
+  const tmpV = new pc.Vec3();
+  function updateNums(dt) {
+    for (let i = NUMS.length - 1; i >= 0; i--) {
+      const n = NUMS[i]; n.t += dt; if (n.t > 0.8) { n.d.remove(); NUMS.splice(i, 1); continue; }
+      cam.camera.worldToScreen(new pc.Vec3(n.x, n.y + n.t * 1.2, n.z), tmpV);
+      n.d.style.transform = `translate(${tmpV.x.toFixed(0)}px, ${tmpV.y.toFixed(0)}px) translate(-50%, -50%) scale(${n.t < 0.08 ? 1.3 : 1})`; n.d.style.opacity = n.t > 0.5 ? (1 - (n.t - 0.5) / 0.3).toFixed(2) : '1';
+    }
+  }
+
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, step: (n, auto) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : {}); handle(S.events.slice()); } return S; } };
+  app.start(); menu(); persist();
+})();
