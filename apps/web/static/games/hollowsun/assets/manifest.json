@@ -1,0 +1,73 @@
+{
+	"generated": "scripts/hollowsun-assets.mjs",
+	"assets": [
+		{
+			"id": "DM_crypt_rS_X_a",
+			"file": "DM_crypt_rS_X_a.glb",
+			"bytes": 54172,
+			"materials": [
+				"M_crypt_stone",
+				"M_crypt_trim"
+			],
+			"parts": [
+				{
+					"name": "DM_crypt_rS_X_a",
+					"tris": 684
+				}
+			],
+			"sockets": [
+				"socket_door_N",
+				"socket_door_S",
+				"socket_door_W",
+				"socket_door_E"
+			],
+			"meta": {
+				"cells": [
+					5,
+					5
+				],
+				"cellSize": 2,
+				"size": [
+					10,
+					4,
+					10
+				],
+				"trisBudget": 3000
+			}
+		},
+		{
+			"id": "CH_ak_body",
+			"file": "CH_ak_body.glb",
+			"bytes": 624464,
+			"materials": [
+				"M_ak_steel",
+				"M_ak_ember"
+			],
+			"parts": [
+				{
+					"name": "CH_ak_body_LOD0",
+					"tris": 10496
+				},
+				{
+					"name": "CH_ak_body_LOD1",
+					"tris": 2016
+				},
+				{
+					"name": "CH_ak_body_LOD2",
+					"tris": 560
+				}
+			],
+			"sockets": [
+				"socket_hand_R"
+			],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [
+					25000,
+					9000,
+					3000
+				]
+			}
+		}
+	]
+}

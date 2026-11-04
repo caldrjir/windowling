@@ -226,6 +226,15 @@ hit-stop, HUD, a 20 s benchmark with 50 enemies). Save `hollowsun.save.v1`, stat
 exported from the Bible (`hollowsun.fixtures.json`) and runs the simulation headless;
 `e2e/hollowsun.test.ts` drives the real page in a software WebGL renderer.
 
+Asset pipeline test (P0): `pnpm --filter @windowling/web hollowsun:assets` writes GLB files and
+`assets/manifest.json` (a dungeon module `DM_crypt_rS_X_a` and a placeholder `CH_ak_body` with
+three LODs) the way a Blender export would arrive; the game's "Asset test" mode loads them through
+PlayCanvas, switches LODs by camera distance and shows the sockets.
+`src/lib/games/hollowsun-assets.test.ts` holds every GLB to the Bible's asset rules: naming, triangle
+budget, at most 2 materials per mesh, LOD0–2, footprint on the 2 m grid, door sockets, vertex-colour
+AO and glTF integrity. Real exports from Blender must pass the same test; compression (Meshopt,
+KTX2) and skinned characters are not covered yet.
+
 ## Vesnička - `static/games/vesnicka`
 
 An idle game outside the puzzle kit, plain scripts loaded by `index.html`: `data.js` (trades,
