@@ -7,6 +7,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "node scripts/preview.mjs",
+		"hollowsun:assets": "node scripts/hollowsun-assets.mjs",
 		"typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"test:e2e": "playwright test",
 		"cf-typegen": "wrangler types src/worker-configuration.d.ts",

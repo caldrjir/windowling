@@ -53,3 +53,25 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 	expect(stats.stats).toHaveProperty('bestWave');
 	expect(errors).toEqual([]);
 });
+
+test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
+	test.setTimeout(90_000);
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto('/games/hollowsun/index.html');
+	await page.locator('#b-assets').click();
+	await expect(page.locator('#assetPanel')).toBeVisible();
+	await expect
+		.poll(() => run<number>(page, 'return (HSGame.assets && HSGame.assets.loaded) || 0;'), {
+			timeout: 60_000,
+		})
+		.toBe(2);
+	const assets = await run<{ error: string | null; items: { id: string; ok: boolean }[] }>(
+		page,
+		'return HSGame.assets;',
+	);
+	expect(assets.error).toBeNull();
+	expect(assets.items.map((i) => i.id)).toEqual(['DM_crypt_rS_X_a', 'CH_ak_body']);
+	expect(errors).toEqual([]);
+});

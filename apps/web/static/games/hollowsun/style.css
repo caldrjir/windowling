@@ -49,4 +49,7 @@ table.res { border-collapse: collapse; width: 100%; font-size: 13px; }
 table.res td { padding: 4px 0; border-bottom: 1px solid #1f2533; }
 table.res td.n { text-align: right; font-family: var(--f-mono); }
 .ok { color: #6fae74; } .bad { color: #e0705a; }
+#assetPanel { position: fixed; top: 16px; left: 16px; width: min(380px, calc(100vw - 32px)); border: 1px solid #5a4630; background: #0d0f15e6; padding: 16px 18px; display: grid; gap: 8px; font-size: 13px; }
+#assetPanel h2 { margin: 0; font: 600 22px/1.1 var(--f-display); color: var(--gold); }
+#assetPanel .muted { color: var(--muted); font-size: 12px; }
 .opt { display: flex; gap: 10px; align-items: center; font-size: 13px; pointer-events: auto; }
