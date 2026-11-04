@@ -86,10 +86,10 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 	// Skinned character: the four clips play, the attack carries root motion forward (+Z).
 	const clips = await run<string[]>(page, 'return HSGame.assets.clips;');
 	expect([...clips].sort()).toEqual([
-		'AN_human_attack',
-		'AN_human_death',
-		'AN_human_idle',
-		'AN_human_run',
+		'AN_hero_attack',
+		'AN_hero_death',
+		'AN_hero_idle',
+		'AN_hero_run',
 	]);
 	await page.locator('[data-clip="attack"]').click();
 	await expect

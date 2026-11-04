@@ -180,7 +180,7 @@
   const CH = { res: null, gray: /[?&]gray\b/.test(location.search) };
   const CH_SETS = { en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace } };
   const CH_SCALE = { en_thrall: 1, en_brute: 1.45 };
-  const SWING = 0.47; // s: švih v klipu AN_human_attack (snímek 14 z 27)
+  const SWING = 0.47; // s: švih v klipu AN_hero_attack (snímek 14 z 27)
   function charVisual(parent, set, scale) {
     const holder = new pc.Entity(); holder.setLocalEulerAngles(0, 90, 0); if (scale) holder.setLocalScale(scale, scale, scale); parent.addChild(holder); // model hledí na +Z, simulace na +X
     const e = CH.res.instantiateRenderEntity(); holder.addChild(e);
@@ -188,7 +188,7 @@
     const mis = []; lods.forEach((n) => { for (const r of n.findComponents('render')) for (const mi of r.meshInstances) mis.push({ mi, base: (set && set[mi.material.name]) || mi.material }); });
     for (const m of mis) m.mi.material = m.base;
     e.addComponent('anim', { activate: true });
-    for (const a of CH.res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_human_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
+    for (const a of CH.res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_hero_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
     const c = { e, holder, lods, mis, bone: e.findByName('root'), clip: null, key: null, lod: -1, mat: null };
     charClip(c, 'idle', 1, 0); return c;
   }
@@ -309,10 +309,10 @@
   /* ---------- test asset pipeline: GLB z manifestu, LOD podle vzdálenosti, sockety ---------- */
   const AS = { root: null, items: [], lod: 0, lodAuto: true, loaded: 0, error: null, char: null, res: null, clip: null, crowd: [], measure: null, crowdRes: null };
   const CLIPS = ['idle', 'run', 'attack', 'death'];
-  // animace z GLB (AN_human_<akce>) do anim komponenty; útok a smrt se neopakují, po útoku zpět do stání
+  // animace z GLB (AN_hero_<akce>) do anim komponenty; útok a smrt se neopakují, po útoku zpět do stání
   function setupAnim(e, res, first, speed) {
     e.addComponent('anim', { activate: true, speed: speed || 1 });
-    for (const a of res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_human_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
+    for (const a of res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_hero_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
     playClip(e, first, 0);
   }
   function playClip(e, name, blend) {

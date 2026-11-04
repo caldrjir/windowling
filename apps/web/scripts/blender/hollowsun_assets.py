@@ -180,8 +180,8 @@ for _s, _x in (("L", 1), ("R", -1)):
 
 
 def rig():
-    data = bpy.data.armatures.new("RIG_human")
-    arm = bpy.data.objects.new("RIG_human", data)
+    data = bpy.data.armatures.new("RIG_hero")
+    arm = bpy.data.objects.new("RIG_hero", data)
     bpy.context.collection.objects.link(arm)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.mode_set(mode="EDIT")
@@ -197,8 +197,8 @@ def rig():
 
 
 def clip(arm, name, frames, keys):
-    """Action AN_human_<name>: keys = {bone: [(frame, (rx, ry, rz)) or (frame, rot, loc)]}."""
-    act = bpy.data.actions.new("AN_human_" + name)
+    """Action AN_hero_<name>: keys = {bone: [(frame, (rx, ry, rz)) or (frame, rot, loc)]}."""
+    act = bpy.data.actions.new("AN_hero_" + name)
     act.use_fake_user = True
     arm.animation_data_create().action = act
     for bone, seq in keys.items():
@@ -321,7 +321,7 @@ def knight():
     hand.parent_bone = "hand_R"
     anims = clips(arm)
     meta = {"height": 1.78, "trisBudget": [25000, 9000, 3000], "source": "blender",
-            "rig": {"name": "RIG_human", "bones": len(BONES)}, "clips": anims}
+            "rig": {"name": "RIG_hero", "bones": len(BONES)}, "clips": anims}
     return export("CH_ak_body", lods, [steel, ember], [hand], meta, rig=arm)
 
 

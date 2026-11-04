@@ -206,7 +206,7 @@ const COMPRESSION = ['EXT_meshopt_compression', 'KHR_mesh_quantization'];
 // Bible: one shared humanoid skeleton (D16) with at most 65 bones; clips AN_<rig>_<action> at 30 FPS,
 // root motion on attacks (the character faces +Z), loops that close seamlessly.
 const MAX_BONES = 65;
-const CLIP_RE = /^AN_human_[a-z]+$/;
+const CLIP_RE = /^AN_hero_[a-z]+$/;
 const REQUIRED_CLIPS = ['attack', 'death', 'idle', 'run'];
 const LOOPS = ['idle', 'run'];
 const FPS = 30;
@@ -332,7 +332,7 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 			expect(anims.map((a) => a.name).sort()).toEqual(
 				(asset.meta.clips ?? []).map((c) => c.name).sort(),
 			);
-			expect(anims.map((a) => a.name.replace('AN_human_', '')).sort()).toEqual(REQUIRED_CLIPS);
+			expect(anims.map((a) => a.name.replace('AN_hero_', '')).sort()).toEqual(REQUIRED_CLIPS);
 			/** Channel values per keyframe of a joint's path in a clip (undefined when not animated). */
 			const track = (a: (typeof anims)[number], bone: string, path: string) => {
 				const ch = a.channels.find(
@@ -355,7 +355,7 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 					for (let i = 1; i < t.length; i++)
 						expect(at(t, i) - at(t, i - 1)).toBeGreaterThanOrEqual(1 / FPS - 1e-3);
 				}
-				const action = a.name.replace('AN_human_', '');
+				const action = a.name.replace('AN_hero_', '');
 				if (LOOPS.includes(action))
 					for (const ch of a.channels) {
 						const s = at(a.samplers, ch.sampler);
