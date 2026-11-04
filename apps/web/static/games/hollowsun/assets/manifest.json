@@ -1,10 +1,10 @@
 {
-	"generated": "scripts/hollowsun-assets.mjs",
+	"generated": "scripts/blender/hollowsun_assets.py (Blender 5.2.3 LTS)",
 	"assets": [
 		{
 			"id": "DM_crypt_rS_X_a",
 			"file": "DM_crypt_rS_X_a.glb",
-			"bytes": 54172,
+			"bytes": 84440,
 			"materials": [
 				"M_crypt_stone",
 				"M_crypt_trim"
@@ -12,7 +12,7 @@
 			"parts": [
 				{
 					"name": "DM_crypt_rS_X_a",
-					"tris": 684
+					"tris": 1148
 				}
 			],
 			"sockets": [
@@ -29,16 +29,17 @@
 				"cellSize": 2,
 				"size": [
 					10,
-					4,
+					4.0,
 					10
 				],
-				"trisBudget": 3000
+				"trisBudget": 3000,
+				"source": "blender"
 			}
 		},
 		{
 			"id": "CH_ak_body",
 			"file": "CH_ak_body.glb",
-			"bytes": 624464,
+			"bytes": 329164,
 			"materials": [
 				"M_ak_steel",
 				"M_ak_ember"
@@ -46,15 +47,15 @@
 			"parts": [
 				{
 					"name": "CH_ak_body_LOD0",
-					"tris": 10496
+					"tris": 3456
 				},
 				{
 					"name": "CH_ak_body_LOD1",
-					"tris": 2016
+					"tris": 760
 				},
 				{
 					"name": "CH_ak_body_LOD2",
-					"tris": 560
+					"tris": 206
 				}
 			],
 			"sockets": [
@@ -66,7 +67,8 @@
 					25000,
 					9000,
 					3000
-				]
+				],
+				"source": "blender"
 			}
 		}
 	]

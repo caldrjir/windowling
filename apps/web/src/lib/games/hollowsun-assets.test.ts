@@ -15,6 +15,7 @@ interface Accessor {
 	componentType: number;
 	count: number;
 	type: string;
+	normalized?: boolean;
 	min?: number[];
 	max?: number[];
 }
@@ -71,15 +72,26 @@ function read(g: { json: Gltf; bin: DataView }, i: number): number[] {
 	const v = at(g.json.bufferViews, a.bufferView);
 	const comps = a.type === 'VEC3' ? 3 : a.type === 'VEC4' ? 4 : 1;
 	const o = v.byteOffset;
+	// float, uint32, uint16, uint8; normalized integers map to 0..1 (glTF 2.0, accessor.normalized)
+	const size = { 5126: 4, 5125: 4, 5123: 2, 5121: 1 }[a.componentType] ?? 0;
+	const get = (off: number): number =>
+		a.componentType === 5126
+			? g.bin.getFloat32(off, true)
+			: a.componentType === 5125
+				? g.bin.getUint32(off, true)
+				: a.componentType === 5123
+					? g.bin.getUint16(off, true)
+					: g.bin.getUint8(off);
+	const scale = a.normalized
+		? a.componentType === 5123
+			? 65535
+			: a.componentType === 5121
+				? 255
+				: 1
+		: 1;
+	expect(size, `component type ${a.componentType}`).toBeGreaterThan(0);
 	const out: number[] = [];
-	for (let k = 0; k < a.count * comps; k++)
-		out.push(
-			a.componentType === 5126
-				? g.bin.getFloat32(o + k * 4, true)
-				: a.componentType === 5125
-					? g.bin.getUint32(o + k * 4, true)
-					: g.bin.getUint16(o + k * 2, true),
-		);
+	for (let k = 0; k < a.count * comps; k++) out.push(get(o + k * size) / scale);
 	return out;
 }
 
