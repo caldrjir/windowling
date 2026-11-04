@@ -244,7 +244,15 @@ only as KTX2 via `KHR_texture_basisu`), naming, triangle budget, at most 2 mater
 LOD0–2, footprint on the 2 m grid (through the dequantizing node transform), door sockets,
 vertex-colour AO and glTF integrity. The P0 assets have no textures yet; the npm gltfpack cannot
 encode KTX2 (the native gltfpack build with Basis Universal can, `-tc`), and the game will also
-need the Basis transcoder for them. Skinned characters are not covered yet.
+need the Basis transcoder for them.
+`CH_ak_body` is skinned to the shared humanoid rig `RIG_human` (Bible D16: one skeleton for every
+class, at most 65 bones; 20 now, rigid placeholder skinning) and carries four placeholder clips
+`AN_human_idle|run|attack|death` sampled at 30 FPS; the attack has root motion (0.6 m forward on
+the `root` bone), the loops stay in place and close seamlessly. The weapon socket `socket_hand_R`
+is a child of the `hand_R` joint. The "Asset test" mode plays the clips through PlayCanvas' anim
+component (keys 1–4) and has a crowd test: 50 skinned, animated characters (LOD1) for 5 s with the
+average FPS and p95 frame time. The validator checks the skin (bone budget, complete weights, valid
+joints, one skin for all LODs), the clip names, 30 FPS sampling, seamless loops and root motion.
 
 ## Vesnička - `static/games/vesnicka`
 

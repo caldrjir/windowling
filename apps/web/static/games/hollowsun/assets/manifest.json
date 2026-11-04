@@ -44,7 +44,7 @@
 		{
 			"id": "CH_ak_body",
 			"file": "CH_ak_body.glb",
-			"bytes": 72944,
+			"bytes": 99928,
 			"materials": [
 				"M_ak_steel",
 				"M_ak_ember"
@@ -52,7 +52,7 @@
 			"parts": [
 				{
 					"name": "CH_ak_body_LOD0",
-					"tris": 3456
+					"tris": 3460
 				},
 				{
 					"name": "CH_ak_body_LOD1",
@@ -60,7 +60,7 @@
 				},
 				{
 					"name": "CH_ak_body_LOD2",
-					"tris": 206
+					"tris": 242
 				}
 			],
 			"sockets": [
@@ -73,9 +73,35 @@
 					9000,
 					3000
 				],
-				"source": "blender"
+				"source": "blender",
+				"rig": {
+					"name": "RIG_human",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_human_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_human_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_human_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_human_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
 			},
-			"rawBytes": 329164,
+			"rawBytes": 555188,
 			"compression": [
 				"EXT_meshopt_compression",
 				"KHR_mesh_quantization"

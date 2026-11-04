@@ -47,6 +47,7 @@ interface Primitive {
 interface GltfNode {
 	name?: string;
 	mesh?: number;
+	skin?: number;
 	children?: number[];
 	translation?: number[];
 	rotation?: number[];
@@ -60,6 +61,12 @@ interface Gltf {
 	materials: { name: string }[];
 	accessors: Accessor[];
 	bufferViews: BufferView[];
+	skins?: { joints: number[]; inverseBindMatrices: number }[];
+	animations?: {
+		name: string;
+		channels: { sampler: number; target: { node: number; path: string } }[];
+		samplers: { input: number; output: number }[];
+	}[];
 	images?: { mimeType?: string }[];
 	textures?: { source?: number; extensions?: { KHR_texture_basisu?: { source: number } } }[];
 }
@@ -72,7 +79,13 @@ interface ManifestAsset {
 	materials: string[];
 	parts: { name: string; tris: number }[];
 	sockets: string[];
-	meta: { cells?: number[]; cellSize?: number; trisBudget: number | number[] };
+	meta: {
+		cells?: number[];
+		cellSize?: number;
+		trisBudget: number | number[];
+		rig?: { name: string; bones: number };
+		clips?: { name: string; frames: number; seconds: number }[];
+	};
 }
 /** A mesh instance with its node transform (translation + uniform scale; gltfpack dequantization). */
 interface Placed {
@@ -138,7 +151,7 @@ class Glb {
 		const a = at(this.json.accessors, i);
 		const v = at(this.json.bufferViews, a.bufferView);
 		const dv = this.view(a.bufferView);
-		const comps = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 }[a.type] ?? 0;
+		const comps = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }[a.type] ?? 0;
 		const types: Record<number, [number, (o: number) => number, number]> = {
 			5120: [1, (o) => dv.getInt8(o), 127],
 			5121: [1, (o) => dv.getUint8(o), 255],
@@ -190,6 +203,13 @@ const MODULE_RE = /^DM_(crypt|abbey|glass|gloam|sundial)_r(S|M|L)_(D|I|L|T|X)_[a
 const CHAR_RE = /^CH_(ak|rb|gc|ns)_[a-z]+_LOD[0-2]$/;
 const DOORS: Record<string, number> = { D: 1, I: 2, L: 2, T: 3, X: 4 };
 const COMPRESSION = ['EXT_meshopt_compression', 'KHR_mesh_quantization'];
+// Bible: one shared humanoid skeleton (D16) with at most 65 bones; clips AN_<rig>_<action> at 30 FPS,
+// root motion on attacks (the character faces +Z), loops that close seamlessly.
+const MAX_BONES = 65;
+const CLIP_RE = /^AN_human_[a-z]+$/;
+const REQUIRED_CLIPS = ['attack', 'death', 'idle', 'run'];
+const LOOPS = ['idle', 'run'];
+const FPS = 30;
 
 describe.each(manifest.assets)('asset $id', (asset) => {
 	const buf = new Uint8Array(readFileSync(dir + asset.file));
@@ -270,6 +290,90 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 				expect(Math.min(...col.filter((_, i) => i % 4 === 0))).toBeLessThan(1); // AO darkens something
 			}
 	});
+
+	it.runIf(asset.id.startsWith('CH_'))(
+		'is skinned to the shared rig within the bone budget',
+		() => {
+			const skins = g.json.skins ?? [];
+			expect(skins).toHaveLength(1);
+			const skin = at(skins, 0);
+			const names = skin.joints.map((j) => at(g.json.nodes, j).name);
+			expect(skin.joints.length).toBeLessThanOrEqual(MAX_BONES);
+			expect(skin.joints.length).toBe(asset.meta.rig?.bones);
+			expect(new Set(names).size).toBe(names.length);
+			const ibm = at(g.json.accessors, skin.inverseBindMatrices);
+			expect([ibm.type, ibm.count]).toEqual(['MAT4', skin.joints.length]);
+			// every LOD is skinned to the same skeleton; weights are complete and joints valid
+			for (const n of g.json.nodes) if (n.mesh !== undefined) expect(n.skin).toBe(0);
+			for (const m of g.json.meshes)
+				for (const p of m.primitives) {
+					const joints = g.read(attr(p, 'JOINTS_0'));
+					const weights = g.read(attr(p, 'WEIGHTS_0'));
+					expect(Math.max(...joints)).toBeLessThan(skin.joints.length);
+					for (let i = 0; i < weights.length; i += 4) {
+						const sum =
+							at(weights, i) + at(weights, i + 1) + at(weights, i + 2) + at(weights, i + 3);
+						expect(Math.abs(sum - 1)).toBeLessThan(0.01);
+					}
+				}
+			// the weapon socket follows the right hand
+			const sock = g.json.nodes.findIndex((n) => n.name === 'socket_hand_R');
+			const parent = g.json.nodes.find((n) => n.children?.includes(sock));
+			expect(parent?.name).toBe('hand_R');
+			expect(names).toContain('hand_R');
+		},
+	);
+
+	it.runIf(asset.id.startsWith('CH_'))(
+		'has the animation clips: names, 30 FPS, loops, root motion',
+		() => {
+			const anims = g.json.animations ?? [];
+			const joints = new Set(at(g.json.skins, 0).joints);
+			expect(anims.map((a) => a.name).sort()).toEqual(
+				(asset.meta.clips ?? []).map((c) => c.name).sort(),
+			);
+			expect(anims.map((a) => a.name.replace('AN_human_', '')).sort()).toEqual(REQUIRED_CLIPS);
+			/** Channel values per keyframe of a joint's path in a clip (undefined when not animated). */
+			const track = (a: (typeof anims)[number], bone: string, path: string) => {
+				const ch = a.channels.find(
+					(c) => at(g.json.nodes, c.target.node).name === bone && c.target.path === path,
+				);
+				if (!ch) return undefined;
+				const s = at(a.samplers, ch.sampler);
+				const vals = g.read(s.output);
+				const n = at(g.json.accessors, s.output).count;
+				const w = vals.length / n;
+				return Array.from({ length: n }, (_, i) => vals.slice(i * w, i * w + w));
+			};
+			for (const a of anims) {
+				expect(a.name).toMatch(CLIP_RE);
+				const clip = asset.meta.clips?.find((c) => c.name === a.name);
+				for (const ch of a.channels) expect(joints.has(ch.target.node), a.name).toBe(true);
+				for (const s of a.samplers) {
+					const t = g.read(s.input);
+					expect(Math.max(...t)).toBeLessThanOrEqual((clip?.seconds ?? 0) + 1e-3);
+					for (let i = 1; i < t.length; i++)
+						expect(at(t, i) - at(t, i - 1)).toBeGreaterThanOrEqual(1 / FPS - 1e-3);
+				}
+				const action = a.name.replace('AN_human_', '');
+				if (LOOPS.includes(action))
+					for (const ch of a.channels) {
+						const s = at(a.samplers, ch.sampler);
+						const vals = g.read(s.output);
+						const w = vals.length / at(g.json.accessors, s.output).count;
+						const first = vals.slice(0, w),
+							last = vals.slice(-w);
+						first.forEach((v, k) => expect(Math.abs(v - at(last, k)), a.name).toBeLessThan(2e-3));
+					}
+				// root motion only where the Bible asks for it: loops stay in place
+				const root = track(a, 'root', 'translation') ?? [[0, 0, 0]];
+				const moved = (k: number) => at(at(root, root.length - 1), k) - at(at(root, 0), k);
+				if (action === 'attack') expect(moved(2)).toBeGreaterThan(0.3);
+				if (LOOPS.includes(action))
+					for (const v of root) expect(Math.hypot(at(v, 0), at(v, 2))).toBeLessThan(1e-3);
+			}
+		},
+	);
 
 	it.runIf(asset.id.startsWith('DM_'))('fits its grid footprint and has the door sockets', () => {
 		const cells = asset.meta.cells ?? [0, 0];

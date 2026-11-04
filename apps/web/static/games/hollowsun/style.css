@@ -53,3 +53,6 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #assetPanel h2 { margin: 0; font: 600 22px/1.1 var(--f-display); color: var(--gold); }
 #assetPanel .muted { color: var(--muted); font-size: 12px; }
 .opt { display: flex; gap: 10px; align-items: center; font-size: 13px; pointer-events: auto; }
+#assetPanel .clips .btn { font-size: 14px; padding: 7px 10px; }
+#assetPanel .btn.on { color: var(--gold); border-color: var(--gold); }
+#assetPanel .btn:disabled { opacity: 0.6; cursor: default; }

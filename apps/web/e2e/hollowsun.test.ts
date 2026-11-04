@@ -73,5 +73,34 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 	);
 	expect(assets.error).toBeNull();
 	expect(assets.items.map((i) => i.id)).toEqual(['DM_crypt_rS_X_a', 'CH_ak_body']);
+
+	// Skinned character: the four clips play, the attack carries root motion forward (+Z).
+	const clips = await run<string[]>(page, 'return HSGame.assets.clips;');
+	expect([...clips].sort()).toEqual([
+		'AN_human_attack',
+		'AN_human_death',
+		'AN_human_idle',
+		'AN_human_run',
+	]);
+	await page.locator('[data-clip="attack"]').click();
+	await expect
+		.poll(
+			() =>
+				run<number>(
+					page,
+					"return pc.Application.getApplication().root.findByName('root').getPosition().z;",
+				),
+			{ timeout: 10_000, intervals: [50] },
+		)
+		.toBeGreaterThan(0.3);
+	await expect.poll(() => run<string>(page, 'return HSGame.assets.clip;')).toBe('idle');
+
+	// Crowd of 50 skinned, animated characters renders and gets measured.
+	await page.locator('#b-as-crowd').click();
+	await expect
+		.poll(() => run<number>(page, 'return (HSGame.assets.crowd || { count: 0 }).count;'), {
+			timeout: 30_000,
+		})
+		.toBe(50);
 	expect(errors).toEqual([]);
 });
