@@ -5,7 +5,7 @@
   const HS = root.HS;
   const TICK = 1 / 30;
   const ARENA = 18; // poloměr arény (m)
-  const PLAYER_R = 0.5, PLAYER_SPEED = 5.2;
+  const PLAYER_R = 0.5, PLAYER_SPEED = 5.2, PICK_R = 1.3;
   const DODGE = { dist: 5.5, time: 0.3, iframes: 0.25, cd: 0.9 };
   const WINDUP = 0.4; // zásah přichází po 40 % času akce (Casting Lifecycle v Bible)
   const ER = { en_thrall: 0.45, en_brute: 0.95 };
@@ -20,17 +20,100 @@
   const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return Math.abs(d); };
   const PILLARS = [[-7, -6, 1.1], [7, -6, 1.1], [-7, 6, 1.1], [7, 6, 1.1], [0, -11, 1.4], [0, 11, 1.4]];
 
+  /* ---------- výbava a loot (P1) ---------- */
+  // Sloty výbavy podle Bible (G.SLOTS); prsten má dva sloty. Inventář má pevnou kapacitu.
+  const EQ_SLOTS = ['main', 'off', 'helm', 'chest', 'gloves', 'boots', 'belt', 'amulet', 'ring1', 'ring2', 'relic'];
+  const INV_MAX = 40;
+  const baseOf = (it) => HS.get(it.base);
+  const equipped = (s) => EQ_SLOTS.map((k) => s.gear.eq[k]).filter(Boolean);
+  function defaultGear(L) { return { eq: { main: HS.starterGear(L)[0] }, inv: [] }; }
+  // staty postavy a tabulky zásahů skillů z aktuální výbavy; poměr HP zůstává
+  function refreshChar(s) {
+    const ch = HS.calcChar(s.L, equipped(s)); s.ch = ch;
+    for (const id in s.skills) { const slot = s.skills[id]; slot.hit = {}; for (const e of HS.D.enemies) slot.hit[e.id] = HS.computeHit(slot.sk, slot.sl, ch, HS.refEnemy(s.L, e.id)); }
+    const p = s.player; if (p) { const k = p.hpMax ? p.hp / p.hpMax : 1; p.hpMax = ch.S.hp; p.hp = Math.max(1, Math.round(ch.S.hp * k)); p.resMax = ch.S.res; }
+  }
+  // požadavky na nasazení: level tieru, atributy báze, třída (G.BASES.cls)
+  function canEquip(s, it) {
+    const b = baseOf(it); if (!b) return 'base';
+    if (b.cls && !b.cls.includes(HS.D.cls.id)) return 'class';
+    if (HS.B.tierReqLevel[it.tier || 0] > s.L) return 'level';
+    for (const k in b.req || {}) if ((s.ch.A[k] || 0) < b.req[k]) return k;
+    return null;
+  }
+  function slotFor(s, it) {
+    const b = baseOf(it); if (b.slot !== 'ring') return b.slot;
+    return !s.gear.eq.ring1 ? 'ring1' : !s.gear.eq.ring2 ? 'ring2' : 'ring1';
+  }
+  // příkazy inventáře: { equip: index } | { unequip: slot } | { discard: index }; platí okamžitě (i v pauze)
+  function invCommand(s, cmd) {
+    const g = s.gear; const ev = (t, o) => { s.events.push(Object.assign({ t }, o)); return false; };
+    if (cmd.equip != null) {
+      const it = g.inv[cmd.equip]; if (!it) return false;
+      const why = canEquip(s, it); if (why) return ev('cantequip', { why, item: it });
+      const slot = slotFor(s, it); const b = baseOf(it); const back = [];
+      if (slot === 'off' && g.eq.main && baseOf(g.eq.main).hand === '2h') return ev('cantequip', { why: 'twohand', item: it });
+      if (g.eq[slot]) back.push(g.eq[slot]);
+      if (slot === 'main' && b.hand === '2h' && g.eq.off) back.push(g.eq.off);
+      if (g.inv.length - 1 + back.length > INV_MAX) return ev('invfull');
+      g.inv.splice(cmd.equip, 1); g.eq[slot] = it; if (slot === 'main' && b.hand === '2h') delete g.eq.off;
+      g.inv.push(...back); refreshChar(s); s.events.push({ t: 'equip', slot, item: it }); return true;
+    }
+    if (cmd.unequip) {
+      const it = g.eq[cmd.unequip]; if (!it || cmd.unequip === 'main') return false; // bez zbraně by Ash Knight nemohl útočit
+      if (g.inv.length >= INV_MAX) return ev('invfull');
+      delete g.eq[cmd.unequip]; g.inv.push(it); refreshChar(s); s.events.push({ t: 'unequip', slot: cmd.unequip }); return true;
+    }
+    if (cmd.discard != null) { const it = g.inv.splice(cmd.discard, 1)[0]; if (it) s.events.push({ t: 'discard', item: it }); return !!it; }
+    return false;
+  }
+  // drop z nepřítele: šance podle typu (BAL.dropChance), rarita G.rollRarity, pity pro unikát (lootSim v Bible),
+  // předmět G.genItem s item levelem = level monstra a smart lootem pro třídu. Vlastní RNG na každý drop.
+  function rollDrop(s, e) {
+    if (!s.loot) return;
+    const r = HS.rng(s.seed + '#loot#' + s.lootN++); const type = e.def.lt === 'lt_elite' ? 'elite' : e.def.lt === 'lt_rare' ? 'rare' : 'normal';
+    if (r() >= HS.B.dropChance[type]) return;
+    let rar = HS.rollRarity(r, 0, type); s.sinceU++;
+    if (rar !== 'unique' && s.sinceU >= HS.B.pityUnique && rar === 'rare') rar = 'unique';
+    if (rar === 'unique') s.sinceU = 0;
+    const item = HS.genItem(r, s.L, HS.D.cls.id, rar);
+    const d = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(d);
+    s.events.push({ t: 'drop', id: d.id, x: d.x, z: d.z, rar: item.rar });
+  }
+  // uložená výbava: jen známé báze a sloty, nejvýš INV_MAX předmětů; bez zbraně výchozí palcát
+  function sanitizeGear(g, L) {
+    const ok = (it) => it && typeof it === 'object' && HS.get(it.base) && (!it.unique || HS.get(it.unique)) && (it.affixes || []).every((a) => HS.get(a[0]));
+    const out = { eq: {}, inv: [] }; if (!g || typeof g !== 'object') return defaultGear(L);
+    for (const k of EQ_SLOTS) if (g.eq && ok(g.eq[k])) out.eq[k] = JSON.parse(JSON.stringify(g.eq[k]));
+    for (const it of (Array.isArray(g.inv) ? g.inv : []).slice(0, INV_MAX)) if (ok(it)) out.inv.push(JSON.parse(JSON.stringify(it)));
+    if (!out.eq.main) out.eq.main = HS.starterGear(L)[0];
+    return out;
+  }
+  // save hollowsun.save.v1: verze 1 (P0) → 2 (P1: výbava, inventář, pity čítač unikátů)
+  function migrateSave(save) {
+    const s = Object.assign({}, save); const v = Number(s.v) || 1;
+    if (v < 2) { s.gear = null; s.sinceU = 0; }
+    s.v = 2; return s;
+  }
+  function pickUp(s, d) {
+    if (s.gear.inv.length >= INV_MAX) { s.events.push({ t: 'invfull' }); return false; }
+    s.drops = s.drops.filter((x) => x !== d); s.gear.inv.push(d.item); s.events.push({ t: 'pickup', id: d.id, item: d.item }); return true;
+  }
+
   function create(opts) {
     opts = opts || {};
     const L = opts.level || HS.D.level;
-    const ch = HS.calcChar(L);
     const skills = {};
-    for (const sk of HS.D.skills) { const sl = HS.F.maxSkillLevel(L, sk.req); skills[sk.id] = { sk, sl, cd: 0, hit: {} }; for (const e of HS.D.enemies) skills[sk.id].hit[e.id] = HS.computeHit(sk, sl, ch, HS.refEnemy(L, e.id)); }
+    for (const sk of HS.D.skills) skills[sk.id] = { sk, sl: HS.F.maxSkillLevel(L, sk.req), cd: 0, hit: {} };
+    const gear = sanitizeGear(opts.gear, L);
     const s = {
-      L, ch, skills, rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
-      player: { x: 0, z: 0, face: 0, hp: ch.S.hp, hpMax: ch.S.hp, res: 30, resMax: ch.S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, invuln: !!opts.invuln, dmgTaken: 0 },
-      enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {} },
+      L, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
+      loot: opts.loot != null ? !!opts.loot : (opts.mode || 'arena') === 'arena', lootN: 0, sinceU: opts.sinceU || 0, drops: [],
+      player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
+    refreshChar(s);
+    const S = s.ch.S;
+    s.player = { x: 0, z: 0, face: 0, hp: S.hp, hpMax: S.hp, res: 30, resMax: S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, pick: null, invuln: !!opts.invuln, dmgTaken: 0 };
     if (s.mode === 'bench') spawnBench(s, opts.benchCount || 50); else nextWave(s);
     return s;
   }
@@ -68,7 +151,7 @@
     if (e.hp <= 0) kill(s, e);
     return true;
   }
-  function kill(s, e) { if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type }); }
+  function kill(s, e) { if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type }); rollDrop(s, e); }
 
   function startSkill(s, id, aim) {
     const p = s.player; const slot = s.skills[id]; if (!slot || p.act || p.dodge || p.stun > 0) return false;
@@ -104,6 +187,12 @@
     p.dodgeCd = Math.max(0, p.dodgeCd - dt); p.stun = Math.max(0, p.stun - dt);
     p.hp = Math.min(p.hpMax, p.hp + s.ch.S.hpRegen * dt);
     if (p.hp <= 0) return;
+    // sebrání předmětu: cíl se zadá příkazem a zvedne se, jakmile je hráč blízko (i během úderu)
+    if (inp.pickup != null) { const d = s.drops.find((x) => x.id === inp.pickup); if (d) { p.pick = d.id; p.moveTo = [d.x, d.z]; } }
+    if (p.pick != null) {
+      const d = s.drops.find((x) => x.id === p.pick);
+      if (!d) p.pick = null; else if (len(d.x - p.x, d.z - p.z) <= PICK_R) { p.pick = null; p.moveTo = null; pickUp(s, d); s.stats.items++; }
+    }
     if (inp.dodge && !p.dodge && p.dodgeCd <= 0 && p.stun <= 0) {
       let dx = inp.move ? inp.move[0] : Math.cos(p.face), dz = inp.move ? inp.move[1] : Math.sin(p.face); if (!dx && !dz) { dx = Math.cos(p.face); dz = Math.sin(p.face); }
       const d = len(dx, dz) || 1; p.dodge = { t: 0, dx: dx / d, dz: dz / d }; p.dodgeCd = DODGE.cd; p.act = null; p.moveTo = null; s.events.push({ t: 'dodge', x: p.x, z: p.z });
@@ -127,11 +216,11 @@
       return;
     }
     let mx = 0, mz = 0;
-    if (inp.move && (inp.move[0] || inp.move[1])) { mx = inp.move[0]; mz = inp.move[1]; p.moveTo = null; }
-    else if (inp.moveTo) p.moveTo = inp.moveTo.slice();
+    if (inp.move && (inp.move[0] || inp.move[1])) { mx = inp.move[0]; mz = inp.move[1]; p.moveTo = null; p.pick = null; }
+    else if (inp.moveTo) { p.moveTo = inp.moveTo.slice(); p.pick = null; }
     if (!mx && !mz && p.moveTo) { const dx = p.moveTo[0] - p.x, dz = p.moveTo[1] - p.z; const d = len(dx, dz); if (d < 0.15) p.moveTo = null; else { mx = dx / d; mz = dz / d; } }
     const d = len(mx, mz);
-    if (d > 0) { mx /= d; mz /= d; move(s, p, mx * PLAYER_SPEED * dt, mz * PLAYER_SPEED * dt, PLAYER_R); if (!inp.aim) p.face = Math.atan2(mz, mx); }
+    if (d > 0) { mx /= d; mz /= d; const v = PLAYER_SPEED * s.ch.S.ms; move(s, p, mx * v * dt, mz * v * dt, PLAYER_R); if (!inp.aim) p.face = Math.atan2(mz, mx); }
     if (inp.aim) p.face = Math.atan2(inp.aim[1] - p.z, inp.aim[0] - p.x);
   }
   function move(s, o, dx, dz, r) {
@@ -193,6 +282,7 @@
     updateEnemies(s);
     if (s.enemies.length > 300) s.enemies = s.enemies.filter((e) => !e.dead);
     if (s.mode === 'arena' && !s.over && s.enemies.every((e) => e.dead)) { s.enemies = []; nextWave(s); }
+    if (s.drops.length > 60) s.drops.splice(0, s.drops.length - 60);
     if (s.mode === 'bench' && s.enemies.every((e) => e.dead)) { s.enemies = []; spawnBench(s, 50); }
     return s;
   }
@@ -210,5 +300,5 @@
     else inp.move = [best.x - p.x, best.z - p.z];
     return inp;
   }
-  root.HSim = { TICK, ARENA, PLAYER_R, DODGE, create, step, autopilot, rng };
+  root.HSim = { TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, migrateSave };
 })(typeof window !== 'undefined' ? window : globalThis);

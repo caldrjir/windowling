@@ -234,6 +234,23 @@ hit-stop, HUD, a 20 s benchmark with 50 enemies). Save `hollowsun.save.v1`, stat
 exported from the Bible (`hollowsun.fixtures.json`) and runs the simulation headless;
 `e2e/hollowsun.test.ts` drives the real page in a software WebGL renderer.
 
+Loot and inventory (P1): `data.js` also carries the Bible's item data (`loot`: slots, rarities,
+bases, affixes with tiers, uniques, loot tables) and loot constants (`rarW`, `dropChance`,
+`smartLoot`, `pityUnique`). `core.js` ports the Bible's `G.rng`, `G.rollRarity`, `G.genItem`,
+`G.itemMods` and `G.weaponOf`, and `calcChar`/`computeHit` take the equipped items; with the starter
+mace they give exactly the P0 numbers. In `sim.js` a killed enemy rolls a drop with its own seeded
+RNG (`seed#loot#n`), so drops are deterministic. The drop uses the enemy's drop chance and rarity
+weights, the unique pity counter, and an item level equal to the monster level, with smart loot for
+the Ash Knight. The benchmark and the input test drop nothing. A drop is picked up with the
+`pickup` command when the player is close. `invCommand` equips, takes off or discards; it checks
+class, tier level, attribute requirements, two-handed weapons and the two ring slots, then
+recomputes the character. The inventory (I) pauses the game and shows a tooltip comparing the item
+with what is equipped. The save moves from version 1 to 2 (`gear`, `sinceU`) via
+`HSim.migrateSave`; unknown items are dropped on load (`sanitizeGear`).
+`src/lib/games/hollowsun-loot.test.ts` checks item generation, item stats and the character with
+gear against `hollowsun.loot.fixtures.json` (exported from the Bible), plus drops, equipping and the
+save migration.
+
 Asset pipeline (P0): `pnpm --filter @windowling/web hollowsun:assets` runs
 `scripts/blender/hollowsun_assets.py` in Blender without a window (`scripts/hollowsun-assets.mjs`
 finds it through `BLENDER`, the PATH or the default install folders) and exports raw GLB files:

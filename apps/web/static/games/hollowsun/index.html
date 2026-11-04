@@ -16,8 +16,9 @@
 <body>
 <canvas id="gl"></canvas>
 <div id="fx"></div>
+<div id="drops"></div>
 <div id="hud" hidden>
-  <div id="topbar"><span id="wave"></span><span id="kills"></span><span id="fps" hidden></span></div>
+  <div id="topbar"><span id="wave"></span><span id="kills"></span><span id="fps" hidden></span><button id="b-inv" class="invbtn" type="button"></button></div>
   <div id="orbs">
     <div class="bar hp"><i id="b-hp"></i><span id="t-hp"></span></div>
     <div class="bar res"><i id="b-res"></i><span id="t-res"></span></div>
@@ -26,6 +27,9 @@
   <div id="hint"></div>
 </div>
 <div id="assetPanel" hidden></div>
+<div id="inv" hidden></div>
+<div id="tip" hidden></div>
+<div id="toast" hidden></div>
 <div id="screen"></div>
 <script src="vendor/playcanvas.min.js"></script>
 <script src="vendor/meshopt_decoder.js"></script>

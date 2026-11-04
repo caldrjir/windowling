@@ -141,3 +141,53 @@ test('HOLLOW SUN: input latency test and combat rating', async ({ page }, info) 
 	expect(feel.at(-1)?.a).toEqual([4, 4, 4, 4]);
 	expect(errors).toEqual([]);
 });
+
+test('HOLLOW SUN: loot drops, pick-up and the inventory', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
+	test.setTimeout(120_000);
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto('/games/hollowsun/index.html');
+	await page.locator('#b-arena').click();
+	await expect(page.locator('#hud')).toBeVisible();
+	// Fight on autopilot (invulnerable) until something drops; drop labels appear on the ground.
+	const drops = await run<number>(
+		page,
+		`HSGame.state.player.invuln = true;
+		for (let i = 0; i < 40 && !HSGame.state.drops.length; i++) HSGame.step(30 * 10, true);
+		return HSGame.state.drops.length;`,
+	);
+	expect(drops).toBeGreaterThan(0);
+	await expect(page.locator('.drop').first()).toBeVisible();
+	// Pick everything up through the simulation's pickup command, then save carries the bag.
+	const bag = await run<number>(
+		page,
+		`for (const d of HSGame.state.drops.slice()) { const p = HSGame.state.player; p.x = d.x; p.z = d.z; HSGame.step(1, false, { pickup: d.id }); }
+		return HSGame.gear.inv.length;`,
+	);
+	expect(bag).toBeGreaterThan(0);
+	const saved = await run<{ v: number; gear: { inv: unknown[] } }>(
+		page,
+		`return JSON.parse(localStorage.getItem('hollowsun.save.v1'));`,
+	);
+	expect(saved.v).toBe(2);
+	expect(saved.gear.inv).toHaveLength(bag);
+
+	// The inventory opens with I, shows a tooltip and equips on click.
+	await page.keyboard.press('i');
+	await expect(page.locator('#inv')).toBeVisible();
+	await page.locator('#inv .grid .cell.has').first().hover();
+	await expect(page.locator('#tip')).toBeVisible();
+	const usable = page.locator('#inv .grid .cell.has:not(.no)');
+	if (await usable.count()) {
+		const before = await run<number>(page, 'return Object.keys(HSGame.gear.eq).length;');
+		await usable.first().click();
+		expect(
+			await run<number>(page, 'return Object.keys(HSGame.gear.eq).length;'),
+		).toBeGreaterThanOrEqual(before);
+	}
+	await page.keyboard.press('Escape');
+	await expect(page.locator('#inv')).toBeHidden();
+	expect(await run<string>(page, 'return HSGame.mode;')).toBe('play');
+	expect(errors).toEqual([]);
+});

@@ -13,6 +13,7 @@
       keysMove: 'Pohyb', keysMoveClick: 'levé tlačítko na zem (nebo WASD)', keysMoveWasd: 'WASD', keysCleave: 'levé tlačítko (držet) – generuje Cinders', keysSlam: 'pravé tlačítko – AoE, oheň, stojí Cinders', keysCharge: 'Q – výpad, omráčí', keysDodge: 'mezerník – úhyb s nezranitelností', keysMisc: 'Esc pauza · F počítadlo FPS · kolečko zoom',
       benchRun: 'Benchmark běží… autopilot bojuje s 50 nepřáteli', benchDone: 'Výsledek benchmarku', avg: 'Průměr FPS', low: '1 % nejhorších snímků', p95: '95. percentil snímku', simMs: 'Simulace na krok', entities: 'Nepřátel ve scéně', target: 'Cíl P0: 60 FPS s 50 nepřáteli', pass: 'splněno', fail: 'nesplněno', note: 'Měřeno v tomto prohlížeči a na tomto počítači.',
       hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
+      inv: 'Inventář', invBtn: 'I · Inventář', invHint: 'Klik na předmět v batohu = nasadit · klik na nasazený = sundat · Shift + klik = zahodit · I / Esc zavře.', invStats: 'Postava', invEmpty: 'prázdné', cmp: 'Proti nasazenému', reqs: 'Požadavky', lvl: 'Úroveň', picked: 'Sebráno', invFull: 'Batoh je plný', why: { class: 'Ash Knight tuhle zbraň nepoužívá', level: 'Vyšší úroveň postavy', twohand: 'Obouruční zbraň zabírá i druhou ruku', base: 'Neznámý předmět' }, whyAttr: 'Chybí', stHp: 'Zdraví', stArmor: 'Armor (redukce)', stEva: 'Šance uhnout', stDps: 'Cleave DPS (thrall)', stAs: 'Útoky za sekundu', stMs: 'Rychlost pohybu', keysInv: 'I – inventář, klik na předmět na zemi = sebrat', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
       feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
     },
@@ -24,6 +25,7 @@
       keysMove: 'Move', keysMoveClick: 'left click on the ground (or WASD)', keysMoveWasd: 'WASD', keysCleave: 'left button (hold) – builds Cinders', keysSlam: 'right button – AoE fire, costs Cinders', keysCharge: 'Q – dash, stuns', keysDodge: 'space – dodge with i-frames', keysMisc: 'Esc pause · F FPS counter · wheel zoom',
       benchRun: 'Benchmark running… the autopilot fights 50 enemies', benchDone: 'Benchmark result', avg: 'Average FPS', low: '1 % low', p95: '95th percentile frame', simMs: 'Simulation per step', entities: 'Enemies in the scene', target: 'P0 target: 60 FPS with 50 enemies', pass: 'met', fail: 'not met', note: 'Measured in this browser on this computer.',
       hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
+      inv: 'Inventory', invBtn: 'I · Inventory', invHint: 'Click an item in the bag = equip · click an equipped one = take off · Shift + click = discard · I / Esc closes.', invStats: 'Character', invEmpty: 'empty', cmp: 'Against equipped', reqs: 'Requirements', lvl: 'Level', picked: 'Picked up', invFull: 'The bag is full', why: { class: 'The Ash Knight does not use this weapon', level: 'Higher character level needed', twohand: 'A two-handed weapon takes the off hand too', base: 'Unknown item' }, whyAttr: 'Missing', stHp: 'Health', stArmor: 'Armor (reduction)', stEva: 'Evade chance', stDps: 'Cleave DPS (thrall)', stAs: 'Attacks per second', stMs: 'Movement speed', keysInv: 'I – inventory, click an item on the ground = pick up', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
       feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
     },
@@ -33,12 +35,13 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 1, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [] };
-  let SAVE = (() => { try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) { return Object.assign({}, DEF); } })();
+  const DEF = { v: 2, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0 };
+  // načtení s migrací (HSim.migrateSave: v1 z P0 → v2 s výbavou)
+  let SAVE = (() => { try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return Object.assign({}, DEF, raw ? window.HSim.migrateSave(raw) : {}); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
-      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: Math.min(1, SAVE.bestWave / 10), stats: { bestWave: SAVE.bestWave, kills: SAVE.kills, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
+      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: Math.min(1, SAVE.bestWave / 10), stats: { bestWave: SAVE.bestWave, kills: SAVE.kills, items: SAVE.items || 0, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
     } catch (e) { /* bez úložiště */ }
   }
 
@@ -129,7 +132,7 @@
   /* ---------- stav a vstup ---------- */
   let S = null, mode = 'menu', acc = 0, hitstop = 0, renderT = 0, lastEvents = [];
   const keys = {}; let mouse = [innerWidth / 2, innerHeight / 2], lmb = false, aimPt = [0, 0];
-  const pend = { cast: null, dodge: false, moveTo: null, click: false }; // click: krátké kliknutí (stisk i puštění mezi dvěma kroky) se neztratí
+  const pend = { cast: null, dodge: false, moveTo: null, click: false, pickup: null }; // click: krátké kliknutí (stisk i puštění mezi dvěma kroky) se neztratí
   function groundAt(mx, my) {
     const c = cam.camera; const a = c.screenToWorld(mx, my, c.nearClip), b = c.screenToWorld(mx, my, c.farClip);
     const k = a.y / (a.y - b.y || 1e-6); return [a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k];
@@ -148,6 +151,7 @@
       } else inp.hold = true;
     }
     if (pend.cast) { inp.cast = pend.cast; pend.cast = null; }
+    if (pend.pickup != null) { inp.pickup = pend.pickup; pend.pickup = null; }
     if (pend.dodge) { inp.dodge = true; pend.dodge = false; if (!inp.move) inp.move = [aimPt[0] - S.player.x, aimPt[1] - S.player.z]; }
     return inp;
   }
@@ -158,7 +162,8 @@
   app.mouse.on(pc.EVENT_MOUSEWHEEL, (e) => { const lo = mode === 'assets' ? 6 : 14, hi = mode === 'assets' ? 45 : 22; zoom = Math.max(lo, Math.min(hi, zoom + (e.wheelDelta > 0 ? 1 : -1) * (mode === 'assets' ? 2 : 1))); });
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase(); keys[k] = true;
-    if (k === 'escape') { if (mode === 'play') pause(); else if (mode === 'paused') resume(); else if (mode === 'assets') leaveAssets(); return; }
+    if (k === 'escape') { if (mode === 'inv') closeInv(); else if (mode === 'play') pause(); else if (mode === 'paused') resume(); else if (mode === 'assets') leaveAssets(); return; }
+    if (k === 'i') { if (mode === 'inv') closeInv(); else if (mode === 'play') openInv(); return; }
     if (k === 'l' && mode === 'assets') { AS.lodAuto = !AS.lodAuto; if (!AS.lodAuto) AS.lod = (AS.lod + 1) % 3; }
     if (mode === 'assets' && AS.char && '1234'.includes(k)) { AS.char.enabled = true; playClip(AS.char, CLIPS[Number(k) - 1]); }
     if (k === 'f') { fpsOn = !fpsOn; document.getElementById('fps').hidden = !fpsOn; }
@@ -264,10 +269,91 @@
         case 'nores': flashSkill(ev.skill); break;
         case 'death': { const v = EV.get(ev.id); if (v) { v.dying = 0.001; if (v.c) { charMat(v.c, null); charClip(v.c, 'death', 1, 0.08); } } SFX.death(); break; }
         case 'over': gameOver(); break;
+        case 'drop': tone(ev.rar === 'unique' ? 660 : ev.rar === 'rare' ? 520 : 380, 760, 0.18, ev.rar === 'common' ? 0.05 : 0.12, 'triangle'); break;
+        case 'pickup': { const d = HS.describe(ev.item); num(S.player.x, S.player.z, t('picked') + ': ' + d.name, 'info r-' + d.rar, 2.6); SAVE.items = (SAVE.items || 0) + 1; saveGear(); break; }
+        case 'equip': case 'unequip': case 'discard': saveGear(); break;
+        case 'cantequip': toast(ev.why in T[LANG].why ? t('why')[ev.why] : `${t('whyAttr')} ${String(ev.why).toUpperCase()}`); break;
+        case 'invfull': toast(t('invFull')); break;
         default: break;
       }
     }
   }
+
+  /* ---------- loot na zemi, inventář a tooltip (P1) ---------- */
+  const RCOL = { common: '#c9c2b2', magic: '#6f9ff0', rare: '#ecc65a', unique: '#ec7a3a' };
+  const RMAT = {}; for (const r in RCOL) RMAT[r] = mat(RCOL[r], { unlit: true });
+  const BEAM = {}; for (const r in RCOL) BEAM[r] = mat(RCOL[r], { unlit: true, opacity: 0.35, add: true });
+  const dropsLayer = document.getElementById('drops'); const DV = new Map();
+  function saveGear() { if (!S) return; SAVE.gear = JSON.parse(JSON.stringify(S.gear)); SAVE.sinceU = S.sinceU; persist(); }
+  let toastT = 0; function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 1800); }
+  function syncDrops() {
+    const live = new Set();
+    for (const d of S.drops) {
+      live.add(d.id); let v = DV.get(d.id);
+      if (!v) {
+        const r = d.item.rar; const root = new pc.Entity(); root.setLocalPosition(d.x, 0, d.z); app.root.addChild(root);
+        const box = ent('box', RMAT[r], [0, 0.12, 0], [0.42, 0.14, 0.24], root, false); box.setLocalEulerAngles(0, (d.id * 47) % 180, 0);
+        if (r !== 'common') ent('cylinder', BEAM[r], [0, 1.4, 0], [0.07, 2.8, 0.07], root, false);
+        const el = document.createElement('div'); const ds = HS.describe(d.item); el.className = 'drop r-' + r; el.textContent = ds.name;
+        el.addEventListener('mousedown', (e) => { e.stopPropagation(); if (mode !== 'play') return; pend.pickup = d.id; fresh = true; });
+        dropsLayer.appendChild(el); v = { root, el, x: d.x, z: d.z }; DV.set(d.id, v);
+      }
+      cam.camera.worldToScreen(new pc.Vec3(v.x, 0.55, v.z), tmpV); v.el.style.transform = `translate(${tmpV.x.toFixed(0)}px, ${tmpV.y.toFixed(0)}px) translate(-50%, -100%)`;
+    }
+    for (const [id, v] of DV) if (!live.has(id)) { v.root.destroy(); v.el.remove(); DV.delete(id); }
+  }
+  function clearDrops() { for (const v of DV.values()) { v.root.destroy(); v.el.remove(); } DV.clear(); }
+
+  // statistiky postavy pro panel a porovnání: HP, armor (redukce), evade, Cleave DPS proti thrallovi, APS, pohyb
+  function charSummary(ch) {
+    const sk = HS.skill('ak_cleave'); const h = HS.computeHit(sk, HS.F.maxSkillLevel(S.L, sk.req), ch, HS.refEnemy(S.L, 'en_thrall'));
+    return { hp: ch.S.hp, armor: ch.S.armor, dr: ch.S.dr, evade: ch.S.evade, dps: h.dps, aps: ch.weapon.aps * (1 + ch.S.asInc), ms: ch.S.ms };
+  }
+  function hypothetical(item) {
+    const eq = Object.assign({}, S.gear.eq); const slot = SIM.slotFor(S, item); const b = HS.get(item.base);
+    eq[slot] = item; if (slot === 'main' && b.hand === '2h') delete eq.off;
+    return HS.calcChar(S.L, SIM.EQ_SLOTS.map((k) => eq[k]).filter(Boolean));
+  }
+  const pctS = (v) => (v * 100).toFixed(1).replace('.', ',') + ' %';
+  const STAT_ROWS = [['stHp', 'hp', (v) => Math.round(v)], ['stArmor', 'dr', pctS], ['stEva', 'evade', pctS], ['stDps', 'dps', (v) => v.toFixed(1).replace('.', ',')], ['stAs', 'aps', (v) => v.toFixed(2).replace('.', ',')], ['stMs', 'ms', (v) => Math.round(v * 100) + ' %']];
+  function tipHtml(item, equippedSlot) {
+    const d = HS.describe(item); const why = equippedSlot ? null : SIM.canEquip(S, item);
+    const slotN = (HS.D.loot.slots.find((x) => x.id === d.slot) || {}).n || d.slot;
+    let h = `<h3 class="r-${d.rar}">${d.name}</h3><span class="base">${t('rar')[d.rar] || d.rar} · ${d.base} · ${slotN}${d.hand ? ' · ' + d.hand.toUpperCase() : ''} · T${d.tier + 1}</span>`;
+    for (const l of d.lines) h += `<span class="${l[0]}">${l[1]}</span>`;
+    const req = Object.entries(d.req).map(([k, v]) => { const have = k === 'level' ? S.L : S.ch.A[k] || 0; return `<span class="${have < v ? 'bad' : ''}">${k === 'level' ? t('lvl') : k.toUpperCase()} ${v}</span>`; }).join(' · ');
+    h += `<span class="req">${t('reqs')}: ${req}</span>`;
+    if (why) h += `<span class="bad">${why in T[LANG].why ? t('why')[why] : t('whyAttr') + ' ' + why.toUpperCase()}</span>`;
+    if (!equippedSlot && !why) {
+      const a = charSummary(S.ch), b = charSummary(hypothetical(item));
+      h += `<div class="cmp"><span class="muted">${t('cmp')}</span><span></span>` + STAT_ROWS.map(([k, f, fm]) => { const dlt = b[f] - a[f]; const cls = Math.abs(dlt) < 1e-6 ? '' : dlt > 0 ? 'up' : 'down'; return `<span>${t(k)}</span><b class="${cls}">${fm(b[f])}${cls ? (dlt > 0 ? ' ▲' : ' ▼') : ''}</b>`; }).join('') + '</div>';
+    }
+    return h;
+  }
+  function showTip(e, html) { const tip = document.getElementById('tip'); tip.innerHTML = html; tip.hidden = false; const w = 300; const x = Math.min(innerWidth - w - 12, e.clientX + 16); const y = Math.min(innerHeight - tip.offsetHeight - 12, e.clientY + 12); tip.style.left = x + 'px'; tip.style.top = Math.max(8, y) + 'px'; }
+  function hideTip() { document.getElementById('tip').hidden = true; }
+  function cellHtml(item, kind, key, slotLabel) {
+    if (!item) return `<div class="cell" data-k="${kind}" data-i="${key}">${slotLabel ? `<span class="sl">${slotLabel}</span>` : ''}<span class="muted">${slotLabel ? '' : ''}</span></div>`;
+    const d = HS.describe(item); const no = kind === 'inv' && SIM.canEquip(S, item) ? ' no' : '';
+    return `<div class="cell has r-${d.rar}${no}" data-k="${kind}" data-i="${key}">${slotLabel ? `<span class="sl">${slotLabel}</span>` : ''}<span>${(d.cat || d.base).slice(0, 7)}<br>T${d.tier + 1}</span></div>`;
+  }
+  function renderInv() {
+    const el = document.getElementById('inv'); const g = S.gear; const sm = charSummary(S.ch);
+    const slotN = (k) => { const id = k.replace(/[12]$/, ''); return ((HS.D.loot.slots.find((x) => x.id === id) || {}).n || id).replace(' ×2', '') + (k.endsWith('2') ? ' 2' : k.endsWith('1') ? ' 1' : ''); };
+    el.innerHTML = `<div class="box"><div class="head"><h2>${t('inv')}</h2><button class="btn dim" id="b-inv-close" aria-label="✕">✕</button></div><span class="muted">${t('invHint')}</span>
+      <div class="cols"><div><div class="eq">${SIM.EQ_SLOTS.map((k) => cellHtml(g.eq[k], 'eq', k, slotN(k))).join('')}</div>
+      <div class="stats"><span class="muted">${t('invStats')} · L${S.L}</span><span></span>${STAT_ROWS.map(([k, f, fm]) => `<span>${t(k)}</span><b>${fm(sm[f])}</b>`).join('')}</div></div>
+      <div><div class="grid">${Array.from({ length: SIM.INV_MAX }, (_, i) => cellHtml(g.inv[i], 'inv', i)).join('')}</div><p class="muted">${g.inv.length} / ${SIM.INV_MAX}</p></div></div></div>`;
+    document.getElementById('b-inv-close').onclick = closeInv;
+    for (const c of el.querySelectorAll('.cell.has')) {
+      const kind = c.dataset.k, key = c.dataset.i; const item = kind === 'inv' ? g.inv[+key] : g.eq[key];
+      c.onmouseenter = (e) => showTip(e, tipHtml(item, kind === 'eq' ? key : null)); c.onmousemove = (e) => showTip(e, tipHtml(item, kind === 'eq' ? key : null)); c.onmouseleave = hideTip;
+      c.onclick = (e) => { hideTip(); S.events.length = 0; if (kind === 'inv') SIM.invCommand(S, e.shiftKey ? { discard: +key } : { equip: +key }); else SIM.invCommand(S, { unequip: key }); handle(S.events.slice()); S.events.length = 0; renderInv(); };
+    }
+  }
+  function openInv() { if (mode !== 'play' || !S) return; mode = 'inv'; lmb = false; document.getElementById('inv').hidden = false; renderInv(); }
+  function closeInv() { if (mode !== 'inv') return; hideTip(); document.getElementById('inv').hidden = true; mode = 'play'; acc = 0; }
+  document.getElementById('b-inv').textContent = t('invBtn'); document.getElementById('b-inv').onclick = () => (mode === 'inv' ? closeInv() : openInv());
 
   /* ---------- HUD ---------- */
   const SK = [['ak_cleave', 'LMB', 'cleave'], ['ak_slam', 'RMB', 'slam'], ['ak_charge', 'Q', 'charge'], ['dodge', '␣', 'dodge']];
@@ -370,7 +456,7 @@
 
   /* ---------- obrazovky ---------- */
   const screen = document.getElementById('screen');
-  const keysHtml = () => `<div class="keys"><kbd>${t('keysMove')}</kbd><span>${SAVE.clickMove ? t('keysMoveClick') : t('keysMoveWasd')}</span><kbd>Cleave</kbd><span>${t('keysCleave')}</span><kbd>Slam</kbd><span>${t('keysSlam')}</span><kbd>Charge</kbd><span>${t('keysCharge')}</span><kbd>${t('dodge')}</kbd><span>${t('keysDodge')}</span><kbd>…</kbd><span>${t('keysMisc')}</span></div>`;
+  const keysHtml = () => `<div class="keys"><kbd>${t('keysMove')}</kbd><span>${SAVE.clickMove ? t('keysMoveClick') : t('keysMoveWasd')}</span><kbd>Cleave</kbd><span>${t('keysCleave')}</span><kbd>Slam</kbd><span>${t('keysSlam')}</span><kbd>Charge</kbd><span>${t('keysCharge')}</span><kbd>${t('dodge')}</kbd><span>${t('keysDodge')}</span><kbd>I</kbd><span>${t('keysInv')}</span><kbd>…</kbd><span>${t('keysMisc')}</span></div>`;
   const opt = () => `<label class="opt" for="o-click"><input type="checkbox" id="o-click" ${SAVE.clickMove ? 'checked' : ''}> ${t('clickMove')}</label>`;
   function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
   function menu() {
@@ -380,11 +466,11 @@
       <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}${SAVE.latency ? ' · ' + t('latency') + ': p95 ' + SAVE.latency.presentP95 + ' ms' : ''}</span></div>`;
     document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; document.getElementById('b-lat').onclick = () => start('latency'); document.getElementById('b-feel').onclick = feelForm; bindOpt();
   }
-  function clearWorld() { for (const v of EV.values()) v.root.destroy(); EV.clear(); for (const te of TELES) { te.line.destroy(); te.fill.destroy(); } TELES.length = 0; for (const f of FXS) f.e.destroy(); FXS.length = 0; for (const n of NUMS) n.d.remove(); NUMS.length = 0; }
+  function clearWorld() { clearDrops(); for (const v of EV.values()) v.root.destroy(); EV.clear(); for (const te of TELES) { te.line.destroy(); te.fill.destroy(); } TELES.length = 0; for (const f of FXS) f.e.destroy(); FXS.length = 0; for (const n of NUMS) n.d.remove(); NUMS.length = 0; }
   let bench = null;
   function start(m) {
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
-    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency' });
+    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' });
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
     document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : t('hint');
@@ -585,6 +671,7 @@
       const m = e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : v.base; if (v.body.render.material !== m) v.body.render.material = m;
       const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
     }
+    syncDrops();
     for (let i = TELES.length - 1; i >= 0; i--) {
       const te = TELES[i]; te.t += dt; const owner = S.enemies.find((e) => e.id === te.id); const k = Math.min(1, te.t / te.dur);
       te.fill.setLocalScale(te.r * k, 1, te.r * k);
@@ -601,7 +688,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();

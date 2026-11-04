@@ -1,8 +1,8 @@
 'use strict';
 // GENEROVÁNO z Game Design Bible (needitovat ručně) – data pro prototyp P0.
-// Zdroj: Echoes of the Hollow Sun – Game Design Bible v16 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
+// Zdroj: Echoes of the Hollow Sun – Game Design Bible v20 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
 window.HS_DATA = {
- "source": "Echoes of the Hollow Sun – Game Design Bible v16 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
+ "source": "Echoes of the Hollow Sun – Game Design Bible v20 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
  "generated": "2026-11-04",
  "BAL": {
   "hpBase": 60,
@@ -53,7 +53,35 @@ window.HS_DATA = {
   ],
   "freeAttrPerLevel": 3,
   "mxp0": 1.6,
-  "mxpExp": 1.55
+  "mxpExp": 1.55,
+  "rarW": {
+   "common": 780,
+   "magic": 180,
+   "rare": 36,
+   "unique": 4
+  },
+  "dropChance": {
+   "normal": 0.1,
+   "elite": 0.35,
+   "rare": 0.9
+  },
+  "smartLoot": 0.6,
+  "pityUnique": 600,
+  "weaponDmgMult": 1,
+  "msCap": 1.6,
+  "blockCap": 0.6,
+  "tenCap": 0.5,
+  "tenPerWil": 0.0015,
+  "resHardCap": 90,
+  "actResPenalty": [
+   0,
+   0,
+   -10,
+   -20,
+   -30,
+   -40
+  ],
+  "blockMitigation": 0.7
  },
  "cls": {
   "id": "ak",
@@ -113,7 +141,8 @@ window.HS_DATA = {
    "d": "Široký sek před postavou zasáhne všechny nepřátele v oblouku.",
    "st": "—",
    "vfx": "Žhnoucí stopa čepele, jiskry na zásahu",
-   "sfx": "Těžký švih + kovový dopad, praskání uhlíků"
+   "sfx": "Těžký švih + kovový dopad, praskání uhlíků",
+   "ct": null
   },
   {
    "id": "ak_charge",
@@ -137,7 +166,8 @@ window.HS_DATA = {
    "d": "Výpad vpřed, který srazí vše na dráze a omráčí první cíl.",
    "st": "Stun 0,6 s (ne bossové)",
    "vfx": "Ohnivá stopa za postavou",
-   "sfx": "Dupot + výbuch žhavého prachu"
+   "sfx": "Dupot + výbuch žhavého prachu",
+   "ct": null
   },
   {
    "id": "ak_slam",
@@ -172,7 +202,8 @@ window.HS_DATA = {
    "d": "Úder do země, který rozžhaví půdu.",
    "st": "Burn: 40 % zásahu jako Fire DoT během 4 s",
    "vfx": "Kruhová tlaková vlna, praskliny s lávou",
-   "sfx": "Hluboký dopad, basový rumble"
+   "sfx": "Hluboký dopad, basový rumble",
+   "ct": null
   }
  ],
  "enemies": [
@@ -199,7 +230,8 @@ window.HS_DATA = {
    ],
    "pattern": "Pomalé vlny; obklíčí hráče. Telegraph 0,6 s.",
    "eva": 0,
-   "xpMul": 0.9
+   "xpMul": 0.9,
+   "lt": "lt_normal"
   },
   {
    "id": "en_brute",
@@ -223,7 +255,8 @@ window.HS_DATA = {
    ],
    "pattern": "Pomalý, velké telegraphy; trestá stání na místě.",
    "eva": 0,
-   "xpMul": 2.4
+   "xpMul": 2.4,
+   "lt": "lt_normal"
   }
  ],
  "attacks": {
@@ -256,6 +289,3279 @@ window.HS_DATA = {
     "shape": "circle",
     "cd": 7,
     "stun": 0.5
+   }
+  ]
+ },
+ "loot": {
+  "slots": [
+   {
+    "id": "main",
+    "n": "Main Hand",
+    "d": "Zbraň (1H nebo 2H). 2H blokuje Off Hand."
+   },
+   {
+    "id": "off",
+    "n": "Off Hand",
+    "d": "Štít, grimoár, toulec nebo druhá 1H zbraň (dual wield jen Nightstalker, D17)."
+   },
+   {
+    "id": "helm",
+    "n": "Helmet",
+    "d": "Obrana + 1 affix navíc pro resistance."
+   },
+   {
+    "id": "chest",
+    "n": "Chest",
+    "d": "Největší obrana; 2 sockety max."
+   },
+   {
+    "id": "gloves",
+    "n": "Gloves",
+    "d": "Útočné affixy (attack/cast speed)."
+   },
+   {
+    "id": "boots",
+    "n": "Boots",
+    "d": "Movement speed implicit."
+   },
+   {
+    "id": "belt",
+    "n": "Belt",
+    "d": "Lektvary a HP."
+   },
+   {
+    "id": "amulet",
+    "n": "Amulet",
+    "d": "Univerzální affixy, +skill level."
+   },
+   {
+    "id": "ring",
+    "n": "Ring ×2",
+    "d": "Dva sloty, resistance a damage."
+   },
+   {
+    "id": "relic",
+    "n": "Relic",
+    "d": "Vlastní slot Echo Bearerů: modifikuje skilly a Echo sloty. Žádná obrana."
+   }
+  ],
+  "rarities": [
+   {
+    "id": "common",
+    "n": "Common",
+    "aff": "0",
+    "d": "Jen base staty a implicit. Suroviny (salvage → Ember Shards)."
+   },
+   {
+    "id": "magic",
+    "n": "Magic",
+    "aff": "1–2 (max 1 prefix + 1 suffix)",
+    "d": "Jednoduché rozhodnutí; v kampani časté upgrady."
+   },
+   {
+    "id": "rare",
+    "n": "Rare",
+    "aff": "3–6 (max 3+3)",
+    "d": "Hlavní zdroj síly; crafting cíl."
+   },
+   {
+    "id": "unique",
+    "n": "Unique",
+    "aff": "pevné linie s rozsahy",
+    "d": "Ručně navržené; mění build. Každý má zdroj a roli."
+   },
+   {
+    "id": "sun",
+    "n": "Sunforged",
+    "aff": "Rare + 1 Sun affix",
+    "d": "Endgame crafting (Sunmote). Ne drop – vždy výsledek rozhodnutí."
+   }
+  ],
+  "bases": [
+   {
+    "id": "wb_sword",
+    "n": "Arming Sword",
+    "slot": "main",
+    "hand": "1h",
+    "cat": "Sword",
+    "dmg": [
+     5,
+     10
+    ],
+    "aps": 1.35,
+    "imp": {
+     "accInc": 0.05
+    },
+    "impT": "+5 % accuracy",
+    "req": {
+     "str": 12,
+     "dex": 12
+    },
+    "cls": [
+     "ak",
+     "ns"
+    ],
+    "size": [
+     1,
+     3
+    ],
+    "look": "Rovná čepel, kožená rukojeť s mosazí"
+   },
+   {
+    "id": "wb_axe",
+    "n": "Bearded Axe",
+    "slot": "main",
+    "hand": "1h",
+    "cat": "Axe",
+    "dmg": [
+     6,
+     12
+    ],
+    "aps": 1.25,
+    "imp": {
+     "bleedInc": 0.08
+    },
+    "impT": "+8 % bleed damage",
+    "req": {
+     "str": 16
+    },
+    "cls": [
+     "ak"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Vousatá sekera, zubaté ostří"
+   },
+   {
+    "id": "wb_mace",
+    "n": "Flanged Mace",
+    "slot": "main",
+    "hand": "1h",
+    "cat": "Mace",
+    "dmg": [
+     7,
+     11
+    ],
+    "aps": 1.2,
+    "imp": {
+     "physInc": 0.05
+    },
+    "impT": "+5 % physical damage, +10 % stun",
+    "req": {
+     "str": 18
+    },
+    "cls": [
+     "ak",
+     "gc"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Žebrovaný palcát z černé oceli"
+   },
+   {
+    "id": "wb_dagger",
+    "n": "Rondel Dagger",
+    "slot": "main",
+    "hand": "1h",
+    "cat": "Dagger",
+    "dmg": [
+     4,
+     9
+    ],
+    "aps": 1.5,
+    "imp": {
+     "critFlat": 3
+    },
+    "impT": "+3 % base crit",
+    "req": {
+     "dex": 16
+    },
+    "cls": [
+     "ns",
+     "rb",
+     "gc"
+    ],
+    "size": [
+     1,
+     2
+    ],
+    "look": "Kruhová záštita, úzký hrot"
+   },
+   {
+    "id": "wb_wand",
+    "n": "Ash Wand",
+    "slot": "main",
+    "hand": "1h",
+    "cat": "Wand",
+    "dmg": [
+     3,
+     7
+    ],
+    "aps": 1.4,
+    "imp": {
+     "spellInc": 0.1
+    },
+    "impT": "+10 % spell damage",
+    "req": {
+     "int": 16
+    },
+    "cls": [
+     "rb",
+     "gc"
+    ],
+    "size": [
+     1,
+     2
+    ],
+    "look": "Ohořelá hůlka s uhlíkem"
+   },
+   {
+    "id": "wb_scepter",
+    "n": "Lantern Scepter",
+    "slot": "main",
+    "hand": "1h",
+    "cat": "Scepter",
+    "dmg": [
+     5,
+     9
+    ],
+    "aps": 1.25,
+    "imp": {
+     "eleInc": 0.08
+    },
+    "impT": "+8 % elemental damage",
+    "req": {
+     "str": 10,
+     "int": 12
+    },
+    "cls": [
+     "ak",
+     "rb"
+    ],
+    "size": [
+     1,
+     3
+    ],
+    "look": "Žezlo s miniaturní lucernou"
+   },
+   {
+    "id": "wb_greatsword",
+    "n": "Zweihänder",
+    "slot": "main",
+    "hand": "2h",
+    "cat": "Greatsword",
+    "dmg": [
+     9,
+     16
+    ],
+    "aps": 1.15,
+    "imp": {
+     "accInc": 0.1
+    },
+    "impT": "+10 % accuracy",
+    "req": {
+     "str": 22,
+     "dex": 12
+    },
+    "cls": [
+     "ak"
+    ],
+    "size": [
+     2,
+     4
+    ],
+    "look": "Plamenná čepel, parírovací háky"
+   },
+   {
+    "id": "wb_greataxe",
+    "n": "Executioner Axe",
+    "slot": "main",
+    "hand": "2h",
+    "cat": "Greataxe",
+    "dmg": [
+     10,
+     19
+    ],
+    "aps": 1.05,
+    "imp": {
+     "bleedInc": 0.15
+    },
+    "impT": "+15 % bleed damage",
+    "req": {
+     "str": 26
+    },
+    "cls": [
+     "ak"
+    ],
+    "size": [
+     2,
+     4
+    ],
+    "look": "Široké půlměsíčné ostří"
+   },
+   {
+    "id": "wb_maul",
+    "n": "Pyre Maul",
+    "slot": "main",
+    "hand": "2h",
+    "cat": "Maul",
+    "dmg": [
+     11,
+     21
+    ],
+    "aps": 0.95,
+    "imp": {
+     "physInc": 0.1
+    },
+    "impT": "+10 % physical, +15 % stun",
+    "req": {
+     "str": 30
+    },
+    "cls": [
+     "ak"
+    ],
+    "size": [
+     2,
+     4
+    ],
+    "look": "Kovadlina na tyči"
+   },
+   {
+    "id": "wb_staff",
+    "n": "Runic Staff",
+    "slot": "main",
+    "hand": "2h",
+    "cat": "Staff",
+    "dmg": [
+     9,
+     15
+    ],
+    "aps": 1.15,
+    "imp": {
+     "spellInc": 0.18
+    },
+    "impT": "+18 % spell damage",
+    "req": {
+     "int": 24
+    },
+    "cls": [
+     "rb",
+     "gc"
+    ],
+    "size": [
+     1,
+     4
+    ],
+    "look": "Hůl s plovoucími runami"
+   },
+   {
+    "id": "wb_bow",
+    "n": "Yew Longbow",
+    "slot": "main",
+    "hand": "2h",
+    "cat": "Bow",
+    "dmg": [
+     7,
+     16
+    ],
+    "aps": 1.2,
+    "imp": {
+     "projInc": 0.1
+    },
+    "impT": "+10 % projectile damage",
+    "req": {
+     "dex": 24
+    },
+    "cls": [
+     "ns"
+    ],
+    "size": [
+     2,
+     4
+    ],
+    "look": "Tisový luk, tětiva ze šlach"
+   },
+   {
+    "id": "wb_scythe",
+    "n": "Grave Scythe",
+    "slot": "main",
+    "hand": "2h",
+    "cat": "Scythe",
+    "dmg": [
+     11,
+     20
+    ],
+    "aps": 1.1,
+    "imp": {
+     "minionInc": 0.15
+    },
+    "impT": "+15 % minion damage",
+    "req": {
+     "str": 10,
+     "wil": 20
+    },
+    "cls": [
+     "gc"
+    ],
+    "size": [
+     2,
+     4
+    ],
+    "look": "Kosa s kostěnou násadou"
+   },
+   {
+    "id": "wb_buckler",
+    "n": "Iron Buckler",
+    "slot": "off",
+    "cat": "Shield",
+    "imp": {},
+    "impT": "Block 18 %",
+    "armor": 15,
+    "eva": 15,
+    "block": 18,
+    "req": {
+     "dex": 12
+    },
+    "cls": [
+     "ak",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Malý kulatý štít"
+   },
+   {
+    "id": "wb_kite",
+    "n": "Kite Shield",
+    "slot": "off",
+    "cat": "Shield",
+    "imp": {},
+    "impT": "Block 24 %",
+    "armor": 30,
+    "eva": 0,
+    "block": 24,
+    "req": {
+     "str": 18
+    },
+    "cls": [
+     "ak",
+     "gc"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Erb lucerny na štítu"
+   },
+   {
+    "id": "wb_tower",
+    "n": "Tower Shield",
+    "slot": "off",
+    "cat": "Shield",
+    "imp": {
+     "ms": -0.05
+    },
+    "impT": "Block 30 %, −5 % movement",
+    "armor": 45,
+    "eva": 0,
+    "block": 30,
+    "req": {
+     "str": 28
+    },
+    "cls": [
+     "ak"
+    ],
+    "size": [
+     2,
+     4
+    ],
+    "look": "Pavéza s průzorem"
+   },
+   {
+    "id": "wb_grimoire",
+    "n": "Ashen Grimoire",
+    "slot": "off",
+    "cat": "Focus",
+    "imp": {
+     "resFlat": 15,
+     "cs": 0.05
+    },
+    "impT": "+15 resource, +5 % cast speed",
+    "armor": 0,
+    "eva": 0,
+    "req": {
+     "int": 18
+    },
+    "cls": [
+     "rb",
+     "gc"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Kniha se spálenými okraji"
+   },
+   {
+    "id": "wb_quiver",
+    "n": "Barbed Quiver",
+    "slot": "off",
+    "cat": "Quiver",
+    "imp": {
+     "projInc": 0.06
+    },
+    "impT": "+6 % projectile damage",
+    "armor": 0,
+    "eva": 0,
+    "req": {
+     "dex": 14
+    },
+    "cls": [
+     "ns"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Toulec s ostnatými šípy"
+   },
+   {
+    "id": "wb_helm_str",
+    "n": "Great Helm",
+    "slot": "helm",
+    "cat": "Helmet (STR)",
+    "imp": {},
+    "impT": "—",
+    "armor": 22,
+    "eva": 0,
+    "req": {
+     "str": 14
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Uzavřená přilba s průzorem"
+   },
+   {
+    "id": "wb_helm_dex",
+    "n": "Leather Hood",
+    "slot": "helm",
+    "cat": "Helmet (DEX)",
+    "imp": {},
+    "impT": "—",
+    "armor": 0,
+    "eva": 22,
+    "req": {
+     "dex": 14
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Kápě s maskou"
+   },
+   {
+    "id": "wb_helm_int",
+    "n": "Votive Circlet",
+    "slot": "helm",
+    "cat": "Helmet (INT)",
+    "imp": {
+     "resAll": 0.04,
+     "hpInc": 0.06
+    },
+    "impT": "+4 % všech res, +6 % Max HP (D14)",
+    "armor": 8,
+    "eva": 0,
+    "req": {
+     "int": 14
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Tenký kroužek se svíčkou"
+   },
+   {
+    "id": "wb_chest_str",
+    "n": "Plate Hauberk",
+    "slot": "chest",
+    "cat": "Chest (STR)",
+    "imp": {},
+    "impT": "—",
+    "armor": 60,
+    "eva": 0,
+    "req": {
+     "str": 24
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Plát přes kroužkovou košili"
+   },
+   {
+    "id": "wb_chest_dex",
+    "n": "Brigandine Jerkin",
+    "slot": "chest",
+    "cat": "Chest (DEX)",
+    "imp": {},
+    "impT": "—",
+    "armor": 0,
+    "eva": 60,
+    "req": {
+     "dex": 24
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Nýtovaná kazajka"
+   },
+   {
+    "id": "wb_chest_int",
+    "n": "Votive Robes",
+    "slot": "chest",
+    "cat": "Chest (INT)",
+    "imp": {
+     "resAll": 0.06,
+     "hpInc": 0.1
+    },
+    "impT": "+6 % všech res, +10 % Max HP (D14)",
+    "armor": 20,
+    "eva": 0,
+    "req": {
+     "int": 24
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     3
+    ],
+    "look": "Roucho s modlitebními pásky"
+   },
+   {
+    "id": "wb_gloves_str",
+    "n": "Gauntlets",
+    "slot": "gloves",
+    "cat": "Gloves (STR)",
+    "imp": {},
+    "impT": "—",
+    "armor": 14,
+    "eva": 0,
+    "req": {
+     "str": 12
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Plátové rukavice"
+   },
+   {
+    "id": "wb_gloves_dex",
+    "n": "Bracers",
+    "slot": "gloves",
+    "cat": "Gloves (DEX)",
+    "imp": {},
+    "impT": "—",
+    "armor": 0,
+    "eva": 14,
+    "req": {
+     "dex": 12
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Kožené chrániče"
+   },
+   {
+    "id": "wb_gloves_int",
+    "n": "Silk Wraps",
+    "slot": "gloves",
+    "cat": "Gloves (INT)",
+    "imp": {
+     "cs": 0.04
+    },
+    "impT": "+4 % cast speed",
+    "armor": 5,
+    "eva": 0,
+    "req": {
+     "int": 12
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Hedvábné obvazy s inkoustem"
+   },
+   {
+    "id": "wb_boots_str",
+    "n": "Sabatons",
+    "slot": "boots",
+    "cat": "Boots (STR)",
+    "imp": {
+     "ms": 0.1
+    },
+    "impT": "+10 % movement",
+    "armor": 16,
+    "eva": 0,
+    "req": {
+     "str": 12
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Plátové boty"
+   },
+   {
+    "id": "wb_boots_dex",
+    "n": "Treads",
+    "slot": "boots",
+    "cat": "Boots (DEX)",
+    "imp": {
+     "ms": 0.12
+    },
+    "impT": "+12 % movement",
+    "armor": 0,
+    "eva": 16,
+    "req": {
+     "dex": 12
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Měkké boty"
+   },
+   {
+    "id": "wb_boots_int",
+    "n": "Pilgrim's Sandals",
+    "slot": "boots",
+    "cat": "Boots (INT)",
+    "imp": {
+     "ms": 0.1,
+     "resFlat": 5
+    },
+    "impT": "+10 % movement, +5 resource",
+    "armor": 6,
+    "eva": 0,
+    "req": {
+     "int": 12
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     2
+    ],
+    "look": "Sandály s popelem"
+   },
+   {
+    "id": "wb_belt_heavy",
+    "n": "Heavy Belt",
+    "slot": "belt",
+    "cat": "Belt",
+    "imp": {
+     "hpFlat": 20
+    },
+    "impT": "+20 HP",
+    "armor": 0,
+    "eva": 0,
+    "req": {
+     "str": 10
+    },
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     1
+    ],
+    "look": "Široký pás s přezkou"
+   },
+   {
+    "id": "wb_belt_sash",
+    "n": "Ritual Sash",
+    "slot": "belt",
+    "cat": "Belt",
+    "imp": {
+     "regenInc": 0.06
+    },
+    "impT": "+6 % resource regen",
+    "armor": 0,
+    "eva": 0,
+    "req": {},
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     2,
+     1
+    ],
+    "look": "Šerpa s amulety"
+   },
+   {
+    "id": "wb_amulet",
+    "n": "Sun Pendant",
+    "slot": "amulet",
+    "cat": "Amulet",
+    "imp": {
+     "allAttr": 4
+    },
+    "impT": "+4 ke všem atributům",
+    "armor": 0,
+    "eva": 0,
+    "req": {},
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     1,
+     1
+    ],
+    "look": "Přívěsek s uhasínajícím sluncem"
+   },
+   {
+    "id": "wb_ring",
+    "n": "Iron Band",
+    "slot": "ring",
+    "cat": "Ring",
+    "imp": {
+     "resFlat": 8
+    },
+    "impT": "+8 max resource",
+    "armor": 0,
+    "eva": 0,
+    "req": {},
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     1,
+     1
+    ],
+    "look": "Prostý železný kroužek"
+   },
+   {
+    "id": "wb_relic_sun",
+    "n": "Sunshard Relic",
+    "slot": "relic",
+    "cat": "Relic",
+    "imp": {
+     "radInc": 0.08
+    },
+    "impT": "+8 % radiant damage",
+    "armor": 0,
+    "eva": 0,
+    "req": {},
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     1,
+     2
+    ],
+    "look": "Střep v mosazné kleci"
+   },
+   {
+    "id": "wb_relic_bone",
+    "n": "Bone Reliquary",
+    "slot": "relic",
+    "cat": "Relic",
+    "imp": {
+     "minionHp": 0.08
+    },
+    "impT": "+8 % minion HP",
+    "armor": 0,
+    "eva": 0,
+    "req": {},
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     1,
+     2
+    ],
+    "look": "Kostěná schránka"
+   },
+   {
+    "id": "wb_relic_moth",
+    "n": "Moth-Glass Relic",
+    "slot": "relic",
+    "cat": "Relic",
+    "imp": {
+     "critInc": 0.08
+    },
+    "impT": "+8 % crit chance",
+    "armor": 0,
+    "eva": 0,
+    "req": {},
+    "cls": [
+     "ak",
+     "rb",
+     "gc",
+     "ns"
+    ],
+    "size": [
+     1,
+     2
+    ],
+    "look": "Sklo s uvězněnou můrou"
+   }
+  ],
+  "affixes": [
+   {
+    "id": "af_life",
+    "kind": "prefix",
+    "n": "Hale",
+    "stat": "hpFlat",
+    "txt": "+{v} Maximum Health",
+    "tiers": [
+     [
+      60,
+      90,
+      110
+     ],
+     [
+      44,
+      65,
+      89
+     ],
+     [
+      30,
+      45,
+      64
+     ],
+     [
+      16,
+      28,
+      44
+     ],
+     [
+      1,
+      12,
+      27
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "life",
+    "w": 1000,
+    "pct": false
+   },
+   {
+    "id": "af_armor_inc",
+    "kind": "prefix",
+    "n": "Fortified",
+    "stat": "armorInc",
+    "txt": "+{v} % increased Armor",
+    "tiers": [
+     [
+      60,
+      40,
+      55
+     ],
+     [
+      44,
+      30,
+      39
+     ],
+     [
+      30,
+      22,
+      29
+     ],
+     [
+      16,
+      14,
+      21
+     ],
+     [
+      1,
+      8,
+      13
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off"
+    ],
+    "group": "def",
+    "w": 800,
+    "pct": true
+   },
+   {
+    "id": "af_eva_inc",
+    "kind": "prefix",
+    "n": "Shadowed",
+    "stat": "evaInc",
+    "txt": "+{v} % increased Evasion",
+    "tiers": [
+     [
+      60,
+      40,
+      55
+     ],
+     [
+      44,
+      30,
+      39
+     ],
+     [
+      30,
+      22,
+      29
+     ],
+     [
+      16,
+      14,
+      21
+     ],
+     [
+      1,
+      8,
+      13
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off"
+    ],
+    "group": "def",
+    "w": 800,
+    "pct": true
+   },
+   {
+    "id": "af_phys_inc",
+    "kind": "prefix",
+    "n": "Cruel",
+    "stat": "wPhysInc",
+    "txt": "+{v} % increased Physical Damage (lokální)",
+    "tiers": [
+     [
+      60,
+      90,
+      119
+     ],
+     [
+      44,
+      65,
+      89
+     ],
+     [
+      30,
+      45,
+      64
+     ],
+     [
+      16,
+      28,
+      44
+     ],
+     [
+      1,
+      15,
+      27
+     ]
+    ],
+    "slots": [
+     "main"
+    ],
+    "group": "wphys",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_phys_flat",
+    "kind": "prefix",
+    "n": "Jagged",
+    "stat": "wFlat",
+    "txt": "Přidá průměrně {v} Physical Damage (lokální)",
+    "tiers": [
+     [
+      60,
+      30,
+      38
+     ],
+     [
+      44,
+      20,
+      29
+     ],
+     [
+      30,
+      13,
+      19
+     ],
+     [
+      16,
+      7,
+      12
+     ],
+     [
+      1,
+      3,
+      6
+     ]
+    ],
+    "slots": [
+     "main"
+    ],
+    "group": "wflat",
+    "w": 800,
+    "pct": false
+   },
+   {
+    "id": "af_added_phys",
+    "kind": "prefix",
+    "n": "Barbed",
+    "stat": "addPhys",
+    "txt": "Přidá průměrně {v} Physical Damage k útokům",
+    "tiers": [
+     [
+      60,
+      10,
+      14
+     ],
+     [
+      44,
+      7,
+      9
+     ],
+     [
+      30,
+      5,
+      6
+     ],
+     [
+      16,
+      3,
+      4
+     ],
+     [
+      1,
+      1,
+      2
+     ]
+    ],
+    "slots": [
+     "gloves",
+     "ring"
+    ],
+    "group": "addphys",
+    "w": 500,
+    "pct": false
+   },
+   {
+    "id": "af_spell_flat",
+    "kind": "prefix",
+    "n": "Inscribed",
+    "stat": "addSpell",
+    "txt": "Přidá průměrně {v} poškození ke kouzlům (× efektivita kouzla, D28)",
+    "tiers": [
+     [
+      60,
+      24,
+      32
+     ],
+     [
+      44,
+      14,
+      20
+     ],
+     [
+      30,
+      7,
+      10
+     ],
+     [
+      16,
+      4,
+      6
+     ],
+     [
+      1,
+      1,
+      3
+     ]
+    ],
+    "slots": [
+     "main",
+     "off",
+     "amulet"
+    ],
+    "group": "addspell",
+    "w": 600,
+    "pct": false
+   },
+   {
+    "id": "af_fire_inc",
+    "kind": "prefix",
+    "n": "Smoldering",
+    "stat": "fireInc",
+    "txt": "+{v} % increased Fire Damage",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "ring"
+    ],
+    "group": "ele",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_cold_inc",
+    "kind": "prefix",
+    "n": "Rimed",
+    "stat": "coldInc",
+    "txt": "+{v} % increased Cold Damage",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "ring"
+    ],
+    "group": "ele",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_light_inc",
+    "kind": "prefix",
+    "n": "Charged",
+    "stat": "lightInc",
+    "txt": "+{v} % increased Lightning Damage",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "ring"
+    ],
+    "group": "ele",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_nec_inc",
+    "kind": "prefix",
+    "n": "Rotting",
+    "stat": "necInc",
+    "txt": "+{v} % increased Necrotic Damage",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "ring"
+    ],
+    "group": "ele",
+    "w": 500,
+    "pct": true
+   },
+   {
+    "id": "af_rad_inc",
+    "kind": "prefix",
+    "n": "Dawnlit",
+    "stat": "radInc",
+    "txt": "+{v} % increased Radiant Damage",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "relic"
+    ],
+    "group": "ele",
+    "w": 200,
+    "pct": true
+   },
+   {
+    "id": "af_spell_inc",
+    "kind": "prefix",
+    "n": "Runic",
+    "stat": "spellInc",
+    "txt": "+{v} % increased Spell Damage",
+    "tiers": [
+     [
+      60,
+      45,
+      60
+     ],
+     [
+      44,
+      33,
+      44
+     ],
+     [
+      30,
+      24,
+      32
+     ],
+     [
+      16,
+      15,
+      23
+     ],
+     [
+      1,
+      8,
+      14
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "off"
+    ],
+    "group": "spell",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_minion",
+    "kind": "prefix",
+    "n": "Commanding",
+    "stat": "minionInc",
+    "txt": "+{v} % increased Minion Damage",
+    "tiers": [
+     [
+      60,
+      45,
+      60
+     ],
+     [
+      44,
+      33,
+      44
+     ],
+     [
+      30,
+      24,
+      32
+     ],
+     [
+      16,
+      15,
+      23
+     ],
+     [
+      1,
+      8,
+      14
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "relic",
+     "helm"
+    ],
+    "group": "minion",
+    "w": 500,
+    "pct": true
+   },
+   {
+    "id": "af_dot",
+    "kind": "prefix",
+    "n": "Festering",
+    "stat": "dotInc",
+    "txt": "+{v} % increased Damage over Time",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "ring"
+    ],
+    "group": "dot",
+    "w": 500,
+    "pct": true
+   },
+   {
+    "id": "af_proj",
+    "kind": "prefix",
+    "n": "Fletched",
+    "stat": "projInc",
+    "txt": "+{v} % increased Projectile Damage",
+    "tiers": [
+     [
+      60,
+      30,
+      40
+     ],
+     [
+      44,
+      22,
+      29
+     ],
+     [
+      30,
+      16,
+      21
+     ],
+     [
+      16,
+      10,
+      15
+     ],
+     [
+      1,
+      5,
+      9
+     ]
+    ],
+    "slots": [
+     "main",
+     "off",
+     "gloves"
+    ],
+    "group": "proj",
+    "w": 500,
+    "pct": true
+   },
+   {
+    "id": "af_res_mana",
+    "kind": "prefix",
+    "n": "Deep",
+    "stat": "resFlat",
+    "txt": "+{v} Maximum Resource",
+    "tiers": [
+     [
+      60,
+      50,
+      65
+     ],
+     [
+      44,
+      38,
+      49
+     ],
+     [
+      30,
+      28,
+      37
+     ],
+     [
+      16,
+      18,
+      27
+     ],
+     [
+      1,
+      8,
+      17
+     ]
+    ],
+    "slots": [
+     "helm",
+     "amulet",
+     "ring",
+     "off"
+    ],
+    "group": "res",
+    "w": 700,
+    "pct": false
+   },
+   {
+    "id": "af_ms",
+    "kind": "prefix",
+    "n": "Swift",
+    "stat": "ms",
+    "txt": "+{v} % Movement Speed",
+    "tiers": [
+     [
+      44,
+      25,
+      30
+     ],
+     [
+      30,
+      20,
+      24
+     ],
+     [
+      16,
+      15,
+      19
+     ],
+     [
+      1,
+      10,
+      14
+     ]
+    ],
+    "slots": [
+     "boots"
+    ],
+    "group": "ms",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_block",
+    "kind": "prefix",
+    "n": "Bulwark",
+    "stat": "block",
+    "txt": "+{v} % Block Chance",
+    "tiers": [
+     [
+      44,
+      5,
+      6
+     ],
+     [
+      16,
+      3,
+      4
+     ],
+     [
+      1,
+      1,
+      2
+     ]
+    ],
+    "slots": [
+     "off"
+    ],
+    "group": "block",
+    "w": 400,
+    "pct": true
+   },
+   {
+    "id": "af_res_fire",
+    "kind": "suffix",
+    "n": "of Embers",
+    "stat": "res_fire",
+    "txt": "+{v} % Fire Resistance",
+    "tiers": [
+     [
+      60,
+      40,
+      46
+     ],
+     [
+      44,
+      34,
+      39
+     ],
+     [
+      30,
+      27,
+      33
+     ],
+     [
+      16,
+      18,
+      26
+     ],
+     [
+      1,
+      8,
+      17
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "r_fire",
+    "w": 900,
+    "pct": true
+   },
+   {
+    "id": "af_res_cold",
+    "kind": "suffix",
+    "n": "of the Hearth",
+    "stat": "res_cold",
+    "txt": "+{v} % Cold Resistance",
+    "tiers": [
+     [
+      60,
+      40,
+      46
+     ],
+     [
+      44,
+      34,
+      39
+     ],
+     [
+      30,
+      27,
+      33
+     ],
+     [
+      16,
+      18,
+      26
+     ],
+     [
+      1,
+      8,
+      17
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "r_cold",
+    "w": 900,
+    "pct": true
+   },
+   {
+    "id": "af_res_light",
+    "kind": "suffix",
+    "n": "of Grounding",
+    "stat": "res_light",
+    "txt": "+{v} % Lightning Resistance",
+    "tiers": [
+     [
+      60,
+      40,
+      46
+     ],
+     [
+      44,
+      34,
+      39
+     ],
+     [
+      30,
+      27,
+      33
+     ],
+     [
+      16,
+      18,
+      26
+     ],
+     [
+      1,
+      8,
+      17
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "r_light",
+    "w": 900,
+    "pct": true
+   },
+   {
+    "id": "af_res_nec",
+    "kind": "suffix",
+    "n": "of the Living",
+    "stat": "res_nec",
+    "txt": "+{v} % Necrotic Resistance",
+    "tiers": [
+     [
+      60,
+      40,
+      46
+     ],
+     [
+      44,
+      34,
+      39
+     ],
+     [
+      30,
+      27,
+      33
+     ],
+     [
+      16,
+      18,
+      26
+     ],
+     [
+      1,
+      8,
+      17
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "r_nec",
+    "w": 700,
+    "pct": true
+   },
+   {
+    "id": "af_res_rad",
+    "kind": "suffix",
+    "n": "of Shade",
+    "stat": "res_rad",
+    "txt": "+{v} % Radiant Resistance",
+    "tiers": [
+     [
+      60,
+      40,
+      46
+     ],
+     [
+      44,
+      34,
+      39
+     ],
+     [
+      30,
+      27,
+      33
+     ],
+     [
+      16,
+      18,
+      26
+     ],
+     [
+      1,
+      8,
+      17
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "r_rad",
+    "w": 400,
+    "pct": true
+   },
+   {
+    "id": "af_res_all",
+    "kind": "suffix",
+    "n": "of the Lantern",
+    "stat": "resAll",
+    "txt": "+{v} % ke všem elementálním rezistencím",
+    "tiers": [
+     [
+      60,
+      15,
+      18
+     ],
+     [
+      44,
+      12,
+      14
+     ],
+     [
+      30,
+      9,
+      11
+     ],
+     [
+      16,
+      6,
+      8
+     ],
+     [
+      1,
+      3,
+      5
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "amulet",
+     "ring",
+     "off"
+    ],
+    "group": "r_all",
+    "w": 300,
+    "pct": true
+   },
+   {
+    "id": "af_atkspd",
+    "kind": "suffix",
+    "n": "of Haste",
+    "stat": "as",
+    "txt": "+{v} % increased Attack Speed",
+    "tiers": [
+     [
+      60,
+      14,
+      16
+     ],
+     [
+      44,
+      11,
+      13
+     ],
+     [
+      30,
+      8,
+      10
+     ],
+     [
+      16,
+      5,
+      7
+     ],
+     [
+      1,
+      3,
+      4
+     ]
+    ],
+    "slots": [
+     "main",
+     "gloves",
+     "off",
+     "ring"
+    ],
+    "group": "speed",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_cast",
+    "kind": "suffix",
+    "n": "of Fluency",
+    "stat": "cs",
+    "txt": "+{v} % increased Cast Speed",
+    "tiers": [
+     [
+      60,
+      14,
+      16
+     ],
+     [
+      44,
+      11,
+      13
+     ],
+     [
+      30,
+      8,
+      10
+     ],
+     [
+      16,
+      5,
+      7
+     ],
+     [
+      1,
+      3,
+      4
+     ]
+    ],
+    "slots": [
+     "main",
+     "gloves",
+     "amulet",
+     "off"
+    ],
+    "group": "speed",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_crit",
+    "kind": "suffix",
+    "n": "of Precision",
+    "stat": "critInc",
+    "txt": "+{v} % increased Critical Chance",
+    "tiers": [
+     [
+      60,
+      30,
+      38
+     ],
+     [
+      44,
+      23,
+      29
+     ],
+     [
+      30,
+      17,
+      22
+     ],
+     [
+      16,
+      11,
+      16
+     ],
+     [
+      1,
+      6,
+      10
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "ring",
+     "off",
+     "helm"
+    ],
+    "group": "crit",
+    "w": 600,
+    "pct": true
+   },
+   {
+    "id": "af_crit_mult",
+    "kind": "suffix",
+    "n": "of Ruin",
+    "stat": "critMult",
+    "txt": "+{v} % Critical Multiplier",
+    "tiers": [
+     [
+      60,
+      25,
+      30
+     ],
+     [
+      44,
+      19,
+      24
+     ],
+     [
+      30,
+      14,
+      18
+     ],
+     [
+      16,
+      9,
+      13
+     ],
+     [
+      1,
+      5,
+      8
+     ]
+    ],
+    "slots": [
+     "main",
+     "amulet",
+     "off",
+     "gloves"
+    ],
+    "group": "critm",
+    "w": 500,
+    "pct": true
+   },
+   {
+    "id": "af_str",
+    "kind": "suffix",
+    "n": "of the Ox",
+    "stat": "str",
+    "txt": "+{v} Strength",
+    "tiers": [
+     [
+      60,
+      28,
+      33
+     ],
+     [
+      44,
+      21,
+      27
+     ],
+     [
+      30,
+      15,
+      20
+     ],
+     [
+      16,
+      9,
+      14
+     ],
+     [
+      1,
+      4,
+      8
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "a_str",
+    "w": 700,
+    "pct": false
+   },
+   {
+    "id": "af_dex",
+    "kind": "suffix",
+    "n": "of the Fox",
+    "stat": "dex",
+    "txt": "+{v} Dexterity",
+    "tiers": [
+     [
+      60,
+      28,
+      33
+     ],
+     [
+      44,
+      21,
+      27
+     ],
+     [
+      30,
+      15,
+      20
+     ],
+     [
+      16,
+      9,
+      14
+     ],
+     [
+      1,
+      4,
+      8
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "a_dex",
+    "w": 700,
+    "pct": false
+   },
+   {
+    "id": "af_int",
+    "kind": "suffix",
+    "n": "of the Owl",
+    "stat": "int",
+    "txt": "+{v} Intelligence",
+    "tiers": [
+     [
+      60,
+      28,
+      33
+     ],
+     [
+      44,
+      21,
+      27
+     ],
+     [
+      30,
+      15,
+      20
+     ],
+     [
+      16,
+      9,
+      14
+     ],
+     [
+      1,
+      4,
+      8
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "a_int",
+    "w": 700,
+    "pct": false
+   },
+   {
+    "id": "af_wil",
+    "kind": "suffix",
+    "n": "of the Monk",
+    "stat": "wil",
+    "txt": "+{v} Willpower",
+    "tiers": [
+     [
+      60,
+      28,
+      33
+     ],
+     [
+      44,
+      21,
+      27
+     ],
+     [
+      30,
+      15,
+      20
+     ],
+     [
+      16,
+      9,
+      14
+     ],
+     [
+      1,
+      4,
+      8
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "a_wil",
+    "w": 700,
+    "pct": false
+   },
+   {
+    "id": "af_vit",
+    "kind": "suffix",
+    "n": "of the Bear",
+    "stat": "vit",
+    "txt": "+{v} Vitality",
+    "tiers": [
+     [
+      60,
+      28,
+      33
+     ],
+     [
+      44,
+      21,
+      27
+     ],
+     [
+      30,
+      15,
+      20
+     ],
+     [
+      16,
+      9,
+      14
+     ],
+     [
+      1,
+      4,
+      8
+     ]
+    ],
+    "slots": [
+     "helm",
+     "chest",
+     "gloves",
+     "boots",
+     "off",
+     "belt",
+     "amulet",
+     "ring"
+    ],
+    "group": "a_vit",
+    "w": 800,
+    "pct": false
+   },
+   {
+    "id": "af_regen",
+    "kind": "suffix",
+    "n": "of Recovery",
+    "stat": "hpRegenPct",
+    "txt": "+{v} % Max HP regenerace/s",
+    "tiers": [
+     [
+      44,
+      0.8,
+      1
+     ],
+     [
+      16,
+      0.5,
+      0.7
+     ],
+     [
+      1,
+      0.2,
+      0.4
+     ]
+    ],
+    "slots": [
+     "chest",
+     "belt",
+     "helm",
+     "amulet"
+    ],
+    "group": "regen",
+    "w": 400,
+    "pct": true
+   },
+   {
+    "id": "af_cdr",
+    "kind": "suffix",
+    "n": "of Patience",
+    "stat": "cdr",
+    "txt": "+{v} % Cooldown Recovery",
+    "tiers": [
+     [
+      44,
+      8,
+      10
+     ],
+     [
+      16,
+      5,
+      7
+     ],
+     [
+      1,
+      3,
+      4
+     ]
+    ],
+    "slots": [
+     "amulet",
+     "relic",
+     "helm"
+    ],
+    "group": "cdr",
+    "w": 300,
+    "pct": true
+   },
+   {
+    "id": "af_skill",
+    "kind": "suffix",
+    "n": "of the Echo",
+    "stat": "skillLvl",
+    "txt": "+{v} k úrovni všech skillů",
+    "tiers": [
+     [
+      50,
+      2,
+      2
+     ],
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    "slots": [
+     "amulet",
+     "relic"
+    ],
+    "group": "skill",
+    "w": 100,
+    "pct": false
+   }
+  ],
+  "uniques": [
+   {
+    "id": "un_ashfather",
+    "n": "Ashfather's Maul",
+    "base": "wb_maul",
+    "tier": 1,
+    "req": 12,
+    "lines": [
+     [
+      "wPhysInc",
+      1.2,
+      1.5
+     ],
+     [
+      "fireInc",
+      0.3,
+      0.4
+     ],
+     [
+      "str",
+      20,
+      30
+     ]
+    ],
+    "spec": "Searing Slam zanechá hořící zem 3 s (30 % zásahu/s).",
+    "lore": "Aldric si do něj zakoval vlastní stín."
+   },
+   {
+    "id": "un_kilnbrand",
+    "n": "Kilnbrand",
+    "base": "wb_sword",
+    "tier": 1,
+    "req": 10,
+    "lines": [
+     [
+      "wFlat",
+      8,
+      12
+     ],
+     [
+      "fireInc",
+      0.25,
+      0.35
+     ],
+     [
+      "as",
+      0.08,
+      0.1
+     ]
+    ],
+    "spec": "Brand Strike nestackuje, ale Brand se šíří na 2 blízké cíle.",
+    "lore": "Žár z pece, který nikdy nevyhasl."
+   },
+   {
+    "id": "un_lanternheart",
+    "n": "Lantern of the First Vigil",
+    "base": "wb_kite",
+    "tier": 1,
+    "req": 14,
+    "lines": [
+     [
+      "block",
+      0.06,
+      0.08
+     ],
+     [
+      "hpFlat",
+      40,
+      60
+     ],
+     [
+      "resAll",
+      0.1,
+      0.12
+     ]
+    ],
+    "spec": "Blokovaný zásah přidá 5 Cinders (cd 0,5 s).",
+    "lore": "Lucerna, kterou nesla první hlídka po Sunderingu."
+   },
+   {
+    "id": "un_oathkeeper",
+    "n": "Oathkeeper's Torc",
+    "base": "wb_amulet",
+    "tier": 2,
+    "req": 40,
+    "lines": [
+     [
+      "str",
+      25,
+      35
+     ],
+     [
+      "critMult",
+      0.2,
+      0.3
+     ],
+     [
+      "hpInc",
+      -0.1,
+      -0.1
+     ]
+    ],
+    "spec": "Blood Oath stojí 5 % HP místo 8 % a dává 2 Ruin stacky.",
+    "lore": "Přísaha, kterou nikdo nedodržel."
+   },
+   {
+    "id": "un_rootcrown",
+    "n": "Crown of the Rootmother",
+    "base": "wb_helm_int",
+    "tier": 1,
+    "req": 20,
+    "lines": [
+     [
+      "minionHp",
+      0.25,
+      0.35
+     ],
+     [
+      "necInc",
+      0.15,
+      0.2
+     ],
+     [
+      "res_nec",
+      0.2,
+      0.25
+     ]
+    ],
+    "spec": "Minioni při smrti zanechají kořen, který na 1 s zastaví nepřátele.",
+    "lore": "Kořeny stále hledají srdce."
+   },
+   {
+    "id": "un_ghuljaw",
+    "n": "Ghulmaw's Jaw",
+    "base": "wb_gloves_str",
+    "tier": 1,
+    "req": 18,
+    "lines": [
+     [
+      "addPhys",
+      6,
+      9
+     ],
+     [
+      "as",
+      0.08,
+      0.12
+     ],
+     [
+      "hpRegenPct",
+      0.004,
+      0.006
+     ]
+    ],
+    "spec": "2 % fyzického poškození zásahů je leech jako HP.",
+    "lore": "Čelist stále cvaká, když je hlad."
+   },
+   {
+    "id": "un_skyfall_codex",
+    "n": "Skyfall Codex",
+    "base": "wb_relic_sun",
+    "tier": 2,
+    "req": 45,
+    "lines": [
+     [
+      "lightInc",
+      0.25,
+      0.35
+     ],
+     [
+      "skillLvl",
+      1,
+      1
+     ],
+     [
+      "cs",
+      0.06,
+      0.08
+     ]
+    ],
+    "spec": "Skyfall Sigil má o 30 % kratší cooldown; každý glyf ve 7 m zvýší jeho damage o 10 % more.",
+    "lore": "Stránky, které píší blesky."
+   },
+   {
+    "id": "un_prism",
+    "n": "Prism of Sarkhan",
+    "base": "wb_relic_moth",
+    "tier": 1,
+    "req": 32,
+    "lines": [
+     [
+      "eleInc",
+      0.2,
+      0.3
+     ],
+     [
+      "resAll",
+      0.05,
+      0.08
+     ]
+    ],
+    "spec": "Echoes kategorie Element lze kombinovat (ignoruje exkluzivní skupinu „conv“, max 2).",
+    "lore": "Sarkhanova hlava viděla svět rozložený na barvy."
+   },
+   {
+    "id": "un_sphinx_sand",
+    "n": "Sands of the Sphinx",
+    "base": "wb_belt_sash",
+    "tier": 1,
+    "req": 28,
+    "lines": [
+     [
+      "cdr",
+      0.08,
+      0.12
+     ],
+     [
+      "hpFlat",
+      30,
+      50
+     ],
+     [
+      "regenInc",
+      0.1,
+      0.15
+     ]
+    ],
+    "spec": "Při použití skillu s CD ≥ 10 s se ostatní CD posunou o 1 s.",
+    "lore": "Písek teče nahoru."
+   },
+   {
+    "id": "un_vigil_tongue",
+    "n": "Tongue of St. Vigil",
+    "base": "wb_scepter",
+    "tier": 2,
+    "req": 36,
+    "lines": [
+     [
+      "eleInc",
+      0.3,
+      0.4
+     ],
+     [
+      "cs",
+      0.08,
+      0.1
+     ],
+     [
+      "res_light",
+      0.15,
+      0.2
+     ]
+    ],
+    "spec": "Každý 5. seslaný spell zazvoní: 1 s stun v 4 m.",
+    "lore": "Zvon mlčí, jazyk ne."
+   },
+   {
+    "id": "un_last_waltz",
+    "n": "Morwen's Last Waltz",
+    "base": "wb_ring",
+    "tier": 2,
+    "req": 42,
+    "lines": [
+     [
+      "dmgInc",
+      0.12,
+      0.16
+     ],
+     [
+      "res_cold",
+      0.2,
+      0.25
+     ],
+     [
+      "ms",
+      0.04,
+      0.06
+     ]
+    ],
+    "spec": "4 % damage jako leech; přeléčení se mění na bariéru (max 15 % HP).",
+    "lore": "Tančila, dokud čas nestál."
+   },
+   {
+    "id": "un_veilwalker",
+    "n": "Veilwalker Jerkin",
+    "base": "wb_chest_dex",
+    "tier": 3,
+    "req": 55,
+    "lines": [
+     [
+      "evaInc",
+      0.6,
+      0.8
+     ],
+     [
+      "dex",
+      25,
+      35
+     ],
+     [
+      "critInc",
+      0.2,
+      0.3
+     ]
+    ],
+    "spec": "Po vyhnutí se útoku (evasion) je další zásah jistý crit (cd 2 s).",
+    "lore": "Šitá ze stínu, který si nikdo nenárokoval."
+   },
+   {
+    "id": "un_pale_signet",
+    "n": "Pale Signet",
+    "base": "wb_ring",
+    "tier": 3,
+    "req": 50,
+    "lines": [
+     [
+      "necInc",
+      0.2,
+      0.28
+     ],
+     [
+      "dotInc",
+      0.15,
+      0.22
+     ],
+     [
+      "res_nec",
+      0.15,
+      0.2
+     ]
+    ],
+    "spec": "Pale Rot má max 7 stacků místo 5.",
+    "lore": "Pečeť, kterou chór pečetil mrtvé."
+   },
+   {
+    "id": "un_noon_halo",
+    "n": "Halo of the Unending Noon",
+    "base": "wb_helm_str",
+    "tier": 3,
+    "req": 50,
+    "lines": [
+     [
+      "radInc",
+      0.3,
+      0.4
+     ],
+     [
+      "hpInc",
+      0.08,
+      0.12
+     ],
+     [
+      "res_rad",
+      0.25,
+      0.3
+     ]
+    ],
+    "spec": "30 % všech zásahů se konvertuje na Radiant; Sear na nepřátelích ti léčí 1 % HP/s.",
+    "lore": "Svatozář, která pálí nositele."
+   },
+   {
+    "id": "un_noonsplitter",
+    "n": "Noonsplitter",
+    "base": "wb_greatsword",
+    "tier": 3,
+    "req": 50,
+    "lines": [
+     [
+      "wPhysInc",
+      1.5,
+      1.8
+     ],
+     [
+      "radInc",
+      0.3,
+      0.4
+     ],
+     [
+      "critFlat",
+      2,
+      3
+     ]
+    ],
+    "spec": "Pillar of the Last Dawn a Severing Arc jsou 100 % Radiant.",
+    "lore": "Rozpůlila poledne."
+   },
+   {
+    "id": "un_eclipse_pact",
+    "n": "Eclipse Pact",
+    "base": "wb_amulet",
+    "tier": 3,
+    "req": 60,
+    "lines": [
+     [
+      "dmgInc",
+      0.2,
+      0.25
+     ],
+     [
+      "allAttr",
+      10,
+      15
+     ],
+     [
+      "resAll",
+      0.1,
+      0.12
+     ]
+    ],
+    "spec": "Střídavě 10 s Sol (+25 % fire/rad more) a 10 s Umbra (+25 % cold/nec more).",
+    "lore": "Dva hlasy, jedna smlouva."
+   },
+   {
+    "id": "un_first_echo",
+    "n": "Echo of the First",
+    "base": "wb_relic_moth",
+    "tier": 3,
+    "req": 68,
+    "lines": [
+     [
+      "skillLvl",
+      2,
+      2
+     ],
+     [
+      "dmgInc",
+      0.15,
+      0.2
+     ]
+    ],
+    "spec": "Všechny skilly mají +1 Echo slot (max 4). Memory Echoes −20 % účinku.",
+    "lore": "Ysolde to slyšela jako první."
+   },
+   {
+    "id": "un_rimeweave",
+    "n": "Rimeweave Wraps",
+    "base": "wb_gloves_int",
+    "tier": 2,
+    "req": 34,
+    "lines": [
+     [
+      "coldInc",
+      0.25,
+      0.3
+     ],
+     [
+      "cs",
+      0.06,
+      0.08
+     ],
+     [
+      "res_cold",
+      0.15,
+      0.2
+     ]
+    ],
+    "spec": "Chill na cíli = +30 % šance na freeze od Rime Prison i na bossy (0,8 → 1,2 s).",
+    "lore": "Mráz má paměť."
+   },
+   {
+    "id": "un_gravesong",
+    "n": "Gravesong Scythe",
+    "base": "wb_scythe",
+    "tier": 2,
+    "req": 30,
+    "lines": [
+     [
+      "minionInc",
+      0.4,
+      0.5
+     ],
+     [
+      "minionHp",
+      0.2,
+      0.25
+     ],
+     [
+      "wil",
+      15,
+      25
+     ]
+    ],
+    "spec": "+1 max husk, +1 max archer.",
+    "lore": "Zpívá, když žne."
+   },
+   {
+    "id": "un_hexstring",
+    "n": "Hexstring",
+    "base": "wb_bow",
+    "tier": 2,
+    "req": 30,
+    "lines": [
+     [
+      "wPhysInc",
+      0.8,
+      1
+     ],
+     [
+      "necInc",
+      0.2,
+      0.3
+     ],
+     [
+      "critInc",
+      0.15,
+      0.2
+     ]
+    ],
+    "spec": "Hex Arrow aplikuje Hex na všechny proražené cíle.",
+    "lore": "Tětiva z vlasů čarodějnice."
+   },
+   {
+    "id": "un_marrow_cath",
+    "n": "Marrow Cathedral",
+    "base": "wb_chest_int",
+    "tier": 2,
+    "req": 36,
+    "lines": [
+     [
+      "armorInc",
+      0.4,
+      0.5
+     ],
+     [
+      "minionHp",
+      0.3,
+      0.4
+     ],
+     [
+      "hpFlat",
+      50,
+      70
+     ]
+    ],
+    "spec": "Bone Colossus sdílí 20 % poškození, které dostáváš.",
+    "lore": "Katedrála, kterou nosíš."
+   },
+   {
+    "id": "un_ash_treads",
+    "n": "Ashwalker Treads",
+    "base": "wb_boots_dex",
+    "tier": 1,
+    "req": 24,
+    "lines": [
+     [
+      "ms",
+      0.18,
+      0.22
+     ],
+     [
+      "res_fire",
+      0.15,
+      0.2
+     ],
+     [
+      "evaInc",
+      0.2,
+      0.3
+     ]
+    ],
+    "spec": "Imunita na doutnající zem a písečné bouře (environment).",
+    "lore": "Nikdy nespálily nohu."
+   },
+   {
+    "id": "un_choir_mask",
+    "n": "Faceless Choir Mask",
+    "base": "wb_helm_dex",
+    "tier": 2,
+    "req": 44,
+    "lines": [
+     [
+      "critMult",
+      0.2,
+      0.25
+     ],
+     [
+      "res_rad",
+      0.2,
+      0.25
+     ],
+     [
+      "dex",
+      15,
+      20
+     ]
+    ],
+    "spec": "Stealth trvá o 1 s déle; první zásah ze stealthu aplikuje Sear.",
+    "lore": "Za maskou nic nezbylo."
+   },
+   {
+    "id": "un_kindling_belt",
+    "n": "Belt of Kindling",
+    "base": "wb_belt_heavy",
+    "tier": 1,
+    "req": 16,
+    "lines": [
+     [
+      "hpFlat",
+      30,
+      45
+     ],
+     [
+      "cinderOnHit",
+      1,
+      1
+     ],
+     [
+      "res_fire",
+      0.15,
+      0.2
+     ]
+    ],
+    "spec": "Cinders neklesají mimo boj.",
+    "lore": "Pás, který hřeje."
+   }
+  ],
+  "tables": [
+   {
+    "id": "lt_normal",
+    "n": "Normal enemy",
+    "cur": [
+     [
+      "cu_gold",
+      0.06
+     ],
+     [
+      "cu_ember",
+      0.02
+     ],
+     [
+      "cu_residue",
+      0.05
+     ]
+    ],
+    "d": "Základní tabulka; item level = level monstra."
+   },
+   {
+    "id": "lt_caster",
+    "n": "Caster enemy",
+    "cur": [
+     [
+      "cu_gold",
+      0.06
+     ],
+     [
+      "cu_ember",
+      0.03
+     ],
+     [
+      "cu_residue",
+      0.06
+     ]
+    ],
+    "d": "Mírně vyšší šance na runy (+1 %)."
+   },
+   {
+    "id": "lt_elite",
+    "n": "Elite pack member",
+    "cur": [
+     [
+      "cu_gold",
+      0.2
+     ],
+     [
+      "cu_ember",
+      0.1
+     ],
+     [
+      "cu_residue",
+      0.5
+     ]
+    ],
+    "d": "Garantovaný Magic+ z balíku (pack bonus)."
+   },
+   {
+    "id": "lt_rare",
+    "n": "Rare enemy",
+    "cur": [
+     [
+      "cu_gold",
+      0.5
+     ],
+     [
+      "cu_dust",
+      0.3
+     ],
+     [
+      "cu_residue",
+      1
+     ]
+    ],
+    "d": "2 pokusy, smart loot 60 %."
    }
   ]
  },
