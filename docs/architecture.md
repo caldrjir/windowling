@@ -253,6 +253,13 @@ is a child of the `hand_R` joint. The "Asset test" mode plays the clips through 
 component (keys 1–4) and has a crowd test: 50 skinned, animated characters (LOD1) for 5 s with the
 average FPS and p95 frame time. The validator checks the skin (bone budget, complete weights, valid
 joints, one skin for all LODs), the clip names, 30 FPS sampling, seamless loops and root motion.
+The arena and the benchmark use the same knight for the player and the enemies (thrall and brute get
+their own materials, the brute is scaled up) once the GLB has loaded; until then, or with `?gray` for
+a comparison, the grey boxes stay. The simulation still owns positions and timing: the clips follow
+its state (attack slowed or sped up so the swing lands at the end of the telegraph or in the
+player's hit window, run while moving, death played out before the body is removed), the attack's
+root motion is pinned to the spot, LODs switch by camera distance (18 m / 35 m) and the player's
+blade sits in `socket_hand_R`.
 
 ## Vesnička - `static/games/vesnicka`
 

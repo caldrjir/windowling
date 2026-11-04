@@ -114,10 +114,11 @@
 
   /* ---------- hráč ---------- */
   const P = new pc.Entity(); app.root.addChild(P);
-  ent('capsule', M.steel, [0, 0.9, 0], [0.9, 0.9, 0.9], P);
-  ent('cylinder', M.trim, [0, 1.25, 0], [0.95, 0.12, 0.95], P);
-  ent('box', M.trim, [0.38, 1.45, 0], [0.22, 0.12, 0.5], P, false); // „zorník“ ukazuje směr
-  const pivot = new pc.Entity(); pivot.setLocalPosition(0, 1.1, 0); P.addChild(pivot);
+  const PG = new pc.Entity(); P.addChild(PG); // šedý box hráče (záloha, než se načte rytíř, a ?gray)
+  ent('capsule', M.steel, [0, 0.9, 0], [0.9, 0.9, 0.9], PG);
+  ent('cylinder', M.trim, [0, 1.25, 0], [0.95, 0.12, 0.95], PG);
+  ent('box', M.trim, [0.38, 1.45, 0], [0.22, 0.12, 0.5], PG, false); // „zorník“ ukazuje směr
+  const pivot = new pc.Entity(); pivot.setLocalPosition(0, 1.1, 0); PG.addChild(pivot);
   ent('box', M.blade, [0.9, 0, 0], [1.3, 0.12, 0.18], pivot); ent('box', M.steel, [0.25, 0, 0], [0.3, 0.2, 0.2], pivot);
   const ring = flat(meshFor('ring', 0.62, 0.72, 360), M.marker, 0, 0, 0, 1, 0.02); ring.reparent(P);
 
@@ -174,9 +175,52 @@
   function tone(f0, f1, dur, vol, type) { if (!AC) return; const o = AC.createOscillator(); o.type = type || 'sine'; o.frequency.setValueAtTime(f0, AC.currentTime); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), AC.currentTime + dur); const g = AC.createGain(); g.gain.setValueAtTime(vol, AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur); o.connect(g).connect(master); o.start(); o.stop(AC.currentTime + dur); }
   const SFX = { swing: () => noise(0.14, 2400, 600, 0.5), hit: (c) => { tone(c ? 180 : 120, 50, 0.12, 0.6, 'triangle'); noise(0.05, 3000, 1500, 0.4); }, slam: () => { tone(90, 30, 0.45, 0.9); noise(0.35, 900, 120, 0.6, 'lowpass'); }, hurt: () => tone(320, 140, 0.18, 0.35, 'sawtooth'), dodge: () => noise(0.18, 600, 2400, 0.25), tele: () => tone(520, 480, 0.08, 0.08, 'square'), death: () => noise(0.25, 700, 150, 0.3, 'lowpass') };
 
+  /* ---------- postavy z asset pipeline: rytíř se skinem a animacemi (CH_ak_body) ---------- */
+  // Simulace určuje pozici i načasování; animace se jí přizpůsobí (root motion útoku se vynuluje).
+  const CH = { res: null, gray: /[?&]gray\b/.test(location.search) };
+  const CH_SETS = { en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace } };
+  const CH_SCALE = { en_thrall: 1, en_brute: 1.45 };
+  const SWING = 0.47; // s: švih v klipu AN_human_attack (snímek 14 z 27)
+  function charVisual(parent, set, scale) {
+    const holder = new pc.Entity(); holder.setLocalEulerAngles(0, 90, 0); if (scale) holder.setLocalScale(scale, scale, scale); parent.addChild(holder); // model hledí na +Z, simulace na +X
+    const e = CH.res.instantiateRenderEntity(); holder.addChild(e);
+    const lods = [0, 1, 2].map((l) => e.findByName('CH_ak_body_LOD' + l));
+    const mis = []; lods.forEach((n) => { for (const r of n.findComponents('render')) for (const mi of r.meshInstances) mis.push({ mi, base: (set && set[mi.material.name]) || mi.material }); });
+    for (const m of mis) m.mi.material = m.base;
+    e.addComponent('anim', { activate: true });
+    for (const a of CH.res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_human_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
+    const c = { e, holder, lods, mis, bone: e.findByName('root'), clip: null, key: null, lod: -1, mat: null };
+    charClip(c, 'idle', 1, 0); return c;
+  }
+  // klip podle stavu; key odliší dva útoky po sobě (nový útok začne od začátku)
+  function charClip(c, name, speed, blend, key) {
+    const L = c.e.anim.baseLayer; if (!L) return;
+    if (c.clip !== name) L.transition(name, blend === undefined ? 0.12 : blend); else if (key !== undefined && key !== c.key) L.activeStateCurrentTime = 0;
+    c.clip = name; c.key = key; c.e.anim.speed = speed;
+  }
+  function charLod(c, x, z) {
+    const cp = cam.getPosition(); const d = Math.hypot(cp.x - x, cp.y - 1, cp.z - z); const l = d < 18 ? 0 : d < 35 ? 1 : 2;
+    if (l !== c.lod) { c.lods.forEach((n, i) => { n.enabled = i === l; }); c.lod = l; }
+  }
+  function charMat(c, m) { if (c.mat === m) return; c.mat = m; for (const x of c.mis) x.mi.material = m || x.base; }
+  // po vyhodnocení animace: kořenová kost zůstane na místě (pozici drží simulace)
+  function charPin(c) { if (c.bone) c.bone.setLocalPosition(0, 0, 0); }
+  let PC = null, lastP = null; // rytíř hráče
+  function charsReady() {
+    if (CH.gray || !CH.res) return;
+    PC = charVisual(P, null, 1); PG.enabled = false;
+    // čepel v socketu pravé ruky: zbraň sleduje animaci
+    const sock = PC.e.findByName('socket_hand_R'); if (sock) { ent('box', M.blade, [0, -0.55, 0], [0.07, 1.0, 0.16], sock); ent('box', M.steel, [0, -0.02, 0], [0.26, 0.06, 0.08], sock); }
+    for (const v of EV.values()) if (v.dying >= 0) v.stale = true; // šedé nepřátele vymění syncWorld
+  }
+
   /* ---------- vizuály nepřátel, telegraphy, efekty ---------- */
   const EV = new Map(); // id → vizuál nepřítele
   function enemyVisual(e) {
+    if (CH.res && !CH.gray) {
+      const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z);
+      const v = { root, c: charVisual(root, CH_SETS[e.type] || CH_SETS.en_thrall, CH_SCALE[e.type] || 1), dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v;
+    }
     const root = new pc.Entity(); app.root.addChild(root); const big = e.type === 'en_brute';
     const body = ent('capsule', big ? M.brute : M.thrall, [0, big ? 1.25 : 0.85, 0], big ? [1.9, 1.25, 1.9] : [0.9, 0.85, 0.9], root);
     ent('box', big ? M.furnace : M.eyes, big ? [0.75, 1.5, 0] : [0.38, 1.35, 0], big ? [0.35, 0.6, 0.9] : [0.12, 0.08, 0.4], root, false);
@@ -212,7 +256,7 @@
         case 'evade': num(ev.x, ev.z, t('evade'), 'info', 2.4); break;
         case 'dodged': num(ev.x, ev.z, t('dodged'), 'info', 2.4); break;
         case 'nores': flashSkill(ev.skill); break;
-        case 'death': { const v = EV.get(ev.id); if (v) v.dying = 0.001; SFX.death(); break; }
+        case 'death': { const v = EV.get(ev.id); if (v) { v.dying = 0.001; if (v.c) { charMat(v.c, null); charClip(v.c, 'death', 1, 0.08); } } SFX.death(); break; }
         case 'over': gameOver(); break;
         default: break;
       }
@@ -415,13 +459,40 @@
     // švih zbraně podle rozpracované akce
     if (p.act && p.act.id !== 'ak_charge') { const k = Math.min(1, p.act.t / p.act.dur); const sw = p.act.id === 'ak_slam' ? -100 + 190 * Math.min(1, k / 0.4) : -75 + 150 * Math.min(1, k / 0.45); pivot.setLocalEulerAngles(p.act.id === 'ak_slam' ? 0 : 0, sw, p.act.id === 'ak_slam' ? Math.max(-80, sw * 0.6) : 0); }
     else pivot.setLocalEulerAngles(0, -35, 0);
-    P.setLocalScale(1, p.dodge ? 0.75 : 1, 1);
+    if (PC) {
+      // hráč: útok zpomalený/zrychlený tak, aby švih padl do okna zásahu akce (~45 % trvání)
+      const moved = lastP ? Math.hypot(p.x - lastP[0], p.z - lastP[1]) : 0; lastP = [p.x, p.z];
+      if (p.dodge) charClip(PC, 'run', 2.2);
+      else if (p.act && p.act.id === 'ak_charge') charClip(PC, 'run', 2, 0.08, p.act);
+      else if (p.act) charClip(PC, 'attack', Math.min(3, SWING / (0.45 * p.act.dur)), 0.06, p.act);
+      else if (p.stun > 0) charClip(PC, 'idle', 0.5);
+      else if (dt > 0 && moved / dt > 0.5) charClip(PC, 'run', 1.25);
+      else charClip(PC, 'idle', 1);
+      charPin(PC); charLod(PC, p.x, p.z); P.setLocalScale(1, 1, 1);
+    } else P.setLocalScale(1, p.dodge ? 0.75 : 1, 1);
+    for (const [id, v] of EV) { // umírající: dohrají smrt i poté, co je simulace zahodí
+      if (v.dying <= 0) continue; v.dying += dt;
+      if (v.c) { charPin(v.c); if (v.dying >= 1.8) { v.root.destroy(); EV.delete(id); } continue; }
+      const k = Math.min(1, v.dying / 0.4); v.root.setLocalScale(1 - k * 0.7, 1 - k, 1 - k * 0.7); if (k >= 1) { v.root.destroy(); EV.delete(id); }
+    }
     for (const e of S.enemies) {
-      let v = EV.get(e.id); if (!v) { if (e.dead) continue; v = enemyVisual(e); }
-      if (v.dying > 0) { v.dying += dt; const k = Math.min(1, v.dying / 0.4); v.root.setLocalScale(1 - k * 0.7, 1 - k, 1 - k * 0.7); if (k >= 1) { v.root.destroy(); EV.delete(e.id); v.dying = -1; } continue; }
-      if (v.dying < 0) continue;
+      let v = EV.get(e.id);
+      if (v && v.stale && !v.dying) { v.root.destroy(); EV.delete(e.id); v = null; }
+      if (!v) { if (e.dead) continue; v = enemyVisual(e); }
+      if (v.dying) continue;
+      const px = v.x, pz = v.z;
       v.x += (e.x - v.x) * Math.min(1, dt * 18); v.z += (e.z - v.z) * Math.min(1, dt * 18);
       v.root.setLocalPosition(v.x, 0, v.z); v.root.setLocalEulerAngles(0, (-e.face * 180) / Math.PI, 0);
+      if (v.c) {
+        // útok: švih na konci telegraphu; omráčení stojí; jinak běh/stání podle pohybu
+        if (e.atk) charClip(v.c, 'attack', Math.max(0.3, Math.min(2.5, SWING / e.atk.def.tele)), 0.08, e.atk);
+        else if (e.stun > 0) charClip(v.c, 'idle', 0.4);
+        else if (v.c.clip === 'attack' && v.c.e.anim.baseLayer.activeStateProgress < 1) { /* dohraje švih */ }
+        else if (dt > 0 && Math.hypot(v.x - px, v.z - pz) / dt > 0.4) charClip(v.c, 'run', Math.max(0.6, e.speed / 4.5));
+        else charClip(v.c, 'idle', 1);
+        charMat(v.c, e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : null); charPin(v.c); charLod(v.c, v.x, v.z);
+        continue;
+      }
       const m = e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : v.base; if (v.body.render.material !== m) v.body.render.material = m;
       const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
     }
@@ -441,6 +512,8 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, step: (n, auto) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : {}); handle(S.events.slice()); } return S; } };
+  // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
+  if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();
 })();
