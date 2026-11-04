@@ -2,7 +2,7 @@
 #   DM_crypt_rS_X_a – crypt room module from the Game Design Bible's catalogue (5×5 cells of 2 m,
 #                     door sockets on all four sides, bevelled walls, vertex-colour AO, 2 materials)
 #   CH_ak_body      – placeholder Ash Knight body; LOD1/LOD2 come from LOD0 through Decimate
-# Run headless (apps/web/scripts/hollowsun-blender.mjs does this):
+# Run headless (apps/web/scripts/hollowsun-assets.mjs does this, then compresses the GLBs with gltfpack):
 #   blender -b --factory-startup --python hollowsun_assets.py -- <output folder>
 # Every export must pass src/lib/games/hollowsun-assets.test.ts.
 import json

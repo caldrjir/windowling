@@ -228,15 +228,23 @@ exported from the Bible (`hollowsun.fixtures.json`) and runs the simulation head
 
 Asset pipeline (P0): `pnpm --filter @windowling/web hollowsun:assets` runs
 `scripts/blender/hollowsun_assets.py` in Blender without a window (`scripts/hollowsun-assets.mjs`
-finds it through `BLENDER`, the PATH or the default install folders) and exports GLB files plus
-`assets/manifest.json`: a dungeon module `DM_crypt_rS_X_a` (bevelled walls, door sockets,
-vertex-colour AO) and a placeholder `CH_ak_body` whose LOD1/LOD2 come from LOD0 through Decimate.
-The GLBs are committed, so CI needs no Blender. The game's "Asset test" mode loads them through
-PlayCanvas, switches LODs by camera distance and shows the sockets.
-`src/lib/games/hollowsun-assets.test.ts` holds every GLB to the Bible's asset rules: naming, triangle
-budget, at most 2 materials per mesh, LOD0–2, footprint on the 2 m grid, door sockets, vertex-colour
-AO and glTF integrity (normalized accessors included). Compression (Meshopt, KTX2) and skinned
-characters are not covered yet.
+finds it through `BLENDER`, the PATH or the default install folders) and exports raw GLB files:
+a dungeon module `DM_crypt_rS_X_a` (bevelled walls, door sockets, vertex-colour AO) and a
+placeholder `CH_ak_body` whose LOD1/LOD2 come from LOD0 through Decimate. gltfpack (the
+`gltfpack` npm package, meshoptimizer) then quantizes and compresses them
+(`EXT_meshopt_compression` + `KHR_mesh_quantization`, `-cc -kn -km`: named nodes and materials
+kept) into `assets/`, together with `assets/manifest.json` (raw and compressed sizes). The GLBs
+are committed, so CI needs no Blender. PlayCanvas cannot decode Meshopt itself: the game's
+"Asset test" mode loads the GLBs as container assets whose `bufferView.processAsync` hook
+decodes them with meshoptimizer's decoder (`vendor/meshopt_decoder.js`, MIT), switches LODs by
+camera distance and shows the sockets.
+`src/lib/games/hollowsun-assets.test.ts` decodes every GLB the same way and holds it to the
+Bible's asset rules: compression (every buffer view Meshopt, at most half the raw size, textures
+only as KTX2 via `KHR_texture_basisu`), naming, triangle budget, at most 2 materials per mesh,
+LOD0–2, footprint on the 2 m grid (through the dequantizing node transform), door sockets,
+vertex-colour AO and glTF integrity. The P0 assets have no textures yet; the npm gltfpack cannot
+encode KTX2 (the native gltfpack build with Basis Universal can, `-tc`), and the game will also
+need the Basis transcoder for them. Skinned characters are not covered yet.
 
 ## Vesnička - `static/games/vesnicka`
 

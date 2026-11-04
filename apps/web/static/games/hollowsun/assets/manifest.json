@@ -1,10 +1,10 @@
 {
-	"generated": "scripts/blender/hollowsun_assets.py (Blender 5.2.3 LTS)",
+	"generated": "scripts/blender/hollowsun_assets.py (Blender 5.2.3 LTS) + gltfpack -cc -kn -km",
 	"assets": [
 		{
 			"id": "DM_crypt_rS_X_a",
 			"file": "DM_crypt_rS_X_a.glb",
-			"bytes": 84440,
+			"bytes": 20144,
 			"materials": [
 				"M_crypt_stone",
 				"M_crypt_trim"
@@ -29,17 +29,22 @@
 				"cellSize": 2,
 				"size": [
 					10,
-					4.0,
+					4,
 					10
 				],
 				"trisBudget": 3000,
 				"source": "blender"
-			}
+			},
+			"rawBytes": 84440,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization"
+			]
 		},
 		{
 			"id": "CH_ak_body",
 			"file": "CH_ak_body.glb",
-			"bytes": 329164,
+			"bytes": 72944,
 			"materials": [
 				"M_ak_steel",
 				"M_ak_ember"
@@ -69,7 +74,12 @@
 					3000
 				],
 				"source": "blender"
-			}
+			},
+			"rawBytes": 329164,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization"
+			]
 		}
 	]
 }
