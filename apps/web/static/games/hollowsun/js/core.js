@@ -18,6 +18,8 @@
     maxSkillLevel: (charL, req) => Math.max(1, Math.min(B.skillMax, 1 + Math.floor((charL - req) / B.skillLevelEvery))),
     itemTierFor: (ilvl) => { let r = 0; B.tierReqLevel.forEach((t, i) => { if (ilvl >= t) r = i; }); return r; },
     monsterXp: (L, mul) => Math.max(1, Math.round(B.mxp0 * (mul || 1) * Math.pow(L + 4, B.mxpExp))),
+    xpToNext: (L) => { let x = B.xpA * Math.pow(L, B.xpExp) + B.xpB * L; if (L >= B.xpEndFrom) x *= Math.pow(B.xpEndGrowth, L - B.xpEndFrom + 1); return Math.round(x / 10) * 10; },
+    xpPenalty: (pL, mL) => { const safe = 3 + Math.floor(pL / 16); const d = Math.abs(pL - mL) - safe; return d <= 0 ? 1 : Math.max(0.1, 1 - 0.2 * d); },
   };
 
   /* ---------- deterministické RNG (G.seedHash + G.rng v Bible) ---------- */
@@ -98,10 +100,12 @@
     a[D.cls.primary] = Math.round((free * 2) / 3); a.vit = free - a[D.cls.primary];
     return a;
   }
-  function calcChar(L, items) {
+  // al: rozdělené body atributů (výchozí = referenční alokace Bible); extra: dočasné modifikátory (buffy, cfg.extra v Bible)
+  function calcChar(L, items, al, extra) {
     items = items || starterGear(L);
-    const c = D.cls; const al = alloc(L); const m = {};
+    const c = D.cls; al = al || alloc(L); const m = {};
     for (const it of items) { const im = itemMods(it); for (const k in im) addMod(m, k, im[k]); }
+    for (const k in extra || {}) addMod(m, k, extra[k]);
     const A = {};
     for (const k of ['str', 'dex', 'int', 'wil', 'vit']) A[k] = Math.round(c.base[k] + c.grow[k] * (L - 1) + (al[k] || 0) + (m[k] || 0) + (m.allAttr || 0));
     const S = {};
@@ -125,7 +129,7 @@
     };
     S.more = []; if (m.moreDmg) S.more.push(m.moreDmg);
     S.dr = F.armorDR(S.armor, L); S.evade = F.evadeChance(S.eva, L);
-    return { L, A, S, m, items, weapon: weaponOf(items) };
+    return { L, A, S, m, items, al, weapon: weaponOf(items) };
   }
   function refEnemy(L, id) {
     const e = D.enemies.find((x) => x.id === id);
@@ -201,5 +205,7 @@
     return `${pre ? pre.n : base.cat} ${suf ? suf.n : base.cat}`.replace(/^(\S+) \1$/, '$1') + ' · ' + base.n;
   }
 
-  root.HS = { D, B, F, rng, seedHash, get, alloc, calcChar, weaponOf, itemMods, rollRarity, genItem, starterGear, describe, refEnemy, skillBase, computeHit, skill: (id) => D.skills.find((s) => s.id === id) };
+  // Ashen Bulwark: štít = (15 % + 1 % × úroveň skillu) Max HP (G.BARRIERS.ak_bulwark)
+  const bulwarkBarrier = (ch, sl) => (0.15 + 0.01 * sl) * ch.S.hp;
+  root.HS = { D, B, F, rng, bulwarkBarrier, seedHash, get, alloc, calcChar, weaponOf, itemMods, rollRarity, genItem, starterGear, describe, refEnemy, skillBase, computeHit, skill: (id) => D.skills.find((s) => s.id === id) };
 })(typeof window !== 'undefined' ? window : globalThis);

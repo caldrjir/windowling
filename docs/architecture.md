@@ -251,6 +251,29 @@ with what is equipped. The save moves from version 1 to 2 (`gear`, `sinceU`) via
 gear against `hollowsun.loot.fixtures.json` (exported from the Bible), plus drops, equipping and the
 save migration.
 
+Character progression (P1): the arena character starts at level 1 and gains XP per kill by the
+Bible (`F.monsterXp` × `F.xpPenalty` for the level gap, `F.xpToNext` per level, cap `levelCap`). A
+level-up heals, gives 3 attribute points (`freeAttrPerLevel`) and unlocks skills by their `req`;
+skill levels follow `F.maxSkillLevel`. Points go to attributes through `invCommand` (`alloc` or
+`autoAlloc`, which splits like the Bible's reference character: 2/3 to the primary attribute, the
+rest to VIT), so item attribute requirements matter. The Bible sets no enemy level for the
+prototype arena; the rule here is player level − 1 + every second wave, capped at the end of Act I
+(12, from the exported Act I areas), with brutes only from their level range (5+). Enemy armour,
+evasion and damage use each enemy's own level. The Ash Knight's six Act I skills are on the bar:
+
+- Cleave, Searing Slam and Ember Charge (from P0).
+- Brand Strike: a single-target generator with 50 % fire conversion. Its brand gives +10 % increased
+  Fire damage for 4 s (an exact `computeHit` with `fireInc` + 0.1), and Searing Slam's burn on a
+  branded target lasts 6 s.
+- Ashen Bulwark: a barrier of (15 % + 1 % × skill level) Max HP and +20 % Armor for 6 s.
+- Cry of the Pyre: a 7 m pull, −15 % enemy damage for 6 s and +40 Cinders.
+
+The benchmark and the input test keep the P0 setup: a fixed level 8 with the reference allocation.
+The save moves to version 3 (`char`: level, xp, alloc, points). Players with a P0/P1 save get the
+level 8 character they effectively had, so their gear stays usable. The progression fixtures
+(`progress` in the loot fixtures) check the XP formulas, the character with its own allocation and
+the Bulwark buff, the barrier and the new skills against the Bible.
+
 Asset pipeline (P0): `pnpm --filter @windowling/web hollowsun:assets` runs
 `scripts/blender/hollowsun_assets.py` in Blender without a window (`scripts/hollowsun-assets.mjs`
 finds it through `BLENDER`, the PATH or the default install folders) and exports raw GLB files:

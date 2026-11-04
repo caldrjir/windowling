@@ -39,7 +39,8 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 		mode: string;
 	}>(
 		page,
-		`const s = HSGame.step(30 * 60, true);
+		// invulnerable: a new character starts at level 1 and would die before the minute is up
+		`HSGame.state.player.invuln = true; const s = HSGame.step(30 * 60, true);
 		return { wave: s.wave, kills: s.kills, hits: s.stats.hits, over: s.over, mode: HSGame.mode };`,
 	);
 	expect(result.hits).toBeGreaterThan(20);
@@ -154,10 +155,14 @@ test('HOLLOW SUN: loot drops, pick-up and the inventory', async ({ page }, info)
 	const drops = await run<number>(
 		page,
 		`HSGame.state.player.invuln = true;
-		for (let i = 0; i < 40 && !HSGame.state.drops.length; i++) HSGame.step(30 * 10, true);
+		for (let i = 0; i < 60 && (!HSGame.state.drops.length || HSGame.char.level < 2); i++) HSGame.step(30 * 10, true);
 		return HSGame.state.drops.length;`,
 	);
 	expect(drops).toBeGreaterThan(0);
+	// A new character starts at level 1 and levels up from kills; the save keeps it (save v3).
+	const level = await run<number>(page, 'return HSGame.char.level;');
+	expect(level).toBeGreaterThan(1);
+	await expect(page.locator('#xpbar')).toBeVisible();
 	await expect(page.locator('.drop').first()).toBeVisible();
 	// Pick everything up through the simulation's pickup command, then save carries the bag.
 	const bag = await run<number>(
@@ -166,11 +171,12 @@ test('HOLLOW SUN: loot drops, pick-up and the inventory', async ({ page }, info)
 		return HSGame.gear.inv.length;`,
 	);
 	expect(bag).toBeGreaterThan(0);
-	const saved = await run<{ v: number; gear: { inv: unknown[] } }>(
+	const saved = await run<{ v: number; gear: { inv: unknown[] }; char: { level: number } }>(
 		page,
 		`return JSON.parse(localStorage.getItem('hollowsun.save.v1'));`,
 	);
-	expect(saved.v).toBe(2);
+	expect(saved.v).toBe(3);
+	expect(saved.char.level).toBe(level);
 	expect(saved.gear.inv).toHaveLength(bag);
 
 	// The inventory opens with I, shows a tooltip and equips on click.

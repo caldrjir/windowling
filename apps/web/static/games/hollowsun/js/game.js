@@ -13,6 +13,7 @@
       keysMove: 'Pohyb', keysMoveClick: 'levé tlačítko na zem (nebo WASD)', keysMoveWasd: 'WASD', keysCleave: 'levé tlačítko (držet) – generuje Cinders', keysSlam: 'pravé tlačítko – AoE, oheň, stojí Cinders', keysCharge: 'Q – výpad, omráčí', keysDodge: 'mezerník – úhyb s nezranitelností', keysMisc: 'Esc pauza · F počítadlo FPS · kolečko zoom',
       benchRun: 'Benchmark běží… autopilot bojuje s 50 nepřáteli', benchDone: 'Výsledek benchmarku', avg: 'Průměr FPS', low: '1 % nejhorších snímků', p95: '95. percentil snímku', simMs: 'Simulace na krok', entities: 'Nepřátel ve scéně', target: 'Cíl P0: 60 FPS s 50 nepřáteli', pass: 'splněno', fail: 'nesplněno', note: 'Měřeno v tomto prohlížeči a na tomto počítači.',
       hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
+      brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (odemykají se s úrovní)', lvlUp: 'Úroveň', xpShort: 'XP', locked: 'Odemkne se na úrovni', unlocked: 'Nový skill', attrs: 'Atributy', points: 'Volné body', autoAlloc: 'Rozdělit automaticky', brandTxt: 'Cejch', absorbTxt: 'Štít', attrN: { str: 'Síla (STR)', dex: 'Obratnost (DEX)', int: 'Intelekt (INT)', wil: 'Vůle (WIL)', vit: 'Vitalita (VIT)' },
       inv: 'Inventář', invBtn: 'I · Inventář', invHint: 'Klik na předmět v batohu = nasadit · klik na nasazený = sundat · Shift + klik = zahodit · I / Esc zavře.', invStats: 'Postava', invEmpty: 'prázdné', cmp: 'Proti nasazenému', reqs: 'Požadavky', lvl: 'Úroveň', picked: 'Sebráno', invFull: 'Batoh je plný', why: { class: 'Ash Knight tuhle zbraň nepoužívá', level: 'Vyšší úroveň postavy', twohand: 'Obouruční zbraň zabírá i druhou ruku', base: 'Neznámý předmět' }, whyAttr: 'Chybí', stHp: 'Zdraví', stArmor: 'Armor (redukce)', stEva: 'Šance uhnout', stDps: 'Cleave DPS (thrall)', stAs: 'Útoky za sekundu', stMs: 'Rychlost pohybu', keysInv: 'I – inventář, klik na předmět na zemi = sebrat', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
       feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
@@ -25,6 +26,7 @@
       keysMove: 'Move', keysMoveClick: 'left click on the ground (or WASD)', keysMoveWasd: 'WASD', keysCleave: 'left button (hold) – builds Cinders', keysSlam: 'right button – AoE fire, costs Cinders', keysCharge: 'Q – dash, stuns', keysDodge: 'space – dodge with i-frames', keysMisc: 'Esc pause · F FPS counter · wheel zoom',
       benchRun: 'Benchmark running… the autopilot fights 50 enemies', benchDone: 'Benchmark result', avg: 'Average FPS', low: '1 % low', p95: '95th percentile frame', simMs: 'Simulation per step', entities: 'Enemies in the scene', target: 'P0 target: 60 FPS with 50 enemies', pass: 'met', fail: 'not met', note: 'Measured in this browser on this computer.',
       hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
+      brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (unlock with level)', lvlUp: 'Level', xpShort: 'XP', locked: 'Unlocks at level', unlocked: 'New skill', attrs: 'Attributes', points: 'Unspent points', autoAlloc: 'Distribute automatically', brandTxt: 'Brand', absorbTxt: 'Shield', attrN: { str: 'Strength (STR)', dex: 'Dexterity (DEX)', int: 'Intelligence (INT)', wil: 'Willpower (WIL)', vit: 'Vitality (VIT)' },
       inv: 'Inventory', invBtn: 'I · Inventory', invHint: 'Click an item in the bag = equip · click an equipped one = take off · Shift + click = discard · I / Esc closes.', invStats: 'Character', invEmpty: 'empty', cmp: 'Against equipped', reqs: 'Requirements', lvl: 'Level', picked: 'Picked up', invFull: 'The bag is full', why: { class: 'The Ash Knight does not use this weapon', level: 'Higher character level needed', twohand: 'A two-handed weapon takes the off hand too', base: 'Unknown item' }, whyAttr: 'Missing', stHp: 'Health', stArmor: 'Armor (reduction)', stEva: 'Evade chance', stDps: 'Cleave DPS (thrall)', stAs: 'Attacks per second', stMs: 'Movement speed', keysInv: 'I – inventory, click an item on the ground = pick up', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
       feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
@@ -35,13 +37,13 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 2, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0 };
+  const DEF = { v: 3, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null };
   // načtení s migrací (HSim.migrateSave: v1 z P0 → v2 s výbavou)
   let SAVE = (() => { try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return Object.assign({}, DEF, raw ? window.HSim.migrateSave(raw) : {}); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
-      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: Math.min(1, SAVE.bestWave / 10), stats: { bestWave: SAVE.bestWave, kills: SAVE.kills, items: SAVE.items || 0, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
+      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: Math.min(1, ((SAVE.char && SAVE.char.level) || 1) / 12), stats: { level: (SAVE.char && SAVE.char.level) || 1, bestWave: SAVE.bestWave, kills: SAVE.kills, items: SAVE.items || 0, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
     } catch (e) { /* bez úložiště */ }
   }
 
@@ -168,10 +170,13 @@
     if (mode === 'assets' && AS.char && '1234'.includes(k)) { AS.char.enabled = true; playClip(AS.char, CLIPS[Number(k) - 1]); }
     if (k === 'f') { fpsOn = !fpsOn; document.getElementById('fps').hidden = !fpsOn; }
     if (mode !== 'play') return; audioInit();
-    if (!e.repeat && ' qe23wasd'.includes(k) && k.length === 1) { fresh = true; latInput(e.timeStamp); }
+    if (!e.repeat && ' qe12345rtwasd'.includes(k) && k.length === 1) { fresh = true; latInput(e.timeStamp); }
     if (k === ' ') { pend.dodge = true; e.preventDefault(); }
     if (k === 'q' || k === '3') pend.cast = 'ak_charge';
-    if (k === '2' || k === 'e') pend.cast = 'ak_slam';
+    if (k === '2') pend.cast = 'ak_slam';
+    if (k === 'e' || k === '1') pend.cast = 'ak_brand';
+    if (k === 'r' || k === '4') pend.cast = 'ak_bulwark';
+    if (k === 't' || k === '5') pend.cast = 'ak_warcry';
   });
   window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; lmb = false; if (mode === 'play') pause(); });
@@ -274,6 +279,15 @@
         case 'equip': case 'unequip': case 'discard': saveGear(); break;
         case 'cantequip': toast(ev.why in T[LANG].why ? t('why')[ev.why] : `${t('whyAttr')} ${String(ev.why).toUpperCase()}`); break;
         case 'invfull': toast(t('invFull')); break;
+        case 'levelup': num(S.player.x, S.player.z, t('lvlUp') + ' ' + ev.level, 'lvl', 3); tone(392, 784, 0.5, 0.25, 'triangle'); tone(523, 1046, 0.6, 0.18, 'sine'); saveChar(); break;
+        case 'unlock': toast(t('unlocked') + ': ' + t({ ak_brand: 'brand', ak_charge: 'charge', ak_slam: 'slam', ak_bulwark: 'bulwark', ak_warcry: 'warcry' }[ev.skill] || 'cleave')); break;
+        case 'locked': flashSkill(ev.skill, t('locked') + ' ' + ev.req); break;
+        case 'alloc': saveChar(); break;
+        case 'wave': saveChar(); break;
+        case 'brand': num(ev.x, ev.z, t('brandTxt'), 'fire', 2.2); break;
+        case 'absorb': num(ev.x, ev.z, t('absorbTxt') + ' −' + ev.amt, 'info', 2.2); break;
+        case 'bulwark': { const g = ent('sphere', M.ghost, [ev.x, 1, ev.z], [2.2, 2.4, 2.2], null, false); fx(g, 0.45, (f, k) => f.e.setLocalScale(2.2 + k * 0.6, 2.4 + k * 0.6, 2.2 + k * 0.6)); tone(220, 140, 0.4, 0.3, 'sine'); break; }
+        case 'warcry': { const e = flat(meshFor('ringS', 0.75, 1, 360), M.slam, ev.x, ev.z, 0, 0.5, 0.06); fx(e, 0.45, (f, k) => f.e.setLocalScale(ev.r * (0.2 + k), 1, ev.r * (0.2 + k))); tone(140, 90, 0.5, 0.6, 'sawtooth'); noise(0.4, 400, 120, 0.4, 'lowpass'); break; }
         default: break;
       }
     }
@@ -285,6 +299,7 @@
   const BEAM = {}; for (const r in RCOL) BEAM[r] = mat(RCOL[r], { unlit: true, opacity: 0.35, add: true });
   const dropsLayer = document.getElementById('drops'); const DV = new Map();
   function saveGear() { if (!S) return; SAVE.gear = JSON.parse(JSON.stringify(S.gear)); SAVE.sinceU = S.sinceU; persist(); }
+  function saveChar() { if (!S || !S.progress) return; SAVE.char = JSON.parse(JSON.stringify(S.char)); persist(); }
   let toastT = 0; function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 1800); }
   function syncDrops() {
     const live = new Set();
@@ -342,9 +357,14 @@
     const slotN = (k) => { const id = k.replace(/[12]$/, ''); return ((HS.D.loot.slots.find((x) => x.id === id) || {}).n || id).replace(' ×2', '') + (k.endsWith('2') ? ' 2' : k.endsWith('1') ? ' 1' : ''); };
     el.innerHTML = `<div class="box"><div class="head"><h2>${t('inv')}</h2><button class="btn dim" id="b-inv-close" aria-label="✕">✕</button></div><span class="muted">${t('invHint')}</span>
       <div class="cols"><div><div class="eq">${SIM.EQ_SLOTS.map((k) => cellHtml(g.eq[k], 'eq', k, slotN(k))).join('')}</div>
-      <div class="stats"><span class="muted">${t('invStats')} · L${S.L}</span><span></span>${STAT_ROWS.map(([k, f, fm]) => `<span>${t(k)}</span><b>${fm(sm[f])}</b>`).join('')}</div></div>
+      <div class="stats"><span class="muted">${t('invStats')} · L${S.L}</span><span></span>${STAT_ROWS.map(([k, f, fm]) => `<span>${t(k)}</span><b>${fm(sm[f])}</b>`).join('')}</div>
+      <div class="attrs"><span class="muted">${t('attrs')} · ${t('points')}: <b>${S.char.points}</b></span><span></span><span></span>${SIM.ATTRS.map((k) => `<span>${t('attrN')[k]}</span><b>${S.ch.A[k]}</b><button data-attr="${k}" ${S.char.points && S.progress ? '' : 'disabled'} aria-label="+1 ${k}">+</button>`).join('')}</div>
+      ${S.char.points && S.progress ? `<button class="btn dim" id="b-auto" style="margin-top:8px;font-size:13px;padding:6px 10px">${t('autoAlloc')}</button>` : ''}</div>
       <div><div class="grid">${Array.from({ length: SIM.INV_MAX }, (_, i) => cellHtml(g.inv[i], 'inv', i)).join('')}</div><p class="muted">${g.inv.length} / ${SIM.INV_MAX}</p></div></div></div>`;
     document.getElementById('b-inv-close').onclick = closeInv;
+    const cmd = (c) => { S.events.length = 0; SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; renderInv(); };
+    for (const b of el.querySelectorAll('[data-attr]')) b.onclick = () => cmd({ alloc: b.dataset.attr });
+    const ba = document.getElementById('b-auto'); if (ba) ba.onclick = () => cmd({ autoAlloc: true });
     for (const c of el.querySelectorAll('.cell.has')) {
       const kind = c.dataset.k, key = c.dataset.i; const item = kind === 'inv' ? g.inv[+key] : g.eq[key];
       c.onmouseenter = (e) => showTip(e, tipHtml(item, kind === 'eq' ? key : null)); c.onmousemove = (e) => showTip(e, tipHtml(item, kind === 'eq' ? key : null)); c.onmouseleave = hideTip;
@@ -356,10 +376,10 @@
   document.getElementById('b-inv').textContent = t('invBtn'); document.getElementById('b-inv').onclick = () => (mode === 'inv' ? closeInv() : openInv());
 
   /* ---------- HUD ---------- */
-  const SK = [['ak_cleave', 'LMB', 'cleave'], ['ak_slam', 'RMB', 'slam'], ['ak_charge', 'Q', 'charge'], ['dodge', '␣', 'dodge']];
+  const SK = [['ak_cleave', 'LMB', 'cleave'], ['ak_slam', 'RMB', 'slam'], ['ak_charge', 'Q', 'charge'], ['ak_brand', 'E', 'brand'], ['ak_bulwark', 'R', 'bulwark'], ['ak_warcry', 'T', 'warcry'], ['dodge', '␣', 'dodge']];
   const skillsEl = document.getElementById('skills');
   skillsEl.innerHTML = SK.map(([id, key, nm]) => `<div class="sk" id="sk-${id}"><span class="key">${key}</span><b>${t(nm)}</b><span class="cost"></span><div class="cd"></div></div>`).join('');
-  function flashSkill(id) { const el = document.getElementById('sk-' + id); if (!el) return; el.classList.add('no'); setTimeout(() => el.classList.remove('no'), 250); num(S.player.x, S.player.z, t('nores'), 'info', 2.6); }
+  function flashSkill(id, txt) { const el = document.getElementById('sk-' + id); if (!el) return; el.classList.add('no'); setTimeout(() => el.classList.remove('no'), 250); num(S.player.x, S.player.z, txt || t('nores'), 'info', 2.6); }
   let fpsOn = false;
   function hud() {
     const p = S.player;
@@ -367,13 +387,17 @@
     document.getElementById('b-res').style.width = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' Cinders';
     document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : t('wave') + ' ' + S.wave;
     document.getElementById('kills').textContent = t('kills') + ' ' + S.kills;
+    const need = HS.F.xpToNext(S.L); const xpOn = S.progress; document.getElementById('xpbar').hidden = !xpOn;
+    if (xpOn) { document.getElementById('b-xp').style.width = ((S.char.xp / need) * 100).toFixed(1) + '%'; document.getElementById('t-xp').textContent = `L${S.L} · ${S.char.xp} / ${need} ${t('xpShort')}${S.char.points ? ' · +' + S.char.points : ''}`; }
     for (const [id] of SK) {
       const el = document.getElementById('sk-' + id); if (!el) continue;
       if (id === 'dodge') { el.querySelector('.cd').style.height = ((p.dodgeCd / SIM.DODGE.cd) * 100).toFixed(0) + '%'; continue; }
       const sl = S.skills[id]; const h = sl.hit.en_thrall; const cdMax = h.cd || 0;
+      el.classList.toggle('locked', !sl.on); el.dataset.req = 'L' + sl.sk.req; el.title = sl.on ? '' : t('locked') + ' ' + sl.sk.req;
+      el.classList.toggle('on', id === 'ak_bulwark' && p.bulwark > 0);
       el.querySelector('.cd').style.height = cdMax ? ((sl.cd / cdMax) * 100).toFixed(0) + '%' : '0%';
       el.querySelector('.cost').textContent = h.cost > 0 ? h.cost : '+' + -h.cost;
-      el.style.opacity = h.cost > 0 && p.res < h.cost ? 0.55 : 1;
+      el.style.opacity = !sl.on ? '' : h.cost > 0 && p.res < h.cost ? 0.55 : 1;
     }
   }
 
@@ -456,7 +480,7 @@
 
   /* ---------- obrazovky ---------- */
   const screen = document.getElementById('screen');
-  const keysHtml = () => `<div class="keys"><kbd>${t('keysMove')}</kbd><span>${SAVE.clickMove ? t('keysMoveClick') : t('keysMoveWasd')}</span><kbd>Cleave</kbd><span>${t('keysCleave')}</span><kbd>Slam</kbd><span>${t('keysSlam')}</span><kbd>Charge</kbd><span>${t('keysCharge')}</span><kbd>${t('dodge')}</kbd><span>${t('keysDodge')}</span><kbd>I</kbd><span>${t('keysInv')}</span><kbd>…</kbd><span>${t('keysMisc')}</span></div>`;
+  const keysHtml = () => `<div class="keys"><kbd>${t('keysMove')}</kbd><span>${SAVE.clickMove ? t('keysMoveClick') : t('keysMoveWasd')}</span><kbd>Cleave</kbd><span>${t('keysCleave')}</span><kbd>Slam</kbd><span>${t('keysSlam')}</span><kbd>Charge</kbd><span>${t('keysCharge')}</span><kbd>${t('dodge')}</kbd><span>${t('keysDodge')}</span><kbd>E R T</kbd><span>${t('keysSkills')}</span><kbd>I</kbd><span>${t('keysInv')}</span><kbd>…</kbd><span>${t('keysMisc')}</span></div>`;
   const opt = () => `<label class="opt" for="o-click"><input type="checkbox" id="o-click" ${SAVE.clickMove ? 'checked' : ''}> ${t('clickMove')}</label>`;
   function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
   function menu() {
@@ -470,7 +494,8 @@
   let bench = null;
   function start(m) {
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
-    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' });
+    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena', char: m === 'arena' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
+    if (S.progress) saveChar();
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
     document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : t('hint');
@@ -585,7 +610,7 @@
   function pause() { mode = 'paused'; screen.innerHTML = `<div class="panel"><h2>${t('paused')}</h2>${keysHtml()}${opt()}<div class="row"><button class="btn" id="b-res">${t('resume')}</button><button class="btn dim" id="b-rst">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-res').onclick = resume; document.getElementById('b-rst').onclick = () => start('arena'); document.getElementById('b-menu').onclick = menu; bindOpt(); }
   function resume() { screen.innerHTML = ''; mode = 'play'; acc = 0; }
   function gameOver() {
-    mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; persist();
+    mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; saveChar(); persist();
     const st = S.stats;
     screen.innerHTML = `<div class="panel"><h2>${t('over')}</h2><table class="res"><tr><td>${t('wave')}</td><td class="n">${S.wave}</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('dmgDealt')}</td><td class="n">${st.dmg}</td></tr><tr><td>${t('hits')}</td><td class="n">${st.hits}</td></tr><tr><td>${t('dodges')}</td><td class="n">${st.dodged}</td></tr><tr><td>${t('taken')}</td><td class="n">${st.taken}</td></tr></table><div class="row"><button class="btn" id="b-again">${t('restart')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
     document.getElementById('b-again').onclick = () => start('arena'); document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu;
@@ -688,7 +713,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();

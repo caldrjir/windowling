@@ -93,3 +93,14 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 @media (max-width: 760px) { #inv .cols { grid-template-columns: 1fr; } }
 #inv .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 #inv .head .btn { padding: 6px 12px; }
+/* P1: postup postavy */
+#xpbar { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); width: min(520px, 60vw); height: 10px; background: #1a1f2c; border: 1px solid #3a3020; overflow: hidden; }
+#xpbar i { position: absolute; inset: 0 auto 0 0; display: block; background: linear-gradient(#e3b964, #9a6d2c); }
+#xpbar span { position: absolute; inset: 0; text-align: center; font: 600 9px/10px var(--f-mono); color: #f2efe6; text-shadow: 0 1px 1px #000; }
+.sk.locked { opacity: .45; } .sk.locked b::after { content: attr(data-req); display: block; font: 600 10px/1 var(--f-mono); color: var(--muted); margin-top: 2px; }
+.sk.on { border-color: var(--gold); box-shadow: 0 0 10px #e3b96466; }
+.dmg.lvl { color: var(--gold); font: 600 34px/1 var(--f-display); }
+#inv .attrs { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 8px; align-items: center; font-size: 12px; margin-top: 10px; }
+#inv .attrs b { font-family: var(--f-mono); text-align: right; }
+#inv .attrs button { font: 600 12px/1 var(--f-mono); color: var(--gold); background: none; border: 1px solid var(--bronze); width: 22px; height: 20px; cursor: pointer; }
+#inv .attrs button:disabled { opacity: .3; cursor: default; }

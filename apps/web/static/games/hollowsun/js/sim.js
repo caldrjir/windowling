@@ -28,10 +28,45 @@
   const equipped = (s) => EQ_SLOTS.map((k) => s.gear.eq[k]).filter(Boolean);
   function defaultGear(L) { return { eq: { main: HS.starterGear(L)[0] }, inv: [] }; }
   // staty postavy a tabulky zásahů skillů z aktuální výbavy; poměr HP zůstává
-  function refreshChar(s) {
-    const ch = HS.calcChar(s.L, equipped(s)); s.ch = ch;
-    for (const id in s.skills) { const slot = s.skills[id]; slot.hit = {}; for (const e of HS.D.enemies) slot.hit[e.id] = HS.computeHit(slot.sk, slot.sl, ch, HS.refEnemy(s.L, e.id)); }
-    const p = s.player; if (p) { const k = p.hpMax ? p.hp / p.hpMax : 1; p.hpMax = ch.S.hp; p.hp = Math.max(1, Math.round(ch.S.hp * k)); p.resMax = ch.S.res; }
+  function refreshChar(s, heal) {
+    const items = equipped(s); const al = s.char.alloc;
+    const ch = HS.calcChar(s.L, items, al); s.ch = ch;
+    s.chBulwark = HS.calcChar(s.L, items, al, { armorInc: 0.2 }); // Ashen Bulwark: +20 % Armor
+    s.chBrand = HS.calcChar(s.L, items, al, { fireInc: 0.1 }); // Brand: cíl dostává +10 % increased Fire damage
+    s.hitCache = {};
+    for (const id in s.skills) {
+      const slot = s.skills[id]; slot.sl = HS.F.maxSkillLevel(s.L, slot.sk.req); slot.on = slot.sk.req <= s.L; slot.hit = {};
+      for (const e of HS.D.enemies) slot.hit[e.id] = HS.computeHit(slot.sk, slot.sl, ch, HS.refEnemy(s.L, e.id));
+    }
+    const p = s.player; if (p) { const k = heal ? 1 : p.hpMax ? p.hp / p.hpMax : 1; p.hpMax = ch.S.hp; p.hp = Math.max(1, Math.round(ch.S.hp * k)); p.resMax = ch.S.res; }
+  }
+  // zásah skillu proti konkrétnímu nepříteli (jeho level; cejch Brand přidá +10 % increased Fire)
+  function hitFor(s, slot, e) {
+    const br = e.brand > 0; const key = slot.sk.id + '|' + e.type + '|' + e.L + (br ? '|b' : '');
+    return s.hitCache[key] || (s.hitCache[key] = HS.computeHit(slot.sk, slot.sl, br ? s.chBrand : s.ch, HS.refEnemy(e.L, e.type)));
+  }
+
+  /* ---------- postup postavy (P1): XP, levely, body atributů ---------- */
+  const ATTRS = ['str', 'dex', 'int', 'wil', 'vit'];
+  const sumAlloc = (al) => ATTRS.reduce((t, k) => t + (al[k] || 0), 0);
+  function newChar(level) { const L = level || 1; return { level: L, xp: 0, alloc: level ? HS.alloc(L) : {}, points: 0 }; }
+  // uložená postava: level v mezích, alokace jen z volných bodů (3 za level), zbytek jako nerozdělené body
+  function sanitizeChar(c) {
+    if (!c || typeof c !== 'object') return newChar();
+    const L = Math.max(1, Math.min(HS.B.levelCap, Math.floor(Number(c.level) || 1))); const total = (L - 1) * HS.B.freeAttrPerLevel; const al = {}; let used = 0;
+    for (const k of ATTRS) { const v = Math.max(0, Math.floor(Number((c.alloc || {})[k]) || 0)); const take = Math.min(v, total - used); if (take > 0) { al[k] = take; used += take; } }
+    return { level: L, xp: Math.max(0, Math.min(HS.F.xpToNext(L) - 1, Math.floor(Number(c.xp) || 0))), alloc: al, points: total - used };
+  }
+  // úroveň nepřátel v aréně prototypu (Bible ji pro arénu neurčuje): level hráče − 1 + každá druhá vlna, strop konce Act I
+  const ACT1_MAX = Math.max(...HS.D.areas.map((a) => a.lv[1]));
+  function monsterLevel(s) { return s.mode === 'arena' ? Math.max(1, Math.min(ACT1_MAX, s.L - 1 + Math.floor((s.wave - 1) / 2))) : s.L; }
+  function gainXp(s, e) {
+    if (s.mode !== 'arena' || !s.progress) return;
+    const c = s.char; const xp = Math.max(1, Math.round(HS.F.monsterXp(e.L, e.def.xpMul) * HS.F.xpPenalty(s.L, e.L)));
+    c.xp += xp; s.events.push({ t: 'xp', xp, x: e.x, z: e.z });
+    let up = false;
+    while (c.level < HS.B.levelCap && c.xp >= HS.F.xpToNext(c.level)) { c.xp -= HS.F.xpToNext(c.level); c.level++; c.points += HS.B.freeAttrPerLevel; up = true; s.events.push({ t: 'levelup', level: c.level }); }
+    if (up) { s.L = c.level; refreshChar(s, true); for (const id in s.skills) if (s.skills[id].sk.req === s.L) s.events.push({ t: 'unlock', skill: id }); }
   }
   // požadavky na nasazení: level tieru, atributy báze, třída (G.BASES.cls)
   function canEquip(s, it) {
@@ -65,6 +100,9 @@
       delete g.eq[cmd.unequip]; g.inv.push(it); refreshChar(s); s.events.push({ t: 'unequip', slot: cmd.unequip }); return true;
     }
     if (cmd.discard != null) { const it = g.inv.splice(cmd.discard, 1)[0]; if (it) s.events.push({ t: 'discard', item: it }); return !!it; }
+    // body atributů: { alloc: 'str' } jeden bod; { autoAlloc: true } zbytek jako referenční postava Bible (2/3 primární, zbytek VIT)
+    if (cmd.alloc && ATTRS.includes(cmd.alloc)) { const c = s.char; if (c.points <= 0) return false; c.alloc[cmd.alloc] = (c.alloc[cmd.alloc] || 0) + 1; c.points--; refreshChar(s); s.events.push({ t: 'alloc', attr: cmd.alloc }); return true; }
+    if (cmd.autoAlloc) { const c = s.char; if (c.points <= 0) return false; const pr = HS.D.cls.primary; const a = Math.round((c.points * 2) / 3); c.alloc[pr] = (c.alloc[pr] || 0) + a; c.alloc.vit = (c.alloc.vit || 0) + c.points - a; c.points = 0; refreshChar(s); s.events.push({ t: 'alloc', attr: 'auto' }); return true; }
     return false;
   }
   // drop z nepřítele: šance podle typu (BAL.dropChance), rarita G.rollRarity, pity pro unikát (lootSim v Bible),
@@ -76,7 +114,7 @@
     let rar = HS.rollRarity(r, 0, type); s.sinceU++;
     if (rar !== 'unique' && s.sinceU >= HS.B.pityUnique && rar === 'rare') rar = 'unique';
     if (rar === 'unique') s.sinceU = 0;
-    const item = HS.genItem(r, s.L, HS.D.cls.id, rar);
+    const item = HS.genItem(r, e.L, HS.D.cls.id, rar);
     const d = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(d);
     s.events.push({ t: 'drop', id: d.id, x: d.x, z: d.z, rar: item.rar });
   }
@@ -89,11 +127,13 @@
     if (!out.eq.main) out.eq.main = HS.starterGear(L)[0];
     return out;
   }
-  // save hollowsun.save.v1: verze 1 (P0) → 2 (P1: výbava, inventář, pity čítač unikátů)
+  // save hollowsun.save.v1: verze 1 (P0) → 2 (P1: výbava, inventář, pity čítač unikátů) → 3 (P1: postava, XP, atributy).
+  // Kdo hrál P0/P1, měl postavu napevno na levelu 8: dostane ji (referenční alokace), aby mu výbava zůstala použitelná.
   function migrateSave(save) {
     const s = Object.assign({}, save); const v = Number(s.v) || 1;
     if (v < 2) { s.gear = null; s.sinceU = 0; }
-    s.v = 2; return s;
+    if (v < 3) s.char = s.gear || Number(s.bestWave) > 0 ? newChar(HS.D.level) : null;
+    s.v = 3; return s;
   }
   function pickUp(s, d) {
     if (s.gear.inv.length >= INV_MAX) { s.events.push({ t: 'invfull' }); return false; }
@@ -102,29 +142,32 @@
 
   function create(opts) {
     opts = opts || {};
-    const L = opts.level || HS.D.level;
+    // arena: postava ze save (opts.char) a postup; benchmark a test vstupu: pevný level (P0 = 8), referenční alokace
+    const fixed = opts.level || ((opts.mode || 'arena') === 'bench' ? HS.D.level : 0);
+    const char = fixed ? newChar(fixed) : sanitizeChar(opts.char);
+    const L = char.level;
     const skills = {};
-    for (const sk of HS.D.skills) skills[sk.id] = { sk, sl: HS.F.maxSkillLevel(L, sk.req), cd: 0, hit: {} };
+    for (const sk of HS.D.skills) skills[sk.id] = { sk, sl: HS.F.maxSkillLevel(L, sk.req), on: sk.req <= L, cd: 0, hit: {} };
     const gear = sanitizeGear(opts.gear, L);
     const s = {
-      L, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
+      L, char, progress: !fixed, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
       loot: opts.loot != null ? !!opts.loot : (opts.mode || 'arena') === 'arena', lootN: 0, sinceU: opts.sinceU || 0, drops: [],
       player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
     refreshChar(s);
     const S = s.ch.S;
-    s.player = { x: 0, z: 0, face: 0, hp: S.hp, hpMax: S.hp, res: 30, resMax: S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, pick: null, invuln: !!opts.invuln, dmgTaken: 0 };
+    s.player = { x: 0, z: 0, face: 0, hp: S.hp, hpMax: S.hp, res: 30, resMax: S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, pick: null, barrier: 0, bulwark: 0, invuln: !!opts.invuln, dmgTaken: 0 };
     if (s.mode === 'bench') spawnBench(s, opts.benchCount || 50); else nextWave(s);
     return s;
   }
   function spawn(s, id, x, z) {
-    const def = HS.D.enemies.find((e) => e.id === id); const en = HS.refEnemy(s.L, id);
-    const e = { id: s.nextId++, type: id, def, x, z, face: 0, hp: en.hp, hpMax: en.hp, armor: en.armor, eva: en.eva, res: en.res, r: ER[id], speed: def.ms, atk: null, cds: HS.D.attacks[id].map(() => 0.5 + s.rnd()), stun: 0, burn: [], flash: 0, dead: false, push: [0, 0] };
+    const def = HS.D.enemies.find((e) => e.id === id); const L = monsterLevel(s); const en = HS.refEnemy(L, id);
+    const e = { id: s.nextId++, type: id, def, L, x, z, face: 0, brand: 0, weak: 0, hp: en.hp, hpMax: en.hp, armor: en.armor, eva: en.eva, res: en.res, r: ER[id], speed: def.ms, atk: null, cds: HS.D.attacks[id].map(() => 0.5 + s.rnd()), stun: 0, burn: [], flash: 0, dead: false, push: [0, 0] };
     s.enemies.push(e); return e;
   }
   function ring(s, n, r0) { const out = []; const off = s.rnd() * Math.PI * 2; for (let i = 0; i < n; i++) { const a = off + (i / n) * Math.PI * 2 + (s.rnd() - 0.5) * 0.3; const r = r0 - s.rnd() * 2; out.push([Math.cos(a) * r, Math.sin(a) * r]); } return out; }
   function nextWave(s) {
-    s.wave++; const nT = 5 + 3 * s.wave, nB = Math.floor(s.wave / 2);
+    s.wave++; const brute = HS.D.enemies.find((e) => e.id === 'en_brute'); const nT = 5 + 3 * s.wave, nB = monsterLevel(s) >= brute.lv[0] ? Math.floor(s.wave / 2) : 0; // brute až od svého levelu (Bible: 5–12)
     ring(s, nT, ARENA - 1).forEach(([x, z]) => spawn(s, 'en_thrall', x, z));
     ring(s, nB, ARENA - 2).forEach(([x, z]) => spawn(s, 'en_brute', x, z));
     s.events.push({ t: 'wave', wave: s.wave, n: nT + nB });
@@ -138,23 +181,25 @@
 
   /* hráč zasáhne nepřítele: hod na zásah a crit, poškození z computeHit (bez očekávaného critu) */
   function strike(s, e, slot, mult) {
-    const h = slot.hit[e.type]; const sk = slot.sk;
+    const h = hitFor(s, slot, e); const sk = slot.sk;
     if (s.rnd() > h.hitChance) { s.events.push({ t: 'miss', x: e.x, z: e.z }); return false; }
     const crit = s.rnd() < h.critChance; const S = s.ch.S;
     let dmg = (h.perHit / h.eCrit) * (crit ? S.critMult : 1) * (mult || 1) * (0.9 + s.rnd() * 0.2);
     dmg = Math.max(1, Math.round(dmg));
     e.hp -= dmg; e.flash = 0.1; s.stats.hits++; s.stats.dmg += dmg; if (crit) s.stats.crits++;
-    if (sk.dot) e.burn.push({ left: sk.dot.dur, dps: (h.dot / h.hitChance) / sk.dot.dur });
+    // Searing Slam proti cíli s cejchem Brand: Burn trvá 6 s (ix v Bible), tempo hoření stejné
+    if (sk.dot) e.burn.push({ left: sk.id === 'ak_slam' && e.brand > 0 ? 6 : sk.dot.dur, dps: (h.dot / h.hitChance) / sk.dot.dur });
     const kb = sk.id === 'ak_slam' ? 1.4 : sk.id === 'ak_charge' ? 2 : 0.6; const d = len(e.x - s.player.x, e.z - s.player.z) || 1;
     if (e.type !== 'en_brute') { e.push[0] += ((e.x - s.player.x) / d) * kb; e.push[1] += ((e.z - s.player.z) / d) * kb; }
-    s.events.push({ t: 'hit', id: e.id, x: e.x, z: e.z, dmg, crit, skill: sk.id, type: sk.conv ? 'fire' : 'phys' });
+    s.events.push({ t: 'hit', id: e.id, x: e.x, z: e.z, dmg, crit, skill: sk.id, type: sk.conv ? 'fire' : 'phys', brand: e.brand > 0 });
     if (e.hp <= 0) kill(s, e);
     return true;
   }
-  function kill(s, e) { if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type }); rollDrop(s, e); }
+  function kill(s, e) { if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type }); rollDrop(s, e); gainXp(s, e); }
 
   function startSkill(s, id, aim) {
     const p = s.player; const slot = s.skills[id]; if (!slot || p.act || p.dodge || p.stun > 0) return false;
+    if (!slot.on) { s.events.push({ t: 'locked', skill: id, req: slot.sk.req }); return false; }
     const h = slot.hit.en_thrall; if (slot.cd > 0) return false; if (h.cost > 0 && p.res < h.cost) { s.events.push({ t: 'nores', skill: id }); return false; }
     if (aim) p.face = Math.atan2(aim[1] - p.z, aim[0] - p.x);
     p.res = Math.min(p.resMax, p.res - Math.max(0, h.cost));
@@ -177,6 +222,20 @@
       const dx = act.aim[0] - p.x, dz = act.aim[1] - p.z; const d = Math.min(sk.r, len(dx, dz)); const cx = p.x + Math.cos(p.face) * d, cz = p.z + Math.sin(p.face) * d; const R = 3.5;
       for (const e of s.enemies) { if (e.dead) continue; if (len(e.x - cx, e.z - cz) - e.r > R) continue; if (strike(s, e, act.slot)) hits++; }
       s.events.push({ t: 'slam', x: cx, z: cz, r: R, hits }); s.events.push({ t: 'hitstop', ms: hits ? 90 : 40 }); s.events.push({ t: 'shake', amp: 0.35 });
+    } else if (sk.id === 'ak_brand') {
+      // Brand Strike: jeden cíl před postavou (nejbližší v oblouku 90°), +6 Cinders, cejch na 4 s (+10 % Fire damage)
+      let best = null, bd = 1e9;
+      for (const e of s.enemies) { if (e.dead) continue; const dx = e.x - p.x, dz = e.z - p.z; const d = len(dx, dz) - e.r; if (d > sk.r || angDiff(Math.atan2(dz, dx), p.face) > Math.PI / 4) continue; if (d < bd) { bd = d; best = e; } }
+      if (best && strike(s, best, act.slot)) { hits = 1; if (!best.dead) best.brand = sk.du; p.res = Math.min(p.resMax, p.res - act.slot.hit.en_thrall.cost); s.events.push({ t: 'brand', id: best.id, x: best.x, z: best.z }); s.events.push({ t: 'hitstop', ms: 55 }); }
+      s.events.push({ t: 'swing', x: p.x, z: p.z, face: p.face, r: sk.r, w: 70, hits });
+    } else if (sk.id === 'ak_bulwark') {
+      // Ashen Bulwark: štít (15 % + 1 % × sl) Max HP a +20 % Armor na 6 s
+      p.barrier = HS.bulwarkBarrier(s.ch, act.slot.sl); p.bulwark = sk.du; s.events.push({ t: 'bulwark', x: p.x, z: p.z, barrier: Math.round(p.barrier) });
+    } else if (sk.id === 'ak_warcry') {
+      // Cry of the Pyre: kruh 7 m – přitáhne nepřátele, −15 % jejich poškození na 6 s, taunt 4 s; +40 Cinders
+      const R = 7; p.res = Math.min(p.resMax, p.res - act.slot.hit.en_thrall.cost);
+      for (const e of s.enemies) { if (e.dead) continue; const dx = p.x - e.x, dz = p.z - e.z; const d = len(dx, dz); if (d - e.r > R) continue; hits++; e.weak = sk.du; e.taunt = 4; e.recover = 0; if (d > 1.6 && e.type !== 'en_brute') { e.push[0] += (dx / d) * Math.min(3, d - 1.2); e.push[1] += (dz / d) * Math.min(3, d - 1.2); } }
+      s.events.push({ t: 'warcry', x: p.x, z: p.z, r: R, hits }); s.events.push({ t: 'shake', amp: 0.2 });
     }
     return hits;
   }
@@ -185,6 +244,7 @@
     const p = s.player; const dt = TICK;
     for (const id in s.skills) s.skills[id].cd = Math.max(0, s.skills[id].cd - dt);
     p.dodgeCd = Math.max(0, p.dodgeCd - dt); p.stun = Math.max(0, p.stun - dt);
+    if (p.bulwark > 0) { p.bulwark -= dt; if (p.bulwark <= 0) { p.bulwark = 0; p.barrier = 0; } }
     p.hp = Math.min(p.hpMax, p.hp + s.ch.S.hpRegen * dt);
     if (p.hp <= 0) return;
     // sebrání předmětu: cíl se zadá příkazem a zvedne se, jakmile je hráč blízko (i během úderu)
@@ -235,11 +295,13 @@
     return angDiff(Math.atan2(dz, dx), atk.face) <= ((a.w / 2) * Math.PI) / 180 + 0.15;
   }
   function hurtPlayer(s, e, a) {
-    const p = s.player; const L = s.L; const S = s.ch.S;
+    const p = s.player; const L = e.L; const S = (p.bulwark > 0 ? s.chBulwark : s.ch).S;
     if (p.dodge && p.dodge.t <= DODGE.iframes) { s.stats.dodged++; s.events.push({ t: 'dodged', x: p.x, z: p.z }); return; }
-    if (s.rnd() < S.evade) { s.events.push({ t: 'evade', x: p.x, z: p.z }); return; }
-    const raw = HS.F.enemyDmg(L, e.def.dmgMul * a.mul) * (0.9 + s.rnd() * 0.2);
-    const dmg = Math.max(1, Math.round(raw * (1 - S.dr)));
+    // armor a evasion proti levelu útočníka (F.armorDR, F.evadeChance v Bible)
+    if (s.rnd() < HS.F.evadeChance(S.eva, L)) { s.events.push({ t: 'evade', x: p.x, z: p.z }); return; }
+    const raw = HS.F.enemyDmg(L, e.def.dmgMul * a.mul) * (0.9 + s.rnd() * 0.2) * (e.weak > 0 ? 0.85 : 1);
+    let dmg = Math.max(1, Math.round(raw * (1 - HS.F.armorDR(S.armor, L))));
+    if (p.barrier > 0) { const ab = Math.min(p.barrier, dmg); p.barrier -= ab; dmg -= ab; s.events.push({ t: 'absorb', amt: Math.round(ab), x: p.x, z: p.z }); if (!dmg) return; }
     s.stats.taken += dmg; if (!p.invuln) p.hp -= dmg;
     if (a.stun) { p.stun = Math.max(p.stun, a.stun); p.act = null; }
     s.events.push({ t: 'hurt', dmg, x: p.x, z: p.z, by: e.type }); s.events.push({ t: 'shake', amp: a.mul >= 1.5 ? 0.3 : 0.15 });
@@ -248,7 +310,7 @@
   function updateEnemies(s) {
     const dt = TICK; const p = s.player; const alive = s.enemies.filter((e) => !e.dead);
     for (const e of alive) {
-      e.flash = Math.max(0, e.flash - dt);
+      e.flash = Math.max(0, e.flash - dt); if (e.brand > 0) e.brand -= dt; if (e.weak > 0) e.weak -= dt; if (e.taunt > 0) e.taunt -= dt;
       if (e.burn.length) { let bd = 0; for (const b of e.burn) { const t = Math.min(dt, b.left); bd += b.dps * t; b.left -= dt; } e.burn = e.burn.filter((b) => b.left > 0); e.burnAcc = (e.burnAcc || 0) + bd; if (e.burnAcc >= 1) { const d = Math.floor(e.burnAcc); e.burnAcc -= d; e.hp -= d; s.stats.dmg += d; if (s.tick % 10 === 0) s.events.push({ t: 'burn', id: e.id, x: e.x, z: e.z, dmg: d }); if (e.hp <= 0) { kill(s, e); continue; } } }
       // odstrčení se tlumí
       if (e.push[0] || e.push[1]) { move(s, e, e.push[0] * dt * 6, e.push[1] * dt * 6, e.r); e.push[0] *= 0.7; e.push[1] *= 0.7; if (Math.abs(e.push[0]) + Math.abs(e.push[1]) < 0.01) e.push = [0, 0]; }
@@ -294,11 +356,12 @@
     const aim = [best.x, best.z]; const inp = { aim };
     const tele = s.enemies.some((e) => e.atk && e.atk.def.mul >= 1.2 && e.atk.t > e.atk.def.tele - 0.35 && len(e.x - p.x, e.z - p.z) < 4);
     if (tele && p.dodgeCd <= 0) { inp.dodge = true; inp.move = [p.x - best.x || 1, p.z - best.z]; return inp; }
-    if (bd > 3 && s.skills.ak_charge.cd <= 0 && p.res >= 20) inp.cast = 'ak_charge';
-    else if (p.res >= 40 && s.skills.ak_slam.cd <= 0 && bd < 3.5) inp.cast = 'ak_slam';
+    const ready = (id) => s.skills[id].on && s.skills[id].cd <= 0;
+    if (bd > 3 && ready('ak_charge') && p.res >= 20) inp.cast = 'ak_charge';
+    else if (p.res >= 40 && ready('ak_slam') && bd < 3.5) inp.cast = 'ak_slam';
     else if (bd <= s.skills.ak_cleave.sk.r + best.r) inp.hold = true;
     else inp.move = [best.x - p.x, best.z - p.z];
     return inp;
   }
-  root.HSim = { TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, migrateSave };
+  root.HSim = { TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
 })(typeof window !== 'undefined' ? window : globalThis);

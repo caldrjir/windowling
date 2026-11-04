@@ -81,7 +81,13 @@ window.HS_DATA = {
    -30,
    -40
   ],
-  "blockMitigation": 0.7
+  "blockMitigation": 0.7,
+  "xpA": 160,
+  "xpExp": 1.85,
+  "xpB": 40,
+  "xpEndFrom": 50,
+  "xpEndGrowth": 1.12,
+  "levelCap": 70
  },
  "cls": {
   "id": "ak",
@@ -142,7 +148,40 @@ window.HS_DATA = {
    "st": "—",
    "vfx": "Žhnoucí stopa čepele, jiskry na zásahu",
    "sfx": "Těžký švih + kovový dopad, praskání uhlíků",
-   "ct": null
+   "ct": null,
+   "du": null,
+   "aoe": "2,8 m, oblouk 150°"
+  },
+  {
+   "id": "ak_brand",
+   "n": "Brand Strike",
+   "k": "attack",
+   "t": [
+    "melee",
+    "generator",
+    "physical",
+    "fire"
+   ],
+   "dt": "phys",
+   "conv": {
+    "to": "fire",
+    "pct": 50
+   },
+   "rc": -6,
+   "an": 1,
+   "we": 252,
+   "wg": 4,
+   "r": 2.5,
+   "cr": 7,
+   "cd": 0,
+   "req": 2,
+   "d": "Úder, který vypálí cejch. 50 % Physical se konvertuje na Fire.",
+   "st": "Brand: cíl má +10 % zvýšené Fire poškození 4 s",
+   "vfx": "Žhnoucí runa na cíli",
+   "sfx": "Syčení rozžhaveného kovu",
+   "ct": null,
+   "du": 4,
+   "aoe": null
   },
   {
    "id": "ak_charge",
@@ -167,7 +206,9 @@ window.HS_DATA = {
    "st": "Stun 0,6 s (ne bossové)",
    "vfx": "Ohnivá stopa za postavou",
    "sfx": "Dupot + výbuch žhavého prachu",
-   "ct": null
+   "ct": null,
+   "du": null,
+   "aoe": "dráha šířky 1,5 m"
   },
   {
    "id": "ak_slam",
@@ -203,7 +244,163 @@ window.HS_DATA = {
    "st": "Burn: 40 % zásahu jako Fire DoT během 4 s",
    "vfx": "Kruhová tlaková vlna, praskliny s lávou",
    "sfx": "Hluboký dopad, basový rumble",
-   "ct": null
+   "ct": null,
+   "du": null,
+   "aoe": "kruh 3,5 m"
+  },
+  {
+   "id": "ak_bulwark",
+   "n": "Ashen Bulwark",
+   "k": "buff",
+   "t": [
+    "buff",
+    "defense",
+    "duration"
+   ],
+   "dt": null,
+   "rc": 30,
+   "an": null,
+   "r": null,
+   "cr": null,
+   "cd": 14,
+   "req": 8,
+   "d": "Popelavý štít obalí postavu.",
+   "st": "Štít = 15 % Max HP + 1 % za úroveň skillu; +20 % Armor",
+   "vfx": "Šedý popelavý plášť",
+   "sfx": "Šumění popela",
+   "ct": 0,
+   "du": 6,
+   "aoe": null
+  },
+  {
+   "id": "ak_warcry",
+   "n": "Cry of the Pyre",
+   "k": "buff",
+   "t": [
+    "warcry",
+    "aoe",
+    "duration"
+   ],
+   "dt": null,
+   "rc": -40,
+   "an": null,
+   "r": null,
+   "cr": null,
+   "cd": 18,
+   "req": 10,
+   "d": "Válečný pokřik, který přitáhne nepřátele a naplní Cinders.",
+   "st": "Taunt 4 s; nepřátelé −15 % damage 6 s",
+   "vfx": "Kruh jisker",
+   "sfx": "Řev + echo",
+   "ct": 0.4,
+   "du": 6,
+   "aoe": "kruh 7 m"
+  }
+ ],
+ "areas": [
+  {
+   "id": "a1_cinderhold",
+   "n": "Cinderhold",
+   "lv": [
+    1,
+    1
+   ],
+   "enemies": []
+  },
+  {
+   "id": "a1_ashfields",
+   "n": "Ashfields",
+   "lv": [
+    1,
+    3
+   ],
+   "enemies": [
+    "en_thrall",
+    "en_hound"
+   ]
+  },
+  {
+   "id": "a1_burnt_orchard",
+   "n": "Burnt Orchard",
+   "lv": [
+    3,
+    5
+   ],
+   "enemies": [
+    "en_thrall",
+    "en_wisp",
+    "en_bowman"
+   ]
+  },
+  {
+   "id": "a1_chapel_crypt",
+   "n": "Chapel of Embers – Crypt",
+   "lv": [
+    4,
+    6
+   ],
+   "enemies": [
+    "en_bowman",
+    "en_acolyte"
+   ]
+  },
+  {
+   "id": "a1_tollgate",
+   "n": "Ironbound Tollgate",
+   "lv": [
+    5,
+    7
+   ],
+   "enemies": [
+    "en_brute",
+    "en_hound"
+   ]
+  },
+  {
+   "id": "a1_charcoal_woods",
+   "n": "Charcoal Woods",
+   "lv": [
+    6,
+    9
+   ],
+   "enemies": [
+    "en_hound",
+    "en_wisp",
+    "en_brute"
+   ]
+  },
+  {
+   "id": "a1_gallows",
+   "n": "Gallows Hill",
+   "lv": [
+    8,
+    8
+   ],
+   "enemies": [
+    "en_bowman"
+   ]
+  },
+  {
+   "id": "a1_kiln",
+   "n": "The Great Kiln",
+   "lv": [
+    9,
+    11
+   ],
+   "enemies": [
+    "en_acolyte",
+    "en_brute",
+    "en_wisp"
+   ]
+  },
+  {
+   "id": "a1_kiln_heart",
+   "n": "Heart of the Kiln",
+   "lv": [
+    12,
+    12
+   ],
+   "enemies": []
   }
  ],
  "enemies": [

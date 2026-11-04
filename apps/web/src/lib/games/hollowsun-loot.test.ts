@@ -36,14 +36,31 @@ interface Core {
 	genItem(r: Rng, ilvl: number, cls: string | null, forceRar: string | null, slot?: string): Item;
 	rollRarity(r: Rng, mf: number, type: string): string;
 	itemMods(item: Item): Record<string, number>;
-	calcChar(level: number, items: Item[]): Char;
+	calcChar(
+		level: number,
+		items: Item[],
+		alloc?: Record<string, number>,
+		extra?: Record<string, number>,
+	): Char & { A: Record<string, number> };
 	refEnemy(level: number, id: string): unknown;
 	skill(id: string): { req: number };
 	computeHit(sk: unknown, sl: number, ch: Char, en: unknown): Hit;
-	F: { maxSkillLevel(level: number, req: number): number };
+	F: {
+		maxSkillLevel(level: number, req: number): number;
+		xpToNext(level: number): number;
+		monsterXp(level: number, mul: number): number;
+		xpPenalty(pL: number, mL: number): number;
+	};
+	bulwarkBarrier(ch: Char, sl: number): number;
 	describe(item: Item): { name: string; lines: unknown[] };
 }
 
+interface CharSave {
+	level: number;
+	xp: number;
+	alloc: Record<string, number>;
+	points: number;
+}
 interface Drop {
 	id: number;
 	x: number;
@@ -60,7 +77,30 @@ interface SimState {
 	lootN: number;
 	drops: Drop[];
 	gear: Gear;
-	player: { x: number; z: number; hp: number; hpMax: number; invuln: boolean };
+	L: number;
+	wave: number;
+	char: CharSave;
+	skills: Record<string, { on: boolean; sl: number; cd: number }>;
+	enemies: {
+		L: number;
+		type: string;
+		dead: boolean;
+		x: number;
+		z: number;
+		brand: number;
+		weak: number;
+	}[];
+	player: {
+		x: number;
+		z: number;
+		hp: number;
+		hpMax: number;
+		res: number;
+		invuln: boolean;
+		barrier: number;
+		bulwark: number;
+		face: number;
+	};
 	ch: { S: Record<string, number> };
 	events: { t: string; why?: string }[];
 }
@@ -71,6 +111,8 @@ interface Sim {
 	invCommand(s: SimState, cmd: Record<string, unknown>): boolean;
 	canEquip(s: SimState, item: Item): string | null;
 	migrateSave(save: Record<string, unknown>): Record<string, unknown>;
+	sanitizeChar(c: unknown): CharSave;
+	monsterLevel(s: SimState): number;
 	sanitizeGear(g: unknown, level: number): Gear;
 	INV_MAX: number;
 }
@@ -208,7 +250,7 @@ describe('HOLLOW SUN loot in the simulation', () => {
 	});
 
 	it('enforces class, level and two-handed rules', () => {
-		const s = HSim.create({ mode: 'arena', seed: 'rules' });
+		const s = HSim.create({ mode: 'arena', seed: 'rules', level: 8 });
 		const wand = { base: 'wb_wand', tier: 0, affixes: [], rar: 'common' };
 		const highTier = { base: 'wb_mace', tier: 2, affixes: [], rar: 'common' };
 		expect(HSim.canEquip(s, wand)).toBe('class');
@@ -225,7 +267,10 @@ describe('HOLLOW SUN loot in the simulation', () => {
 	it('migrates a P0 save and drops unknown items', () => {
 		const v1 = { v: 1, bestWave: 4, kills: 30, clickMove: true };
 		const v2 = HSim.migrateSave(v1);
-		expect(v2).toMatchObject({ v: 2, gear: null, sinceU: 0, bestWave: 4, kills: 30 });
+		expect(v2).toMatchObject({ v: 3, gear: null, sinceU: 0, bestWave: 4, kills: 30 });
+		// P0 players had a fixed level 8 character; they keep it so their gear stays usable
+		expect(v2.char).toMatchObject({ level: 8, xp: 0, points: 0 });
+		expect(HSim.migrateSave({ v: 1 }).char).toBeNull();
 		expect(HSim.migrateSave(v2)).toEqual(v2);
 		const g = HSim.sanitizeGear(
 			{
@@ -240,5 +285,110 @@ describe('HOLLOW SUN loot in the simulation', () => {
 		expect(Object.keys(g.eq)).toEqual(['main']);
 		expect(g.inv).toHaveLength(1);
 		expect(HSim.sanitizeGear('garbage', 8).eq.main).toBeDefined();
+	});
+});
+
+describe('HOLLOW SUN character progression = Game Design Bible', () => {
+	const { HS } = loadAll();
+	const P = fixtures.progress;
+
+	it('XP curve, monster XP and the level-gap penalty', () => {
+		P.xpToNext.forEach((v, i) => expect(HS.F.xpToNext(i + 1), `L${i + 1}`).toBe(v));
+		for (const row of P.monsterXp) {
+			const L = Number(row[0]);
+			expect([HS.F.monsterXp(L, 1), HS.F.monsterXp(L, 2.6)]).toEqual([row[1], row[2]]);
+		}
+		for (const row of P.penalty)
+			expect(HS.F.xpPenalty(Number(row[0]), Number(row[1]))).toBeCloseTo(Number(row[2]), 9);
+	});
+
+	it.each(P.chars)('L$level with alloc $alloc and $extra', (row) => {
+		const items = [{ base: 'wb_mace', tier: row.level >= 18 ? 1 : 0, affixes: [], rar: 'common' }];
+		const ch = HS.calcChar(
+			row.level,
+			items,
+			row.alloc as Record<string, number>,
+			row.extra as Record<string, number>,
+		);
+		for (const [k, v] of Object.entries(row.S)) expect(Number(ch.S[k]), k).toBeCloseTo(v, 9);
+		expect(plain(ch.A)).toEqual(row.A);
+		expect(HS.bulwarkBarrier(ch, HS.F.maxSkillLevel(row.level, 8))).toBeCloseTo(row.barrier, 9);
+		for (const h of row.hits) {
+			const sk = HS.skill(h.skill);
+			const got = HS.computeHit(sk, h.sl, ch, HS.refEnemy(row.level, 'en_thrall'));
+			for (const k of ['perHit', 'dot', 'actTime', 'dps'] as const)
+				expect(got[k], `${h.skill} ${k}`).toBeCloseTo(h[k], 6);
+			for (const k of ['final', 'cd', 'cost'] as const)
+				expect(got[k], `${h.skill} ${k}`).toBe(h[k]);
+		}
+	});
+});
+
+describe('HOLLOW SUN progression in the simulation', () => {
+	const { HSim } = loadAll();
+
+	it('a new character starts at level 1, levels up and unlocks skills', () => {
+		const s = HSim.create({ mode: 'arena', seed: 'prog', invuln: true });
+		expect(s.L).toBe(1);
+		expect(s.skills.ak_cleave?.on).toBe(true);
+		expect(s.skills.ak_slam?.on).toBe(false);
+		const ups: number[] = [];
+		for (let i = 0; i < 30 * 600 && s.L < 6; i++) {
+			HSim.step(s, HSim.autopilot(s));
+			for (const e of s.events) if (e.t === 'levelup') ups.push(s.L);
+		}
+		expect(s.L).toBeGreaterThanOrEqual(6);
+		expect(ups[0]).toBe(2);
+		expect(s.char.points).toBe((s.L - 1) * 3);
+		expect(s.skills.ak_slam?.on).toBe(true);
+		// enemies follow the arena rule: player level - 1 + every second wave, capped at Act I's end
+		expect(HSim.monsterLevel(s)).toBe(
+			Math.max(1, Math.min(12, s.L - 1 + Math.floor((s.wave - 1) / 2))),
+		);
+		expect(s.player.hp).toBeLessThanOrEqual(s.player.hpMax);
+	});
+
+	it('attribute points change the character', () => {
+		const s = HSim.create({ mode: 'arena', seed: 'pts', char: { level: 6, xp: 0, alloc: {} } });
+		expect(s.char.points).toBe(15);
+		const hp = s.player.hpMax;
+		expect(HSim.invCommand(s, { alloc: 'vit' })).toBe(true);
+		expect(s.player.hpMax).toBeGreaterThan(hp);
+		expect(HSim.invCommand(s, { autoAlloc: true })).toBe(true);
+		expect(s.char.points).toBe(0);
+		expect(HSim.invCommand(s, { alloc: 'str' })).toBe(false);
+		expect(Object.values(s.char.alloc).reduce((a, b) => a + b, 0)).toBe(15);
+	});
+
+	it('Bulwark shields, Brand marks, Cry of the Pyre weakens and pays Cinders', () => {
+		const s = HSim.create({ mode: 'arena', seed: 'skills', char: { level: 10, xp: 0, alloc: {} } });
+		const p = s.player;
+		p.res = 100;
+		HSim.step(s, { cast: 'ak_bulwark' });
+		for (let i = 0; i < 15; i++) HSim.step(s, {});
+		expect(p.barrier).toBeGreaterThan(0);
+		expect(p.bulwark).toBeGreaterThan(0);
+		const e = s.enemies[0];
+		if (!e) throw new Error('no enemy');
+		e.x = p.x + 1.5;
+		e.z = p.z;
+		HSim.step(s, { cast: 'ak_brand', aim: [e.x, e.z] });
+		for (let i = 0; i < 30 && !(e.brand > 0) && !e.dead; i++) HSim.step(s, {});
+		expect(e.brand > 0 || e.dead).toBe(true);
+		p.res = 0;
+		for (let i = 0; i < 40 && s.skills.ak_warcry?.cd === 0; i++)
+			HSim.step(s, { cast: 'ak_warcry' });
+		for (let i = 0; i < 30; i++) HSim.step(s, {});
+		expect(p.res).toBeGreaterThanOrEqual(40 - 1);
+		expect(s.enemies.some((x) => !x.dead && x.weak > 0)).toBe(true);
+	});
+
+	it('sanitises a saved character', () => {
+		expect(HSim.sanitizeChar(null)).toMatchObject({ level: 1, xp: 0, points: 0 });
+		const c = HSim.sanitizeChar({ level: 5, xp: 999999, alloc: { str: 100, dex: 'x' } });
+		expect(c.level).toBe(5);
+		expect(c.alloc).toEqual({ str: 12 });
+		expect(c.points).toBe(0);
+		expect(c.xp).toBeLessThan(3340);
 	});
 });
