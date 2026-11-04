@@ -109,3 +109,35 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 		.toBe(50);
 	expect(errors).toEqual([]);
 });
+
+test('HOLLOW SUN: input latency test and combat rating', async ({ page }, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
+	test.setTimeout(90_000);
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto('/games/hollowsun/index.html');
+	await page.locator('#b-lat').click();
+	await expect(page.locator('#hud')).toBeVisible();
+	// Clicks on the ground: each one the knight can react to right away becomes a sample.
+	for (const [x, y] of [
+		[500, 300],
+		[800, 500],
+		[400, 550],
+		[900, 280],
+	]) {
+		await page.mouse.click(x, y);
+		await page.waitForTimeout(400);
+	}
+	await expect
+		.poll(() => run<number>(page, 'return HSGame.latency().n;'), { timeout: 20_000 })
+		.toBeGreaterThan(0);
+
+	// Combat rating: four questions 1–5, saved with the game's own save.
+	await run(page, 'HSGame.menu();');
+	await page.locator('#b-feel').click();
+	for (const q of [0, 1, 2, 3]) await page.locator(`[data-q="${q}"][data-v="4"]`).click();
+	await page.locator('#b-fsave').click();
+	const feel = await run<{ a: number[] }[]>(page, 'return HSGame.feel;');
+	expect(feel.at(-1)?.a).toEqual([4, 4, 4, 4]);
+	expect(errors).toEqual([]);
+});

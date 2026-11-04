@@ -12,7 +12,9 @@
       cleave: 'Cleave', slam: 'Searing Slam', charge: 'Ember Charge', dodge: 'Úhyb', nores: 'Málo Cinders', miss: 'Vedle', evade: 'Úhyb!', dodged: 'Vyhnuto',
       keysMove: 'Pohyb', keysMoveClick: 'levé tlačítko na zem (nebo WASD)', keysMoveWasd: 'WASD', keysCleave: 'levé tlačítko (držet) – generuje Cinders', keysSlam: 'pravé tlačítko – AoE, oheň, stojí Cinders', keysCharge: 'Q – výpad, omráčí', keysDodge: 'mezerník – úhyb s nezranitelností', keysMisc: 'Esc pauza · F počítadlo FPS · kolečko zoom',
       benchRun: 'Benchmark běží… autopilot bojuje s 50 nepřáteli', benchDone: 'Výsledek benchmarku', avg: 'Průměr FPS', low: '1 % nejhorších snímků', p95: '95. percentil snímku', simMs: 'Simulace na krok', entities: 'Nepřátel ve scéně', target: 'Cíl P0: 60 FPS s 50 nepřáteli', pass: 'splněno', fail: 'nesplněno', note: 'Měřeno v tomto prohlížeči a na tomto počítači.',
-      hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
+      hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
+      latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
+      feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
     },
     en: {
       sub: 'Prototype P0 · grey box', pitch: 'An Ash Knight against hordes of ash. We are testing whether combat feels right and whether the browser holds 60 FPS with 50 enemies.',
@@ -21,7 +23,9 @@
       cleave: 'Cleave', slam: 'Searing Slam', charge: 'Ember Charge', dodge: 'Dodge', nores: 'Not enough Cinders', miss: 'Miss', evade: 'Evade!', dodged: 'Dodged',
       keysMove: 'Move', keysMoveClick: 'left click on the ground (or WASD)', keysMoveWasd: 'WASD', keysCleave: 'left button (hold) – builds Cinders', keysSlam: 'right button – AoE fire, costs Cinders', keysCharge: 'Q – dash, stuns', keysDodge: 'space – dodge with i-frames', keysMisc: 'Esc pause · F FPS counter · wheel zoom',
       benchRun: 'Benchmark running… the autopilot fights 50 enemies', benchDone: 'Benchmark result', avg: 'Average FPS', low: '1 % low', p95: '95th percentile frame', simMs: 'Simulation per step', entities: 'Enemies in the scene', target: 'P0 target: 60 FPS with 50 enemies', pass: 'met', fail: 'not met', note: 'Measured in this browser on this computer.',
-      hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
+      hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
+      latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
+      feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
     },
   };
   const t = (k) => (T[LANG][k] != null ? T[LANG][k] : T.cs[k]);
@@ -29,7 +33,7 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 1, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null };
+  const DEF = { v: 1, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [] };
   let SAVE = (() => { try { return Object.assign({}, DEF, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
     try {
@@ -125,7 +129,7 @@
   /* ---------- stav a vstup ---------- */
   let S = null, mode = 'menu', acc = 0, hitstop = 0, renderT = 0, lastEvents = [];
   const keys = {}; let mouse = [innerWidth / 2, innerHeight / 2], lmb = false, aimPt = [0, 0];
-  const pend = { cast: null, dodge: false, moveTo: null };
+  const pend = { cast: null, dodge: false, moveTo: null, click: false }; // click: krátké kliknutí (stisk i puštění mezi dvěma kroky) se neztratí
   function groundAt(mx, my) {
     const c = cam.camera; const a = c.screenToWorld(mx, my, c.nearClip), b = c.screenToWorld(mx, my, c.farClip);
     const k = a.y / (a.y - b.y || 1e-6); return [a.x + (b.x - a.x) * k, a.z + (b.z - a.z) * k];
@@ -135,7 +139,8 @@
     const inp = { aim: aimPt.slice() };
     let mx = 0, mz = 0; if (keys.w) { mx += FWD[0]; mz += FWD[1]; } if (keys.s) { mx -= FWD[0]; mz -= FWD[1]; } if (keys.d) { mx += RIGHT[0]; mz += RIGHT[1]; } if (keys.a) { mx -= RIGHT[0]; mz -= RIGHT[1]; }
     if (mx || mz) inp.move = [mx, mz];
-    if (lmb) {
+    if (lmb || pend.click) {
+      pend.click = false;
       if (SAVE.clickMove) {
         const e = enemyNear(aimPt, 1.2);
         if (e) { const d = Math.hypot(e.x - S.player.x, e.z - S.player.z); if (d <= S.skills.ak_cleave.sk.r + e.r) { inp.hold = true; inp.aim = [e.x, e.z]; } else inp.moveTo = [e.x, e.z]; }
@@ -148,7 +153,7 @@
   }
   app.mouse.disableContextMenu();
   app.mouse.on(pc.EVENT_MOUSEMOVE, (e) => { mouse = [e.x, e.y]; });
-  app.mouse.on(pc.EVENT_MOUSEDOWN, (e) => { if (mode !== 'play') return; audioInit(); mouse = [e.x, e.y]; aimPt = groundAt(e.x, e.y); if (e.button === pc.MOUSEBUTTON_LEFT) lmb = true; if (e.button === pc.MOUSEBUTTON_RIGHT) pend.cast = 'ak_slam'; });
+  app.mouse.on(pc.EVENT_MOUSEDOWN, (e) => { if (mode !== 'play') return; audioInit(); fresh = true; latInput(e.event ? e.event.timeStamp : performance.now()); mouse = [e.x, e.y]; aimPt = groundAt(e.x, e.y); if (e.button === pc.MOUSEBUTTON_LEFT) { lmb = true; pend.click = true; } if (e.button === pc.MOUSEBUTTON_RIGHT) pend.cast = 'ak_slam'; });
   app.mouse.on(pc.EVENT_MOUSEUP, (e) => { if (e.button === pc.MOUSEBUTTON_LEFT) lmb = false; });
   app.mouse.on(pc.EVENT_MOUSEWHEEL, (e) => { const lo = mode === 'assets' ? 6 : 14, hi = mode === 'assets' ? 45 : 22; zoom = Math.max(lo, Math.min(hi, zoom + (e.wheelDelta > 0 ? 1 : -1) * (mode === 'assets' ? 2 : 1))); });
   window.addEventListener('keydown', (e) => {
@@ -158,6 +163,7 @@
     if (mode === 'assets' && AS.char && '1234'.includes(k)) { AS.char.enabled = true; playClip(AS.char, CLIPS[Number(k) - 1]); }
     if (k === 'f') { fpsOn = !fpsOn; document.getElementById('fps').hidden = !fpsOn; }
     if (mode !== 'play') return; audioInit();
+    if (!e.repeat && ' qe23wasd'.includes(k) && k.length === 1) { fresh = true; latInput(e.timeStamp); }
     if (k === ' ') { pend.dodge = true; e.preventDefault(); }
     if (k === 'q' || k === '3') pend.cast = 'ak_charge';
     if (k === '2' || k === 'e') pend.cast = 'ak_slam';
@@ -285,6 +291,83 @@
     }
   }
 
+  /* ---------- čas GPU a CPU na snímek (benchmark) a údaje o hardwaru pro testery ---------- */
+  // GPU: časovač WebGL2 (EXT_disjoint_timer_query_webgl2) kolem vykreslení snímku; výsledek je k dispozici
+  // o pár snímků později. CPU: update + render podle statistik PlayCanvas. Měří se jen během benchmarku.
+  const GT = (() => { const gl = app.graphicsDevice.gl; const ext = gl && gl.getExtension && gl.getExtension('EXT_disjoint_timer_query_webgl2'); return { gl, ext, q: [], cur: null, on: false, ms: [] }; })();
+  app.on('prerender', () => { if (!GT.on || !GT.ext || GT.cur) return; GT.cur = GT.gl.createQuery(); GT.gl.beginQuery(GT.ext.TIME_ELAPSED_EXT, GT.cur); });
+  app.on('postrender', () => {
+    const { gl, ext } = GT; if (!ext) return;
+    if (GT.cur) { gl.endQuery(ext.TIME_ELAPSED_EXT); GT.q.push(GT.cur); GT.cur = null; }
+    while (GT.q.length && gl.getQueryParameter(GT.q[0], gl.QUERY_RESULT_AVAILABLE)) {
+      const q = GT.q.shift(); const ns = gl.getQueryParameter(q, gl.QUERY_RESULT); gl.deleteQuery(q);
+      if (!gl.getParameter(ext.GPU_DISJOINT_EXT) && GT.on) GT.ms.push(ns / 1e6);
+    }
+  });
+  const HW = (() => { let gpu = '?'; try { const gl = app.graphicsDevice.gl; const d = gl.getExtension('WEBGL_debug_renderer_info'); gpu = String(gl.getParameter(d ? d.UNMASKED_RENDERER_WEBGL : gl.RENDERER)); } catch (e) { /* bez údaje */ } return { gpu, threads: navigator.hardwareConcurrency || 0 }; })();
+
+  /* ---------- input latency: vstup → snímek s reakcí (P0: < 50 ms) ---------- */
+  // Událost vstupu má časovou značku (stejný základ jako performance.now). Reakce = první krok simulace,
+  // po kterém se hráč změní (nová akce, úhyb, cíl pohybu, posun); měří se konec vykreslení toho snímku
+  // (frameend) a začátek dalšího snímku (≈ chvíle, kdy je předchozí na obrazovce).
+  const LAT = { on: false, need: 20, pend: null, samples: [] };
+  // čerstvý vstup spustí krok simulace hned v nejbližším snímku (krok si „půjčí“ čas a další počká,
+  // takže tempo zůstává 30 kroků/s a simulace je dál deterministická podle příkazů)
+  let fresh = false, steps = 0;
+  function latInput(ts) {
+    if (!S || mode !== 'play' || LAT.pend) return; const p = S.player;
+    // jen vstupy, na které může rytíř hned reagovat (ne během úderu, úhybu, omráčení nebo hit-stopu: ty se záměrně řadí za akci)
+    if (p.act || p.dodge || p.stun > 0 || hitstop > 0) return;
+    LAT.pend = { t: ts, hit: false, step0: steps, snap: { act: p.act, dodge: p.dodge, moveTo: p.moveTo, x: p.x, z: p.z } };
+  }
+  function latCheck() {
+    const L = LAT.pend; if (!L || L.hit) return; const p = S.player, s0 = L.snap;
+    if (p.act !== s0.act || (p.dodge && p.dodge !== s0.dodge) || (p.moveTo && p.moveTo !== s0.moveTo) || Math.hypot(p.x - s0.x, p.z - s0.z) > 0.005) L.hit = true;
+    else if (steps - L.step0 >= 2) LAT.pend = null; // dva kroky bez viditelné reakce (např. cooldown): vzorek se nepočítá
+  }
+  app.on('frameend', () => {
+    const L = LAT.pend; if (!L || !L.hit) return; LAT.pend = null; const t1 = performance.now();
+    requestAnimationFrame(() => latPush(t1 - L.t, performance.now() - L.t));
+  });
+  const pct = (a, q) => { const f = a.slice().sort((x, y) => x - y); return f[Math.min(f.length - 1, Math.floor(f.length * q))]; };
+  const avgOf = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+  function latStats(sm) { const r = sm.map((x) => x[0]), q = sm.map((x) => x[1]); const f = (v) => +v.toFixed(1); return { n: sm.length, renderAvg: f(avgOf(r)), renderP95: f(pct(r, 0.95)), presentAvg: f(avgOf(q)), presentP95: f(pct(q, 0.95)), max: f(Math.max(...q)), at: Date.now() }; }
+  function latPush(r, q) {
+    LAT.samples.push([r, q]); if (LAT.samples.length > 200) LAT.samples.shift();
+    if (!LAT.on) return;
+    document.getElementById('hint').textContent = `${t('latHint')} ${LAT.samples.length}/${LAT.need}`;
+    if (LAT.samples.length >= LAT.need && mode === 'play') latDone();
+  }
+  function latDone() {
+    const res = latStats(LAT.samples); LAT.on = false; SAVE.latency = res; persist(); window.HSGame.lastLatency = res; mode = 'over';
+    const ok = res.presentP95 < 50;
+    screen.innerHTML = `<div class="panel"><h2>${t('latDone')}</h2><table class="res"><tr><td></td><td class="n">Ø</td><td class="n">p95</td></tr><tr><td>${t('latRender')}</td><td class="n">${res.renderAvg} ms</td><td class="n">${res.renderP95} ms</td></tr><tr><td>${t('latPresent')}</td><td class="n">${res.presentAvg} ms</td><td class="n">${res.presentP95} ms</td></tr><tr><td>${t('latMax')}</td><td class="n" colspan="2">${res.max} ms</td></tr><tr><td>${t('latN')}</td><td class="n" colspan="2">${res.n}</td></tr></table><p>${t('latTarget')}: <b class="${ok ? 'ok' : 'bad'}">${ok ? t('pass') : t('fail')}</b></p><span class="muted">${t('latNote')}</span><div class="row"><button class="btn" id="b-again">${t('latency')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
+    document.getElementById('b-again').onclick = () => start('latency'); document.getElementById('b-menu').onclick = menu;
+  }
+
+  /* ---------- feel test: hodnocení boje 1–5 (P0: průměr ≥ 4 od 5 hráčů) ---------- */
+  function feelForm() {
+    mode = 'over'; document.getElementById('hud').hidden = true; const pick = [0, 0, 0, 0];
+    const list = () => { const F = SAVE.feel; if (!F.length) return ''; const m = (i) => avgOf(F.map((x) => x.a[i])).toFixed(1); return `<p class="muted">${t('feelSaved')}: ${F.length} · ${t('feelAvg')}: ${t('feelQ').map((q, i) => `${q} <b>${m(i)}</b>`).join(' · ')}</p><p class="muted">${t('feelTarget')}</p>`; };
+    screen.innerHTML = `<div class="panel feel"><h2>${t('feelTitle')}</h2>${t('feelQ').map((q, i) => `<div class="fq"><span>${q}</span><div class="scale">${[1, 2, 3, 4, 5].map((v) => `<button class="btn dim" data-q="${i}" data-v="${v}">${v}</button>`).join('')}</div></div>`).join('')}<label class="muted" for="f-note">${t('feelNote')}</label><textarea id="f-note" rows="2" maxlength="400"></textarea><p id="f-msg" class="bad" hidden>${t('feelPick')}</p><div id="f-list">${list()}</div><div class="row"><button class="btn" id="b-fsave">${t('feelSave')}</button><button class="btn dim" id="b-fcopy" ${SAVE.feel.length || SAVE.bench || SAVE.latency ? '' : 'disabled'}>${t('feelCopy')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
+    for (const b of screen.querySelectorAll('[data-q]')) b.onclick = () => { const q = +b.dataset.q; pick[q] = +b.dataset.v; for (const o of screen.querySelectorAll(`[data-q="${q}"]`)) o.classList.toggle('on', o === b); };
+    document.getElementById('b-fsave').onclick = () => {
+      if (pick.some((v) => !v)) { document.getElementById('f-msg').hidden = false; return; }
+      SAVE.feel.push({ at: Date.now(), a: pick.slice(), note: document.getElementById('f-note').value.trim().slice(0, 400), wave: SAVE.bestWave }); if (SAVE.feel.length > 50) SAVE.feel.shift(); persist();
+      menu();
+    };
+    document.getElementById('b-fcopy').onclick = () => {
+      const B = SAVE.bench, Lt = SAVE.latency;
+      const txt = [`HOLLOW SUN P0 · ${HW.gpu} · ${HW.threads} vláken · ${window.screen.width}×${window.screen.height}@${devicePixelRatio}`,
+        B ? `benchmark · ${B.avg} FPS · p95 ${B.p95} ms · GPU ${B.gpuMs ? B.gpuMs.avg + ' ms' : '?'} · CPU ${B.cpuMs ? B.cpuMs.avg + ' ms' : '?'} · ${B.res ? B.res.join('×') : ''}` : 'benchmark · nespuštěn',
+        Lt ? `vstup · Ø ${Lt.presentAvg} ms · p95 ${Lt.presentP95} ms` : 'vstup · nespuštěn',
+        ...SAVE.feel.map((x) => `feel · ${new Date(x.at).toISOString().slice(0, 10)} · ${x.a.join('/')}${x.note ? ' · ' + x.note : ''}`)].join('\n');
+      const done = () => { const el = document.getElementById('b-fcopy'); if (el) el.textContent = t('feelCopied'); };
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, () => {}); 
+    };
+    document.getElementById('b-menu').onclick = menu;
+  }
+
   /* ---------- obrazovky ---------- */
   const screen = document.getElementById('screen');
   const keysHtml = () => `<div class="keys"><kbd>${t('keysMove')}</kbd><span>${SAVE.clickMove ? t('keysMoveClick') : t('keysMoveWasd')}</span><kbd>Cleave</kbd><span>${t('keysCleave')}</span><kbd>Slam</kbd><span>${t('keysSlam')}</span><kbd>Charge</kbd><span>${t('keysCharge')}</span><kbd>${t('dodge')}</kbd><span>${t('keysDodge')}</span><kbd>…</kbd><span>${t('keysMisc')}</span></div>`;
@@ -293,18 +376,20 @@
   function menu() {
     mode = 'menu'; document.getElementById('hud').hidden = true;
     screen.innerHTML = `<div class="panel"><span class="muted">ECHOES OF THE HOLLOW SUN · ${t('sub')}</span><h1>Hollow Sun</h1><p>${t('pitch')}</p>${keysHtml()}${opt()}
-      <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
-      <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}</span></div>`;
-    document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; bindOpt();
+      <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
+      <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}${SAVE.latency ? ' · ' + t('latency') + ': p95 ' + SAVE.latency.presentP95 + ' ms' : ''}</span></div>`;
+    document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; document.getElementById('b-lat').onclick = () => start('latency'); document.getElementById('b-feel').onclick = feelForm; bindOpt();
   }
   function clearWorld() { for (const v of EV.values()) v.root.destroy(); EV.clear(); for (const te of TELES) { te.line.destroy(); te.fill.destroy(); } TELES.length = 0; for (const f of FXS) f.e.destroy(); FXS.length = 0; for (const n of NUMS) n.d.remove(); NUMS.length = 0; }
   let bench = null;
   function start(m) {
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
-    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' });
+    S = SIM.create({ mode: m === 'bench' ? 'bench' : 'arena', seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency' });
+    LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
-    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : t('hint');
-    bench = m === 'bench' ? { t0: performance.now(), frames: [], simMs: 0, steps: 0, last: performance.now() } : null;
+    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : t('hint');
+    bench = m === 'bench' ? { t0: performance.now(), frames: [], cpu: [], simMs: 0, steps: 0, last: performance.now() } : null;
+    GT.on = m === 'bench'; GT.ms = [];
   }
   /* ---------- test asset pipeline: GLB z manifestu, LOD podle vzdálenosti, sockety ---------- */
   const AS = { root: null, items: [], lod: 0, lodAuto: true, loaded: 0, error: null, char: null, res: null, clip: null, crowd: [], measure: null, crowdRes: null };
@@ -416,15 +501,17 @@
   function gameOver() {
     mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; persist();
     const st = S.stats;
-    screen.innerHTML = `<div class="panel"><h2>${t('over')}</h2><table class="res"><tr><td>${t('wave')}</td><td class="n">${S.wave}</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('dmgDealt')}</td><td class="n">${st.dmg}</td></tr><tr><td>${t('hits')}</td><td class="n">${st.hits}</td></tr><tr><td>${t('dodges')}</td><td class="n">${st.dodged}</td></tr><tr><td>${t('taken')}</td><td class="n">${st.taken}</td></tr></table><div class="row"><button class="btn" id="b-again">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
-    document.getElementById('b-again').onclick = () => start('arena'); document.getElementById('b-menu').onclick = menu;
+    screen.innerHTML = `<div class="panel"><h2>${t('over')}</h2><table class="res"><tr><td>${t('wave')}</td><td class="n">${S.wave}</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('dmgDealt')}</td><td class="n">${st.dmg}</td></tr><tr><td>${t('hits')}</td><td class="n">${st.hits}</td></tr><tr><td>${t('dodges')}</td><td class="n">${st.dodged}</td></tr><tr><td>${t('taken')}</td><td class="n">${st.taken}</td></tr></table><div class="row"><button class="btn" id="b-again">${t('restart')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
+    document.getElementById('b-again').onclick = () => start('arena'); document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu;
   }
   function benchDone() {
     const f = bench.frames.slice(30).sort((a, b) => a - b); const n = f.length || 1; const sum = f.reduce((a, b) => a + b, 0);
     const res = { avg: Math.round((1000 * n) / sum), low1: Math.round(1000 / f[Math.floor(n * 0.99)]), p95: +f[Math.floor(n * 0.95)].toFixed(1), simMs: +(bench.simMs / Math.max(1, bench.steps)).toFixed(3), enemies: S.enemies.filter((e) => !e.dead).length, at: Date.now() };
+    const ms2 = (a) => (a.length ? { avg: +avgOf(a).toFixed(2), p95: +pct(a, 0.95).toFixed(2) } : null);
+    res.gpuMs = ms2(GT.ms.slice(30)); res.cpuMs = ms2(bench.cpu.slice(30)); res.gpu = HW.gpu; res.threads = HW.threads; res.res = [app.graphicsDevice.width, app.graphicsDevice.height]; res.knights = !!PC; GT.on = false;
     SAVE.bench = res; persist(); window.HSGame.lastBench = res; mode = 'over';
     const ok = res.avg >= 58 && res.p95 <= 20;
-    screen.innerHTML = `<div class="panel"><h2>${t('benchDone')}</h2><table class="res"><tr><td>${t('avg')}</td><td class="n">${res.avg}</td></tr><tr><td>${t('low')}</td><td class="n">${res.low1} FPS</td></tr><tr><td>${t('p95')}</td><td class="n">${res.p95} ms</td></tr><tr><td>${t('simMs')}</td><td class="n">${res.simMs} ms</td></tr><tr><td>${t('entities')}</td><td class="n">${res.enemies}</td></tr></table><p>${t('target')}: <b class="${ok ? 'ok' : 'bad'}">${ok ? t('pass') : t('fail')}</b></p><span class="muted">${t('note')}</span><div class="row"><button class="btn" id="b-again">${t('bench')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
+    screen.innerHTML = `<div class="panel"><h2>${t('benchDone')}</h2><table class="res"><tr><td>${t('avg')}</td><td class="n">${res.avg}</td></tr><tr><td>${t('low')}</td><td class="n">${res.low1} FPS</td></tr><tr><td>${t('p95')}</td><td class="n">${res.p95} ms</td></tr><tr><td>${t('simMs')}</td><td class="n">${res.simMs} ms</td></tr><tr><td>${t('entities')}</td><td class="n">${res.enemies}</td></tr><tr><td>${t('gpuMs')}</td><td class="n">${res.gpuMs ? res.gpuMs.avg + ' ms (p95 ' + res.gpuMs.p95 + ')' : t('noTimer')}</td></tr><tr><td>${t('cpuMs')}</td><td class="n">${res.cpuMs ? res.cpuMs.avg + ' ms (p95 ' + res.cpuMs.p95 + ')' : '—'}</td></tr><tr><td>${t('gpuName')}</td><td class="n" style="font-size:11px">${String(res.gpu).replace(/[<>&"]/g, '')} · ${res.res[0]}×${res.res[1]}</td></tr></table><p>${t('target')}: <b class="${ok ? 'ok' : 'bad'}">${ok ? t('pass') : t('fail')}</b></p><span class="muted">${t('note')}</span><div class="row"><button class="btn" id="b-again">${t('bench')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
     document.getElementById('b-again').onclick = () => start('bench'); document.getElementById('b-menu').onclick = menu;
   }
 
@@ -432,26 +519,28 @@
   let playAcc = 0;
   app.on('update', (dtRaw) => {
     const dt = Math.min(dtRaw, 0.1);
-    if (bench && mode === 'bench') { const now = performance.now(); bench.frames.push(now - bench.last); bench.last = now; if (now - bench.t0 > 20000) benchDone(); }
+    if (bench && mode === 'bench') { const now = performance.now(); bench.frames.push(now - bench.last); bench.last = now; const fs = app.stats.frame; bench.cpu.push(fs.updateTime + fs.renderTime); if (now - bench.t0 > 20000) benchDone(); }
     if (S && (mode === 'play' || mode === 'bench')) {
       aimPt = groundAt(mouse[0], mouse[1]);
       playAcc += dt; if (playAcc >= 5 && mode === 'play') { SAVE.playTime += playAcc; playAcc = 0; persist(); }
       if (hitstop > 0) hitstop -= dt * 1000;
       else {
         acc += dt;
-        while (acc >= SIM.TICK) {
+        while (acc >= SIM.TICK || (fresh && mode === 'play' && acc >= 0)) {
+          fresh = false; steps++;
           const t0 = performance.now(); const inp = mode === 'bench' ? SIM.autopilot(S) : readInput(); SIM.step(S, inp);
           if (bench) { bench.simMs += performance.now() - t0; bench.steps++; }
           lastEvents = S.events.slice(); handle(lastEvents); acc -= SIM.TICK; if (mode !== 'play' && mode !== 'bench') break;
         }
         renderT += dt;
       }
+      latCheck();
       syncWorld(hitstop > 0 ? 0 : dt);
       hud();
     }
     if (mode === 'assets') updateAssets();
     placeCamera(dt); updateNums(dt);
-    if (fpsOn) document.getElementById('fps').textContent = Math.round(1 / Math.max(1e-3, dtRaw)) + ' FPS';
+    if (fpsOn) { const L = LAT.samples.slice(-20); document.getElementById('fps').textContent = Math.round(1 / Math.max(1e-3, dtRaw)) + ' FPS' + (L.length ? ` · ${t('latShort')} ${latStats(L).presentAvg} ms` : ''); }
   });
   function syncWorld(dt) {
     const p = S.player;
@@ -512,7 +601,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();

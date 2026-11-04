@@ -56,3 +56,9 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #assetPanel .clips .btn { font-size: 14px; padding: 7px 10px; }
 #assetPanel .btn.on { color: var(--gold); border-color: var(--gold); }
 #assetPanel .btn:disabled { opacity: 0.6; cursor: default; }
+.panel.feel .fq { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.panel.feel .scale { display: flex; gap: 6px; }
+.panel.feel .scale .btn { font-size: 15px; padding: 7px 12px; }
+.panel .btn.on { color: var(--gold); border-color: var(--gold); background: #b98a4e33; }
+.panel textarea { width: 100%; box-sizing: border-box; background: #0d0f15; color: inherit; border: 1px solid #39425a; font: 14px/1.4 var(--f-body, inherit); padding: 8px; resize: vertical; }
+.btn:disabled { opacity: 0.55; cursor: default; }

@@ -261,6 +261,20 @@ player's hit window, run while moving, death played out before the body is remov
 root motion is pinned to the spot, LODs switch by camera distance (18 m / 35 m) and the player's
 blade sits in `socket_hand_R`.
 
+P0 acceptance tools: "Test vstupu" measures input latency – from the input event's timestamp to the
+end of rendering the frame where the knight reacts (`frameend`) and to the start of the next frame
+(≈ on screen); 20 samples, average and p95 (target < 50 ms p95). Only inputs the knight can act on
+right away count (not during a strike, dodge, stun or hit-stop, where commands queue on purpose). A
+fresh input runs the next simulation step in the very next frame, borrowing the time so the rate
+stays 30 steps/s and the command stream stays deterministic; a click that is pressed and released
+between two steps is kept for the next step. "Ohodnotit boj" (also after a game over) asks four
+1–5 questions for the combat feel test (target ≥ 4/5 from 5 players), keeps the ratings in the
+game's save and copies them as text to the clipboard for collecting, together with the graphics
+adapter, the last benchmark and the last input test, so testers on other hardware send one paste.
+The benchmark also records GPU time per frame (WebGL2 `EXT_disjoint_timer_query_webgl2` around
+rendering; measure without the frame cap, since the GPU clocks down at 60 FPS) and CPU time per frame
+(PlayCanvas `stats.frame` update + render).
+
 ## Vesnička - `static/games/vesnicka`
 
 An idle game outside the puzzle kit, plain scripts loaded by `index.html`: `data.js` (trades,
