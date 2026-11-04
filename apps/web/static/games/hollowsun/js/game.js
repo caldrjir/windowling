@@ -7,7 +7,7 @@
   const T = {
     cs: {
       sub: 'Prototyp P0 · šedý box', pitch: 'Ash Knight proti hordám popela. Ověřujeme, jestli je souboj cítit a jestli prohlížeč utáhne 50 nepřátel v 60 FPS.',
-      arena: 'Aréna (vlny)', bench: 'Benchmark: 50 nepřátel', assets: 'Test assetů', assetsTitle: 'Test asset pipeline', assetsHint: 'Kolečko mění vzdálenost kamery a tím LOD postavy (0–18 m LOD0, 18–35 m LOD1, dál LOD2). L přepíná automatický LOD. Esc zpět.', loading: 'Načítám…', loaded: 'načteno', lodAuto: 'automaticky', file: 'Soubor', tris: 'Trojúhelníky', mats: 'Materiály', sockets: 'Sockety', loadMs: 'Načtení', lod: 'LOD postavy', dist: 'Vzdálenost kamery', back: 'Zpět do centra', resume: 'Pokračovat', restart: 'Znovu', menu: 'Hlavní menu',
+      arena: 'Aréna (vlny)', bench: 'Benchmark: 50 nepřátel', assets: 'Test assetů', assetsTitle: 'Test asset pipeline', assetsHint: 'Kolečko mění vzdálenost kamery a tím LOD postavy (0–18 m LOD0, 18–35 m LOD1, dál LOD2). L přepíná automatický LOD, 1–4 animace. Esc zpět.', clip: 'Animace', crowd: '50 animovaných postav', crowdRun: 'Měřím 5 s…', crowdRes: 'Dav 50 postav (LOD1, skin + animace)', idle: 'Stání', run: 'Běh', attack: 'Útok (root motion)', death: 'Smrt', loading: 'Načítám…', loaded: 'načteno', lodAuto: 'automaticky', file: 'Soubor', tris: 'Trojúhelníky', mats: 'Materiály', sockets: 'Sockety', loadMs: 'Načtení', lod: 'LOD postavy', dist: 'Vzdálenost kamery', back: 'Zpět do centra', resume: 'Pokračovat', restart: 'Znovu', menu: 'Hlavní menu',
       wave: 'Vlna', kills: 'Zabití', paused: 'Pauza', over: 'Ozvěna se rozpadla', best: 'Nejlepší vlna', clickMove: 'Pohyb kliknutím (jinak WASD)',
       cleave: 'Cleave', slam: 'Searing Slam', charge: 'Ember Charge', dodge: 'Úhyb', nores: 'Málo Cinders', miss: 'Vedle', evade: 'Úhyb!', dodged: 'Vyhnuto',
       keysMove: 'Pohyb', keysMoveClick: 'levé tlačítko na zem (nebo WASD)', keysMoveWasd: 'WASD', keysCleave: 'levé tlačítko (držet) – generuje Cinders', keysSlam: 'pravé tlačítko – AoE, oheň, stojí Cinders', keysCharge: 'Q – výpad, omráčí', keysDodge: 'mezerník – úhyb s nezranitelností', keysMisc: 'Esc pauza · F počítadlo FPS · kolečko zoom',
@@ -16,7 +16,7 @@
     },
     en: {
       sub: 'Prototype P0 · grey box', pitch: 'An Ash Knight against hordes of ash. We are testing whether combat feels right and whether the browser holds 60 FPS with 50 enemies.',
-      arena: 'Arena (waves)', bench: 'Benchmark: 50 enemies', assets: 'Asset test', assetsTitle: 'Asset pipeline test', assetsHint: 'The wheel changes the camera distance and with it the character LOD (0–18 m LOD0, 18–35 m LOD1, beyond LOD2). L toggles automatic LOD. Esc goes back.', loading: 'Loading…', loaded: 'loaded', lodAuto: 'automatic', file: 'File', tris: 'Triangles', mats: 'Materials', sockets: 'Sockets', loadMs: 'Load', lod: 'Character LOD', dist: 'Camera distance', back: 'Back to the center', resume: 'Resume', restart: 'Restart', menu: 'Main menu',
+      arena: 'Arena (waves)', bench: 'Benchmark: 50 enemies', assets: 'Asset test', assetsTitle: 'Asset pipeline test', assetsHint: 'The wheel changes the camera distance and with it the character LOD (0–18 m LOD0, 18–35 m LOD1, beyond LOD2). L toggles automatic LOD, 1–4 play the clips. Esc goes back.', clip: 'Clip', crowd: '50 animated characters', crowdRun: 'Measuring for 5 s…', crowdRes: 'Crowd of 50 (LOD1, skin + animation)', idle: 'Idle', run: 'Run', attack: 'Attack (root motion)', death: 'Death', loading: 'Loading…', loaded: 'loaded', lodAuto: 'automatic', file: 'File', tris: 'Triangles', mats: 'Materials', sockets: 'Sockets', loadMs: 'Load', lod: 'Character LOD', dist: 'Camera distance', back: 'Back to the center', resume: 'Resume', restart: 'Restart', menu: 'Main menu',
       wave: 'Wave', kills: 'Kills', paused: 'Paused', over: 'Your echo has shattered', best: 'Best wave', clickMove: 'Click to move (otherwise WASD)',
       cleave: 'Cleave', slam: 'Searing Slam', charge: 'Ember Charge', dodge: 'Dodge', nores: 'Not enough Cinders', miss: 'Miss', evade: 'Evade!', dodged: 'Dodged',
       keysMove: 'Move', keysMoveClick: 'left click on the ground (or WASD)', keysMoveWasd: 'WASD', keysCleave: 'left button (hold) – builds Cinders', keysSlam: 'right button – AoE fire, costs Cinders', keysCharge: 'Q – dash, stuns', keysDodge: 'space – dodge with i-frames', keysMisc: 'Esc pause · F FPS counter · wheel zoom',
@@ -154,6 +154,7 @@
     const k = e.key.toLowerCase(); keys[k] = true;
     if (k === 'escape') { if (mode === 'play') pause(); else if (mode === 'paused') resume(); else if (mode === 'assets') leaveAssets(); return; }
     if (k === 'l' && mode === 'assets') { AS.lodAuto = !AS.lodAuto; if (!AS.lodAuto) AS.lod = (AS.lod + 1) % 3; }
+    if (mode === 'assets' && AS.char && '1234'.includes(k)) { AS.char.enabled = true; playClip(AS.char, CLIPS[Number(k) - 1]); }
     if (k === 'f') { fpsOn = !fpsOn; document.getElementById('fps').hidden = !fpsOn; }
     if (mode !== 'play') return; audioInit();
     if (k === ' ') { pend.dodge = true; e.preventDefault(); }
@@ -262,7 +263,33 @@
     bench = m === 'bench' ? { t0: performance.now(), frames: [], simMs: 0, steps: 0, last: performance.now() } : null;
   }
   /* ---------- test asset pipeline: GLB z manifestu, LOD podle vzdálenosti, sockety ---------- */
-  const AS = { root: null, items: [], lod: 0, lodAuto: true, loaded: 0, error: null, char: null };
+  const AS = { root: null, items: [], lod: 0, lodAuto: true, loaded: 0, error: null, char: null, res: null, clip: null, crowd: [], measure: null, crowdRes: null };
+  const CLIPS = ['idle', 'run', 'attack', 'death'];
+  // animace z GLB (AN_human_<akce>) do anim komponenty; útok a smrt se neopakují, po útoku zpět do stání
+  function setupAnim(e, res, first, speed) {
+    e.addComponent('anim', { activate: true, speed: speed || 1 });
+    for (const a of res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_human_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
+    playClip(e, first, 0);
+  }
+  function playClip(e, name, blend) {
+    if (!e.anim || !e.anim.baseLayer) return;
+    e.anim.baseLayer.transition(name, blend === undefined ? 0.15 : blend);
+    if (e !== AS.char) return;
+    AS.clip = name; panel();
+  }
+  // zátěžový test: 50 postav se skinem a animací (LOD1) v místnosti, 5 s měření snímků
+  function crowd() {
+    if (!AS.res || AS.measure) return;
+    for (const c of AS.crowd) c.destroy(); AS.crowd = [];
+    for (let i = 0; i < 50; i++) {
+      const e = AS.res.instantiateRenderEntity(); AS.root.addChild(e);
+      e.setLocalPosition(-4.05 + (i % 10) * 0.9, 0, -3.6 + Math.floor(i / 10) * 1.5);
+      for (let l = 0; l < 3; l++) { const n = e.findByName('CH_ak_body_LOD' + l); if (n) n.enabled = l === 1; }
+      setupAnim(e, AS.res, i % 7 === 0 ? 'attack' : 'run', 0.85 + (i % 5) * 0.07); AS.crowd.push(e);
+    }
+    if (AS.char) AS.char.enabled = false;
+    AS.measure = { t0: performance.now(), last: performance.now(), frames: [] }; AS.crowdRes = null; zoom = 20; panel();
+  }
   const sockMat = mat('#4fb3b0', { unlit: true });
   // GLB z pipeline jsou komprimované (EXT_meshopt_compression); PlayCanvas je sám nerozbalí,
   // proto buffer view dekóduje meshoptimizer (vendor/meshopt_decoder.js) přes hook parseru.
@@ -285,7 +312,7 @@
   }
   function assetsMode() {
     audioInit(); clearWorld(); S = null; mode = 'assets'; screen.innerHTML = ''; document.getElementById('hud').hidden = true; P.enabled = false; zoom = 14; camT.set(0, 0, 0);
-    AS.root = new pc.Entity(); app.root.addChild(AS.root); AS.items = []; AS.loaded = 0; AS.error = null; AS.char = null;
+    AS.root = new pc.Entity(); app.root.addChild(AS.root); AS.items = []; AS.loaded = 0; AS.error = null; AS.char = null; AS.res = null; AS.clip = null; AS.crowd = []; AS.measure = null; AS.crowdRes = null;
     panel();
     fetch('assets/manifest.json').then((r) => r.json()).then((man) => {
       AS.manifest = man;
@@ -295,7 +322,7 @@
           if (err || !asset) { AS.error = String(err); panel(); return; }
           item.ms = Math.round(performance.now() - t0); item.ok = true; AS.loaded++;
           const e = asset.resource.instantiateRenderEntity(); AS.root.addChild(e); item.e = e;
-          if (a.id.startsWith('CH_')) { e.setLocalPosition(0, 0, 0); e.setLocalScale(1.6, 1.6, 1.6); AS.char = e; }
+          if (a.id.startsWith('CH_')) { e.setLocalPosition(0, 0, 0); e.setLocalScale(1.6, 1.6, 1.6); AS.char = e; AS.res = asset.resource; if (asset.resource.animations.length) setupAnim(e, asset.resource, 'idle'); }
           // sockety jako malé koule (kontrola, že jsou na hranách modulu a ve středu dveří)
           for (const name of a.sockets) { const n = e.findByName(name); if (n) ent('sphere', sockMat, [0, 0.15, 0], [0.3, 0.3, 0.3], n, false); }
           panel();
@@ -304,12 +331,23 @@
     }).catch((err) => { AS.error = String(err); panel(); });
   }
   function leaveAssets(silent) {
-    if (AS.root) { AS.root.destroy(); AS.root = null; }
+    if (AS.root) { AS.root.destroy(); AS.root = null; } AS.char = null; AS.crowd = []; AS.measure = null;
     P.enabled = true; document.getElementById('assetPanel').hidden = true; zoom = 18;
     if (!silent && mode === 'assets') menu();
   }
   function updateAssets() {
-    if (!AS.char) return;
+    if (AS.measure) {
+      const now = performance.now(); AS.measure.frames.push(now - AS.measure.last); AS.measure.last = now;
+      if (now - AS.measure.t0 > 5000) {
+        const f = AS.measure.frames.slice(15).sort((a, b) => a - b); const n = f.length || 1;
+        AS.crowdRes = { count: AS.crowd.length, avg: Math.round((1000 * n) / f.reduce((a, b) => a + b, 0)), p95: +f[Math.floor(n * 0.95)].toFixed(1) };
+        AS.measure = null; panel();
+      }
+    }
+    if (!AS.char || !AS.char.enabled) return;
+    // po útoku zpět do stání podle průběhu klipu (ne podle hodin: pomalé snímky animaci zpomalí)
+    const L = AS.char.anim && AS.char.anim.baseLayer;
+    if (AS.clip === 'attack' && L && L.activeState === 'attack' && L.activeStateProgress >= 1) playClip(AS.char, 'idle');
     const dist = cam.getPosition().distance(new pc.Vec3(0, 1, 0));
     if (AS.lodAuto) AS.lod = dist < 18 ? 0 : dist < 35 ? 1 : 2;
     for (let l = 0; l < 3; l++) { const n = AS.char.findByName('CH_ak_body_LOD' + l); if (n) n.enabled = l === AS.lod; }
@@ -319,9 +357,14 @@
     const el = document.getElementById('assetPanel'); el.hidden = false;
     el.innerHTML = `<h2>${t('assetsTitle')}</h2><span class="muted">${t('assetsHint')}</span>` + (AS.error ? `<p class="bad">${AS.error}</p>` : '') +
       (AS.items.length ? `<table class="res">${AS.items.map((it) => `<tr><td><b>${it.a.id}</b><br><span class="muted">${it.a.parts.map((p) => p.name.replace(it.a.id + '_', '') + ' ' + p.tris).join(' · ')} ${t('tris')}</span></td><td class="n">${it.ok ? it.ms + ' ms<br>' + Math.round(it.a.bytes / 1024) + ' kB' : t('loading')}</td></tr><tr><td colspan="2" class="muted">${t('mats')}: ${it.a.materials.join(', ')} · ${t('sockets')}: ${it.a.sockets.length}</td></tr>`).join('')}</table>` : `<p>${t('loading')}</p>`) +
+      (AS.res && AS.res.animations.length ? `<p class="muted">${t('clip')}:</p><div class="row clips">${CLIPS.map((c, i) => `<button class="btn dim${AS.clip === c ? ' on' : ''}" data-clip="${c}">${i + 1} · ${t(c)}</button>`).join('')}</div>` +
+        `<div class="row"><button class="btn dim" id="b-as-crowd" ${AS.measure ? 'disabled' : ''}>${AS.measure ? t('crowdRun') : t('crowd')}</button></div>` +
+        (AS.crowdRes ? `<p class="muted">${t('crowdRes')}: <b>${AS.crowdRes.avg} FPS</b> · p95 ${AS.crowdRes.p95} ms</p>` : '') : '') +
       `<p id="as-lod" class="muted"></p><div class="row"><button class="btn dim" id="b-as-back">${t('menu')}</button></div>`;
     document.getElementById('b-as-back').onclick = () => leaveAssets();
-    window.HSGame.assets = { loaded: AS.loaded, total: AS.items.length, error: AS.error, items: AS.items.map((it) => ({ id: it.a.id, ok: it.ok, ms: it.ms })) };
+    for (const b of el.querySelectorAll('[data-clip]')) b.onclick = () => { if (AS.char) { AS.char.enabled = true; playClip(AS.char, b.dataset.clip); } };
+    const bc = document.getElementById('b-as-crowd'); if (bc) bc.onclick = crowd;
+    window.HSGame.assets = { loaded: AS.loaded, total: AS.items.length, error: AS.error, items: AS.items.map((it) => ({ id: it.a.id, ok: it.ok, ms: it.ms })), clips: AS.res ? AS.res.animations.map((a) => a.resource.name) : [], clip: AS.clip, crowd: AS.crowdRes, measuring: !!AS.measure };
   }
 
   function pause() { mode = 'paused'; screen.innerHTML = `<div class="panel"><h2>${t('paused')}</h2>${keysHtml()}${opt()}<div class="row"><button class="btn" id="b-res">${t('resume')}</button><button class="btn dim" id="b-rst">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-res').onclick = resume; document.getElementById('b-rst').onclick = () => start('arena'); document.getElementById('b-menu').onclick = menu; bindOpt(); }
