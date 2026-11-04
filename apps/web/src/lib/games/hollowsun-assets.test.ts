@@ -1,17 +1,21 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { MeshoptDecoder } from 'meshoptimizer';
 import { describe, expect, it } from 'vitest';
 
 /**
  * HOLLOW SUN asset pipeline (P0): every GLB in static/games/hollowsun/assets must pass the
- * checks the Game Design Bible's asset specification asks of CI – naming, triangle budget,
- * at most 2 materials per mesh, LODs, module footprint on the 2 m grid, door sockets,
- * vertex-colour AO – plus basic glTF integrity. Real Blender exports go through the same test.
+ * checks the Game Design Bible's asset specification asks of CI – compression (Meshopt +
+ * quantization, KTX2 for textures), naming, triangle budget, at most 2 materials per mesh, LODs,
+ * module footprint on the 2 m grid, door sockets, vertex-colour AO – plus basic glTF integrity.
+ * The GLBs are decoded here the same way the game decodes them (meshoptimizer's decoder).
  */
 const dir = fileURLToPath(new URL('../../../static/games/hollowsun/assets/', import.meta.url));
+await MeshoptDecoder.ready;
 
 interface Accessor {
 	bufferView: number;
+	byteOffset?: number;
 	componentType: number;
 	count: number;
 	type: string;
@@ -19,27 +23,62 @@ interface Accessor {
 	min?: number[];
 	max?: number[];
 }
+interface MeshoptView {
+	buffer: number;
+	byteOffset?: number;
+	byteLength: number;
+	byteStride: number;
+	count: number;
+	mode: string;
+	filter?: string;
+}
+interface BufferView {
+	buffer: number;
+	byteOffset?: number;
+	byteLength: number;
+	byteStride?: number;
+	extensions?: { EXT_meshopt_compression?: MeshoptView };
+}
 interface Primitive {
 	attributes: Record<string, number>;
 	indices: number;
 	material: number;
 }
+interface GltfNode {
+	name?: string;
+	mesh?: number;
+	children?: number[];
+	translation?: number[];
+	rotation?: number[];
+	scale?: number[];
+}
 interface Gltf {
 	asset: { version: string };
-	nodes: { name: string; mesh?: number; translation?: number[] }[];
-	meshes: { name: string; primitives: Primitive[] }[];
+	extensionsRequired?: string[];
+	nodes: GltfNode[];
+	meshes: { primitives: Primitive[] }[];
 	materials: { name: string }[];
 	accessors: Accessor[];
-	bufferViews: { byteOffset: number; byteLength: number }[];
+	bufferViews: BufferView[];
+	images?: { mimeType?: string }[];
+	textures?: { source?: number; extensions?: { KHR_texture_basisu?: { source: number } } }[];
 }
 interface ManifestAsset {
 	id: string;
 	file: string;
 	bytes: number;
+	rawBytes: number;
+	compression: string[];
 	materials: string[];
 	parts: { name: string; tris: number }[];
 	sockets: string[];
 	meta: { cells?: number[]; cellSize?: number; trisBudget: number | number[] };
+}
+/** A mesh instance with its node transform (translation + uniform scale; gltfpack dequantization). */
+interface Placed {
+	mesh: number;
+	t: number[];
+	s: number;
 }
 
 /** Indexed access that fails the test instead of yielding `undefined`. */
@@ -54,45 +93,94 @@ function attr(p: Primitive, name: string): number {
 	return i;
 }
 
-function parseGlb(bytes: Uint8Array): { json: Gltf; bin: DataView } {
-	const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-	const u32 = (o: number) => dv.getUint32(o, true);
-	expect(u32(0)).toBe(0x46546c67); // "glTF"
-	expect(u32(4)).toBe(2);
-	expect(u32(8)).toBe(bytes.byteLength);
-	const jlen = u32(12);
-	expect(u32(16)).toBe(0x4e4f534a); // JSON
-	const json = JSON.parse(new TextDecoder().decode(bytes.subarray(20, 20 + jlen))) as Gltf;
-	const bOff = 20 + jlen;
-	expect(u32(bOff + 4)).toBe(0x004e4942); // BIN
-	return { json, bin: new DataView(bytes.buffer, bytes.byteOffset + bOff + 8, u32(bOff)) };
-}
-function read(g: { json: Gltf; bin: DataView }, i: number): number[] {
-	const a = at(g.json.accessors, i);
-	const v = at(g.json.bufferViews, a.bufferView);
-	const comps = a.type === 'VEC3' ? 3 : a.type === 'VEC4' ? 4 : 1;
-	const o = v.byteOffset;
-	// float, uint32, uint16, uint8; normalized integers map to 0..1 (glTF 2.0, accessor.normalized)
-	const size = { 5126: 4, 5125: 4, 5123: 2, 5121: 1 }[a.componentType] ?? 0;
-	const get = (off: number): number =>
-		a.componentType === 5126
-			? g.bin.getFloat32(off, true)
-			: a.componentType === 5125
-				? g.bin.getUint32(off, true)
-				: a.componentType === 5123
-					? g.bin.getUint16(off, true)
-					: g.bin.getUint8(off);
-	const scale = a.normalized
-		? a.componentType === 5123
-			? 65535
-			: a.componentType === 5121
-				? 255
-				: 1
-		: 1;
-	expect(size, `component type ${a.componentType}`).toBeGreaterThan(0);
-	const out: number[] = [];
-	for (let k = 0; k < a.count * comps; k++) out.push(get(o + k * size) / scale);
-	return out;
+class Glb {
+	readonly json: Gltf;
+	private readonly bin: Uint8Array;
+	private readonly views = new Map<number, DataView>();
+
+	constructor(bytes: Uint8Array) {
+		const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+		const u32 = (o: number) => dv.getUint32(o, true);
+		expect(u32(0)).toBe(0x46546c67); // "glTF"
+		expect(u32(4)).toBe(2);
+		expect(u32(8)).toBe(bytes.byteLength);
+		const jlen = u32(12);
+		expect(u32(16)).toBe(0x4e4f534a); // JSON
+		this.json = JSON.parse(new TextDecoder().decode(bytes.subarray(20, 20 + jlen))) as Gltf;
+		const bOff = 20 + jlen;
+		expect(u32(bOff + 4)).toBe(0x004e4942); // BIN
+		this.bin = bytes.subarray(bOff + 8, bOff + 8 + u32(bOff));
+	}
+
+	/** Bytes of a buffer view, decompressed when it uses EXT_meshopt_compression. */
+	view(i: number): DataView {
+		const cached = this.views.get(i);
+		if (cached) return cached;
+		const v = at(this.json.bufferViews, i);
+		const m = v.extensions?.EXT_meshopt_compression;
+		let bytes: Uint8Array;
+		if (m) {
+			expect(m.buffer).toBe(0); // compressed data lives in the GLB's BIN chunk
+			const src = this.bin.subarray(m.byteOffset ?? 0, (m.byteOffset ?? 0) + m.byteLength);
+			bytes = new Uint8Array(m.count * m.byteStride);
+			MeshoptDecoder.decodeGltfBuffer(bytes, m.count, m.byteStride, src, m.mode, m.filter);
+		} else {
+			expect(v.buffer).toBe(0);
+			bytes = this.bin.subarray(v.byteOffset ?? 0, (v.byteOffset ?? 0) + v.byteLength);
+		}
+		const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+		this.views.set(i, dv);
+		return dv;
+	}
+
+	/** Accessor values as numbers; normalized integers map to 0..1 / -1..1 (glTF 2.0). */
+	read(i: number): number[] {
+		const a = at(this.json.accessors, i);
+		const v = at(this.json.bufferViews, a.bufferView);
+		const dv = this.view(a.bufferView);
+		const comps = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 }[a.type] ?? 0;
+		const types: Record<number, [number, (o: number) => number, number]> = {
+			5120: [1, (o) => dv.getInt8(o), 127],
+			5121: [1, (o) => dv.getUint8(o), 255],
+			5122: [2, (o) => dv.getInt16(o, true), 32767],
+			5123: [2, (o) => dv.getUint16(o, true), 65535],
+			5125: [4, (o) => dv.getUint32(o, true), 1],
+			5126: [4, (o) => dv.getFloat32(o, true), 1],
+		};
+		const type = types[a.componentType];
+		if (!type || !comps) throw new Error(`Unsupported accessor ${a.componentType} ${a.type}`);
+		const [size, get, norm] = type;
+		const stride = v.byteStride ?? size * comps;
+		const out: number[] = [];
+		for (let e = 0; e < a.count; e++)
+			for (let k = 0; k < comps; k++) {
+				const x = get((a.byteOffset ?? 0) + e * stride + k * size);
+				out.push(a.normalized ? Math.max(x / norm, -1) : x);
+			}
+		return out;
+	}
+
+	/** Mesh instances under a named node (gltfpack moves a mesh into an unnamed child node). */
+	placed(name: string): Placed[] {
+		const nodes = this.json.nodes;
+		const root = nodes.findIndex((n) => n.name === name);
+		expect(root, name).toBeGreaterThanOrEqual(0);
+		const out: Placed[] = [];
+		const walk = (i: number, t: number[], s: number) => {
+			const n = at(nodes, i);
+			expect(n.rotation, 'no node rotations').toBeUndefined();
+			const ns = n.scale ?? [1, 1, 1];
+			expect(at(ns, 0)).toBe(at(ns, 1));
+			expect(at(ns, 1)).toBe(at(ns, 2));
+			const nt = n.translation ?? [0, 0, 0];
+			const t2 = t.map((x, k) => x + s * at(nt, k));
+			const s2 = s * at(ns, 0);
+			if (n.mesh !== undefined) out.push({ mesh: n.mesh, t: t2, s: s2 });
+			for (const c of n.children ?? []) walk(c, t2, s2);
+		};
+		walk(root, [0, 0, 0], 1);
+		return out;
+	}
 }
 
 const manifest = JSON.parse(readFileSync(dir + 'manifest.json', 'utf8')) as {
@@ -101,23 +189,44 @@ const manifest = JSON.parse(readFileSync(dir + 'manifest.json', 'utf8')) as {
 const MODULE_RE = /^DM_(crypt|abbey|glass|gloam|sundial)_r(S|M|L)_(D|I|L|T|X)_[a-c]$/;
 const CHAR_RE = /^CH_(ak|rb|gc|ns)_[a-z]+_LOD[0-2]$/;
 const DOORS: Record<string, number> = { D: 1, I: 2, L: 2, T: 3, X: 4 };
+const COMPRESSION = ['EXT_meshopt_compression', 'KHR_mesh_quantization'];
 
 describe.each(manifest.assets)('asset $id', (asset) => {
 	const buf = new Uint8Array(readFileSync(dir + asset.file));
-	const g = parseGlb(buf);
+	const g = new Glb(buf);
+	const tris = (mesh: number) =>
+		at(g.json.meshes, mesh).primitives.reduce(
+			(s, pr) => s + at(g.json.accessors, pr.indices).count / 3,
+			0,
+		);
 
 	it('is a valid glTF 2.0 binary that matches the manifest', () => {
 		expect(g.json.asset.version).toBe('2.0');
 		expect(buf.byteLength).toBe(asset.bytes);
 		expect(g.json.materials.map((m) => m.name)).toEqual(asset.materials);
 		for (const p of asset.parts) {
-			const mesh = g.json.meshes.find((m) => m.name === p.name);
-			expect(mesh, p.name).toBeDefined();
-			const tris = (mesh?.primitives ?? []).reduce(
-				(s, pr) => s + at(g.json.accessors, pr.indices).count / 3,
-				0,
-			);
-			expect(tris).toBe(p.tris);
+			const placed = g.placed(p.name);
+			expect(placed.length, p.name).toBeGreaterThan(0);
+			expect(placed.reduce((s, m) => s + tris(m.mesh), 0)).toBe(p.tris);
+		}
+		for (const s of asset.sockets)
+			expect(
+				g.json.nodes.some((n) => n.name === s),
+				s,
+			).toBe(true);
+	});
+
+	it('is compressed: Meshopt geometry, quantized attributes, KTX2 textures', () => {
+		expect(asset.compression).toEqual(COMPRESSION);
+		expect(g.json.extensionsRequired ?? []).toEqual(expect.arrayContaining(COMPRESSION));
+		for (const v of g.json.bufferViews)
+			expect(v.extensions?.EXT_meshopt_compression, 'every buffer view').toBeDefined();
+		expect(asset.bytes).toBeLessThan(asset.rawBytes * 0.5);
+		// textures only as Basis Universal in KTX2 (none yet: the P0 assets use vertex colours)
+		for (const tex of g.json.textures ?? []) {
+			const src = tex.extensions?.KHR_texture_basisu?.source;
+			expect(tex.source, 'no PNG/JPEG fallback').toBeUndefined();
+			expect(at(g.json.images, src).mimeType).toBe('image/ktx2');
 		}
 	});
 
@@ -140,10 +249,10 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 	it('has consistent geometry: bounds, normals, indices and vertex-colour AO', () => {
 		for (const m of g.json.meshes)
 			for (const p of m.primitives) {
-				const pos = read(g, attr(p, 'POSITION'));
-				const nor = read(g, attr(p, 'NORMAL'));
-				const col = read(g, attr(p, 'COLOR_0'));
-				const idx = read(g, p.indices);
+				const pos = g.read(attr(p, 'POSITION'));
+				const nor = g.read(attr(p, 'NORMAL'));
+				const col = g.read(attr(p, 'COLOR_0'));
+				const idx = g.read(p.indices);
 				const acc = at(g.json.accessors, attr(p, 'POSITION'));
 				const n = pos.length / 3;
 				for (let k = 0; k < 3; k++) {
@@ -152,8 +261,11 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 					expect(Math.max(...vals)).toBeCloseTo(at(acc.max, k), 4);
 				}
 				expect(idx.every((i) => i < n)).toBe(true);
-				for (let i = 0; i < nor.length; i += 3)
-					expect(Math.hypot(at(nor, i), at(nor, i + 1), at(nor, i + 2))).toBeCloseTo(1, 3);
+				// int8 octahedral normals: unit length up to quantization error
+				for (let i = 0; i < nor.length; i += 3) {
+					const len = Math.hypot(at(nor, i), at(nor, i + 1), at(nor, i + 2));
+					expect(Math.abs(len - 1)).toBeLessThan(0.02);
+				}
 				expect(col.length).toBe(n * 4);
 				expect(Math.min(...col.filter((_, i) => i % 4 === 0))).toBeLessThan(1); // AO darkens something
 			}
@@ -164,16 +276,19 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 		const size = asset.meta.cellSize ?? 2;
 		const hx = (at(cells, 0) * size) / 2,
 			hz = (at(cells, 1) * size) / 2;
-		for (const m of g.json.meshes)
-			for (const p of m.primitives) {
+		// quantized positions back in metres through the node transform
+		for (const pl of g.placed(asset.id))
+			for (const p of at(g.json.meshes, pl.mesh).primitives) {
 				const a = at(g.json.accessors, attr(p, 'POSITION'));
-				expect(at(a.min, 0)).toBeGreaterThanOrEqual(-hx - 1e-4);
-				expect(at(a.max, 0)).toBeLessThanOrEqual(hx + 1e-4);
-				expect(at(a.min, 2)).toBeGreaterThanOrEqual(-hz - 1e-4);
-				expect(at(a.max, 2)).toBeLessThanOrEqual(hz + 1e-4);
+				const lo = (k: number) => at(pl.t, k) + pl.s * at(a.min, k);
+				const hi = (k: number) => at(pl.t, k) + pl.s * at(a.max, k);
+				expect(lo(0)).toBeGreaterThanOrEqual(-hx - 1e-3);
+				expect(hi(0)).toBeLessThanOrEqual(hx + 1e-3);
+				expect(lo(2)).toBeGreaterThanOrEqual(-hz - 1e-3);
+				expect(hi(2)).toBeLessThanOrEqual(hz + 1e-3);
 			}
 		const cfg = at(asset.id.split('_'), 3);
-		const doors = g.json.nodes.filter((nd) => nd.name.startsWith('socket_door_'));
+		const doors = g.json.nodes.filter((nd) => nd.name?.startsWith('socket_door_'));
 		expect(doors).toHaveLength(DOORS[cfg] ?? -1);
 		for (const d of doors) {
 			const x = at(d.translation, 0),

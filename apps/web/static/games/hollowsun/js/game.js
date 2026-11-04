@@ -264,6 +264,25 @@
   /* ---------- test asset pipeline: GLB z manifestu, LOD podle vzdálenosti, sockety ---------- */
   const AS = { root: null, items: [], lod: 0, lodAuto: true, loaded: 0, error: null, char: null };
   const sockMat = mat('#4fb3b0', { unlit: true });
+  // GLB z pipeline jsou komprimované (EXT_meshopt_compression); PlayCanvas je sám nerozbalí,
+  // proto buffer view dekóduje meshoptimizer (vendor/meshopt_decoder.js) přes hook parseru.
+  const GLB_OPTS = {
+    bufferView: {
+      processAsync(view, buffers, cb) {
+        const m = view.extensions && view.extensions.EXT_meshopt_compression;
+        if (!m) { cb(null, null); return; }
+        Promise.all([buffers[m.buffer], MeshoptDecoder.ready]).then(([buf]) => {
+          const src = new Uint8Array(buf.buffer, buf.byteOffset + (m.byteOffset || 0), m.byteLength);
+          return MeshoptDecoder.decodeGltfBufferAsync(m.count, m.byteStride, src, m.mode, m.filter);
+        }).then((data) => cb(null, data), (err) => cb(err));
+      },
+    },
+  };
+  function loadGlb(file, cb) {
+    const asset = new pc.Asset(file, 'container', { url: 'assets/' + file }, null, GLB_OPTS);
+    asset.once('load', (a) => cb(null, a)); asset.once('error', (err) => cb(err));
+    app.assets.add(asset); app.assets.load(asset);
+  }
   function assetsMode() {
     audioInit(); clearWorld(); S = null; mode = 'assets'; screen.innerHTML = ''; document.getElementById('hud').hidden = true; P.enabled = false; zoom = 14; camT.set(0, 0, 0);
     AS.root = new pc.Entity(); app.root.addChild(AS.root); AS.items = []; AS.loaded = 0; AS.error = null; AS.char = null;
@@ -272,7 +291,7 @@
       AS.manifest = man;
       for (const a of man.assets) {
         const t0 = performance.now(); const item = { a, ms: 0, ok: false }; AS.items.push(item);
-        app.assets.loadFromUrl('assets/' + a.file, 'container', (err, asset) => {
+        loadGlb(a.file, (err, asset) => {
           if (err || !asset) { AS.error = String(err); panel(); return; }
           item.ms = Math.round(performance.now() - t0); item.ok = true; AS.loaded++;
           const e = asset.resource.instantiateRenderEntity(); AS.root.addChild(e); item.e = e;

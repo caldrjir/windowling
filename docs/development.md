@@ -78,7 +78,8 @@ Convention: each completed iteration is at least one minor release.
   binary, otherwise Playwright's own (`playwright install --only-shell chromium`).
 - HOLLOW SUN assets are exported from Blender: `pnpm --filter @windowling/web hollowsun:assets`
   (set `BLENDER` to `blender.exe` if it is not on the PATH, e.g. `BLENDER=D:\Blender\blender.exe`;
-  the launcher does not run headless). The exported GLBs are committed and checked by
+  the launcher does not run headless). The script compresses the exports with gltfpack (a dev
+  dependency, nothing to install). The compressed GLBs are committed and checked by
   `hollowsun-assets.test.ts`, so CI needs no Blender.
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without
   credentials). E2E checks the hub, the language contract, launching VOIDBORN and stats.
