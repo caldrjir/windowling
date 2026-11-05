@@ -94,11 +94,14 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 	await page.locator('[data-clip="attack"]').click();
 	await expect
 		.poll(() => run<number>(page, 'return HSGame.assetRootZ();'), {
-			timeout: 10_000,
+			timeout: 30_000,
 			intervals: [50],
 		})
 		.toBeGreaterThan(0.3);
-	await expect.poll(() => run<string>(page, 'return HSGame.assets.clip;')).toBe('idle');
+	// back to idle once the clip has played; slow software rendering advances it at most 0.1 s per frame
+	await expect
+		.poll(() => run<string>(page, 'return HSGame.assets.clip;'), { timeout: 30_000 })
+		.toBe('idle');
 
 	// Crowd of 50 skinned, animated characters renders and gets measured.
 	await page.locator('#b-as-crowd').click();

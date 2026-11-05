@@ -468,8 +468,9 @@
     if (AS.measure) {
       const now = performance.now(); AS.measure.frames.push(now - AS.measure.last); AS.measure.last = now;
       if (now - AS.measure.t0 > 5000) {
-        const f = AS.measure.frames.slice(15).sort((a, b) => a - b); const n = f.length || 1;
-        AS.crowdRes = { count: AS.crowd.length, avg: Math.round((1000 * n) / f.reduce((a, b) => a + b, 0)), p95: +f[Math.floor(n * 0.95)].toFixed(1) };
+        // první snímky (rozjezd) se zahazují, jen když jich je dost; pomalé vykreslování jich za 5 s dá málo
+        const all = AS.measure.frames; const f = (all.length > 30 ? all.slice(15) : all.slice()).sort((a, b) => a - b); const n = f.length || 1;
+        AS.crowdRes = { count: AS.crowd.length, avg: Math.round((1000 * n) / f.reduce((a, b) => a + b, 0)), p95: +(f[Math.min(f.length - 1, Math.floor(n * 0.95))] || 0).toFixed(1) };
         AS.measure = null; panel();
       }
     }
