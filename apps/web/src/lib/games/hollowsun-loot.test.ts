@@ -375,8 +375,12 @@ describe('HOLLOW SUN progression in the simulation', () => {
 		if (!e) throw new Error('no enemy');
 		e.x = p.x + 1.5;
 		e.z = p.z;
-		HSim.step(s, { cast: 'ak_brand', aim: [e.x, e.z] });
-		for (let i = 0; i < 30 && !(e.brand > 0) && !e.dead; i++) HSim.step(s, {});
+		// Brand Strike can miss (hit chance < 100 %): strike until the brand sticks
+		for (let i = 0; i < 30 * 10 && !(e.brand > 0) && !e.dead; i++) {
+			e.x = p.x + 1.5;
+			e.z = p.z;
+			HSim.step(s, { cast: 'ak_brand', aim: [e.x, e.z] });
+		}
 		expect(e.brand > 0 || e.dead).toBe(true);
 		p.res = 0;
 		for (let i = 0; i < 40 && s.skills.ak_warcry?.cd === 0; i++)
@@ -416,11 +420,11 @@ describe('HOLLOW SUN Kiln Warden = Game Design Bible', () => {
 	it('skills against the boss, also with phase 3 armour (-30 %)', () => {
 		for (const h of B.hits) {
 			const ch = HS.calcChar(h.level, [{ base: 'wb_mace', tier: 0, affixes: [], rar: 'common' }]);
-			const en = HS.refEnemy(12, 'bo_kiln');
+			const en = HS.refEnemy(h.vs ? h.level : 12, h.vs ?? 'bo_kiln');
 			if (h.armor70) en.armor = Math.round(en.armor * 0.7);
 			const got = HS.computeHit(HS.skill(h.skill), h.sl, ch, en);
 			for (const k of ['perHit', 'dot', 'hitChance', 'dps'] as const)
-				expect(got[k], `${h.skill} L${h.level} ${k}`).toBeCloseTo(h[k], 6);
+				expect(got[k], `${h.skill} L${h.level} ${h.vs ?? 'boss'} ${k}`).toBeCloseTo(h[k], 6);
 			expect(got.final).toBe(h.final);
 		}
 	});
@@ -550,5 +554,69 @@ describe('HOLLOW SUN Kiln Warden in the simulation', () => {
 			HSim.step(again, { hold: true, aim: [b2.x, b2.z] });
 		expect(again.drops.length).toBeGreaterThanOrEqual(5);
 		expect(again.drops.filter((d) => d.item.rar === 'magic')).toHaveLength(3);
+	});
+});
+
+describe('HOLLOW SUN Act I enemies in the simulation', () => {
+	const { HSim } = loadAll();
+	const arena = (level: number) =>
+		HSim.create({
+			mode: 'arena',
+			seed: 'act1-' + level,
+			invuln: true,
+			char: { level, xp: 0, alloc: {} },
+		});
+	const types = (s: SimState) => new Set(s.enemies.map((e) => e.type));
+
+	it('waves bring hound packs from wave 2 and bowmen from their Bible level', () => {
+		const low = arena(1);
+		expect(types(low).has('en_hound')).toBe(false);
+		expect(types(low).has('en_bowman')).toBe(false);
+		const s = arena(6);
+		for (let i = 0; i < 30 * 600 && s.wave < 2; i++) HSim.step(s, HSim.autopilot(s));
+		const hounds = s.enemies.filter((e) => e.type === 'en_hound').length;
+		expect(hounds).toBeGreaterThanOrEqual(3);
+		expect(hounds).toBeLessThanOrEqual(5);
+		expect(types(s).has('en_bowman')).toBe(true);
+	});
+
+	it('a hound leaps along its telegraph; a bowman keeps 12-16 m and shoots arrows', () => {
+		const s = arena(6);
+		for (let i = 0; i < 30 * 600 && s.wave < 2; i++) HSim.step(s, HSim.autopilot(s));
+		const p = s.player;
+		const ev = new Set<string>();
+		for (let i = 0; i < 30 * 30; i++) {
+			HSim.step(s, {});
+			for (const e of s.events) ev.add(e.t);
+		}
+		expect(ev.has('leap')).toBe(true);
+		expect(ev.has('shoot')).toBe(true);
+		const bow = s.enemies.filter((e) => !e.dead && e.type === 'en_bowman');
+		for (const b of bow) expect(Math.hypot(b.x - p.x, b.z - p.z)).toBeGreaterThan(9);
+	});
+
+	it('pillars stop arrows', () => {
+		const s = arena(6) as SimState & { proj: unknown[]; stats: { taken: number } };
+		s.enemies.length = 0;
+		const p = s.player;
+		p.x = 7;
+		p.z = -2;
+		// an arrow flying from behind the pillar at (7, -6) towards the player
+		s.proj.push({
+			id: 999,
+			by: 0,
+			x: 7,
+			z: -12,
+			dx: 0,
+			dz: 1,
+			speed: 18,
+			left: 20,
+			mul: 1.1,
+			fire: false,
+		});
+		const taken = s.stats.taken;
+		for (let i = 0; i < 40; i++) HSim.step(s, {});
+		expect(s.proj).toHaveLength(0);
+		expect(s.stats.taken).toBe(taken);
 	});
 });

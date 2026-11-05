@@ -99,7 +99,10 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 			intervals: [50],
 		})
 		.toBeGreaterThan(0.3);
-	await expect.poll(() => run<string>(page, 'return HSGame.assets.clip;')).toBe('idle');
+	// back to idle once the clip has played; slow software rendering advances it at most 0.1 s per frame
+	await expect
+		.poll(() => run<string>(page, 'return HSGame.assets.clip;'), { timeout: 30_000 })
+		.toBe('idle');
 
 	// Crowd of 50 skinned, animated characters renders and gets measured.
 	await page.locator('#b-as-crowd').click();
@@ -152,13 +155,21 @@ test('HOLLOW SUN: loot drops, pick-up and the inventory', async ({ page }, info)
 	await page.locator('#b-arena').click();
 	await expect(page.locator('#hud')).toBeVisible();
 	// Fight on autopilot (invulnerable) until something drops; drop labels appear on the ground.
-	const drops = await run<number>(
+	const fight = await run<{
+		drops: number;
+		kills: number;
+		wave: number;
+		over: boolean;
+		loot: boolean;
+		mode: string;
+	}>(
 		page,
 		`HSGame.state.player.invuln = true;
 		for (let i = 0; i < 60 && (!HSGame.state.drops.length || HSGame.char.level < 2); i++) HSGame.step(30 * 10, true);
-		return HSGame.state.drops.length;`,
+		const s = HSGame.state;
+		return { drops: s.drops.length, kills: s.kills, wave: s.wave, over: s.over, loot: s.loot, mode: HSGame.mode };`,
 	);
-	expect(drops).toBeGreaterThan(0);
+	expect(fight.drops, JSON.stringify(fight)).toBeGreaterThan(0);
 	// A new character starts at level 1 and levels up from kills; the save keeps it (save v3).
 	const level = await run<number>(page, 'return HSGame.char.level;');
 	expect(level).toBeGreaterThan(1);

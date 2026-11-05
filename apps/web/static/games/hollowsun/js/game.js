@@ -198,9 +198,11 @@
   // Simulace určuje pozici i načasování; animace se jí přizpůsobí (root motion útoku se vynuluje).
   const CH = { res: null, gray: /[?&]gray\b/.test(location.search) };
   const M_BOSS = mat('#2a1d18', { gloss: 0.5, emissive: '#3a1206' });
-  const CH_SETS = { en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace }, bo_kiln: { M_ak_steel: M_BOSS, M_ak_ember: M.furnace } };
-  const CH_SCALE = { en_thrall: 1, en_brute: 1.45, bo_kiln: 2.3 };
+  const M_BONE = mat('#b9ad98', { gloss: 0.2 }), M_HOUND = mat('#2b2420', { gloss: 0.3 }), M_BOW = mat('#5a3a22');
+  const CH_SETS = { en_bowman: { M_ak_steel: M_BONE, M_ak_ember: M.eyes }, en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace }, bo_kiln: { M_ak_steel: M_BOSS, M_ak_ember: M.furnace } };
+  const CH_SCALE = { en_thrall: 1, en_brute: 1.45, bo_kiln: 2.3, en_bowman: 0.95 };
   const SWING = 0.47; // s: švih v klipu AN_hero_attack (snímek 14 z 27)
+  function bowFor(c) { const sock = c.e.findByName('socket_hand_R'); if (sock) ent('box', M_BOW, [0, -0.1, 0], [0.06, 1.3, 0.06], sock, false); }
   function charVisual(parent, set, scale) {
     const holder = new pc.Entity(); holder.setLocalEulerAngles(0, 90, 0); if (scale) holder.setLocalScale(scale, scale, scale); parent.addChild(holder); // model hledí na +Z, simulace na +X
     const e = CH.res.instantiateRenderEntity(); holder.addChild(e);
@@ -237,10 +239,16 @@
   /* ---------- vizuály nepřátel, telegraphy, efekty ---------- */
   const EV = new Map(); // id → vizuál nepřítele
   function enemyVisual(e) {
+    if (e.type === 'en_hound') {
+      const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z); const body = new pc.Entity(); root.addChild(body);
+      ent('box', M_HOUND, [0, 0.55, 0], [1.05, 0.38, 0.42], body); ent('box', M_HOUND, [0.62, 0.72, 0], [0.42, 0.3, 0.32], body); ent('box', M.eyes, [0.84, 0.76, 0], [0.06, 0.07, 0.24], body, false); ent('box', M.furnace, [0, 0.58, 0], [0.5, 0.2, 0.44], body, false);
+      for (const [x, zz] of [[0.36, 0.14], [0.36, -0.14], [-0.36, 0.14], [-0.36, -0.14]]) ent('box', M_HOUND, [x, 0.22, zz], [0.11, 0.44, 0.11], body);
+      const v = { root, body, base: null, hound: true, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v;
+    }
     if (e.type === 'en_wisp') { const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z); const body = ent('sphere', M.furnace, [0, 1.1, 0], [0.55, 0.55, 0.55], root, false); ent('sphere', M.ghost, [0, 1.1, 0], [1.1, 1.1, 1.1], root, false); const v = { root, body, base: M.furnace, wisp: true, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v; }
     if (CH.res && !CH.gray) {
       const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z);
-      const v = { root, c: charVisual(root, CH_SETS[e.type] || CH_SETS.en_thrall, CH_SCALE[e.type] || 1), dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v;
+      const v = { root, c: charVisual(root, CH_SETS[e.type] || CH_SETS.en_thrall, CH_SCALE[e.type] || 1), dying: 0, x: e.x, z: e.z }; if (e.type === 'en_bowman') bowFor(v.c); EV.set(e.id, v); return v;
     }
     const root = new pc.Entity(); app.root.addChild(root); const big = e.type === 'en_brute';
     const body = ent('capsule', big ? M.brute : M.thrall, [0, big ? 1.25 : 0.85, 0], big ? [1.9, 1.25, 1.9] : [0.9, 0.85, 0.9], root);
@@ -319,6 +327,8 @@
         case 'qslam': qslamVisual(ev); break;
         case 'breath': case 'kilnfire': { const e = flat(meshFor('cone' + ev.w, 0, 1, ev.w), M.swing, ev.x, ev.z, ev.face, ev.r, 0.05); fx(e, ev.dur || 0.5, (f, k) => f.e.setLocalScale(ev.r * (0.3 + 0.7 * Math.min(1, k * 3)), 1, ev.r * (0.3 + 0.7 * Math.min(1, k * 3)))); noise(ev.dur || 0.5, 600, 200, 0.3, 'lowpass'); break; }
         case 'victory': victory(ev); break;
+        case 'leap': noise(0.18, 300, 900, 0.25); break;
+        case 'shoot': noise(0.12, ev.fire ? 900 : 2600, ev.fire ? 300 : 1200, 0.18, 'bandpass'); break;
         case 'drop': tone(ev.rar === 'unique' ? 660 : ev.rar === 'rare' ? 520 : 380, 760, 0.18, ev.rar === 'common' ? 0.05 : 0.12, 'triangle'); break;
         case 'pickup': { const d = HS.describe(ev.item); num(S.player.x, S.player.z, t('picked') + ': ' + d.name, 'info r-' + d.rar, 2.6); SAVE.items = (SAVE.items || 0) + 1; saveGear(); break; }
         case 'equip': case 'unequip': case 'discard': saveGear(); break;
@@ -362,7 +372,18 @@
     }
     for (const [id, v] of DV) if (!live.has(id)) { v.root.destroy(); v.el.remove(); DV.delete(id); }
   }
-  function clearDrops() { for (const v of DV.values()) { v.root.destroy(); v.el.remove(); } DV.clear(); }
+  // šípy (P1: Charred Bowman): tenké hranoly ve směru letu, ohnivý šíp žhne
+  const PV = new Map();
+  function syncProj() {
+    const live = new Set();
+    for (const pr of S.proj || []) {
+      live.add(pr.id); let e = PV.get(pr.id);
+      if (!e) { e = ent('box', pr.fire ? M.furnace : M.blade, [pr.x, 1.2, pr.z], [0.75, 0.06, 0.06], null, false); e.setLocalEulerAngles(0, (-Math.atan2(pr.dz, pr.dx) * 180) / Math.PI, 0); PV.set(pr.id, e); }
+      e.setLocalPosition(pr.x, 1.2, pr.z);
+    }
+    for (const [id, e] of PV) if (!live.has(id)) { e.destroy(); PV.delete(id); }
+  }
+  function clearDrops() { for (const e of PV.values()) e.destroy(); PV.clear(); for (const v of DV.values()) { v.root.destroy(); v.el.remove(); } DV.clear(); }
 
   // statistiky postavy pro panel a porovnání: HP, armor (redukce), evade, Cleave DPS proti thrallovi, APS, pohyb
   function charSummary(ch) {
@@ -626,8 +647,9 @@
     if (AS.measure) {
       const now = performance.now(); AS.measure.frames.push(now - AS.measure.last); AS.measure.last = now;
       if (now - AS.measure.t0 > 5000) {
-        const f = AS.measure.frames.slice(15).sort((a, b) => a - b); const n = f.length || 1;
-        AS.crowdRes = { count: AS.crowd.length, avg: Math.round((1000 * n) / f.reduce((a, b) => a + b, 0)), p95: +f[Math.floor(n * 0.95)].toFixed(1) };
+        // první snímky (rozjezd) se zahazují, jen když jich je dost; pomalé vykreslování jich za 5 s dá málo
+        const all = AS.measure.frames; const f = (all.length > 30 ? all.slice(15) : all.slice()).sort((a, b) => a - b); const n = f.length || 1;
+        AS.crowdRes = { count: AS.crowd.length, avg: Math.round((1000 * n) / f.reduce((a, b) => a + b, 0)), p95: +(f[Math.min(f.length - 1, Math.floor(n * 0.95))] || 0).toFixed(1) };
         AS.measure = null; panel();
       }
     }
@@ -740,11 +762,12 @@
         charMat(v.c, e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : null); charPin(v.c); charLod(v.c, v.x, v.z);
         continue;
       }
+      if (v.hound) { const mv = Math.hypot(v.x - px, v.z - pz) / Math.max(dt, 1e-3); v.body.setLocalPosition(0, mv > 0.5 ? Math.abs(Math.sin(renderT * 14 + e.id)) * 0.12 : 0, 0); v.body.setLocalEulerAngles(0, 0, e.atk && e.atk.def.shape === 'leap' ? -12 * Math.min(1, e.atk.t / e.atk.def.tele) : 0); for (const r of v.body.findComponents('render')) { const want = e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : null; if (want && r.material !== want) { r._m = r._m || r.material; r.material = want; } else if (!want && r._m) { r.material = r._m; r._m = null; } } continue; }
       const m = e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : v.base; if (v.body.render.material !== m) v.body.render.material = m;
       if (v.wisp) { v.body.setLocalPosition(0, 1.1 + Math.sin(renderT * 6 + e.id) * 0.15, 0); const k = e.atk ? 1 + Math.min(1, e.atk.t / e.atk.def.tele) * 0.6 : 1; v.body.setLocalScale(0.55 * k, 0.55 * k, 0.55 * k); continue; }
       const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
     }
-    syncDrops(); syncBoss();
+    syncDrops(); syncBoss(); syncProj();
     for (let i = TELES.length - 1; i >= 0; i--) {
       const te = TELES[i]; te.t += dt; const owner = S.enemies.find((e) => e.id === te.id); const k = Math.min(1, te.t / te.dur);
       te.fill.setLocalScale(te.r * k, 1, te.r * k);

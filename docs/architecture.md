@@ -274,6 +274,22 @@ level 8 character they effectively had, so their gear stays usable. The progress
 (`progress` in the loot fixtures) check the XP formulas, the character with its own allocation and
 the Bulwark buff, the barrier and the new skills against the Bible.
 
+Act I enemies (P1): besides the Ashen Thrall and the Smoldering Brute, the arena now has two more
+Act I types from the Bible:
+
+- Cinder Hound: fast (6 m/s), evasion 40, packs of 3–5 from wave 2. It bites (0.9×) and leaps
+  6 m (1.4×, 0.5 s telegraph) along a line from the side, and circles the player while the leap
+  is on cooldown.
+- Charred Bowman: from its Bible level 3. It keeps 12–16 m, backs off when approached and needs a
+  clear line. It shoots arrows (1.1×, 20 m) and a fire arrow (1.6×, cd 6 s) as projectiles; pillars,
+  the anvil, the kilns and the arena wall stop them, and the dodge's i-frames avoid them.
+
+The bite's telegraph, the cooldowns, the draw time and the arrow speed are prototype values marked
+in the exported `attacks`. Waves mix Thralls (4 + 2 × wave), the hound pack, Bowmen and Brutes,
+each from the first level of its Bible range. The benchmark keeps its P0 Thrall/Brute mix. Fixtures
+check the hound and bowman stats and the skills against them; simulation tests cover the wave mix,
+the leap, the bowman's range and arrows stopped by pillars.
+
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three
 kilns on the edge. The boss comes from the exported Bible data (`bosses.bo_kiln`: level 12, HP ×60,

@@ -624,6 +624,56 @@ window.HS_DATA = {
    "lt": "lt_normal"
   },
   {
+   "id": "en_hound",
+   "n": "Cinder Hound",
+   "arche": "Fast melee",
+   "lv": [
+    1,
+    12
+   ],
+   "hpMul": 0.7,
+   "dmgMul": 0.9,
+   "aps": 1.4,
+   "ms": 6,
+   "armorMul": 0.4,
+   "res": {
+    "fire": 40
+   },
+   "abil": [
+    "Kousnutí (0,9×)",
+    "Skok 6 m (1,4×, telegraph 0,5 s)"
+   ],
+   "pattern": "Smečky 3–5, obíhají a skáčou zboku.",
+   "eva": 40,
+   "xpMul": 1,
+   "lt": "lt_normal"
+  },
+  {
+   "id": "en_bowman",
+   "n": "Charred Bowman",
+   "arche": "Ranged",
+   "lv": [
+    3,
+    12
+   ],
+   "hpMul": 0.8,
+   "dmgMul": 1.1,
+   "aps": 0.7,
+   "ms": 3,
+   "armorMul": 0.5,
+   "res": {
+    "fire": 20
+   },
+   "abil": [
+    "Šíp (1,1×, 20 m)",
+    "Ohnivý šíp (1,6×, cd 6 s)"
+   ],
+   "pattern": "Udržuje 12–16 m, ustupuje při přiblížení.",
+   "eva": 0,
+   "xpMul": 1,
+   "lt": "lt_normal"
+  },
+  {
    "id": "bo_kiln",
    "n": "The Kiln Warden (Brother Aldric)",
    "lv": 12,
@@ -755,6 +805,48 @@ window.HS_DATA = {
     "shape": "circle",
     "cd": 99,
     "suicide": true
+   }
+  ],
+  "en_hound": [
+   {
+    "n": "Kousnutí",
+    "mul": 0.9,
+    "tele": 0.4,
+    "range": 1.4,
+    "shape": "cone",
+    "w": 80,
+    "cd": 1.1
+   },
+   {
+    "n": "Skok",
+    "mul": 1.4,
+    "tele": 0.5,
+    "range": 6,
+    "shape": "leap",
+    "w": 1.2,
+    "cd": 5,
+    "min": 2.5
+   }
+  ],
+  "en_bowman": [
+   {
+    "n": "Šíp",
+    "mul": 1.1,
+    "tele": 0.6,
+    "range": 20,
+    "shape": "arrow",
+    "speed": 18,
+    "cd": 1.6
+   },
+   {
+    "n": "Ohnivý šíp",
+    "mul": 1.6,
+    "tele": 0.9,
+    "range": 20,
+    "shape": "arrow",
+    "speed": 15,
+    "cd": 6,
+    "fire": true
    }
   ],
   "bo_kiln": []

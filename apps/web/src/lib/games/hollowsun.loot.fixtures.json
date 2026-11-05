@@ -3898,6 +3898,78 @@
 	"boss": {
 		"enemies": [
 			{
+				"level": 1,
+				"id": "bo_kiln",
+				"hp": 2400,
+				"armor": 35,
+				"eva": 13,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 22
+			},
+			{
+				"level": 1,
+				"id": "en_wisp",
+				"hp": 14,
+				"armor": 0,
+				"eva": 13,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 20
+			},
+			{
+				"level": 1,
+				"id": "en_hound",
+				"hp": 28,
+				"armor": 12,
+				"eva": 42,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 9
+			},
+			{
+				"level": 1,
+				"id": "en_bowman",
+				"hp": 32,
+				"armor": 15,
+				"eva": 13,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 11
+			},
+			{
+				"level": 3,
+				"id": "bo_kiln",
+				"hp": 2825,
+				"armor": 56,
+				"eva": 19,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 24.5
+			},
+			{
+				"level": 3,
+				"id": "en_wisp",
+				"hp": 16,
+				"armor": 0,
+				"eva": 19,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 22.3
+			},
+			{
+				"level": 3,
+				"id": "en_hound",
+				"hp": 33,
+				"armor": 19,
+				"eva": 46,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 10
+			},
+			{
+				"level": 3,
+				"id": "en_bowman",
+				"hp": 38,
+				"armor": 24,
+				"eva": 19,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 12.2
+			},
+			{
 				"level": 8,
 				"id": "bo_kiln",
 				"hp": 4248,
@@ -3916,6 +3988,24 @@
 				"dmg": 29.1
 			},
 			{
+				"level": 8,
+				"id": "en_hound",
+				"hp": 50,
+				"armor": 37,
+				"eva": 56,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 13.1
+			},
+			{
+				"level": 8,
+				"id": "en_bowman",
+				"hp": 57,
+				"armor": 46,
+				"eva": 34,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 16
+			},
+			{
 				"level": 12,
 				"id": "bo_kiln",
 				"hp": 5888,
@@ -3932,9 +4022,71 @@
 				"eva": 46,
 				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
 				"dmg": 36
+			},
+			{
+				"level": 12,
+				"id": "en_hound",
+				"hp": 69,
+				"armor": 51,
+				"eva": 64,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 16.2
+			},
+			{
+				"level": 12,
+				"id": "en_bowman",
+				"hp": 79,
+				"armor": 64,
+				"eva": 46,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 19.8
 			}
 		],
 		"hits": [
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"vs": "en_hound",
+				"sl": 3,
+				"final": 15,
+				"perHit": 21.790048984282077,
+				"dot": 0,
+				"hitChance": 0.6964788732394366,
+				"dps": 18.33905151090689
+			},
+			{
+				"level": 8,
+				"skill": "ak_brand",
+				"vs": "en_hound",
+				"sl": 3,
+				"final": 15,
+				"perHit": 21.619828886315148,
+				"dot": 0,
+				"hitChance": 0.6964788732394366,
+				"dps": 18.195790008968146
+			},
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"vs": "en_bowman",
+				"sl": 3,
+				"final": 18,
+				"perHit": 21.491100141509914,
+				"dot": 0,
+				"hitChance": 0.8241666666666666,
+				"dps": 21.403480926232977
+			},
+			{
+				"level": 8,
+				"skill": "ak_brand",
+				"vs": "en_bowman",
+				"sl": 3,
+				"final": 20,
+				"perHit": 24.164061626214334,
+				"dot": 0,
+				"hitChance": 0.8241666666666666,
+				"dps": 24.065544746964257
+			},
 			{
 				"level": 8,
 				"skill": "ak_cleave",
@@ -3975,6 +4127,50 @@
 				"dot": 0,
 				"hitChance": 0.7492424242424242,
 				"dps": 17.777517710317586
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"vs": "en_hound",
+				"sl": 4,
+				"final": 17,
+				"perHit": 22.768848183347444,
+				"dot": 0,
+				"hitChance": 0.7365168539325843,
+				"dps": 20.284557066145243
+			},
+			{
+				"level": 12,
+				"skill": "ak_brand",
+				"vs": "en_hound",
+				"sl": 4,
+				"final": 17,
+				"perHit": 22.665326526344266,
+				"dot": 0,
+				"hitChance": 0.7365168539325843,
+				"dps": 20.192330575716156
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"vs": "en_bowman",
+				"sl": 4,
+				"final": 18,
+				"perHit": 22.42224979179766,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 22.22305052464733
+			},
+			{
+				"level": 12,
+				"skill": "ak_brand",
+				"vs": "en_bowman",
+				"sl": 4,
+				"final": 21,
+				"perHit": 25.320973581863363,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 25.096022052562088
 			},
 			{
 				"level": 12,

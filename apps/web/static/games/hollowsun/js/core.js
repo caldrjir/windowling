@@ -201,7 +201,7 @@
   function affixName(inst, base) {
     const pre = (inst.affixes || []).map((a) => get(a[0])).find((af) => af && af.kind === 'prefix');
     const suf = (inst.affixes || []).map((a) => get(a[0])).find((af) => af && af.kind === 'suffix');
-    if (inst.rar === 'magic') return [pre && pre.n, base.n, suf && 'of ' + suf.n].filter(Boolean).join(' ');
+    if (inst.rar === 'magic') return [pre && pre.n, base.n, suf && (/^of /i.test(suf.n) ? suf.n : 'of ' + suf.n)].filter(Boolean).join(' ');
     return `${pre ? pre.n : base.cat} ${suf ? suf.n : base.cat}`.replace(/^(\S+) \1$/, '$1') + ' · ' + base.n;
   }
 

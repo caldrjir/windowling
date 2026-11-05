@@ -8,7 +8,7 @@
   const PLAYER_R = 0.5, PLAYER_SPEED = 5.2, PICK_R = 1.3;
   const DODGE = { dist: 5.5, time: 0.3, iframes: 0.25, cd: 0.9 };
   const WINDUP = 0.4; // zásah přichází po 40 % času akce (Casting Lifecycle v Bible)
-  const ER = { en_thrall: 0.45, en_brute: 0.95, en_wisp: 0.35, bo_kiln: 1.6 };
+  const ER = { en_thrall: 0.45, en_brute: 0.95, en_wisp: 0.35, en_hound: 0.5, en_bowman: 0.45, bo_kiln: 1.6 };
 
   function rng(seed) {
     let h = 1779033703 ^ String(seed).length;
@@ -157,7 +157,7 @@
     const gear = sanitizeGear(opts.gear, L);
     const s = {
       L, char, progress: !fixed, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
-      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss'].includes(opts.mode || 'arena'), lootN: 0, sinceU: opts.sinceU || 0, drops: [],
+      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [],
       player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
     refreshChar(s);
@@ -175,10 +175,15 @@
   }
   function ring(s, n, r0) { const out = []; const off = s.rnd() * Math.PI * 2; for (let i = 0; i < n; i++) { const a = off + (i / n) * Math.PI * 2 + (s.rnd() - 0.5) * 0.3; const r = r0 - s.rnd() * 2; out.push([Math.cos(a) * r, Math.sin(a) * r]); } return out; }
   function nextWave(s) {
-    s.wave++; const brute = HS.D.enemies.find((e) => e.id === 'en_brute'); const nT = 5 + 3 * s.wave, nB = monsterLevel(s) >= brute.lv[0] ? Math.floor(s.wave / 2) : 0; // brute až od svého levelu (Bible: 5–12)
+    // složení vlny (prototyp arény): Thralli jako jádro, od 2. vlny smečka Houndů (3–5, Bible), Bowmen a Brute
+    // až od prvního levelu svého rozsahu v Bible (Bowman 3+, Brute 5+)
+    s.wave++; const ml = monsterLevel(s); const lv0 = (id) => HS.D.enemies.find((e) => e.id === id).lv[0]; const w = s.wave;
+    const nT = 4 + 2 * w, nH = w >= 2 ? 3 + (w % 3) : 0, nBw = ml >= lv0('en_bowman') ? Math.min(6, Math.floor((w + 1) / 2)) : 0, nB = ml >= lv0('en_brute') ? Math.floor(w / 2) : 0;
     ring(s, nT, ARENA - 1).forEach(([x, z]) => spawn(s, 'en_thrall', x, z));
+    if (nH) { const a = s.rnd() * Math.PI * 2; for (let i = 0; i < nH; i++) spawn(s, 'en_hound', Math.cos(a) * (ARENA - 2) + (s.rnd() - 0.5) * 3, Math.sin(a) * (ARENA - 2) + (s.rnd() - 0.5) * 3); }
+    ring(s, nBw, ARENA - 1.5).forEach(([x, z]) => spawn(s, 'en_bowman', x, z));
     ring(s, nB, ARENA - 2).forEach(([x, z]) => spawn(s, 'en_brute', x, z));
-    s.events.push({ t: 'wave', wave: s.wave, n: nT + nB });
+    s.events.push({ t: 'wave', wave: s.wave, n: nT + nH + nBw + nB });
   }
   function spawnBench(s, n) {
     const nB = Math.round(n / 5);
@@ -396,9 +401,15 @@
     for (const [px, pz, pr] of s.pillars) { const ddx = o.x - px, ddz = o.z - pz; const d = len(ddx, ddz); const min = pr + r; if (d < min && d > 1e-6) { o.x = px + (ddx / d) * min; o.z = pz + (ddz / d) * min; } }
     const R = s.arenaR || ARENA; const d = len(o.x, o.z); if (d > R - r) { o.x *= (R - r) / d; o.z *= (R - r) / d; }
   }
+  // vzdálenost bodu od úsečky
+  function segDist(px, pz, ax, az, bx, bz) { const dx = bx - ax, dz = bz - az; const l2 = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)); return len(ax + dx * t - px, az + dz * t - pz); }
+  // je přímka zdroj → cíl volná? (sloupy, kovadlina a pece blokují šípy)
+  function lineFree(s, ax, az, bx, bz) { for (const [x, z, r] of s.pillars) if (segDist(x, z, ax, az, bx, bz) < r) return false; return true; }
   function inShape(s, e, atk, tx, tz) {
     const p = s.player; const a = atk.def;
     if (a.shape === 'circle') return len(p.x - tx, p.z - tz) <= a.range + PLAYER_R;
+    if (a.shape === 'leap') return segDist(p.x, p.z, atk.from[0], atk.from[1], atk.to[0], atk.to[1]) <= a.w / 2 + PLAYER_R;
+    if (a.shape === 'arrow') return false;
     const dx = p.x - e.x, dz = p.z - e.z; if (len(dx, dz) > a.range + PLAYER_R) return false;
     return angDiff(Math.atan2(dz, dx), atk.face) <= ((a.w / 2) * Math.PI) / 180 + 0.15;
   }
@@ -428,16 +439,32 @@
       const dx = p.x - e.x, dz = p.z - e.z; const d = len(dx, dz);
       if (e.atk) {
         e.atk.t += dt;
-        if (e.atk.t >= e.atk.def.tele) { if (p.hp > 0 && inShape(s, e, e.atk, e.atk.tx, e.atk.tz)) hurtPlayer(s, e, e.atk.def); e.cds[e.atk.i] = e.atk.def.cd; const sui = e.atk.def.suicide; e.atk = null; e.recover = 0.35; if (sui) { e.noLoot = true; s.events.push({ t: 'slam', x: e.x, z: e.z, r: 2.5, hits: 0 }); kill(s, e); } }
+        if (e.atk.t >= e.atk.def.tele) {
+          const ad = e.atk.def;
+          if (ad.shape === 'leap') { const [tx, tz] = e.atk.to; move(s, e, tx - e.x, tz - e.z, e.r); s.events.push({ t: 'leap', id: e.id, x: e.x, z: e.z }); }
+          if (ad.shape === 'arrow') { s.proj.push({ id: s.nextId++, by: e.id, x: e.x + Math.cos(e.atk.face) * (e.r + 0.3), z: e.z + Math.sin(e.atk.face) * (e.r + 0.3), dx: Math.cos(e.atk.face), dz: Math.sin(e.atk.face), speed: ad.speed, left: ad.range, mul: ad.mul, fire: !!ad.fire }); s.events.push({ t: 'shoot', id: e.id, fire: !!ad.fire }); }
+          if (p.hp > 0 && inShape(s, e, e.atk, e.atk.tx, e.atk.tz)) hurtPlayer(s, e, e.atk.def); e.cds[e.atk.i] = e.atk.def.cd; const sui = e.atk.def.suicide; e.atk = null; e.recover = 0.35; if (sui) { e.noLoot = true; s.events.push({ t: 'slam', x: e.x, z: e.z, r: 2.5, hits: 0 }); kill(s, e); } }
         continue;
       }
       if (e.recover > 0) { e.recover -= dt; continue; }
       if (s.over) continue;
       e.face = Math.atan2(dz, dx);
       const atks = HS.D.attacks[e.type];
-      let chosen = -1; for (let i = atks.length - 1; i >= 0; i--) { if (e.cds[i] > 0) continue; const reach = atks[i].shape === 'circle' ? atks[i].range * 0.8 : atks[i].range + PLAYER_R * 0.5; if (d - e.r <= reach) { chosen = i; break; } }
-      if (chosen >= 0) { const a = atks[chosen]; e.atk = { i: chosen, def: a, t: 0, face: e.face, tx: a.shape === 'circle' ? e.x : p.x, tz: a.shape === 'circle' ? e.z : p.z }; s.events.push({ t: 'tele', id: e.id, shape: a.shape, x: e.x, z: e.z, face: e.face, r: a.range, w: a.w || 360, dur: a.tele }); continue; }
-      if (d > e.r + PLAYER_R + 0.2) move(s, e, (dx / d) * e.speed * dt, (dz / d) * e.speed * dt, e.r);
+      let chosen = -1;
+      for (let i = atks.length - 1; i >= 0; i--) {
+        const a = atks[i]; if (e.cds[i] > 0) continue;
+        if (a.shape === 'leap') { if (d - e.r >= a.min && d - e.r <= a.range && lineFree(s, e.x, e.z, p.x, p.z)) { chosen = i; break; } continue; }
+        if (a.shape === 'arrow') { if (d <= a.range && lineFree(s, e.x, e.z, p.x, p.z)) { chosen = i; break; } continue; }
+        const reach = a.shape === 'circle' ? a.range * 0.8 : a.range + PLAYER_R * 0.5; if (d - e.r <= reach) { chosen = i; break; }
+      }
+      if (chosen >= 0) {
+        const a = atks[chosen]; e.atk = { i: chosen, def: a, t: 0, face: e.face, tx: a.shape === 'circle' ? e.x : p.x, tz: a.shape === 'circle' ? e.z : p.z };
+        let tshape = a.shape, tw = a.w || 360, tr = a.range;
+        if (a.shape === 'leap') { const L = Math.min(a.range, d - e.r - PLAYER_R * 0.5); e.atk.from = [e.x, e.z]; e.atk.to = [e.x + (dx / d) * L, e.z + (dz / d) * L]; tshape = 'cone'; tw = 20; tr = L; }
+        if (a.shape === 'arrow') { tshape = 'cone'; tw = 4; tr = Math.min(a.range, d + 2); }
+        s.events.push({ t: 'tele', id: e.id, shape: tshape, x: e.x, z: e.z, face: e.face, r: tr, w: tw, dur: a.tele, kind: a.shape }); continue;
+      }
+      steer(s, e, dx, dz, d, dt);
     }
     // oddělení nepřátel (měkké kolize)
     for (let i = 0; i < alive.length; i++) for (let j = i + 1; j < alive.length; j++) {
@@ -446,11 +473,34 @@
     }
     for (const e of alive) { const dx = e.x - p.x, dz = e.z - p.z; const d = len(dx, dz); const min = e.r + PLAYER_R; if (d < min && d > 1e-6) { e.x = p.x + (dx / d) * min; e.z = p.z + (dz / d) * min; } }
   }
+  // pohyb nepřátel podle archetypu v Bible: Hound obíhá a skáče zboku, Bowman drží 12–16 m a ustupuje, ostatní jdou přímo
+  function steer(s, e, dx, dz, d, dt) {
+    const v = e.speed * dt;
+    if (e.type === 'en_bowman') {
+      if (d < 12) move(s, e, (-dx / d) * v * 0.8, (-dz / d) * v * 0.8, e.r);
+      else if (d > 16 || !lineFree(s, e.x, e.z, s.player.x, s.player.z)) { const sd = e.id % 2 ? 1 : -1; move(s, e, ((dx / d) * 0.7 - (dz / d) * 0.7 * sd) * v, ((dz / d) * 0.7 + (dx / d) * 0.7 * sd) * v, e.r); }
+      return;
+    }
+    if (e.type === 'en_hound' && d < 7 && d > 2.2 && e.cds[1] > 0) { const sd = e.id % 2 ? 1 : -1; const k = d < 4 ? -0.3 : 0.2; move(s, e, ((-dz / d) * sd + (dx / d) * k) * v, ((dx / d) * sd + (dz / d) * k) * v, e.r); return; }
+    if (d > e.r + PLAYER_R + 0.2) move(s, e, (dx / d) * v, (dz / d) * v, e.r);
+  }
+  // šípy: let, zásah hráče (úhyb s i-frames platí), zastaví je sloupy a stěna arény
+  function updateProj(s) {
+    const p = s.player; const keep = [];
+    for (const pr of s.proj) {
+      const st = pr.speed * TICK; pr.x += pr.dx * st; pr.z += pr.dz * st; pr.left -= st;
+      if (pr.left <= 0 || len(pr.x, pr.z) > (s.arenaR || ARENA) || s.pillars.some(([x, z, r]) => len(pr.x - x, pr.z - z) < r)) { s.events.push({ t: 'projend', id: pr.id }); continue; }
+      if (p.hp > 0 && len(pr.x - p.x, pr.z - p.z) <= PLAYER_R + 0.15) { const by = s.enemies.find((x) => x.id === pr.by) || { L: s.L, def: { dmgMul: 1 }, weak: 0 }; hurtPlayer(s, by, { mul: pr.mul }); s.events.push({ t: 'projend', id: pr.id, hit: true }); continue; }
+      keep.push(pr);
+    }
+    s.proj = keep;
+  }
   function step(s, inp) {
     s.events.length = 0; if (s.over) return s;
     s.tick++; s.t += TICK;
     updatePlayer(s, inp || {});
     updateEnemies(s);
+    updateProj(s);
     if (s.mode === 'boss') updateBoss(s);
     if (s.enemies.length > 300) s.enemies = s.enemies.filter((e) => !e.dead);
     if (s.mode === 'arena' && !s.over && s.enemies.every((e) => e.dead)) { s.enemies = []; nextWave(s); }
