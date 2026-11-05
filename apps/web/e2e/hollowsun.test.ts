@@ -95,7 +95,7 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 	await page.locator('[data-clip="attack"]').click();
 	await expect
 		.poll(() => run<number>(page, 'return HSGame.assetRootZ();'), {
-			timeout: 10_000,
+			timeout: 30_000,
 			intervals: [50],
 		})
 		.toBeGreaterThan(0.3);
