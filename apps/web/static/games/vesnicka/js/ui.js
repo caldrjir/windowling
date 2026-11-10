@@ -297,13 +297,23 @@ const UI = (() => {
       <p class="muted">${S.steward && S.settings.auto ? L('Šafář bude mezitím nakupovat za tebe.', 'Meanwhile the steward keeps buying for you.') : L(`Za tu dobu vydělá zhruba ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} grošů.`, `In that time it earns about ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} groschen.`)} ${L('Delší výdělek bez tebe dává Ponocný a kronika.', 'The Night watchman and the chronicle make it last longer.')}</p></div>
       <h3>${L('Statistiky', 'Statistics')}</h3><table class="stats">${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
       <h3>${L('Nastavení', 'Settings')}</h3>
+      <label class="set"><input type="checkbox" id="setMusic" ${S.settings.music ? 'checked' : ''}> ${L('Hudba', 'Music')}</label>
+      ${vol('musicVol', L('Hlasitost hudby', 'Music volume'), !S.settings.music)}
       <label class="set"><input type="checkbox" id="setSound" ${S.settings.sound ? 'checked' : ''}> ${L('Zvukové efekty', 'Sound effects')}</label>
+      ${vol('sfxVol', L('Hlasitost zvuků', 'Sound volume'), !S.settings.sound)}
+      ${S.settings.mute ? `<p class="muted">🔇 ${L('Hudbu i zvuky teď ztlumilo tlačítko nahoře. Zapneš je stejným tlačítkem.', 'Music and sounds are muted by the button at the top. The same button turns them back on.')}</p>` : ''}
+      ${window.GCMusic && !window.GCMusic.gameMusic ? `<p class="muted">🎧 ${L('V herním centru máš zvolený vlastní playlist nebo bez hudby, hudba vesnice proto mlčí.', 'The game center is set to your own playlist or no music, so the village music stays quiet.')} <button class="btn small" data-gcmusic>${L('Hudba v centru', 'Center music')}</button></p>` : ''}
       <label class="set"><input type="checkbox" id="setSci" ${S.settings.sci ? 'checked' : ''}> ${L('Vědecký zápis čísel (1,23e15)', 'Scientific notation (1.23e15)')}</label>
       <label class="set"><input type="checkbox" id="setQuick" ${S.settings.quick ? 'checked' : ''}> ${L('Tlačítko ⚡ Nejlepší koupě na návsi', 'The ⚡ Best buy button on the village green')}</label>
       <h3>${L('Jak hrát', 'How to play')}</h3>${help()}
       <h3>${L('Začít úplně znovu', 'Start over completely')}</h3>
       <p class="muted">${L('Smaže celou vesnici, pověsti i úspěchy.', 'Deletes the whole village, legends and achievements.')}</p>
       <button class="btn danger" id="reset">${L('Smazat vesnici', 'Delete the village')}</button>`;
+  }
+  // Posuvník hlasitosti 0–100 % (mění se hned, uloží se po puštění).
+  function vol(k, label, off) {
+    const v = S.settings[k] ?? (k === 'musicVol' ? 55 : 100);
+    return `<label class="set vol${off ? ' off' : ''}"><span>${label}</span><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${k}" style="--p:${v}%"><output>${v} %</output></label>`;
   }
   function help() {
     return `<ul class="help">${[
@@ -369,17 +379,26 @@ const UI = (() => {
       if (t.closest('#reset')) { handlers.reset(); return; }
     });
     body.addEventListener('change', e => {
+      if (e.target.id === 'setMusic') handlers.setting('music', e.target.checked);
       if (e.target.id === 'setSound') handlers.setting('sound', e.target.checked);
+      if (e.target.dataset.vol) handlers.volume(e.target.dataset.vol, +e.target.value, true);
       if (e.target.id === 'setSci') handlers.setting('sci', e.target.checked);
       if (e.target.id === 'setQuick') handlers.setting('quick', e.target.checked);
       if (e.target.id === 'autoBuy') handlers.setting('auto', e.target.checked);
+    });
+    body.addEventListener('input', e => {
+      const k = e.target.dataset && e.target.dataset.vol;
+      if (!k) return;
+      e.target.style.setProperty('--p', `${e.target.value}%`);
+      e.target.nextElementSibling.textContent = `${e.target.value} %`;
+      handlers.volume(k, +e.target.value, false);
     });
     body.addEventListener('keydown', e => { const pl = e.target.closest && e.target.closest('#lb tr[data-nick]'); if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); compare(pl.dataset.nick); } });
     for (const id of ['#edgeL', '#edgeR']) $(id).addEventListener('click', () => Scene.focusCreature());
     $('#quick').addEventListener('click', () => { if (best) handlers.quick(best); });
     $('#newsBtn').addEventListener('click', () => toggleNews());
     $('#news').addEventListener('click', e => { if (e.target.closest('[data-close]')) toggleNews(false); });
-    $('#soundBtn').addEventListener('click', () => handlers.setting('sound', !S.settings.sound));
+    $('#soundBtn').addEventListener('click', () => handlers.setting('mute', !silent()));
   }
   // ── Novinky ──
   function toggleNews(open) {
@@ -391,7 +410,9 @@ const UI = (() => {
     el.hidden = !show;
     $('#newsBtn').setAttribute('aria-expanded', String(show));
   }
-  function soundIcon() { $('#soundBtn').textContent = S.settings.sound ? '🔊' : '🔇'; $('#soundBtn').setAttribute('aria-label', S.settings.sound ? L('Vypnout zvuky', 'Mute sounds') : L('Zapnout zvuky', 'Unmute sounds')); }
+  // Tlačítko nahoře ztlumí hudbu i zvuky naráz (nastavení obou zůstane).
+  const silent = () => S.settings.mute || (!S.settings.sound && !S.settings.music);
+  function soundIcon() { const m = silent(); $('#soundBtn').textContent = m ? '🔇' : '🔊'; $('#soundBtn').setAttribute('aria-label', m ? L('Zapnout hudbu a zvuky', 'Unmute music and sounds') : L('Ztlumit hudbu i zvuky', 'Mute music and sounds')); }
 
   function init(state, handlers) {
     S = state; H = handlers;

@@ -1,12 +1,12 @@
 'use strict';
-// ── VESNIČKA · zvuky (Web Audio, nic se nenačítá). Hudbu hraje společný přehrávač (music.js). ──
+// ── VESNIČKA · zvuky (Web Audio, nic se nenačítá). Hudbu v pozadí hraje hudba.js. ──
 const Sound = (() => {
-  let ac = null, out = null, on = true, last = {};
+  let ac = null, out = null, on = true, vol = 1, last = {};
   function ctx() {
     if (!on) return null;
     if (!ac) {
       try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
-      out = ac.createGain(); out.gain.value = 0.5; out.connect(ac.destination);
+      out = ac.createGain(); out.gain.value = 0.5 * vol * vol; out.connect(ac.destination);
     }
     if (ac.state === 'suspended') ac.resume().catch(() => {});
     return ac;
@@ -49,5 +49,7 @@ const Sound = (() => {
   return {
     play: new Proxy(play, { get: (o, k) => (on && o[k]) || (() => {}) }),
     set on(v) { on = !!v; }, get on() { return on; }, unlock() { ctx(); },
+    /** Hlasitost efektů 0..1 (posuvník v nastavení). */
+    set vol(v) { vol = Math.max(0, Math.min(1, v)); if (out) out.gain.value = 0.5 * vol * vol; },
   };
 })();

@@ -12,7 +12,7 @@ const Econ = (() => {
       upg: {}, legends: 0, spent: 0, steward: false, gen: 1, taps: 0, caught: {}, buffs: [], ach: {},
       daily: null, nextCreature: 25,
       stats: { playTime: 0, bought: 0, upgrades: 0, milestones: 0, seasons: {}, night: 0, awayMax: 0, dailyAll: 0, bestRate: 0, started: now(), genStart: now(), missed: 0, maxBuildings: 0, stewardBuys: 0, nesro: 0 },
-      settings: { sound: true, sci: false, quick: true, auto: true },
+      settings: { sound: true, sci: false, quick: true, auto: true, music: true, musicVol: 55, sfxVol: 100, mute: false },
       seen: {},
       t: now(),
     };

@@ -13,7 +13,11 @@ const Game = (() => {
   /** Jak rychle hráč teď klepe (klepnutí za sekundu za posledních 10 s). */
   function tps() { const t = performance.now() - 10000; while (tapTimes.length && tapTimes[0] < t) tapTimes.shift(); return tapTimes.length / 10; }
 
-  function applySettings() { SCI = !!S.settings.sci; Sound.on = !!S.settings.sound; }
+  function applySettings() {
+    const st = S.settings;
+    SCI = !!st.sci; Sound.on = !!st.sound && !st.mute; Sound.vol = (st.sfxVol ?? 100) / 100;
+    Hudba.set({ on: !!st.music && !st.mute, vol: (st.musicVol ?? 55) / 100 });
+  }
   function save() {
     store.set(SAVE_KEY, Econ.serialize(S));
     store.set(STATS_KEY, JSON.stringify(Econ.hubStats(S)));
@@ -42,7 +46,7 @@ const Game = (() => {
       <p class="muted">${o.capped
         ? L(`Bez tebe vesnička vydělává nejvýš ${fmtDur(o.cap)}, pak zahálí. Příště se vrať do ${fmtDur(o.cap)} (když odejdeš teď, tak nejpozději v ${UI.clockAt(o.cap)}). Déle vydrží s Ponocným a s kronikou.`, `Without you the village earns for at most ${fmtDur(o.cap)}, then it idles. Next time come back within ${fmtDur(o.cap)} (if you leave now, by ${UI.clockAt(o.cap)}). The Night watchman and the chronicle make it last longer.`)
         : L(`Vesnička vydělávala celou dobu. Bez tebe vydrží ${fmtDur(o.cap)}: když odejdeš teď, vrať se nejpozději v ${UI.clockAt(o.cap)}.`, `The village earned the whole time. It lasts ${fmtDur(o.cap)} without you: if you leave now, come back by ${UI.clockAt(o.cap)}.`)}</p></div>`,
-    [{ text: L('Vybrat groše', 'Collect'), cls: 'gold', fn: () => { Sound.play.claim(); burstCoins(); newsOnce(); } }]);
+    [{ text: L('Vybrat groše', 'Collect'), cls: 'gold', fn: () => { Sound.unlock(); Hudba.unlock(); Sound.play.claim(); burstCoins(); newsOnce(); } }]);
   }
   function burstCoins() {
     const cv = document.getElementById('cv'), r = cv.getBoundingClientRect();
@@ -51,7 +55,7 @@ const Game = (() => {
 
   // ── Akce hráče ──
   function onTap(sx, sy) {
-    Sound.unlock();
+    Sound.unlock(); Hudba.unlock();
     tapTimes.push(performance.now());
     const v = Econ.tap(S);
     Scene.floatText(sx, sy - 6, '+' + fmt(v, 1), Econ.buff(S, 'tap') > 1 ? '#ff9a7a' : '#fff3b0');
@@ -157,9 +161,18 @@ const Game = (() => {
     afterChange();
   }
   function setting(k, v) {
-    S.settings[k] = v; applySettings(); UI.soundIcon();
+    S.settings[k] = v;
+    // Odtlumit, když je hudba i zvuky vypnuté: zapnout obojí, jinak by tlačítko nic neudělalo.
+    if (k === 'mute' && !v && !S.settings.sound && !S.settings.music) S.settings.sound = S.settings.music = true;
+    if (k !== 'mute' && v === true && (k === 'sound' || k === 'music')) S.settings.mute = false;
+    applySettings(); UI.soundIcon(); Hudba.unlock();
     if (UI.tab === 'more') UI.render(); else UI.refresh();
     save();
+  }
+  // Posuvník hlasitosti: zní hned, uloží se po puštění.
+  function volume(k, v, final) {
+    S.settings[k] = v; applySettings();
+    if (final) save();
   }
   function reset() {
     UI.modal(`<div class="welcome"><div class="wico">⚠️</div><h2>${L('Smazat vesnici?', 'Delete the village?')}</h2><p>${L('Tohle nejde vrátit. Přijdeš o všechno včetně pověstí a úspěchů.', 'This cannot be undone. You lose everything including legends and achievements.')}</p></div>`,
@@ -209,7 +222,7 @@ const Game = (() => {
     Scene.frame(dt, S);
     uiT += dt; achT += dt; saveT += dt;
     if (uiT > 0.2) { uiT = 0; UI.refresh(); creatureTick(); }
-    if (achT > 1) { achT = 0; checkAch(); }
+    if (achT > 1) { achT = 0; checkAch(); Hudba.tick(); }
     if (saveT > 5) { saveT = 0; save(); }
     requestAnimationFrame(frame);
   }
@@ -221,14 +234,14 @@ const Game = (() => {
     UI.modal(`<div class="welcome"><div class="wico">🏡</div><h2>VESNIČKA</h2>
       <p>${L('Postav vesnici, která roste, i když zrovna nehraješ. Od políčka a kurníku po pivovar, zámek a pražský orloj.', 'Build a village that keeps growing while you are away. From a field and a hen house to a brewery, a castle and an astronomical clock.')}</p>
       <p>${L('<b>Klepej do vesnice</b> a vydělej první groše. Za 12 grošů postavíš políčko.', '<b>Tap the village</b> to earn your first groschen. A field costs 12.')}</p></div>`,
-    [{ text: L('Do toho!', 'Let’s go!'), cls: 'gold', fn: () => Sound.unlock() }]);
+    [{ text: L('Do toho!', 'Let’s go!'), cls: 'gold', fn: () => { Sound.unlock(); Hudba.unlock(); } }]);
   }
 
   function start() {
     applySettings();
     Scene.init(document.getElementById('cv'));
     Scene.on.tap = onTap; Scene.on.creature = onCreature;
-    UI.init(S, { buy, upg, buyAll, prestige, claim, setting, reset, quick: quickBuy, smart, hire, tps, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
+    UI.init(S, { buy, upg, buyAll, prestige, claim, setting, volume, reset, quick: quickBuy, smart, hire, tps, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
     Econ.daily(S);
     if (isNew) { S.seen.news = NEWS_VERSION; intro(); }
     else {
