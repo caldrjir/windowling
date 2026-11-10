@@ -527,6 +527,111 @@ const ACTION_GAMES: Game[] = [
 			}
 		},
 	},
+	{
+		id: 'hollowsun',
+		title: 'HOLLOW SUN',
+		tagline: 'Prototyp temného ARPG: Ash Knight proti hordám popela.',
+		description:
+			'Hratelný prototyp P0 izometrického dark fantasy ARPG Echoes of the Hollow Sun. Seký Cleave, spaluj Searing Slamem, prorážej se Ember Charge a uhýbej telegraphům. Šedý box bez finální grafiky, který ověřuje pocit ze souboje a výkon prohlížeče s 50 nepřáteli.',
+		genres: ['ARPG', '3D', 'Prototyp'],
+		features: [
+			'3 schopnosti Ash Knighta',
+			'Vlny nepřátel z Act I',
+			'Benchmark 50 nepřátel',
+			'Čísla z Game Design Bible',
+		],
+		en: {
+			tagline: 'A dark ARPG prototype: an Ash Knight against hordes of ash.',
+			description:
+				'A playable P0 prototype of the isometric dark fantasy ARPG Echoes of the Hollow Sun. Cleave, burn with Searing Slam, break through with Ember Charge and dodge telegraphs. A grey box without final art that tests how combat feels and how the browser copes with 50 enemies.',
+			genres: ['ARPG', '3D', 'Prototype'],
+			features: [
+				'3 Ash Knight skills',
+				'Waves of Act I enemies',
+				'50-enemy benchmark',
+				'Numbers from the Game Design Bible',
+			],
+		},
+		statLabels: {
+			bestWave: ['Nejlepší vlna', 'Best wave'],
+			kills: ['Zabití celkem', 'Total kills'],
+			benchFps: ['Benchmark (FPS)', 'Benchmark (FPS)'],
+		},
+		path: '/games/hollowsun/index.html',
+		colors: ['#e3b964', '#ec7a3a', '#c23b43'],
+		statsKey: 'gamecenter.stats.hollowsun',
+		desktopOnly: true,
+		cover(ctx, w, h, t) {
+			const s = Math.min(w, h);
+			const bg = ctx.createRadialGradient(
+				w * 0.5,
+				h * 0.42,
+				0,
+				w * 0.5,
+				h * 0.42,
+				Math.max(w, h) * 0.8,
+			);
+			bg.addColorStop(0, '#3b2a14');
+			bg.addColorStop(0.55, '#14100c');
+			bg.addColorStop(1, '#07080c');
+			ctx.fillStyle = bg;
+			ctx.fillRect(0, 0, w, h);
+			// duté slunce: zářící prstenec s tmavým středem
+			const cx = w * 0.5,
+				cy = h * 0.4,
+				r = s * 0.2;
+			const halo = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 2.2);
+			halo.addColorStop(0, 'rgba(227,185,100,0.35)');
+			halo.addColorStop(1, 'rgba(227,185,100,0)');
+			ctx.fillStyle = halo;
+			ctx.fillRect(0, 0, w, h);
+			ctx.strokeStyle = '#e3b964';
+			ctx.lineWidth = Math.max(2, s * 0.018);
+			ctx.beginPath();
+			ctx.arc(cx, cy, r, 0, Math.PI * 2);
+			ctx.stroke();
+			ctx.fillStyle = '#07080c';
+			ctx.beginPath();
+			ctx.arc(cx, cy, r * 0.82, 0, Math.PI * 2);
+			ctx.fill();
+			// popelavá pláň
+			ctx.fillStyle = '#0d0b0a';
+			ctx.beginPath();
+			ctx.moveTo(0, h * 0.78);
+			ctx.quadraticCurveTo(w * 0.3, h * 0.7, w * 0.55, h * 0.76);
+			ctx.quadraticCurveTo(w * 0.8, h * 0.82, w, h * 0.74);
+			ctx.lineTo(w, h);
+			ctx.lineTo(0, h);
+			ctx.fill();
+			// rytíř s mečem
+			const kx = w * 0.5,
+				ky = h * 0.77;
+			ctx.fillStyle = '#050506';
+			ctx.beginPath();
+			ctx.moveTo(kx - s * 0.035, ky);
+			ctx.lineTo(kx - s * 0.025, ky - s * 0.13);
+			ctx.lineTo(kx + s * 0.025, ky - s * 0.13);
+			ctx.lineTo(kx + s * 0.035, ky);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.arc(kx, ky - s * 0.15, s * 0.022, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = '#ec7a3a';
+			ctx.lineWidth = Math.max(1.5, s * 0.008);
+			ctx.beginPath();
+			ctx.moveTo(kx + s * 0.03, ky - s * 0.09);
+			ctx.lineTo(kx + s * 0.13, ky - s * 0.2);
+			ctx.stroke();
+			// uhlíky stoupající vzhůru
+			for (let i = 0; i < 28; i++) {
+				const p = (t * (0.04 + (i % 5) * 0.012) + i * 0.137) % 1;
+				const x = ((i * 97) % w) + Math.sin(t + i) * s * 0.02,
+					y = h * (1 - p);
+				ctx.fillStyle = `rgba(236,${110 + (i % 4) * 25},58,${0.8 * (1 - p)})`;
+				ctx.fillRect(x, y, Math.max(1.5, s * 0.006), Math.max(1.5, s * 0.006));
+			}
+		},
+	},
 ];
 
 export const GAMES: Game[] = [...ACTION_GAMES, ...PUZZLE_GAMES];

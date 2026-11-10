@@ -20,6 +20,8 @@ Auth, CI/CD, release-please) carries on.
 - Mobile: responsive hub; VOIDBORN touch controls (stick + dash) and compact phone HUD/menus.
 - STARSPIRE (deck-building roguelike) joins the library, with a phone layout for battles.
 - DRIFTWOOD (first-person 3D survival) joins the library; computers only (blocked on phones/tablets).
+- HOLLOW SUN (P0 prototype of the isometric ARPG _Echoes of the Hollow Sun_, PlayCanvas) joins the
+  library; computers only. Combat numbers match the Game Design Bible (unit-tested).
 - Live player counts per game (signed-in vs anonymous) from game-tab heartbeats.
 - Puzzle shelf, stage 1: puzzle kit (daily puzzle, streaks, Star Path, weekly quests, themes) with
   Sudoku, Nonograms, Kakuro and Souhvězdí (Hashi).

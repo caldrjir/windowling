@@ -1,0 +1,111 @@
+{
+	"generated": "scripts/blender/hollowsun_assets.py (Blender 5.2.3 LTS) + gltfpack -cc -kn -km",
+	"assets": [
+		{
+			"id": "DM_crypt_rS_X_a",
+			"file": "DM_crypt_rS_X_a.glb",
+			"bytes": 20128,
+			"materials": [
+				"M_crypt_stone",
+				"M_crypt_trim"
+			],
+			"parts": [
+				{
+					"name": "DM_crypt_rS_X_a",
+					"tris": 1148
+				}
+			],
+			"sockets": [
+				"socket_door_N",
+				"socket_door_S",
+				"socket_door_W",
+				"socket_door_E"
+			],
+			"meta": {
+				"cells": [
+					5,
+					5
+				],
+				"cellSize": 2,
+				"size": [
+					10,
+					4,
+					10
+				],
+				"trisBudget": 3000,
+				"source": "blender"
+			},
+			"rawBytes": 84440,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization"
+			]
+		},
+		{
+			"id": "CH_ak_body",
+			"file": "CH_ak_body.glb",
+			"bytes": 99856,
+			"materials": [
+				"M_ak_steel",
+				"M_ak_ember"
+			],
+			"parts": [
+				{
+					"name": "CH_ak_body_LOD0",
+					"tris": 3460
+				},
+				{
+					"name": "CH_ak_body_LOD1",
+					"tris": 760
+				},
+				{
+					"name": "CH_ak_body_LOD2",
+					"tris": 242
+				}
+			],
+			"sockets": [
+				"socket_hand_R"
+			],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [
+					25000,
+					9000,
+					3000
+				],
+				"source": "blender",
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 555164,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization"
+			]
+		}
+	]
+}

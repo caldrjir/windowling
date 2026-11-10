@@ -1,0 +1,64 @@
+/* HOLLOW SUN – P0 prototyp. Barvy a písma z UI design systému Game Design Bible. */
+:root {
+  --bg: #0a0c11; --panel: #141823cc; --line: #2a3142; --fg: #e7e2d6; --muted: #8b8778;
+  --bronze: #b98a4e; --gold: #e3b964; --blood: #c23b43; --ember: #ec7a3a;
+  --f-display: "Cormorant SC", Georgia, serif; --f-body: "IBM Plex Sans", system-ui, sans-serif; --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--f-body); user-select: none; }
+canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+[hidden] { display: none !important; }
+#fx { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.dmg { position: absolute; left: 0; top: 0; font: 700 18px/1 var(--f-mono); color: #f2efe6; text-shadow: 0 2px 0 #000, 0 0 6px #000; transform: translate(-50%, -50%); white-space: nowrap; will-change: transform, opacity; }
+.dmg.crit { color: var(--gold); font-size: 26px; }
+.dmg.fire { color: #ff9a4a; }
+.dmg.hurt { color: #ff5a5a; font-size: 20px; }
+.dmg.info { color: #9fd0ff; font: 600 14px/1 var(--f-body); }
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#topbar { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 22px; font: 600 15px/1 var(--f-mono); color: var(--fg); text-shadow: 0 1px 2px #000; }
+#topbar #wave { font-family: var(--f-display); font-size: 22px; color: var(--gold); }
+#fps { color: #9fd0ff; }
+#orbs { position: absolute; left: 24px; bottom: 26px; display: grid; gap: 8px; width: 260px; }
+.bar { position: relative; height: 18px; background: #1a1f2c; border: 1px solid #5a4630; overflow: hidden; }
+.bar i { position: absolute; inset: 0 auto 0 0; display: block; }
+.bar.hp i { background: linear-gradient(#d9454f, #8e1f27); }
+.bar.res i { background: linear-gradient(#ffb15c, #c4561c); }
+.bar span { position: relative; z-index: 1; font: 600 11px/18px var(--f-mono); padding-left: 8px; text-shadow: 0 1px 1px #000; }
+#skills { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 10px; }
+.sk { position: relative; width: 64px; height: 64px; border: 1px solid #5a4630; background: #141823e6; display: grid; place-items: center; text-align: center; }
+.sk b { font: 600 11px/1.15 var(--f-body); padding: 0 4px; }
+.sk .key { position: absolute; top: 3px; left: 4px; font: 600 10px/1 var(--f-mono); color: var(--gold); }
+.sk .cost { position: absolute; bottom: 3px; right: 4px; font: 600 10px/1 var(--f-mono); color: #ffb15c; }
+.sk .cd { position: absolute; inset: auto 0 0 0; background: #000b; }
+.sk.no { border-color: var(--blood); }
+#hint { position: absolute; right: 22px; bottom: 26px; width: 300px; font-size: 12px; color: var(--muted); text-align: right; text-shadow: 0 1px 2px #000; }
+#screen { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, #2a1e1288, #07080cf0 70%); }
+#screen:empty { display: none; }
+.panel { width: min(560px, calc(100vw - 32px)); border: 1px solid #5a4630; background: #0d0f15f2; padding: 28px 30px; display: grid; gap: 14px; box-shadow: 0 20px 80px #000; }
+.panel h1 { margin: 0; font: 600 44px/1 var(--f-display); color: var(--gold); letter-spacing: .02em; text-wrap: balance; }
+.panel h2 { margin: 0; font: 600 26px/1.1 var(--f-display); color: var(--gold); }
+.panel p { margin: 0; color: #c3bdb0; }
+.panel .muted { color: var(--muted); font-size: 12.5px; }
+.panel .row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { pointer-events: auto; font: 600 18px/1 var(--f-display); color: var(--gold); background: #b98a4e22; border: 1px solid var(--bronze); padding: 11px 18px; cursor: pointer; }
+.btn:hover, .btn:focus-visible { background: #b98a4e44; outline: none; border-color: var(--gold); }
+.btn.dim { color: var(--muted); border-color: #39425a; background: none; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13px; }
+.keys kbd { font: 600 12px/1 var(--f-mono); color: var(--gold); border: 1px solid #5a4630; padding: 3px 6px; background: #141823; justify-self: start; }
+table.res { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.res td { padding: 4px 0; border-bottom: 1px solid #1f2533; }
+table.res td.n { text-align: right; font-family: var(--f-mono); }
+.ok { color: #6fae74; } .bad { color: #e0705a; }
+#assetPanel { position: fixed; top: 16px; left: 16px; width: min(380px, calc(100vw - 32px)); border: 1px solid #5a4630; background: #0d0f15e6; padding: 16px 18px; display: grid; gap: 8px; font-size: 13px; }
+#assetPanel h2 { margin: 0; font: 600 22px/1.1 var(--f-display); color: var(--gold); }
+#assetPanel .muted { color: var(--muted); font-size: 12px; }
+.opt { display: flex; gap: 10px; align-items: center; font-size: 13px; pointer-events: auto; }
+#assetPanel .clips .btn { font-size: 14px; padding: 7px 10px; }
+#assetPanel .btn.on { color: var(--gold); border-color: var(--gold); }
+#assetPanel .btn:disabled { opacity: 0.6; cursor: default; }
+.panel.feel .fq { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.panel.feel .scale { display: flex; gap: 6px; }
+.panel.feel .scale .btn { font-size: 15px; padding: 7px 12px; }
+.panel .btn.on { color: var(--gold); border-color: var(--gold); background: #b98a4e33; }
+.panel textarea { width: 100%; box-sizing: border-box; background: #0d0f15; color: inherit; border: 1px solid #39425a; font: 14px/1.4 var(--f-body, inherit); padding: 8px; resize: vertical; }
+.btn:disabled { opacity: 0.55; cursor: default; }

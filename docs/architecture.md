@@ -211,6 +211,70 @@ bottles, explored map), `audio.js` (procedural sound and generative music), `ui.
 merged into old saves, finished story steps are recognised from the old flags. E2E drives the
 real game in a software WebGL renderer (`e2e/driftwood.test.ts`).
 
+## HOLLOW SUN prototype - `static/games/hollowsun`
+
+The P0 prototype of _Echoes of the Hollow Sun_, an isometric dark fantasy ARPG designed in a
+separate Game Design Bible (a claude.ai artifact). Plain scripts on PlayCanvas 2.23.3
+(`vendor/playcanvas.min.js`, MIT, licence beside it), loaded in order by `index.html`:
+`data.js` (generated from the Bible – Ash Knight, three skills, two Act I enemies, balance
+constants; never edited by hand), `core.js` (the Bible's formulas: character stats, weapon,
+`computeHit` with conversion, crit, armour/resistance and hit chance), `sim.js` (combat at a
+fixed 30 Hz with a seeded RNG and commands as input, no rendering - the GDD's multiplayer
+preparation) and `game.js` (PlayCanvas scene, isometric camera, click-to-move or WASD, telegraphs,
+hit-stop, HUD, a 20 s benchmark with 50 enemies). Save `hollowsun.save.v1`, stats
+`gamecenter.stats.hollowsun`. `src/lib/games/hollowsun.test.ts` checks the core against values
+exported from the Bible (`hollowsun.fixtures.json`) and runs the simulation headless;
+`e2e/hollowsun.test.ts` drives the real page in a software WebGL renderer.
+
+Asset pipeline (P0): `pnpm --filter @windowling/web hollowsun:assets` runs
+`scripts/blender/hollowsun_assets.py` in Blender without a window (`scripts/hollowsun-assets.mjs`
+finds it through `BLENDER`, the PATH or the default install folders) and exports raw GLB files:
+a dungeon module `DM_crypt_rS_X_a` (bevelled walls, door sockets, vertex-colour AO) and a
+placeholder `CH_ak_body` whose LOD1/LOD2 come from LOD0 through Decimate. gltfpack (the
+`gltfpack` npm package, meshoptimizer) then quantizes and compresses them
+(`EXT_meshopt_compression` + `KHR_mesh_quantization`, `-cc -kn -km`: named nodes and materials
+kept) into `assets/`, together with `assets/manifest.json` (raw and compressed sizes). The GLBs
+are committed, so CI needs no Blender. PlayCanvas cannot decode Meshopt itself: the game's
+"Asset test" mode loads the GLBs as container assets whose `bufferView.processAsync` hook
+decodes them with meshoptimizer's decoder (`vendor/meshopt_decoder.js`, MIT), switches LODs by
+camera distance and shows the sockets.
+`src/lib/games/hollowsun-assets.test.ts` decodes every GLB the same way and holds it to the
+Bible's asset rules: compression (every buffer view Meshopt, at most half the raw size, textures
+only as KTX2 via `KHR_texture_basisu`), naming, triangle budget, at most 2 materials per mesh,
+LOD0–2, footprint on the 2 m grid (through the dequantizing node transform), door sockets,
+vertex-colour AO and glTF integrity. The P0 assets have no textures yet; the npm gltfpack cannot
+encode KTX2 (the native gltfpack build with Basis Universal can, `-tc`), and the game will also
+need the Basis transcoder for them.
+`CH_ak_body` is skinned to the shared humanoid rig `RIG_hero` (Bible D16: one skeleton for every
+class, at most 65 bones; 20 now, rigid placeholder skinning) and carries four placeholder clips
+`AN_hero_idle|run|attack|death` sampled at 30 FPS; the attack has root motion (0.6 m forward on
+the `root` bone), the loops stay in place and close seamlessly. The weapon socket `socket_hand_R`
+is a child of the `hand_R` joint. The "Asset test" mode plays the clips through PlayCanvas' anim
+component (keys 1–4) and has a crowd test: 50 skinned, animated characters (LOD1) for 5 s with the
+average FPS and p95 frame time. The validator checks the skin (bone budget, complete weights, valid
+joints, one skin for all LODs), the clip names, 30 FPS sampling, seamless loops and root motion.
+The arena and the benchmark use the same knight for the player and the enemies (thrall and brute get
+their own materials, the brute is scaled up) once the GLB has loaded; until then, or with `?gray` for
+a comparison, the grey boxes stay. The simulation still owns positions and timing: the clips follow
+its state (attack slowed or sped up so the swing lands at the end of the telegraph or in the
+player's hit window, run while moving, death played out before the body is removed), the attack's
+root motion is pinned to the spot, LODs switch by camera distance (18 m / 35 m) and the player's
+blade sits in `socket_hand_R`.
+
+P0 acceptance tools: "Test vstupu" measures input latency – from the input event's timestamp to the
+end of rendering the frame where the knight reacts (`frameend`) and to the start of the next frame
+(≈ on screen); 20 samples, average and p95 (target < 50 ms p95). Only inputs the knight can act on
+right away count (not during a strike, dodge, stun or hit-stop, where commands queue on purpose). A
+fresh input runs the next simulation step in the very next frame, borrowing the time so the rate
+stays 30 steps/s and the command stream stays deterministic; a click that is pressed and released
+between two steps is kept for the next step. "Ohodnotit boj" (also after a game over) asks four
+1–5 questions for the combat feel test (target ≥ 4/5 from 5 players), keeps the ratings in the
+game's save and copies them as text to the clipboard for collecting, together with the graphics
+adapter, the last benchmark and the last input test, so testers on other hardware send one paste.
+The benchmark also records GPU time per frame (WebGL2 `EXT_disjoint_timer_query_webgl2` around
+rendering; measure without the frame cap, since the GPU clocks down at 60 FPS) and CPU time per frame
+(PlayCanvas `stats.frame` update + render).
+
 ## Vesnička - `static/games/vesnicka`
 
 An idle game outside the puzzle kit, plain scripts loaded by `index.html`: `data.js` (trades,
@@ -323,4 +387,5 @@ Signed-in players keep their progress in their account; anonymous play is unchan
 | 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |
 | 2026-10-23 | Online puzzles: one generic room DO for turns and races | One server for 13 games; the room enforces turn order and timing, the games keep rules.     |
 | 2026-10-23 | Cloud saves mirror localStorage keys, newest write wins | Games stay untouched; one generic sync script for all games; per-key time stamps.           |
+| 2026-11-04 | HOLLOW SUN on PlayCanvas, vendored like Three.js        | Engine chosen in the GDD (D09); no build step, self-contained static game, MIT licence.     |
 | 2026-10-23 | Leaderboards per comparable board only                  | Fair rankings: same daily puzzle, same level, same rules; client-reported, range-checked.   |
