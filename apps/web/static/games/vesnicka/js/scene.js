@@ -579,8 +579,9 @@ const Scene = (() => {
     if (id === 'vodnik') {
       // na kameni v rybníku nebo na břehu potoka: nejlépe tam, kde je to vidět
       const spots = [[POND[0] - 34, POND[1] - 2], [POND[0] + 30, POND[1] - 4], ...[0.55, 0.7, 0.86].map(f => { const [a, b] = brookAt(f); return [a + 22, b]; })];
-      const inView = spots.filter(([a]) => a > view[0] + 40 && a < view[1] - 40), mid = (view[0] + view[1]) / 2;
-      [x, y] = (inView.length ? inView : spots).reduce((a, b) => (Math.abs(b[0] - mid) < Math.abs(a[0] - mid) ? b : a));
+      const inView = a => a > view[0] + 40 && a < view[1] - 40, mid = (view[0] + view[1]) / 2;
+      const order = spots.map(([a, b]) => ({ id, x: a, y: b, p })).sort((u, v) => inView(v.x) - inView(u.x) || Math.abs(u.x - mid) - Math.abs(v.x - mid));
+      ({ x, y } = order.find(freeSpot) || order[0]);
     } else if (id === 'krakonos') {
       // na jedné straně obrazu (uprostřed nahoře je počítadlo grošů), za kopci
       p = 0.3; const vwW = vw / scale, side = Math.random() < 0.5 ? 0.12 + Math.random() * 0.16 : 0.72 + Math.random() * 0.16;
@@ -588,8 +589,11 @@ const Scene = (() => {
       y = 246;
     } else {
       const pad = Math.min(90, (view[1] - view[0]) * 0.15);
-      x = view[0] + pad + Math.random() * Math.max(10, view[1] - view[0] - pad * 2);
-      y = id === 'bludicka' ? 300 + Math.random() * 120 : id === 'cert' ? roadY(x) + 30 + Math.random() * 40 : roadY(x) + 4 + Math.random() * 60;
+      for (let i = 0; i < 12; i++) {
+        x = view[0] + pad + Math.random() * Math.max(10, view[1] - view[0] - pad * 2);
+        y = id === 'bludicka' ? 300 + Math.random() * 120 : id === 'cert' ? roadY(x) + 30 + Math.random() * 40 : roadY(x) + 4 + Math.random() * 60;
+        if (freeSpot({ id, x, y, p })) break;
+      }
     }
     creature = { id, x, y, p, t0: t, life, done: false, gone: 0 };
   }
@@ -691,12 +695,22 @@ const Scene = (() => {
       circ(c, 13, -12, 4, `rgba(255,220,110,${g})`, OL);
     },
   };
-  /** Kam na obrazovce klepnout na bytost (CSS px od levého horního rohu plátna). */
-  function creatureScreen() {
-    const cr = creature;
-    if (!cr) return null;
+  /** Kam na obrazovce klepnout na bytost (CSS px od levého horního rohu plátna) při kameře cx. */
+  function screenOf(cr, cx) {
     const k = scale * CR_SIZE * (cr.p < 1 ? 1.3 : 1);
-    return { x: (cr.x - cam * cr.p) * scale, y: cr.y * scale - (cr.id === 'bludicka' ? 20 : cr.id === 'krakonos' ? 50 : 26) * k };
+    return { x: (cr.x - cx * cr.p) * scale, y: cr.y * scale - (cr.id === 'bludicka' ? 20 : cr.id === 'krakonos' ? 50 : 26) * k };
+  }
+  function creatureScreen() { return creature ? screenOf(creature, cam) : null; }
+  // Bytost nesmí stát pod tlačítkem nad scénou (nejlepší koupě na telefonu zakrývá břeh rybníka):
+  // ani teď, ani když na ni najede kamera.
+  function freeSpot(cr) {
+    const r = cv.getBoundingClientRect();
+    return [cam, clampCam((cr.x - viewW() / 2) / cr.p)].every(cx => {
+      const s = screenOf(cr, cx);
+      if (s.x < 0 || s.x > vw) return true;
+      const el = document.elementFromPoint(r.left + s.x, r.top + s.y);
+      return !el || el === cv;
+    });
   }
   function hitCreature(sx, sy) {
     const cr = creature;
