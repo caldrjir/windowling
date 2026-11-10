@@ -1,13 +1,14 @@
 import { error, json } from '@sveltejs/kit';
-import { leaderboard, submitScores } from '@windowling/database';
+import { leaderboard, playerScores, submitScores } from '@windowling/database';
 import { z } from 'zod';
-import { BOARD_RE } from '$lib/cloud';
+import { BOARD_RE, cleanNickname } from '$lib/cloud';
 import { GAMES } from '$lib/games/registry';
 import type { RequestHandler } from './$types';
 
 /**
  * Leaderboards. Signed-in players' best results are sent by static/games/sync.js; anyone can
- * read a board. Results come from the player's browser, so values are only range-checked.
+ * read a board, or all of one player's boards in a game (`?game&player=<nickname>`) to compare
+ * with them. Results come from the player's browser, so values are only range-checked.
  */
 const gameIds = GAMES.map((g) => g.id);
 const game = z.string().refine((id) => gameIds.includes(id));
@@ -24,6 +25,15 @@ const body = z.object({
 });
 
 export const GET: RequestHandler = async ({ url, locals }) => {
+	const player = url.searchParams.get('player');
+	if (player !== null) {
+		const g = game.safeParse(url.searchParams.get('game'));
+		const nick = cleanNickname(player);
+		if (!g.success || !nick) error(400, 'Invalid player');
+		const found = await playerScores(locals.db, g.data, nick);
+		if (!found) error(404, 'No such player');
+		return json(found, { headers: { 'cache-control': 'no-store' } });
+	}
 	const g = game.safeParse(url.searchParams.get('game'));
 	const b = board.safeParse(url.searchParams.get('board'));
 	if (!g.success || !b.success) error(400, 'Invalid board');

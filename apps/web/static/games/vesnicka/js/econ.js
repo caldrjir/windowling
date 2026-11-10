@@ -9,10 +9,10 @@ const Econ = (() => {
     return {
       v: 1, coins: 0, earnedGen: 0, earnedAll: 0,
       owned: Object.fromEntries(BUILDINGS.map(b => [b.id, 0])),
-      upg: {}, legends: 0, gen: 1, taps: 0, caught: {}, buffs: [], ach: {},
+      upg: {}, legends: 0, spent: 0, steward: false, gen: 1, taps: 0, caught: {}, buffs: [], ach: {},
       daily: null, nextCreature: 25,
-      stats: { playTime: 0, bought: 0, upgrades: 0, milestones: 0, seasons: {}, night: 0, awayMax: 0, dailyAll: 0, bestRate: 0, started: now(), genStart: now(), missed: 0 },
-      settings: { sound: true, sci: false },
+      stats: { playTime: 0, bought: 0, upgrades: 0, milestones: 0, seasons: {}, night: 0, awayMax: 0, dailyAll: 0, bestRate: 0, started: now(), genStart: now(), missed: 0, maxBuildings: 0, stewardBuys: 0, nesro: 0 },
+      settings: { sound: true, sci: false, quick: true, auto: true },
       seen: {},
       t: now(),
     };
@@ -22,7 +22,9 @@ const Econ = (() => {
   const total = S => BUILDINGS.reduce((a, b) => a + (S.owned[b.id] || 0), 0);
   const caughtAll = S => CREATURES.reduce((a, c) => a + (S.caught[c.id] || 0), 0);
   const upgSum = (S, kind) => { let v = 0; for (const id in S.upg) { const u = U_INDEX[id]; if (u && u.kind === kind) v += u.v; } return v; };
-  const perks = S => PERKS.filter(p => S.legends >= p.n);
+  /** Pověsti získané celkem (i utracené za šafáře): podle nich se odemyká kronika. */
+  const legendsTotal = S => S.legends + (S.spent || 0);
+  const perks = S => PERKS.filter(p => legendsTotal(S) >= p.n);
   const perkSum = (S, id) => perks(S).filter(p => p.id === id).reduce((a, p) => a + (p.v || 1), 0);
   const perkMax = (S, id) => perks(S).filter(p => p.id === id).reduce((a, p) => Math.max(a, p.v || 1), 0);
   const milestonesOf = n => { let k = 0; while (k < MILESTONES.length && n >= MILESTONES[k]) k++; return k; };
@@ -105,6 +107,68 @@ const Econ = (() => {
     return true;
   }
 
+  // ── Nejlepší koupě (rychlý nákup a šafář) ──
+  // Průměrný výnos přes čtyři roční období v uzavřeném tvaru: každé řemeslo má sezónu jedno
+  // období ze čtyř, takže jeho průměrný násobek je (3 + sezónní násobek) / 4.
+  function evalCtx(S) {
+    const mb = milestoneBase(S), sm = seasonMul(S), g = gMul(S, false), part = [];
+    let B = 0;
+    for (let i = 0; i < BUILDINGS.length; i++) {
+      const b = BUILDINGS[i], n = S.owned[b.id], u = Math.pow(2, upgCount(S, i));
+      const one = b.prod * u, c = one * n * Math.pow(mb, milestonesOf(n));
+      part.push({ one, c }); B += c;
+    }
+    return { mb, sm, g, part, B, avg: g * B * (3 + sm) / 4, k: g * (3 + sm) / 4 };
+  }
+  /**
+   * To, co se vyplatí koupit nejdřív: nejkratší čas, než se nákup zaplatí, včetně čekání na groše.
+   * tapsPerSec: jak rychle hráč klepe (vylepšení rukou se jinak nepočítají).
+   */
+  function bestBuy(S, tapsPerSec = 0) {
+    const E = evalCtx(S), live = Math.max(1e-9, rate(S) + tapsPerSec * tapValue(S));
+    const last = BUILDINGS.reduce((a, b, i) => (S.owned[b.id] ? i : a), -1);
+    let best = null;
+    const consider = (o, cost, gain) => {
+      if (!(gain > 0) || !isFinite(cost)) return;
+      const wait = Math.max(0, (cost - S.coins) / live), score = wait + cost / gain;
+      if (!best || score < best.score) best = Object.assign(o, { cost, gain, score, wait });
+    };
+    for (let i = 0; i <= Math.min(BUILDINGS.length - 1, last + 1); i++) {
+      const b = BUILDINGS[i], n = S.owned[b.id], p = E.part[i];
+      const after = p.one * (n + 1) * Math.pow(E.mb, milestonesOf(n + 1));
+      consider({ kind: 'b', i, name: b.name }, costOf(S, i, 1), E.k * (after - p.c));
+    }
+    for (const u of upgAvailable(S)) {
+      let gain = 0;
+      if (u.kind === 'b') gain = E.k * E.part[u.b].c;
+      else if (u.kind === 'g') gain = E.avg * u.v / (1 + upgSum(S, 'g'));
+      else if (u.kind === 'season') gain = E.g * E.B * u.v / 4;
+      else if (u.kind === 'tap') { if (tapsPerSec > 0) { S.upg[u.id] = 1; const a = tapValue(S); delete S.upg[u.id]; gain = (a - tapValue(S)) * tapsPerSec; } }
+      else gain = E.avg * 0.04; // bytosti, kouzla, delší výdělek bez hráče
+      consider({ kind: 'u', id: u.id, name: u.name, sub: u.sub }, upgCost(S, u), gain);
+    }
+    return best;
+  }
+  /** Koupí jednu věc z bestBuy; vrací ji (s událostí stavby) nebo null. */
+  function buyThing(S, b) {
+    if (!b || b.cost > S.coins * (1 + 1e-9)) return null;
+    if (b.kind === 'b') { const ev = buy(S, b.i, 1); return ev ? Object.assign({}, b, { ev }) : null; }
+    return buyUpg(S, b.id) ? b : null;
+  }
+  /** Šafář nakoupí, co se vyplatí, dokud na to jsou groše (nejvýš max věcí). */
+  function stewardBuy(S, tapsPerSec = 0, max = 40) {
+    const out = { n: 0, buildings: 0, upgrades: 0, milestones: [], firsts: [] };
+    for (let k = 0; k < max; k++) {
+      const got = buyThing(S, bestBuy(S, tapsPerSec));
+      if (!got) break;
+      out.n++;
+      if (got.kind === 'b') { out.buildings++; for (const m of got.ev.milestones) out.milestones.push([got.i, m]); if (got.ev.first) out.firsts.push(got.i); }
+      else out.upgrades++;
+    }
+    S.stats.stewardBuys += out.n;
+    return out;
+  }
+
   // ── Kouzla (dočasné násobky) ──
   const durMul = S => 1 + upgSum(S, 'dur');
   function addBuff(S, id, kind, mul, dur) {
@@ -125,12 +189,21 @@ const Econ = (() => {
       if (c.id === 'cert' && S.taps < 20) return 0; // čert až když hráč umí klepat
       return c.w * (c.id === 'krakonos' && season === 3 ? 2 : 1);
     });
+    // Vzácný host: kamarád ze vsi, který se občas zastaví (až po prvních bytostech).
+    if (caughtAll(S) >= NESRO.after && r() < NESRO.chance) return 'nesro';
     let x = r() * w.reduce((a, b) => a + b, 0);
     for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return CREATURES[i].id; }
     return 'bludicka';
   }
   /** Klepnutí na bytost: vrací, co přinesla. */
   function catchCreature(S, id, season = seasonAt(now())) {
+    if (id === 'nesro') {
+      S.stats.nesro++;
+      const coins = Math.max(500, rate(S, season) * NESRO.coins);
+      earn(S, coins);
+      addBuff(S, 'nesro', 'rate', NESRO.mul, NESRO.dur * durMul(S));
+      return { id, name: NESRO.name, text: NESRO.text, coins };
+    }
     const c = C_INDEX[id];
     if (!c) return null;
     S.caught[id] = (S.caught[id] || 0) + 1;
@@ -173,6 +246,31 @@ const Econ = (() => {
     earn(S, got);
     return got;
   }
+  /**
+   * Čas bez hráče: vesnice vydělává nejvýš offlineCap sekund, šafář mezitím průběžně nakupuje.
+   * Vrací přehled pro uvítání: jak dlouho byl hráč pryč, kolik z toho vesnice vydělávala a co koupil šafář.
+   */
+  function offline(S, fromMs, toMs) {
+    const away = Math.max(0, (toMs - fromMs) / 1000), cap = offlineCap(S), earnSec = Math.min(away, cap);
+    const before = S.earnedAll, out = { away, cap, earnSec, capped: away > cap, buys: 0, buildings: 0, upgrades: 0 };
+    if (S.steward && S.settings.auto && earnSec > 120) {
+      const n = Math.min(240, Math.ceil(earnSec / 60)), step = (earnSec * 1000) / n;
+      let t = fromMs;
+      for (let k = 0; k < n; k++) {
+        advance(S, t, t + step);
+        t += step;
+        const b = stewardBuy(S, 0, 60);
+        out.buys += b.n; out.buildings += b.buildings; out.upgrades += b.upgrades;
+      }
+      advance(S, t, toMs, 0); // kouzla dobíhají i za limitem
+    } else advance(S, fromMs, toMs, cap);
+    out.got = S.earnedAll - before;
+    if (away > S.stats.awayMax) S.stats.awayMax = away;
+    return out;
+  }
+  /** Za kolik sekund přijdou nové úkoly dne (o půlnoci místního času). */
+  function dailyLeft(ms = now()) { const d = new Date(ms), m = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); return (m.getTime() - ms) / 1000; }
+
   /** Hraní: dt sekund s hráčem u hry. Vrací události (bytost se objevila). */
   function tick(S, dt, ms = now()) {
     const season = seasonAt(ms);
@@ -184,6 +282,8 @@ const Econ = (() => {
     if (auto) earn(S, tapValue(S, season) * auto * dt);
     const r = rate(S, season, false);
     if (r > S.stats.bestRate) S.stats.bestRate = r;
+    const tot = total(S);
+    if (tot > S.stats.maxBuildings) S.stats.maxBuildings = tot;
     const h = new Date(ms).getHours();
     if (h < 4) S.stats.night = 1;
     S.nextCreature -= dt;
@@ -199,9 +299,18 @@ const Econ = (() => {
 
   // ── Pověsti ──
   const legendsFor = E => Math.floor(Math.cbrt(E / LEGEND_BASE) + 1e-9);
-  const pending = S => Math.max(0, legendsFor(S.earnedAll) - S.legends);
+  const pending = S => Math.max(0, legendsFor(S.earnedAll) - legendsTotal(S));
   /** Kolik je potřeba vydělat celkem pro další pověst. */
-  const nextLegendAt = S => LEGEND_BASE * Math.pow(Math.max(legendsFor(S.earnedAll), S.legends) + 1, 3);
+  const nextLegendAt = S => LEGEND_BASE * Math.pow(Math.max(legendsFor(S.earnedAll), legendsTotal(S)) + 1, 3);
+  /** Šafář: najme se jednou provždy za pověsti (ty se utratí, výhody kroniky zůstávají). */
+  function hireSteward(S) {
+    if (S.steward || S.legends < STEWARD_COST) return false;
+    S.legends -= STEWARD_COST;
+    S.spent = (S.spent || 0) + STEWARD_COST;
+    S.steward = true;
+    S.settings.auto = true;
+    return true;
+  }
   function prestige(S) {
     const p = pending(S);
     if (p < 1) return 0;
@@ -273,9 +382,11 @@ const Econ = (() => {
     let o = null;
     try { o = JSON.parse(raw); } catch (e) { o = null; }
     if (!o || typeof o !== 'object') return S;
-    for (const k of ['coins', 'earnedGen', 'earnedAll', 'legends', 'gen', 'taps', 'nextCreature', 't']) S[k] = Math.max(0, num(o[k], S[k]));
+    for (const k of ['coins', 'earnedGen', 'earnedAll', 'legends', 'spent', 'gen', 'taps', 'nextCreature', 't']) S[k] = Math.max(0, num(o[k], S[k]));
     S.gen = Math.max(1, Math.floor(S.gen));
     S.legends = Math.floor(S.legends);
+    S.spent = Math.floor(S.spent);
+    S.steward = o.steward === true;
     if (o.owned) for (const b of BUILDINGS) S.owned[b.id] = Math.max(0, Math.floor(num(o.owned[b.id])));
     if (o.upg) for (const id in o.upg) if (U_INDEX[id]) S.upg[id] = 1;
     if (o.caught) for (const c of CREATURES) if (o.caught[c.id]) S.caught[c.id] = Math.floor(num(o.caught[c.id]));
@@ -287,20 +398,29 @@ const Econ = (() => {
     if (o.seen) S.seen = Object.assign({}, o.seen);
     return S;
   }
+  /** Výsledky do žebříčků (sync.js je posílá na /api/scores): celá čísla, velká čísla jako log10 × 1000. */
+  function boards(S) {
+    const lb = {}, put = (b, v) => { v = Math.floor(v); if (v > 0 && v < 1e10) lb[b] = v; };
+    put('best:score', legendsTotal(S));
+    // čas ve hře posílá sync.js za každou hru sám (total:played)
+    for (const d of BOARDS) if (d.key !== 'best:score' && d.key !== 'total:played') put(d.key, d.log ? (d.get(S) > 1 ? Math.log10(d.get(S)) * 1000 : 0) : d.get(S));
+    return lb;
+  }
   function serialize(S) {
     const o = Object.assign({}, S, { t: now() });
-    if (S.legends > 0) o.lb = { 'best:score': S.legends };
+    const lb = boards(S);
+    if (Object.keys(lb).length) o.lb = lb;
     return JSON.stringify(o);
   }
   function hubStats(S) {
     return {
       playTime: Math.round(S.stats.playTime), lastPlayed: now(), progress: Math.min(1, achCount(S) / ACHIEVEMENTS.length),
-      stats: { legends: S.legends, generation: S.gen, buildings: total(S), earned: fmt(S.earnedAll), creatures: caughtAll(S), achievements: `${achCount(S)} / ${ACHIEVEMENTS.length}` },
+      stats: { legends: legendsTotal(S), generation: S.gen, buildings: total(S), earned: fmt(S.earnedAll), creatures: caughtAll(S), achievements: `${achCount(S)} / ${ACHIEVEMENTS.length}` },
     };
   }
 
   return {
-    fresh, total, caughtAll, upgSum, perks, perkSum, perkMax, milestonesOf, nextMilestone, milestoneBase, seasonMul, buff, upgCount, bMul, gMul, bRate, rate, tapValue, achCount,
+    fresh, total, caughtAll, upgSum, legendsTotal, hireSteward, bestBuy, buyThing, stewardBuy, offline, dailyLeft, boards, perks, perkSum, perkMax, milestonesOf, nextMilestone, milestoneBase, seasonMul, buff, upgCount, bMul, gMul, bRate, rate, tapValue, achCount,
     discount, costOf, maxAfford, buy, reqMet, upgCost, upgAvailable, buyUpg, addBuff, freqMul, nextGap, pickCreature, catchCreature, durMul,
     earn, offlineCap, advance, tick, tap, legendsFor, pending, nextLegendAt, prestige, checkAch, daily, dailyProgress, dailyReward, claimDaily, load, serialize, hubStats,
   };

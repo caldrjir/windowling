@@ -222,8 +222,14 @@ effects; the music is the generated playlist from `music.js`), `ui.js` and `main
 saving every 5 s and on leaving). Save `vesnicka.save.v1`, stats `gamecenter.stats.vesnicka`.
 Time away is paid out when the game starts or the tab returns: `Econ.advance` integrates
 income piecewise between season changes and spell ends, up to the offline cap. Seasons come
-from the wall clock (`floor(now / 5 min) % 4`), so all players share them. The save's `lb`
-holds the legends for the `best:score` board.
+from the wall clock (`floor(now / 5 min) % 4`), so all players share them. `Econ.bestBuy`
+ranks every purchase by payback time (average income over the four seasons in closed form);
+the ⚡ best-buy button and the steward (bought for legends, which are then spent; the
+chronicle counts legends earned in total) both use it, and the steward also buys while the
+player is away (`Econ.offline` steps through the time in up to 240 slices). The save's `lb`
+holds the leaderboard values: legends on `best:score` and `free:<category>:score` for fortune,
+best income (both as log10 × 1000), buildings, creatures, taps, generations and achievements.
+`NEWS` in `data.js` feeds the "what's new" popover, shown once per version (`seen.news`).
 
 ## Online puzzles - `apps/web/src/worker/duel`
 
@@ -291,7 +297,8 @@ Signed-in players keep their progress in their account; anonymous play is unchan
   results of all games (`lb`, the action games' records, `playTime`) to `POST /api/scores`
   after each sync. Results come from the browser, so the server only range-checks them.
 - `GET /api/scores?game&board` is public: the top players (only players with a nickname), the
-  asking player's place and the count. Shown in every puzzle (Žebříčky, and from the result of a
+  asking player's place and the count. `GET /api/scores?game&player=<nickname>` returns all
+  boards of one player in a game (Vesnička compares two players with it). Shown in every puzzle (Žebříčky, and from the result of a
   daily or level) and in the center for the selected game (record board or play time).
 
 ## Future: multiplayer

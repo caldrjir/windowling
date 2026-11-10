@@ -316,6 +316,10 @@ const Scene = (() => {
         for (let i = 0; i < 5; i++) circ(c, sx - 16 + i * 8, y - 14.5, 2.8, goods[i % goods.length], OL);
       };
       stall(x - 62, '#e8455a', '#ffffff', ['#c9862e', '#e8455a', '#7cc256']);
+      // stánek s koláči u Nesra
+      rect(c, x - 78, y - 46, 32, 10, '#f3e6cc', OL);
+      c.fillStyle = '#7a3b2e'; c.font = 'bold 6.5px sans-serif'; c.textAlign = 'center'; c.fillText(LANG === 'en' ? "NESRO'S" : 'U NESRA', x - 62, y - 39);
+      line(c, x - 72, y - 36, x - 72, y - 34, '#6b4a30', 1); line(c, x - 52, y - 36, x - 52, y - 34, '#6b4a30', 1);
       stall(x + 62, '#3e8fd8', '#ffffff', ['#f2c14e', '#a46ad8', '#ef8a2a']);
       if (lv >= 2) { // kolotoč
         const a = t * 1.4;
@@ -656,6 +660,23 @@ const Scene = (() => {
       circ(c, -3.5, -62, 1.3, '#2a2a2a'); circ(c, 3.5, -62, 1.3, '#2a2a2a');
       ell(c, 0, -69, 17, 4, '#4a5a3a', OL); poly(c, [-9, -69, 9, -69, 6, -82, -6, -82], '#4a5a3a', OL);
       poly(c, [6, -80, 12, -92, 8, -78], '#c43a3a');
+    },
+    // Nesro: kamarád s velkým batohem a košíkem koláčů, mává na pozdrav.
+    nesro(c, age) {
+      const step = Math.sin(age * 5), wave = Math.sin(age * 7) * 0.5;
+      line(c, -4, -18, -4 - step * 3, 0, '#2f4a7a', 4.5); line(c, 4, -18, 4 + step * 3, 0, '#2f4a7a', 4.5);
+      ell(c, -4 - step * 3, 1, 4, 2, '#5a3a22'); ell(c, 4 + step * 3, 1, 4, 2, '#5a3a22');
+      rect(c, -15, -42, 13, 22, '#d9762f', OL); rect(c, -14, -36, 11, 4, '#b85a1e'); line(c, -8, -46, -8, -42, '#7a4a2c', 2);
+      poly(c, [-8, -18, 8, -18, 9, -40, -9, -40], '#3f8a5a', OL);
+      line(c, -2, -40, -2, -18, '#2f6b4a', 1);
+      circ(c, 0, -48, 8.5, '#f0d0a8', OL);
+      c.beginPath(); c.arc(0, -46, 8, 0.25, Math.PI - 0.25); c.fillStyle = '#7a5236'; c.fill();
+      circ(c, -3, -50, 1.3, '#2a2a2a'); circ(c, 3, -50, 1.3, '#2a2a2a');
+      c.beginPath(); c.arc(0, -47, 3, 0.2, Math.PI - 0.2); c.strokeStyle = '#2a1d18'; c.lineWidth = 1.2; c.stroke();
+      ell(c, 0, -56, 10, 3.2, '#c43a3a', OL); c.beginPath(); c.arc(0, -56, 7.5, Math.PI, 0); c.fillStyle = '#c43a3a'; c.fill(); c.stroke();
+      c.save(); c.translate(8, -38); c.rotate(-1.1 + wave); line(c, 0, 0, 0, -13, '#3f8a5a', 4); circ(c, 0, -14, 2.6, '#f0d0a8'); c.restore();
+      line(c, -8, -36, -12, -24, '#3f8a5a', 4);
+      ell(c, -13, -21, 7, 4, '#a8784a', OL); for (let i = 0; i < 3; i++) circ(c, -17 + i * 4, -24, 2.2, '#e3a75a', OL);
     },
     hospodaricek(c, age) {
       const bob = Math.abs(Math.sin(age * 3)) * 3;

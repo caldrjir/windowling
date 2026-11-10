@@ -92,3 +92,31 @@ export async function leaderboard(
 	}
 	return { entries, me, total: count?.n ?? 0 };
 }
+
+export interface PlayerScores {
+	nickname: string;
+	/** The player's best result per board of the game. */
+	scores: Record<string, number>;
+}
+
+/**
+ * Every result of one player (found by nickname, any letter case) in one game, so other
+ * players can compare themselves with them. Only players with a nickname can be found,
+ * as on the boards; null when there is no such player.
+ */
+export async function playerScores(
+	db: Database,
+	game: string,
+	nickname: string,
+): Promise<PlayerScores | null> {
+	const [p] = await db
+		.select({ userId: playerProfile.userId, nickname: playerProfile.nickname })
+		.from(playerProfile)
+		.where(sql`lower(${playerProfile.nickname}) = lower(${nickname})`);
+	if (!p) return null;
+	const rows = await db
+		.select({ board: score.board, value: score.value })
+		.from(score)
+		.where(and(eq(score.userId, p.userId), eq(score.game, game)));
+	return { nickname: p.nickname, scores: Object.fromEntries(rows.map((r) => [r.board, r.value])) };
+}

@@ -3,7 +3,7 @@ import { getTestDatabaseUrl } from '../test/test-database.ts';
 import { createDatabase } from './client.ts';
 import { setNickname } from './cloud.ts';
 import { playerProfile, score, user } from './schema/index.ts';
-import { leaderboard, submitScores } from './scores.ts';
+import { leaderboard, playerScores, submitScores } from './scores.ts';
 
 const url = getTestDatabaseUrl();
 
@@ -62,5 +62,26 @@ describe.skipIf(!url)('leaderboards', () => {
 		expect(lb.total).toBe(3);
 		// Another board of the same game is separate.
 		expect((await leaderboard(db(), 'kakuro', 'level:13:time')).total).toBe(0);
+	});
+
+	it("returns one player's results in a game by nickname, for comparing", async () => {
+		await submitScores(db(), 'a', [
+			{ game: 'vesnicka', board: 'best:score', value: 12 },
+			{ game: 'vesnicka', board: 'free:budovy:score', value: 340 },
+			{ game: 'sudoku', board: 'total:played', value: 600 },
+		]);
+		expect(await playerScores(db(), 'vesnicka', 'hráč A')).toEqual({
+			nickname: 'Hráč a',
+			scores: { 'best:score': 12, 'free:budovy:score': 340 },
+		});
+		// A player without results in the game, and a nickname nobody has.
+		expect(await playerScores(db(), 'vesnicka', 'Hráč b')).toEqual({
+			nickname: 'Hráč b',
+			scores: {},
+		});
+		expect(await playerScores(db(), 'vesnicka', 'Nikdo')).toBeNull();
+		// Players without a nickname cannot be looked up.
+		await submitScores(db(), 'd', [{ game: 'vesnicka', board: 'best:score', value: 99 }]);
+		expect(await playerScores(db(), 'vesnicka', 'd')).toBeNull();
 	});
 });
