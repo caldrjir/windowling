@@ -3,11 +3,13 @@
 const UI = (() => {
   const $ = (s, el = document) => el.querySelector(s);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  let S = null, tab = 'build', amount = 1, structKey = '';
+  let S = null, H = null, tab = 'build', amount = 1, structKey = '', board = 'best:score';
   const U_ICON = { kaplicka: '⛪', skola: '🏫', posta: '📯', silnice: '🛣️', zeleznice: '🚂', elektrina: '💡', rozhlas: '📢', pohadky: '📖', bylinkarka: '🌿', lucerna: '🏮', pranostiky: '🌦️', fletna: '🎶', kalendar: '📅', ponocny: '🌙', vecernice: '⭐' };
-  const C_ICON = { bludicka: '✨', vodnik: '🐸', cert: '😈', krakonos: '⛰️', hospodaricek: '🧙' };
-  const BUFF_ICON = { vodnik: '🫖', cert: '🔥', krakonos: '⛰️', blessing: '🌟' };
-  const BUFF_NAME = { vodnik: L('Vodníkův hrníček', 'Goblin’s pot'), cert: L('Čertovská síla', 'Devilish strength'), krakonos: L('Krakonošova štědrost', 'Krakonoš’s gift'), blessing: L('Požehnání', 'Blessing') };
+  const C_ICON = { bludicka: '✨', vodnik: '🐸', cert: '😈', krakonos: '⛰️', hospodaricek: '🧙', nesro: '🎒' };
+  const cName = id => (id === 'nesro' ? NESRO.name : (C_INDEX[id] || {}).name || '');
+  const BUFF_ICON = { vodnik: '🫖', cert: '🔥', krakonos: '⛰️', blessing: '🌟', nesro: '🥧' };
+  const BUFF_NAME = { vodnik: L('Vodníkův hrníček', 'Goblin’s pot'), cert: L('Čertovská síla', 'Devilish strength'), krakonos: L('Krakonošova štědrost', 'Krakonoš’s gift'), blessing: L('Požehnání', 'Blessing'), nesro: L('Nesrovy koláče', 'Nesro’s kolache') };
+  const clockAt = sec => new Date(Date.now() + sec * 1000).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
   const coinSvg = '<svg class="coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f2c14e" stroke="#a8771e" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#c9952e" stroke-width="1.2"/><path d="M9.5 9.5h5M12 9.5v6" stroke="#a8771e" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
   // ── Lišta a HUD ──
@@ -17,20 +19,34 @@ const UI = (() => {
     $('#rate').textContent = L(`+${fmt(r, 1)} za s`, `+${fmt(r, 1)} /s`);
     const sn = seasonAt(Date.now());
     $('#season').innerHTML = `<span>${SEASONS[sn].icon}</span><span class="sn">${SEASONS[sn].name}</span><b>${fmtClock(seasonLeft(Date.now()))}</b>`;
-    $('#buffs').innerHTML = S.buffs.map(b => `<span class="buff b-${b.id}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : '×' + b.mul}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
+    $('#buffs').innerHTML = (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : '×' + b.mul}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
     const side = Scene.creatureSide();
     const cr = Scene.creature;
     for (const [id, s] of [['#edgeL', -1], ['#edgeR', 1]]) {
       const el = $(id);
       el.hidden = side !== s;
-      if (side === s && cr) el.innerHTML = s < 0 ? `‹ ${C_ICON[cr.id]} ${C_INDEX[cr.id].name}` : `${C_ICON[cr.id]} ${C_INDEX[cr.id].name} ›`;
+      if (side === s && cr) el.innerHTML = s < 0 ? `‹ ${C_ICON[cr.id]} ${cName(cr.id)}` : `${C_ICON[cr.id]} ${cName(cr.id)} ›`;
     }
+    quick();
+    const nd = $('#newsBtn .dot'); if (nd) nd.hidden = (S.seen.news || 0) >= NEWS_VERSION;
     // odznáčky na záložkách
     const upgN = Econ.upgAvailable(S).filter(u => Econ.upgCost(S, u) <= S.coins).length;
     badge('upg', upgN);
     const d = Econ.daily(S), claim = d.tasks.filter(t => !t.claimed && Econ.dailyProgress(S, t) >= t.n).length;
     badge('tasks', claim);
     badge('legend', Econ.pending(S) > 0 ? '+' + fmt(Econ.pending(S)) : 0);
+  }
+  // Rychlý nákup: to, co se nejrychleji zaplatí (stejná volba jako u šafáře).
+  let best = null;
+  function quick() {
+    const q = $('#quick');
+    q.hidden = !S.settings.quick || !Econ.total(S) && S.coins < BUILDINGS[0].cost;
+    if (q.hidden) return;
+    best = Econ.bestBuy(S, H.tps());
+    if (!best) { q.hidden = true; return; }
+    const can = best.cost <= S.coins;
+    q.disabled = !can;
+    q.innerHTML = `<i>⚡</i><span><small>${L('Nejlepší koupě', 'Best buy')}</small><b>${esc(best.name)}${best.sub && best.kind === 'u' ? ` · ${esc(best.sub)}` : ''}</b></span><em>${can ? coinSvg + fmt(best.cost) : '⏳ ' + fmtClock(best.wait)}</em>`;
   }
   function badge(id, v) { const el = $(`.tabs [data-tab="${id}"] .bd`); if (el) { el.textContent = v || ''; el.hidden = !v; } }
 
@@ -68,14 +84,17 @@ const UI = (() => {
   function renderBuild(body) {
     const vis = visibleBuildings(), sn = seasonAt(Date.now());
     structKey = buildKey();
-    body.innerHTML = `<div class="amounts" role="group" aria-label="${L('Kolik kupovat', 'How many to buy')}">${[1, 10, 100, 'max'].map(a => `<button data-amt="${a}" aria-pressed="${amount === a}">${a === 'max' ? 'MAX' : '×' + a}</button>`).join('')}</div>
+    const stew = S.steward
+      ? `<div class="steward"><span class="st-n">🤵 <b>${L('Šafář', 'Steward')}</b></span><label class="sw"><input type="checkbox" id="autoBuy" ${S.settings.auto ? 'checked' : ''}><i></i>${L('Nakupuje sám', 'Buys on his own')}</label><button class="btn small" id="smartBuy">${L('Nakoupit chytře', 'Buy smart')}</button></div>`
+      : Econ.legendsTotal(S) > 0 ? `<p class="hint-card">🤵 ${L(`Šafáře, který nakupuje za tebe, najmeš v Kronice za ${STEWARD_COST} pověsti.`, `Hire a steward who buys for you in the Chronicle for ${STEWARD_COST} legends.`)}</p>` : '';
+    body.innerHTML = `${stew}<div class="amounts" role="group" aria-label="${L('Kolik kupovat', 'How many to buy')}">${[1, 10, 100, 'max'].map(a => `<button data-amt="${a}" aria-pressed="${amount === a}">${a === 'max' ? 'MAX' : '×' + a}</button>`).join('')}</div>
       <div class="rows">${vis.map(b => { const i = B_INDEX[b.id], locked = !S.owned[b.id];
         return `<div class="row${locked ? ' locked' : ''}" data-b="${i}">
           <canvas class="ico" data-lv="-1" aria-hidden="true"></canvas>
-          <div class="info"><div class="nm"><b>${b.name}</b><span class="cnt"></span>${b.season === sn ? `<span class="tag">${SEASONS[sn].icon} ${L('sezóna', 'in season')}</span>` : ''}</div>
+          <div class="info"><div class="nm"><b>${b.name}</b><span class="cnt"></span>${b.season === sn ? `<span class="tag">${SEASONS[sn].icon} ${L('sezóna', 'in season')}</span>` : ''}<span class="mx"></span></div>
           <div class="sub">${locked ? `<span class="desc">${b.desc}</span>` : `<span class="prod"></span>`}</div>
           ${locked ? '' : '<div class="ms"><i></i><span></span></div>'}</div>
-          <button class="buy" data-buy="${i}"><small></small><b></b></button></div>`; }).join('')}</div>
+          <div class="btns"><button class="buy" data-buy="${i}"><small></small><b></b></button>${locked ? '' : `<button class="to" data-to="${i}" hidden></button>`}</div></div>`; }).join('')}</div>
       ${vis.length < BUILDINGS.length ? `<p class="more-hint">${L(`Další řemesla: ${BUILDINGS.length - vis.length}`, `More trades to discover: ${BUILDINGS.length - vis.length}`)}</p>` : ''}`;
   }
   function refreshBuild() {
@@ -96,7 +115,31 @@ const UI = (() => {
       btn.querySelector('small').textContent = L(`Postavit ×${k}`, `Build ×${k}`);
       btn.querySelector('b').innerHTML = coinSvg + fmt(cost);
       btn.classList.toggle('sale', Econ.buff(S, 'cost') < 1);
+      const mx = Econ.maxAfford(S, i);
+      row.querySelector('.mx').textContent = mx ? L(`max +${mx}`, `max +${mx}`) : '';
+      // kolik chybí do dalšího mistrovství nebo vylepšení
+      const to = row.querySelector('.to');
+      if (to) {
+        const tg = target(i);
+        to.hidden = !tg;
+        if (tg) {
+          const need = tg.at - n, c = Econ.costOf(S, i, need);
+          to.dataset.n = need;
+          to.disabled = c > S.coins;
+          to.innerHTML = `${tg.icon} +${need} → ${tg.at} · ${coinSvg}${fmt(c)}`;
+          to.title = tg.title;
+        }
+      }
     }
+  }
+  /** Nejbližší cíl řemesla: další mistrovství nebo stupeň vylepšení, který ještě nemáš. */
+  function target(i) {
+    const b = BUILDINGS[i], n = S.owned[b.id];
+    const ms = Econ.nextMilestone(n), tier = TIER_REQ.findIndex((r, t) => r > n && !S.upg[b.id + (t + 1)]);
+    const tr = tier >= 0 ? TIER_REQ[tier] : null;
+    if (ms == null && tr == null) return null;
+    if (tr != null && (ms == null || tr < ms)) return { at: tr, icon: '🔨', title: L(`Do vylepšení ${TIER_NAMES[tier]}`, `To the upgrade ${TIER_NAMES[tier]}`) };
+    return { at: ms, icon: '⭐', title: L(`Do mistrovství: výnos ×${Econ.milestoneBase(S)}`, `To mastery: output ×${Econ.milestoneBase(S)}`) };
   }
 
   // ── Vylepšení ──
@@ -136,13 +179,18 @@ const UI = (() => {
   // ── Kronika (pověsti) ──
   let lb = null, lbAt = 0;
   function renderLegend(body) {
-    const p = Econ.pending(S), next = Econ.nextLegendAt(S), base = LEGEND_BASE * Math.pow(Math.max(Econ.legendsFor(S.earnedAll), S.legends), 3);
+    const p = Econ.pending(S), next = Econ.nextLegendAt(S), base = LEGEND_BASE * Math.pow(Math.max(Econ.legendsFor(S.earnedAll), Econ.legendsTotal(S)), 3), tot = Econ.legendsTotal(S);
     structKey = 'l';
     const pct = Math.max(0, Math.min(100, ((S.earnedAll - base) / Math.max(1, next - base)) * 100));
     body.innerHTML = `<div class="legend-card">
         <div class="big"><span>📜</span><b id="legN">${fmt(S.legends)}</b><small>${L('pověstí', 'legends')}</small></div>
         <p>${L(`Každá pověst přidá <b>+${Math.round(LEGEND_BONUS * 100)} %</b> ke všem výnosům: teď <b>+${fmt(S.legends * LEGEND_BONUS * 100)} %</b>.`, `Every legend adds <b>+${Math.round(LEGEND_BONUS * 100)}%</b> to all income: now <b>+${fmt(S.legends * LEGEND_BONUS * 100)}%</b>.`)}</p>
-        <p class="muted">${L(`Pokolení: ${S.gen} · vyděláno celkem ${fmt(S.earnedAll)} grošů`, `Generation ${S.gen} · earned ${fmt(S.earnedAll)} groschen in total`)}</p>
+        <p class="muted">${L(`Pokolení: ${S.gen} · vyděláno celkem ${fmt(S.earnedAll)} grošů`, `Generation ${S.gen} · earned ${fmt(S.earnedAll)} groschen in total`)}${S.spent ? L(` · za šafáře utraceno ${S.spent} (kronika počítá všech ${tot})`, ` · ${S.spent} spent on the steward (the chronicle counts all ${tot})`) : ''}</p>
+      </div>
+      <div class="steward-card${S.steward ? ' on' : ''}">
+        <span class="sc-i">🤵</span>
+        <div><b>${L('Šafář', 'Steward')}</b><small>${S.steward ? L('Slouží ti napořád: nakupuje nejvýhodněji, i když nejsi u hry. Zapneš ho v Řemeslech.', 'At your service for good: he buys the best deals, even while you are away. Switch him on in Trades.') : L(`Nakupuje za tebe nejvýhodnější řemesla a vylepšení, i když nejsi u hry. Najmeš ho jednou provždy za ${STEWARD_COST} pověsti: ty se utratí (bonus +${Math.round(LEGEND_BONUS * 100)} % za každou zmizí), výhody kroniky zůstávají.`, `He buys the best trades and upgrades for you, even while you are away. Hire him for good for ${STEWARD_COST} legends: they are spent (their +${Math.round(LEGEND_BONUS * 100)}% each goes), chronicle perks stay.`)}</small></div>
+        ${S.steward ? '<i>✔</i>' : `<button class="btn gold" id="hire" ${S.legends >= STEWARD_COST ? '' : 'disabled'}>${L(`Najmout · ${STEWARD_COST} 📜`, `Hire · ${STEWARD_COST} 📜`)}</button>`}
       </div>
       <div class="prestige">
         <h3>${L('Předat vesnici dalšímu pokolení', 'Pass the village to the next generation')}</h3>
@@ -153,22 +201,49 @@ const UI = (() => {
         <button class="btn gold wide" id="prestige" ${p > 0 ? '' : 'disabled'}>${L('Předat vesnici', 'Pass it on')}</button>
       </div>
       <h3>${L('Kronika rodu', 'Family chronicle')}</h3>
-      <div class="perks">${PERKS.map(pk => `<div class="perk${S.legends >= pk.n ? ' on' : ''}"><span class="pn">${fmt(pk.n)}</span><div><b>${pk.name}</b><small>${pk.desc}</small></div><i>${S.legends >= pk.n ? '✔' : '🔒'}</i></div>`).join('')}</div>
-      <h3>${L('Nejslavnější vesnice', 'Most famous villages')}</h3>
+      <div class="perks">${PERKS.map(pk => `<div class="perk${tot >= pk.n ? ' on' : ''}"><span class="pn">${fmt(pk.n)}</span><div><b>${pk.name}</b><small>${pk.desc}</small></div><i>${tot >= pk.n ? '✔' : '🔒'}</i></div>`).join('')}</div>
+      <h3>${L('Žebříčky', 'Leaderboards')}</h3>
+      <p class="muted">${L('Klepni na hráče a porovnej se s ním.', 'Tap a player to compare yourself with them.')}</p>
+      <div class="chips boards" role="tablist">${BOARDS.map(d => `<button class="chip" data-board="${d.key}" aria-selected="${d.key === board}">${d.icon} ${d.name}</button>`).join('')}</div>
       <div id="lb" class="lb"><p class="muted">${L('Načítám…', 'Loading…')}</p></div>`;
     loadLb();
   }
+  /** Moje hodnota na desce (stejně zakódovaná jako v žebříčku). */
+  function myBoard(key) { return key === 'total:played' ? Math.floor(S.stats.playTime) : Econ.boards(S)[key] || 0; }
+  const lbCache = {};
   async function loadLb() {
-    const el = $('#lb');
-    if (!el) return;
-    if (!lb || Date.now() - lbAt > 60000) {
-      try { const r = await fetch('/api/scores?game=vesnicka&board=best%3Ascore&limit=10', { cache: 'no-store' }); if (!r.ok) throw new Error(String(r.status)); lb = await r.json(); lbAt = Date.now(); }
-      catch (e) { if ($('#lb')) $('#lb').innerHTML = `<p class="muted">${L('Žebříček teď není dostupný.', 'The leaderboard is not available right now.')}</p>`; return; }
+    const key = board, d = BOARDS.find(x => x.key === key);
+    if (!$('#lb') || !d) return;
+    let data = lbCache[key];
+    if (!data || Date.now() - data.at > 60000) {
+      try {
+        const r = await fetch(`/api/scores?game=vesnicka&board=${encodeURIComponent(key)}&limit=10`, { cache: 'no-store' });
+        if (!r.ok) throw new Error(String(r.status));
+        data = lbCache[key] = Object.assign(await r.json(), { at: Date.now() });
+      } catch (e) { if ($('#lb') && board === key) $('#lb').innerHTML = `<p class="muted">${L('Žebříček teď není dostupný.', 'The leaderboard is not available right now.')}</p>`; return; }
     }
-    const box = $('#lb'); if (!box) return;
-    const rows = (lb.entries || []).map(e => `<tr class="${e.me ? 'me' : ''}"><td>${e.rank}.</td><td>${esc(e.nickname)}</td><td>${fmt(e.value)} 📜</td></tr>`).join('');
-    box.innerHTML = rows ? `<table>${rows}</table>` : `<p class="muted">${L('Zatím tu nikdo není. Buď první!', 'Nobody here yet. Be the first!')}</p>`;
-    if (!lb.signedIn) box.innerHTML += `<p class="muted">${L('Přihlas se v herním centru a tvoje vesnice se objeví v žebříčku.', 'Sign in at the game center and your village will appear here.')}</p>`;
+    const box = $('#lb'); if (!box || board !== key) return;
+    const row = e => `<tr class="${e.me ? 'me' : ''}" data-nick="${esc(e.nickname)}" tabindex="0"><td>${e.rank}.</td><td>${esc(e.nickname)}</td><td>${boardValue(d, e.value)}</td></tr>`;
+    const me = data.me && !data.entries.some(e => e.me) ? `<tr class="me sep"><td>${data.me.rank}.</td><td>${L('Ty', 'You')}</td><td>${boardValue(d, data.me.value)}</td></tr>` : '';
+    box.innerHTML = data.entries.length ? `<table>${data.entries.map(row).join('')}${me}</table>` : `<p class="muted">${L('Zatím tu nikdo není. Buď první!', 'Nobody here yet. Be the first!')}</p>`;
+    const mine = myBoard(key);
+    box.innerHTML += `<p class="muted mine">${L('Tvoje hodnota', 'Yours')}: <b>${mine ? boardValue(d, mine) : '–'}</b>${data.total ? L(` · hráčů v žebříčku: ${data.total}`, ` · players on the board: ${data.total}`) : ''}</p>`;
+    if (!data.signedIn) box.innerHTML += `<p class="muted">${L('Přihlas se v herním centru a nastav si přezdívku: tvoje vesnice se objeví v žebříčcích.', 'Sign in at the game center and pick a nickname: your village will appear on the boards.')}</p>`;
+  }
+  /** Porovnání s jiným hráčem: všechny jeho žebříčky vedle mých. */
+  async function compare(nick) {
+    let data = null;
+    try { const r = await fetch(`/api/scores?game=vesnicka&player=${encodeURIComponent(nick)}`, { cache: 'no-store' }); if (r.ok) data = await r.json(); } catch (e) { data = null; }
+    if (!data) { toast(L('Statistiky hráče teď nejdou načíst.', 'The player’s stats cannot be loaded right now.')); return; }
+    const rows = BOARDS.map(d => {
+      const a = myBoard(d.key), b = data.scores[d.key] || 0, win = a > b ? 'me' : b > a ? 'them' : '';
+      return `<tr><td>${d.icon} ${d.name}</td><td class="${win === 'me' ? 'win' : ''}">${a ? boardValue(d, a) : '–'}</td><td class="${win === 'them' ? 'win' : ''}">${b ? boardValue(d, b) : '–'}</td></tr>`;
+    }).join('');
+    const wins = BOARDS.filter(d => myBoard(d.key) > (data.scores[d.key] || 0)).length, losses = BOARDS.filter(d => (data.scores[d.key] || 0) > myBoard(d.key)).length;
+    modal(`<div class="compare"><div class="wico">⚖️</div><h2>${L('Ty vs.', 'You vs.')} ${esc(data.nickname)}</h2>
+      <table class="stats cmp"><thead><tr><th></th><th>${L('Ty', 'You')}</th><th>${esc(data.nickname)}</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted">${L(`Vedeš v ${wins} z ${BOARDS.length}, ${esc(data.nickname)} v ${losses}.`, `You lead in ${wins} of ${BOARDS.length}, ${esc(data.nickname)} in ${losses}.`)}</p></div>`,
+    [{ text: L('Zavřít', 'Close'), cls: 'ghost' }]);
   }
 
   // ── Úkoly a úspěchy ──
@@ -176,10 +251,12 @@ const UI = (() => {
     const d = Econ.daily(S);
     structKey = 't' + d.day;
     body.innerHTML = `<h3>${L('Úkoly dne', 'Today’s tasks')}</h3><p class="muted">${L('Každý den nové, stejné pro všechny. Splň všechny tři a vesnici přijde požehnání: výnos ×2 na 15 minut.', 'New every day, the same for everyone. Complete all three and the village is blessed: income ×2 for 15 minutes.')}</p>
+      <p class="next" id="dailyNext"></p>
       <div class="tasks">${d.tasks.map((tk, i) => `<div class="task" data-t="${i}"><div class="info"><b>${taskText(tk)}</b><div class="bar"><i></i></div><small></small></div><button class="btn" data-claim="${i}"></button></div>`).join('')}</div>
       <h3>${L(`Úspěchy · ${Econ.achCount(S)} / ${ACHIEVEMENTS.length}`, `Achievements · ${Econ.achCount(S)} / ${ACHIEVEMENTS.length}`)}</h3>
       <p class="muted">${L(`Každý úspěch přidá +${Math.round(ACH_BONUS * 100)} % ke všem výnosům.`, `Each achievement adds +${Math.round(ACH_BONUS * 100)}% to all income.`)}</p>
-      <div class="achs">${ACHIEVEMENTS.map(a => `<div class="ach${S.ach[a.id] ? ' on' : ''}" title="${esc(a.desc)}"><i>${S.ach[a.id] ? '🏅' : '🔒'}</i><b>${a.name}</b><small>${a.desc}</small></div>`).join('')}</div>`;
+      <div class="achs">${ACHIEVEMENTS.map(a => { const on = !!S.ach[a.id], secret = a.hidden && !on;
+        return `<div class="ach${on ? ' on' : ''}${secret ? ' secret' : ''}" title="${esc(secret ? L('Tajný úspěch', 'Secret achievement') : a.desc)}"><i>${on ? '🏅' : secret ? '❔' : '🔒'}</i><b>${secret ? '???' : a.name}</b><small>${secret ? L('Tajný úspěch', 'Secret achievement') : a.desc}</small></div>`; }).join('')}</div>`;
   }
   function taskText(tk) { const q = DAILY.find(x => x.kind === tk.kind); return q.text(tk.kind === 'earn' ? fmt(tk.n) + L(' grošů', ' groschen') : tk.n); }
   function refreshTasks() {
@@ -194,6 +271,13 @@ const UI = (() => {
       b.innerHTML = tk.claimed ? L('Hotovo ✔', 'Done ✔') : L(`Vyzvednout ${coinSvg}${fmt(Econ.dailyReward(S))}`, `Claim ${coinSvg}${fmt(Econ.dailyReward(S))}`);
       el.classList.toggle('ready', !tk.claimed && p >= tk.n);
     }
+    const nx = $('#dailyNext'), left = Econ.dailyLeft();
+    if (nx) {
+      const all = d.tasks.every(t => t.claimed);
+      nx.className = 'next' + (all ? ' done' : '');
+      nx.innerHTML = all ? L(`🎉 Dnešní úkoly máš hotové. Nové přijdou za <b>${fmtDur(left)}</b> (o půlnoci).`, `🎉 Today’s tasks are done. New ones arrive in <b>${fmtDur(left)}</b> (at midnight).`)
+        : L(`⏰ Nové úkoly za <b>${fmtDur(left)}</b> (o půlnoci). Nesplněné do té doby propadnou.`, `⏰ New tasks in <b>${fmtDur(left)}</b> (at midnight). Unfinished ones expire then.`);
+    }
   }
 
   // ── Více: statistiky, nastavení, nápověda ──
@@ -203,14 +287,19 @@ const UI = (() => {
     const rows = [
       [L('Čas ve hře', 'Time played'), fmtDur(st.playTime)], [L('Pokolení', 'Generation'), S.gen], [L('Vyděláno celkem', 'Earned in total'), fmt(S.earnedAll)],
       [L('Vyděláno v tomto pokolení', 'Earned this generation'), fmt(S.earnedGen)], [L('Nejvyšší výnos', 'Best income'), fmt(st.bestRate, 1) + L(' za s', ' /s')],
-      [L('Postaveno budov', 'Buildings built'), fmt(st.bought)], [L('Koupeno vylepšení', 'Upgrades bought'), fmt(st.upgrades)], [L('Klepnutí', 'Taps'), fmt(S.taps)],
+      [L('Postaveno budov', 'Buildings built'), fmt(st.bought)], [L('Nejvíc budov naráz', 'Most buildings at once'), fmt(st.maxBuildings)], ...(S.steward ? [[L('Šafář nakoupil', 'Steward purchases'), fmt(st.stewardBuys)]] : []), [L('Koupeno vylepšení', 'Upgrades bought'), fmt(st.upgrades)], [L('Klepnutí', 'Taps'), fmt(S.taps)],
       ...CREATURES.map(c => [`${C_ICON[c.id]} ${c.name}`, fmt(S.caught[c.id] || 0)]), [L('Utekly ti', 'Got away'), fmt(st.missed)],
       [L('Bez tebe vesnice vydělává', 'Earns without you for'), fmtDur(Econ.offlineCap(S))],
     ];
-    body.innerHTML = `<h3>${L('Statistiky', 'Statistics')}</h3><table class="stats">${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
+    const cap = Econ.offlineCap(S);
+    body.innerHTML = `<div class="away-card"><b>🌙 ${L('Odcházíš?', 'Heading off?')}</b>
+      <p>${L(`Bez tebe vesnička vydělává až <b>${fmtDur(cap)}</b>. Vrať se nejpozději <b>v ${clockAt(cap)}</b>, jinak začne zahálet. Čím dřív se vrátíš a groše utratíš, tím rychleji poroste.`, `Without you the village earns for up to <b>${fmtDur(cap)}</b>. Come back by <b>${clockAt(cap)}</b> at the latest or it starts idling. The sooner you come back and spend, the faster it grows.`)}</p>
+      <p class="muted">${S.steward && S.settings.auto ? L('Šafář bude mezitím nakupovat za tebe.', 'Meanwhile the steward keeps buying for you.') : L(`Za tu dobu vydělá zhruba ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} grošů.`, `In that time it earns about ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} groschen.`)} ${L('Delší výdělek bez tebe dává Ponocný a kronika.', 'The Night watchman and the chronicle make it last longer.')}</p></div>
+      <h3>${L('Statistiky', 'Statistics')}</h3><table class="stats">${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
       <h3>${L('Nastavení', 'Settings')}</h3>
       <label class="set"><input type="checkbox" id="setSound" ${S.settings.sound ? 'checked' : ''}> ${L('Zvukové efekty', 'Sound effects')}</label>
       <label class="set"><input type="checkbox" id="setSci" ${S.settings.sci ? 'checked' : ''}> ${L('Vědecký zápis čísel (1,23e15)', 'Scientific notation (1.23e15)')}</label>
+      <label class="set"><input type="checkbox" id="setQuick" ${S.settings.quick ? 'checked' : ''}> ${L('Tlačítko ⚡ Nejlepší koupě na návsi', 'The ⚡ Best buy button on the village green')}</label>
       <h3>${L('Jak hrát', 'How to play')}</h3>${help()}
       <h3>${L('Začít úplně znovu', 'Start over completely')}</h3>
       <p class="muted">${L('Smaže celou vesnici, pověsti i úspěchy.', 'Deletes the whole village, legends and achievements.')}</p>
@@ -232,7 +321,7 @@ const UI = (() => {
     if (tab === 'build') { if (buildKey() !== structKey) renderBuild($('#body')); refreshBuild(); }
     else if (tab === 'upg') refreshUpg();
     else if (tab === 'tasks') refreshTasks();
-    else if (tab === 'legend') { const el = $('#legN'); if (el && el.textContent !== fmt(S.legends)) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; }
+    else if (tab === 'legend') { const el = $('#legN'); if (el && el.textContent !== fmt(S.legends)) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; const hb = $('#hire'); if (hb) hb.disabled = S.legends < STEWARD_COST; }
   }
 
   // ── Oznámení ──
@@ -267,6 +356,11 @@ const UI = (() => {
     body.addEventListener('click', e => {
       const t = e.target;
       const b = t.closest('[data-buy]'); if (b) { handlers.buy(+b.dataset.buy, amount); return; }
+      const to = t.closest('[data-to]'); if (to) { handlers.buy(+to.dataset.to, +to.dataset.n); return; }
+      if (t.closest('#smartBuy')) { handlers.smart(); return; }
+      if (t.closest('#hire')) { handlers.hire(); return; }
+      const bd = t.closest('[data-board]'); if (bd) { board = bd.dataset.board; for (const x of body.querySelectorAll('[data-board]')) x.setAttribute('aria-selected', String(x === bd)); $('#lb').innerHTML = `<p class="muted">${L('Načítám…', 'Loading…')}</p>`; loadLb(); return; }
+      const pl = t.closest('#lb tr[data-nick]'); if (pl) { compare(pl.dataset.nick); return; }
       const a = t.closest('[data-amt]'); if (a) { amount = a.dataset.amt === 'max' ? 'max' : +a.dataset.amt; for (const x of body.querySelectorAll('[data-amt]')) x.setAttribute('aria-pressed', String(x === a)); refresh(); return; }
       const u = t.closest('[data-ubuy]'); if (u) { handlers.upg(u.dataset.ubuy); return; }
       if (t.closest('#buyAll')) { handlers.buyAll(); return; }
@@ -277,18 +371,35 @@ const UI = (() => {
     body.addEventListener('change', e => {
       if (e.target.id === 'setSound') handlers.setting('sound', e.target.checked);
       if (e.target.id === 'setSci') handlers.setting('sci', e.target.checked);
+      if (e.target.id === 'setQuick') handlers.setting('quick', e.target.checked);
+      if (e.target.id === 'autoBuy') handlers.setting('auto', e.target.checked);
     });
+    body.addEventListener('keydown', e => { const pl = e.target.closest && e.target.closest('#lb tr[data-nick]'); if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); compare(pl.dataset.nick); } });
     for (const id of ['#edgeL', '#edgeR']) $(id).addEventListener('click', () => Scene.focusCreature());
+    $('#quick').addEventListener('click', () => { if (best) handlers.quick(best); });
+    $('#newsBtn').addEventListener('click', () => toggleNews());
+    $('#news').addEventListener('click', e => { if (e.target.closest('[data-close]')) toggleNews(false); });
     $('#soundBtn').addEventListener('click', () => handlers.setting('sound', !S.settings.sound));
+  }
+  // ── Novinky ──
+  function toggleNews(open) {
+    const el = $('#news'), show = open == null ? el.hidden : open;
+    if (show) {
+      el.innerHTML = `<div class="nw-h"><b>🎁 ${L('Co je nového', 'What’s new')}</b><button data-close aria-label="${L('Zavřít', 'Close')}">✕</button></div>${NEWS.map(n => `<div class="nw-v"><small>${n.date}</small><ul>${n.items.map(([i, t]) => `<li><i>${i}</i><span>${t}</span></li>`).join('')}</ul></div>`).join('')}`;
+      H.newsSeen();
+    }
+    el.hidden = !show;
+    $('#newsBtn').setAttribute('aria-expanded', String(show));
   }
   function soundIcon() { $('#soundBtn').textContent = S.settings.sound ? '🔊' : '🔇'; $('#soundBtn').setAttribute('aria-label', S.settings.sound ? L('Vypnout zvuky', 'Mute sounds') : L('Zapnout zvuky', 'Unmute sounds')); }
 
   function init(state, handlers) {
-    S = state;
+    S = state; H = handlers;
     tabs(); bind(handlers); soundIcon();
     document.documentElement.lang = LANG;
     $('.back').setAttribute('aria-label', L('Zpět do herního centra', 'Back to the game center'));
+    $('#newsBtn .nl').textContent = L('Novinky', 'What’s new');
     render();
   }
-  return { init, render, refresh, toast, modal, closeModal, setTab, soundIcon, coinSvg, C_ICON, help, get tab() { return tab; }, set state(v) { S = v; } };
+  return { init, render, refresh, toast, modal, closeModal, setTab, soundIcon, coinSvg, C_ICON, cName, clockAt, help, toggleNews, compare, get tab() { return tab; }, set state(v) { S = v; } };
 })();

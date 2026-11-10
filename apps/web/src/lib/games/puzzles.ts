@@ -4825,13 +4825,18 @@ export const PUZZLE_GAMES: Game[] = [
 		description:
 			'Idle budovatelská hra z české pohádkové vesnice. Klepej, stav řemesla od políčka po orloj a vydělávej groše i ve chvílích, kdy zrovna nehraješ. Střídají se roční období, ve vsi se zjevují bludičky, vodník, čert i Krakonoš a s vydělaným jměním předáš vesnici dalšímu pokolení. Pověsti o ní pak zrychlí všechno další.',
 		genres: ['Idle', 'Budování', 'Relax'],
-		features: ['14 řemesel', 'Pohádkové bytosti', 'Roční období', 'Pověsti a kronika'],
+		features: ['14 řemesel', 'Pohádkové bytosti', 'Šafář a pověsti', 'Žebříčky v 9 kategoriích'],
 		en: {
 			tagline: 'A village that grows while you sleep.',
 			description:
 				'An idle building game set in a Czech fairy-tale village. Tap, build trades from a field to an astronomical clock and keep earning groschen even while you are away. The seasons change, will-o’-wisps, a water goblin, a devil and the mountain spirit Krakonoš drop by, and once you have made a fortune you pass the village on to the next generation. Its legends then speed everything up.',
 			genres: ['Idle', 'Building', 'Relax'],
-			features: ['14 trades', 'Fairy-tale creatures', 'Seasons', 'Legends & chronicle'],
+			features: [
+				'14 trades',
+				'Fairy-tale creatures',
+				'Steward & legends',
+				'Leaderboards in 9 categories',
+			],
 		},
 		statLabels: {
 			legends: ['Pověsti', 'Legends'],

@@ -140,6 +140,11 @@ const CREATURES = [
 ];
 const C_INDEX = Object.fromEntries(CREATURES.map(c => [c.id, c]));
 const CREATURE_GAP = [70, 160]; // sekundy mezi bytostmi
+// Vzácný host na návsi (ne bytost: nepočítá se do bytostí, má vlastní tajný úspěch).
+const NESRO = {
+  after: 15, chance: 0.025, life: 16, mul: 3, dur: 180, coins: 300,
+  name: 'Nesro', text: L('se zastavil na kus řeči a přinesl koláče: výnos ×3 na 3 minuty a k tomu', 'stopped by for a chat and brought kolache: income ×3 for 3 minutes, plus'),
+};
 
 // ── Pověsti (prestiž) a Kronika (trvalé výhody podle počtu pověstí) ──
 const LEGEND_BASE = 1e9; // pověsti celkem = ∛(vyděláno za všechna pokolení / LEGEND_BASE)
@@ -157,6 +162,7 @@ const PERKS = [
   { n: 10000, id: 'milestone', v: 3, name: L('Zlatý věk', 'Golden age'), desc: L('Každé mistrovství ztrojnásobí výnos místo zdvojnásobení.', 'Every mastery triples output instead of doubling it.') },
 ];
 const OFFLINE_BASE = 8; // hodin
+const STEWARD_COST = 3; // pověsti za šafáře
 
 // ── Úkoly dne (3 denně, stejné pro všechny) ──
 const DAILY = [
@@ -174,7 +180,7 @@ const BLESSING = { mul: 2, dur: 900 }; // všechny tři úkoly: požehnání
 // ── Úspěchy (každý +2 % výnosu) ──
 const ACH_BONUS = 0.02;
 const ACHIEVEMENTS = [];
-const ach = (id, name, desc, test) => ACHIEVEMENTS.push({ id, name, desc, test });
+const ach = (id, name, desc, test, hidden) => ACHIEVEMENTS.push({ id, name, desc, test, hidden: !!hidden });
 [[1, L('První brázda', 'First furrow')], [50, L('Dvůr', 'Farmyard')], [150, L('Osada', 'Hamlet')], [400, L('Ves', 'Village')], [800, L('Městys', 'Market town')], [1500, L('Město', 'Town')], [3000, L('Královské město', 'Royal town')]]
   .forEach(([n, name]) => ach('total' + n, name, n === 1 ? L('Postav první budovu', 'Build your first building') : L(`Měj ${n} budov`, `Own ${n} buildings`), S => Econ.total(S) >= n));
 [[1e3, L('Plný měšec', 'Full purse')], [1e6, L('Milionář', 'Millionaire')], [1e9, L('Boháč', 'Rich man')], [1e12, L('Pan statkář', 'Landowner')], [1e15, L('Kupec', 'Merchant prince')], [1e18, L('Bankéř', 'Banker')],
@@ -188,7 +194,7 @@ CREATURES.forEach(c => ach('c_' + c.id, c.name, L(`Chyť: ${c.name}`, `Catch: ${
 [[1, L('Nové pokolení', 'New generation')], [5, L('Rod', 'Lineage')], [15, L('Dynastie', 'Dynasty')], [40, L('Věčná ves', 'Eternal village')]]
   .forEach(([n, name]) => ach('gen' + n, name, L(`Předej vesnici ${n}× dalšímu pokolení`, `Pass the village on ${n} times`), S => S.gen - 1 >= n));
 [[10, L('Vesnická pověst', 'Village legend')], [100, L('Kronikář', 'Chronicler')], [1000, L('Živá legenda', 'Living legend')], [10000, L('Mýtus', 'Myth')]]
-  .forEach(([n, name]) => ach('leg' + n, name, L(`Získej ${n} pověstí`, `Gain ${n} legends`), S => S.legends >= n));
+  .forEach(([n, name]) => ach('leg' + n, name, L(`Získej ${n} pověstí`, `Gain ${n} legends`), S => Econ.legendsTotal(S) >= n));
 ach('allb', L('Od pole po orloj', 'From field to clock'), L('Postav všech 14 řemesel', 'Build all 14 trades'), S => BUILDINGS.every(b => S.owned[b.id] > 0));
 ach('each25', L('Všeuměl', 'Jack of all trades'), L('Měj od každého řemesla 25 kusů', 'Own 25 of every trade'), S => BUILDINGS.every(b => S.owned[b.id] >= 25));
 ach('each100', L('Zlatá vesnice', 'Golden village'), L('Měj od každého řemesla 100 kusů', 'Own 100 of every trade'), S => BUILDINGS.every(b => S.owned[b.id] >= 100));
@@ -199,6 +205,36 @@ ach('night', L('Noční sova', 'Night owl'), L('Hraj mezi půlnocí a čtvrtou r
 ach('away8', L('Vesnice nespí', 'The village never sleeps'), L('Vrať se po osmi hodinách', 'Come back after eight hours'), S => S.stats.awayMax >= 8 * 3600);
 ach('daily', L('Den jako malovaný', 'A perfect day'), L('Splň všechny úkoly dne', 'Complete all daily tasks'), S => S.stats.dailyAll > 0);
 ach('daily7', L('Týden na statku', 'A week on the farm'), L('Splň všechny úkoly dne sedmkrát', 'Complete all daily tasks seven times'), S => S.stats.dailyAll >= 7);
+ach('steward', L('Pan správce', 'Lord of the manor'), L('Najmi šafáře', 'Hire a steward'), S => S.steward);
+ach('nesro', L('Kamarád Nesro', 'Nesro’s friend'), L('Potkej na návsi Nesra', 'Meet Nesro on the village green'), S => S.stats.nesro > 0, true);
+
+// ── Žebříčky: co se dá porovnávat s ostatními (log: velká čísla se posílají jako log10 × 1000) ──
+const BOARDS = [
+  { key: 'best:score', name: L('Pověsti', 'Legends'), icon: '📜', get: S => Econ.legendsTotal(S) },
+  { key: 'free:jmeni:score', name: L('Jmění', 'Fortune'), icon: '💰', log: true, get: S => S.earnedAll },
+  { key: 'free:vynos:score', name: L('Výnos', 'Income'), icon: '📈', log: true, get: S => S.stats.bestRate, unit: L(' za s', ' /s') },
+  { key: 'free:budovy:score', name: L('Budovy', 'Buildings'), icon: '🏡', get: S => S.stats.maxBuildings },
+  { key: 'free:bytosti:score', name: L('Bytosti', 'Creatures'), icon: '✨', get: S => Econ.caughtAll(S) },
+  { key: 'free:klepnuti:score', name: L('Klepnutí', 'Taps'), icon: '👆', get: S => S.taps },
+  { key: 'free:pokoleni:score', name: L('Pokolení', 'Generations'), icon: '👪', get: S => S.gen - 1 },
+  { key: 'free:uspechy:score', name: L('Úspěchy', 'Achievements'), icon: '🏅', get: S => Econ.achCount(S) },
+  { key: 'total:played', name: L('Čas ve hře', 'Time played'), icon: '⏱️', time: true, get: S => S.stats.playTime },
+];
+/** Hodnota z žebříčku zpět pro zobrazení. */
+const boardValue = (d, v) => (d.log ? fmt(Math.pow(10, v / 1000)) + (d.unit || '') : d.time ? fmtDur(v) : fmt(v));
+
+// ── Novinky (okénko vlevo nahoře; ukáže se samo, dokud hráč aktuální verzi neviděl) ──
+const NEWS = [
+  { v: 2, date: L('10. listopadu 2026', 'November 10, 2026'), items: [
+    ['🤵', L('Šafář: najmeš ho v Kronice za 3 pověsti a nakupuje za tebe nejvýhodněji, i když nejsi u hry.', 'Steward: hire him in the Chronicle for 3 legends and he buys the best deals for you, even while you are away.')],
+    ['⚡', L('Nejlepší koupě: tlačítko na návsi koupí jedním klepnutím to, co se nejrychleji zaplatí.', 'Best buy: one tap on the village button buys whatever pays for itself fastest.')],
+    ['⭐', L('U řemesel tlačítko „do mistrovství“ koupí přesně tolik, kolik chybí do dalšího ×2, a vidíš, kolik si můžeš dovolit.', 'Trades: a “to mastery” button buys exactly what is missing to the next ×2, and you see how many you can afford.')],
+    ['⏰', L('Úkoly dne ukazují, za jak dlouho přijdou nové.', 'Daily tasks show when the next ones arrive.')],
+    ['🏡', L('Podrobnější „Vítej zpátky“ a rada, kdy se vrátit, aby vesnička nezahálela.', 'A more detailed welcome back and a hint on when to return so the village never idles.')],
+    ['🏆', L('Žebříčky v devíti kategoriích a porovnání s ostatními hráči.', 'Leaderboards in nine categories and comparisons with other players.')],
+  ] },
+];
+const NEWS_VERSION = NEWS[0].v;
 const A_INDEX = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, a]));
 
 // Deterministická náhoda (úkoly dne)

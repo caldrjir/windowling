@@ -39,8 +39,13 @@ is closed (8 hours, more with upgrades and legends); masteries, upgrades, season
 every 5 minutes for everyone, creatures from Czech tales as random events (will-o'-wisp, water
 goblin, devil, Krakonoš, house sprite), daily tasks, 51 achievements, and prestige: passing the
 village to the next generation turns earnings into legends (+5 % each) that unlock a family
-chronicle of lasting perks. Day and night follow the player's clock. Its leaderboard is the
-number of legends.
+chronicle of lasting perks. Day and night follow the player's clock. A ⚡ best-buy button buys
+whatever pays for itself fastest, a "to the next upgrade" button per trade fills the gap to the
+next mastery or tier, and a steward hired for 3 legends buys for the player, also while away.
+The welcome back says how much of the time away the village earned and when to return; daily
+tasks count down to the next ones. Leaderboards in nine categories (legends, fortune, income,
+buildings, creatures, taps, generations, achievements, play time) and a side-by-side comparison
+with any listed player. A "what's new" popover shows the latest changes once.
 
 ## What the hub shows
 

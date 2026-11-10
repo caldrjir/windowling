@@ -105,6 +105,59 @@ test('action games rank records and every game ranks play time', async ({
 	await p.close();
 });
 
+test('VESNIČKA ranks villages in several categories and compares two players', async ({
+	browser,
+	baseURL,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const stamp = Date.now() % 100000;
+	const sedlak = `Sedlák${stamp}`,
+		rychtar = `Rychtář${stamp}`;
+	const a = await player(browser, baseURL ?? '', sedlak);
+	const b = await player(browser, baseURL ?? '', rychtar);
+	for (const [p, legends, buildings] of [
+		[a, 7, 300],
+		[b, 3, 500],
+	] as const) {
+		await p.page.goto('/games/vesnicka/index.html');
+		await p.page.locator('.sheet .btn').click();
+		await p.page.evaluate(
+			`Game.S.legends = ${legends}; Game.S.stats.maxBuildings = ${buildings}; Game.S.earnedAll = 1e15; Game.save();`,
+		);
+		await p.page.evaluate('GCSync.sync()');
+	}
+
+	// Every category is its own board; one player's boards can be read by nickname.
+	const res = await a.page.request.get(
+		'/api/scores?game=vesnicka&board=free:budovy:score&limit=50',
+	);
+	const lb = (await res.json()) as { entries: { nickname: string }[] };
+	expect(lb.entries.map((e) => e.nickname).filter((n) => n.endsWith(String(stamp)))).toEqual([
+		rychtar,
+		sedlak,
+	]);
+	const them = (await (
+		await a.page.request.get(`/api/scores?game=vesnicka&player=${encodeURIComponent(rychtar)}`)
+	).json()) as { nickname: string; scores: Record<string, number> };
+	expect(them.nickname).toBe(rychtar);
+	expect(them.scores).toMatchObject({ 'best:score': 3, 'free:budovy:score': 500 });
+	expect(
+		(await a.page.request.get('/api/scores?game=vesnicka&player=Nikdo-tu-neni')).status(),
+	).toBe(404);
+	expect((await a.page.request.get('/api/scores?game=vesnicka&player=x')).status()).toBe(400);
+
+	// In the game: the chronicle's boards; tapping a player compares the two villages.
+	await a.page.locator('[data-tab="legend"]').click();
+	await a.page.locator('[data-board="free:budovy:score"]').click();
+	await a.page.locator(`#lb tr[data-nick="${rychtar}"]`).click();
+	const cmp = a.page.locator('.compare');
+	await expect(cmp).toContainText(rychtar);
+	await expect(cmp).toContainText('500');
+	await expect(cmp).toContainText('300');
+	await a.close();
+	await b.close();
+});
+
 test('the leaderboard API rejects bad boards and anonymous results', async ({ request }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
 	expect((await request.get('/api/scores?game=sudoku&board=anything')).status()).toBe(400);
