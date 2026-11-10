@@ -270,6 +270,9 @@ test('worms online: the turn is replayed for the other player and both islands a
 	browser,
 }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	// two real-time turns (flight, explosions, falling worms) take ~20 s locally; give the test the
+	// time its waits below allow instead of the 30 s default
+	test.setTimeout(90_000);
 	const ann = await player(browser, 'Ann');
 	const bob = await player(browser, 'Bob');
 	const code = await create(ann.page, 'cervici');
