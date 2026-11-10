@@ -120,35 +120,6 @@ test('gomoku online: five in a row wins for one player and loses for the other',
 	await bob.close();
 });
 
-test('prsi online: both players see the same deal and one of them wins', async ({
-	browser,
-}, info) => {
-	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
-	// a whole game is played, give it the time its result waits allow
-	test.setTimeout(150_000);
-	const ann = await player(browser, 'Ann');
-	const bob = await player(browser, 'Bob');
-	const code = await create(ann.page, 'prsi');
-	await bob.page.goto(`/games/prsi/index.html?duel=${code}`);
-	await expect(ann.page.locator('.pr-hand .pr-card')).toHaveCount(4);
-	await expect(bob.page.locator('.pr-hand .pr-card')).toHaveCount(4);
-	// the same table on both sides: the same top card and the same card counts
-	const table = (page: Page) =>
-		page.evaluate('(s => [s.top, s.counts.join()])(Kit._test.inst._state())') as Promise<
-			[number, string]
-		>;
-	expect(await table(ann.page)).toEqual(await table(bob.page));
-	// both let the computer play for them until someone runs out of cards
-	for (const p of [ann.page, bob.page])
-		await p.evaluate('Kit._test.inst._speed(4); Kit._test.inst._autoplay()');
-	await expect(result(ann.page)).toHaveText(/Výhra!|Prohra/, { timeout: 60_000 });
-	await expect(result(bob.page)).toHaveText(/Výhra!|Prohra/, { timeout: 60_000 });
-	expect(await result(ann.page).textContent()).not.toEqual(await result(bob.page).textContent());
-	expect([...ann.errors, ...bob.errors]).toEqual([]);
-	await ann.close();
-	await bob.close();
-});
-
 test('dama online: moves cross over and a resignation ends the game', async ({ browser }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
 	const ann = await player(browser, 'Ann');
@@ -299,6 +270,9 @@ test('worms online: the turn is replayed for the other player and both islands a
 	browser,
 }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	// two real-time turns (flight, explosions, falling worms) take ~20 s locally; give the test the
+	// time its waits below allow instead of the 30 s default
+	test.setTimeout(90_000);
 	const ann = await player(browser, 'Ann');
 	const bob = await player(browser, 'Bob');
 	const code = await create(ann.page, 'cervici');

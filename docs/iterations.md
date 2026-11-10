@@ -22,10 +22,10 @@ Auth, CI/CD, release-please) carries on.
 - DRIFTWOOD (first-person 3D survival) joins the library; computers only (blocked on phones/tablets).
 - Live player counts per game (signed-in vs anonymous) from game-tab heartbeats.
 - Puzzle shelf, stage 1: puzzle kit (daily puzzle, streaks, Star Path, weekly quests, themes) with
-  Sudoku, Nonograms, Kakuro and Souhvězdí (Hashi).
+  Sudoku, Nonograms, Kakuro and Souhvězdí (Hashi; removed later).
 - Puzzle shelf, stage 2: Pulsar (falling blocks), Fúze (2048), Miny (no-guess minesweeper),
   Omalovánky (colour by number).
-- Puzzle shelf, stage 3: Solitaire (Klondike 1/3, FreeCell, Spider; winnable Klondike deals),
+- Puzzle shelf, stage 3: Solitaire (Klondike 1/3, FreeCell, Spider; winnable Klondike deals; removed later),
   Mahjong (always solvable layouts), Skládačka (jigsaw of generated cosmic paintings).
 - Puzzle shelf, stage 4: Šachy (computer at six strengths, daily mate in 1–2, two players) and
   Piškvorky (15×15 gomoku, four strengths with VCF, daily opening, two players).
@@ -43,15 +43,15 @@ Auth, CI/CD, release-please) carries on.
 - Puzzle shelf: Had (snake: Sprint 25 on a seeded obstacle map, endless Classic and No walls for
   score, golden bonus stars). Obstacle maps are point-symmetric and checked so free cells stay
   connected with no dead-end pockets; the daily sprint shares map and fruit order.
-- Puzzle shelf: Impakt (side-scrolling space shooter in the spirit of Space Impact: auto-fire,
+- Puzzle shelf: Impakt (removed later; side-scrolling space shooter in the spirit of Space Impact: auto-fire,
   enemy waves and a boss per sector, missiles, laser, shield and double shot from carriers, a
   green retro-screen look). Sectors are generated from the seed; the 5-sector Campaign uses fixed
   seeds so its score board is fair; Endless, a daily sector, a 120-sector Path and online races.
-- Puzzle shelf: Skladník (warehouse crates in the spirit of Stack Attack: cranes drop crates,
+- Puzzle shelf: Skladník (removed later; warehouse crates in the spirit of Stack Attack: cranes drop crates,
   the worker pushes and jumps onto them, full rows disappear; bombs, hearts and a high-jump
   feather). Crate order comes from the seed, so the daily shift is shared; Shift, Calm shift,
   Endless for score, a 120-shift Path and online races.
-- Puzzle shelf: Bubliny (bubble shooter: hex cluster from the seed, bank shots with a dotted aim
+- Puzzle shelf: Bubliny (removed later; bubble shooter: hex cluster from the seed, bank shots with a dotted aim
   line, match three pops, unattached bubbles fall, the ceiling drops after misses; Endless adds
   rows for score; daily board, 120-board Path, online races).
 - Two-player shelf (`category: 'duo'`, „Pro dva hráče“): Tanky, a turn-based artillery duel
@@ -67,6 +67,8 @@ Auth, CI/CD, release-please) carries on.
 - Online puzzles: live chess and gomoku games (open games list, code or link, chat, draw
   offers, rematch with swapped colours) and races of up to 8 players on the same puzzle for
   every other puzzle (live progress, standings).
+- Library trimmed: Souhvězdí, Solitaire, Impakt, Skladník, Bubliny, Letní hry, Šmik!, Ptačí
+  pomsta, Pírko, Mrakodrap, Prší and Věky válek were removed; their code stays in git history.
 
 ## Game Center 2 – Accounts & Cloud Saves
 
@@ -83,7 +85,7 @@ Auth, CI/CD, release-please) carries on.
 Games the owner wants next, in the spirit of the originals (own names, art and code; the
 originals are only the inspiration). Ticked when the game is in the library.
 
-- [x] Letní hry (Playman Summer Games: sprint, long jump, hurdles, javelin)
+- [ ] Letní hry – Playman Summer Games: sprint, long jump, hurdles, javelin (removed from the library)
 - [ ] Rally Master Pro – top-down / behind-the-car rally on stages
 - [ ] Asphalt (series) – arcade street racing with nitro
 - [ ] Townsmen – medieval town builder
@@ -92,17 +94,17 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Diamond Rush – maze adventure, collect diamonds, push boulders
 - [ ] Bounce / Bounce Tales – rolling red ball platformer
 - [ ] Splinter Cell – stealth in shadows
-- [x] Tower Bloxx – stack swinging floors into a tower (Mrakodrap)
+- [ ] Tower Bloxx – stack swinging floors into a tower (Mrakodrap, removed from the library)
 - [x] Vlak (1993) – steer a growing train, collect items, leave through the gate (Vlak)
 - [x] Člověče, nezlob se – two or four players, seeded dice, online for two (Člověče)
 - [x] Settlers of Catan – seeded hex island, bank and harbour trades, development cards, computer players at three strengths, online for two (Osadníci)
 - [x] Lodě – battleship: computer admiral at three strengths and online with hidden fleets (Lodě)
 - [x] Dáma – Czech draughts: computer at three strengths, two players and online (Dáma)
-- [x] Prší – the Czech card game: computer players and two-player online with a who-beat-whom score, no daily or Path (Prší)
+- [ ] Prší – the Czech card game: computer players and two-player online with a who-beat-whom score, no daily or Path (Prší, removed from the library)
 - [x] Bomberman – bombs, crates with power-ups, monsters and a hidden exit, battles against computer bombers (Bombarďák)
-- [x] Angry Birds – slingshot physics against structures (Ptačí pomsta)
-- [x] Flappy Bird – tap to fly through gaps (Pírko)
-- [x] Fruit Ninja – swipe to slice fruit, avoid bombs (Šmik!)
+- [ ] Angry Birds – slingshot physics against structures (Ptačí pomsta, removed from the library)
+- [ ] Flappy Bird – tap to fly through gaps (Pírko, removed from the library)
+- [ ] Fruit Ninja – swipe to slice fruit, avoid bombs (Šmik!, removed from the library)
 - [ ] Temple Run / Subway Surfers – endless runner with lanes, jump and slide
 - [x] Doodle Jump – endless vertical jumping on platforms (Skokan)
 - [ ] Plants vs. Zombies – lane defence with plants
@@ -115,7 +117,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] The Right Mix – bartending / cocktail mixing
 - [ ] Happy Wheels – ragdoll physics obstacle courses
 - [ ] Heli Attack – helicopter shooter
-- [x] Age of War – lane war through the ages, with its iconic-style music (Věky válek)
+- [ ] Age of War – lane war through the ages, with its iconic-style music (Věky válek, removed from the library)
 - [ ] Burger Tycoon – burger chain business sim
 - [x] Gold Miner – swinging claw grabbing gold (Zlatokop)
 - [ ] Hobo – brawler as a homeless guy
