@@ -44,7 +44,9 @@ next mastery or tier, and a steward hired for 3 legends buys for the player, als
 The welcome back says how much of the time away the village earned and when to return; daily
 tasks count down to the next ones. Leaderboards in nine categories (legends, fortune, income,
 buildings, creatures, taps, generations, achievements, play time) and a side-by-side comparison
-with any listed player. A "what's new" popover shows the latest changes once.
+with any listed player. A "what's new" popover shows the latest changes once. Its own calm
+music (two tracks per season and two for the night, cross-faded) with music and sound switches,
+volume sliders and one mute button.
 
 ## What the hub shows
 

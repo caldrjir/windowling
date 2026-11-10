@@ -225,6 +225,10 @@ const boardValue = (d, v) => (d.log ? fmt(Math.pow(10, v / 1000)) + (d.unit || '
 
 // ── Novinky (okénko vlevo nahoře; ukáže se samo, dokud hráč aktuální verzi neviděl) ──
 const NEWS = [
+  { v: 3, date: L('10. listopadu 2026', 'November 10, 2026'), items: [
+    ['🎻', L('Vesnička má vlastní hudbu: každé roční období a noc hrají svou klidnou písničku z cimbálu, flétny a houslí.', 'The village has music of its own: every season and the night play a calm tune of dulcimer, flute and violin.')],
+    ['🔊', L('V záložce Více zapneš nebo vypneš hudbu i zvuky a nastavíš jejich hlasitost. Tlačítko nahoře ztlumí obojí.', 'In the More tab you switch music and sounds on or off and set their volume. The button at the top mutes both.')],
+  ] },
   { v: 2, date: L('10. listopadu 2026', 'November 10, 2026'), items: [
     ['🤵', L('Šafář: najmeš ho v Kronice za 3 pověsti a nakupuje za tebe nejvýhodněji, i když nejsi u hry.', 'Steward: hire him in the Chronicle for 3 legends and he buys the best deals for you, even while you are away.')],
     ['⚡', L('Nejlepší koupě: tlačítko na návsi koupí jedním klepnutím to, co se nejrychleji zaplatí.', 'Best buy: one tap on the village button buys whatever pays for itself fastest.')],

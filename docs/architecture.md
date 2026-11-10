@@ -79,7 +79,9 @@ No personal data beyond the user link; presence rows live for a minute.
 The hub and every game page load `music.js` (after `sync.js`). The synced key
 `gamecenter.music` (`{ src: 'game' | 'own' | 'off', url, vol, side }`) chooses the music:
 
-- `game` (default): VOIDBORN, STARSPIRE and DRIFTWOOD play their own music; the puzzle games get
+- `game` (default): VOIDBORN, STARSPIRE, DRIFTWOOD and Vesnička (`vesnicka/js/hudba.js`: two
+  tracks per season and two for the night in `vesnicka/hudba/`, loudness-matched to −18 LUFS, played
+  where the shared 5-minute season clock stands and cross-faded) play their own music; the puzzle games get
   a generated playlist (`music-gen.js`, Web Audio, four tracks per game seeded by its id, the
   same for everyone; no audio files).
 - `own`: a YouTube, SoundCloud or Spotify link plays in a small player card on every page

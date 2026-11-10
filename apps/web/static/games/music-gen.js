@@ -25,7 +25,7 @@
   const TASTE = {
     sudoku: ['piano', 'lofi'], nonogram: ['lofi', 'garden'], kakuro: ['piano', 'ambient'],
     pulsar: ['chip', 'space'], fuze: ['chip', 'garden'], miny: ['lofi', 'chip'], omalovanky: ['garden', 'ambient'],
-    mahjong: ['ambient', 'garden'], skladacka: ['garden', 'piano'], sachy: ['piano', 'ambient'], piskvorky: ['lofi', 'garden'], vesnicka: ['garden', 'piano'],
+    mahjong: ['ambient', 'garden'], skladacka: ['garden', 'piano'], sachy: ['piano', 'ambient'], piskvorky: ['lofi', 'garden'],
   };
   const lang = () => { try { return localStorage.getItem('gamecenter.lang') === 'en' ? 1 : 0; } catch (e) { return 0; } };
   const ADJ = [['Tichá', 'Quiet'], ['Zlatá', 'Golden'], ['Noční', 'Night'], ['Ranní', 'Morning'], ['Modrá', 'Blue'], ['Hvězdná', 'Starry'], ['Mlžná', 'Misty'], ['Teplá', 'Warm'], ['Daleká', 'Distant'], ['Měkká', 'Soft'], ['Snová', 'Dreamy'], ['Křišťálová', 'Crystal']];

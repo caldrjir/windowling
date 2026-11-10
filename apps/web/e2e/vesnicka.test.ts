@@ -157,6 +157,50 @@ test('VESNIČKA: tap, build, catch a creature, pass the village on and earn whil
 	expect(errors).toEqual([]);
 });
 
+test('VESNIČKA music: the season by day, the night, volume and mute', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	const key = () => run<string | null>(page, 'return Hudba.state().key;');
+	const level = () => run<number>(page, 'return Hudba.state().level;');
+	await page.goto(URL);
+	await run(page, 'Scene.opts.hour = 12; Scene.opts.season = 2;');
+	expect(await key()).toBeNull(); // browsers play sound only after the first tap
+	await page.locator('.sheet .btn').click();
+	// Autumn by day, quietly under the sound effects (55 % of the music volume).
+	await expect.poll(key).toMatch(/^podzim-[12]$/);
+	expect(await level()).toBeCloseTo(0.3025, 3);
+	// At night the night music fades in instead.
+	await run(page, 'Scene.opts.hour = 23; Hudba.tick();');
+	await expect.poll(key).toMatch(/^noc-[12]$/);
+
+	// Settings: music off and on, its volume and the volume of the sounds.
+	await page.locator('[data-tab="more"]').click();
+	await page.locator('#setMusic').uncheck();
+	await expect.poll(level).toBe(0);
+	await page.locator('#setMusic').check();
+	await page.locator('[data-vol="musicVol"]').fill('20');
+	await expect.poll(level).toBeCloseTo(0.04, 3);
+	await page.locator('[data-vol="sfxVol"]').fill('50');
+	expect(await run(page, 'return [Game.S.settings.musicVol, Game.S.settings.sfxVol];')).toEqual([
+		20, 50,
+	]);
+	// The button at the top mutes music and sounds together, and brings them back.
+	await page.locator('#soundBtn').click();
+	await expect(page.locator('#soundBtn')).toHaveText('🔇');
+	expect(await run(page, 'return [Hudba.state().level, Sound.on];')).toEqual([0, false]);
+	await page.locator('#soundBtn').click();
+	await expect(page.locator('#soundBtn')).toHaveText('🔊');
+	await expect.poll(level).toBeGreaterThan(0);
+
+	// Two tracks for every season and two for the night.
+	for (const slot of ['jaro', 'leto', 'podzim', 'zima', 'noc'])
+		for (const n of [1, 2]) {
+			const res = await page.request.head(`/games/vesnicka/hudba/${slot}-${n}.mp3`);
+			expect(res.ok(), `${slot}-${n}`).toBe(true);
+		}
+	expect(errors).toEqual([]);
+});
+
 test('VESNIČKA in the center: the card, the cover and the link', async ({ page }) => {
 	await page.goto('/');
 	const card = page.getByTestId('library').locator('.gslot[data-game="vesnicka"]');
