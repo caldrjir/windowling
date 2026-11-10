@@ -79,8 +79,7 @@ No personal data beyond the user link; presence rows live for a minute.
 The hub and every game page load `music.js` (after `sync.js`). The synced key
 `gamecenter.music` (`{ src: 'game' | 'own' | 'off', url, vol, side }`) chooses the music:
 
-- `game` (default): VOIDBORN, STARSPIRE, DRIFTWOOD and Věky válek (`veky/hudba.js`, a generated
-  march whose instruments change with each age) play their own music; the other puzzle games get
+- `game` (default): VOIDBORN, STARSPIRE and DRIFTWOOD play their own music; the puzzle games get
   a generated playlist (`music-gen.js`, Web Audio, four tracks per game seeded by its id, the
   same for everyone; no audio files).
 - `own`: a YouTube, SoundCloud or Spotify link plays in a small player card on every page
@@ -159,16 +158,15 @@ keep players coming back for weeks:
   achievements, leaderboard tabs and hub stats follow). `versus: true` adds a **Score** card: who
   beat whom, from online results (by nickname) and `api.versus(id, name, 'w' | 'l' | 'd')` against
   computer players, kept in the game's save (`vs`). `freeTitle` / `freeNote` rename free play
-  (Prší, Lodě: "Proti počítači"). `palette: { a, b, c, bg }` fixes the colours for a game with its own
-  artwork (Prší: candlelit tavern, Lodě: night sea) and hides the theme picker there.
+  (Lodě: "Proti počítači"). `palette: { a, b, c, bg }` fixes the colours for a game with its own
+  artwork (Lodě: night sea) and hides the theme picker there.
 - Wording: `Kit.game({ wording })` picks the shell's words: `solve` (default: a puzzle is
   solved), `win` (board, card and two-player games: a game is won) or `play` (arcade and relax
   games: a run is finished). The catalogue's `statLabels` match (`labels`, `winLabels`, `doneLabels`).
 
 Generators guarantee a unique solution (Sudoku: digging with a solution counter, graded by a
-logic solver; Nonograms: line solver; Kakuro: combination solver with repair; Souhvězdí: bridge
-solver; Miny: no-guess fields checked by a constraint solver; Solitaire: Klondike deals proven
-winnable by a search; Mahjong: deals built by removing random free pairs in reverse; Šachy: mate-in-1/2 puzzles
+logic solver; Nonograms: line solver; Kakuro: combination solver with repair; Miny: no-guess
+fields checked by a constraint solver; Mahjong: deals built by removing random free pairs in reverse; Šachy: mate-in-1/2 puzzles
 found by `mateIn` search in positions from random lively games, opponent is an alpha-beta engine
 in a Web Worker (`sachy/ai-worker.js`); Piškvorky: threat rules plus a VCF search); where uniqueness would need
 guessing, they reveal a cell or line up front. Arcade puzzles (Pulsar, Fúze) end with
@@ -236,7 +234,7 @@ best income (both as log10 × 1000), buildings, creatures, taps, generations and
 Every puzzle can be played online, served by the Worker entry like DRIFTWOOD multiplayer.
 
 - `DuelRoom` (SQLite-backed Durable Object, one per room, 5-letter code). Two kinds:
-  - **turn** (Šachy, Piškvorky, Tanky, Červíci, Prší, Dáma, Lodě, Člověče, Osadníci): two seats, the room keeps the move list and accepts a move
+  - **turn** (Šachy, Piškvorky, Tanky, Červíci, Dáma, Lodě, Člověče, Osadníci): two seats, the room keeps the move list and accepts a move
     only from the seat to move (`seatToMove`: colours swap every round). It also records the
     result (game end reported by the clients, resignation, draw by agreement, or a win claimed
     when the opponent has been gone 60 s) and handles rematches. The clients check the rules
@@ -255,7 +253,7 @@ Every puzzle can be played online, served by the Worker entry like DRIFTWOOD mul
   with `online: { kind: 'turn' | 'race', diffs? }` in `Kit.game`. Turn games get
   `opts.net` (`side`, `moves`, `send`, `onMove`, `end`, `resign`; a move is up to 320 characters and a
   game's moves up to 100 kB; Tanky sends the aim and the impact points, Červíci the whole turn result
-  (explosions and every worm's position and health), so both terrains stay identical; Prší shuffles the deck from the round seed and sends only actions; Lodě keeps each fleet on its own device, a move carries the result of the opponent's last shot plus a new shot; Člověče rolls the die from the round seed and the turn number and sends only which pieces moved; Osadníci derives the island, the dice, the card deck and every robbery from the round seed, and a move is the list of one player's actions until play passes to the other, e.g. `D,T03,s30,E`); race games implement
+  (explosions and every worm's position and health), so both terrains stay identical; Lodě keeps each fleet on its own device, a move carries the result of the opponent's last shot plus a new shot; Člověče rolls the die from the round seed and the turn number and sends only which pieces moved; Osadníci derives the island, the dice, the card deck and every robbery from the round seed, and a move is the list of one player's actions until play passes to the other, e.g. `D,T03,s30,E`); race games implement
   `progress()` (0..1) and use the normal `api.solved` / `api.failed`. Results go to
   `<id>.save.v1` (`stats.online`), the room link is `?duel=<code>`.
 

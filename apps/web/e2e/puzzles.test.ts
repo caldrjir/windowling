@@ -7,12 +7,10 @@ const PUZZLES = [
 	'sudoku',
 	'nonogram',
 	'kakuro',
-	'souhvezdi',
 	'pulsar',
 	'fuze',
 	'miny',
 	'omalovanky',
-	'solitaire',
 	'mahjong',
 	'skladacka',
 	'sachy',
@@ -22,22 +20,12 @@ const PUZZLES = [
 	'rybky',
 	'mlsoun',
 	'had',
-	'impakt',
-	'skladnik',
 	'tanky',
 	'cervici',
-	'bubliny',
-	'letni',
 	'zlatokop',
 	'skokan',
-	'smik',
-	'veky',
-	'ptaci',
-	'pirko',
-	'mrakodrap',
 	'vlak',
 	'bombardak',
-	'prsi',
 	'dama',
 	'lode',
 	'clovece',
@@ -113,33 +101,6 @@ test('nonogram cells are filled by tapping', async ({ page }) => {
 	const cell = page.locator('.ng-c').first();
 	await cell.click();
 	await expect(cell).toHaveClass(/ f| x/);
-});
-
-test('constellation lines are drawn between two stars', async ({ page }) => {
-	await startFree(page, 'souhvezdi');
-	// Find two stars that are neighbours in the puzzle and connect them.
-	const pair = await page.evaluate(() => {
-		const stars = [...document.querySelectorAll<SVGGElement>('.hs-s')];
-		for (const a of stars) {
-			const [ax, ay] = (a.getAttribute('transform') ?? '').match(/[\d.]+/g)?.map(Number) ?? [];
-			for (const b of stars) {
-				if (a === b) continue;
-				const [bx, by] = (b.getAttribute('transform') ?? '').match(/[\d.]+/g)?.map(Number) ?? [];
-				if (ax === bx || ay === by) return [a.dataset.i, b.dataset.i];
-			}
-		}
-		return null;
-	});
-	expect(pair).not.toBeNull();
-	await page.locator(`.hs-s[data-i="${pair?.[0]}"]`).click();
-	await page.locator(`.hs-s[data-i="${pair?.[1]}"]`).click();
-	// Either a line appears or the move counts as a mistake (when the pair is not in the solution).
-	await expect
-		.poll(
-			async () =>
-				(await page.locator('.hs-l').count()) + (await page.locator('#kTimer em').count()),
-		)
-		.toBeGreaterThan(0);
 });
 
 test('the daily puzzle builds a streak shared with the calendar', async ({ page }) => {
@@ -254,28 +215,6 @@ test('omalovanky bucket fills a whole region and moves on to the next colour', a
 	await expect(page.locator('.om-sw.done')).toHaveCount(1);
 });
 
-test('solitaire sends a tapped card to a legal place or draws from the stock', async ({ page }) => {
-	await startFree(page, 'solitaire');
-	const moves = () => page.evaluate('Kit._test.inst.getState().moves');
-	await page.locator('.sl-slot.s').dispatchEvent('pointerdown');
-	await expect.poll(moves).toBe(1);
-	await expect.poll(() => page.locator('.sl-card.up').count()).toBeGreaterThan(7);
-});
-
-test('solitaire finishes by itself once no card is face down', async ({ page }) => {
-	await page.goto('/games/solitaire/index.html');
-	// A Klondike game with every card but the kings home and the kings face up in the tableau.
-	await page.evaluate(`(() => {
-		const f = [0, 1, 2, 3].map((s) => [...Array(12)].map((_, k) => ({ id: s * 13 + k, s, r: k + 1, up: true })));
-		const t = [0, 1, 2, 3].map((s) => [{ id: s * 13 + 12, s, r: 13, up: true }]).concat([[], [], []]);
-		Kit._test.save.cur = { kind: 'free', key: null, diff: 'klondike1', seed: 1, time: 10, mistakes: 0, hints: 0,
-			state: { S: { mode: 'klondike1', stock: [], waste: [], f, t, cells: [], draw: 1 }, hist: [], moves: 5 } };
-	})()`);
-	await page.reload();
-	await page.locator('[data-k="resume"]').click();
-	await expect(page.locator('#kModal:not([hidden]) .k-result')).toBeVisible({ timeout: 8000 });
-});
-
 test('mahjong sends tapped tiles to the tray where a matching pair vanishes', async ({ page }) => {
 	await startFree(page, 'mahjong');
 	const left = Number(await page.locator('.mj-left').textContent());
@@ -352,22 +291,6 @@ test('skladacka joins matching loose pieces and picks a piece under another', as
 	expect(c3b[0] - c3[0]).toBeGreaterThan(10);
 });
 
-test('letni runs the 100 m by alternating feet and scores points', async ({ page }) => {
-	await startFree(page, 'letni', 'sprint');
-	await expect(page.locator('.lh-cv')).toBeVisible();
-	// The same foot twice does not count, alternating does.
-	await page.waitForTimeout(2600);
-	await page.keyboard.press('ArrowLeft');
-	await page.keyboard.press('ArrowLeft');
-	const one = (await page.evaluate('Kit._test.inst._state()')) as { v: number };
-	await page.keyboard.press('ArrowRight');
-	const two = (await page.evaluate('Kit._test.inst._state()')) as { v: number };
-	expect(two.v).toBeGreaterThan(one.v);
-	await page.evaluate('Kit._test.inst._auto(true)');
-	await expect(page.locator('.k-result')).toBeVisible({ timeout: 30_000 });
-	await expect(page.locator('.k-result')).toContainText(/bod/);
-});
-
 test('zlatokop drops the claw, hauls a catch and pays for it', async ({ page }) => {
 	await startFree(page, 'zlatokop', 'spech');
 	await expect(page.locator('.zk-cv')).toBeVisible();
@@ -406,53 +329,6 @@ test('skokan bounces off platforms and climbs while steering', async ({ page }) 
 			},
 		)
 		.toBeGreaterThan(1500);
-});
-
-test('smik slices fruit with a swipe and scores', async ({ page }) => {
-	await startFree(page, 'smik', 'zen');
-	const cv = page.locator('.sm-cv');
-	await expect(cv).toBeVisible();
-	// Wait for a fruit in the air, then swipe straight through it with the mouse.
-	let fruit: { x: number; y: number } | undefined;
-	await expect
-		.poll(
-			async () => {
-				const list = (await page.evaluate('Kit._test.inst._fruits()')) as {
-					x: number;
-					y: number;
-					bomb: boolean;
-				}[];
-				fruit = list.find((f) => !f.bomb && f.y < 380 && f.y > 40);
-				return Boolean(fruit);
-			},
-			{ timeout: 15_000 },
-		)
-		.toBe(true);
-	await page.evaluate(
-		`(() => { const f = Kit._test.inst._fruits().find(q => !q.bomb && q.y < 380); Kit._test.inst._cut(f.x - 60, f.y, f.x + 60, f.y); })()`,
-	);
-	expect(
-		((await page.evaluate('Kit._test.inst._state()')) as { score: number }).score,
-	).toBeGreaterThan(0);
-	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(6)');
-	await expect(page.locator('.k-result')).toBeVisible({ timeout: 40_000 });
-	await expect(page.locator('.k-result')).toContainText(/bod/);
-});
-
-test('veky trains units that march, fight and earn experience', async ({ page }) => {
-	await startFree(page, 'veky', 'lehka');
-	await expect(page.locator('.vk-cv')).toBeVisible();
-	const before = (await page.evaluate('Kit._test.inst._state()')) as { gold: number };
-	await page.locator('.vk-card[data-u="0"]').click();
-	const after = (await page.evaluate('Kit._test.inst._state()')) as { gold: number; queue: number };
-	expect(after.gold).toBeLessThan(before.gold);
-	expect(after.queue).toBe(1);
-	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(6)');
-	await expect
-		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { xp: number }).xp, {
-			timeout: 40_000,
-		})
-		.toBeGreaterThan(0);
 });
 
 test('sachy lets the player pick the promotion piece', async ({ page }) => {
@@ -670,113 +546,6 @@ test('had: the snake waits for a direction, eats a fruit, grows and pauses', asy
 	expect(errors).toEqual([]);
 });
 
-test('impakt: the ship moves and fires, enemies come, a special weapon and the boss work', async ({
-	page,
-	isMobile,
-}) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await startFree(page, 'impakt');
-	type IpState = {
-		ship: { x: number; y: number };
-		shots: number;
-		foes: number;
-		boss: { hp: number } | null;
-		special: string | null;
-		charges: number;
-		retro: boolean;
-	};
-	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<IpState>;
-	// (Enemies must not end the run while the test looks at the controls.)
-	await page.evaluate('Kit._test.inst._god()');
-	// The ship fires on its own and enemy waves arrive.
-	await expect.poll(async () => (await state()).shots, { timeout: 5000 }).toBeGreaterThan(0);
-	await expect.poll(async () => (await state()).foes, { timeout: 8000 }).toBeGreaterThan(0);
-	// Moving: keys on computers, dragging on phones.
-	const y0 = (await state()).ship.y;
-	if (isMobile) {
-		const box = await page.locator('.ip-board').boundingBox();
-		if (!box) throw new Error('no board');
-		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-		await page.mouse.down();
-		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 40, { steps: 5 });
-		await page.mouse.up();
-	} else {
-		await page.keyboard.down('ArrowUp');
-		await page.waitForTimeout(400);
-		await page.keyboard.up('ArrowUp');
-	}
-	expect((await state()).ship.y).toBeLessThan(y0);
-	// A carrier's bonus gives the special weapon; Space (or the button) fires it.
-	await page.evaluate("Kit._test.inst._give('missile')");
-	await expect.poll(async () => (await state()).special).toBe('missile');
-	if (isMobile) await page.locator('.ip-fire').tap();
-	else await page.keyboard.press(' ');
-	await expect.poll(async () => (await state()).charges).toBe(2);
-	// The boss comes at the end of the sector.
-	await page.evaluate('Kit._test.inst._boss()');
-	await expect
-		.poll(async () => (await state()).boss?.hp ?? 0, { timeout: 5000 })
-		.toBeGreaterThan(0);
-	// The retro screen switch.
-	await page.locator('.ip-retro').click();
-	await expect(page.locator('.ip-wrap')).toHaveClass(/retro/);
-	expect((await state()).retro).toBe(true);
-	expect(errors).toEqual([]);
-});
-
-test('skladnik: the worker pushes a crate, jumps onto it, and a full row disappears', async ({
-	page,
-	isMobile,
-}) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await startFree(page, 'skladnik');
-	type SkState = { worker: { c: number; r: number }; rows: number; score: number };
-	const I = 'Kit._test.inst';
-	const state = () => page.evaluate(`${I}._state()`) as Promise<SkState>;
-	const row = (y: number) => page.evaluate(`${I}._row(${y})`) as Promise<string>;
-	const right = () =>
-		isMobile ? page.locator('.sk-pad [data-m="1"]').tap() : page.keyboard.press('ArrowRight');
-	const jump = () =>
-		isMobile ? page.locator('.sk-pad [data-j]').tap() : page.keyboard.press('ArrowUp');
-	// An empty warehouse with no cranes, the worker on the floor and a crate next to him.
-	await page.evaluate(`${I}._calm(); ${I}._clear(5, 10); ${I}._place(6, 10)`);
-	await right();
-	await expect.poll(() => row(10)).toBe('.......b....');
-	await expect.poll(async () => (await state()).worker.c).toBe(6);
-	// Jump and step onto the crate.
-	await jump();
-	await page.waitForTimeout(60);
-	await right();
-	await expect.poll(async () => (await state()).worker).toEqual({ c: 7, r: 9, dead: 0 });
-	// Jumping while holding a direction lands again (no walking on air).
-	await page.evaluate(`${I}._clear(2, 10)`);
-	if (isMobile) {
-		await page.locator('.sk-pad [data-j]').tap();
-		await page.locator('.sk-pad [data-m="1"]').dispatchEvent('pointerdown');
-		await page.waitForTimeout(900);
-		await page.locator('.sk-pad [data-m="1"]').dispatchEvent('pointerup');
-	} else {
-		await page.keyboard.press('ArrowUp');
-		await page.keyboard.down('ArrowRight');
-		await page.waitForTimeout(900);
-		await page.keyboard.up('ArrowRight');
-	}
-	await expect.poll(async () => (await state()).worker.r).toBe(10);
-	// (moved right at least one cell; how far depends on the frame rate)
-	expect((await state()).worker.c).toBeGreaterThan(2);
-	// A full row disappears and scores.
-	await page.evaluate(
-		`${I}._clear(5, 9); for (let x = 0; x < 12; x++) ${I}._place(x, 10); ${I}._check()`,
-	);
-	await expect.poll(async () => (await state()).rows).toBe(1);
-	expect(await row(10)).toBe('............');
-	expect((await state()).score).toBeGreaterThan(0);
-	await expect(page.locator('.sk-rows')).toHaveText('1 / 8');
-	expect(errors).toEqual([]);
-});
-
 test('tanky: two players on one device take turns, and a resignation names the winner', async ({
 	page,
 }) => {
@@ -835,97 +604,6 @@ test('cervici: two teams take turns on one device; a shot changes the island', a
 	expect(errors).toEqual([]);
 });
 
-test('bubliny: a shot sticks to the cluster, swap and pause work', async ({ page }) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await startFree(page, 'bubliny');
-	type BbState = { shots: number; left: number; flying: boolean; ammo: number[] };
-	const state = () => page.evaluate('Kit._test.inst._state()') as Promise<BbState>;
-	const before = await state();
-	// Swap exchanges the cannon bubble with the next one.
-	await page.locator('[data-b="swap"]').click();
-	expect((await state()).ammo).toEqual([before.ammo[1], before.ammo[0]]);
-	// A shot straight up flies and lands in the cluster (it sticks or pops a group).
-	await page.evaluate('Kit._test.inst._aim(90); Kit._test.inst._shoot()');
-	await expect.poll(async () => (await state()).shots).toBe(1);
-	await expect.poll(async () => (await state()).flying).toBe(false);
-	expect((await state()).left).not.toBe(before.left);
-	await page.locator('[data-b="pause"]').click();
-	await expect(page.locator('.bb-over')).toBeVisible();
-	await page.locator('.bb-over [data-b="resume"]').click();
-	await expect(page.locator('.bb-over')).toBeHidden();
-	expect(errors).toEqual([]);
-});
-
-test('ptaci launches a bird from the slingshot and the forts break', async ({ page }) => {
-	await startFree(page, 'ptaci', 'lehka');
-	const cv = page.locator('.pt-cv');
-	await expect(cv).toBeVisible();
-	// Drag back from the slingshot with the mouse and let go: the bird flies.
-	const box = await cv.boundingBox();
-	if (!box) throw new Error('no canvas');
-	await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.5);
-	await page.mouse.down();
-	await page.mouse.move(box.x + box.width * 0.3 - 120, box.y + box.height * 0.5 + 80, { steps: 5 });
-	await page.mouse.up();
-	await expect
-		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { shots: number }).shots)
-		.toBe(1);
-	// The autoplayer aims at the pigs until the level ends with a result.
-	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
-	await expect(page.locator('.k-result')).toBeVisible({ timeout: 60_000 });
-});
-
-test('pirko flaps through the pipes and scores', async ({ page }) => {
-	await startFree(page, 'pirko', 'lehka');
-	const cv = page.locator('.pk-cv');
-	await expect(cv).toBeVisible();
-	// The first tap starts the flight.
-	await cv.click();
-	await expect
-		.poll(async () => ((await page.evaluate('Kit._test.inst._state()')) as { phase: string }).phase)
-		.not.toBe('ready');
-	// The autopilot flies through a few gaps.
-	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
-	await expect
-		.poll(
-			async () => ((await page.evaluate('Kit._test.inst._state()')) as { score: number }).score,
-			{
-				timeout: 20_000,
-			},
-		)
-		.toBeGreaterThan(2);
-});
-
-test('mrakodrap drops floors onto the tower and scores', async ({ page }) => {
-	await startFree(page, 'mrakodrap', 'lehka');
-	const cv = page.locator('.md-cv');
-	await expect(cv).toBeVisible();
-	const state = () =>
-		page.evaluate('Kit._test.inst._state()') as Promise<{
-			phase: string;
-			floors: number;
-			lives: number;
-		}>;
-	// The autopilot drops floors precisely. (A tap at a random moment may land a floor so far
-	// off-centre that the tower falls at once, so the tower is built first.)
-	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(4)');
-	await expect.poll(async () => (await state()).floors, { timeout: 20_000 }).toBeGreaterThan(3);
-	// A tap drops the hanging floor: it lands, falls off (a life) or topples the tower.
-	await page.evaluate('Kit._test.inst._auto(false)');
-	const before = await state();
-	await expect
-		.poll(
-			async () => {
-				await cv.click();
-				const s = await state();
-				return s.floors !== before.floors || s.lives < before.lives || s.phase === 'end';
-			},
-			{ timeout: 10_000 },
-		)
-		.toBe(true);
-});
-
 test("vlak plays the first original scene with the author's solution", async ({ page }) => {
 	await page.goto('/games/vlak/index.html');
 	await expect(page.locator('.k-hero h1')).toBeVisible();
@@ -971,25 +649,6 @@ test('bombardak: standing on your own bomb costs a life and restarts the arena',
 	await expect(page.locator('.bb-hearts i')).toHaveCount(2);
 });
 
-test('prsi: a full game against three computer players reaches a result', async ({ page }) => {
-	test.setTimeout(120_000);
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// Prší has only the game against the computer, online and the score: no daily, Path or quests.
-	await page.goto('/games/prsi/index.html');
-	await expect(page.locator('.k-online')).toBeVisible();
-	await expect(page.locator('.k-score')).toBeVisible();
-	await expect(page.locator('.k-daily, .k-path, .k-quests')).toHaveCount(0);
-	await startFree(page, 'prsi', 'tri');
-	await expect(page.locator('.pr-hand .pr-card')).toHaveCount(4);
-	await page.evaluate('Kit._test.inst._speed(4); Kit._test.inst._autoplay()');
-	await expect(page.locator('.k-result')).toBeVisible({ timeout: 90_000 });
-	// the score now shows who beat whom
-	await page.locator('#kHome').click();
-	await expect(page.locator('.k-score tr')).not.toHaveCount(0);
-	expect(errors).toEqual([]);
-});
-
 test('lode: ships are dragged from the harbour onto the sea and turned by a tap', async ({
 	page,
 	isMobile,
@@ -1031,19 +690,5 @@ test('lode: ships are dragged from the harbour onto the sea and turned by a tap'
 	await expect(page.locator('.k-result')).toBeVisible();
 	await page.locator('#kHome').click();
 	await expect(page.locator('.k-score tr')).not.toHaveCount(0);
-	expect(errors).toEqual([]);
-});
-
-test('prsi: the card gallery shows the pictures and opens one up close', async ({ page }) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/games/prsi/index.html');
-	await page.locator('[data-k="view"]').click();
-	await expect(page.locator('.pr-gal-row canvas').first()).toBeVisible({ timeout: 30_000 });
-	await page.locator('.pr-gal-row button').first().click();
-	await expect(page.locator('.pr-lb img')).toBeVisible();
-	await expect(page.locator('.pr-lb figcaption')).not.toBeEmpty();
-	await page.keyboard.press('Escape');
-	await expect(page.locator('.pr-lb')).toBeHidden();
 	expect(errors).toEqual([]);
 });
