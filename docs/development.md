@@ -81,6 +81,11 @@ Convention: each completed iteration is at least one minor release.
   the launcher does not run headless). The script compresses the exports with gltfpack (a dev
   dependency, nothing to install). The compressed GLBs are committed and checked by
   `hollowsun-assets.test.ts`, so CI needs no Blender.
+- HOLLOW SUN music: put the downloaded tracks (Suno) into a folder outside the repo, fill in `src`
+  and `suno` (the track link) per track in `apps/web/scripts/hollowsun-music.json`, then run
+  `pnpm --filter @windowling/web hollowsun:music D:/hollowsun-audio` (needs `ffmpeg` with libopus
+  on the PATH or `FFMPEG`). The script cuts the loops on bar lines, masters them to −16 LUFS and
+  writes Opus files plus a manifest that `hollowsun-music.test.ts` checks.
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without
   credentials). E2E checks the hub, the language contract, launching VOIDBORN and stats.
 

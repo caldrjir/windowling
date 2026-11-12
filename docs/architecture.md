@@ -290,6 +290,27 @@ each from the first level of its Bible range. The benchmark keeps its P0 Thrall/
 check the hound and bowman stats and the skills against them; simulation tests cover the wave mix,
 the leap, the bowman's range and arrows stopped by pillars.
 
+Music (P1): `js/hudba.js` plays the Bible's adaptive layers (Audio direction):
+
+- the main menu,
+- the Act I region as explore and combat layers, which switch with a 2 s crossfade (combat while
+  an enemy is within 11 m or within 4 s of a hit),
+- the Kiln Warden as three phase layers,
+- stingers for level up, a unique drop, death and the boss kill, which duck the music by 6 dB.
+
+The layers of one group are loops of the same length started together, so a crossfade stays on the
+beat. The benchmark, the input test and the asset test play no music. It follows `GCMusic.gameMusic`
+and `GCMusic.level` like the other action games.
+
+`scripts/hollowsun-music.mjs` (`pnpm --filter @windowling/web hollowsun:music [folder]`) makes the
+tracks from downloaded sources (Suno, allowed for final music by D32) listed in
+`scripts/hollowsun-music.json`. It cuts loops to whole bars (`bars` × 4 beats at `bpm`), normalises
+them to −16 LUFS / −1 dBTP (two-pass loudnorm) and encodes Opus 128 kb/s into
+`static/games/hollowsun/assets/music/` with a manifest. `hollowsun-music.test.ts` checks the files
+(Opus, loudness, loop length, one length per group, the Suno link D32 asks for). Without a manifest
+the game stays silent, so `hollowsun` joins `OWN_MUSIC` in `static/games/music.js` together with the
+first tracks.
+
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three
 kilns on the edge. The boss comes from the exported Bible data (`bosses.bo_kiln`: level 12, HP ×60,

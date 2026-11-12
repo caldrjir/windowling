@@ -186,7 +186,13 @@
 
   /* ---------- zvuk: krátké procedurální efekty (Web Audio) ---------- */
   let AC = null, master = null;
-  function audioInit() { if (AC) return; try { AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0.35; master.connect(AC.destination); } catch (e) { AC = null; } }
+  function audioInit() { if (AC) return; try { AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0.35; master.connect(AC.destination); } catch (e) { AC = null; } if (AC && window.HSMusic) { HSMusic.init(AC); HSMusic.state(mode === 'menu' ? 'menu' : musicFor()); } }
+  // hudba podle obrazovky: menu, aréna (explore/combat), boss; benchmark, test vstupu a test assetů bez hudby
+  const musicFor = () => (mode === 'assets' ? 'none' : !S ? 'menu' : S.mode === 'boss' ? 'boss' : S.mode === 'bench' || LAT.on || !S.progress ? 'none' : 'arena');
+  const music = (name) => { if (window.HSMusic) HSMusic.state(name || musicFor()); };
+  const sting = (id) => !!(window.HSMusic && HSMusic.sting(id));
+  let lastFight = -99;
+  addEventListener('pointerdown', audioInit, { once: true }); addEventListener('keydown', audioInit, { once: true });
   function noise(dur, f0, f1, vol, type) {
     if (!AC) return; const n = AC.createBufferSource(); const len = Math.floor(AC.sampleRate * dur); const buf = AC.createBuffer(1, len, AC.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
     n.buffer = buf; const f = AC.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.setValueAtTime(f0, AC.currentTime); f.frequency.exponentialRampToValueAtTime(f1, AC.currentTime + dur); const g = AC.createGain(); g.gain.value = vol; n.connect(f).connect(g).connect(master); n.start();
@@ -302,7 +308,7 @@
   function handle(evs) {
     for (const ev of evs) {
       switch (ev.t) {
-        case 'hit': num(ev.x, ev.z, ev.dmg, (ev.crit ? 'crit ' : '') + (ev.type === 'fire' ? 'fire' : '')); SFX.hit(ev.crit); break;
+        case 'hit': lastFight = renderT; num(ev.x, ev.z, ev.dmg, (ev.crit ? 'crit ' : '') + (ev.type === 'fire' ? 'fire' : '')); SFX.hit(ev.crit); break;
         case 'burn': num(ev.x, ev.z, ev.dmg, 'fire', 1.6); break;
         case 'miss': num(ev.x, ev.z, t('miss'), 'info'); break;
         case 'swing': { const e = flat(meshFor('swing', 0.6, ev.r, ev.w), M.swing, ev.x, ev.z, ev.face, 1, 0.6); fx(e, 0.14, (f, k) => f.e.setLocalScale(0.85 + k * 0.2, 1, 0.85 + k * 0.2)); SFX.swing(); break; }
@@ -312,29 +318,29 @@
         case 'tele': teleVisual(ev); SFX.tele(); break;
         case 'hitstop': hitstop = Math.min(120, Math.max(hitstop, ev.ms)); break;
         case 'shake': shake = Math.max(shake, ev.amp); break;
-        case 'hurt': num(ev.x, ev.z, '-' + ev.dmg, 'hurt', 2.4); SFX.hurt(); break;
+        case 'hurt': lastFight = renderT; num(ev.x, ev.z, '-' + ev.dmg, 'hurt', 2.4); SFX.hurt(); break;
         case 'evade': num(ev.x, ev.z, t('evade'), 'info', 2.4); break;
         case 'dodged': num(ev.x, ev.z, t('dodged'), 'info', 2.4); break;
         case 'nores': flashSkill(ev.skill); break;
         case 'death': { const v = EV.get(ev.id); if (v) { v.dying = 0.001; if (v.c) { charMat(v.c, null); charClip(v.c, 'death', 1, 0.08); } } SFX.death(); break; }
-        case 'over': gameOver(); break;
+        case 'over': music('none'); sting('AU_mus_sting_2'); gameOver(); break;
         case 'boss': document.getElementById('bossbar').hidden = false; document.getElementById('boss-n').textContent = ev.n; break;
-        case 'phase': num(S.player.x, S.player.z, t('phaseN')[ev.phase], 'lvl', 3); toast(t('phaseN')[ev.phase]); shake = Math.max(shake, 0.5); tone(110, 55, 0.9, 0.6, 'sawtooth'); break;
+        case 'phase': if (window.HSMusic) HSMusic.phase(ev.phase); num(S.player.x, S.player.z, t('phaseN')[ev.phase], 'lvl', 3); toast(t('phaseN')[ev.phase]); shake = Math.max(shake, 0.5); tone(110, 55, 0.9, 0.6, 'sawtooth'); break;
         case 'enrage': toast(t('enraged')); tone(90, 60, 1.2, 0.6, 'sawtooth'); break;
         case 'immune': num(ev.x, ev.z, t('immune'), 'info', 3.4); break;
         case 'quenched': toast(t('quenchedT')); noise(0.8, 2000, 200, 0.4, 'highpass'); break;
         case 'quench': if (ev.safe) num(S.player.x, S.player.z, t('safeT'), 'info', 2.6); break;
         case 'qslam': qslamVisual(ev); break;
         case 'breath': case 'kilnfire': { const e = flat(meshFor('cone' + ev.w, 0, 1, ev.w), M.swing, ev.x, ev.z, ev.face, ev.r, 0.05); fx(e, ev.dur || 0.5, (f, k) => f.e.setLocalScale(ev.r * (0.3 + 0.7 * Math.min(1, k * 3)), 1, ev.r * (0.3 + 0.7 * Math.min(1, k * 3)))); noise(ev.dur || 0.5, 600, 200, 0.3, 'lowpass'); break; }
-        case 'victory': victory(ev); break;
+        case 'victory': music('none'); sting('AU_mus_sting_8'); victory(ev); break;
         case 'leap': noise(0.18, 300, 900, 0.25); break;
         case 'shoot': noise(0.12, ev.fire ? 900 : 2600, ev.fire ? 300 : 1200, 0.18, 'bandpass'); break;
-        case 'drop': tone(ev.rar === 'unique' ? 660 : ev.rar === 'rare' ? 520 : 380, 760, 0.18, ev.rar === 'common' ? 0.05 : 0.12, 'triangle'); break;
+        case 'drop': if (ev.rar === 'unique' && sting('AU_mus_sting_3')) break; tone(ev.rar === 'unique' ? 660 : ev.rar === 'rare' ? 520 : 380, 760, 0.18, ev.rar === 'common' ? 0.05 : 0.12, 'triangle'); break;
         case 'pickup': { const d = HS.describe(ev.item); num(S.player.x, S.player.z, t('picked') + ': ' + d.name, 'info r-' + d.rar, 2.6); SAVE.items = (SAVE.items || 0) + 1; saveGear(); break; }
         case 'equip': case 'unequip': case 'discard': saveGear(); break;
         case 'cantequip': toast(ev.why in T[LANG].why ? t('why')[ev.why] : `${t('whyAttr')} ${String(ev.why).toUpperCase()}`); break;
         case 'invfull': toast(t('invFull')); break;
-        case 'levelup': num(S.player.x, S.player.z, t('lvlUp') + ' ' + ev.level, 'lvl', 3); tone(392, 784, 0.5, 0.25, 'triangle'); tone(523, 1046, 0.6, 0.18, 'sine'); saveChar(); break;
+        case 'levelup': num(S.player.x, S.player.z, t('lvlUp') + ' ' + ev.level, 'lvl', 3); if (!sting('AU_mus_sting_1')) { tone(392, 784, 0.5, 0.25, 'triangle'); tone(523, 1046, 0.6, 0.18, 'sine'); } saveChar(); break;
         case 'unlock': toast(t('unlocked') + ': ' + t({ ak_brand: 'brand', ak_charge: 'charge', ak_slam: 'slam', ak_bulwark: 'bulwark', ak_warcry: 'warcry' }[ev.skill] || 'cleave')); break;
         case 'locked': flashSkill(ev.skill, t('locked') + ' ' + ev.req); break;
         case 'alloc': saveChar(); break;
@@ -551,7 +557,7 @@
   function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
   function menu() {
     if (typeof bossScene === 'function' && BOSS_G) bossScene(false); document.getElementById('bossbar').hidden = true;
-    mode = 'menu'; document.getElementById('hud').hidden = true;
+    mode = 'menu'; document.getElementById('hud').hidden = true; music('menu');
     screen.innerHTML = `<div class="panel"><span class="muted">ECHOES OF THE HOLLOW SUN · ${t('sub')}</span><h1>Hollow Sun</h1><p>${t('pitch')}</p>${keysHtml()}${opt()}
       <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-boss" title="${t('bossRec')}">${t('boss')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
       <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bossKills ? ' · ' + t('bossKills') + ': ' + SAVE.bossKills + ' (' + SAVE.bossBest + ' s)' : ''}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}${SAVE.latency ? ' · ' + t('latency') + ': p95 ' + SAVE.latency.presentP95 + ' ms' : ''}</span></div>`;
@@ -563,6 +569,7 @@
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
     S = SIM.create({ mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss', char: m === 'arena' || m === 'boss' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
     if (S.progress) saveChar();
+    music();
     document.getElementById('bossbar').hidden = !S.boss; bossScene(!!S.boss); slowmo = 0;
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
@@ -619,7 +626,7 @@
     app.assets.add(asset); app.assets.load(asset);
   }
   function assetsMode() {
-    audioInit(); clearWorld(); S = null; mode = 'assets'; screen.innerHTML = ''; document.getElementById('hud').hidden = true; P.enabled = false; zoom = 14; camT.set(0, 0, 0);
+    audioInit(); clearWorld(); S = null; mode = 'assets'; music('none'); screen.innerHTML = ''; document.getElementById('hud').hidden = true; P.enabled = false; zoom = 14; camT.set(0, 0, 0);
     AS.root = new pc.Entity(); app.root.addChild(AS.root); AS.items = []; AS.loaded = 0; AS.error = null; AS.char = null; AS.res = null; AS.clip = null; AS.crowd = []; AS.measure = null; AS.crowdRes = null;
     panel();
     fetch('assets/manifest.json').then((r) => r.json()).then((man) => {
@@ -715,6 +722,7 @@
         renderT += dt;
       }
       latCheck();
+      if (S.mode === 'arena' && window.HSMusic) { const p = S.player; const near = S.enemies.some((e) => !e.dead && Math.hypot(e.x - p.x, e.z - p.z) < 11); HSMusic.combat(near || renderT - lastFight < 4); }
       syncWorld(hitstop > 0 ? 0 : dt);
       hud();
     }
@@ -784,7 +792,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get boss() { return S && S.boss; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();
