@@ -533,18 +533,99 @@ const Scene = (() => {
     const hs = house(c, k, x, y, w, h, { wall: walls[seed % walls.length], roof: roofs[(seed * 3) % roofs.length], depth: 22 + r() * 8, windows: r() < 0.5 ? 1 : 2, ww: 7, doorW: 8, chimney: [0.3 + r() * 0.3, 0.5, 9, 5], timber: r() < 0.3 ? '#8a5a3c' : null, box: r() < 0.5, shutters: r() < 0.3 ? '#4f7a4a' : null });
     if (hs.chimneyTop && (k.season === 3 || k.night > 0.3 || seed % 3 === 0)) k.emit(hs.chimneyTop[0], hs.chimneyTop[1], 'smoke', 0.5);
   }
+  // ── Kostelík (vylepšení Kaplička): gotický, roste se součtem mistrovství všech řemesel v pokolení ──
+  // 1 kamenná kaple se zvoničkou na hřebeni · 2 (3 mistrovství) věž s cimbuřím · 3 (10) štíhlá jehla
+  // · 4 (25) hodiny, barevná okna a hřbitůvek · 5 (50) zlacená jehla a fiály na rozích věže.
+  const CHURCH_AT = [0, 3, 10, 25, 50];
+  const masteries = st => (st ? BUILDINGS.reduce((a, b) => a + Econ.milestonesOf(st.owned[b.id] || 0), 0) : 0);
+  const churchLevel = st => CHURCH_AT.filter(n => masteries(st) >= n).length;
+  const CHURCH = { x: 584, y: 304 };
+  // Všechno ve zkosení stavení: hloubka = (0,62; −0,4) na jednotku.
+  const dep = (p, u) => [p[0] + 0.62 * u, p[1] - 0.4 * u];
+  function box(c, x0, y, w, h, d, wall) {
+    poly(c, [x0 + w, y, x0 + w + 0.62 * d, y - 0.4 * d, x0 + w + 0.62 * d, y - 0.4 * d - h, x0 + w, y - h], shade(wall, 0.8), OL);
+    poly(c, [x0, y, x0 + w, y, x0 + w, y - h, x0, y - h], wall, OL);
+  }
+  // Lomené (gotické) okno nebo dveře, (x, y) je střed spodní hrany; ve dne sklo, v noci svítí.
+  function lancet(c, k, x, y, w, h, o = {}) {
+    const lit = k.night > 0.35 && !o.dark, path = (rr, top, dy) => { c.beginPath(); c.moveTo(x - rr, y + dy); c.lineTo(x - rr, top + rr * 1.4); c.quadraticCurveTo(x - rr, top, x, top - rr * 0.4); c.quadraticCurveTo(x + rr, top, x + rr, top + rr * 1.4); c.lineTo(x + rr, y + dy); c.closePath(); };
+    path(w / 2 + 1.5, y - h - 1.5, 1.5); c.fillStyle = o.frame || '#c9c0ae'; c.fill(); c.lineWidth = 1.2; c.strokeStyle = OL; c.stroke();
+    path(w / 2, y - h, 0); c.fillStyle = lit ? '#ffd56a' : o.glass || '#5e7fa6'; c.fill();
+    if (lit && !o.noGlow) k.light(x, y - h / 2, w * 2.4, 'rgba(255,200,90,');
+    if (o.bars) { line(c, x, y - h + 1, x, y, o.frame || '#c9c0ae', 1); line(c, x - w / 2, y - h * 0.45, x + w / 2, y - h * 0.45, o.frame || '#c9c0ae', 1); }
+  }
+  // Okno na boční zdi lodi (u = hloubka od průčelí, v = výška nad zemí), kreslí se ve zkosení zdi.
+  function sideLancet(c, k, R, y, u, v, w, h, o) {
+    c.save(); c.transform(0.62, -0.4, 0, 1, R, y); lancet(c, k, u, -v, w, h, { ...o, noGlow: true, bars: true }); c.restore();
+    if (k.night > 0.35) k.light(R + 0.62 * u, y - 0.4 * u - v - h / 2, w * 2.4, 'rgba(255,200,90,');
+  }
+  function rose(c, k, x, y, r, frame) {
+    const lit = k.night > 0.35;
+    circ(c, x, y, r + 1.4, frame, OL); circ(c, x, y, r, lit ? '#ffd56a' : '#5e7fa6');
+    if (lit) k.light(x, y, r * 4, 'rgba(255,200,90,');
+    line(c, x - r, y, x + r, y, frame, 1); line(c, x, y - r, x, y + r, frame, 1);
+  }
+  // Jehlan nad čtvercovým vrškem (přední hrana x0..x0+w ve výšce y, hloubka d); vrací vrchol.
+  function pyramid(c, k, x0, y, w, d, vh, col, ov = 1) {
+    const a = [x0 - ov, y + 0.5], b = [x0 + w + ov, y + 0.5], b2 = dep(b, d + ov), ctr = dep([x0 + w / 2, y], d / 2), top = [ctr[0], ctr[1] - vh];
+    poly(c, [...b, ...b2, ...top], k.snow ? '#dfe8f1' : shade(col, 0.78), OL);
+    poly(c, [...a, ...b, ...top], k.snow ? '#f6f9fc' : col, OL);
+    return top;
+  }
+  function bellAt(c, x, y, s, sw) {
+    c.save(); c.translate(x, y); c.rotate(sw); line(c, 0, -2 * s, 0, 0, OL, 1);
+    poly(c, [-2.2 * s, 0, 2.2 * s, 0, 3.2 * s, 5 * s, -3.2 * s, 5 * s], '#e8c25a', OL, 0.9); circ(c, 0, 5.6 * s, 0.9 * s, '#a8771e'); c.restore();
+  }
+  const crossAt = (c, x, y, h, col) => { line(c, x, y, x, y - h, col, 1.5); line(c, x - h * 0.32, y - h * 0.68, x + h * 0.32, y - h * 0.68, col, 1.5); };
+  function church(c, k, lv) {
+    const { x, y } = CHURCH, wall = '#ddd6c6', frame = '#c9c0ae', sw = Math.sin(t * 2) * 0.25, gold = '#e8c25a';
+    const nx = x + 5, ny = y - 4, rh = 24; // loď stojí za věží
+    if (lv >= 4) { // hřbitůvek: pěšinka od branky ke dveřím věže a pár křížů
+      poly(c, [x - 3.5, y, x + 3.5, y, x + 5, y + 16, x - 5, y + 16], k.snow ? '#e3eaf2' : '#d8c9a3');
+      for (const [gx, gy] of [[x - 17, y + 1], [x - 26, y + 6], [x + 30, y + 3]]) { ell(c, gx, gy + 0.5, 3.2, 1.1, 'rgba(60,40,20,.25)'); crossAt(c, gx, gy, 6, '#8a8a92'); }
+    }
+    const hs = house(c, k, nx, ny, 30, 26, { wall, roof: '#55606e', depth: 40, rh, windows: 0, door: false });
+    const glass = lv >= 4 ? ['#7a5aa8', '#4f9a6a', '#c4553e'] : ['#5e7fa6'];
+    (lv >= 2 ? [10, 22, 34] : [14, 28]).forEach((u, i) => sideLancet(c, k, hs.R, ny, u, 7, 5, 14, { glass: glass[i % glass.length], frame }));
+    // zvonička na hřebeni lodi (sedí obkročmo na hřebeni, ve zkosení střechy)
+    { const u0 = 30, P = [nx + 0.62 * u0, hs.A - 0.4 * u0], tw = 6, td = 6, th = 8, sl = rh / 15, tt = P[1] - th, L0 = P[0] - tw / 2, R0 = P[0] + tw / 2;
+      const rb = [R0, P[1] + sl * tw / 2], lb = [L0, P[1] + 0.645 * tw / 2];
+      poly(c, [R0, tt, ...dep([R0, tt], td), ...dep(rb, td), ...rb], shade(wall, 0.8), OL);
+      poly(c, [L0, tt, R0, tt, ...rb, P[0], P[1], ...lb], wall, OL);
+      rect(c, P[0] - 1.5, tt + 1.5, 3, 5, '#3a2e2a');
+      if (lv === 1) bellAt(c, P[0], tt + 2.4, 0.45, sw);
+      const top = pyramid(c, k, L0, tt, tw, td, 12, '#4a5262', 0.8); crossAt(c, top[0], top[1], 5, OL); }
+    if (lv === 1) { // průčelí kaple: lomené dveře a růžice ve štítu
+      lancet(c, k, nx, ny, 8, 15, { glass: '#6e4428', dark: true, frame });
+      rose(c, k, nx, hs.T - rh * 0.42, 3.6, frame);
+    } else { // věž v průčelí
+      const tw = 14, td = 10, th = lv >= 3 ? 46 : 38, x0 = x - tw / 2;
+      box(c, x0, y, tw, th, td, wall);
+      c.strokeStyle = 'rgba(80,70,60,.25)'; c.lineWidth = 1;
+      for (let yy = 8; yy < th - 2; yy += 8) { c.beginPath(); c.moveTo(x0 + 1, y - yy); c.lineTo(x0 + tw - 1, y - yy); c.stroke(); }
+      lancet(c, k, x, y, 7, 15, { glass: '#6e4428', dark: true, frame });
+      const cy = y - th + 20;
+      if (lv >= 4) { // hodiny jdou podle hodin hráče
+        const d = new Date(), hr = ((d.getHours() % 12) + d.getMinutes() / 60) / 12 * TAU, mn = d.getMinutes() / 60 * TAU;
+        circ(c, x, cy, 4.6, '#fbf6ea', lv >= 5 ? '#a8771e' : OL);
+        line(c, x, cy, x + Math.sin(hr) * 2.4, cy - Math.cos(hr) * 2.4, OL, 1.2); line(c, x, cy, x + Math.sin(mn) * 3.6, cy - Math.cos(mn) * 3.6, OL, 0.9);
+      } else rose(c, k, x, cy, 3.4, frame);
+      lancet(c, k, x, y - th + 11, 5, 8, { dark: true, glass: '#3a2e2a', frame });
+      bellAt(c, x, y - th + 4.5, 0.62, sw);
+      for (let i = 0; i < 4; i++) rect(c, x0 - 1 + i * 4.6, y - th - 3, 2.6, 3, wall, OL);
+      if (lv >= 5) for (const p of [[x0 - 0.5, y - th], [x0 + tw + 0.5, y - th], dep([x0 + tw + 0.5, y - th], td)]) poly(c, [p[0] - 1.4, p[1], p[0] + 1.4, p[1], p[0], p[1] - 7], wall, OL, 0.9);
+      if (lv === 2) { const top = pyramid(c, k, x0, y - th, tw, td, 9, '#55606e', 1); crossAt(c, top[0], top[1], 6, OL); }
+      else { const top = pyramid(c, k, x0, y - th, tw, td, 34, '#4a5262', 0.5); circ(c, top[0], top[1] - 1, lv >= 5 ? 2.2 : 1.5, gold, OL); crossAt(c, top[0], top[1] - 2, 7, lv >= 5 ? gold : '#a8771e'); }
+    }
+    if (lv >= 4) { // plot hřbitůvku před kostelem s brankou u věže
+      fence(c, x - 34, x - 9, y + 16, 7, '#8a6a4a'); fence(c, x + 9, x + 46, y + 16, 7, '#8a6a4a');
+      for (const gx of [x - 9, x + 6]) rect(c, gx, y + 6, 3, 10, '#b9b2a6', OL);
+    }
+    if (S && S.upg.rozhlas) { const px = x - 20; line(c, px, y, px, y - 44, '#6b4a30', 2); for (const s of [-1, 1]) poly(c, [px, y - 42, px + s * 9, y - 46, px + s * 9, y - 36], '#8a8a96', OL, 1); }
+  }
   // Vesnická vylepšení vidět ve vsi.
   const EXTRAS = {
-    kaplicka(c, k) {
-      const x = 590, y = 304;
-      house(c, k, x, y, 30, 30, { wall: '#fbf8f0', roof: '#7a4a3a', depth: 22, windows: 0, doorW: 9 });
-      rect(c, x - 6, y - 64, 12, 18, '#fbf8f0', OL);
-      poly(c, [x - 8, y - 64, x + 8, y - 64, x, y - 80], k.snow ? '#ffffff' : '#3d4452', OL);
-      line(c, x, y - 80, x, y - 88, OL, 1.4); line(c, x - 3, y - 85, x + 3, y - 85, OL, 1.4);
-      const sw = Math.sin(t * 2) * 2;
-      circ(c, x + sw * 0.3, y - 55, 3, '#e8c25a', OL);
-      if (S && S.upg.rozhlas) { line(c, x + 26, y, x + 26, y - 44, '#6b4a30', 2); for (const s of [-1, 1]) poly(c, [x + 26, y - 42, x + 26 + s * 9, y - 46, x + 26 + s * 9, y - 36], '#8a8a96', OL, 1); }
-    },
+    kaplicka(c, k) { church(c, k, churchLevel(S)); },
     skola(c, k) {
       const x = 1135, y = 302;
       house(c, k, x, y, 54, 30, { wall: '#f3d98a', roof: '#a8432f', depth: 30, windows: 3, ww: 7, doorW: 9 });
@@ -989,7 +1070,7 @@ const Scene = (() => {
     TREES.forEach(([x, y, s, kd], i) => items.push([y, () => tree(c, k, x, y, s, kd, i + 1)]));
     const tot = S ? Econ.total(S) : 0;
     COTTAGES.forEach(([x, y], i) => { if (tot >= COTTAGE_AT[i]) items.push([y, () => cottage(c, k, x, y, i + 3)]); });
-    if (S) for (const id of ['kaplicka', 'skola', 'posta']) if (S.upg[id]) items.push([300 + (id === 'skola' ? 1 : id === 'posta' ? 2 : 0), () => EXTRAS[id](c, k)]);
+    if (S) for (const id of ['kaplicka', 'skola', 'posta']) if (S.upg[id]) items.push([id === 'kaplicka' ? CHURCH.y : id === 'skola' ? 301 : 302, () => EXTRAS[id](c, k)]);
     let next = true;
     for (const b of BUILDINGS) {
       const n = S ? S.owned[b.id] : 0, [x, y] = SLOT[b.id];
@@ -1131,7 +1212,7 @@ const Scene = (() => {
     cam = clampCam(cam);
   }
   return {
-    init, resize, frame, panTo, focusCreature, creatureScreen, spawnCreature, icon, floatText, burst, coin, creatureSide, opts, on, SLOT, BOX,
+    init, resize, frame, panTo, focusCreature, creatureScreen, spawnCreature, icon, floatText, burst, coin, creatureSide, opts, on, SLOT, BOX, churchLevel: () => churchLevel(S),
     get creature() { return creature; }, clearCreature() { creature = null; }, get cam() { return cam; }, get scale() { return scale; }, viewRange, LV,
   };
 })();
