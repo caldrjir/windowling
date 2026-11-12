@@ -129,14 +129,23 @@ const Sprites = (() => {
     return get(`pk|${kind}`, () => {
       const [c, x] = canvasFor(30);
       x.lineJoin = 'round'; x.lineCap = 'round';
-      const col = { shard: '#e08bff', heart: '#5dffa8', magnet: '#55c8ff', bomb: '#ff5a5a', chest: '#ffd166' }[kind];
+      const col = { shard: '#e08bff', heart: '#ff3d6e', magnet: '#55c8ff', bomb: '#ff5a5a', chest: '#ffd166' }[kind];
       x.shadowColor = col; x.shadowBlur = 14; x.strokeStyle = col; x.lineWidth = 2.4; x.fillStyle = rgba(col, 0.3);
       if (kind === 'shard') {
         x.beginPath(); x.moveTo(0, -11); x.lineTo(7, -2); x.lineTo(0, 11); x.lineTo(-7, -2); x.closePath(); x.fill(); x.stroke();
         x.beginPath(); x.moveTo(-7, -2); x.lineTo(7, -2); x.stroke();
       } else if (kind === 'heart') {
-        x.beginPath(); x.arc(0, 0, 11, 0, TAU); x.fill(); x.stroke();
-        x.strokeStyle = '#fff'; x.lineWidth = 3; x.beginPath(); x.moveTo(-5, 0); x.lineTo(5, 0); x.moveTo(0, -5); x.lineTo(0, 5); x.stroke();
+        // Plné srdce v barvě ukazatele zdraví s bílým lemem a odleskem: nepřátelé jsou duté
+        // geometrické obrysy s jádrem, tohle má vypadat jako předmět, ne jako loď.
+        const heart = () => {
+          x.beginPath(); x.moveTo(0, 11);
+          x.bezierCurveTo(-4, 7.5, -13, 2.5, -13, -4); x.bezierCurveTo(-13, -10.5, -5.5, -13, 0, -6.5);
+          x.bezierCurveTo(5.5, -13, 13, -10.5, 13, -4); x.bezierCurveTo(13, 2.5, 4, 7.5, 0, 11); x.closePath();
+        };
+        const g = x.createLinearGradient(0, -12, 0, 11); g.addColorStop(0, '#ff8fab'); g.addColorStop(1, '#ff2d60');
+        x.shadowBlur = 16; heart(); x.fillStyle = g; x.fill();
+        x.shadowBlur = 0; x.lineWidth = 2.2; x.strokeStyle = '#ffffff'; x.stroke();
+        x.fillStyle = 'rgba(255,255,255,0.85)'; x.beginPath(); x.ellipse(-6, -6, 3, 1.9, -0.7, 0, TAU); x.fill();
       } else if (kind === 'magnet') {
         x.beginPath(); x.arc(0, 2, 8, 0, Math.PI); x.moveTo(-8, 2); x.lineTo(-8, -9); x.moveTo(8, 2); x.lineTo(8, -9); x.lineWidth = 5; x.stroke();
         x.strokeStyle = '#fff'; x.lineWidth = 5; x.beginPath(); x.moveTo(-8, -9); x.lineTo(-8, -5); x.moveTo(8, -9); x.lineTo(8, -5); x.stroke();
@@ -312,6 +321,12 @@ const Render = (() => {
         spr(Sprites.glow('#ffd166', 16), pk.x, pk.y, 0, 1 + Math.sin(pk.t * 5) * 0.15, 0.5);
         ctx.globalCompositeOperation = 'source-over';
         spr(Sprites.pickup('chest'), pk.x, pk.y + bob * 2, Math.sin(pk.t * 2) * 0.1, 1.1);
+      } else if (pk.kind === 'heart') {
+        // tep: dvojitý úder a slabý kruh, který se od srdce rozbíhá
+        const b = (pk.t % 1.2) / 1.2, pulse = q => Math.exp(-(((b - q) / 0.05) ** 2));
+        world(); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,143,171,${(0.55 * (1 - b)).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(pk.x, pk.y + bob, 15 + b * 22, 0, TAU); ctx.stroke();
+        spr(Sprites.pickup('heart'), pk.x, pk.y + bob, 0, 1 + 0.16 * pulse(0.05) + 0.1 * pulse(0.22));
       } else spr(Sprites.pickup(pk.kind), pk.x, pk.y + bob, 0);
     }
 
