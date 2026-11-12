@@ -35,6 +35,7 @@
     f.int = (lo, hi) => lo + Math.floor(f() * (hi - lo + 1));
     f.pick = (arr) => arr[Math.floor(f() * arr.length)];
     f.wpick = (pairs) => { let tot = 0; for (const p of pairs) tot += p[1]; let x = f() * tot; for (const p of pairs) { x -= p[1]; if (x < 0) return p[0]; } return pairs[pairs.length - 1][0]; };
+    f.shuffle = (arr) => { const a2 = arr.slice(); for (let i = a2.length - 1; i > 0; i--) { const j = Math.floor(f() * (i + 1)); [a2[i], a2[j]] = [a2[j], a2[i]]; } return a2; };
     return f;
   }
 

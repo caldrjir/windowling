@@ -1,8 +1,8 @@
 'use strict';
 // GENEROVÁNO z Game Design Bible (needitovat ručně) – data pro prototyp P0.
-// Zdroj: Echoes of the Hollow Sun – Game Design Bible v20 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
+// Zdroj: Echoes of the Hollow Sun – Game Design Bible v25 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
 window.HS_DATA = {
- "source": "Echoes of the Hollow Sun – Game Design Bible v20 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
+ "source": "Echoes of the Hollow Sun – Game Design Bible v25 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
  "generated": "2026-11-04",
  "BAL": {
   "hpBase": 60,
@@ -305,7 +305,13 @@ window.HS_DATA = {
     1,
     1
    ],
-   "enemies": []
+   "enemies": [],
+   "type": "town",
+   "links": [
+    "a1_ashfields"
+   ],
+   "inst": "fixed",
+   "d": "Opevněné hornické město kolem vyhaslých pecí. Hub Act I."
   },
   {
    "id": "a1_ashfields",
@@ -317,7 +323,15 @@ window.HS_DATA = {
    "enemies": [
     "en_thrall",
     "en_hound"
-   ]
+   ],
+   "type": "field",
+   "links": [
+    "a1_cinderhold",
+    "a1_burnt_orchard",
+    "a1_chapel_crypt"
+   ],
+   "inst": "hybrid",
+   "d": "Spálená pole s hromadnými hroby. Tutoriál pohybu a boje."
   },
   {
    "id": "a1_burnt_orchard",
@@ -330,7 +344,13 @@ window.HS_DATA = {
     "en_thrall",
     "en_wisp",
     "en_bowman"
-   ]
+   ],
+   "type": "field",
+   "links": [
+    "a1_ashfields",
+    "a1_tollgate"
+   ],
+   "inst": "hybrid"
   },
   {
    "id": "a1_chapel_crypt",
@@ -342,7 +362,13 @@ window.HS_DATA = {
    "enemies": [
     "en_bowman",
     "en_acolyte"
-   ]
+   ],
+   "type": "dungeon",
+   "links": [
+    "a1_ashfields"
+   ],
+   "inst": "proc",
+   "d": "Procedurální krypta (archetyp Crypt, 2 patra)."
   },
   {
    "id": "a1_tollgate",
@@ -354,7 +380,13 @@ window.HS_DATA = {
    "enemies": [
     "en_brute",
     "en_hound"
-   ]
+   ],
+   "type": "field",
+   "links": [
+    "a1_burnt_orchard",
+    "a1_charcoal_woods"
+   ],
+   "inst": "hybrid"
   },
   {
    "id": "a1_charcoal_woods",
@@ -367,7 +399,14 @@ window.HS_DATA = {
     "en_hound",
     "en_wisp",
     "en_brute"
-   ]
+   ],
+   "type": "field",
+   "links": [
+    "a1_tollgate",
+    "a1_kiln",
+    "a1_gallows"
+   ],
+   "inst": "hybrid"
   },
   {
    "id": "a1_gallows",
@@ -378,7 +417,13 @@ window.HS_DATA = {
    ],
    "enemies": [
     "en_bowman"
-   ]
+   ],
+   "type": "secret",
+   "links": [
+    "a1_charcoal_woods"
+   ],
+   "inst": "hybrid",
+   "d": "Tajná oblast: lore scéna + unikátní truhla."
   },
   {
    "id": "a1_kiln",
@@ -391,7 +436,13 @@ window.HS_DATA = {
     "en_acolyte",
     "en_brute",
     "en_wisp"
-   ]
+   ],
+   "type": "dungeon",
+   "links": [
+    "a1_charcoal_woods",
+    "a1_kiln_heart"
+   ],
+   "inst": "fixed"
   },
   {
    "id": "a1_kiln_heart",
@@ -400,7 +451,58 @@ window.HS_DATA = {
     12,
     12
    ],
-   "enemies": []
+   "enemies": [],
+   "type": "boss",
+   "links": [
+    "a1_kiln",
+    "a2_saltlantern"
+   ],
+   "inst": "fixed"
+  }
+ ],
+ "quests": [
+  {
+   "id": "q1_01",
+   "n": "Ashes Remember",
+   "area": "a1_ashfields",
+   "steps": [
+    "Probuď se (cinematic)",
+    "Zabij 5 Ashen Thrallů (tutoriál útoku)",
+    "Pojmi první ozvěnu (tutoriál Echo)",
+    "Dojdi k bráně Cinderholdu"
+   ]
+  },
+  {
+   "id": "q1_02",
+   "n": "Chapel of Embers",
+   "area": "a1_chapel_crypt",
+   "steps": [
+    "Promluv s Teodorem",
+    "Projdi Burnt Orchard",
+    "Vyčisti kryptu (procedurální, 2 patra)",
+    "Získej Archivní deník"
+   ]
+  },
+  {
+   "id": "q1_03",
+   "n": "The Toll of Iron",
+   "area": "a1_tollgate",
+   "steps": [
+    "Promluv s maršálem Oduinem",
+    "VOLBA: zaplať clo 500 zlata / poraž strážného šampiona",
+    "Projdi Charcoal Woods"
+   ]
+  },
+  {
+   "id": "q1_04",
+   "n": "The Kiln Warden",
+   "area": "a1_kiln_heart",
+   "steps": [
+    "Projdi Great Kiln (fixní dungeon, 3 sekce)",
+    "Uhas 3 pece (mechanika)",
+    "Poraž Kiln Wardena",
+    "VOLBA: Kiln Shard"
+   ]
   }
  ],
  "bosses": {
@@ -4124,5 +4226,43 @@ window.HS_DATA = {
    }
   ]
  },
- "level": 8
+ "level": 8,
+ "dungeon": {
+  "sizes": {
+   "S": [
+    5,
+    7
+   ],
+   "M": [
+    7,
+    10
+   ],
+   "L": [
+    10,
+    14
+   ]
+  },
+  "themes": {
+   "crypt": [
+    "Krypta (Act I)",
+    "#b98a4e"
+   ],
+   "abbey": [
+    "Utopené opatství (Act II)",
+    "#4fb3b0"
+   ],
+   "glass": [
+    "Skleněný kráter (Act III)",
+    "#e8d266"
+   ],
+   "gloam": [
+    "Krypty Vigilu (Act IV)",
+    "#a07ee0"
+   ],
+   "sundial": [
+    "Sluneční hodiny (Act V)",
+    "#ffe7a6"
+   ]
+  }
+ }
 };

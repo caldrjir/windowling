@@ -65,7 +65,7 @@
   function monsterLevel(s) { if (s.mode === 'boss') return KB_LV; return s.mode === 'arena' ? Math.max(1, Math.min(ACT1_MAX, s.L - 1 + Math.floor((s.wave - 1) / 2))) : s.L; }
   function gainXp(s, e, mul) {
     if (!s.progress) return;
-    grantXp(s, Math.max(1, Math.round(HS.F.monsterXp(e.L, mul || e.def.xpMul) * HS.F.xpPenalty(s.L, e.L))), e);
+    grantXp(s, Math.max(1, Math.round(HS.F.monsterXp(e.L, (mul || e.def.xpMul) * (e.elite ? HS.B.eliteXp : 1)) * HS.F.xpPenalty(s.L, e.L))), e);
   }
   function grantXp(s, xp, e) {
     if (!s.progress) return;
@@ -115,7 +115,7 @@
   // předmět G.genItem s item levelem = level monstra a smart lootem pro třídu. Vlastní RNG na každý drop.
   function rollDrop(s, e) {
     if (!s.loot) return;
-    const r = HS.rng(s.seed + '#loot#' + s.lootN++); const type = e.def.lt === 'lt_elite' ? 'elite' : e.def.lt === 'lt_rare' ? 'rare' : 'normal';
+    const r = HS.rng(s.seed + '#loot#' + s.lootN++); const type = e.elite || e.def.lt === 'lt_elite' ? 'elite' : e.def.lt === 'lt_rare' ? 'rare' : 'normal';
     if (r() >= HS.B.dropChance[type]) return;
     let rar = HS.rollRarity(r, 0, type); s.sinceU++;
     if (rar !== 'unique' && s.sinceU >= HS.B.pityUnique && rar === 'rare') rar = 'unique';
@@ -157,20 +157,27 @@
     const gear = sanitizeGear(opts.gear, L);
     const s = {
       L, char, progress: !fixed, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
-      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [],
+      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss', 'act1'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [],
       player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
     refreshChar(s);
     const S = s.ch.S;
     s.player = { x: 0, z: 0, face: 0, hp: S.hp, hpMax: S.hp, res: 30, resMax: S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, pick: null, barrier: 0, bulwark: 0, invuln: !!opts.invuln, dmgTaken: 0 };
-    if (s.mode === 'bench') spawnBench(s, opts.benchCount || 50);
+    if (s.mode === 'act1') {
+      const z = root.HSWorld.buildZone(opts.zone || root.HSWorld.ACT1[0]); s.zone = z; s.zoneKeys = new Set(); s.pillars = []; s.deaths = 0; s.zoneDone = false; s.routeI = 0;
+      s.objs = z.objs.map((o) => Object.assign({ done: false }, o)); const lan = s.objs.find((o) => o.kind === 'lantern'); s.checkpoint = { x: lan.x, z: lan.z };
+      s.player.x = lan.x; s.player.z = lan.z + 1.5;
+      for (const sp of z.spawns) spawn(s, sp.type, sp.x, sp.z, sp.L, sp.elite);
+      s.events.push({ t: 'zone', id: z.id, n: z.n });
+    } else if (s.mode === 'bench') spawnBench(s, opts.benchCount || 50);
     else if (s.mode === 'boss') { s.arenaR = BOSS.R; s.pillars = [BOSS.anvil, ...BOSS.kilns.map(([x, z]) => [x, z, BOSS.kilnR])]; s.bossKills = opts.bossKills || 0; s.player.x = 0; s.player.z = 9; spawnBoss(s); }
     else nextWave(s);
     return s;
   }
-  function spawn(s, id, x, z) {
-    const def = HS.D.enemies.find((e) => e.id === id); const L = monsterLevel(s); const en = HS.refEnemy(L, id);
-    const e = { id: s.nextId++, type: id, def, L, x, z, face: 0, brand: 0, weak: 0, hp: en.hp, hpMax: en.hp, armor: en.armor, eva: en.eva, res: en.res, r: ER[id], speed: def.ms, atk: null, cds: HS.D.attacks[id].map(() => 0.5 + s.rnd()), stun: 0, burn: [], flash: 0, dead: false, push: [0, 0] };
+  function spawn(s, id, x, z, lvl, elite) {
+    const def = HS.D.enemies.find((e) => e.id === id); const L = lvl || monsterLevel(s); const en = HS.refEnemy(L, id);
+    if (elite) en.hp = Math.round(en.hp * HS.B.eliteHp);
+    const e = { id: s.nextId++, type: id, def, L, x, z, face: 0, brand: 0, weak: 0, hp: en.hp, hpMax: en.hp, armor: en.armor, eva: en.eva, res: en.res, r: ER[id], speed: def.ms, atk: null, cds: HS.D.attacks[id].map(() => 0.5 + s.rnd()), stun: 0, burn: [], flash: 0, dead: false, push: [0, 0], elite: !!elite, awake: s.mode !== 'act1' };
     s.enemies.push(e); return e;
   }
   function ring(s, n, r0) { const out = []; const off = s.rnd() * Math.PI * 2; for (let i = 0; i < n; i++) { const a = off + (i / n) * Math.PI * 2 + (s.rnd() - 0.5) * 0.3; const r = r0 - s.rnd() * 2; out.push([Math.cos(a) * r, Math.sin(a) * r]); } return out; }
@@ -397,6 +404,16 @@
     if (inp.aim) p.face = Math.atan2(inp.aim[1] - p.z, inp.aim[0] - p.x);
   }
   function move(s, o, dx, dz, r) {
+    if (s.zone) {
+      const W = root.HSWorld; const ok = (x, z) => W.walkable(s.zone, x, z, r, s.zoneKeys);
+      if (ok(o.x + dx, o.z + dz)) { o.x += dx; o.z += dz; return; }
+      if (ok(o.x + dx, o.z)) { o.x += dx; return; }
+      if (ok(o.x, o.z + dz)) { o.z += dz; return; }
+      // roh místnosti a chodby: krok bokem k nejbližšímu průchodu ve směru pohybu
+      const L = len(dx, dz) || 1; const px = -dz / L, pz = dx / L;
+      for (const k of [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2]) for (const sg of [1, -1]) { const ox = px * k * sg, oz = pz * k * sg; if (ok(o.x + dx + ox, o.z + dz + oz) && ok(o.x + ox * Math.min(1, L / k), o.z + oz * Math.min(1, L / k))) { const st = Math.min(L, k); o.x += px * sg * st; o.z += pz * sg * st; return; } }
+      return;
+    }
     o.x += dx; o.z += dz;
     for (const [px, pz, pr] of s.pillars) { const ddx = o.x - px, ddz = o.z - pz; const d = len(ddx, ddz); const min = pr + r; if (d < min && d > 1e-6) { o.x = px + (ddx / d) * min; o.z = pz + (ddz / d) * min; } }
     const R = s.arenaR || ARENA; const d = len(o.x, o.z); if (d > R - r) { o.x *= (R - r) / d; o.z *= (R - r) / d; }
@@ -404,7 +421,11 @@
   // vzdálenost bodu od úsečky
   function segDist(px, pz, ax, az, bx, bz) { const dx = bx - ax, dz = bz - az; const l2 = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)); return len(ax + dx * t - px, az + dz * t - pz); }
   // je přímka zdroj → cíl volná? (sloupy, kovadlina a pece blokují šípy)
-  function lineFree(s, ax, az, bx, bz) { for (const [x, z, r] of s.pillars) if (segDist(x, z, ax, az, bx, bz) < r) return false; return true; }
+  function lineFree(s, ax, az, bx, bz) {
+    for (const [x, z, r] of s.pillars) if (segDist(x, z, ax, az, bx, bz) < r) return false;
+    if (s.zone) { const n = Math.ceil(len(bx - ax, bz - az)); for (let i = 1; i < n; i++) { const t = i / n; if (!root.HSWorld.walkable(s.zone, ax + (bx - ax) * t, az + (bz - az) * t, 0, s.zoneKeys)) return false; } }
+    return true;
+  }
   function inShape(s, e, atk, tx, tz) {
     const p = s.player; const a = atk.def;
     if (a.shape === 'circle') return len(p.x - tx, p.z - tz) <= a.range + PLAYER_R;
@@ -418,12 +439,13 @@
     if (p.dodge && p.dodge.t <= DODGE.iframes) { s.stats.dodged++; s.events.push({ t: 'dodged', x: p.x, z: p.z }); return; }
     // armor a evasion proti levelu útočníka (F.armorDR, F.evadeChance v Bible)
     if (s.rnd() < HS.F.evadeChance(S.eva, L)) { s.events.push({ t: 'evade', x: p.x, z: p.z }); return; }
-    const raw = HS.F.enemyDmg(L, e.def.dmgMul * a.mul) * (0.9 + s.rnd() * 0.2) * (e.weak > 0 ? 0.85 : 1);
+    const raw = HS.F.enemyDmg(L, e.def.dmgMul * a.mul * (e.elite ? HS.B.eliteDmg : 1)) * (0.9 + s.rnd() * 0.2) * (e.weak > 0 ? 0.85 : 1);
     let dmg = Math.max(1, Math.round(raw * (1 - HS.F.armorDR(S.armor, L))));
     if (p.barrier > 0) { const ab = Math.min(p.barrier, dmg); p.barrier -= ab; dmg -= ab; s.events.push({ t: 'absorb', amt: Math.round(ab), x: p.x, z: p.z }); if (!dmg) return; }
     s.stats.taken += dmg; if (!p.invuln) p.hp -= dmg;
     if (a.stun) { p.stun = Math.max(p.stun, a.stun); p.act = null; }
     s.events.push({ t: 'hurt', dmg, x: p.x, z: p.z, by: e.type }); s.events.push({ t: 'shake', amp: a.mul >= 1.5 ? 0.3 : 0.15 });
+    if (p.hp <= 0 && !p.invuln && s.zone) { const cp = s.checkpoint; p.hp = p.hpMax; p.x = cp.x; p.z = cp.z + 1.5; p.act = null; p.dodge = null; p.stun = 0; p.moveTo = null; p.pick = null; s.deaths++; s.routeI = 0; s.events.push({ t: 'respawn', x: p.x, z: p.z, deaths: s.deaths }); return; }
     if (p.hp <= 0 && !p.invuln) { p.hp = 0; s.over = true; s.events.push({ t: 'over', wave: s.wave, kills: s.kills }); }
   }
   function updateEnemies(s) {
@@ -435,6 +457,11 @@
       // odstrčení se tlumí
       if (e.push[0] || e.push[1]) { move(s, e, e.push[0] * dt * 6, e.push[1] * dt * 6, e.r); e.push[0] *= 0.7; e.push[1] *= 0.7; if (Math.abs(e.push[0]) + Math.abs(e.push[1]) < 0.01) e.push = [0, 0]; }
       e.cds = e.cds.map((c) => Math.max(0, c - dt));
+      if (!e.awake) {
+        const dd = len(p.x - e.x, p.z - e.z);
+        if (e.hp < e.hpMax || (dd <= (e.def.det || 12) && lineFree(s, e.x, e.z, p.x, p.z))) { e.awake = true; for (const o of alive) if (!o.awake && len(o.x - e.x, o.z - e.z) <= 8) o.awake = true; }
+        else continue;
+      }
       if (e.stun > 0) { e.stun -= dt; continue; }
       const dx = p.x - e.x, dz = p.z - e.z; const d = len(dx, dz);
       if (e.atk) {
@@ -489,11 +516,25 @@
     const p = s.player; const keep = [];
     for (const pr of s.proj) {
       const st = pr.speed * TICK; pr.x += pr.dx * st; pr.z += pr.dz * st; pr.left -= st;
-      if (pr.left <= 0 || len(pr.x, pr.z) > (s.arenaR || ARENA) || s.pillars.some(([x, z, r]) => len(pr.x - x, pr.z - z) < r)) { s.events.push({ t: 'projend', id: pr.id }); continue; }
+      if (pr.left <= 0 || (s.zone ? !root.HSWorld.walkable(s.zone, pr.x, pr.z, 0, s.zoneKeys) : len(pr.x, pr.z) > (s.arenaR || ARENA)) || s.pillars.some(([x, z, r]) => len(pr.x - x, pr.z - z) < r)) { s.events.push({ t: 'projend', id: pr.id }); continue; }
       if (p.hp > 0 && len(pr.x - p.x, pr.z - p.z) <= PLAYER_R + 0.15) { const by = s.enemies.find((x) => x.id === pr.by) || { L: s.L, def: { dmgMul: 1 }, weak: 0 }; hurtPlayer(s, by, { mul: pr.mul }); s.events.push({ t: 'projend', id: pr.id, hit: true }); continue; }
       keep.push(pr);
     }
     s.proj = keep;
+  }
+  function updateZone(s) {
+    const p = s.player; if (p.hp <= 0) return;
+    for (const o of s.objs) {
+      if (o.done && o.kind !== 'lantern') continue; const d = len(o.x - p.x, o.z - p.z);
+      if (o.kind === 'lantern' && d <= 2.2 && (s.checkpoint.x !== o.x || s.checkpoint.z !== o.z || !o.done)) { o.done = true; s.checkpoint = { x: o.x, z: o.z }; p.hp = p.hpMax; s.events.push({ t: 'lantern', id: o.id, x: o.x, z: o.z }); }
+      else if (o.kind === 'key' && d <= 2) { o.done = true; s.zoneKeys.add(o.key); s.events.push({ t: 'key', key: o.key, x: o.x, z: o.z }); }
+      else if (o.kind === 'chest' && d <= 1.8) {
+        // truhla: 2 předměty s raritou jako u elitního balíku (prototyp; Bible: poklady z generátoru, krok 11)
+        o.done = true; const r = HS.rng(s.seed + '#chest#' + s.zone.id + '#' + o.id);
+        for (let i = 0; i < 2; i++) { const item = HS.genItem(r, o.L, HS.D.cls.id, HS.rollRarity(r, 0, 'elite')); const dd = { id: s.nextId++, x: o.x + (i ? 0.9 : -0.9), z: o.z + 0.6, item }; s.drops.push(dd); s.events.push({ t: 'drop', id: dd.id, x: dd.x, z: dd.z, rar: item.rar }); }
+        s.events.push({ t: 'chest', id: o.id, x: o.x, z: o.z });
+      } else if (o.kind === 'gate' && d <= 2.4 && !s.zoneDone) { s.zoneDone = true; o.done = true; s.events.push({ t: 'zonedone', id: s.zone.id, next: root.HSWorld.next(s.zone.id), kills: s.kills, deaths: s.deaths, time: s.t }); }
+    }
   }
   function step(s, inp) {
     s.events.length = 0; if (s.over) return s;
@@ -501,6 +542,7 @@
     updatePlayer(s, inp || {});
     updateEnemies(s);
     updateProj(s);
+    if (s.zone) updateZone(s);
     if (s.mode === 'boss') updateBoss(s);
     if (s.enemies.length > 300) s.enemies = s.enemies.filter((e) => !e.dead);
     if (s.mode === 'arena' && !s.over && s.enemies.every((e) => e.dead)) { s.enemies = []; nextWave(s); }
@@ -511,7 +553,16 @@
   // jednoduchý autopilot pro benchmark a testy: drží se u středu, seká nejbližšího a občas použije Slam a Charge
   function autopilot(s) {
     const p = s.player; let best = null, bd = 1e9;
-    for (const e of s.enemies) { if (e.dead) continue; const d = len(e.x - p.x, e.z - p.z); if (d < bd) { bd = d; best = e; } }
+    for (const e of s.enemies) { if (e.dead || (s.zone && !e.awake)) continue; const d = len(e.x - p.x, e.z - p.z); if (s.zone && (d > 7 || !lineFree(s, p.x, p.z, e.x, e.z))) continue; if (d < bd) { bd = d; best = e; } }
+    if (!best && s.zone) {
+      const R = s.zone.route; while (s.routeI < R.length && len(R[s.routeI].x - p.x, R[s.routeI].z - p.z) < 1.2) s.routeI++;
+      let t = R[Math.min(s.routeI, R.length - 1)];
+      // mimo linii trasy (po boji): nejdřív do středu místnosti, ve které stojí, odtud vede trasa chodbou
+      const W = root.HSWorld; const n = Math.ceil(len(t.x - p.x, t.z - p.z) / 0.5); let clear = true;
+      for (let i = 1; i <= n && clear; i++) { const k = i / n; if (!W.walkable(s.zone, p.x + (t.x - p.x) * k, p.z + (t.z - p.z) * k, 0.3, s.zoneKeys)) clear = false; }
+      if (!clear) { const rm = s.zone.rooms.find((q) => p.x >= q.x0 && p.x <= q.x1 && p.z >= q.z0 && p.z <= q.z1); if (rm) t = { x: rm.cx, z: rm.cz }; }
+      return { move: [t.x - p.x, t.z - p.z] };
+    }
     if (!best) return {};
     const aim = [best.x, best.z]; const inp = { aim };
     const tele = s.enemies.some((e) => e.atk && e.atk.def.mul >= 1.2 && e.atk.t > e.atk.def.tele - 0.35 && len(e.x - p.x, e.z - p.z) < 4);
@@ -523,5 +574,5 @@
     else inp.move = [best.x - p.x, best.z - p.z];
     return inp;
   }
-  root.HSim = { TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
+  root.HSim = { updateZone, TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -620,3 +620,30 @@ describe('HOLLOW SUN Act I enemies in the simulation', () => {
 		expect(s.stats.taken).toBe(taken);
 	});
 });
+
+describe('HOLLOW SUN dungeon generator = Game Design Bible', () => {
+	const ctx: Record<string, unknown> = {
+		console,
+		Math,
+		JSON,
+		Object,
+		Array,
+		Set,
+		Map,
+		String,
+		Number,
+	};
+	ctx.window = ctx;
+	createContext(ctx);
+	for (const f of ['data', 'core', 'dungeon'])
+		runInContext(readFileSync(dir + f + '.js', 'utf8'), ctx, { filename: f + '.js' });
+	const gen = (ctx.HS as { genDungeon(p: unknown): Record<string, unknown> }).genDungeon;
+
+	it.each(fixtures.dungeon)('genDungeon $p.seed ($p.size, $p.floors floors)', (row) => {
+		const d = gen(row.p);
+		expect(plain(d.rooms)).toEqual(row.rooms);
+		expect(plain(d.edges)).toEqual(row.edges);
+		expect([d.bossOk, d.allOk, d.mainLen]).toEqual([row.bossOk, row.allOk, row.mainLen]);
+		expect(plain(d.keys)).toEqual(row.keys);
+	});
+});
