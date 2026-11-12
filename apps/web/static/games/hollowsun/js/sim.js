@@ -139,7 +139,8 @@
     const s = Object.assign({}, save); const v = Number(s.v) || 1;
     if (v < 2) { s.gear = null; s.sinceU = 0; }
     if (v < 3) s.char = s.gear || Number(s.bestWave) > 0 ? newChar(HS.D.level) : null;
-    s.v = 3; return s;
+    if (v < 4) s.act1 = null; // P1: postup kampaní Act I (zóna, dokončeno, smrti)
+    s.v = 4; return s;
   }
   function pickUp(s, d) {
     if (s.gear.inv.length >= INV_MAX) { s.events.push({ t: 'invfull' }); return false; }

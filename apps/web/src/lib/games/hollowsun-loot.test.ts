@@ -270,7 +270,7 @@ describe('HOLLOW SUN loot in the simulation', () => {
 	it('migrates a P0 save and drops unknown items', () => {
 		const v1 = { v: 1, bestWave: 4, kills: 30, clickMove: true };
 		const v2 = HSim.migrateSave(v1);
-		expect(v2).toMatchObject({ v: 3, gear: null, sinceU: 0, bestWave: 4, kills: 30 });
+		expect(v2).toMatchObject({ v: 4, gear: null, sinceU: 0, bestWave: 4, kills: 30, act1: null });
 		// P0 players had a fixed level 8 character; they keep it so their gear stays usable
 		expect(v2.char).toMatchObject({ level: 8, xp: 0, points: 0 });
 		expect(HSim.migrateSave({ v: 1 }).char).toBeNull();

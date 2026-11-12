@@ -112,3 +112,6 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #bossbar .bb i { position: absolute; inset: 0 auto 0 0; display: block; background: linear-gradient(#ff7a2a, #9a2a10); transition: width .15s; }
 #bossbar .bb em { position: absolute; top: 0; bottom: 0; width: 2px; background: #f2efe6aa; }
 #bossbar.immune .bb i { background: linear-gradient(#cfcfcf, #6a6a6a); }
+/* P1: kampaň Act I */
+#minimap { position: absolute; top: 16px; right: 16px; width: 200px; height: 200px; border: 1px solid #5a4630; image-rendering: pixelated; }
+.btn.camp { border-color: var(--gold); }

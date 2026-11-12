@@ -15,6 +15,7 @@
       hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (odemykají se s úrovní)', lvlUp: 'Úroveň', xpShort: 'XP', locked: 'Odemkne se na úrovni', unlocked: 'Nový skill', attrs: 'Atributy', points: 'Volné body', autoAlloc: 'Rozdělit automaticky', brandTxt: 'Cejch', absorbTxt: 'Štít', attrN: { str: 'Síla (STR)', dex: 'Obratnost (DEX)', int: 'Intelekt (INT)', wil: 'Vůle (WIL)', vit: 'Vitalita (VIT)' },
       boss: 'Boss: Kiln Warden', bossRec: 'doporučeno L12', bossHint: 'Uhni telegraphům. Před kužely se schovej za kovadlinu. Při Quench Slam najdi páru (zelené kruhy). U hořící pece stůj 1,5 s a uhasíš ji.', phaseN: ['', 'Fáze 1 — Kovář', 'Fáze 2 — Pec', 'Fáze 3 — Roztavený'], enrageT: 'Enrage', enraged: 'Kiln Warden zuří: pece hoří trvale, +50 % damage', immune: 'Nezranitelný', quenchedT: 'Pec uhašena', safeT: 'V páře', victory: 'Kiln Warden poražen', victoryT: 'Čas', lootHint: 'Sesbírej loot a vrať se do menu.', collect: 'Sbírat loot', bossKills: 'Bossové',
+      campaign: 'Kampaň: Act I', campNew: 'začít v Ashfields', campCont: 'pokračovat', zoneDone: 'Oblast dokončena', nextZone: 'Další oblast', continue: 'Pokračovat', lanternLit: 'Lantern zapálena – checkpoint', keyFound: 'Klíč nalezen – zamčené dveře se otevřou', respawned: 'Ozvěna se probouzí u Lantern', act1Done: 'Act I dokončen', gateHint: 'Projdi oblast až k bráně na jejím konci.', zoneLv: 'úroveň',
       inv: 'Inventář', invBtn: 'I · Inventář', invHint: 'Klik na předmět v batohu = nasadit · klik na nasazený = sundat · Shift + klik = zahodit · I / Esc zavře.', invStats: 'Postava', invEmpty: 'prázdné', cmp: 'Proti nasazenému', reqs: 'Požadavky', lvl: 'Úroveň', picked: 'Sebráno', invFull: 'Batoh je plný', why: { class: 'Ash Knight tuhle zbraň nepoužívá', level: 'Vyšší úroveň postavy', twohand: 'Obouruční zbraň zabírá i druhou ruku', base: 'Neznámý předmět' }, whyAttr: 'Chybí', stHp: 'Zdraví', stArmor: 'Armor (redukce)', stEva: 'Šance uhnout', stDps: 'Cleave DPS (thrall)', stAs: 'Útoky za sekundu', stMs: 'Rychlost pohybu', keysInv: 'I – inventář, klik na předmět na zemi = sebrat', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
       feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
@@ -29,6 +30,7 @@
       hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (unlock with level)', lvlUp: 'Level', xpShort: 'XP', locked: 'Unlocks at level', unlocked: 'New skill', attrs: 'Attributes', points: 'Unspent points', autoAlloc: 'Distribute automatically', brandTxt: 'Brand', absorbTxt: 'Shield', attrN: { str: 'Strength (STR)', dex: 'Dexterity (DEX)', int: 'Intelligence (INT)', wil: 'Willpower (WIL)', vit: 'Vitality (VIT)' },
       boss: 'Boss: Kiln Warden', bossRec: 'level 12 recommended', bossHint: 'Dodge the telegraphs. Hide behind the anvil from cones. On Quench Slam find the steam (green circles). Stand by a burning kiln for 1.5 s to quench it.', phaseN: ['', 'Phase 1 — The Smith', 'Phase 2 — The Kiln', 'Phase 3 — Molten'], enrageT: 'Enrage', enraged: 'The Kiln Warden rages: kilns burn for good, +50 % damage', immune: 'Immune', quenchedT: 'Kiln quenched', safeT: 'In the steam', victory: 'Kiln Warden defeated', victoryT: 'Time', lootHint: 'Collect the loot and return to the menu.', collect: 'Collect loot', bossKills: 'Bosses',
+      campaign: 'Campaign: Act I', campNew: 'start in the Ashfields', campCont: 'continue', zoneDone: 'Area cleared', nextZone: 'Next area', continue: 'Continue', lanternLit: 'Lantern lit – checkpoint', keyFound: 'Key found – the locked doors will open', respawned: 'Your echo wakes at the Lantern', act1Done: 'Act I complete', gateHint: 'Cross the area to the gate at its end.', zoneLv: 'level',
       inv: 'Inventory', invBtn: 'I · Inventory', invHint: 'Click an item in the bag = equip · click an equipped one = take off · Shift + click = discard · I / Esc closes.', invStats: 'Character', invEmpty: 'empty', cmp: 'Against equipped', reqs: 'Requirements', lvl: 'Level', picked: 'Picked up', invFull: 'The bag is full', why: { class: 'The Ash Knight does not use this weapon', level: 'Higher character level needed', twohand: 'A two-handed weapon takes the off hand too', base: 'Unknown item' }, whyAttr: 'Missing', stHp: 'Health', stArmor: 'Armor (reduction)', stEva: 'Evade chance', stDps: 'Cleave DPS (thrall)', stAs: 'Attacks per second', stMs: 'Movement speed', keysInv: 'I – inventory, click an item on the ground = pick up', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
       feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
@@ -39,13 +41,13 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 3, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
+  const DEF = { v: 4, act1: null, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
   // načtení s migrací (HSim.migrateSave: v1 z P0 → v2 s výbavou)
   let SAVE = (() => { try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return Object.assign({}, DEF, raw ? window.HSim.migrateSave(raw) : {}); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE));
-      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: Math.min(1, ((SAVE.char && SAVE.char.level) || 1) / 12), stats: { level: (SAVE.char && SAVE.char.level) || 1, bestWave: SAVE.bestWave, kills: SAVE.kills, items: SAVE.items || 0, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
+      localStorage.setItem(STATS_KEY, JSON.stringify({ playTime: Math.round(SAVE.playTime), lastPlayed: Date.now(), progress: SAVE.act1 && SAVE.act1.done ? 1 : Math.min(1, (window.HSWorld && SAVE.act1 ? window.HSWorld.ACT1.indexOf(SAVE.act1.zone) : 0) / 6 + ((SAVE.char && SAVE.char.level) || 1) / 120), stats: { level: (SAVE.char && SAVE.char.level) || 1, bestWave: SAVE.bestWave, kills: SAVE.kills, items: SAVE.items || 0, benchFps: SAVE.bench ? SAVE.bench.avg : 0 } }));
     } catch (e) { /* bez úložiště */ }
   }
 
@@ -104,7 +106,7 @@
   }
 
   // scéna
-  ent('plane', M.ground, [0, 0, 0], [SIM.ARENA * 2.4, 1, SIM.ARENA * 2.4], null, false);
+  const GROUND = ent('plane', M.ground, [0, 0, 0], [SIM.ARENA * 2.4, 1, SIM.ARENA * 2.4], null, false);
   const ARENA_G = new pc.Entity(); app.root.addChild(ARENA_G); // aréna vln; boss má vlastní kovárnu (BOSS_G)
   for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; const r = SIM.ARENA + 0.6; const b = ent('box', M.rim, [Math.cos(a) * r, 0.5 + (i % 3) * 0.25, Math.sin(a) * r], [1.6, 1 + (i % 3) * 0.5, 0.8], ARENA_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
   for (const [x, z, r] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) ent('cylinder', M.pillar, [x, 1.25, z], [r * 2, 2.5, r * 2], ARENA_G);
@@ -188,7 +190,7 @@
   let AC = null, master = null;
   function audioInit() { if (AC) return; try { AC = new AudioContext(); master = AC.createGain(); master.gain.value = 0.35; master.connect(AC.destination); } catch (e) { AC = null; } if (AC && window.HSMusic) { HSMusic.init(AC); HSMusic.state(mode === 'menu' ? 'menu' : musicFor()); } }
   // hudba podle obrazovky: menu, aréna (explore/combat), boss; benchmark, test vstupu a test assetů bez hudby
-  const musicFor = () => (mode === 'assets' ? 'none' : !S ? 'menu' : S.mode === 'boss' ? 'boss' : S.mode === 'bench' || LAT.on || !S.progress ? 'none' : 'arena');
+  const musicFor = () => (mode === 'assets' ? 'none' : !S ? 'menu' : S.mode === 'boss' ? 'boss' : S.mode === 'bench' || LAT.on || !S.progress ? 'none' : 'arena'); // aréna i zóny Act I: vrstvy Emberfall Marches
   const music = (name) => { if (window.HSMusic) HSMusic.state(name || musicFor()); };
   const sting = (id) => !!(window.HSMusic && HSMusic.sting(id));
   let lastFight = -99;
@@ -295,10 +297,78 @@
     const key = b.ground.toFixed(1); if (key !== smoldKey && b.ground < S.arenaR - 0.05) { if (smold) smold.destroy(); smold = flat(meshFor('smold' + key, b.ground / S.arenaR, 1, 360), M_SMOLD, 0, 0, 0, S.arenaR, 0.03); smold.reparent(BOSS_G); smoldKey = key; }
   }
   let slowmo = 0;
+  /* ---------- kampaň Act I: scéna zóny, objekty, minimapa (P1) ---------- */
+  // barvy podlahy podle oblasti (šedý box): pole popelavá, Tollgate kamenná, Woods uhelná, Kiln rozžhavená
+  const ZONE_LOOK = { a1_ashfields: ['#2f2b28', '#4a4440'], a1_burnt_orchard: ['#2c2620', '#4d3b2c'], a1_tollgate: ['#2a2b2e', '#4f5259'], a1_charcoal_woods: ['#1f1d1c', '#3a3330'], a1_kiln: ['#33211a', '#5a2c18'] };
+  let ZONE_G = null; const ZOBJ = new Map(); const ZDOOR = []; const ZVISIT = new Set();
+  const M_GOLD = mat('#e3b964', { emissive: '#5a3f12' }), M_GOLD_OFF = mat('#4a4033'), M_LANTERN = mat('#ffcf7a', { unlit: true }), M_GATE = mat('#e05a2a', { unlit: true }), M_DOOR = mat('#5a3a22');
+  const ACT1 = window.HSWorld ? window.HSWorld.ACT1 : [];
+  const zoneName = (id) => { const a = window.HSWorld && window.HSWorld.area(id); return a ? a.n : id; };
+  function zoneScene(on) {
+    if (ZONE_G) { ZONE_G.destroy(); ZONE_G = null; } ZOBJ.clear(); ZDOOR.length = 0; ZVISIT.clear();
+    GROUND.enabled = !on; if (on) ARENA_G.enabled = false;
+    document.getElementById('minimap').hidden = !on; if (!on) return;
+    const z = S.zone; const W = window.HSWorld; const look = ZONE_LOOK[z.id] || ZONE_LOOK.a1_ashfields;
+    const mFloor = mat(look[0], { gloss: 0.1 }), mWall = mat(look[1], { gloss: 0.15 });
+    ZONE_G = new pc.Entity(); app.root.addChild(ZONE_G);
+    const all = new Set(z.keys.map((k) => k[0]));
+    const rects = [...z.rooms, ...z.corridors.flatMap((c) => c.segs)];
+    for (const r of rects) ent('box', mFloor, [(r.x0 + r.x1) / 2, -0.05, (r.z0 + r.z1) / 2], [r.x1 - r.x0, 0.1, r.z1 - r.z0], ZONE_G, false);
+    // zdi: tam, kde těsně za hranou obdélníku už není průchozí plocha (vzorkování po 0,5 m)
+    const H = 1.6, T = 0.6, STEP = 0.5;
+    for (const r of rects) {
+      for (const [ax, az, bx, bz, nx, nz] of [[r.x0, r.z0, r.x1, r.z0, 0, -1], [r.x0, r.z1, r.x1, r.z1, 0, 1], [r.x0, r.z0, r.x0, r.z1, -1, 0], [r.x1, r.z0, r.x1, r.z1, 1, 0]]) {
+        const L = Math.hypot(bx - ax, bz - az); const n = Math.max(1, Math.round(L / STEP)); let run = -1;
+        const flush = (i) => { if (run < 0) return; const t0 = run / n, t1 = i / n; const sl = L * (t1 - t0) + T; const cx = ax + (bx - ax) * ((t0 + t1) / 2) + nx * (T / 2), cz = az + (bz - az) * ((t0 + t1) / 2) + nz * (T / 2); ent('box', mWall, [cx, H / 2, cz], nx ? [T, H, sl] : [sl, H, T], ZONE_G); run = -1; };
+        for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; const px = ax + (bx - ax) * t + nx * 0.3, pz = az + (bz - az) * t + nz * 0.3; const solid = !W.walkable(z, px, pz, 0, all); if (solid && run < 0) run = i; if (!solid) flush(i); }
+        flush(n);
+      }
+    }
+    // zamčené chodby: dveře v polovině první části chodby, zmizí po nalezení klíče
+    for (const c of z.corridors) if (c.lock) { const sgm = c.segs[0]; const horiz = sgm.x1 - sgm.x0 > sgm.z1 - sgm.z0; const e = ent('box', M_DOOR, [(sgm.x0 + sgm.x1) / 2, 1.1, (sgm.z0 + sgm.z1) / 2], horiz ? [0.5, 2.2, sgm.z1 - sgm.z0] : [sgm.x1 - sgm.x0, 2.2, 0.5], ZONE_G); ZDOOR.push({ lock: c.lock, e }); }
+    for (const o of S.objs) {
+      const g = new pc.Entity(); g.setLocalPosition(o.x, 0, o.z); ZONE_G.addChild(g); const parts = {};
+      if (o.kind === 'lantern') { ent('cylinder', M.steel, [0, 1, 0], [0.2, 2, 0.2], g); parts.glow = ent('sphere', M_LANTERN, [0, 2.1, 0], [0.45, 0.45, 0.45], g, false); }
+      else if (o.kind === 'chest') { parts.box = ent('box', M_GOLD, [0, 0.35, 0], [1.1, 0.7, 0.7], g); }
+      else if (o.kind === 'key') { parts.key = ent('box', M_GOLD, [0, 1, 0], [0.18, 0.5, 0.08], g, false); }
+      else if (o.kind === 'gate') { ent('box', mWall, [-1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [0, 3.3, 0], [3.8, 0.5, 0.6], g); parts.glow = ent('box', M_GATE, [0, 1.5, 0], [2.6, 3, 0.1], g, false); }
+      ZOBJ.set(o.id, { o, g, parts });
+    }
+  }
+  function syncZone() {
+    if (!ZONE_G || !S.zone) return;
+    for (const { o, g, parts } of ZOBJ.values()) {
+      if (o.kind === 'key') { if (o.done) g.enabled = false; else parts.key.setLocalEulerAngles(0, renderT * 90, 0); }
+      if (o.kind === 'chest' && o.done && parts.box.render.material !== M_GOLD_OFF) parts.box.render.material = M_GOLD_OFF;
+    }
+    for (const d of ZDOOR) if (d.e.enabled && S.zoneKeys.has(d.lock)) d.e.enabled = false;
+    const p = S.player; for (const r of S.zone.rooms) if (p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1) ZVISIT.add(r.id);
+    if (Math.floor(renderT * 10) % 3 === 0) drawMinimap();
+  }
+  // minimapa: navštívené místnosti světle, ostatní tmavě; Lantern zeleně, brána rudě, truhly a klíče zlatě
+  function drawMinimap() {
+    const cv = document.getElementById('minimap'); const g = cv.getContext('2d'); const z = S.zone; const W = cv.width, Hh = cv.height;
+    const xs = z.rooms.flatMap((r) => [r.x0, r.x1]), zs = z.rooms.flatMap((r) => [r.z0, r.z1]);
+    const minx = Math.min(...xs), maxx = Math.max(...xs), minz = Math.min(...zs), maxz = Math.max(...zs);
+    const k = Math.min((W - 12) / (maxx - minx), (Hh - 12) / (maxz - minz)); const X = (x) => 6 + (x - minx) * k, Z = (v) => 6 + (v - minz) * k;
+    g.clearRect(0, 0, W, Hh); g.fillStyle = '#07080ccc'; g.fillRect(0, 0, W, Hh);
+    for (const c of z.corridors) for (const s of c.segs) { g.fillStyle = c.lock && !S.zoneKeys.has(c.lock) ? '#5a3a22' : '#2a3142'; g.fillRect(X(s.x0), Z(s.z0), (s.x1 - s.x0) * k, (s.z1 - s.z0) * k); }
+    for (const r of z.rooms) { g.fillStyle = ZVISIT.has(r.id) ? '#5a5f6e' : '#1d222e'; g.fillRect(X(r.x0), Z(r.z0), r.w * k, r.h * k); }
+    for (const o of S.objs) { if (o.done && (o.kind === 'key' || o.kind === 'chest')) continue; g.fillStyle = { lantern: '#6fd18a', gate: '#ff5a2a', chest: '#e3b964', key: '#ffe7a6' }[o.kind]; g.beginPath(); g.arc(X(o.x), Z(o.z), o.kind === 'gate' ? 4 : 2.5, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(X(S.player.x), Z(S.player.z), 3, 0, Math.PI * 2); g.fill();
+  }
+  function zoneObjective(id) { const q = HS.D.quests.find((x) => x.area === id); return q ? `${q.n}: ${q.steps.join(' · ')}` : t('gateHint'); }
+  function startCampaign() { const z = (SAVE.act1 && SAVE.act1.zone) || ACT1[0]; if (z === 'a1_kiln_heart') start('boss', { campaign: true }); else start('act1', { zone: z }); }
+  function zoneDone(ev) {
+    SAVE.act1 = { zone: ev.next || ACT1[ACT1.length - 1], done: false, deaths: ((SAVE.act1 && SAVE.act1.deaths) || 0) + ev.deaths }; saveChar(); saveGear(); persist();
+    tone(330, 660, 0.6, 0.25, 'triangle');
+    setTimeout(() => { if (!S || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${t('zoneDone')}: ${zoneName(ev.id)}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time / 60)} min</td></tr><tr><td>${t('kills')}</td><td class="n">${ev.kills}</td></tr><tr><td>${t('lvl')}</td><td class="n">${S.L}</td></tr></table><p>${t('nextZone')}: <b>${zoneName(ev.next)}</b></p><div class="row"><button class="btn" id="b-next">${t('continue')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-next').onclick = startCampaign; document.getElementById('b-menu').onclick = menu; }, 900);
+  }
   function victory(ev) {
+    if (S.campaign) SAVE.act1 = { zone: 'a1_kiln_heart', done: true, deaths: (SAVE.act1 && SAVE.act1.deaths) || 0 };
     slowmo = 4; SAVE.bossKills = (SAVE.bossKills || 0) + 1; SAVE.bossBest = SAVE.bossBest ? Math.min(SAVE.bossBest, Math.round(ev.time)) : Math.round(ev.time); saveChar(); persist();
     document.getElementById('bossbar').hidden = true; tone(196, 392, 1.2, 0.3, 'triangle'); tone(294, 587, 1.4, 0.2, 'sine');
-    setTimeout(() => { if (!S || !S.won || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${t('victory')}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time)} s</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('bossKills')}</td><td class="n">${SAVE.bossKills}</td></tr></table><p class="muted">${t('lootHint')}</p><div class="row"><button class="btn" id="b-collect">${t('collect')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-collect').onclick = () => { screen.innerHTML = ''; mode = 'play'; acc = 0; }; document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu; }, 4200);
+    setTimeout(() => { if (!S || !S.won || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${S.campaign ? t('act1Done') : t('victory')}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time)} s</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('bossKills')}</td><td class="n">${SAVE.bossKills}</td></tr></table><p class="muted">${t('lootHint')}</p><div class="row"><button class="btn" id="b-collect">${t('collect')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-collect').onclick = () => { screen.innerHTML = ''; mode = 'play'; acc = 0; }; document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu; }, 4200);
   }
   const fxLayer = document.getElementById('fx'); const NUMS = [];
   function num(x, z, text, cls, h) {
@@ -332,6 +402,12 @@
         case 'quench': if (ev.safe) num(S.player.x, S.player.z, t('safeT'), 'info', 2.6); break;
         case 'qslam': qslamVisual(ev); break;
         case 'breath': case 'kilnfire': { const e = flat(meshFor('cone' + ev.w, 0, 1, ev.w), M.swing, ev.x, ev.z, ev.face, ev.r, 0.05); fx(e, ev.dur || 0.5, (f, k) => f.e.setLocalScale(ev.r * (0.3 + 0.7 * Math.min(1, k * 3)), 1, ev.r * (0.3 + 0.7 * Math.min(1, k * 3)))); noise(ev.dur || 0.5, 600, 200, 0.3, 'lowpass'); break; }
+        case 'zone': toast(`${ev.n} · ${t('zoneLv')} ${S.zone.lv[0]}–${S.zone.lv[1]}`); break;
+        case 'lantern': toast(t('lanternLit')); tone(523, 784, 0.5, 0.2, 'sine'); break;
+        case 'key': toast(t('keyFound')); tone(880, 1320, 0.25, 0.15, 'triangle'); break;
+        case 'chest': noise(0.3, 1200, 400, 0.3); break;
+        case 'respawn': toast(t('respawned')); break;
+        case 'zonedone': zoneDone(ev); break;
         case 'victory': music('none'); sting('AU_mus_sting_8'); victory(ev); break;
         case 'leap': noise(0.18, 300, 900, 0.25); break;
         case 'shoot': noise(0.12, ev.fire ? 900 : 2600, ev.fire ? 300 : 1200, 0.18, 'bandpass'); break;
@@ -457,7 +533,7 @@
     const p = S.player;
     document.getElementById('b-hp').style.width = ((p.hp / p.hpMax) * 100).toFixed(1) + '%'; document.getElementById('t-hp').textContent = Math.ceil(p.hp) + ' / ' + p.hpMax;
     document.getElementById('b-res').style.width = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' Cinders';
-    document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : S.mode === 'boss' ? 'The Great Kiln' : t('wave') + ' ' + S.wave;
+    document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : S.mode === 'boss' ? 'Heart of the Kiln' : S.zone ? `${S.zone.n} · ${t('zoneLv')} ${S.zone.lv[0]}–${S.zone.lv[1]}` : t('wave') + ' ' + S.wave;
     document.getElementById('kills').textContent = t('kills') + ' ' + S.kills;
     const need = HS.F.xpToNext(S.L); const xpOn = S.progress; document.getElementById('xpbar').hidden = !xpOn;
     if (xpOn) { document.getElementById('b-xp').style.width = ((S.char.xp / need) * 100).toFixed(1) + '%'; document.getElementById('t-xp').textContent = `L${S.L} · ${S.char.xp} / ${need} ${t('xpShort')}${S.char.points ? ' · +' + S.char.points : ''}`; }
@@ -556,24 +632,26 @@
   const opt = () => `<label class="opt" for="o-click"><input type="checkbox" id="o-click" ${SAVE.clickMove ? 'checked' : ''}> ${t('clickMove')}</label>`;
   function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
   function menu() {
-    if (typeof bossScene === 'function' && BOSS_G) bossScene(false); document.getElementById('bossbar').hidden = true;
+    if (typeof bossScene === 'function' && BOSS_G) bossScene(false); if (ZONE_G) zoneScene(false); document.getElementById('bossbar').hidden = true;
     mode = 'menu'; document.getElementById('hud').hidden = true; music('menu');
     screen.innerHTML = `<div class="panel"><span class="muted">ECHOES OF THE HOLLOW SUN · ${t('sub')}</span><h1>Hollow Sun</h1><p>${t('pitch')}</p>${keysHtml()}${opt()}
-      <div class="row"><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-boss" title="${t('bossRec')}">${t('boss')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
+      <div class="row"><button class="btn camp" id="b-camp">${t('campaign')} · ${SAVE.act1 && SAVE.act1.done ? t('act1Done') : SAVE.act1 ? t('campCont') + ': ' + zoneName(SAVE.act1.zone) : t('campNew')}</button><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-boss" title="${t('bossRec')}">${t('boss')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
       <span class="muted">${t('best')}: ${SAVE.bestWave} · ${t('kills')}: ${SAVE.kills}${SAVE.bossKills ? ' · ' + t('bossKills') + ': ' + SAVE.bossKills + ' (' + SAVE.bossBest + ' s)' : ''}${SAVE.bench ? ' · Benchmark: ' + SAVE.bench.avg + ' FPS' : ''}${SAVE.latency ? ' · ' + t('latency') + ': p95 ' + SAVE.latency.presentP95 + ' ms' : ''}</span></div>`;
-    document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-boss').onclick = () => start('boss'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; document.getElementById('b-lat').onclick = () => start('latency'); document.getElementById('b-feel').onclick = feelForm; bindOpt();
+    document.getElementById('b-camp').onclick = startCampaign; document.getElementById('b-arena').onclick = () => start('arena'); document.getElementById('b-boss').onclick = () => start('boss'); document.getElementById('b-bench').onclick = () => start('bench'); document.getElementById('b-assets').onclick = assetsMode; document.getElementById('b-lat').onclick = () => start('latency'); document.getElementById('b-feel').onclick = feelForm; bindOpt();
   }
   function clearWorld() { clearDrops(); for (const v of EV.values()) v.root.destroy(); EV.clear(); for (const te of TELES) { te.line.destroy(); te.fill.destroy(); } TELES.length = 0; for (const f of FXS) f.e.destroy(); FXS.length = 0; for (const n of NUMS) n.d.remove(); NUMS.length = 0; }
   let bench = null;
-  function start(m) {
+  function start(m, o) {
+    o = o || {};
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
-    S = SIM.create({ mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss', char: m === 'arena' || m === 'boss' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
+    S = SIM.create({ zone: o.zone, mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : m === 'act1' ? 'act1' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss' || m === 'act1', char: m === 'arena' || m === 'boss' || m === 'act1' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
+    S.campaign = !!o.campaign;
     if (S.progress) saveChar();
     music();
-    document.getElementById('bossbar').hidden = !S.boss; bossScene(!!S.boss); slowmo = 0;
+    document.getElementById('bossbar').hidden = !S.boss; bossScene(!!S.boss); zoneScene(!!S.zone); slowmo = 0;
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
-    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : m === 'boss' ? t('bossHint') : t('hint');
+    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : m === 'boss' ? t('bossHint') : m === 'act1' ? zoneObjective(S.zone.id) : t('hint');
     bench = m === 'bench' ? { t0: performance.now(), frames: [], cpu: [], simMs: 0, steps: 0, last: performance.now() } : null;
     GT.on = m === 'bench'; GT.ms = [];
   }
@@ -689,7 +767,7 @@
     mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; saveChar(); persist();
     const st = S.stats;
     screen.innerHTML = `<div class="panel"><h2>${t('over')}</h2><table class="res"><tr><td>${t('wave')}</td><td class="n">${S.wave}</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('dmgDealt')}</td><td class="n">${st.dmg}</td></tr><tr><td>${t('hits')}</td><td class="n">${st.hits}</td></tr><tr><td>${t('dodges')}</td><td class="n">${st.dodged}</td></tr><tr><td>${t('taken')}</td><td class="n">${st.taken}</td></tr></table><div class="row"><button class="btn" id="b-again">${t('restart')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`;
-    document.getElementById('b-again').onclick = () => start(S.mode === 'boss' ? 'boss' : 'arena'); document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu;
+    document.getElementById('b-again').onclick = () => (S.campaign ? startCampaign() : start(S.mode === 'boss' ? 'boss' : 'arena')); document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu;
   }
   function benchDone() {
     const f = bench.frames.slice(30).sort((a, b) => a - b); const n = f.length || 1; const sum = f.reduce((a, b) => a + b, 0);
@@ -722,7 +800,7 @@
         renderT += dt;
       }
       latCheck();
-      if (S.mode === 'arena' && window.HSMusic) { const p = S.player; const near = S.enemies.some((e) => !e.dead && Math.hypot(e.x - p.x, e.z - p.z) < 11); HSMusic.combat(near || renderT - lastFight < 4); }
+      if ((S.mode === 'arena' || S.mode === 'act1') && window.HSMusic) { const p = S.player; const near = S.enemies.some((e) => !e.dead && Math.hypot(e.x - p.x, e.z - p.z) < 11); HSMusic.combat(near || renderT - lastFight < 4); }
       syncWorld(hitstop > 0 ? 0 : dt);
       hud();
     }
@@ -755,6 +833,7 @@
     for (const e of S.enemies) {
       let v = EV.get(e.id);
       if (v && v.stale && !v.dying) { v.root.destroy(); EV.delete(e.id); v = null; }
+      if (S.zone) { const dd = Math.hypot(e.x - S.player.x, e.z - S.player.z); if (!v && dd > 38) continue; if (v && !v.dying && dd > 48) { v.root.destroy(); EV.delete(e.id); continue; } }
       if (!v) { if (e.dead) continue; v = enemyVisual(e); }
       if (v.dying) continue;
       const px = v.x, pz = v.z;
@@ -775,7 +854,7 @@
       if (v.wisp) { v.body.setLocalPosition(0, 1.1 + Math.sin(renderT * 6 + e.id) * 0.15, 0); const k = e.atk ? 1 + Math.min(1, e.atk.t / e.atk.def.tele) * 0.6 : 1; v.body.setLocalScale(0.55 * k, 0.55 * k, 0.55 * k); continue; }
       const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
     }
-    syncDrops(); syncBoss(); syncProj();
+    syncDrops(); syncBoss(); syncProj(); syncZone();
     for (let i = TELES.length - 1; i >= 0; i--) {
       const te = TELES[i]; te.t += dt; const owner = S.enemies.find((e) => e.id === te.id); const k = Math.min(1, te.t / te.dur);
       te.fill.setLocalScale(te.r * k, 1, te.r * k);
@@ -792,7 +871,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();

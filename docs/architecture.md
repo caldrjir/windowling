@@ -311,6 +311,35 @@ them to −16 LUFS / −1 dBTP (two-pass loudnorm) and encodes Opus 128 kb/s int
 the game stays silent, so `hollowsun` joins `OWN_MUSIC` in `static/games/music.js` together with the
 first tracks.
 
+Act I campaign (P1): "Kampaň: Act I" in the menu plays the Bible's Act I main path, following the
+areas' links: Ashfields (L1–3), Burnt Orchard (3–5), Ironbound Tollgate (5–7), Charcoal Woods
+(6–9), the Great Kiln (9–11), then the Kiln Warden in the Heart of the Kiln (L12, the boss mode).
+
+- Layout: each zone comes from the Bible's own dungeon generator. `js/dungeon.js` is G.genDungeon
+  (14 steps), exported unchanged by the Bible exporter and checked by fixtures. `js/world.js` turns
+  it into geometry (cells 18 m apart, room units of 2.5 m, 4 m corridors, L-shaped where rooms are
+  not neighbours).
+- Content: a Lantern at the entrance, locks with their keys in side rooms, chests, the gate to the
+  next area in the last main room, and the generator's enemy budget with types from the area's list.
+  Enemies are at the area's levels by depth, elites use the Bible's elite multipliers, and the Kiln
+  Acolyte still stands in as a Bowman.
+- Simulation (`mode: 'act1'`): enemies sleep until they see the player (the Bible's detection
+  ranges) and alarm allies within 8 m. Movement slides along the walls and steps round corners;
+  walls block sight and arrows.
+- Death respawns at the last Lantern (D08: no XP loss). A chest drops two items with elite-pack
+  rarity (prototype value).
+- The renderer builds floors, walls (where the space next to an edge is not walkable), doors that
+  open with their key, the objects, a minimap and the area's quest objective. It only creates enemy
+  visuals within 38 m of the player.
+- The save moves to version 4 (`act1`: the zone reached, done, deaths), and the progress goes to the
+  hub stats.
+
+The generator parameters per zone are prototype values (`ZONE_P` in `world.js`); an XP estimate
+reaches level 11 at the end of the Great Kiln, matching the Bible's area levels. On the autopilot a
+zone takes about 3–11 minutes. `hollowsun-world.test.ts` checks that the zones follow the Bible's
+links, the levels and objects, that walking each route picks up the keys and reaches the gate, and
+the respawn; E2E clears a zone, moves on to the next and finishes Act I with the boss.
+
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three
 kilns on the edge. The boss comes from the exported Bible data (`bosses.bo_kiln`: level 12, HP ×60,

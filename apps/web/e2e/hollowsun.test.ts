@@ -186,7 +186,7 @@ test('HOLLOW SUN: loot drops, pick-up and the inventory', async ({ page }, info)
 		page,
 		`return JSON.parse(localStorage.getItem('hollowsun.save.v1'));`,
 	);
-	expect(saved.v).toBe(3);
+	expect(saved.v).toBe(4);
 	expect(saved.char.level).toBe(level);
 	expect(saved.gear.inv).toHaveLength(bag);
 
@@ -238,5 +238,56 @@ test('HOLLOW SUN: the Kiln Warden fight, phases and boss loot', async ({ page },
 		`return JSON.parse(localStorage.getItem('hollowsun.save.v1'));`,
 	);
 	expect(saved.bossKills).toBe(1);
+	expect(errors).toEqual([]);
+});
+
+test('HOLLOW SUN: the Act I campaign – a zone, the next area and the Kiln Warden', async ({
+	page,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
+	test.setTimeout(150_000);
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto('/games/hollowsun/index.html');
+	await page.locator('#b-camp').click();
+	await expect(page.locator('#minimap')).toBeVisible();
+	const zone = await run<{ id: string; objs: { kind: string }[] }>(page, 'return HSGame.zone;');
+	expect(zone.id).toBe('a1_ashfields');
+	expect(zone.objs.map((o) => o.kind)).toEqual(expect.arrayContaining(['lantern', 'gate']));
+	// Walk the zone's route (enemies removed) to the gate: the area is cleared and the save moves on.
+	const done = await run<{ done: boolean; keys: number; next: string | null }>(
+		page,
+		`const s = HSGame.state; s.enemies.length = 0; s.player.invuln = true; const R = s.zone.route; let i = 0;
+		for (let t = 0; t < 30 * 60 * 6 && !s.zoneDone; t++) { const p = s.player; while (i < R.length - 1 && Math.hypot(R[i].x - p.x, R[i].z - p.z) < 1) i++; HSGame.step(1, false, { move: [R[i].x - p.x, R[i].z - p.z] }); }
+		const sv = JSON.parse(localStorage.getItem('hollowsun.save.v1'));
+		return { done: s.zoneDone, keys: s.zoneKeys.size, next: sv.act1 && sv.act1.zone };`,
+	);
+	expect(done).toEqual({ done: true, keys: expect.any(Number), next: 'a1_burnt_orchard' });
+	await page.locator('#b-next').click({ timeout: 20_000 });
+	await expect
+		.poll(() => run<string>(page, 'return HSGame.zone && HSGame.zone.id;'))
+		.toBe('a1_burnt_orchard');
+
+	// The last step of Act I is the Kiln Warden; beating him completes the act.
+	await run(
+		page,
+		`const sv = JSON.parse(localStorage.getItem('hollowsun.save.v1')); sv.act1 = { zone: 'a1_kiln_heart', done: false, deaths: 0 }; localStorage.setItem('hollowsun.save.v1', JSON.stringify(sv)); HSGame.menu();`,
+	);
+	await page.reload();
+	await page.locator('#b-camp').click();
+	await expect(page.locator('#bossbar')).toBeVisible();
+	await run(
+		page,
+		`const s = HSGame.state; const b = s.enemies.find((e) => e.id === s.boss.id); s.player.invuln = true; b.hp = 1;
+		for (let i = 0; i < 30 * 30 && !s.won; i++) { s.player.x = b.x; s.player.z = b.z + 2.6; HSGame.step(1, false, { hold: true, aim: [b.x, b.z] }); }`,
+	);
+	await expect
+		.poll(() =>
+			run<boolean>(
+				page,
+				`return !!JSON.parse(localStorage.getItem('hollowsun.save.v1')).act1.done;`,
+			),
+		)
+		.toBe(true);
 	expect(errors).toEqual([]);
 });
