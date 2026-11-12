@@ -153,6 +153,59 @@ const Scene = (() => {
     pivovar: [-70, -125, 90, 10], sklarna: [-60, -120, 75, 8], jarmark: [-90, -130, 90, 10], lazne: [-80, -105, 85, 10], zamek: [-90, -150, 100, 30], alchymie: [-40, -150, 50, 8],
     golem: [-60, -110, 70, 8], orloj: [-40, -190, 50, 8],
   };
+  // Mlýn stojí boční zdí u potoka: náhon teče rovně podél zdi (viz BROOK) a kolo stojí v něm.
+  const MILL = { x: SLOT.mlyn[0] - 8, y: SLOT.mlyn[1], w: 62, depth: 46, gap: 3, race: 16 };
+  /**
+   * Mlýnské kolo na spodní vodu: je rovnoběžné s boční zdí (kreslí se ve stejném zkosení jako zeď,
+   * hloubka = (0,62; −0,4) na jednotku), stojí těsně u ní v náhonu a hřídel vede kolmo do mlýna.
+   * Spodní lopatky jsou pod hladinou; proud teče podél zdi k nám a tlačí je s sebou, takže se kolo
+   * dole točí po proudu. V zimě potok zamrzne a kolo stojí.
+   */
+  function millWheel(c, k, hs, lv) {
+    const r = lv >= 4 ? 20 : 17, sub = 5, g = MILL.gap, wa = 8, u0 = MILL.depth / 2, ice = k.season === 3;
+    const ox = hs.R + g + 0.62 * u0, oy = MILL.y - 0.4 * u0 - (r - sub); // náboj u zadního věnce
+    const a = ice ? 0.35 : -t * 0.8; // dolní lopatky se pohybují k nám, po proudu
+    const P = (th, rr, ax) => [ox + ax + rr * Math.cos(th) * 0.62, oy - rr * Math.cos(th) * 0.4 - rr * Math.sin(th)];
+    const ring = (ax, rr) => { c.save(); c.transform(0.62, -0.4, 0, -1, ox + ax, oy); c.beginPath(); c.arc(0, 0, rr, 0, TAU); c.restore(); };
+    // hladina náhonu v rovině kola (ax: vzdálenost od zadního věnce směrem od zdi)
+    const wl = (s, ax) => [ox + ax + 0.62 * s, oy + (r - sub) - 0.4 * s];
+    const wood = '#7a5236', dark = '#5a3a22', board = '#8a6040', water = PAL[k.season].water;
+    function wheel() {
+      ring(0, r); c.lineWidth = 2.4; c.strokeStyle = dark; c.stroke();
+      for (let i = 0; i < 6; i++) { const [px, py] = P(a + (i * TAU) / 6, r, 0); line(c, ox, oy, px, py, dark, 1.4); }
+      for (let i = 0; i < 12; i++) {
+        const th = a + (i * TAU) / 12, [x1, y1] = P(th, r - 1.5, 0), [x2, y2] = P(th, r + 4, 0);
+        poly(c, [x1, y1, x2, y2, x2 + wa, y2, x1 + wa, y1], board, OL, 0.8);
+      }
+      ring(wa, r); c.lineWidth = 3; c.strokeStyle = wood; c.stroke();
+      ring(wa, r - 1.6); c.lineWidth = 0.8; c.strokeStyle = OL; c.stroke();
+      for (let i = 0; i < 6; i++) { const [px, py] = P(a + (i * TAU) / 6, r - 1, wa); line(c, ox + wa, oy, px, py, wood, 2); }
+      circ(c, ox + wa, oy, 3.4, dark, OL);
+    }
+    // hřídel kolmo do zdi s ložiskem
+    rect(c, ox - g - 3, oy - 4.5, 4, 9, '#6b4a30', OL);
+    line(c, ox - g, oy, ox + wa + 1.5, oy, dark, 3.4);
+    wheel();
+    // hladina přes ponořenou část (je trochu průhledná) a nad ní znovu to, co z vody čouhá
+    const s0 = r + 8, A = wl(-s0, -g), B = wl(s0, -g), Cc = wl(s0, MILL.race - g), D = wl(-s0, MILL.race - g);
+    c.globalAlpha = ice ? 0.95 : 0.8;
+    poly(c, [...A, ...B, ...Cc, ...D], water);
+    c.globalAlpha = 1;
+    c.save();
+    const m1 = wl(-80, wa / 2), m2 = wl(80, wa / 2);
+    c.beginPath(); c.moveTo(m1[0], m1[1]); c.lineTo(m2[0], m2[1]); c.lineTo(m2[0], m2[1] - 120); c.lineTo(m1[0], m1[1] - 120); c.closePath(); c.clip();
+    wheel();
+    c.restore();
+    // v zimě visí rampouchy z lopatek nad ledem (vpředu i vzadu), pod ledem nic
+    if (ice) { for (const th of [-0.3, -0.7, -2.2, -2.55]) { const [ix, iy] = P(th + a - 0.35, r + 4, wa); poly(c, [ix - 1.6, iy, ix + 1.6, iy, ix, iy + 5], '#e8f4ff', 'rgba(120,150,180,.8)', 0.6); } return; }
+    // pěna, kde lopatky vyjíždějí z vody (vpředu po proudu), a kde do ní vjíždějí
+    const se = Math.sqrt(r * r - (r - sub) * (r - sub)), [fx, fy] = wl(-se, wa / 2), [bx2, by2] = wl(se, wa / 2);
+    c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 1.2;
+    for (let i = 0; i < 3; i++) { const ph = (t * 1.6 + i / 3) % 1; c.beginPath(); c.ellipse(fx - ph * 9, fy + ph * 5, 3 + ph * 5, 1 + ph * 1.5, -0.57, 0, TAU); c.globalAlpha = 1 - ph; c.stroke(); }
+    c.globalAlpha = 1;
+    if (Math.random() < 0.35) k.emit(fx + (Math.random() - 0.5) * wa, fy, 'splash', 1);
+    if (Math.random() < 0.12) k.emit(bx2, by2, 'splash', 1);
+  }
   const DRAW = {
     pole(c, k, x, y, lv) {
       const P = PAL[k.season];
@@ -243,19 +296,9 @@ const Scene = (() => {
       if (lv >= 4) { rect(c, x + 50, y - 22, 24, 22, '#8a6a4c', OL); poly(c, [x + 47, y - 22, x + 77, y - 22, x + 72, y - 30, x + 52, y - 30], '#5a4b4e', OL); }
     },
     mlyn(c, k, x, y, lv) {
-      const hs = house(c, k, x - 8, y, 62, 52, { wall: '#efe2c6', roof: '#9a5b34', depth: 34, windows: 2, timber: '#7a4a2c', attic: true, chimney: lv >= 3 ? [0.4, 0.4, 16, 7] : null, shutters: '#4f7a4a' });
+      const hs = house(c, k, MILL.x, y, MILL.w, 52, { wall: '#efe2c6', roof: '#9a5b34', depth: MILL.depth, windows: 2, timber: '#7a4a2c', attic: true, chimney: lv >= 3 ? [0.4, 0.4, 16, 7] : null, shutters: '#4f7a4a' });
       if (hs.chimneyTop) k.emit(hs.chimneyTop[0], hs.chimneyTop[1], 'smoke', 0.8);
-      // mlýnské kolo na potoce
-      const wx = x + 38, wy = y - 20, R = 22 + (lv >= 4 ? 4 : 0), a = k.season === 3 ? 0 : t * 0.9;
-      circ(c, wx, wy, R, null, '#5a3a22'); c.lineWidth = 3; c.strokeStyle = '#7a5236'; c.beginPath(); c.arc(wx, wy, R, 0, TAU); c.stroke();
-      c.lineWidth = 1.8;
-      for (let i = 0; i < 8; i++) {
-        const an = a + (i * TAU) / 8;
-        line(c, wx, wy, wx + Math.cos(an) * R, wy + Math.sin(an) * R, '#7a5236', 1.8);
-        rect(c, wx + Math.cos(an) * R - 3, wy + Math.sin(an) * R - 3, 6, 6, '#8a6040');
-      }
-      circ(c, wx, wy, 4, '#5a3a22', OL);
-      if (k.season !== 3 && Math.random() < 0.3) k.emit(wx + R * 0.6, wy + R * 0.8, 'splash', 1);
+      millWheel(c, k, hs, lv);
       if (lv >= 2) for (let i = 0; i < Math.min(5, lv); i++) ell(c, x - 40 + i * 7, y - 4 - (i % 2) * 3, 4.5, 5, '#f4efe2', OL);
     },
     pivovar(c, k, x, y, lv) {
@@ -531,9 +574,36 @@ const Scene = (() => {
   const COTTAGES = [[300, 304], [345, 308], [655, 302], [845, 306], [1210, 304], [1270, 300], [1500, 306], [1560, 302], [1790, 300], [1860, 306], [2130, 302], [2190, 308], [395, 302], [960, 300]];
   const COTTAGE_AT = [5, 15, 30, 50, 80, 120, 170, 230, 300, 400, 520, 700, 900, 1200];
   const roadY = x => 376 + 7 * Math.sin(x / 170) + 3 * Math.sin(x / 61);
-  // potok: kvadratická křivka od kopců dolů
-  const BROOK = [1010, 286, 905, 380, 960, 504];
-  const brookAt = f => [(1 - f) * (1 - f) * BROOK[0] + 2 * (1 - f) * f * BROOK[2] + f * f * BROOK[4], (1 - f) * (1 - f) * BROOK[1] + 2 * (1 - f) * f * BROOK[3] + f * f * BROOK[5]];
+  // Potok od kopců dolů. U mlýna teče rovně podél jeho boční zdi (náhon pro kolo, směr hloubky stavení
+  // (0,62; −0,4)), levý břeh je zeď; nad mlýnem a pod ním se vlní. Šířka je vodorovná (±8, břeh ±11).
+  const BROOK = (() => {
+    const U = [0.62, -0.4], fx = MILL.x + MILL.w / 2 + MILL.race / 2, fy = MILL.y;
+    const at = u => [fx + U[0] * u, fy + U[1] * u];
+    const P4 = at(MILL.depth + 8), P5 = at(-8), F = [-0.84, 0.54]; // F: směr proudu podél zdi
+    const cubic = (a, b, c2, d, n, out) => { for (let i = 0; i <= n; i++) { const q = i / n, m = 1 - q; out.push([m * m * m * a[0] + 3 * m * m * q * b[0] + 3 * m * q * q * c2[0] + q * q * q * d[0], m * m * m * a[1] + 3 * m * m * q * b[1] + 3 * m * q * q * c2[1] + q * q * q * d[1]]); } };
+    const pts = [];
+    cubic([1010, 284], [940, 340], [P4[0] - F[0] * 25, P4[1] - F[1] * 25], P4, 60, pts);
+    for (let i = 1; i < 12; i++) pts.push([P4[0] + (P5[0] - P4[0]) * (i / 12), P4[1] + (P5[1] - P4[1]) * (i / 12)]);
+    cubic(P5, [P5[0] + F[0] * 6, P5[1] + F[1] * 6], [934, 470], [942, 512], 30, pts); // za rohem mlýna se stočí od domu
+    const len = [0];
+    for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    return { pts, len, total: len[len.length - 1] };
+  })();
+  /** Bod potoka v poměru f (0 nahoře u kopců, 1 dole) podle délky toku. */
+  const brookAt = f => {
+    const d = Math.max(0, Math.min(1, f)) * BROOK.total, L = BROOK.len;
+    let i = 1; while (i < L.length - 1 && L[i] < d) i++;
+    const q = (d - L[i - 1]) / (L[i] - L[i - 1] || 1), a = BROOK.pts[i - 1], b = BROOK.pts[i];
+    return [a[0] + (b[0] - a[0]) * q, a[1] + (b[1] - a[1]) * q];
+  };
+  // obrys potoka posunutý vodorovně o ±w
+  function brookShape(c, w) {
+    const p = BROOK.pts;
+    c.beginPath(); c.moveTo(p[0][0] - w, p[0][1]);
+    for (const [x, y] of p) c.lineTo(x - w, y);
+    for (let i = p.length - 1; i >= 0; i--) c.lineTo(p[i][0] + w, p[i][1]);
+    c.closePath();
+  }
   const bridge = (() => { let best = [0, 0], d = 1e9; for (let f = 0; f <= 1; f += 0.005) { const [x, y] = brookAt(f), e = Math.abs(y - roadY(x)); if (e < d) { d = e; best = [x, y]; } } return best; })();
   const POND = [470, 474];
 
@@ -543,7 +613,7 @@ const Scene = (() => {
   function emit(x, y, kind, rate) {
     if (kind === 'spark') { parts.push({ x, y, vx: (Math.random() - 0.5) * 50, vy: -40 - Math.random() * 50, life: 0, max: 0.6, kind }); return; }
     if (kind === 'glint') { parts.push({ x, y, vx: 0, vy: -4, life: 0, max: 0.8, kind }); return; }
-    if (kind === 'splash') { parts.push({ x, y, vx: (Math.random() - 0.3) * 30, vy: -20 - Math.random() * 20, life: 0, max: 0.5, kind }); return; }
+    if (kind === 'splash') { parts.push({ x, y, vx: (Math.random() - 0.7) * 30, vy: -20 - Math.random() * 20, life: 0, max: 0.5, kind }); return; }
     if (Math.random() > rate * 0.045 * (frameDt * 60)) return;
     parts.push({ x, y, vx: 6 + Math.random() * 6, vy: -14 - Math.random() * 8, life: 0, max: 3 + Math.random() * 1.5, r: 3, kind });
   }
@@ -578,7 +648,7 @@ const Scene = (() => {
     let x, y, p = 1;
     if (id === 'vodnik') {
       // na kameni v rybníku nebo na břehu potoka: nejlépe tam, kde je to vidět
-      const spots = [[POND[0] - 34, POND[1] - 2], [POND[0] + 30, POND[1] - 4], ...[0.55, 0.7, 0.86].map(f => { const [a, b] = brookAt(f); return [a + 22, b]; })];
+      const spots = [[POND[0] - 34, POND[1] - 2], [POND[0] + 30, POND[1] - 4], ...[0.5, 0.86].map(f => { const [a, b] = brookAt(f); return [a + 22, b]; })]; // pravý břeh nad mlýnem a pod ním, ne u kola
       const inView = a => a > view[0] + 40 && a < view[1] - 40, mid = (view[0] + view[1]) / 2;
       const order = spots.map(([a, b]) => ({ id, x: a, y: b, p })).sort((u, v) => inView(v.x) - inView(u.x) || Math.abs(u.x - mid) - Math.abs(v.x - mid));
       ({ x, y } = order.find(freeSpot) || order[0]);
@@ -881,14 +951,17 @@ const Scene = (() => {
     const gg = c.createLinearGradient(0, 284, 0, H);
     gg.addColorStop(0, P.ground2); gg.addColorStop(0.25, P.ground); gg.addColorStop(1, P.ground);
     c.fillStyle = gg; c.fillRect(-10, 284, W + 20, H);
-    // dráha za vsí
-    if (S && S.upg.zeleznice) drawRail(c, k);
     for (const [x, y, s] of tufts) { if (x < cam - 20 || x > cam + viewW() + 20) continue; c.strokeStyle = snow ? '#d6e0ea' : P.ground2; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x - 3 * s, y); c.lineTo(x - 4 * s, y - 5 * s); c.moveTo(x, y); c.lineTo(x, y - 6 * s); c.moveTo(x + 3 * s, y); c.lineTo(x + 4 * s, y - 5 * s); c.stroke(); }
     // potok
+    brookShape(c, 11); c.fillStyle = shade(P.water, 0.8); c.fill();
+    brookShape(c, 8); c.fillStyle = P.water; c.fill();
+    if (!snow) {
+      c.beginPath(); BROOK.pts.forEach(([x, y], i) => (i ? c.lineTo(x + 2, y) : c.moveTo(x + 2, y)));
+      c.setLineDash([8, 22]); c.lineDashOffset = -t * 30; c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2; c.stroke(); c.setLineDash([]);
+    }
+    // dráha za vsí (až po potoku: vede přes něj po mostku)
+    if (S && S.upg.zeleznice) drawRail(c, k);
     c.lineCap = 'round';
-    c.strokeStyle = shade(P.water, 0.8); c.lineWidth = 22; c.beginPath(); c.moveTo(BROOK[0], BROOK[1]); c.quadraticCurveTo(BROOK[2], BROOK[3], BROOK[4], BROOK[5]); c.stroke();
-    c.strokeStyle = P.water; c.lineWidth = 16; c.stroke();
-    if (!snow) { c.setLineDash([8, 22]); c.lineDashOffset = -t * 30; c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 2; c.stroke(); c.setLineDash([]); }
     // cesta
     c.strokeStyle = shade(P.road, 0.85); c.lineWidth = 30; c.beginPath();
     for (let x = -20; x <= W + 20; x += 20) { if (x === -20) c.moveTo(x, roadY(x)); else c.lineTo(x, roadY(x)); }
@@ -903,8 +976,6 @@ const Scene = (() => {
       if (snow) for (let i = 0; i < 4; i++) line(c, px - 50 + i * 26, py - 6 + (i % 2) * 8, px - 36 + i * 26, py - 3 + (i % 2) * 8, 'rgba(255,255,255,.8)', 1.4);
       for (let i = 0; i < 7; i++) { const rx = px + 50 + i * 4, ry = py + 6 - (i % 3) * 3; line(c, rx, ry, rx + Math.sin(t + i) * 1.5, ry - 18, snow ? '#b8a07a' : '#5a8a3a', 1.6); if (i % 2) ell(c, rx, ry - 18, 1.6, 4, '#6b4a30'); }
     }
-    // elektrické sloupy
-    if (S && S.upg.elektrina) for (let x = 80; x < W; x += 190) { const y = roadY(x) - 17; line(c, x, y, x, y - 46, '#6b4a30', 2.4); line(c, x - 7, y - 42, x + 7, y - 42, '#6b4a30', 2); if (x + 190 < W) { c.strokeStyle = 'rgba(40,30,30,.6)'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(x, y - 42); c.quadraticCurveTo(x + 95, y - 30, x + 190, roadY(x + 190) - 59); c.stroke(); } circ(c, x + 6, y - 38, 2.6, light.sun < 0.5 ? '#ffe9a0' : '#d8d8c8', OL); if (light.sun < 0.5) lights.push([x + 6, y - 36, 26, 'rgba(255,220,130,']); }
     // vše s hloubkou: seřadit podle y
     const items = [];
     TREES.forEach(([x, y, s, kd], i) => items.push([y, () => tree(c, k, x, y, s, kd, i + 1)]));
@@ -919,6 +990,8 @@ const Scene = (() => {
       else if (next) { items.push([y, () => plot(c, k, x, y)]); next = false; }
     }
     for (const v of villagers) items.push([v.y, () => person(c, v)]);
+    // elektrické sloupy stojí za cestou mezi staveními a kreslí se podle hloubky (před domy za nimi)
+    if (S && S.upg.elektrina) POLES.forEach((x, i) => items.push([roadY(x) - 17, () => pole(c, x, POLES[i + 1])]));
     items.sort((a, b) => a[0] - b[0]);
     for (const [, f] of items) f();
     drawParts(c);
@@ -941,6 +1014,23 @@ const Scene = (() => {
     drawFx(c, frameDt);
     drawMinimap(c);
   }
+  // Sloupy po zhruba 190 jednotkách, posunuté mimo stavení za cestou a mimo most.
+  const POLES = (() => {
+    const busy = Object.keys(SLOT).filter(id => SLOT[id][1] < 376).map(id => [SLOT[id][0] + BOX[id][0] - 8, SLOT[id][0] + BOX[id][2] + 8]);
+    busy.push([bridge[0] - 38, bridge[0] + 32]);
+    busy.sort((a, b) => a[0] - b[0]);
+    const zones = [];
+    for (const z of busy) { const l = zones[zones.length - 1]; if (l && z[0] <= l[1]) l[1] = Math.max(l[1], z[1]); else zones.push([...z]); }
+    const xs = [];
+    for (let x = 80; x < W; x += 190) { const z = zones.find(([a, b]) => x > a && x < b); xs.push(!z ? x : x - z[0] < z[1] - x && z[0] > 10 ? z[0] : z[1]); }
+    return xs;
+  })();
+  function pole(c, x, next) {
+    const y = roadY(x) - 17;
+    if (next != null) { c.strokeStyle = 'rgba(40,30,30,.6)'; c.lineWidth = 0.8; c.beginPath(); c.moveTo(x, y - 42); c.quadraticCurveTo((x + next) / 2, (y + roadY(next) - 17) / 2 - 30, next, roadY(next) - 59); c.stroke(); }
+    line(c, x, y, x, y - 46, '#6b4a30', 2.4); line(c, x - 7, y - 42, x + 7, y - 42, '#6b4a30', 2);
+    circ(c, x + 6, y - 38, 2.6, light.sun < 0.5 ? '#ffe9a0' : '#d8d8c8', OL); if (light.sun < 0.5) lights.push([x + 6, y - 36, 26, 'rgba(255,220,130,']);
+  }
   function plot(c, k, x, y) {
     // staveniště dalšího řemesla
     for (const [ox, oy] of [[-24, 0], [24, 0], [-16, -12], [16, -12]]) rect(c, x + ox - 1.5, y + oy - 12, 3, 12, '#8a6a4a');
@@ -952,6 +1042,10 @@ const Scene = (() => {
   }
   function drawRail(c, k) {
     const y = 290;
+    // mostek přes potok: trám, dvě opěry a zábradlí
+    { let bx = BROOK.pts[0][0]; for (const [px, py] of BROOK.pts) if (py <= y + 2) bx = px;
+      rect(c, bx - 15, y - 1, 30, 8, '#7a5a3e', OL); rect(c, bx - 16, y + 6, 4, 6, '#8a8a92', OL); rect(c, bx + 12, y + 6, 4, 6, '#8a8a92', OL);
+      line(c, bx - 15, y - 6, bx + 15, y - 6, '#6b4a30', 1.4); for (const ex of [-15, -5, 5, 15]) line(c, bx + ex, y - 6, bx + ex, y - 1, '#6b4a30', 1.2); }
     line(c, 0, y, W, y, '#6b5a4a', 1.6); line(c, 0, y + 4, W, y + 4, '#6b5a4a', 1.6);
     for (let x = 0; x < W; x += 10) line(c, x, y - 1, x + 2, y + 5, '#8a6a4a', 1.4);
     const period = 70, ph = (t % period) / period, tx = -200 + ph * (W + 400);
