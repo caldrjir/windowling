@@ -149,7 +149,7 @@ const Scene = (() => {
   };
   // Obrys pro ikonky (minX, minY, maxX, maxY) kolem SLOT.
   const BOX = {
-    pole: [-112, -70, 112, 12], kurnik: [-70, -70, 70, 10], vcelin: [-70, -95, 70, 8], pekarna: [-50, -95, 72, 8], kovarna: [-55, -100, 75, 8], mlyn: [-50, -100, 75, 10],
+    pole: [-112, -70, 112, 12], kurnik: [-70, -70, 70, 10], vcelin: [-70, -95, 70, 8], pekarna: [-50, -95, 72, 8], kovarna: [-90, -100, 75, 14], mlyn: [-50, -100, 75, 10],
     pivovar: [-86, -125, 90, 10], sklarna: [-60, -120, 75, 8], jarmark: [-90, -130, 90, 10], lazne: [-80, -105, 85, 10], zamek: [-90, -150, 100, 30], alchymie: [-40, -150, 50, 8],
     golem: [-60, -110, 70, 8], orloj: [-40, -190, 50, 8],
   };
@@ -279,23 +279,7 @@ const Scene = (() => {
       c.beginPath(); c.arc(x + 48, y - 31, 6, 0, TAU); c.moveTo(x + 43, y - 34); c.lineTo(x + 53, y - 27); c.moveTo(x + 53, y - 34); c.lineTo(x + 43, y - 27); c.stroke();
       if (lv >= 3) { rect(c, x + 40, y - 12, 26, 10, '#9a6a3c', OL); for (let i = 0; i < 4; i++) ell(c, x + 45 + i * 6, y - 14, 3.5, 2.3, '#e3a75a', OL); }
     },
-    kovarna(c, k, x, y, lv) {
-      const hs = house(c, k, x, y, 76, 44, { wall: '#aaa49b', roof: '#5a4b4e', depth: 36, windows: 0, door: false, chimney: [0.25, 0.6, 26, 11], chimneyCol: '#7d7670' });
-      if (hs.chimneyTop) k.emit(hs.chimneyTop[0], hs.chimneyTop[1], 'dark', 1.6);
-      for (let i = 0; i < 9; i++) { const sx = x - 36 + (i % 5) * 16 + (i > 4 ? 8 : 0), sy = y - 8 - (i > 4 ? 22 : 0); c.lineWidth = 1; c.strokeStyle = '#8a847c'; c.strokeRect(sx - 7, sy - 10, 15, 10); }
-      // otevřená dílna s výhní
-      rect(c, x - 20, y - 30, 40, 30, '#2a1d18', OL);
-      const glow = 0.75 + 0.25 * Math.sin(t * 7) * Math.sin(t * 3.1);
-      ell(c, x - 6, y - 7, 11, 5, `rgba(255,${120 + 60 * glow | 0},40,1)`);
-      k.light(x - 6, y - 10, 30 + glow * 10, 'rgba(255,130,40,');
-      if (Math.random() < 0.08 + lv * 0.02) k.emit(x - 6, y - 12, 'spark', 1);
-      // kovadlina
-      poly(c, [x + 24, y, x + 30, y - 7, x + 26, y - 9, x + 44, y - 9, x + 42, y - 13, x + 26, y - 13, x + 20, y - 9], '#3c3c44', OL, 1);
-      // podkova
-      c.strokeStyle = lv >= 5 ? '#ffd23a' : '#7a7a86'; c.lineWidth = 3; c.beginPath(); c.arc(x, y - 38, 5, Math.PI * 0.15, Math.PI * 0.85, true); c.stroke();
-      if (lv >= 3) { circ(c, x - 34, y - 6, 8, null, '#6b4a30'); line(c, x - 42, y - 6, x - 26, y - 6, '#6b4a30', 1.4); line(c, x - 34, y - 14, x - 34, y + 2, '#6b4a30', 1.4); }
-      if (lv >= 4) { rect(c, x + 50, y - 22, 24, 22, '#8a6a4c', OL); poly(c, [x + 47, y - 22, x + 77, y - 22, x + 72, y - 30, x + 52, y - 30], '#5a4b4e', OL); }
-    },
+    kovarna(c, k, x, y, lv) { smithy(c, k, x, y, lv); },
     mlyn(c, k, x, y, lv) {
       const hs = house(c, k, MILL.x, y, MILL.w, 52, { wall: '#efe2c6', roof: '#9a5b34', depth: MILL.depth, windows: 2, timber: '#7a4a2c', attic: true, chimney: lv >= 3 ? [0.4, 0.4, 16, 7] : null, shutters: '#4f7a4a' });
       if (hs.chimneyTop) k.emit(hs.chimneyTop[0], hs.chimneyTop[1], 'smoke', 0.8);
@@ -513,6 +497,98 @@ const Scene = (() => {
     const w = 34 + r() * 12, h = 22 + r() * 6;
     const hs = house(c, k, x, y, w, h, { wall: walls[seed % walls.length], roof: roofs[(seed * 3) % roofs.length], depth: 22 + r() * 8, windows: r() < 0.5 ? 1 : 2, ww: 7, doorW: 8, chimney: [0.3 + r() * 0.3, 0.5, 9, 5], timber: r() < 0.3 ? '#8a5a3c' : null, box: r() < 0.5, shutters: r() < 0.3 ? '#4f7a4a' : null });
     if (hs.chimneyTop && (k.season === 3 || k.night > 0.3 || seed % 3 === 0)) k.emit(hs.chimneyTop[0], hs.chimneyTop[1], 'smoke', 0.5);
+  }
+  // ── Kovárna (roubená): roubenka na kamenné podezdívce, otevřená vrata s výhní, kamenný komín u boční zdi ──
+  const STONE = '#b3aca2';
+  // Kamenné zdivo: nepravidelné kvádry jako jemné spáry.
+  function stones(c, x0, x1, y, h, seed = 1) {
+    c.strokeStyle = 'rgba(70,60,50,.28)'; c.lineWidth = 1;
+    let r = seed;
+    for (let row = 0, yy = y - 6; yy > y - h + 2; yy -= 6, row++) {
+      c.beginPath(); c.moveTo(x0 + 1, yy); c.lineTo(x1 - 1, yy); c.stroke();
+      for (let xx = x0 + (row % 2 ? 5 : 9); xx < x1 - 3; xx += 9 + ((r = (r * 9301 + 49297) % 233280) / 233280) * 6) { c.beginPath(); c.moveTo(xx, yy); c.lineTo(xx, yy + 6); c.stroke(); }
+    }
+  }
+  function shoe(c, x, y, s, col) { c.strokeStyle = col; c.lineWidth = 2.6 * s; c.beginPath(); c.arc(x, y, 4.5 * s, Math.PI * 0.15, Math.PI * 0.85, true); c.stroke(); for (const a of [0.35, 0.65]) circ(c, x + Math.cos(Math.PI * a) * 4.5 * s, y + Math.sin(Math.PI * a) * 4.5 * s, 0.5 * s, '#3a3a44'); }
+  // Kovadlina na pařezu.
+  function anvil(c, x, y) {
+    rect(c, x - 4, y - 8, 8, 8, '#8a5a3c', OL); ell(c, x, y - 8, 4, 1.4, '#c49a6a', OL);
+    poly(c, [x - 3, y - 8, x + 3, y - 8, x + 2, y - 10.5, x + 5.5, y - 11, x + 6, y - 13.5, x - 4, y - 13.5, x - 9, y - 12, x - 4, y - 11, x - 2, y - 10.5], '#3c3c46', OL, 1);
+    line(c, x - 4, y - 13.2, x + 5.5, y - 13.2, '#8a8a98', 1);
+  }
+  function trough(c, k, x0, y) {
+    box(c, x0, y, 12, 5, 7, '#7a5236');
+    poly(c, [x0 + 1, y - 5, x0 + 11, y - 5, x0 + 11 + 0.62 * 6, y - 5 - 0.4 * 6, x0 + 1 + 0.62 * 6, y - 5 - 0.4 * 6], k.season === 3 ? '#dfeef8' : PAL[k.season].water);
+  }
+  function wheelLean(c, x, y, r) {
+    c.lineWidth = 2; c.strokeStyle = '#6b4a30'; c.beginPath(); c.ellipse(x, y - r, r * 0.55, r, -0.15, 0, TAU); c.stroke();
+    for (let i = 0; i < 4; i++) { const a = (i * Math.PI) / 4; line(c, x - Math.cos(a) * r * 0.55, y - r - Math.sin(a) * r, x + Math.cos(a) * r * 0.55, y - r + Math.sin(a) * r, '#6b4a30', 1.2); }
+    circ(c, x, y - r, 1.6, '#4a3a30');
+  }
+  // Kovář v zástěře: ruka s kladivem se zvedá a dopadá.
+  function smithMan(c, x, y) {
+    line(c, x - 1.5, y - 7, x - 2, y, '#3a2a20', 1.8); line(c, x + 1.5, y - 7, x + 2, y, '#3a2a20', 1.8);
+    poly(c, [x - 4, y - 7, x + 4, y - 7, x + 4, y - 17, x - 4, y - 17], '#5a5a66', OL, 1);
+    poly(c, [x - 3, y - 6, x + 3, y - 6, x + 3, y - 15, x - 3, y - 15], '#7a5236');
+    circ(c, x, y - 20, 3.4, '#f0d0a8', OL);
+    const a = -0.4 - Math.max(0, Math.sin(t * 6)) * 1.4, hx = x + 3 + Math.cos(a) * 7, hy = y - 15 + Math.sin(a) * 7;
+    line(c, x + 3, y - 15, hx, hy, '#f0d0a8', 1.8); line(c, hx, hy, hx + Math.cos(a + 1.6) * 3, hy + Math.sin(a + 1.6) * 3, '#3a2a20', 2.2);
+  }
+  // Kůň z boku hlavou doprava: (x, y) je střed trupu na zemi.
+  function horse(c, x, y, col = '#9a6234') {
+    const dark = shade(col, 0.72), mane = '#3a2418';
+    const leg = (lx, cl) => { poly(c, [x + lx - 1.7, y - 12, x + lx + 1.7, y - 12, x + lx + 1.2, y - 2, x + lx - 1.2, y - 2], cl, OL, 0.8); rect(c, x + lx - 1.5, y - 2.2, 3, 2.2, '#2a1d18'); };
+    leg(-7, dark); leg(9, dark);
+    const sw = Math.sin(t * 1.7) * 1.5;
+    c.strokeStyle = mane; c.lineWidth = 2.4; c.lineCap = 'round'; c.beginPath(); c.moveTo(x - 11.5, y - 18); c.quadraticCurveTo(x - 17 + sw, y - 13, x - 15 + sw, y - 5); c.stroke(); c.lineCap = 'butt';
+    c.beginPath(); c.moveTo(x - 12, y - 18.5); c.quadraticCurveTo(x - 14, y - 11, x - 8, y - 10.5); c.lineTo(x + 8, y - 10.5); c.quadraticCurveTo(x + 13, y - 11.5, x + 11.5, y - 18);
+    c.quadraticCurveTo(x, y - 21.5, x - 12, y - 18.5); c.closePath(); c.fillStyle = col; c.fill(); c.lineWidth = 1.2; c.strokeStyle = OL; c.stroke();
+    poly(c, [x + 7, y - 18.5, x + 12, y - 14.5, x + 16.5, y - 24.5, x + 12.5, y - 27.5], col, OL, 1.1);
+    poly(c, [x + 12.2, y - 27.6, x + 16.6, y - 26.8, x + 21.5, y - 21.8, x + 20, y - 19.6, x + 15.6, y - 22.8], col, OL, 1.1);
+    poly(c, [x + 12.8, y - 27.4, x + 13.4, y - 30.4, x + 14.8, y - 27.2], col, OL, 0.9);
+    circ(c, x + 16.2, y - 24.6, 0.7, '#1a1410');
+    c.strokeStyle = mane; c.lineWidth = 2; c.beginPath(); c.moveTo(x + 12.4, y - 27.6); c.lineTo(x + 6.8, y - 19); c.stroke();
+    leg(-9.5, col); leg(6.5, col);
+  }
+  /**
+   * Roubená kovárna podle počtu kusů: 1 roubenka s otevřenými vraty, výhní a kovadlinou a nízkým kamenným
+   * komínem u boční zdi · 10 podkovy nad vraty a necky · 25 vyšší komín s hlavicí a kolo u zdi
+   * · 50 kovář ve vratech · 100 zlaté podkovy a kůň u bidla.
+   */
+  function smithy(c, k, x, y, lv) {
+    const wood = '#9a6a42', w = 64, h = 34, depth = 36, rh = 22, bx = x - 8, logs = 'rgba(50,30,15,.42)';
+    const hs = house(c, k, bx, y, w, h, { wall: wood, roof: '#4a3e3a', depth, rh, windows: 0, door: false });
+    // trámy roubení vpředu i na boku, svislá prkna ve štítu, kamenná podezdívka
+    c.strokeStyle = logs; c.lineWidth = 1.2;
+    for (let yy = y - 10; yy > y - h; yy -= 5) { c.beginPath(); c.moveTo(hs.L, yy); c.lineTo(hs.R, yy); c.moveTo(hs.R, yy); c.lineTo(hs.R + hs.dx, yy + hs.dy); c.stroke(); }
+    for (let gx = hs.L + 4; gx < hs.R - 2; gx += 4) { const f = 1 - Math.abs(gx - bx) / (w / 2); if (f > 0.12) line(c, gx, hs.T, gx, hs.T - rh * f + 2.5, 'rgba(50,30,15,.3)', 1); }
+    poly(c, [hs.R, y, hs.R + hs.dx, y + hs.dy, hs.R + hs.dx, y + hs.dy - 5, hs.R, y - 5], shade(STONE, 0.8), OL);
+    rect(c, hs.L, y - 5, w, 5, STONE, OL);
+    // otevřená vrata: tma, výheň a kovadlina uvnitř, křídla dokořán
+    const gw = 22, gh = 24, gx = bx;
+    rect(c, gx - gw / 2, y - gh, gw, gh, '#2a1d18', OL);
+    const glow = 0.75 + 0.25 * Math.sin(t * 7) * Math.sin(t * 3.1);
+    rect(c, gx - 10, y - 9, 12, 9, '#5a3a2e');
+    ell(c, gx - 4, y - 9, 6, 2.4, `rgba(255,${120 + 70 * glow | 0},40,1)`); ell(c, gx - 4, y - 9.4, 3, 1, '#fff2a0');
+    k.light(gx - 4, y - 11, 30 + glow * 10, 'rgba(255,130,40,');
+    if (Math.random() < 0.08 + lv * 0.02) k.emit(gx - 4, y - 12, 'spark', 1);
+    anvil(c, gx + 6, y);
+    if (lv >= 4) smithMan(c, gx + 1, y);
+    for (const sx of [-1, 1]) poly(c, [gx + sx * gw / 2, y, gx + sx * (gw / 2 + 8), y + 3, gx + sx * (gw / 2 + 8), y - gh + 3, gx + sx * gw / 2, y - gh], '#7a5236', OL, 1);
+    if (lv >= 2) for (let i = 0; i < 3; i++) shoe(c, gx - 7.5 + i * 7.5, y - gh - 4, 0.7, lv >= 5 ? '#ffd23a' : '#a8a8b4');
+    // kamenný komín přistavěný k boční zdi (od země)
+    const u0 = 14, ch = lv >= 3 ? 74 : 52, cx0 = hs.R + 0.62 * u0, cy = y - 0.4 * u0;
+    box(c, cx0, cy, 10, ch, 9, '#9a9288'); stones(c, cx0, cx0 + 10, cy, ch, 3);
+    if (lv >= 3) boxT(c, cx0 - 1.5, cy - ch, 13, 3, 11, '#7d7670');
+    k.emit(cx0 + 5 + 0.62 * 4.5, cy - ch - (lv >= 3 ? 4 : 1) - 0.4 * 4.5, 'dark', 1.2 + lv * 0.1);
+    if (lv >= 3) wheelLean(c, hs.L - 6, y + 2, 9);
+    if (lv >= 2) trough(c, k, bx + 13, y + 5);
+    if (lv >= 5) { // kůň uvázaný u bidla vlevo před kovárnou
+      const hx = hs.L - 30, hy = y + 11;
+      line(c, hx - 18, hy - 12, hx + 18, hy - 12, '#6b4a30', 2); for (const px of [hx - 17, hx + 17]) line(c, px, hy + 1, px, hy - 13, '#6b4a30', 2.2);
+      horse(c, hx - 2, hy);
+      line(c, hx + 17, hy - 22, hx + 17, hy - 12, '#3a2a20', 0.8);
+    }
   }
   // ── Pivovar (zámecký): okrová budova, komín přistavěný k boční zdi, sudy, věžička a sladovna podle počtu ──
   function onion(c, k, cx, base, s, col) {
