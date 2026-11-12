@@ -226,6 +226,9 @@ const boardValue = (d, v) => (d.log ? fmt(Math.pow(10, v / 1000)) + (d.unit || '
 
 // ── Novinky (okénko vlevo nahoře; ukáže se samo, dokud hráč aktuální verzi neviděl) ──
 const NEWS = [
+  { v: 5, date: L('12. listopadu 2026', 'November 12, 2026'), items: [
+    ['🍺', L('Pivovar je teď zámecký: okrová budova s lizénami, roste s počtem kusů o patro, sudy na stojanu, komín přistavěný ke zdi, věžičku s hodinami a sladovnu.', 'The brewery is now a château brewery: an ochre building that grows with your count by a floor, barrels on a rack, a chimney built onto the wall, a clock turret and a malt kiln.')],
+  ] },
   { v: 4, date: L('12. listopadu 2026', 'November 12, 2026'), items: [
     ['⛪', L('Kaplička je teď gotický kostelík a roste s mistrovstvími: přibude věž, štíhlá jehla, hodiny s hřbitůvkem a nakonec zlatá špice.', 'The chapel is now a Gothic church that grows with your masteries: a tower, a slender spire, a clock with a churchyard and at last a golden tip.')],
     ['🌊', L('Mlýnské kolo stojí v mlýnské tůni podél zdi a točí se po proudu.', 'The water wheel stands in a mill pond along the wall and turns with the current.')],
