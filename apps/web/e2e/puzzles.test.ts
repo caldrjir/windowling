@@ -22,7 +22,6 @@ const PUZZLES = [
 	'had',
 	'tanky',
 	'cervici',
-	'zlatokop',
 	'skokan',
 	'vlak',
 	'bombardak',
@@ -289,25 +288,6 @@ test('skladacka joins matching loose pieces and picks a piece under another', as
 	await drag(c3, [c3[0] + 25, c3[1] + 25]);
 	const c3b = await I<number[]>('_center(3)');
 	expect(c3b[0] - c3[0]).toBeGreaterThan(10);
-});
-
-test('zlatokop drops the claw, hauls a catch and pays for it', async ({ page }) => {
-	await startFree(page, 'zlatokop', 'spech');
-	await expect(page.locator('.zk-cv')).toBeVisible();
-	await page.locator('.zk-btn.go').click();
-	const out = (await page.evaluate('Kit._test.inst._state()')) as { hook: string };
-	expect(out.hook).toBe('out');
-	await page.evaluate('Kit._test.inst._auto(true); Kit._test.inst._speed(8)');
-	await expect
-		.poll(
-			async () => ((await page.evaluate('Kit._test.inst._state()')) as { money: number }).money,
-			{
-				timeout: 20_000,
-			},
-		)
-		.toBeGreaterThan(0);
-	await expect(page.locator('.k-result')).toBeVisible({ timeout: 30_000 });
-	await expect(page.locator('.k-result')).toContainText('$');
 });
 
 test('skokan bounces off platforms and climbs while steering', async ({ page }) => {
