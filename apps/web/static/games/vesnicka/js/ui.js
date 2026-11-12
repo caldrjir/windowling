@@ -46,7 +46,8 @@ const UI = (() => {
     if (!best) { q.hidden = true; return; }
     const can = best.cost <= S.coins;
     q.disabled = !can;
-    q.innerHTML = `<i>⚡</i><span><small>${L('Nejlepší koupě', 'Best buy')}</small><b>${esc(best.name)}${best.sub && best.kind === 'u' ? ` · ${esc(best.sub)}` : ''}</b></span><em>${can ? coinSvg + fmt(best.cost) : '⏳ ' + fmtClock(best.wait)}</em>`;
+    const html = `<i>⚡</i><span><small>${L('Nejlepší koupě', 'Best buy')}</small><b>${esc(best.name)}${best.sub && best.kind === 'u' ? ` · ${esc(best.sub)}` : ''}</b></span><em>${can ? coinSvg + fmt(best.cost) : '⏳ ' + fmtClock(best.wait)}</em>`;
+    if (q._h !== html) { q.innerHTML = html; q._h = html; }
   }
   function badge(id, v) { const el = $(`.tabs [data-tab="${id}"] .bd`); if (el) { el.textContent = v || ''; el.hidden = !v; } }
 
