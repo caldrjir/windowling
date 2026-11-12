@@ -119,7 +119,7 @@ originals are only the inspiration). Ticked when the game is in the library.
 - [ ] Heli Attack – helicopter shooter
 - [ ] Age of War – lane war through the ages, with its iconic-style music (Věky válek, removed from the library)
 - [ ] Burger Tycoon – burger chain business sim
-- [x] Gold Miner – swinging claw grabbing gold (Zlatokop)
+- [x] Gold Miner – swinging claw grabbing gold (Zlatokop, removed from the library)
 - [ ] Hobo – brawler as a homeless guy
 - [ ] Earn to Die – drive through zombies, upgrade the car between runs
 - [ ] Defend Your Castle – drag and fling attackers away from the castle
