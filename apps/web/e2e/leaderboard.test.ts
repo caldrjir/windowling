@@ -158,6 +158,32 @@ test('VESNIČKA ranks villages in several categories and compares two players', 
 	await b.close();
 });
 
+test('results of a game removed from the library do not block the others', async ({
+	browser,
+	baseURL,
+}, info) => {
+	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+	const nick = `Stary${Date.now() % 100000}`;
+	const p = await player(browser, baseURL ?? '', nick);
+	// Browsers keep the saves of games that were removed since (Skladník was).
+	await p.page.evaluate(() => {
+		localStorage.setItem('skladnik.save.v1', JSON.stringify({ lb: { 'best:score': 1200 } }));
+		localStorage.setItem(
+			'gamecenter.stats.skladnik',
+			JSON.stringify({ playTime: 600, lastPlayed: Date.now() - 1e9, stats: {} }),
+		);
+		localStorage.setItem('voidborn.save.v1', JSON.stringify({ stats: { bestTime: 61.5 } }));
+	});
+	await p.page.evaluate('GCSync.sync()');
+	const lb = (await (
+		await p.page.request.get('/api/scores?game=voidborn&board=best:survive&limit=1')
+	).json()) as { me: { value: number } | null };
+	expect(lb.me?.value).toBe(61_500);
+	// A body that is not a list of results is still refused.
+	expect((await p.page.request.post('/api/scores', { data: { scores: 'x' } })).status()).toBe(400);
+	await p.close();
+});
+
 test('the leaderboard API rejects bad boards and anonymous results', async ({ request }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
 	expect((await request.get('/api/scores?game=sudoku&board=anything')).status()).toBe(400);
