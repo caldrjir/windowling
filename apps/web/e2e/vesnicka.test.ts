@@ -201,6 +201,30 @@ test('VESNIČKA music: the season by day, the night, volume and mute', async ({ 
 	expect(errors).toEqual([]);
 });
 
+test('VESNIČKA: the chapel grows into a church with the masteries', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto(URL);
+	await page.locator('.sheet .btn').click();
+	const level = (pole: number) =>
+		run<number>(
+			page,
+			`for (const b of BUILDINGS) Game.S.owned[b.id] = 0; Game.S.owned.pole = ${pole}; Game.S.upg.kaplicka = 1; return Scene.churchLevel();`,
+		);
+	expect(await level(0)).toBe(1); // a stone chapel
+	expect(await level(100)).toBe(2); // 25, 50 and 100 fields: three masteries, a tower
+	expect(await level(450)).toBe(3); // ten masteries, the spire
+	await run(page, 'Scene.panTo(600, false);');
+	expect(
+		await run<number>(
+			page,
+			'for (const b of BUILDINGS.slice(0, 4)) Game.S.owned[b.id] = 1000; return Scene.churchLevel();',
+		),
+	).toBe(5);
+	await page.waitForTimeout(300); // a few frames of the whole church on screen
+	expect(errors).toEqual([]);
+});
+
 test('VESNIČKA in the center: the card, the cover and the link', async ({ page }) => {
 	await page.goto('/');
 	const card = page.getByTestId('library').locator('.gslot[data-game="vesnicka"]');

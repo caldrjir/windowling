@@ -104,7 +104,7 @@ TAP_UPGRADES.forEach(([cost, v, name], i) => UPGRADES.push({
 }));
 // Vesnice: celkové bonusy podle počtu budov (některé jsou vidět ve vesnici).
 const VILLAGE_UPGRADES = [
-  ['kaplicka', 25, 2500, 0.1, L('Kaplička', 'Chapel'), L('Zvonek svolává k práci.', 'A little bell calls to work.')],
+  ['kaplicka', 25, 2500, 0.1, L('Kaplička', 'Chapel'), L('Zvonek svolává k práci. S mistrovstvími řemesel vyroste v kostelík s věží.', 'A little bell calls to work. With the masteries of your trades it grows into a church with a tower.')],
   ['skola', 75, 6e5, 0.15, L('Škola', 'School'), L('Pan řídící učí počty.', 'The schoolmaster teaches sums.')],
   ['posta', 150, 1.5e9, 0.2, L('Pošta', 'Post office'), L('Psaníčka do celého světa.', 'Letters to the whole world.')],
   ['silnice', 300, 4e13, 0.25, L('Silnice do města', 'Road to town'), L('Kočáry jezdí každý den.', 'Coaches run every day.')],
@@ -128,6 +128,7 @@ const MAGIC_UPGRADES = [
 ];
 MAGIC_UPGRADES.forEach(([id, kind, v, cost, req, name, effect]) => UPGRADES.push({ id, kind, v, cost, req, name, sub: L('Kouzla', 'Magic'), effect }));
 const U_INDEX = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
+U_INDEX.kaplicka.effect += L(' · roste s mistrovstvími', ' · grows with masteries');
 
 // ── Pohádkové bytosti (náhodné události) ──
 // w: váha, life: kolik sekund čekají na klepnutí; dur: trvání kouzla v sekundách.
@@ -225,6 +226,10 @@ const boardValue = (d, v) => (d.log ? fmt(Math.pow(10, v / 1000)) + (d.unit || '
 
 // ── Novinky (okénko vlevo nahoře; ukáže se samo, dokud hráč aktuální verzi neviděl) ──
 const NEWS = [
+  { v: 4, date: L('12. listopadu 2026', 'November 12, 2026'), items: [
+    ['⛪', L('Kaplička je teď gotický kostelík a roste s mistrovstvími: přibude věž, štíhlá jehla, hodiny s hřbitůvkem a nakonec zlatá špice.', 'The chapel is now a Gothic church that grows with your masteries: a tower, a slender spire, a clock with a churchyard and at last a golden tip.')],
+    ['🌊', L('Mlýnské kolo stojí v mlýnské tůni podél zdi a točí se po proudu.', 'The water wheel stands in a mill pond along the wall and turns with the current.')],
+  ] },
   { v: 3, date: L('10. listopadu 2026', 'November 10, 2026'), items: [
     ['🎻', L('Vesnička má vlastní hudbu: každé roční období a noc hrají svou klidnou písničku z cimbálu, flétny a houslí.', 'The village has music of its own: every season and the night play a calm tune of dulcimer, flute and violin.')],
     ['🔊', L('V záložce Více zapneš nebo vypneš hudbu i zvuky a nastavíš jejich hlasitost. Tlačítko nahoře ztlumí obojí.', 'In the More tab you switch music and sounds on or off and set their volume. The button at the top mutes both.')],
