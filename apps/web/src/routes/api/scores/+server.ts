@@ -20,9 +20,8 @@ const board = z
 		const day = /^daily:(\d{4}-\d{2}-\d{2})/.exec(b)?.[1];
 		return !day || Date.parse(day) <= Date.now() + 36 * 3600_000;
 	});
-const body = z.object({
-	scores: z.array(z.object({ game, board, value: z.number().int().positive().max(1e10) })).max(200),
-});
+const score = z.object({ game, board, value: z.number().int().positive().max(1e10) });
+const body = z.object({ scores: z.array(z.unknown()).max(200) });
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const player = url.searchParams.get('player');
@@ -52,6 +51,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) error(401, 'Not signed in');
 	const parsed = body.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Invalid scores');
-	const improved = await submitScores(locals.db, locals.user.id, parsed.data.scores);
-	return json({ improved });
+	// Browsers keep the saves of games removed from the library since, so one result the server
+	// no longer takes is skipped instead of refusing the player's other results with it.
+	const scores = parsed.data.scores.flatMap((s) => {
+		const r = score.safeParse(s);
+		return r.success ? [r.data] : [];
+	});
+	const improved = await submitScores(locals.db, locals.user.id, scores);
+	return json({ improved, ignored: parsed.data.scores.length - scores.length });
 };

@@ -295,7 +295,9 @@ Signed-in players keep their progress in their account; anonymous play is unchan
   everything else when higher.
 - The puzzle kit keeps its best result per board in its save (`lb`); `sync.js` sends changed
   results of all games (`lb`, the action games' records, `playTime`) to `POST /api/scores`
-  after each sync. Results come from the browser, so the server only range-checks them.
+  after each sync. Results come from the browser, so the server only range-checks them. It
+  skips single results it does not take (a game removed from the library, an unknown board)
+  and stores the rest: browsers keep the saves of removed games for years.
 - `GET /api/scores?game&board` is public: the top players (only players with a nickname), the
   asking player's place and the count. `GET /api/scores?game&player=<nickname>` returns all
   boards of one player in a game (Vesnička compares two players with it). Shown in every puzzle (Žebříčky, and from the result of a
