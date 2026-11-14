@@ -19,6 +19,9 @@
     itemTierFor: (ilvl) => { let r = 0; B.tierReqLevel.forEach((t, i) => { if (ilvl >= t) r = i; }); return r; },
     monsterXp: (L, mul) => Math.max(1, Math.round(B.mxp0 * (mul || 1) * Math.pow(L + 4, B.mxpExp))),
     xpToNext: (L) => { let x = B.xpA * Math.pow(L, B.xpExp) + B.xpB * L; if (L >= B.xpEndFrom) x *= Math.pow(B.xpEndGrowth, L - B.xpEndFrom + 1); return Math.round(x / 10) * 10; },
+    // D04: 1 pasivní bod za level do L40, pak 1 za 2 levely, + questové body (≈ L/6, max 8); D13: respec zdarma do L12, pak 10 × L za bod
+    passivePoints: (L) => { const s = B.passiveSlowFrom; return (Math.min(L, s) - 1) * B.passivePerLevel + Math.floor(Math.max(0, L - s) / B.passiveSlowEvery) + Math.min(B.questPassives, Math.floor(L / 6)); },
+    respecPoint: (L) => (L <= B.respecFreeTo ? 0 : B.respecPerPointL * L),
     xpPenalty: (pL, mL) => { const safe = 3 + Math.floor(pL / 16); const d = Math.abs(pL - mL) - safe; return d <= 0 ? 1 : Math.max(0.1, 1 - 0.2 * d); },
   };
 
@@ -129,6 +132,7 @@
       nec: m.necInc || 0, rad: m.radInc || 0, ele: m.eleInc || 0, dot: m.dotInc || 0, aoe: m.aoeInc || 0, proj: m.projInc || 0, melee: m.meleeInc || 0, minion: A.wil * 0.003 + (m.minionInc || 0), bleed: m.bleedInc || 0,
     };
     S.more = []; if (m.moreDmg) S.more.push(m.moreDmg);
+    S.lowHpMore = m.lowHpMore || 0;
     S.dr = F.armorDR(S.armor, L); S.evade = F.evadeChance(S.eva, L);
     return { L, A, S, m, items, al, weapon: weaponOf(items) };
   }

@@ -15,7 +15,7 @@
       hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (odemykají se s úrovní)', lvlUp: 'Úroveň', xpShort: 'XP', locked: 'Odemkne se na úrovni', unlocked: 'Nový skill', attrs: 'Atributy', points: 'Volné body', autoAlloc: 'Rozdělit automaticky', brandTxt: 'Cejch', absorbTxt: 'Štít', attrN: { str: 'Síla (STR)', dex: 'Obratnost (DEX)', int: 'Intelekt (INT)', wil: 'Vůle (WIL)', vit: 'Vitalita (VIT)' },
       boss: 'Boss: Kiln Warden', bossRec: 'doporučeno L12', bossHint: 'Uhni telegraphům. Před kužely se schovej za kovadlinu. Při Quench Slam najdi páru (zelené kruhy). U hořící pece stůj 1,5 s a uhasíš ji.', phaseN: ['', 'Fáze 1 — Kovář', 'Fáze 2 — Pec', 'Fáze 3 — Roztavený'], enrageT: 'Enrage', enraged: 'Kiln Warden zuří: pece hoří trvale, +50 % damage', immune: 'Nezranitelný', quenchedT: 'Pec uhašena', safeT: 'V páře', victory: 'Kiln Warden poražen', victoryT: 'Čas', lootHint: 'Sesbírej loot a vrať se do menu.', collect: 'Sbírat loot', bossKills: 'Bossové',
-      interruptT: 'Přerušeno!', wardT: 'Štít', dlgHint: 'klikni nebo mezerník', talkTo: 'Promluv s', gateOpen: 'Brána na severu vede dál.', gateLocked: 'Brána je zavřená. Nejdřív promluv s', noGold: 'prototyp zatím nemá gold', floor: 'patro', whisperT: 'Šepot', questDone: 'Quest dokončen', gallowsKey: 'Rusty Gallows Key – na kopci za Charcoal Woods se něco otevřelo', sideLocked: 'Zamčeno. Klíč nosí někdo z Smoldering Brutů.', sideEnter: 'Vstoupit', sideStay: 'Zůstat', sideQ: 'Tajná oblast', back: 'Návrat', campaign: 'Kampaň: Act I', campNew: 'začít v Ashfields', campCont: 'pokračovat', zoneDone: 'Oblast dokončena', nextZone: 'Další oblast', continue: 'Pokračovat', lanternLit: 'Lantern zapálena – checkpoint', keyFound: 'Klíč nalezen – zamčené dveře se otevřou', respawned: 'Ozvěna se probouzí u Lantern', act1Done: 'Act I dokončen', gateHint: 'Projdi oblast až k bráně na jejím konci.', zoneLv: 'úroveň',
+      goldN: 'zlato', goldHave: 'máš', passivesT: 'Pasivní dovednosti', passPts: 'body', respecT: 'Respec pasiv', respecFree: 'zdarma do L12', sellHint: 'V Cinderholdu: Shift + klik = prodat obchodníkovi.', sold: 'Prodáno', paid: 'Zaplaceno', reqL: 'od L', interruptT: 'Přerušeno!', wardT: 'Štít', dlgHint: 'klikni nebo mezerník', talkTo: 'Promluv s', gateOpen: 'Brána na severu vede dál.', gateLocked: 'Brána je zavřená. Nejdřív promluv s', floor: 'patro', whisperT: 'Šepot', questDone: 'Quest dokončen', gallowsKey: 'Rusty Gallows Key – na kopci za Charcoal Woods se něco otevřelo', sideLocked: 'Zamčeno. Klíč nosí někdo z Smoldering Brutů.', sideEnter: 'Vstoupit', sideStay: 'Zůstat', sideQ: 'Tajná oblast', back: 'Návrat', campaign: 'Kampaň: Act I', campNew: 'začít v Ashfields', campCont: 'pokračovat', zoneDone: 'Oblast dokončena', nextZone: 'Další oblast', continue: 'Pokračovat', lanternLit: 'Lantern zapálena – checkpoint', keyFound: 'Klíč nalezen – zamčené dveře se otevřou', respawned: 'Ozvěna se probouzí u Lantern', act1Done: 'Act I dokončen', gateHint: 'Projdi oblast až k bráně na jejím konci.', zoneLv: 'úroveň',
       inv: 'Inventář', invBtn: 'I · Inventář', invHint: 'Klik na předmět v batohu = nasadit · klik na nasazený = sundat · Shift + klik = zahodit · I / Esc zavře.', invStats: 'Postava', invEmpty: 'prázdné', cmp: 'Proti nasazenému', reqs: 'Požadavky', lvl: 'Úroveň', picked: 'Sebráno', invFull: 'Batoh je plný', why: { class: 'Ash Knight tuhle zbraň nepoužívá', level: 'Vyšší úroveň postavy', twohand: 'Obouruční zbraň zabírá i druhou ruku', base: 'Neznámý předmět' }, whyAttr: 'Chybí', stHp: 'Zdraví', stArmor: 'Armor (redukce)', stEva: 'Šance uhnout', stDps: 'Cleave DPS (thrall)', stAs: 'Útoky za sekundu', stMs: 'Rychlost pohybu', keysInv: 'I – inventář, klik na předmět na zemi = sebrat', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
       feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
@@ -30,7 +30,7 @@
       hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (unlock with level)', lvlUp: 'Level', xpShort: 'XP', locked: 'Unlocks at level', unlocked: 'New skill', attrs: 'Attributes', points: 'Unspent points', autoAlloc: 'Distribute automatically', brandTxt: 'Brand', absorbTxt: 'Shield', attrN: { str: 'Strength (STR)', dex: 'Dexterity (DEX)', int: 'Intelligence (INT)', wil: 'Willpower (WIL)', vit: 'Vitality (VIT)' },
       boss: 'Boss: Kiln Warden', bossRec: 'level 12 recommended', bossHint: 'Dodge the telegraphs. Hide behind the anvil from cones. On Quench Slam find the steam (green circles). Stand by a burning kiln for 1.5 s to quench it.', phaseN: ['', 'Phase 1 — The Smith', 'Phase 2 — The Kiln', 'Phase 3 — Molten'], enrageT: 'Enrage', enraged: 'The Kiln Warden rages: kilns burn for good, +50 % damage', immune: 'Immune', quenchedT: 'Kiln quenched', safeT: 'In the steam', victory: 'Kiln Warden defeated', victoryT: 'Time', lootHint: 'Collect the loot and return to the menu.', collect: 'Collect loot', bossKills: 'Bosses',
-      interruptT: 'Interrupted!', wardT: 'Ward', dlgHint: 'click or space', talkTo: 'Talk to', gateOpen: 'The north gate leads on.', gateLocked: 'The gate is shut. First talk to', noGold: 'the prototype has no gold yet', floor: 'floor', whisperT: 'Whisper', questDone: 'Quest complete', gallowsKey: 'Rusty Gallows Key – something opened on the hill beyond the Charcoal Woods', sideLocked: 'Locked. One of the Smoldering Brutes carries the key.', sideEnter: 'Enter', sideStay: 'Stay', sideQ: 'Secret area', back: 'Return', campaign: 'Campaign: Act I', campNew: 'start in the Ashfields', campCont: 'continue', zoneDone: 'Area cleared', nextZone: 'Next area', continue: 'Continue', lanternLit: 'Lantern lit – checkpoint', keyFound: 'Key found – the locked doors will open', respawned: 'Your echo wakes at the Lantern', act1Done: 'Act I complete', gateHint: 'Cross the area to the gate at its end.', zoneLv: 'level',
+      goldN: 'gold', goldHave: 'you have', passivesT: 'Passive skills', passPts: 'points', respecT: 'Respec passives', respecFree: 'free up to L12', sellHint: 'In Cinderhold: Shift + click = sell to the merchant.', sold: 'Sold', paid: 'Paid', reqL: 'from L', interruptT: 'Interrupted!', wardT: 'Ward', dlgHint: 'click or space', talkTo: 'Talk to', gateOpen: 'The north gate leads on.', gateLocked: 'The gate is shut. First talk to', floor: 'floor', whisperT: 'Whisper', questDone: 'Quest complete', gallowsKey: 'Rusty Gallows Key – something opened on the hill beyond the Charcoal Woods', sideLocked: 'Locked. One of the Smoldering Brutes carries the key.', sideEnter: 'Enter', sideStay: 'Stay', sideQ: 'Secret area', back: 'Return', campaign: 'Campaign: Act I', campNew: 'start in the Ashfields', campCont: 'continue', zoneDone: 'Area cleared', nextZone: 'Next area', continue: 'Continue', lanternLit: 'Lantern lit – checkpoint', keyFound: 'Key found – the locked doors will open', respawned: 'Your echo wakes at the Lantern', act1Done: 'Act I complete', gateHint: 'Cross the area to the gate at its end.', zoneLv: 'level',
       inv: 'Inventory', invBtn: 'I · Inventory', invHint: 'Click an item in the bag = equip · click an equipped one = take off · Shift + click = discard · I / Esc closes.', invStats: 'Character', invEmpty: 'empty', cmp: 'Against equipped', reqs: 'Requirements', lvl: 'Level', picked: 'Picked up', invFull: 'The bag is full', why: { class: 'The Ash Knight does not use this weapon', level: 'Higher character level needed', twohand: 'A two-handed weapon takes the off hand too', base: 'Unknown item' }, whyAttr: 'Missing', stHp: 'Health', stArmor: 'Armor (reduction)', stEva: 'Evade chance', stDps: 'Cleave DPS (thrall)', stAs: 'Attacks per second', stMs: 'Movement speed', keysInv: 'I – inventory, click an item on the ground = pick up', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
       feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
@@ -41,7 +41,7 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 4, act1: null, story: null, whispers: [], gallowsKey: false, gallowsDone: false, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
+  const DEF = { v: 4, act1: null, story: null, gold: 0, whispers: [], gallowsKey: false, gallowsDone: false, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
   // načtení s migrací (HSim.migrateSave: v1 z P0 → v2 s výbavou)
   let SAVE = (() => { try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return Object.assign({}, DEF, raw ? window.HSim.migrateSave(raw) : {}); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
@@ -423,8 +423,9 @@
     mode = 'dialog'; DLG = { lines: [], done: null, choice: true };
     const el = document.getElementById('dialog'); el.hidden = false; el.classList.remove('ysolde'); el.querySelector('.who').textContent = sc.at; el.querySelector('.txt').textContent = ''; el.querySelector('.hint').textContent = '';
     const box = el.querySelector('.choices'); box.innerHTML = '';
-    d.choice.forEach((ch, i) => { const b = document.createElement('button'); b.className = 'btn'; b.textContent = ch.c + (sc.q === 'q1_03' && i === 0 ? ` (${t('noGold')})` : ''); b.id = 'dlg-c' + i; b.onclick = () => pick(i); box.appendChild(b); });
+    d.choice.forEach((ch, i) => { const b = document.createElement('button'); b.className = 'btn'; const toll = sc.q === 'q1_03' && i === 0; b.textContent = ch.c + (toll ? ` (${t('goldHave')} ${S.gold})` : ''); if (toll && S.gold < 500) b.disabled = true; b.id = 'dlg-c' + i; b.onclick = () => pick(i); box.appendChild(b); });
     function pick(i) {
+      if (sc.q === 'q1_03' && i === 0) { S.events.length = 0; if (!SIM.invCommand(S, { pay: 500 })) return; handle(S.events.slice()); S.events.length = 0; } // Bible: clo 500 zlatých
       const ch = d.choice[i]; const st = story(); st.choices[sc.q] = i; if (ch.flag) st.flags[ch.flag] = true; persist();
       DLG = null; const lines = ch.lines.slice();
       if (sc.fight === i) { talk(lines.slice(0, 1), () => { CHAMP = lines.slice(1); SIM.champion(S); handle(S.events.slice()); S.events.length = 0; done(); }); return; }
@@ -504,7 +505,7 @@
         case 'side': sidePrompt(ev); break;
         case 'sidelocked': toast(t('sideLocked')); break;
         case 'gallowskey': SAVE.gallowsKey = true; persist(); toast(t('gallowsKey')); if (!sting('AU_mus_sting_3')) tone(392, 588, 0.8, 0.2, 'triangle'); break;
-        case 'quest': toast(`${t('questDone')}: ${ev.n} · +${ev.xp} XP${ev.item ? ' · ' + HS.describe(ev.item).name : ''}`); saveChar(); saveGear(); break;
+        case 'quest': SAVE.gold = S.gold; toast(`${t('questDone')}: ${ev.n} · +${ev.xp} XP${ev.gold ? ' · +' + ev.gold + ' ' + t('goldN') : ''}${ev.item ? ' · ' + HS.describe(ev.item).name : ''}`); saveChar(); saveGear(); break;
         case 'lantern': toast(t('lanternLit')); tone(523, 784, 0.5, 0.2, 'sine'); break;
         case 'key': toast(t('keyFound')); tone(880, 1320, 0.25, 0.15, 'triangle'); break;
         case 'chest': noise(0.3, 1200, 400, 0.3); break;
@@ -512,6 +513,11 @@
         case 'zonedone': zoneDone(ev); break;
         case 'victory': music('none'); sting('AU_mus_sting_8'); if (S.campaign) { SAVE.act1 = { zone: 'a1_kiln_heart', done: true, deaths: (SAVE.act1 && SAVE.act1.deaths) || 0 }; persist(); setTimeout(() => playScenes(scenesFor('victory'), () => victory(ev)), 1500); } else victory(ev); break;
         case 'npc': { const sc = scenesFor('npc', { npc: ev.npc }); if (sc.length) playScenes(sc, () => { document.getElementById('hint').textContent = townHint(); }); else toast(speaker(ev.npc) + ' · ' + ((HS.D.npcs.find((x) => x.id === ev.npc) || {}).role || '')); document.getElementById('hint').textContent = townHint(); break; }
+        case 'coins': break;
+        case 'gold': num(ev.x, ev.z, '+' + ev.n + ' ' + t('goldN'), 'lvl', 1.6); tone(988, 1318, 0.08, 0.06, 'square'); SAVE.gold = S.gold; break;
+        case 'sell': toast(`${t('sold')}: ${HS.describe(ev.item).name} · +${ev.gold} ${t('goldN')}`); SAVE.gold = S.gold; saveGear(); break;
+        case 'pay': toast(`${t('paid')}: ${ev.gold} ${t('goldN')}`); SAVE.gold = S.gold; persist(); break;
+        case 'passive': case 'respec': SAVE.gold = S.gold; saveChar(); break;
         case 'gatelocked': toast(`${t('gateLocked')}: ${ev.need.map(speaker).join(', ')}`); break;
         case 'champion': if (CHAMP && CHAMP.length) { const l = CHAMP; CHAMP = null; setTimeout(() => talk(l, null), 900); } break;
         case 'leap': noise(0.18, 300, 900, 0.25); break;
@@ -575,7 +581,15 @@
     }
     for (const [id, e] of PV) if (!live.has(id)) { e.destroy(); PV.delete(id); }
   }
-  function clearDrops() { for (const e of PV.values()) e.destroy(); PV.clear(); for (const v of DV.values()) { v.root.destroy(); v.el.remove(); } DV.clear(); }
+  // gold na zemi: zlatá mince, sebere se průchodem
+  const CV = new Map();
+  function syncCoins() {
+    const live = new Set();
+    for (const c of S.coins || []) { live.add(c.id); if (!CV.has(c.id)) { const e = ent('cylinder', M_COIN, [c.x, 0.08, c.z], [0.36, 0.06, 0.36], null, false); CV.set(c.id, e); } CV.get(c.id).setLocalEulerAngles(0, renderT * 120, 0); }
+    for (const [id, e] of CV) if (!live.has(id)) { e.destroy(); CV.delete(id); }
+  }
+  const M_COIN = mat('#f2c14e', { unlit: true });
+  function clearDrops() { for (const e of CV.values()) e.destroy(); CV.clear(); for (const e of PV.values()) e.destroy(); PV.clear(); for (const v of DV.values()) { v.root.destroy(); v.el.remove(); } DV.clear(); }
 
   // statistiky postavy pro panel a porovnání: HP, armor (redukce), evade, Cleave DPS proti thrallovi, APS, pohyb
   function charSummary(ch) {
@@ -613,21 +627,28 @@
   function renderInv() {
     const el = document.getElementById('inv'); const g = S.gear; const sm = charSummary(S.ch);
     const slotN = (k) => { const id = k.replace(/[12]$/, ''); return ((HS.D.loot.slots.find((x) => x.id === id) || {}).n || id).replace(' ×2', '') + (k.endsWith('2') ? ' 2' : k.endsWith('1') ? ' 1' : ''); };
-    el.innerHTML = `<div class="box"><div class="head"><h2>${t('inv')}</h2><button class="btn dim" id="b-inv-close" aria-label="✕">✕</button></div><span class="muted">${t('invHint')}</span>
+    el.innerHTML = `<div class="box"><div class="head"><h2>${t('inv')}</h2><button class="btn dim" id="b-inv-close" aria-label="✕">✕</button></div><span class="muted">${t('invHint')}${S.zone && S.zone.town ? ' ' + t('sellHint') : ''}</span> <b class="gold" style="color:var(--gold)">${S.gold} ${t('goldN')}</b>
       <div class="cols"><div><div class="eq">${SIM.EQ_SLOTS.map((k) => cellHtml(g.eq[k], 'eq', k, slotN(k))).join('')}</div>
       <div class="stats"><span class="muted">${t('invStats')} · L${S.L}</span><span></span>${STAT_ROWS.map(([k, f, fm]) => `<span>${t(k)}</span><b>${fm(sm[f])}</b>`).join('')}</div>
       <div class="attrs"><span class="muted">${t('attrs')} · ${t('points')}: <b>${S.char.points}</b></span><span></span><span></span>${SIM.ATTRS.map((k) => `<span>${t('attrN')[k]}</span><b>${S.ch.A[k]}</b><button data-attr="${k}" ${S.char.points && S.progress ? '' : 'disabled'} aria-label="+1 ${k}">+</button>`).join('')}</div>
       ${S.char.points && S.progress ? `<button class="btn dim" id="b-auto" style="margin-top:8px;font-size:13px;padding:6px 10px">${t('autoAlloc')}</button>` : ''}</div>
-      <div><div class="grid">${Array.from({ length: SIM.INV_MAX }, (_, i) => cellHtml(g.inv[i], 'inv', i)).join('')}</div><p class="muted">${g.inv.length} / ${SIM.INV_MAX}</p></div></div></div>`;
+      <div><div class="grid">${Array.from({ length: SIM.INV_MAX }, (_, i) => cellHtml(g.inv[i], 'inv', i)).join('')}</div><p class="muted">${g.inv.length} / ${SIM.INV_MAX}</p>${S.progress ? passivesHtml() : ''}</div></div></div>`;
     document.getElementById('b-inv-close').onclick = closeInv;
     const cmd = (c) => { S.events.length = 0; SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; renderInv(); };
     for (const b of el.querySelectorAll('[data-attr]')) b.onclick = () => cmd({ alloc: b.dataset.attr });
     const ba = document.getElementById('b-auto'); if (ba) ba.onclick = () => cmd({ autoAlloc: true });
+    for (const b of el.querySelectorAll('[data-passive]')) b.onclick = () => cmd({ passive: b.dataset.passive });
+    const br = document.getElementById('b-respec'); if (br) br.onclick = () => cmd({ respecPassives: true });
     for (const c of el.querySelectorAll('.cell.has')) {
       const kind = c.dataset.k, key = c.dataset.i; const item = kind === 'inv' ? g.inv[+key] : g.eq[key];
       c.onmouseenter = (e) => showTip(e, tipHtml(item, kind === 'eq' ? key : null)); c.onmousemove = (e) => showTip(e, tipHtml(item, kind === 'eq' ? key : null)); c.onmouseleave = hideTip;
-      c.onclick = (e) => { hideTip(); S.events.length = 0; if (kind === 'inv') SIM.invCommand(S, e.shiftKey ? { discard: +key } : { equip: +key }); else SIM.invCommand(S, { unequip: key }); handle(S.events.slice()); S.events.length = 0; renderInv(); };
+      c.onclick = (e) => { hideTip(); S.events.length = 0; if (kind === 'inv') SIM.invCommand(S, e.shiftKey ? (S.zone && S.zone.town ? { sell: +key } : { discard: +key }) : { equip: +key }); else SIM.invCommand(S, { unequip: key }); handle(S.events.slice()); S.events.length = 0; renderInv(); };
     }
+  }
+  // pasivní dovednosti Ash Knighta (Bible): rank / max, od levelu, popis; body D04, respec D13
+  function passivesHtml() {
+    const c = S.char; const spent = SIM.passiveSpent(c); const left = HS.F.passivePoints(S.L) - spent; const cost = HS.F.respecPoint(S.L) * spent;
+    return `<div class="passives"><span class="muted">${t('passivesT')} · ${t('passPts')}: <b>${left}</b></span><span></span><span></span>${HS.D.passives.map((p) => { const r = c.passives[p.id] || 0; const ok = left > 0 && r < p.mx && p.req <= S.L; return `<span class="${p.req > S.L ? 'locked' : ''}">${p.n}${p.req > S.L ? ` (${t('reqL')} ${p.req})` : ''}</span><b>${r}/${p.mx}</b><button data-passive="${p.id}" ${ok ? '' : 'disabled'} aria-label="+1 ${p.n}">+</button><span class="pd">${p.d}</span>`; }).join('')}</div>${spent ? `<button class="btn dim" id="b-respec" style="margin-top:6px;font-size:13px;padding:6px 10px" ${S.gold < cost ? 'disabled' : ''}>${t('respecT')} · ${cost ? cost + ' ' + t('goldN') : t('respecFree')}</button>` : ''}`;
   }
   function openInv() { if (mode !== 'play' || !S) return; mode = 'inv'; lmb = false; document.getElementById('inv').hidden = false; renderInv(); }
   function closeInv() { if (mode !== 'inv') return; hideTip(); document.getElementById('inv').hidden = true; mode = 'play'; acc = 0; }
@@ -645,6 +666,7 @@
     document.getElementById('b-res').style.width = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' Cinders';
     document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : S.mode === 'boss' ? 'Heart of the Kiln' : S.zone ? `${zoneName(S.zone.id)} · ${t('zoneLv')} ${S.zone.lv[0]}–${S.zone.lv[1]}` : t('wave') + ' ' + S.wave;
     document.getElementById('kills').textContent = t('kills') + ' ' + S.kills;
+    document.getElementById('gold').textContent = S.loot ? `${S.gold} ${t('goldN')}` : '';
     const need = HS.F.xpToNext(S.L); const xpOn = S.progress; document.getElementById('xpbar').hidden = !xpOn;
     if (xpOn) { document.getElementById('b-xp').style.width = ((S.char.xp / need) * 100).toFixed(1) + '%'; document.getElementById('t-xp').textContent = `L${S.L} · ${S.char.xp} / ${need} ${t('xpShort')}${S.char.points ? ' · +' + S.char.points : ''}`; }
     for (const [id] of SK) {
@@ -755,7 +777,7 @@
     o = o || {};
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
     clearStory();
-    S = SIM.create({ zone: o.zone, needTalk: m === 'act1' && window.HSWorld ? window.HSWorld.needTalk(o.zone, story().seen) : [], gallowsKey: !!SAVE.gallowsKey, mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : m === 'act1' ? 'act1' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss' || m === 'act1', char: m === 'arena' || m === 'boss' || m === 'act1' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
+    S = SIM.create({ gold: SAVE.gold || 0, zone: o.zone, needTalk: m === 'act1' && window.HSWorld ? window.HSWorld.needTalk(o.zone, story().seen) : [], gallowsKey: !!SAVE.gallowsKey, mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : m === 'act1' ? 'act1' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss' || m === 'act1', char: m === 'arena' || m === 'boss' || m === 'act1' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
     S.campaign = !!o.campaign;
     if (S.progress) saveChar();
     music();
@@ -967,7 +989,7 @@
       if (v.wisp) { v.body.setLocalPosition(0, 1.1 + Math.sin(renderT * 6 + e.id) * 0.15, 0); const k = e.atk ? 1 + Math.min(1, e.atk.t / e.atk.def.tele) * 0.6 : 1; v.body.setLocalScale(0.55 * k, 0.55 * k, 0.55 * k); continue; }
       const wind = e.atk ? Math.min(1, e.atk.t / e.atk.def.tele) : 0; v.body.setLocalScale(...(e.type === 'en_brute' ? [1.9 + wind * 0.25, 1.25 - wind * 0.08, 1.9 + wind * 0.25] : [0.9 + wind * 0.12, 0.85 - wind * 0.05, 0.9 + wind * 0.12]));
     }
-    syncDrops(); syncBoss(); syncProj(); syncZone();
+    syncDrops(); syncBoss(); syncProj(); syncZone(); syncCoins();
     for (let i = TELES.length - 1; i >= 0; i--) {
       const te = TELES[i]; te.t += dt; const owner = S.enemies.find((e) => e.id === te.id); const k = Math.min(1, te.t / te.dur);
       te.fill.setLocalScale(te.r * k, 1, te.r * k);

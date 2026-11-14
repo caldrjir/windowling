@@ -131,3 +131,8 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #bark { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 7; max-width: min(640px, 90vw); text-align: center; color: #d9dcf0; font-style: italic; text-shadow: 0 1px 3px #000, 0 0 8px #000; font-size: 15px; pointer-events: none; }
 #bark b { color: #b9c8ff; font-style: normal; font-weight: 600; }
 .drop.npcname { color: var(--gold); border-color: var(--bronze); pointer-events: none; }
+/* P1: gold a pasivní dovednosti */
+#topbar .gold { color: var(--gold); }
+.passives { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 10px; align-items: center; margin-top: 10px; font-size: 13px; }
+.passives .pd { grid-column: 1 / -1; color: var(--dim, #9a948a); font-size: 12px; margin: -2px 0 4px; }
+.passives .locked { opacity: 0.45; }

@@ -353,7 +353,7 @@ or by Lantern back to it).
   start and his defeat. Talks pause the game; Ysolde's lines and lines during a fight run as
   subtitles without a pause (length as for VO: words / 2.5 + 0.5 s). Whisper entries in a scene show
   the whisper card. Seen scenes, choices and flags go to `story` in the save.
-- Choices: at the Tollgate, paying the toll (no gold in the prototype yet) or fighting the champion,
+- Choices: at the Tollgate, paying the toll of 500 gold or fighting the champion,
   an elite Smoldering Brute at the area cap who drops a rare weapon (`HSim.champion`); after the
   Kiln Warden, the Kiln Shard choice sets `w_kiln_absorbed` or `w_kiln_returned` for Act II.
 - Simulation (`mode: 'act1'`): enemies sleep until they see the player (the Bible's detection
@@ -374,6 +374,20 @@ main quests and links, the levels and objects, that walking each route picks up 
 the respawn, the quests, the crypt floors, the Gallows Hill key and entrance, the scenes against
 the Bible dialogs, the Cinderhold gate and the champion; E2E clears a zone, reads the opening scene,
 meets Teodor in Cinderhold and finishes Act I with the boss and the Kiln Shard choice.
+
+Gold and passive skills (P1):
+
+- Gold drops by the Bible's loot tables (`lt_normal`/`lt_caster` 6 %, `lt_elite` 20 %, `lt_rare`
+  50 %) as 2–5 × L, rolled per enemy with its own seed; the Kiln Warden drops 20 × L. Piles are
+  picked up by walking over them (1.6 m). Quests add their Bible gold. Gold pays the Tollgate toll
+  and the merchant buys items in Cinderhold (Shift + click: Common 1 / Magic 3 / Rare 10 / Unique
+  25 × L). The save keeps `gold`; the exporter adds `econ` from G.BAL.econ and G.LOOT.
+- The Ash Knight's six class passives (G.SKILLS, `k: 'passive'`) take points from D04
+  (`F.passivePoints`, one per level plus quest points ≈ L / 6), each up to its max rank and from its
+  level. Their stats go into `calcChar` as modifiers; Kindling Fury adds Cinders on every hit and
+  Unquenched adds more damage under 35 % HP. Fire resistance from Smoldering Plate has no effect yet
+  (enemy damage has no type). Respec costs `F.respecPoint` (D13: free up to L12). The character
+  save keeps `passives`, cleaned to the points of its level.
 
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three

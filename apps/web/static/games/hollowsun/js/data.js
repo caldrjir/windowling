@@ -87,7 +87,14 @@ window.HS_DATA = {
   "xpB": 40,
   "xpEndFrom": 50,
   "xpEndGrowth": 1.12,
-  "levelCap": 70
+  "levelCap": 70,
+  "passivePerLevel": 1,
+  "questPassives": 8,
+  "passiveSlowFrom": 40,
+  "passiveSlowEvery": 2,
+  "respecFreeTo": 12,
+  "respecPerPointL": 10,
+  "respecFullPoints": 15
  },
  "cls": {
   "id": "ak",
@@ -297,6 +304,81 @@ window.HS_DATA = {
    "aoe": "kruh 7 m"
   }
  ],
+ "passives": [
+  {
+   "id": "ak_p1",
+   "n": "Forged in Ash",
+   "mx": 5,
+   "req": 1,
+   "stat": "hpInc",
+   "v": 0.03,
+   "d": "+3 % Max HP za rank."
+  },
+  {
+   "id": "ak_p2",
+   "n": "Kindling Fury",
+   "mx": 3,
+   "req": 3,
+   "stat": "cinderOnHit",
+   "v": 1,
+   "d": "+1 Cinder za zásah za rank."
+  },
+  {
+   "id": "ak_p3",
+   "n": "Smoldering Plate",
+   "mx": 5,
+   "req": 6,
+   "stat": "armorInc",
+   "v": 0.08,
+   "stat2": "res_fire",
+   "v2": 0.02,
+   "d": "+8 % Armor a +2 % Fire res za rank."
+  },
+  {
+   "id": "ak_p4",
+   "n": "Hearthblood",
+   "mx": 3,
+   "req": 10,
+   "stat": "hpRegenPct",
+   "v": 0.004,
+   "d": "+0,4 % HP/s, pokud máš ≥ 50 Cinders (v kalkulaci počítáno jako aktivní)."
+  },
+  {
+   "id": "ak_p5",
+   "n": "Weapon Discipline",
+   "mx": 5,
+   "req": 12,
+   "stat": "as",
+   "v": 0.04,
+   "d": "+4 % attack speed (2H) nebo +3 % block (štít) za rank."
+  },
+  {
+   "id": "ak_p6",
+   "n": "Unquenched",
+   "mx": 3,
+   "req": 20,
+   "stat": "lowHpMore",
+   "v": 0.06,
+   "d": "Pod 35 % HP: +6 % more damage za rank."
+  }
+ ],
+ "econ": {
+  "goldMin": 2,
+  "goldMax": 5,
+  "sell": {
+   "common": 1,
+   "magic": 3,
+   "rare": 10,
+   "unique": 25
+  },
+  "bossGold": 20,
+  "goldChance": {
+   "lt_normal": 0.06,
+   "lt_caster": 0.06,
+   "lt_elite": 0.2,
+   "lt_rare": 0.5
+  }
+ },
  "areas": [
   {
    "id": "a1_cinderhold",

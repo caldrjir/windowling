@@ -53,6 +53,17 @@ interface Core {
 		xpToNext(level: number): number;
 		monsterXp(level: number, mul: number): number;
 		xpPenalty(pL: number, mL: number): number;
+		passivePoints(level: number): number;
+		respecPoint(level: number): number;
+	};
+	D: {
+		passives: { id: string; mx: number; req: number; stat: string; v: number }[];
+		econ: {
+			goldMin: number;
+			goldMax: number;
+			sell: Record<string, number>;
+			goldChance: Record<string, number>;
+		};
 	};
 	bulwarkBarrier(ch: Char, sl: number): number;
 	describe(item: Item): { name: string; lines: unknown[] };
@@ -63,6 +74,7 @@ interface CharSave {
 	xp: number;
 	alloc: Record<string, number>;
 	points: number;
+	passives: Record<string, number>;
 }
 interface Drop {
 	id: number;
@@ -117,6 +129,7 @@ interface Sim {
 	sanitizeChar(c: unknown): CharSave;
 	monsterLevel(s: SimState): number;
 	sanitizeGear(g: unknown, level: number): Gear;
+	sanitizePassives(p: unknown, level: number): Record<string, number>;
 	INV_MAX: number;
 }
 
@@ -760,5 +773,91 @@ describe('HOLLOW SUN dungeon generator = Game Design Bible', () => {
 		expect(plain(d.edges)).toEqual(row.edges);
 		expect([d.bossOk, d.allOk, d.mainLen]).toEqual([row.bossOk, row.allOk, row.mainLen]);
 		expect(plain(d.keys)).toEqual(row.keys);
+	});
+});
+
+describe('HOLLOW SUN gold and passive skills = Game Design Bible', () => {
+	const { HS, HSim } = loadAll();
+	type GoldState = SimState & {
+		gold: number;
+		coins: { id: number; x: number; z: number; n: number }[];
+		events: { t: string; gold?: number }[];
+	};
+
+	it('passive points and respec cost follow D04 and D13', () => {
+		for (const [L, pts, respec] of fixtures.progress.passivePoints) {
+			expect(HS.F.passivePoints(L ?? 1), 'L' + L).toBe(pts);
+			expect(HS.F.respecPoint(L ?? 1), 'L' + L).toBe(respec);
+		}
+	});
+
+	it('passives need points, their level and stay under the max rank; they change the character', () => {
+		const s = HSim.create({
+			mode: 'arena',
+			seed: 'pas',
+			char: { level: 6, xp: 0, alloc: {} },
+		}) as GoldState;
+		expect(s.char.passives).toEqual({});
+		const hp = s.player.hpMax;
+		for (let i = 0; i < 5; i++) expect(HSim.invCommand(s, { passive: 'ak_p1' })).toBe(true);
+		expect(HSim.invCommand(s, { passive: 'ak_p1' })).toBe(false); // max rank 5
+		expect(s.player.hpMax).toBeGreaterThan(hp);
+		expect(HSim.invCommand(s, { passive: 'ak_p4' })).toBe(false); // from L10
+		expect(HSim.invCommand(s, { passive: 'ak_p3' })).toBe(true); // L6: 6 points, 5 + 1
+		expect(HSim.invCommand(s, { passive: 'ak_p2' })).toBe(false); // no points left
+		// respec is free up to L12 (D13) and returns every point
+		expect(HSim.invCommand(s, { respecPassives: true })).toBe(true);
+		expect(s.char.passives).toEqual({});
+		expect(s.player.hpMax).toBe(hp);
+		// a save cannot hold more than the points of its level, ranks above max or locked passives
+		const clean = HSim.sanitizePassives({ ak_p1: 9, ak_p4: 2, ak_p3: 5, bogus: 3 }, 6);
+		expect(clean).toEqual({ ak_p1: 5, ak_p3: 1 });
+	});
+
+	it('gold drops by the loot tables, is picked up on the way and pays the merchant and the toll', () => {
+		const E = HS.D.econ;
+		expect(E.goldChance.lt_normal).toBe(0.06);
+		expect(E.goldChance.lt_elite).toBe(0.2);
+		const s = HSim.create({
+			mode: 'arena',
+			seed: 'gold',
+			invuln: true,
+			char: { level: 6, xp: 0, alloc: {} },
+		}) as GoldState;
+		let coins: GoldState['coins'] = [];
+		for (let i = 0; i < 30 * 300 && coins.length < 3; i++) {
+			HSim.step(s, HSim.autopilot(s));
+			coins = s.coins;
+		}
+		expect(coins.length).toBeGreaterThan(0);
+		for (const c of coins) {
+			expect(c.n % 1).toBe(0);
+			expect(c.n).toBeGreaterThanOrEqual(E.goldMin);
+		}
+		const before = s.gold;
+		const c = coins[0];
+		if (!c) throw new Error('no coins');
+		s.player.x = c.x;
+		s.player.z = c.z;
+		HSim.step(s, {});
+		expect(s.gold).toBe(before + c.n);
+		// selling only in Cinderhold: Common 1 / Magic 3 / Rare 10 / Unique 25 x L
+		s.gear.inv.push(HS.genItem(HS.rng('sell'), 6, 'ak', 'rare'));
+		expect(HSim.invCommand(s, { sell: 0 })).toBe(false);
+		const town = HSim.create({
+			mode: 'act1',
+			zone: 'a1_cinderhold',
+			seed: 'sell',
+			gold: 10,
+			char: { level: 6, xp: 0, alloc: {} },
+		}) as GoldState;
+		town.gear.inv.push(HS.genItem(HS.rng('sell'), 6, 'ak', 'rare'));
+		expect(HSim.invCommand(town, { sell: town.gear.inv.length - 1 })).toBe(true);
+		expect(town.gold).toBe(10 + (E.sell.rare ?? 0) * 6);
+		// the toll: 500 gold or nothing happens
+		expect(HSim.invCommand(town, { pay: 500 })).toBe(false);
+		town.gold = 620;
+		expect(HSim.invCommand(town, { pay: 500 })).toBe(true);
+		expect(town.gold).toBe(120);
 	});
 });

@@ -30,9 +30,10 @@
   // staty postavy a tabulky zásahů skillů z aktuální výbavy; poměr HP zůstává
   function refreshChar(s, heal) {
     const items = equipped(s); const al = s.char.alloc;
-    const ch = HS.calcChar(s.L, items, al); s.ch = ch;
-    s.chBulwark = HS.calcChar(s.L, items, al, { armorInc: 0.2 }); // Ashen Bulwark: +20 % Armor
-    s.chBrand = HS.calcChar(s.L, items, al, { fireInc: 0.1 }); // Brand: cíl dostává +10 % increased Fire damage
+    const pm = passiveMods(s.char); const plus = (k, v) => Object.assign({}, pm, { [k]: (pm[k] || 0) + v });
+    const ch = HS.calcChar(s.L, items, al, pm); s.ch = ch;
+    s.chBulwark = HS.calcChar(s.L, items, al, plus('armorInc', 0.2)); // Ashen Bulwark: +20 % Armor
+    s.chBrand = HS.calcChar(s.L, items, al, plus('fireInc', 0.1)); // Brand: cíl dostává +10 % increased Fire damage
     s.hitCache = {};
     for (const id in s.skills) {
       const slot = s.skills[id]; slot.sl = HS.F.maxSkillLevel(s.L, slot.sk.req); slot.on = slot.sk.req <= s.L; slot.hit = {};
@@ -51,13 +52,18 @@
   /* ---------- postup postavy (P1): XP, levely, body atributů ---------- */
   const ATTRS = ['str', 'dex', 'int', 'wil', 'vit'];
   const sumAlloc = (al) => ATTRS.reduce((t, k) => t + (al[k] || 0), 0);
-  function newChar(level) { const L = level || 1; return { level: L, xp: 0, alloc: level ? HS.alloc(L) : {}, points: 0 }; }
+  function newChar(level) { const L = level || 1; return { level: L, xp: 0, alloc: level ? HS.alloc(L) : {}, points: 0, passives: {} }; }
+  // pasivní dovednosti: známé id, rank ≤ max, požadovaný level, celkem nejvýš body z D04 (přebytek se zahodí v pořadí dat)
+  function sanitizePassives(p, L) { const out = {}; let left = HS.F.passivePoints(L); for (const ps of HS.D.passives) { const r = Math.max(0, Math.min(ps.mx, Math.floor(Number((p || {})[ps.id]) || 0), left)); if (r && ps.req <= L) { out[ps.id] = r; left -= r; } } return out; }
+  const passiveSpent = (c) => Object.values(c.passives || {}).reduce((a, b) => a + b, 0);
+  // pasivy jako modifikátory pro calcChar (stat × rank, druhý stat × rank)
+  function passiveMods(c) { const m = {}; for (const ps of HS.D.passives) { const r = (c.passives || {})[ps.id]; if (!r) continue; m[ps.stat] = (m[ps.stat] || 0) + ps.v * r; if (ps.stat2) m[ps.stat2] = (m[ps.stat2] || 0) + ps.v2 * r; } return m; }
   // uložená postava: level v mezích, alokace jen z volných bodů (3 za level), zbytek jako nerozdělené body
   function sanitizeChar(c) {
     if (!c || typeof c !== 'object') return newChar();
     const L = Math.max(1, Math.min(HS.B.levelCap, Math.floor(Number(c.level) || 1))); const total = (L - 1) * HS.B.freeAttrPerLevel; const al = {}; let used = 0;
     for (const k of ATTRS) { const v = Math.max(0, Math.floor(Number((c.alloc || {})[k]) || 0)); const take = Math.min(v, total - used); if (take > 0) { al[k] = take; used += take; } }
-    return { level: L, xp: Math.max(0, Math.min(HS.F.xpToNext(L) - 1, Math.floor(Number(c.xp) || 0))), alloc: al, points: total - used };
+    return { level: L, xp: Math.max(0, Math.min(HS.F.xpToNext(L) - 1, Math.floor(Number(c.xp) || 0))), alloc: al, points: total - used, passives: sanitizePassives(c.passives, L) };
   }
   // úroveň nepřátel v aréně prototypu (Bible ji pro arénu neurčuje): level hráče − 1 + každá druhá vlna, strop konce Act I
   const ACT1_MAX = Math.max(...HS.D.areas.map((a) => a.lv[1]));
@@ -108,6 +114,11 @@
     if (cmd.discard != null) { const it = g.inv.splice(cmd.discard, 1)[0]; if (it) s.events.push({ t: 'discard', item: it }); return !!it; }
     // body atributů: { alloc: 'str' } jeden bod; { autoAlloc: true } zbytek jako referenční postava Bible (2/3 primární, zbytek VIT)
     if (cmd.alloc && ATTRS.includes(cmd.alloc)) { const c = s.char; if (c.points <= 0) return false; c.alloc[cmd.alloc] = (c.alloc[cmd.alloc] || 0) + 1; c.points--; refreshChar(s); s.events.push({ t: 'alloc', attr: cmd.alloc }); return true; }
+    if (cmd.passive) { const ps = HS.D.passives.find((x) => x.id === cmd.passive); const c = s.char; if (!ps || !s.progress) return false; const r = (c.passives[ps.id] || 0); if (r >= ps.mx || ps.req > s.L || passiveSpent(c) >= HS.F.passivePoints(s.L)) return false; c.passives[ps.id] = r + 1; refreshChar(s); s.events.push({ t: 'passive', id: ps.id, rank: r + 1 }); return true; }
+    if (cmd.respecPassives) { const c = s.char; const n = passiveSpent(c); const cost = HS.F.respecPoint(s.L) * n; if (!n || s.gold < cost) return false; s.gold -= cost; c.passives = {}; refreshChar(s); s.events.push({ t: 'respec', points: n, cost }); return true; }
+    // prodej u obchodníka (jen v Cinderholdu): Common 1 / Magic 3 / Rare 10 / Unique 25 × L (Bible)
+    if (cmd.sell != null) { if (!s.zone || !s.zone.town) return false; const it = g.inv[cmd.sell]; if (!it) return false; const price = (HS.D.econ.sell[it.rar] || 1) * s.L; g.inv.splice(cmd.sell, 1); s.gold += price; s.events.push({ t: 'sell', item: it, gold: price }); return true; }
+    if (cmd.pay) { if (s.gold < cmd.pay) return false; s.gold -= cmd.pay; s.events.push({ t: 'pay', gold: cmd.pay }); return true; }
     if (cmd.autoAlloc) { const c = s.char; if (c.points <= 0) return false; const pr = HS.D.cls.primary; const a = Math.round((c.points * 2) / 3); c.alloc[pr] = (c.alloc[pr] || 0) + a; c.alloc.vit = (c.alloc.vit || 0) + c.points - a; c.points = 0; refreshChar(s); s.events.push({ t: 'alloc', attr: 'auto' }); return true; }
     return false;
   }
@@ -123,6 +134,12 @@
     const item = HS.genItem(r, e.L, HS.D.cls.id, rar);
     const d = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(d);
     s.events.push({ t: 'drop', id: d.id, x: d.x, z: d.z, rar: item.rar });
+  }
+  // gold z loot tabulky nepřítele (lt_normal 6 %, lt_elite 20 %, lt_rare 50 %), 2–5 × L; vlastní RNG podle id nepřítele
+  function dropGold(s, e, amount) {
+    if (!s.loot || s.mode === 'bench') return; const E = HS.D.econ; let n = amount || 0;
+    if (!n) { const r = HS.rng(s.seed + '#gold#' + e.id); const lt = e.elite ? 'lt_elite' : e.def.lt in E.goldChance ? e.def.lt : 'lt_normal'; if (r() >= E.goldChance[lt]) return; n = r.int(E.goldMin, E.goldMax) * e.L; }
+    const c = { id: s.nextId++, x: e.x + 0.4, z: e.z - 0.3, n }; s.coins.push(c); s.events.push({ t: 'coins', id: c.id, x: c.x, z: c.z, n });
   }
   // uložená výbava: jen známé báze a sloty, nejvýš INV_MAX předmětů; bez zbraně výchozí palcát
   function sanitizeGear(g, L) {
@@ -158,7 +175,7 @@
     const gear = sanitizeGear(opts.gear, L);
     const s = {
       L, char, progress: !fixed, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
-      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss', 'act1'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [],
+      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss', 'act1'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [], coins: [], gold: Math.max(0, Math.floor(Number(opts.gold) || 0)),
       player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
     refreshChar(s);
@@ -303,6 +320,8 @@
     if (s.rnd() > h.hitChance) { s.events.push({ t: 'miss', x: e.x, z: e.z }); return false; }
     const crit = s.rnd() < h.critChance; const S = s.ch.S;
     let dmg = (h.perHit / h.eCrit) * (crit ? S.critMult : 1) * (mult || 1) * (0.9 + s.rnd() * 0.2);
+    if (S.lowHpMore && s.player.hp < s.player.hpMax * 0.35) dmg *= 1 + S.lowHpMore; // Unquenched
+    if (S.cinderOnHit > 1) s.player.res = Math.min(s.player.resMax, s.player.res + S.cinderOnHit - 1); // Kindling Fury
     dmg = Math.max(1, Math.round(dmg));
     const wd = wardAbsorb(s, e, dmg); e.hp -= dmg - wd; e.flash = 0.1; s.stats.hits++; s.stats.dmg += dmg - wd; if (crit) s.stats.crits++;
     // Kiln Acolyte: zásah během vyvolání nebo štítu kouzlo přeruší (slabina „interrupt“ v Bible); cooldown běží
@@ -317,8 +336,8 @@
   }
   function kill(s, e) {
     if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type });
-    if (s.boss && e.id === s.boss.id) { bossLoot(s, e); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
-    if (!e.noLoot) rollDrop(s, e); gainXp(s, e);
+    if (s.boss && e.id === s.boss.id) { bossLoot(s, e); dropGold(s, e, HS.D.econ.bossGold * e.L); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
+    if (!e.noLoot) { rollDrop(s, e); dropGold(s, e); } gainXp(s, e);
     // šampion Tollgate (q1_03, volba souboje): odměna Rare zbraň (Bible)
     if (e.champion) { const item = HS.genItem(HS.rng(s.seed + '#champion'), e.L, HS.D.cls.id, 'rare', 'main'); const dd = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(dd); s.events.push({ t: 'drop', id: dd.id, x: dd.x, z: dd.z, rar: item.rar }); s.events.push({ t: 'champion', id: e.id, x: e.x, z: e.z }); }
     // Rusty Gallows Key: 4 % ze Smoldering Brute v kampani, jednou (vlastní RNG podle id, nemění ostatní hody)
@@ -587,7 +606,8 @@
     const xp = (q.rewards && q.rewards.xp) || 0; let item = null;
     if (/prsten/i.test((q.rewards && q.rewards.item) || '')) { item = HS.genItem(HS.rng(s.seed + '#quest#' + q.id), s.L, HS.D.cls.id, 'magic', 'ring'); if (s.gear.inv.length < INV_MAX) s.gear.inv.push(item); else { const dd = { id: s.nextId++, x: s.player.x, z: s.player.z, item }; s.drops.push(dd); } }
     if (xp) grantXp(s, xp, s.player);
-    s.events.push({ t: 'quest', id: q.id, n: q.n, xp, item });
+    const gold = (q.rewards && q.rewards.gold) || 0; s.gold += gold;
+    s.events.push({ t: 'quest', id: q.id, n: q.n, xp, gold, item });
   }
   // q1_03 „Utkat se se šampionem“: elitní Smoldering Brute s levelem konce oblasti, hned bdělý, kousek před hráčem
   function champion(s) {
@@ -595,6 +615,8 @@
     for (const [dx, dz] of [[0, -5], [5, 0], [-5, 0], [0, 5], [0, -2.5]]) if (!s.zone || root.HSWorld.walkable(s.zone, p.x + dx, p.z + dz, ER.en_brute, s.zoneKeys)) { x = p.x + dx; z = p.z + dz; break; }
     const e = spawn(s, 'en_brute', x, z, L, true); e.awake = true; e.champion = true; s.events.push({ t: 'champspawn', id: e.id, x, z }); return e;
   }
+  // gold se sbírá sám, když hráč projde kolem (1,6 m)
+  function updateCoins(s) { const p = s.player; s.coins = s.coins.filter((c) => { if (len(c.x - p.x, c.z - p.z) > 1.6) return true; s.gold += c.n; s.events.push({ t: 'gold', id: c.id, n: c.n, x: c.x, z: c.z, total: s.gold }); return false; }); }
   function step(s, inp) {
     s.events.length = 0; if (s.over) return s;
     s.tick++; s.t += TICK;
@@ -602,6 +624,7 @@
     updateEnemies(s);
     updateProj(s);
     if (s.zone) updateZone(s);
+    if (s.coins.length) updateCoins(s);
     if (s.mode === 'boss') updateBoss(s);
     if (s.enemies.length > 300) s.enemies = s.enemies.filter((e) => !e.dead);
     if (s.mode === 'arena' && !s.over && s.enemies.every((e) => e.dead)) { s.enemies = []; nextWave(s); }
@@ -633,5 +656,5 @@
     else inp.move = [best.x - p.x, best.z - p.z];
     return inp;
   }
-  root.HSim = { champion, updateZone, TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
+  root.HSim = { sanitizePassives, passiveSpent, champion, updateZone, TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
 })(typeof window !== 'undefined' ? window : globalThis);
