@@ -64,6 +64,9 @@ volume sliders and one mute button.
 - Per-game stats from this browser: play time, last played, progress and game-specific numbers.
 - Who is playing right now: per game, signed-in players and anonymous players (live, ~15 s).
 - Account: Google sign-in button, or the player's name and avatar with sign-out.
+- Game wikis tab (`/#wiki`): guides and cheat sheets for games we play with friends, e.g. the
+  Gray Zone Warfare field guide (ammo penetration by armour class, loot sell prices, vendor
+  reputation), in Czech. Each wiki is one static page under `static/wiki/<id>/`.
 
 ## Roadmap (high level)
 

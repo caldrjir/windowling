@@ -37,6 +37,10 @@
 - `static/tajne/ruzek/` - a hidden single page at `/tajne/ruzek` (a trainer's site, plain
   HTML + `assets/`, kept as its author wrote it): nothing links to it and it is `noindex`. It is open without the site password (gate `OPEN_PATHS`), so it can
   be shown to friends; files it needs go under `/tajne/ruzek/`.
+- `static/wiki/<id>/` - game wikis: self-contained guide pages for games we play with friends
+  (not games of the library), kept as their authors wrote them, behind the site password like
+  the games. `src/lib/wikis.ts` lists them on the hub's "Game wikis" tab (`/#wiki`); a wiki
+  links back to `/#wiki`. Like every static file they get no SvelteKit CSP.
 
 ### Games - `apps/web/static/games/<id>/`
 
