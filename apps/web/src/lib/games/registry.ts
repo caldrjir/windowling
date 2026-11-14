@@ -63,17 +63,17 @@ const ACTION_GAMES: Game[] = [
 		description:
 			'Neonový roguelite bullet-heaven. Skládej ničivé kombinace zbraní, objevuj tajné evoluce, porážej bossy a probojuj se pěti sektory až do Srdce prázdnoty. Každá smrt tě posílí.',
 		genres: ['Roguelite', 'Akce', 'Bullet heaven'],
-		features: ['16 zbraní a evolucí', '9 pilotů', '5 sektorů × 10 Overdrive', '34 úspěchů'],
+		features: ['22 zbraní a evolucí', '9 pilotů', '5 sektorů × 10 Overdrive', '40 úspěchů'],
 		en: {
 			tagline: 'Survive the endless onslaught of the void.',
 			description:
 				'A neon roguelite bullet heaven. Build devastating weapon combos, uncover secret evolutions, defeat bosses and fight your way through five sectors to the Heart of the Void. Every death makes you stronger.',
 			genres: ['Roguelite', 'Action', 'Bullet heaven'],
 			features: [
-				'16 weapons & evolutions',
+				'22 weapons & evolutions',
 				'9 pilots',
 				'5 sectors × 10 Overdrive',
-				'34 achievements',
+				'40 achievements',
 			],
 		},
 		statLabels: {

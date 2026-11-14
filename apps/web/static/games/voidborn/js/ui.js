@@ -14,7 +14,10 @@ const TIPS = L([
   'Kvantová kostka zvyšuje šanci na <b>čtvrtou kartu</b> při postupu na vyšší úroveň.',
   'Rozbušky (bílé hvězdy) se před výbuchem rozblikají. Drž si odstup!',
   'Magnet vysaje <b>všechny krystaly</b> na mapě. Bomba vyčistí obrazovku.',
-  'Úspěchy odemykají nové <b>piloty</b>. Každý začíná s jinou zbraní.',
+  'Úspěchy odemykají nové <b>piloty, zbraně a doplňky</b>. Co který odemyká, uvidíš v Úspěších.',
+  'Evoluční zbraň jde dál <b>přetížit</b> až na ★4. Když už není co vylepšit, nabídnou se <b>mutace</b> bez limitu.',
+  'Po dobytí Sektoru II se v Kovárně otevře <b>Mistrovská dílna</b>: víc karet, víc slotů, rázový úskok…',
+  '<b>Pancíř</b> ubírá procento z každého zásahu, takže chrání i proti nejsilnějším nepřátelům.',
   'V nekonečném režimu po porážce Monarchy roste síla prázdnoty každou minutou.',
 ], [
   'Every weapon at <b>max level</b> can evolve — but it needs the right passive item.',
@@ -26,7 +29,10 @@ const TIPS = L([
   'The Quantum Die raises the chance of a <b>fourth card</b> when you level up.',
   'Detonators (white stars) start blinking before they explode. Keep your distance!',
   'The magnet pulls in <b>every crystal</b> on the map. The bomb clears the screen.',
-  'Achievements unlock new <b>pilots</b>. Each one starts with a different weapon.',
+  'Achievements unlock new <b>pilots, weapons and passives</b>. See what each one unlocks under Achievements.',
+  'An evolved weapon can be <b>overcharged</b> up to ★4. When nothing is left to upgrade, you get limitless <b>mutations</b>.',
+  'Clearing Sector II opens the <b>Master Workshop</b> in the Forge: more cards, more slots, shock dash…',
+  '<b>Armor</b> takes a percentage off every hit, so it protects even against the strongest enemies.',
   'In endless mode after the Monarch falls, the void grows stronger every minute.',
 ]);
 
@@ -65,7 +71,7 @@ const UI = (() => {
       const S = SAVE.stats;
       const cleared = SECTORS.filter(s => SAVE.sectors[s.id] && SAVE.sectors[s.id].cleared).length;
       const achN = Object.keys(SAVE.achievements).length;
-      const canBuy = FORGE.some(f => (SAVE.forge[f.id] || 0) < f.max && SAVE.shards >= forgeCost(f, SAVE.forge[f.id] || 0));
+      const canBuy = FORGE.some(f => (f.tier !== 2 || masterOpen()) && (SAVE.forge[f.id] || 0) < f.max && SAVE.shards >= forgeCost(f, SAVE.forge[f.id] || 0));
       const prog = (achN / ACHIEVEMENTS.length + cleared / SECTORS.length) / 2;
       el.innerHTML = `
         <div class="menu-left">
@@ -88,13 +94,13 @@ const UI = (() => {
             <span>${L('Zničeno nepřátel', 'Enemies destroyed')}</span><b>${fmtNum(S.kills)}</b>
             <span>${L('Poraženo bossů', 'Bosses defeated')}</span><b>${fmtNum(S.bossKills)}</b>
             <span>${L('Dobyté sektory', 'Sectors cleared')}</span><b>${cleared} / ${SECTORS.length}</b>
-            <span>${L('Objevené evoluce', 'Evolutions found')}</span><b>${Object.keys(SAVE.evolutions).length} / 8</b>
+            <span>${L('Objevené evoluce', 'Evolutions found')}</span><b>${Object.keys(SAVE.evolutions).length} / ${EVOLUTIONS.length}</b>
             <span>${L('Odehráno', 'Time played')}</span><b>${fmtTime(S.time)}</b>
           </div>
           <div class="progress" title="${L('Celkový postup', 'Overall progress')}"><i style="width:${pct(prog)}%"></i></div>
           <div class="tip"><span class="tl">TIP</span>${pick(TIPS)}</div>
         </aside>
-        <div class="version">VOIDBORN · v1.1 · ${L('WASD + MEZERNÍK', 'WASD + SPACE')}</div>
+        <div class="version">VOIDBORN · v1.2 · ${L('WASD + MEZERNÍK', 'WASD + SPACE')}</div>
         <div class="corner-lang">${langSwitch()}</div>`;
     },
 
@@ -150,16 +156,20 @@ const UI = (() => {
 
     forge(el) {
       const spent = FORGE.reduce((s, f) => { let c = 0; for (let l = 0; l < (SAVE.forge[f.id] || 0); l++) c += forgeCost(f, l); return s + c; }, 0);
+      const open = masterOpen();
+      const card = (f, locked) => {
+        const l = SAVE.forge[f.id] || 0, maxed = l >= f.max, cost = maxed ? 0 : forgeCost(f, l);
+        return `<div class="fcard ${maxed ? 'maxed' : ''} ${f.tier === 2 ? 'master' : ''} ${locked ? 'locked' : ''}" id="fc-${f.id}">
+          <div class="fi">${icon(f.icon)}<div><h4>${f.name}</h4><p>${f.desc}</p></div></div>
+          ${pips(l, f.max)}
+          <button class="btn buy ${maxed ? 'ghost' : ''}" data-buy="${f.id}" ${locked || maxed || SAVE.shards < cost ? 'disabled' : ''}>${locked ? `${icon('lock')} ${fmtNum(cost)}` : maxed ? L('Maximum', 'Maxed') : `${icon('shard')} ${fmtNum(cost)}`}</button>
+        </div>`;
+      };
       el.innerHTML = `
         ${topbar(L('TRVALÁ VYLEPŠENÍ', 'PERMANENT UPGRADES'), L('KOVÁRNA', 'FORGE'), spent ? `<button class="btn ghost" data-act="refund">${icon('reroll')} ${L('Vrátit vše', 'Refund all')}</button>` : '')}
-        <div class="grid-cards">${FORGE.map(f => {
-          const l = SAVE.forge[f.id] || 0, maxed = l >= f.max, cost = maxed ? 0 : forgeCost(f, l);
-          return `<div class="fcard ${maxed ? 'maxed' : ''}" id="fc-${f.id}">
-            <div class="fi">${icon(f.icon)}<div><h4>${f.name}</h4><p>${f.desc}</p></div></div>
-            ${pips(l, f.max)}
-            <button class="btn buy ${maxed ? 'ghost' : ''}" data-buy="${f.id}" ${maxed || SAVE.shards < cost ? 'disabled' : ''}>${maxed ? L('Maximum', 'Maxed') : `${icon('shard')} ${fmtNum(cost)}`}</button>
-          </div>`;
-        }).join('')}</div>`;
+        <div class="grid-cards">${FORGE.filter(f => f.tier !== 2).map(f => card(f, false)).join('')}</div>
+        <div class="master-head ${open ? '' : 'locked'}">${icon(open ? 'forge' : 'lock')}<div><h3>${L('MISTROVSKÁ DÍLNA', 'MASTER WORKSHOP')}</h3><p>${open ? L('Silnější a dražší vylepšení pro zkušené piloty.', 'Stronger, pricier upgrades for seasoned pilots.') : L('Otevře se po dobytí Sektoru II.', 'Opens once you clear Sector II.')}</p></div></div>
+        <div class="grid-cards">${FORGE.filter(f => f.tier === 2).map(f => card(f, !open)).join('')}</div>`;
     },
 
     ach(el) {
@@ -169,10 +179,11 @@ const UI = (() => {
         <div class="grid-cards">${ACHIEVEMENTS.map(a => {
           const got = !!SAVE.achievements[a.id], [v, m] = a.prog(SAVE, null);
           const pl = a.pilot && PILOTS.find(p => p.id === a.pilot);
+          const opens = [...(pl ? [pl.name] : []), ...[...BASE_WEAPONS.map(id => WEAPONS[id]), ...Object.values(PASSIVES)].filter(o => o.unlock === a.id).map(o => o.name)];
           return `<div class="fcard ach ${got ? 'got' : ''}">
             <div class="fi">${icon(a.icon)}<div><h4>${a.name}</h4><p>${a.desc}</p></div></div>
             <div class="bar"><i style="width:${Math.min(100, v / m * 100)}%"></i></div>
-            <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${pl ? ` · ${L('odemyká', 'unlocks')} ${pl.name}` : ''}</span><b>+${a.reward} ◆</b></div>
+            <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${opens.length ? ` · ${L('odemyká', 'unlocks')} ${opens.join(', ')}` : ''}</span><b>+${a.reward} ◆</b></div>
           </div>`;
         }).join('')}</div>`;
     },
@@ -181,15 +192,18 @@ const UI = (() => {
       const tabs = [['weapons', L('Zbraně', 'Weapons')], ['passives', L('Doplňky', 'Passives')], ['evos', L('Evoluce', 'Evolutions')], ['enemies', L('Nepřátelé', 'Enemies')]];
       const unknown = L('Zatím neobjeveno.', 'Not discovered yet.');
       let body = '';
+      // Zamčené zbraně a doplňky ukazují, který úspěch je odemkne.
+      const lockNote = o => { const a = ACHIEVEMENTS.find(a => a.id === o.unlock); return `${icon('lock')} ${L('Odemkne úspěch', 'Unlocked by')} „${a.name}“: ${a.desc}`; };
       if (codexTab === 'weapons') body = BASE_WEAPONS.map(id => {
-        const d = WEAPONS[id], seen = SAVE.seen[id];
-        return `<div class="fcard cx ${seen ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi">${icon(d.icon)}<div><h4>${seen ? d.name : '???'}</h4><p>${seen ? d.desc : unknown}</p></div></div>
+        const d = WEAPONS[id], seen = SAVE.seen[id], open = unlocked(d);
+        return `<div class="fcard cx ${seen ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi">${icon(d.icon)}<div><h4>${seen || open ? d.name : '???'}</h4><p>${seen ? d.desc : open ? `${d.desc} <i>${L('Zatím nepoužita.', 'Not used yet.')}</i>` : lockNote(d)}</p></div></div>
           ${seen ? `<p>${d.up.map((u, i) => `<b>${i + 2}:</b> ${u[1]}`).join(' · ')}</p>` : ''}</div>`;
       }).join('');
       else if (codexTab === 'passives') body = Object.entries(PASSIVES).map(([id, d]) => {
-        const seen = SAVE.seen[id];
-        return `<div class="fcard cx ${seen ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi">${icon(d.icon)}<div><h4>${seen ? d.name : '???'}</h4><p>${seen ? `${d.desc} ${L('za úroveň', 'per level')} · max. ${d.max}` : unknown}</p></div></div></div>`;
-      }).join('');
+        const seen = SAVE.seen[id], open = unlocked(d);
+        return `<div class="fcard cx ${seen ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi">${icon(d.icon)}<div><h4>${seen || open ? d.name : '???'}</h4><p>${seen || open ? `${d.desc}${d.noPer ? '' : ' ' + L('za úroveň', 'per level')} · max. ${d.max}` : lockNote(d)}</p></div></div></div>`;
+      }).join('') + `<div class="fcard cx" style="--c:#ffd166"><div class="fi">${icon('overcharge')}<div><h4>${L('Přetížení', 'Overcharge')}</h4><p>${L(`Evoluční zbraň se dál vylepšuje: ★1–★${OC_MAX}, každá hvězda +${pct(OC_DMG)} % poškození a −${pct(OC_CD)} % nabíjení.`, `An evolved weapon keeps improving: ★1–★${OC_MAX}, each star +${pct(OC_DMG)}% damage and −${pct(OC_CD)}% cooldown.`)}</p></div></div></div>
+        <div class="fcard cx" style="--c:#5dffa8"><div class="fi">${icon('mutation')}<div><h4>${L('Mutace', 'Mutations')}</h4><p>${L('Když už není co vylepšit, nabízí postup mutace: drobná posílení bez limitu.', 'When there is nothing left to upgrade, level-ups offer mutations: small boosts with no limit.')}</p></div></div></div>`;
       else if (codexTab === 'evos') body = BASE_WEAPONS.map(id => {
         const b = WEAPONS[id], e = WEAPONS[b.evo], got = SAVE.evolutions[b.evo];
         return `<div class="fcard cx ${got ? '' : 'unknown'}" style="--c:${e.color}"><div class="fi">${icon(e.icon)}<div><h4>${got ? e.name : '???'}</h4><p>${got ? e.desc : L('Neobjevená evoluce.', 'Undiscovered evolution.')}</p></div></div>
@@ -324,7 +338,7 @@ const UI = (() => {
 
   function buy(id) {
     const f = FORGE.find(f => f.id === id), l = SAVE.forge[id] || 0;
-    if (l >= f.max) return;
+    if (l >= f.max || (f.tier === 2 && !masterOpen())) return;
     const cost = forgeCost(f, l);
     if (SAVE.shards < cost) { Sound.play.error(); return; }
     SAVE.shards -= cost;
@@ -354,6 +368,31 @@ const UI = (() => {
     { yes, no: () => { if (prev.__restore) prev.__restore(); else hideOverlay(); } });
   }
 
+  // Jak se statistika projeví: hodnota teď → po výběru (karty doplňků a mutací).
+  const STAT_FMT = {
+    might: [L('Poškození', 'Damage'), s => signPct(s.might - 1)],
+    cdMul: [L('Nabíjení', 'Cooldown'), s => signPct(s.cdMul - 1)],
+    area: [L('Oblast', 'Area'), s => signPct(s.area - 1)],
+    speed: [L('Rychlost', 'Speed'), s => signPct(s.speed / 205 - 1)],
+    armor: [L('Přijaté zranění', 'Damage taken'), s => signPct(armorFactor(s.armor) - 1)],
+    maxHp: [L('Max. zdraví', 'Max HP'), s => Math.round(s.maxHp)],
+    magnet: [L('Dosah sběru', 'Pickup range'), s => signPct(s.magnet / 90 - 1)],
+    dur: [L('Trvání', 'Duration'), s => signPct(s.dur - 1)],
+    regen: [L('Regenerace', 'Regen'), s => s.regen.toFixed(1) + L(' /s', '/s')],
+    luck: [L('Štěstí', 'Luck'), s => signPct(s.luck - 1)],
+    crit: [L('Krit. zásah', 'Crit chance'), s => pct(s.crit) + L(' %', '%')],
+    critDmg: [L('Krit. poškození', 'Crit damage'), s => '×' + s.critMul.toFixed(2)],
+    amount: [L('Projektily navíc', 'Extra projectiles'), s => '+' + s.amount],
+    shield: [L('Dobití štítu', 'Shield recharge'), s => (s.shieldCd ? s.shieldCd + ' s' : '—')],
+    greed: [L('Střepy', 'Shards'), s => signPct(s.greed - 1)],
+  };
+  function statLines(mod, after) {
+    return Object.keys(mod).filter(k => STAT_FMT[k]).map(k => {
+      const [label, f] = STAT_FMT[k];
+      return `<div class="cstat"><span>${label}</span><b>${f(G.st)} → ${f(after)}</b></div>`;
+    }).join('');
+  }
+
   function choiceInfo(c) {
     const lvl = L('Úroveň ', 'Level '), nw = L('Nové', 'New');
     if (c.kind === 'weapon') {
@@ -361,8 +400,16 @@ const UI = (() => {
       return { name: d.name, color: d.color, icon: d.icon, badge: c.isNew ? nw : lvl + c.lvl, isNew: c.isNew, desc: c.isNew ? d.desc : d.up[c.lvl - 2][1], type: L('Zbraň', 'Weapon'), lvl: c.lvl, max: 8 };
     }
     if (c.kind === 'passive') {
-      const d = PASSIVES[c.id];
-      return { name: d.name, color: d.color, icon: d.icon, badge: c.isNew ? nw : lvl + c.lvl, isNew: c.isNew, desc: d.desc, type: L('Doplněk', 'Passive'), lvl: c.lvl, max: d.max, hint: c.evoHint && WEAPONS[c.evoHint].name };
+      const d = PASSIVES[c.id], after = calcStats(G.pilot, SAVE.forge, Object.assign({}, G.passives, { [c.id]: c.lvl }), G.mut);
+      return { name: d.name, color: d.color, icon: d.icon, badge: c.isNew ? nw : lvl + c.lvl, isNew: c.isNew, desc: d.desc, stat: statLines(d.mod, after), type: L('Doplněk', 'Passive'), lvl: c.lvl, max: d.max, hint: c.evoHint && WEAPONS[c.evoHint].name };
+    }
+    if (c.kind === 'oc') {
+      const d = WEAPONS[c.id];
+      return { name: d.name, color: '#ffd166', icon: 'overcharge', badge: L('Přetížení ', 'Overcharge ') + '★' + c.lvl, desc: L(`+${pct(OC_DMG)} % poškození, −${pct(OC_CD)} % nabíjení (celkem +${pct(OC_DMG * c.lvl)} % poškození)`, `+${pct(OC_DMG)}% damage, −${pct(OC_CD)}% cooldown (+${pct(OC_DMG * c.lvl)}% damage in total)`), type: L('Přetížení evoluce', 'Evolution overcharge'), stars: [c.lvl, OC_MAX], evo: true };
+    }
+    if (c.kind === 'mut') {
+      const d = MUTATIONS[c.id], after = calcStats(G.pilot, SAVE.forge, G.passives, Object.assign({}, G.mut, { [c.id]: c.lvl }));
+      return { name: d.name, color: d.color, icon: 'mutation', badge: L('Mutace ', 'Mutation ') + c.lvl, desc: d.desc, stat: statLines(d.mod, after), type: L('Mutace · bez limitu', 'Mutation · no limit') };
     }
     if (c.kind === 'evo') {
       const d = WEAPONS[c.id];
@@ -385,7 +432,9 @@ const UI = (() => {
           <div class="cbadge ${f.isNew ? 'new' : ''}">${f.badge}</div>
           <h3>${f.name}</h3>
           <p>${f.desc}</p>
+          ${f.stat ? `<div class="cstats">${f.stat}</div>` : ''}
           ${f.max ? `<div class="pips">${Array.from({ length: f.max }, (_, j) => `<i class="${j < f.lvl - 1 ? 'on' : j === f.lvl - 1 ? 'next' : ''}"></i>`).join('')}</div>` : ''}
+          ${f.stars ? `<div class="stars">${Array.from({ length: f.stars[1] }, (_, j) => `<i class="${j < f.stars[0] - 1 ? 'on' : j === f.stars[0] - 1 ? 'next' : ''}">★</i>`).join('')}</div>` : ''}
           ${f.hint ? `<div class="hint">★ ${L('Klíč k evoluci', 'Evolution key')}: ${f.hint}</div>` : ''}
           <div class="ctype">${f.type}</div>
         </button>`;
@@ -421,13 +470,14 @@ const UI = (() => {
   function buildList() {
     const w = G.weapons.map(w => {
       const d = WEAPONS[w.id];
-      return `<div class="build-item" style="--c:${d.color}">${icon(d.icon)}<span>${d.name}</span>${d.evolved ? `<span style="margin-left:auto;color:var(--gold)">★ ${L('EVOLUCE', 'EVOLVED')}</span>` : pips(w.level, 8)}</div>`;
+      return `<div class="build-item" style="--c:${d.color}">${icon(d.icon)}<span>${d.name}</span>${d.evolved ? `<span style="margin-left:auto;color:var(--gold)">★ ${L('EVOLUCE', 'EVOLVED')}${w.oc ? ' ' + '★'.repeat(w.oc) : ''}</span>` : pips(w.level, 8)}</div>`;
     }).join('');
     const p = Object.entries(G.passives).map(([id, l]) => {
       const d = PASSIVES[id];
       return `<div class="build-item" style="--c:${d.color}">${icon(d.icon)}<span>${d.name}</span>${pips(l, d.max)}</div>`;
     }).join('');
-    return `<h4>${L('Zbraně', 'Weapons')}</h4><div class="build-list">${w}</div><h4>${L('Doplňky', 'Passives')}</h4><div class="build-list">${p || `<span class="sum">${L('Zatím žádné', 'None yet')}</span>`}</div>`;
+    const m = Object.entries(G.mut).map(([id, l]) => `<div class="build-item" style="--c:${MUTATIONS[id].color}">${icon('mutation')}<span>${MUTATIONS[id].name}</span><b style="margin-left:auto">×${l}</b></div>`).join('');
+    return `<h4>${L('Zbraně', 'Weapons')} <small>${G.weapons.length} / ${G.st.wSlots}</small></h4><div class="build-list">${w}</div><h4>${L('Doplňky', 'Passives')} <small>${Object.keys(G.passives).length} / ${G.st.pSlots}</small></h4><div class="build-list">${p || `<span class="sum">${L('Zatím žádné', 'None yet')}</span>`}</div>${m ? `<h4>${L('Mutace', 'Mutations')}</h4><div class="build-list">${m}</div>` : ''}`;
   }
 
   function showPause() {
@@ -445,10 +495,13 @@ const UI = (() => {
             <span>${L('Oblast', 'Area')}</span><b>${signPct(s.area - 1)}</b>
             <span>${L('Trvání', 'Duration')}</span><b>${signPct(s.dur - 1)}</b>
             <span>${L('Projektily navíc', 'Extra projectiles')}</span><b>+${s.amount}</b>
-            <span>${L('Pancíř / Regenerace', 'Armor / Regen')}</span><b>${s.armor} / ${s.regen.toFixed(1)}</b>
-            <span>${L('Kritický zásah', 'Crit chance')}</span><b>${pct(s.crit)}${L(' %', '%')}</b>
+            <span>${L('Pancíř', 'Armor')}</span><b>${s.armor} (${L('zranění', 'damage')} ${signPct(armorFactor(s.armor) - 1)})</b>
+            <span>${L('Regenerace', 'Regen')}</span><b>${s.regen.toFixed(1)}${L(' /s', '/s')}</b>
+            <span>${L('Kritický zásah', 'Crit chance')}</span><b>${pct(s.crit)}${L(' %', '%')} · ×${s.critMul.toFixed(2)}</b>
             <span>${L('Štěstí / Růst', 'Luck / Growth')}</span><b>${signPct(s.luck - 1)} / ${signPct(s.growth - 1)}</b>
-            <span>${L('Oživení', 'Revives')}</span><b>${G.revives}</b>
+            ${s.shieldCd ? `<span>${L('Štít', 'Shield')}</span><b>${G.p.shieldOn ? L('nabitý', 'ready') : Math.ceil(G.p.shieldT) + ' s'} · ${L('dobití', 'recharge')} ${s.shieldCd} s</b>` : ''}
+            <span>${L('Oživení', 'Revives')}</span><b>${G.revives}${s.reviveFull ? L(' (plné zdraví)', ' (full health)') : ''}</b>
+            <span>${L('Přehození / Přeskočení', 'Rerolls / Skips')}</span><b>${G.rerolls} / ${G.skips}</b>
           </div>
           <h4>${L('Zvuk', 'Audio')}</h4>
           <div class="kv"><span>${L('Efekty', 'Effects')}</span><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.sfx}" data-vol="sfx"><span>${L('Hudba', 'Music')}</span><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.music}" data-vol="music"></div>
@@ -546,13 +599,20 @@ const UI = (() => {
     set('shardStat', 'html', `${icon('shard')} ${fmtNum(G.shards)}`);
     const re = Math.round(p.dashRe / 2.6 * 20);
     set('dashPips', 'html', Array.from({ length: s.dashMax }, (_, i) => i < p.dashCharges ? '<i class="on"></i>' : i === p.dashCharges ? `<i><b style="width:${re * 5}%"></b></i>` : '<i></i>').join(''));
+    // co dřív v běhu vidět nebylo: zbývající oživení, štít, pancíř a regenerace
+    const chips = [];
+    if (s.revives) chips.push(`<span class="hc rv ${G.revives ? '' : 'off'}" title="${L('Zbývající oživení', 'Revives left')}">${icon('revival')}<b>${G.revives}</b></span>`);
+    if (s.shieldCd) chips.push(`<span class="hc sh ${p.shieldOn ? 'on' : ''}" title="${L('Energetický štít', 'Energy shield')}">${icon('shield')}${p.shieldOn ? '' : `<b>${Math.ceil(p.shieldT)}s</b>`}</span>`);
+    if (s.armor) chips.push(`<span class="hc ar" title="${L('Pancíř: méně přijatého zranění', 'Armor: less damage taken')}">${icon('armor')}<b>−${pct(1 - armorFactor(s.armor))}${L(' %', '%')}</b></span>`);
+    if (s.regen) chips.push(`<span class="hc rg" title="${L('Regenerace zdraví za sekundu', 'Health regen per second')}">${icon('regen')}<b>+${s.regen.toFixed(1)}</b></span>`);
+    set('hudChips', 'html', chips.join(''));
     if (G.boss) set('bossFill', 'w', Math.max(0, G.boss.hp / G.boss.maxHp * 100).toFixed(1) + '%');
     set('fps', 'text', SAVE.settings.fps ? fps + ' FPS · ' + G.enemies.length + L(' nepřátel', ' enemies') : '');
   }
   function refreshLoadout() {
     $('#wSlots').innerHTML = G.weapons.map(w => {
       const d = WEAPONS[w.id];
-      return `<div class="slot ${d.evolved ? 'evo' : ''}" style="--c:${d.color}">${icon(d.icon)}<b>${d.evolved ? '★' : w.level}</b></div>`;
+      return `<div class="slot ${d.evolved ? 'evo' : ''}" style="--c:${d.color}">${icon(d.icon)}<b>${d.evolved ? '★' + (w.oc ? w.oc : '') : w.level}</b></div>`;
     }).join('');
     $('#pSlots').innerHTML = Object.entries(G.passives).map(([id, l]) => {
       const d = PASSIVES[id];
