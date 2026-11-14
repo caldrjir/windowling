@@ -231,7 +231,7 @@ const WEAPONS = {
   quantum: {
     name: 'Kvantový disk', color: '#c6fff0', icon: 'disc', evolved: true, from: 'disc',
     desc: 'Disky se odrážejí skoro bez konce a s každým odrazem sílí.',
-    base: { dmg: 30, cd: 0.9, amount: 3, speed: 720, bounce: 12, area: 1.25, grow: 0.12 },
+    base: { dmg: 28, cd: 0.9, amount: 3, speed: 720, bounce: 9, area: 1.25, grow: 0.06 },
   },
   comet: {
     name: 'Kometa', color: '#ffd27a', icon: 'flame', evolved: true, from: 'plasma',
@@ -272,14 +272,15 @@ const PASSIVES = {
 };
 const shieldCd = lvl => (lvl > 0 ? 34 - 4 * lvl : 0);
 
-// Mutace: nekonečná drobná posílení, když už není co vylepšovat (pozdní hra a nekonečný režim).
+// Mutace: drobná posílení, když už není co vylepšovat (pozdní hra a nekonečný režim). Každá nejvýš
+// MUT_MAX krát: bez stropu hráč v nekonečnu přerostl prázdnotu a mutace chamtivosti sypala statisíce střepů.
+const MUT_MAX = 10;
 const MUTATIONS = {
   might: { name: 'Mutace síly', icon: 'might', color: '#ff6b6b', desc: '+4 % poškození', mod: { might: 0.04 } },
   vigor: { name: 'Mutace odolnosti', icon: 'vitality', color: '#5dffa8', desc: '+10 max. zdraví (a hned je doplní)', mod: { maxHp: 10 } },
   haste: { name: 'Mutace rychlosti', icon: 'haste', color: '#ffd166', desc: '−3 % doba nabíjení', mod: { cdMul: -0.03 } },
   area: { name: 'Mutace dosahu', icon: 'area', color: '#06d6a0', desc: '+4 % oblast účinku', mod: { area: 0.04 } },
   crit: { name: 'Mutace přesnosti', icon: 'crit', color: '#ff9e3d', desc: '+2 % kritický zásah, +10 % kritické poškození', mod: { crit: 0.02, critDmg: 0.10 } },
-  greed: { name: 'Mutace chamtivosti', icon: 'greed', color: '#e08bff', desc: '+6 % střepů', mod: { greed: 0.06 } },
 };
 
 // ── Nepřátelé ───────────────────────────────────────────────────────────────
