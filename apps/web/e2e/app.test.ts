@@ -519,6 +519,40 @@ test('the hidden page opens at /tajne/ruzek, unlinked and kept out of search eng
 	await expect(page.locator('a[href*="tajne"]')).toHaveCount(0);
 });
 
+test('the Game wikis tab opens the Gray Zone Warfare field guide, which works and links back', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/');
+	await page.getByTestId('tab-wiki').click();
+	await expect(page).toHaveURL(/#wiki$/);
+	await expect(page.getByTestId('library')).toBeHidden();
+	const card = page.getByTestId('wiki-gzw');
+	await expect(card).toContainText('Gray Zone Warfare');
+	await card.click();
+	await expect(page).toHaveURL(/\/wiki\/gzw\/?$/);
+	await expect(page).toHaveTitle('GZW Polní příručka');
+
+	// Ammo: picking the enemy's armour class keeps only what penetrates it.
+	const rows = page.locator('#ammo-t tbody tr');
+	await expect(rows.first()).toBeVisible();
+	const all = await rows.count();
+	await page.locator('#ammo-cls [data-cls="6"]').click();
+	await expect(page.locator('#ammo-sum')).toContainText('IIIA+');
+	await expect.poll(() => rows.count()).toBeLessThan(all);
+	// Loot shows the item icons.
+	await page.locator('.tabs [data-tab="loot"]').click();
+	await expect(page.locator('#loot-t img.ico').first()).toBeVisible();
+
+	// Back to the center lands on its wiki tab.
+	await page.getByRole('link', { name: '← Game Center' }).click();
+	await expect(page.getByTestId('wiki')).toBeVisible();
+	await page.getByTestId('tab-library').click();
+	await expect(page.getByTestId('library')).toBeVisible();
+	expect(errors).toEqual([]);
+});
+
 test('the library filters by genre, finds games and keeps favourites', async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));

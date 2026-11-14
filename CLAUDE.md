@@ -9,7 +9,7 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
 holds two shelves: action games (**VOIDBORN**, **STARSPIRE**, **DRIFTWOOD** with multiplayer worlds) and
 **Puzzles** (Sudoku, Nonograms, Kakuro, Pulsar falling blocks, Fúze/2048, Miny,
-Omalovánky colour by number, Mahjong, Skládačka jigsaw, Šachy chess, Piškvorky gomoku, Sokoban, Clickomania, Rybky à la Fish Fillets, Mlsoun maze chase à la Pac-Man, Had snake, Skokan à la Doodle Jump, Vlak à la the Czech classic Vlak (train), Bombarďák à la Bomberman, Dáma (Czech draughts, online for two), Lodě battleship (online for two), Člověče, nezlob se (online for two), Osadníci settlers à la Catan (online for two), Tanky two-player artillery, Červíci worms war) built on a shared puzzle kit, plus Vesnička, an idle village game of its own (no kit). Later games will store progress in Postgres.
+Omalovánky colour by number, Mahjong, Skládačka jigsaw, Šachy chess, Piškvorky gomoku, Sokoban, Clickomania, Rybky à la Fish Fillets, Mlsoun maze chase à la Pac-Man, Had snake, Skokan à la Doodle Jump, Vlak à la the Czech classic Vlak (train), Bombarďák à la Bomberman, Dáma (Czech draughts, online for two), Lodě battleship (online for two), Člověče, nezlob se (online for two), Osadníci settlers à la Catan (online for two), Tanky two-player artillery, Červíci worms war) built on a shared puzzle kit, plus Vesnička, an idle village game of its own (no kit). A second header tab, Game wikis, lists guide pages for games we play with friends (Gray Zone Warfare). Later games will store progress in Postgres.
 
 (Until v0.x the repo held a life simulation; it was removed in the Game Center rewrite.
 Its history is in git and `CHANGELOG.md`.)
@@ -49,6 +49,7 @@ apps/web/src/lib/server        Server-only code: env, auth, DB access (never imp
 apps/web/src/worker            Worker entry: site gate, DRIFTWOOD multiplayer and online puzzles (Durable Objects)
 apps/web/static/games/<id>     The games themselves (static HTML/CSS/JS)
 apps/web/static/games/puzzle-kit  Shared shell for puzzle games: daily puzzle, streaks, Star Path, quests, themes
+apps/web/static/wiki/<id>      Game wikis: guide pages for games we play with friends (listed in src/lib/wikis.ts)
 packages/database              Drizzle schema, migrations, client. The ONLY place with SQL.
 docs/                          Product, architecture, iterations, development
 docker/                        Local infrastructure (Postgres init scripts)

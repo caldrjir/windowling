@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '$lib/hub/hub.css';
 	import { invalidateAll } from '$app/navigation';
+	import { asset } from '$app/paths';
 	import { authClient } from '$lib/auth-client';
 	import {
 		CATEGORIES,
@@ -10,6 +11,7 @@
 		type GameCategory,
 		type GameTexts,
 	} from '$lib/games/registry';
+	import { WIKIS, type Wiki, type WikiTexts } from '$lib/wikis';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
@@ -42,6 +44,16 @@
 	let favs = $state<string[]>([]);
 
 	let lang = $state<Lang>('cs');
+	// Header tabs: the game library, or the game wikis (guides for games we play with friends).
+	// The wikis tab has its own address (#wiki), so a wiki page can link back to it.
+	type Tab = 'library' | 'wiki';
+	let tab = $state<Tab>('library');
+	function setTab(t: Tab) {
+		tab = t;
+		history.replaceState(history.state, '', t === 'wiki' ? '#wiki' : location.pathname);
+	}
+	const wx = <K extends keyof WikiTexts>(w: Wiki, k: K): WikiTexts[K] =>
+		lang === 'en' ? w.en[k] : w[k];
 	let sel = $state(0);
 	let now = $state(new Date());
 	let launching = $state<Game | null>(null);
@@ -365,6 +377,7 @@
 		else select(i);
 	}
 	function onKey(e: KeyboardEvent) {
+		if (tab !== 'library') return;
 		if (e.key === 'ArrowRight') select(Math.min(GAMES.length - 1, sel + 1));
 		else if (e.key === 'ArrowLeft') select(Math.max(0, sel - 1));
 		else if (e.key === 'Enter' && game && !(e.target instanceof HTMLButtonElement)) launch(game);
@@ -499,6 +512,7 @@
 	}
 
 	onMount(() => {
+		if (location.hash === '#wiki') tab = 'wiki';
 		try {
 			const s = localStorage.getItem(LANG_KEY);
 			if (s === 'cs' || s === 'en') lang = s;
@@ -660,7 +674,14 @@
 		>
 		<span>WINDOWLING</span><small>Game Center</small>
 	</div>
-	<nav class="tabs"><button class="on">{L('Knihovna', 'Library')}</button></nav>
+	<nav class="tabs">
+		<button class:on={tab === 'library'} onclick={() => setTab('library')} data-testid="tab-library"
+			>{L('Knihovna', 'Library')}</button
+		>
+		<button class:on={tab === 'wiki'} onclick={() => setTab('wiki')} data-testid="tab-wiki"
+			>{L('Herní wiki', 'Game wikis')}</button
+		>
+	</nav>
 	<div class="spacer"></div>
 	<button class="music" onclick={openMusic} data-testid="music-btn" title={L('Hudba', 'Music')}
 		><svg viewBox="0 0 24 24" aria-hidden="true"
@@ -798,271 +819,316 @@
 {/snippet}
 
 <main>
-	<section class="hero">
-		<div class="hero-art"><canvas bind:this={heroCover}></canvas></div>
-		<div class="hero-info" bind:this={heroInfo}>
-			{#if game}
-				{@const last = stats ? ago(stats.lastPlayed) : null}
-				{@const lines = stats ? statLines(game, stats) : []}
-				{@const feats = tx(game, 'features')}
-				<div class="eyebrow">
-					<i></i>{stats
-						? L('Pokračuj ve hře', 'Continue playing')
-						: L('Novinka v knihovně', 'New in your library')}
-				</div>
-				<h1 class="hero-title" style:--len={game.title.length}>
-					{game.title}<button
-						class="fav-hero"
-						class:on={isFav(game.id)}
-						data-testid="fav"
-						onclick={() => toggleFav(game.id)}
-						title={isFav(game.id)
-							? L('Odebrat z oblíbených', 'Remove from favourites')
-							: L('Přidat do oblíbených', 'Add to favourites')}
-						aria-pressed={isFav(game.id)}>{@render star()}</button
-					>
-				</h1>
-				<div class="tagline">{tx(game, 'tagline')}</div>
-				<div class="chips">
-					{#each tx(game, 'genres') as genre (genre)}<span>{genre}</span>{/each}
-				</div>
-				<div class="live" class:on={playing(game.id) > 0} data-testid="live">
-					<i></i>{liveText(game.id)}
-				</div>
-				<p class="desc">{tx(game, 'description')}</p>
-				{#if feats}
-					<div class="feats">
-						{#each feats as f (f)}<span>{f}</span>{/each}
+	<div class="view-lib" hidden={tab !== 'library'}>
+		<section class="hero">
+			<div class="hero-art"><canvas bind:this={heroCover}></canvas></div>
+			<div class="hero-info" bind:this={heroInfo}>
+				{#if game}
+					{@const last = stats ? ago(stats.lastPlayed) : null}
+					{@const lines = stats ? statLines(game, stats) : []}
+					{@const feats = tx(game, 'features')}
+					<div class="eyebrow">
+						<i></i>{stats
+							? L('Pokračuj ve hře', 'Continue playing')
+							: L('Novinka v knihovně', 'New in your library')}
 					</div>
-				{/if}
-				<div class="actions">
-					{#if blocked(game)}
-						<button class="play" data-testid="play" disabled
-							>{L('JEN NA POČÍTAČI', 'DESKTOP ONLY')}</button
+					<h1 class="hero-title" style:--len={game.title.length}>
+						{game.title}<button
+							class="fav-hero"
+							class:on={isFav(game.id)}
+							data-testid="fav"
+							onclick={() => toggleFav(game.id)}
+							title={isFav(game.id)
+								? L('Odebrat z oblíbených', 'Remove from favourites')
+								: L('Přidat do oblíbených', 'Add to favourites')}
+							aria-pressed={isFav(game.id)}>{@render star()}</button
 						>
-					{:else}
-						<button class="play" data-testid="play" onclick={() => launch(game)}
-							><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5l13 7.5-13 7.5z" /></svg
-							>{stats ? L('POKRAČOVAT', 'CONTINUE') : L('HRÁT', 'PLAY')}</button
-						>
+					</h1>
+					<div class="tagline">{tx(game, 'tagline')}</div>
+					<div class="chips">
+						{#each tx(game, 'genres') as genre (genre)}<span>{genre}</span>{/each}
+					</div>
+					<div class="live" class:on={playing(game.id) > 0} data-testid="live">
+						<i></i>{liveText(game.id)}
+					</div>
+					<p class="desc">{tx(game, 'description')}</p>
+					{#if feats}
+						<div class="feats">
+							{#each feats as f (f)}<span>{f}</span>{/each}
+						</div>
 					{/if}
-					<div class="last">
+					<div class="actions">
 						{#if blocked(game)}
-							{L(
-								'Tahle hra potřebuje myš a klávesnici — spusť ji na počítači.',
-								'This game needs a mouse and keyboard — play it on a computer.',
-							)}
-						{:else if last && stats}
-							{L('Naposledy', 'Last played')} <b>{last}</b> · {L('odehráno', 'total')}
-							<b>{fmtDur(stats.playTime)}</b>
+							<button class="play" data-testid="play" disabled
+								>{L('JEN NA POČÍTAČI', 'DESKTOP ONLY')}</button
+							>
 						{:else}
-							{L('Ještě jsi nehrál(a) — tak do toho.', "You haven't played yet — go for it.")}
-						{/if}
-					</div>
-				</div>
-				{#if lines.length}
-					<div class="stats">
-						{#each lines as [k, v] (k)}<div class="stat"><small>{k}</small><b>{v}</b></div>{/each}
-					</div>
-				{/if}
-				<div class="lb" data-testid="leaderboard">
-					<div class="lb-head">
-						<svg viewBox="0 0 24 24"
-							><path
-								d="M3 20h18M9 20V9h6v11M3 20v-6h6M15 20v-4h6v4"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linejoin="round"
-							/></svg
-						>
-						<span>{L('Žebříček', 'Leaderboard')}</span>
-						{#if recordOf(game)}
-							{@const rec = recordOf(game)}
-							<button class:on={lbTab === 'record'} onclick={() => (lbTab = 'record')}
-								>{rec ? L(rec.label[0], rec.label[1]) : ''}</button
+							<button class="play" data-testid="play" onclick={() => launch(game)}
+								><svg viewBox="0 0 24 24" fill="currentColor"
+									><path d="M7 4.5l13 7.5-13 7.5z" /></svg
+								>{stats ? L('POKRAČOVAT', 'CONTINUE') : L('HRÁT', 'PLAY')}</button
 							>
 						{/if}
-						<button
-							class:on={lbTab === 'played' || !recordOf(game)}
-							onclick={() => (lbTab = 'played')}>{L('Nejvíc nahráno', 'Most played')}</button
-						>
-					</div>
-					{#if lb && lb.entries.length}
-						<ol>
-							{#each lb.entries as e (e.rank + e.nickname)}
-								<li class:me={e.me}>
-									<i>{e.rank}.</i><b>{e.nickname}</b><span>{fmtScore(lbBoard ?? '', e.value)}</span>
-								</li>
-							{/each}
-						</ol>
-						{#if lb.me && !lb.entries.some((e) => e.me)}
-							<p class="lb-me">
-								{L('Tvé místo', 'Your place')}: {lb.me.rank}. · {fmtScore(
-									lbBoard ?? '',
-									lb.me.value,
+						<div class="last">
+							{#if blocked(game)}
+								{L(
+									'Tahle hra potřebuje myš a klávesnici — spusť ji na počítači.',
+									'This game needs a mouse and keyboard — play it on a computer.',
 								)}
+							{:else if last && stats}
+								{L('Naposledy', 'Last played')} <b>{last}</b> · {L('odehráno', 'total')}
+								<b>{fmtDur(stats.playTime)}</b>
+							{:else}
+								{L('Ještě jsi nehrál(a) — tak do toho.', "You haven't played yet — go for it.")}
+							{/if}
+						</div>
+					</div>
+					{#if lines.length}
+						<div class="stats">
+							{#each lines as [k, v] (k)}<div class="stat"><small>{k}</small><b>{v}</b></div>{/each}
+						</div>
+					{/if}
+					<div class="lb" data-testid="leaderboard">
+						<div class="lb-head">
+							<svg viewBox="0 0 24 24"
+								><path
+									d="M3 20h18M9 20V9h6v11M3 20v-6h6M15 20v-4h6v4"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linejoin="round"
+								/></svg
+							>
+							<span>{L('Žebříček', 'Leaderboard')}</span>
+							{#if recordOf(game)}
+								{@const rec = recordOf(game)}
+								<button class:on={lbTab === 'record'} onclick={() => (lbTab = 'record')}
+									>{rec ? L(rec.label[0], rec.label[1]) : ''}</button
+								>
+							{/if}
+							<button
+								class:on={lbTab === 'played' || !recordOf(game)}
+								onclick={() => (lbTab = 'played')}>{L('Nejvíc nahráno', 'Most played')}</button
+							>
+						</div>
+						{#if lb && lb.entries.length}
+							<ol>
+								{#each lb.entries as e (e.rank + e.nickname)}
+									<li class:me={e.me}>
+										<i>{e.rank}.</i><b>{e.nickname}</b><span
+											>{fmtScore(lbBoard ?? '', e.value)}</span
+										>
+									</li>
+								{/each}
+							</ol>
+							{#if lb.me && !lb.entries.some((e) => e.me)}
+								<p class="lb-me">
+									{L('Tvé místo', 'Your place')}: {lb.me.rank}. · {fmtScore(
+										lbBoard ?? '',
+										lb.me.value,
+									)}
+								</p>
+							{/if}
+						{:else}
+							<p class="lb-empty">{L('Zatím tu nikdo není.', 'Nobody here yet.')}</p>
+						{/if}
+						{#if lb && !lb.signedIn}
+							<p class="lb-empty">
+								{L('Přihlas se a soupeř s ostatními.', 'Sign in to compete with others.')}
 							</p>
 						{/if}
-					{:else}
-						<p class="lb-empty">{L('Zatím tu nikdo není.', 'Nobody here yet.')}</p>
-					{/if}
-					{#if lb && !lb.signedIn}
-						<p class="lb-empty">
-							{L('Přihlas se a soupeř s ostatními.', 'Sign in to compete with others.')}
-						</p>
-					{/if}
-				</div>
-				{#if stats?.progress !== undefined}
-					{@const pct = Math.round(stats.progress * 100)}
-					<div class="prog">
-						{L('Dokončeno', 'Completion')}
-						<div class="bar"><i style:width="{pct}%"></i></div>
-						<b>{pct}{L(' %', '%')}</b>
 					</div>
-				{/if}
-			{:else}
-				<div class="eyebrow"><i></i>{L('Knihovna je prázdná', 'The library is empty')}</div>
-				<h1 class="hero-title">WINDOWLING</h1>
-			{/if}
-		</div>
-	</section>
-
-	<section class="pulse" data-testid="pulse">
-		<div class="pulse-stats">
-			<div class="ps live-dot">
-				<b data-testid="online">{site ? fmtNum(site.online) : '–'}</b><small
-					>{L('právě online', 'online now')}</small
-				>
-			</div>
-			<div class="ps">
-				<b>{site ? fmtNum(site.visitors.month) : '–'}</b><small
-					>{L('hráčů za 30 dní', 'players in 30 days')}</small
-				>
-			</div>
-			<div class="ps">
-				<b>{site ? fmtNum(site.visitors.total) : '–'}</b><small
-					>{L('hráčů celkem', 'players in total')}</small
-				>
-			</div>
-			<div class="ps">
-				<b>{site ? fmtNum(site.accounts) : '–'}</b><small>{L('účtů', 'accounts')}</small>
-			</div>
-		</div>
-		<div class="pulse-hot" data-testid="hot">
-			<span class="ph"
-				><svg viewBox="0 0 24 24"
-					><path
-						d="M12 22c4.4 0 7-3 7-7 0-5-5-7-5-12-3 2-4 5-4 7-1-1-2-2-2-4-2 2-3 5-3 9 0 4 2.6 7 7 7z"
-						fill="currentColor"
-					/></svg
-				>{L('Teď se hraje', 'Popular right now')}</span
-			>
-			{#each hot as h, k (h.g.id)}
-				<button class="hot" onclick={() => select(h.i)} style:--ca={h.g.colors[0]}
-					><i>{k + 1}</i><b>{h.g.title}</b><span>{h.n}</span></button
-				>
-			{:else}
-				<span class="hot-none"
-					>{L(
-						'Zrovna nikdo nehraje, buď první.',
-						'Nobody is playing right now, be the first.',
-					)}</span
-				>
-			{/each}
-		</div>
-	</section>
-
-	<section class="library featured" data-group="action">
-		<div class="lib-head">
-			<h2>{L('Hlavní hry', 'Featured games')}</h2>
-			<span>{gamesCount(featured.length)}</span>
-			<div class="spacer"></div>
-			<span class="hint"
-				><kbd>←</kbd><kbd>→</kbd>
-				{L('výběr', 'select')} · <kbd>Enter</kbd>
-				{L('spustit', 'launch')}</span
-			>
-		</div>
-		<div class="shelf" data-testid="shelf">
-			{#each featured as { g, i } (g.id)}{@render card(g, i)}{/each}
-		</div>
-	</section>
-
-	<section class="library lib-all" data-testid="library">
-		<div class="lib-head">
-			<h2>{L('Knihovna', 'Library')}</h2>
-			<span>{gamesCount(others.length)}</span>
-		</div>
-		<div class="lib-bar">
-			<div class="filters" role="tablist" aria-label={L('Žánry', 'Genres')}>
-				<button
-					role="tab"
-					class:on={filter === 'all'}
-					aria-selected={filter === 'all'}
-					onclick={() => ((filter = 'all'), saveView())}>{L('Vše', 'All')}</button
-				>
-				<button
-					role="tab"
-					class="f-fav"
-					data-filter="fav"
-					class:on={filter === 'fav'}
-					aria-selected={filter === 'fav'}
-					onclick={() => ((filter = 'fav'), saveView())}
-					>{@render star()}{L('Oblíbené', 'Favourites')}<small>{favs.length}</small></button
-				>
-				{#each CATEGORIES as c (c.id)}
-					{#if catCount(c.id)}
-						<button
-							role="tab"
-							data-filter={c.id}
-							class:on={filter === c.id}
-							aria-selected={filter === c.id}
-							onclick={() => ((filter = c.id), saveView())}
-							>{L(c.title[0], c.title[1])}<small>{catCount(c.id)}</small></button
-						>
+					{#if stats?.progress !== undefined}
+						{@const pct = Math.round(stats.progress * 100)}
+						<div class="prog">
+							{L('Dokončeno', 'Completion')}
+							<div class="bar"><i style:width="{pct}%"></i></div>
+							<b>{pct}{L(' %', '%')}</b>
+						</div>
 					{/if}
+				{:else}
+					<div class="eyebrow"><i></i>{L('Knihovna je prázdná', 'The library is empty')}</div>
+					<h1 class="hero-title">WINDOWLING</h1>
+				{/if}
+			</div>
+		</section>
+
+		<section class="pulse" data-testid="pulse">
+			<div class="pulse-stats">
+				<div class="ps live-dot">
+					<b data-testid="online">{site ? fmtNum(site.online) : '–'}</b><small
+						>{L('právě online', 'online now')}</small
+					>
+				</div>
+				<div class="ps">
+					<b>{site ? fmtNum(site.visitors.month) : '–'}</b><small
+						>{L('hráčů za 30 dní', 'players in 30 days')}</small
+					>
+				</div>
+				<div class="ps">
+					<b>{site ? fmtNum(site.visitors.total) : '–'}</b><small
+						>{L('hráčů celkem', 'players in total')}</small
+					>
+				</div>
+				<div class="ps">
+					<b>{site ? fmtNum(site.accounts) : '–'}</b><small>{L('účtů', 'accounts')}</small>
+				</div>
+			</div>
+			<div class="pulse-hot" data-testid="hot">
+				<span class="ph"
+					><svg viewBox="0 0 24 24"
+						><path
+							d="M12 22c4.4 0 7-3 7-7 0-5-5-7-5-12-3 2-4 5-4 7-1-1-2-2-2-4-2 2-3 5-3 9 0 4 2.6 7 7 7z"
+							fill="currentColor"
+						/></svg
+					>{L('Teď se hraje', 'Popular right now')}</span
+				>
+				{#each hot as h, k (h.g.id)}
+					<button class="hot" onclick={() => select(h.i)} style:--ca={h.g.colors[0]}
+						><i>{k + 1}</i><b>{h.g.title}</b><span>{h.n}</span></button
+					>
+				{:else}
+					<span class="hot-none"
+						>{L(
+							'Zrovna nikdo nehraje, buď první.',
+							'Nobody is playing right now, be the first.',
+						)}</span
+					>
 				{/each}
 			</div>
-			<div class="lib-tools">
-				<input
-					type="search"
-					bind:value={query}
-					placeholder={L('Hledat hru…', 'Search games…')}
-					aria-label={L('Hledat hru', 'Search games')}
-					data-testid="search"
-				/>
-				<select
-					bind:value={sortBy}
-					onchange={saveView}
-					aria-label={L('Řadit', 'Sort')}
-					data-testid="sort"
+		</section>
+
+		<section class="library featured" data-group="action">
+			<div class="lib-head">
+				<h2>{L('Hlavní hry', 'Featured games')}</h2>
+				<span>{gamesCount(featured.length)}</span>
+				<div class="spacer"></div>
+				<span class="hint"
+					><kbd>←</kbd><kbd>→</kbd>
+					{L('výběr', 'select')} · <kbd>Enter</kbd>
+					{L('spustit', 'launch')}</span
 				>
-					<option value="default">{L('Výchozí pořadí', 'Default order')}</option>
-					<option value="recent">{L('Naposledy hrané', 'Recently played')}</option>
-					<option value="played">{L('Nejvíc nahrané', 'Most played')}</option>
-					<option value="online">{L('Kdo teď hraje', 'Playing now')}</option>
-					<option value="name">{L('Podle názvu', 'By name')}</option>
-				</select>
 			</div>
-		</div>
-		{#each shelves as shelf (shelf.id)}
-			<div class="sub" data-group={shelf.id}>
-				<h3>{shelf.title}<span>{gamesCount(shelf.games.length)}</span></h3>
-				<div class="shelf small" data-testid="shelf-{shelf.id}">
-					{#each shelf.games as { g, i } (g.id)}{@render card(g, i)}{/each}
+			<div class="shelf" data-testid="shelf">
+				{#each featured as { g, i } (g.id)}{@render card(g, i)}{/each}
+			</div>
+		</section>
+
+		<section class="library lib-all" data-testid="library">
+			<div class="lib-head">
+				<h2>{L('Knihovna', 'Library')}</h2>
+				<span>{gamesCount(others.length)}</span>
+			</div>
+			<div class="lib-bar">
+				<div class="filters" role="tablist" aria-label={L('Žánry', 'Genres')}>
+					<button
+						role="tab"
+						class:on={filter === 'all'}
+						aria-selected={filter === 'all'}
+						onclick={() => ((filter = 'all'), saveView())}>{L('Vše', 'All')}</button
+					>
+					<button
+						role="tab"
+						class="f-fav"
+						data-filter="fav"
+						class:on={filter === 'fav'}
+						aria-selected={filter === 'fav'}
+						onclick={() => ((filter = 'fav'), saveView())}
+						>{@render star()}{L('Oblíbené', 'Favourites')}<small>{favs.length}</small></button
+					>
+					{#each CATEGORIES as c (c.id)}
+						{#if catCount(c.id)}
+							<button
+								role="tab"
+								data-filter={c.id}
+								class:on={filter === c.id}
+								aria-selected={filter === c.id}
+								onclick={() => ((filter = c.id), saveView())}
+								>{L(c.title[0], c.title[1])}<small>{catCount(c.id)}</small></button
+							>
+						{/if}
+					{/each}
+				</div>
+				<div class="lib-tools">
+					<input
+						type="search"
+						bind:value={query}
+						placeholder={L('Hledat hru…', 'Search games…')}
+						aria-label={L('Hledat hru', 'Search games')}
+						data-testid="search"
+					/>
+					<select
+						bind:value={sortBy}
+						onchange={saveView}
+						aria-label={L('Řadit', 'Sort')}
+						data-testid="sort"
+					>
+						<option value="default">{L('Výchozí pořadí', 'Default order')}</option>
+						<option value="recent">{L('Naposledy hrané', 'Recently played')}</option>
+						<option value="played">{L('Nejvíc nahrané', 'Most played')}</option>
+						<option value="online">{L('Kdo teď hraje', 'Playing now')}</option>
+						<option value="name">{L('Podle názvu', 'By name')}</option>
+					</select>
 				</div>
 			</div>
-		{:else}
-			<p class="lib-empty">
-				{filter === 'fav' && !query.trim()
-					? L(
-							'Zatím nemáš oblíbené hry. Přidej je hvězdičkou na kartě hry.',
-							'No favourites yet. Add games with the star on their card.',
-						)
-					: L('Nic takového jsme nenašli.', 'Nothing found.')}
-			</p>
-		{/each}
+			{#each shelves as shelf (shelf.id)}
+				<div class="sub" data-group={shelf.id}>
+					<h3>{shelf.title}<span>{gamesCount(shelf.games.length)}</span></h3>
+					<div class="shelf small" data-testid="shelf-{shelf.id}">
+						{#each shelf.games as { g, i } (g.id)}{@render card(g, i)}{/each}
+					</div>
+				</div>
+			{:else}
+				<p class="lib-empty">
+					{filter === 'fav' && !query.trim()
+						? L(
+								'Zatím nemáš oblíbené hry. Přidej je hvězdičkou na kartě hry.',
+								'No favourites yet. Add games with the star on their card.',
+							)
+						: L('Nic takového jsme nenašli.', 'Nothing found.')}
+				</p>
+			{/each}
+		</section>
+	</div>
+	<section class="wiki" data-testid="wiki" hidden={tab !== 'wiki'}>
+		<div class="lib-head">
+			<h2>{L('Herní wiki', 'Game wikis')}</h2>
+			<span>{WIKIS.length}</span>
+		</div>
+		<p class="wiki-lede">
+			{L(
+				'Příručky a taháky ke hrám, které hrajeme s kamarády. Hodí se i během hraní v prohlížeči overlaye.',
+				'Guides and cheat sheets for the games we play with friends. Handy in the overlay browser while you play, too.',
+			)}
+		</p>
+		<div class="wiki-grid">
+			{#each WIKIS as w (w.id)}
+				<a
+					class="wiki-card"
+					href={asset(w.path)}
+					style:--wa={w.colors[0]}
+					style:--wb={w.colors[1]}
+					data-testid="wiki-{w.id}"
+				>
+					<span class="wk-mark">{w.mark}</span>
+					<span class="wk-body">
+						<small>{w.game}</small>
+						<b>{wx(w, 'title')}</b>
+						<span class="wk-desc">{wx(w, 'description')}</span>
+						<span class="wk-tags">
+							{#each wx(w, 'sections') as s (s)}<span>{s}</span>{/each}
+						</span>
+						<span class="wk-meta"
+							>{L('Data pro verzi', 'Data for version')}
+							{w.version} · {w.lang === 'cs'
+								? L('česky', 'in Czech')
+								: L('anglicky', 'in English')}</span
+						>
+					</span>
+					<span class="wk-go">{L('Otevřít', 'Open')} →</span>
+				</a>
+			{/each}
+		</div>
 	</section>
 </main>
 
