@@ -7,7 +7,9 @@ const G = {
   grid: new SpatialGrid(72), maxR: 30, shake: 0, flash: 0, hurtFlash: 0, timeScale: 1,
 };
 const _q = [], _q2 = [];
-const MAX_PARTICLES = 1400;
+const MAX_PARTICLES = 1000;
+// Srdce, magnety a bomby na mapě nezůstávají navždy a nehromadí se: v pozdní hře zaplnily celou mapu.
+const PICKUP_LIFE = 75, PICKUP_CAP = { heart: 12, magnet: 6, bomb: 6 };
 
 const xpNeed = l => Math.floor(5 + (l - 1) * 6 + Math.pow(l - 1, 1.55));
 const minutes = () => G.time / 60;
@@ -132,13 +134,16 @@ function enemiesNear(x, y, r) {
 
 // ── Efekty a částice ────────────────────────────────────────────────────────
 function burst(x, y, color, n, spd = 220, size = 3, life = 0.6) {
+  // v plné hordě méně jisker na výbuch, ať vykreslování stíhá
+  const np = G.particles.length;
+  if (np > 400) n = Math.ceil(n * (np > 700 ? 0.3 : 0.6));
   for (let i = 0; i < n && G.particles.length < MAX_PARTICLES; i++) {
     const a = Math.random() * TAU, s = spd * (0.25 + Math.random() * 0.75);
     G.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: life * (0.5 + Math.random() * 0.5), max: life, size: size * (0.6 + Math.random() * 0.8), color, drag: 3 });
   }
 }
 function addText(x, y, txt, color, size = 14, life = 0.7) {
-  if (G.texts.length > 90) return;
+  if (G.texts.length > 60) return;
   G.texts.push({ x: x + rand(-6, 6), y, txt, color, size, life, max: life, vy: -55 });
 }
 // Otřesy o stupeň slabší než dřív: menší strop a vykreslení s menší amplitudou (render.js).
@@ -233,7 +238,11 @@ function mkPickup(kind, x, y, val = 0) {
   const a = Math.random() * TAU, s = rand(40, 130);
   return { kind, x, y, val, vx: Math.cos(a) * s, vy: Math.sin(a) * s, mag: false, sp: 0, t: Math.random() * 3, dead: false };
 }
-function dropPickup(kind, x, y, val = 0) { G.pickups.push(mkPickup(kind, x, y, val)); }
+function dropPickup(kind, x, y, val = 0) {
+  const cap = PICKUP_CAP[kind];
+  if (cap && G.pickups.reduce((n, p) => n + (p.kind === kind && !p.dead ? 1 : 0), 0) >= cap) return;
+  G.pickups.push(mkPickup(kind, x, y, val));
+}
 function dropGem(x, y, val) {
   if (G.gemCount > 320) {
     for (let tries = 0; tries < 6; tries++) {
@@ -260,7 +269,9 @@ function collect(pk) {
     case 'shard': {
       G.shards += pk.val;
       Sound.play.shard();
-      addText(p.x, p.y - 24, '+' + Math.max(1, Math.round(pk.val)) + ' ◆', '#e08bff', 14);
+      // střepy sebrané těsně po sobě (magnet) se sečtou do jednoho čísla
+      G.shardAcc = (G.shardAcc || 0) + pk.val;
+      if (G.time - (G.shardTextT || -9) > 0.3) shardText();
       break;
     }
     case 'heart': {
@@ -1154,12 +1165,20 @@ function updateEffects(dt) {
   }
 }
 
+function shardText() {
+  if (!G.shardAcc) return;
+  addText(G.p.x, G.p.y - 24, '+' + Math.max(1, Math.round(G.shardAcc)) + ' ◆', '#e08bff', 14);
+  G.shardAcc = 0; G.shardTextT = G.time;
+}
+
 function updatePickups(dt) {
   const p = G.p, mr = G.st.magnet;
   let gems = 0;
+  if (G.shardAcc && G.time - (G.shardTextT || -9) > 0.3) shardText();
   for (const pk of G.pickups) {
     if (pk.dead) continue;
     pk.t += dt;
+    if (PICKUP_CAP[pk.kind] && pk.t > PICKUP_LIFE) { pk.dead = true; continue; }
     if (pk.kind === 'gem') gems++;
     const dx = p.x - pk.x, dy = p.y - pk.y, dd = dx * dx + dy * dy;
     if (pk.kind === 'chest') {
