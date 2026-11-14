@@ -120,3 +120,14 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #whisper .wn { color: #b9c8ff; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
 #whisper .wt { font-style: italic; margin: 6px 0; line-height: 1.45; }
 #whisper .ww { color: var(--dim, #9a948a); font-size: 12px; text-align: right; }
+/* P1: dialogy questů (G.DIALOGS) a Cinderhold */
+#dialog { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); z-index: 9; width: min(680px, 92vw); background: #0d0f15f5; border: 1px solid var(--bronze); padding: 14px 18px; color: var(--fg); cursor: pointer; }
+#dialog .who { color: var(--gold); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+#dialog .txt { margin: 8px 0 6px; font-size: 16px; line-height: 1.5; }
+#dialog.ysolde .who { color: #b9c8ff; } #dialog.ysolde .txt { font-style: italic; }
+#dialog .choices { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+#dialog .choices .btn { text-align: left; }
+#dialog .hint { color: var(--dim, #9a948a); font-size: 12px; text-align: right; }
+#bark { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 7; max-width: min(640px, 90vw); text-align: center; color: #d9dcf0; font-style: italic; text-shadow: 0 1px 3px #000, 0 0 8px #000; font-size: 15px; pointer-events: none; }
+#bark b { color: #b9c8ff; font-style: normal; font-weight: 600; }
+.drop.npcname { color: var(--gold); border-color: var(--bronze); pointer-events: none; }

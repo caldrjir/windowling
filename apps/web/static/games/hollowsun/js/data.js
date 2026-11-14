@@ -312,7 +312,18 @@ window.HS_DATA = {
    ],
    "inst": "fixed",
    "d": "Opevněné hornické město kolem vyhaslých pecí. Hub Act I.",
-   "unlock": null
+   "unlock": null,
+   "npcs": [
+    "np_teodor",
+    "np_oduin",
+    "np_brannoc"
+   ],
+   "poi": [
+    "Kovárna",
+    "Stash",
+    "Lantern (fast travel)",
+    "Waypoint"
+   ]
   },
   {
    "id": "a1_ashfields",
@@ -333,7 +344,9 @@ window.HS_DATA = {
    ],
    "inst": "hybrid",
    "d": "Spálená pole s hromadnými hroby. Tutoriál pohybu a boje.",
-   "unlock": null
+   "unlock": null,
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_burnt_orchard",
@@ -353,7 +366,9 @@ window.HS_DATA = {
     "a1_tollgate"
    ],
    "inst": "hybrid",
-   "unlock": null
+   "unlock": null,
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_chapel_crypt",
@@ -372,7 +387,9 @@ window.HS_DATA = {
    ],
    "inst": "proc",
    "d": "Procedurální krypta (archetyp Crypt, 2 patra).",
-   "unlock": null
+   "unlock": null,
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_tollgate",
@@ -394,7 +411,9 @@ window.HS_DATA = {
    "unlock": {
     "q": "q1_02",
     "t": "Dokončit „Chapel of Embers“"
-   }
+   },
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_charcoal_woods",
@@ -415,7 +434,9 @@ window.HS_DATA = {
     "a1_gallows"
    ],
    "inst": "hybrid",
-   "unlock": null
+   "unlock": null,
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_gallows",
@@ -436,7 +457,9 @@ window.HS_DATA = {
    "unlock": {
     "q": null,
     "t": "Najít Rusty Gallows Key (drop: Smoldering Brute, 4 %)"
-   }
+   },
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_kiln",
@@ -459,7 +482,9 @@ window.HS_DATA = {
    "unlock": {
     "q": "q1_03",
     "t": "Dokončit „The Toll of Iron“"
-   }
+   },
+   "npcs": [],
+   "poi": []
   },
   {
    "id": "a1_kiln_heart",
@@ -475,7 +500,252 @@ window.HS_DATA = {
     "a2_saltlantern"
    ],
    "inst": "fixed",
-   "unlock": null
+   "unlock": null,
+   "npcs": [],
+   "poi": []
+  }
+ ],
+ "dialogs": {
+  "q1_01": [
+   {
+    "at": "Probuzení v hrobě",
+    "lines": [
+     [
+      "np_ysolde",
+      "Dýchej. Ne tak rychle – pomalu. Jsi naživu, i když tě zakopali s ostatními."
+     ],
+     [
+      "np_ysolde",
+      "Neboj se mě. Jsem hlas, který ti zůstal v hrudi. Ozvěna. Myslím, že tvoje první."
+     ],
+     [
+      "Hrobník z Cinderholdu",
+      "Pane na nebi, ten je teplej! Utíkej ke Cinderholdu, než přijdou Thrallové!"
+     ]
+    ]
+   },
+   {
+    "at": "První ozvěna",
+    "lines": [
+     [
+      "np_ysolde",
+      "Ten voják po sobě nechal ozvěnu. Sáhni po ní. Bude to pálit – to znamená, že to funguje."
+     ],
+     [
+      "np_ysolde",
+      "Jeho vůle teď vede tvou ruku. Jen jich nenabírej moc. Kdo to přehnal, rozmazal se."
+     ]
+    ]
+   },
+   {
+    "at": "Brána Cinderholdu",
+    "lines": [
+     [
+      "Strážný Compactu",
+      "Stát! Z hrobu se nikdo nevrací. Jestli jsi Thrall, umřeš podruhé."
+     ],
+     [
+      "np_teodor",
+      "Pusťte ho. Thrall nekrvácí a tenhle krvácí docela vydatně. Beru si ho na starost."
+     ],
+     [
+      "np_teodor",
+      "Nesete v sobě cizí hlas, že? Neodpovídejte tady. V archivu je víc stínu a míň uší."
+     ]
+    ]
+   }
+  ],
+  "q1_02": [
+   {
+    "at": "Archiv v Cinderholdu",
+    "lines": [
+     [
+      "np_teodor",
+      "Ozvěny vznikají jen ze silné vůle. Kdo vám dal tu svou, nevím. Ale vím, kde hledat."
+     ],
+     [
+      "np_teodor",
+      "Pod Kaplí žárů jsem kdysi uložil deník. Archivní, ne svůj. Přineste ho a nečtěte ho cestou."
+     ],
+     [
+      "np_ysolde",
+      "Kdysi? Mluví, jako by tu byl déle než ta kaple."
+     ]
+    ]
+   },
+   {
+    "at": "Krypta",
+    "lines": [
+     [
+      "np_ysolde",
+      "Tady se kázalo o světle bez konce. Cítíš to? Kámen si to pamatuje líp než lidé."
+     ],
+     {
+      "whisper": "wh_02"
+     }
+    ]
+   },
+   {
+    "at": "Návrat s deníkem",
+    "lines": [
+     [
+      "np_teodor",
+      "Děkuji. Stránka o Velkém Lumenovi chybí. Někdo ji vytrhl dřív než vy."
+     ],
+     [
+      "np_teodor",
+      "Kiln Shard drží Bratr Aldric. Covenant tvrdí, že kove zbraně. Já se bojím, že kove ozvěny."
+     ]
+    ]
+   }
+  ],
+  "q1_03": [
+   {
+    "at": "Ironbound Tollgate",
+    "lines": [
+     [
+      "np_oduin",
+      "Compact drží tuhle silnici čtyřicet let. Kdo po ní jde, platí. Pět set zlatých, nebo můj šampion."
+     ],
+     [
+      "np_oduin",
+      "Neber to osobně, Beareře. Města nepadají kvůli zlým lidem. Padají kvůli prázdným pokladnám."
+     ]
+    ]
+   },
+   {
+    "at": "Volba: clo",
+    "choice": [
+     {
+      "c": "Zaplatit 500 zlatých",
+      "lines": [
+       [
+        "np_oduin",
+        "Rozumný člověk. Řeknu Brannoc, ať ti dává lepší ceny. Ať se ví, že Compact vrací, co bere."
+       ]
+      ]
+     },
+     {
+      "c": "Utkat se se šampionem",
+      "lines": [
+       [
+        "np_oduin",
+        "Jak chceš. Až padneš, nečekej, že tě pohřbíme podruhé."
+       ],
+       [
+        "np_oduin",
+        "Projdi. A nikomu neříkej, jak snadno to šlo."
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "at": "Charcoal Woods",
+    "lines": [
+     [
+      "np_ysolde",
+      "Chce úlomek jako zbraň. Zapamatuj si jeho tvář."
+     ]
+    ]
+   }
+  ],
+  "q1_04": [
+   {
+    "at": "Kovárna v Cinderholdu",
+    "lines": [
+     [
+      "np_brannoc",
+      "Aldric mě učil. Jestli z něj tam dole ještě něco zbylo, vyřiď mu, že jeho učnice kove bez duchů."
+     ]
+    ]
+   },
+   {
+    "at": "Heart of the Kiln",
+    "lines": [
+     [
+      "np_aldric",
+      "Přísahal jsem Ilsabet, že udržím oheň. Teď oheň drží mě. Odejdi, nebo se staň železem."
+     ]
+    ]
+   },
+   {
+    "at": "Po souboji",
+    "lines": [
+     [
+      "np_aldric",
+      "Úlomek… nechte ho vychladnout. Ne. Vezmi si ho. Ne. Už nevím, kdo z nás mluví."
+     ],
+     {
+      "whisper": "wh_07"
+     }
+    ]
+   },
+   {
+    "at": "Volba: Kiln Shard",
+    "choice": [
+     {
+      "c": "Pojmout Aldrikovu ozvěnu",
+      "flag": "w_kiln_absorbed",
+      "lines": [
+       [
+        "np_ysolde",
+        "Je horký. Je těžký. A je teď tvůj. Covenant ti to neodpustí."
+       ],
+       [
+        "np_teodor",
+        "Udělal jste totéž co Aldric. Doufám, že s lepším koncem."
+       ]
+      ]
+     },
+     {
+      "c": "Vrátit úlomek Covenantu",
+      "flag": "w_kiln_returned",
+      "lines": [
+       [
+        "Posel Covenantu",
+        "Matriarcha vám děkuje. Úlomek bude zapečetěn v lucerně, kde nikomu neublíží."
+       ],
+       [
+        "np_ysolde",
+        "Zapečetěn. Tak se u nich říká tomu, když něco schovávají."
+       ]
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "npcs": [
+  {
+   "id": "np_teodor",
+   "n": "Teodor Lisk",
+   "role": "Archivář, mentor hráče",
+   "area": "a1_cinderhold"
+  },
+  {
+   "id": "np_oduin",
+   "n": "Maršál Oduin Hask",
+   "role": "Velitel Ironbound Compact",
+   "area": "a1_cinderhold"
+  },
+  {
+   "id": "np_aldric",
+   "n": "Bratr Aldric",
+   "role": "Kiln Warden (boss Act I)",
+   "area": "a1_kiln_heart"
+  },
+  {
+   "id": "np_ysolde",
+   "n": "Ysolde",
+   "role": "První Echo Bearer (ozvěna v hráči)",
+   "area": null
+  },
+  {
+   "id": "np_brannoc",
+   "n": "Kovářka Brannoc",
+   "role": "Kovářka (crafting) – Cinderhold",
+   "area": "a1_cinderhold"
   }
  ],
  "quests": [

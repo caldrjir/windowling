@@ -241,7 +241,14 @@ test('HOLLOW SUN: the Kiln Warden fight, phases and boss loot', async ({ page },
 	expect(errors).toEqual([]);
 });
 
-test('HOLLOW SUN: the Act I campaign – a zone, the next area and the Kiln Warden', async ({
+// quest dialogs pause the game: read through them (a choice stays open)
+const skipDialogs = (page: Page) =>
+	run(
+		page,
+		'for (let i = 0; i < 40 && HSGame.dialog && !HSGame.dialog.choice; i++) HSGame.dlgNext();',
+	);
+
+test('HOLLOW SUN: the Act I campaign – a zone, Cinderhold, dialogs and the Kiln Warden', async ({
 	page,
 }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
@@ -253,6 +260,11 @@ test('HOLLOW SUN: the Act I campaign – a zone, the next area and the Kiln Ward
 	await expect(page.locator('#minimap')).toBeVisible();
 	const zone = await run<{ id: string; objs: { kind: string }[] }>(page, 'return HSGame.zone;');
 	expect(zone.id).toBe('a1_ashfields');
+	// the Bible's opening scene (q1_01) starts the campaign
+	await expect(page.locator('#dialog')).toBeVisible();
+	await expect(page.locator('#dialog .who')).toHaveText('Ysolde');
+	await skipDialogs(page);
+	await expect(page.locator('#dialog')).toBeHidden();
 	expect(zone.objs.map((o) => o.kind)).toEqual(expect.arrayContaining(['lantern', 'gate']));
 	// Walk the zone's route (enemies removed) to the gate: the area is cleared and the save moves on.
 	const done = await run<{ done: boolean; keys: number; next: string | null }>(
@@ -262,11 +274,19 @@ test('HOLLOW SUN: the Act I campaign – a zone, the next area and the Kiln Ward
 		const sv = JSON.parse(localStorage.getItem('hollowsun.save.v1'));
 		return { done: s.zoneDone, keys: s.zoneKeys.size, next: sv.act1 && sv.act1.zone };`,
 	);
-	expect(done).toEqual({ done: true, keys: expect.any(Number), next: 'a1_burnt_orchard' });
+	expect(done).toEqual({ done: true, keys: expect.any(Number), next: 'a1_cinderhold' });
 	await page.locator('#b-next').click({ timeout: 20_000 });
 	await expect
 		.poll(() => run<string>(page, 'return HSGame.zone && HSGame.zone.id;'))
-		.toBe('a1_burnt_orchard');
+		.toBe('a1_cinderhold');
+	// Cinderhold: the gate scene, then Teodor must be visited before the gate opens
+	await expect(page.locator('#dialog')).toBeVisible();
+	await skipDialogs(page);
+	await expect(page.locator('#hint')).toContainText('Teodor');
+	await run(page, 'const s = HSGame.state; s.player.x = -19; s.player.z = 0; HSGame.step(2);');
+	await expect(page.locator('#dialog .who')).toHaveText('Teodor Lisk');
+	await skipDialogs(page);
+	await expect(page.locator('#hint')).not.toContainText('Teodor');
 
 	// The last step of Act I is the Kiln Warden; beating him completes the act.
 	await run(
@@ -286,6 +306,19 @@ test('HOLLOW SUN: the Act I campaign – a zone, the next area and the Kiln Ward
 			run<boolean>(
 				page,
 				`return !!JSON.parse(localStorage.getItem('hollowsun.save.v1')).act1.done;`,
+			),
+		)
+		.toBe(true);
+	// after the fight: Aldric's last words, then the Kiln Shard choice is saved as a flag
+	await expect(page.locator('#dialog')).toBeVisible({ timeout: 10_000 });
+	await skipDialogs(page);
+	await page.locator('#dlg-c0').click();
+	await skipDialogs(page);
+	await expect
+		.poll(() =>
+			run<boolean>(
+				page,
+				`return !!JSON.parse(localStorage.getItem('hollowsun.save.v1')).story.flags.w_kiln_absorbed;`,
 			),
 		)
 		.toBe(true);

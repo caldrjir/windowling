@@ -343,6 +343,19 @@ or by Lantern back to it).
   its own seed so other rolls stay the same. With the key the entrance offers the area; it ends
   with a unique chest next to the gate and leads back to the Charcoal Woods without moving the
   campaign on (`gallowsKey`, `gallowsDone` in the save).
+- Cinderhold (the hub, `inst: fixed`): a fixed town from `buildTown` – a plaza with extinguished
+  furnaces, the archive (Teodor), the forge (Brannoc), the Compact barracks (Oduin), a Lantern at the
+  entrance and the gate north. The campaign visits it after the Ashfields and again after the crypt
+  (step `a1_cinderhold#2`); the gate stays shut until the player has met the NPCs whose quest scenes
+  are still unseen (`needTalk`), then leads straight on without a summary panel.
+- Story: `HSWorld.STORY` maps every Act I scene of the Bible's G.DIALOGS (exported with the
+  speakers from G.NPCS) to a trigger – a step's start, an NPC, five kills in the Ashfields, the boss
+  start and his defeat. Talks pause the game; Ysolde's lines and lines during a fight run as
+  subtitles without a pause (length as for VO: words / 2.5 + 0.5 s). Whisper entries in a scene show
+  the whisper card. Seen scenes, choices and flags go to `story` in the save.
+- Choices: at the Tollgate, paying the toll (no gold in the prototype yet) or fighting the champion,
+  an elite Smoldering Brute at the area cap who drops a rare weapon (`HSim.champion`); after the
+  Kiln Warden, the Kiln Shard choice sets `w_kiln_absorbed` or `w_kiln_returned` for Act II.
 - Simulation (`mode: 'act1'`): enemies sleep until they see the player (the Bible's detection
   ranges) and alarm allies within 8 m. Movement slides along the walls and steps round corners;
   walls block sight and arrows.
@@ -358,7 +371,9 @@ The generator parameters per zone are prototype values (`ZONE_P` in `world.js`);
 reaches level 11 at the end of the Great Kiln, matching the Bible's area levels. On the autopilot a
 zone takes about 3–11 minutes. `hollowsun-world.test.ts` checks that the zones follow the Bible's
 main quests and links, the levels and objects, that walking each route picks up the keys and reaches the gate, and
-the respawn, the quests, the crypt floors, the Gallows Hill key and entrance; E2E clears a zone, moves on to the next and finishes Act I with the boss.
+the respawn, the quests, the crypt floors, the Gallows Hill key and entrance, the scenes against
+the Bible dialogs, the Cinderhold gate and the champion; E2E clears a zone, reads the opening scene,
+meets Teodor in Cinderhold and finishes Act I with the boss and the Kiln Shard choice.
 
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three

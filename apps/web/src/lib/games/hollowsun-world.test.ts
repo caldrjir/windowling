@@ -16,6 +16,7 @@ interface Obj {
 	z: number;
 	done: boolean;
 	key?: string;
+	npc?: string;
 }
 interface Zone {
 	id: string;
@@ -38,6 +39,8 @@ interface Event {
 	xp?: number;
 	item?: { base: string; rar: string } | null;
 	to?: string;
+	npc?: string;
+	need?: string[];
 }
 interface State {
 	zone: Zone;
@@ -46,6 +49,7 @@ interface State {
 	enemies: { id: number; type: string; x: number; z: number; hp: number; dead: boolean }[];
 	events: Event[];
 	gallowsKey: boolean;
+	drops: { item: { rar: string; base: string } }[];
 	gear: { inv: { base: string; rar: string }[] };
 	char: { level: number; xp: number };
 	objs: (Obj & { to?: string })[];
@@ -63,10 +67,13 @@ interface World {
 	): { id: string; links: string[]; enemies: string[]; lv: number[]; type: string } | undefined;
 	areaOf(step: string): string;
 	SIDE: Record<string, { from: string; need: string; drop: string; chance: number }>;
+	STORY: { q: string; at: string; on: string; step?: string; npc?: string; fight?: number }[];
+	needTalk(step: string, seen: string[]): string[];
 }
 interface Sim {
 	create(opts: Record<string, unknown>): State;
 	step(s: State, inp: unknown): State;
+	champion(s: State): { id: number; L: number; dead: boolean; hp: number; x: number; z: number };
 }
 
 function load(): { W: World; HSim: Sim; HS: HSCore } {
@@ -90,6 +97,12 @@ function load(): { W: World; HSim: Sim; HS: HSCore } {
 interface HSCore {
 	rng(seed: string): () => number;
 	D: {
+		dialogs: Record<
+			string,
+			{ at: string; lines?: unknown[]; choice?: { c: string; flag?: string; lines: unknown[] }[] }[]
+		>;
+		npcs: { id: string; n: string }[];
+		areas: { id: string; npcs?: string[] }[];
 		quests: { id: string; area: string; rewards: { xp: number } }[];
 		whispers: { id: string; area: string }[];
 	};
@@ -276,5 +289,86 @@ describe('HOLLOW SUN Act I zones', () => {
 			expect(ev.includes('gallowskey')).toBe(drops);
 		}
 		expect(s.gallowsKey).toBe(true);
+	});
+
+	it('story scenes are the Bible dialogs of Act I, with speakers and choices', () => {
+		for (const sc of W.STORY) {
+			const d = HS.D.dialogs[sc.q]?.find((x) => x.at === sc.at);
+			expect(d, sc.q + '/' + sc.at).toBeDefined();
+			if (sc.fight != null) expect(d?.choice?.[sc.fight]).toBeDefined();
+			for (const ln of d?.lines ?? []) {
+				if (!Array.isArray(ln)) continue;
+				const who = String(ln[0]);
+				if (who.startsWith('np_')) expect(HS.D.npcs.map((n) => n.id)).toContain(who);
+			}
+		}
+		// every Act I scene of the Bible is played somewhere in the campaign
+		const all = Object.entries(HS.D.dialogs).flatMap(([q, v]) => v.map((x) => q + '/' + x.at));
+		expect(W.STORY.map((x) => x.q + '/' + x.at).sort()).toEqual(all.sort());
+		const shard = HS.D.dialogs.q1_04?.find((x) => x.choice)?.choice?.map((c) => c.flag);
+		expect(shard).toEqual(['w_kiln_absorbed', 'w_kiln_returned']);
+	});
+
+	it('Cinderhold holds its NPCs and opens the gate only after the quest talks', () => {
+		const npcs = HS.D.areas.find((a) => a.id === 'a1_cinderhold')?.npcs ?? [];
+		expect(W.needTalk('a1_cinderhold', [])).toEqual(['np_teodor']);
+		expect(W.needTalk('a1_cinderhold#2', [])).toEqual(['np_teodor', 'np_brannoc']);
+		expect(W.needTalk('a1_cinderhold', ['q1_02/Archiv v Cinderholdu'])).toEqual([]);
+		const make = () => {
+			const s = HSim.create({
+				mode: 'act1',
+				zone: 'a1_cinderhold#2',
+				seed: 'town',
+				needTalk: W.needTalk('a1_cinderhold#2', []),
+				char: { level: 6, xp: 0, alloc: {} },
+			});
+			expect(s.zone.objs.filter((o) => o.kind === 'npc').map((o) => o.npc)).toEqual(npcs);
+			expect(s.enemies).toHaveLength(0);
+			return s;
+		};
+		// straight to the gate: shut
+		const s = make();
+		const gate = s.zone.objs.find((o) => o.kind === 'gate');
+		if (!gate) throw new Error('no gate in Cinderhold');
+		s.player.x = gate.x;
+		s.player.z = gate.z + 1;
+		HSim.step(s, {});
+		expect(s.events.find((e) => e.t === 'gatelocked')?.need).toEqual(['np_teodor', 'np_brannoc']);
+		expect(s.zoneDone).toBe(false);
+		// the route visits the NPCs, then the gate opens to the next step
+		const t = make();
+		const met: string[] = [];
+		let done: Event | undefined;
+		walk(t, (st) => {
+			for (const e of st.events) if (e.t === 'npc' && e.npc) met.push(e.npc);
+			done = done ?? st.events.find((e) => e.t === 'zonedone');
+			return !!done;
+		});
+		expect(met).toEqual(expect.arrayContaining(['np_teodor', 'np_brannoc']));
+		expect(done?.next).toBe('a1_tollgate');
+	});
+
+	it('the Tollgate champion is an elite brute at the area cap and drops a rare weapon', () => {
+		const s = HSim.create({
+			mode: 'act1',
+			zone: 'a1_tollgate',
+			seed: 'champ',
+			char: { level: 7, xp: 0, alloc: {} },
+		});
+		s.enemies.length = 0;
+		s.player.invuln = true;
+		const c = HSim.champion(s);
+		expect(c.L).toBe(s.zone.lv[1]);
+		c.hp = 1;
+		const seen: string[] = [];
+		for (let i = 0; i < 90 && !c.dead; i++) {
+			s.player.x = c.x + 1.4;
+			s.player.z = c.z;
+			HSim.step(s, { hold: true, aim: [c.x, c.z] });
+			seen.push(...s.events.map((e) => e.t));
+		}
+		expect(c.dead).toBe(true);
+		expect(seen).toContain('champion');
+		expect(s.drops.some((d) => d.item.rar === 'rare')).toBe(true);
 	});
 });

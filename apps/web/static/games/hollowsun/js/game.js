@@ -15,7 +15,7 @@
       hint: 'Telegraph = rudý tvar na zemi. Uhni mezerníkem, než se naplní.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (odemykají se s úrovní)', lvlUp: 'Úroveň', xpShort: 'XP', locked: 'Odemkne se na úrovni', unlocked: 'Nový skill', attrs: 'Atributy', points: 'Volné body', autoAlloc: 'Rozdělit automaticky', brandTxt: 'Cejch', absorbTxt: 'Štít', attrN: { str: 'Síla (STR)', dex: 'Obratnost (DEX)', int: 'Intelekt (INT)', wil: 'Vůle (WIL)', vit: 'Vitalita (VIT)' },
       boss: 'Boss: Kiln Warden', bossRec: 'doporučeno L12', bossHint: 'Uhni telegraphům. Před kužely se schovej za kovadlinu. Při Quench Slam najdi páru (zelené kruhy). U hořící pece stůj 1,5 s a uhasíš ji.', phaseN: ['', 'Fáze 1 — Kovář', 'Fáze 2 — Pec', 'Fáze 3 — Roztavený'], enrageT: 'Enrage', enraged: 'Kiln Warden zuří: pece hoří trvale, +50 % damage', immune: 'Nezranitelný', quenchedT: 'Pec uhašena', safeT: 'V páře', victory: 'Kiln Warden poražen', victoryT: 'Čas', lootHint: 'Sesbírej loot a vrať se do menu.', collect: 'Sbírat loot', bossKills: 'Bossové',
-      interruptT: 'Přerušeno!', wardT: 'Štít', floor: 'patro', whisperT: 'Šepot', questDone: 'Quest dokončen', gallowsKey: 'Rusty Gallows Key – na kopci za Charcoal Woods se něco otevřelo', sideLocked: 'Zamčeno. Klíč nosí někdo z Smoldering Brutů.', sideEnter: 'Vstoupit', sideStay: 'Zůstat', sideQ: 'Tajná oblast', back: 'Návrat', campaign: 'Kampaň: Act I', campNew: 'začít v Ashfields', campCont: 'pokračovat', zoneDone: 'Oblast dokončena', nextZone: 'Další oblast', continue: 'Pokračovat', lanternLit: 'Lantern zapálena – checkpoint', keyFound: 'Klíč nalezen – zamčené dveře se otevřou', respawned: 'Ozvěna se probouzí u Lantern', act1Done: 'Act I dokončen', gateHint: 'Projdi oblast až k bráně na jejím konci.', zoneLv: 'úroveň',
+      interruptT: 'Přerušeno!', wardT: 'Štít', dlgHint: 'klikni nebo mezerník', talkTo: 'Promluv s', gateOpen: 'Brána na severu vede dál.', gateLocked: 'Brána je zavřená. Nejdřív promluv s', noGold: 'prototyp zatím nemá gold', floor: 'patro', whisperT: 'Šepot', questDone: 'Quest dokončen', gallowsKey: 'Rusty Gallows Key – na kopci za Charcoal Woods se něco otevřelo', sideLocked: 'Zamčeno. Klíč nosí někdo z Smoldering Brutů.', sideEnter: 'Vstoupit', sideStay: 'Zůstat', sideQ: 'Tajná oblast', back: 'Návrat', campaign: 'Kampaň: Act I', campNew: 'začít v Ashfields', campCont: 'pokračovat', zoneDone: 'Oblast dokončena', nextZone: 'Další oblast', continue: 'Pokračovat', lanternLit: 'Lantern zapálena – checkpoint', keyFound: 'Klíč nalezen – zamčené dveře se otevřou', respawned: 'Ozvěna se probouzí u Lantern', act1Done: 'Act I dokončen', gateHint: 'Projdi oblast až k bráně na jejím konci.', zoneLv: 'úroveň',
       inv: 'Inventář', invBtn: 'I · Inventář', invHint: 'Klik na předmět v batohu = nasadit · klik na nasazený = sundat · Shift + klik = zahodit · I / Esc zavře.', invStats: 'Postava', invEmpty: 'prázdné', cmp: 'Proti nasazenému', reqs: 'Požadavky', lvl: 'Úroveň', picked: 'Sebráno', invFull: 'Batoh je plný', why: { class: 'Ash Knight tuhle zbraň nepoužívá', level: 'Vyšší úroveň postavy', twohand: 'Obouruční zbraň zabírá i druhou ruku', base: 'Neznámý předmět' }, whyAttr: 'Chybí', stHp: 'Zdraví', stArmor: 'Armor (redukce)', stEva: 'Šance uhnout', stDps: 'Cleave DPS (thrall)', stAs: 'Útoky za sekundu', stMs: 'Rychlost pohybu', keysInv: 'I – inventář, klik na předmět na zemi = sebrat', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Test vstupu', latHint: 'Test vstupu: klikej na různá místa na zemi (20×). Měří se čas od kliknutí po snímek, kde se rytíř pohne.', latDone: 'Výsledek testu vstupu', latRender: 'Vstup → vykreslený snímek', latPresent: 'Vstup → další snímek (≈ zobrazení)', latMax: 'Nejhorší vzorek', latN: 'Vzorků', latTarget: 'Cíl P0: input latency < 50 ms (p95, vstup → zobrazení)', latNote: 'Měří prohlížeč od události vstupu; myš a monitor přidávají vlastní latenci. Simulace běží po 33 ms (30 Hz), čekání na další krok je součástí výsledku.', latShort: 'vstup',
       feel: 'Ohodnotit boj', feelTitle: 'Jak se boj hraje?', feelQ: ['Celkový pocit z boje', 'Odezva ovládání', 'Čitelnost telegraphů', 'Pocit zásahu (hit-stop, zvuk, čísla)'], feelNote: 'Poznámka (nepovinné)', feelSave: 'Uložit hodnocení', feelSaved: 'Hodnocení na tomto počítači', feelAvg: 'Průměr', feelCopy: 'Kopírovat výsledky', feelCopied: 'Zkopírováno do schránky', feelTarget: 'Cíl P0: průměr celkového pocitu ≥ 4/5 od 5 hráčů', feelPick: 'Vyber hodnocení u všech otázek.', gpuMs: 'GPU na snímek', cpuMs: 'CPU na snímek (update + render)', gpuName: 'Grafika', noTimer: 'neměřitelné v tomto prohlížeči', dmgDealt: 'Poškození', hits: 'Zásahy', dodges: 'Úspěšné úhyby', taken: 'Přijaté poškození',
@@ -30,7 +30,7 @@
       hint: 'Telegraph = red shape on the ground. Dodge with space before it fills.',
       brand: 'Brand Strike', bulwark: 'Ashen Bulwark', warcry: 'Cry of the Pyre', keysSkills: 'E Brand Strike · R Ashen Bulwark · T Cry of the Pyre (unlock with level)', lvlUp: 'Level', xpShort: 'XP', locked: 'Unlocks at level', unlocked: 'New skill', attrs: 'Attributes', points: 'Unspent points', autoAlloc: 'Distribute automatically', brandTxt: 'Brand', absorbTxt: 'Shield', attrN: { str: 'Strength (STR)', dex: 'Dexterity (DEX)', int: 'Intelligence (INT)', wil: 'Willpower (WIL)', vit: 'Vitality (VIT)' },
       boss: 'Boss: Kiln Warden', bossRec: 'level 12 recommended', bossHint: 'Dodge the telegraphs. Hide behind the anvil from cones. On Quench Slam find the steam (green circles). Stand by a burning kiln for 1.5 s to quench it.', phaseN: ['', 'Phase 1 — The Smith', 'Phase 2 — The Kiln', 'Phase 3 — Molten'], enrageT: 'Enrage', enraged: 'The Kiln Warden rages: kilns burn for good, +50 % damage', immune: 'Immune', quenchedT: 'Kiln quenched', safeT: 'In the steam', victory: 'Kiln Warden defeated', victoryT: 'Time', lootHint: 'Collect the loot and return to the menu.', collect: 'Collect loot', bossKills: 'Bosses',
-      interruptT: 'Interrupted!', wardT: 'Ward', floor: 'floor', whisperT: 'Whisper', questDone: 'Quest complete', gallowsKey: 'Rusty Gallows Key – something opened on the hill beyond the Charcoal Woods', sideLocked: 'Locked. One of the Smoldering Brutes carries the key.', sideEnter: 'Enter', sideStay: 'Stay', sideQ: 'Secret area', back: 'Return', campaign: 'Campaign: Act I', campNew: 'start in the Ashfields', campCont: 'continue', zoneDone: 'Area cleared', nextZone: 'Next area', continue: 'Continue', lanternLit: 'Lantern lit – checkpoint', keyFound: 'Key found – the locked doors will open', respawned: 'Your echo wakes at the Lantern', act1Done: 'Act I complete', gateHint: 'Cross the area to the gate at its end.', zoneLv: 'level',
+      interruptT: 'Interrupted!', wardT: 'Ward', dlgHint: 'click or space', talkTo: 'Talk to', gateOpen: 'The north gate leads on.', gateLocked: 'The gate is shut. First talk to', noGold: 'the prototype has no gold yet', floor: 'floor', whisperT: 'Whisper', questDone: 'Quest complete', gallowsKey: 'Rusty Gallows Key – something opened on the hill beyond the Charcoal Woods', sideLocked: 'Locked. One of the Smoldering Brutes carries the key.', sideEnter: 'Enter', sideStay: 'Stay', sideQ: 'Secret area', back: 'Return', campaign: 'Campaign: Act I', campNew: 'start in the Ashfields', campCont: 'continue', zoneDone: 'Area cleared', nextZone: 'Next area', continue: 'Continue', lanternLit: 'Lantern lit – checkpoint', keyFound: 'Key found – the locked doors will open', respawned: 'Your echo wakes at the Lantern', act1Done: 'Act I complete', gateHint: 'Cross the area to the gate at its end.', zoneLv: 'level',
       inv: 'Inventory', invBtn: 'I · Inventory', invHint: 'Click an item in the bag = equip · click an equipped one = take off · Shift + click = discard · I / Esc closes.', invStats: 'Character', invEmpty: 'empty', cmp: 'Against equipped', reqs: 'Requirements', lvl: 'Level', picked: 'Picked up', invFull: 'The bag is full', why: { class: 'The Ash Knight does not use this weapon', level: 'Higher character level needed', twohand: 'A two-handed weapon takes the off hand too', base: 'Unknown item' }, whyAttr: 'Missing', stHp: 'Health', stArmor: 'Armor (reduction)', stEva: 'Evade chance', stDps: 'Cleave DPS (thrall)', stAs: 'Attacks per second', stMs: 'Movement speed', keysInv: 'I – inventory, click an item on the ground = pick up', rar: { common: 'Common', magic: 'Magic', rare: 'Rare', unique: 'Unique' },
       latency: 'Input test', latHint: 'Input test: click different spots on the ground (20×). It measures the time from the click to the frame in which the knight moves.', latDone: 'Input test result', latRender: 'Input → rendered frame', latPresent: 'Input → next frame (≈ on screen)', latMax: 'Worst sample', latN: 'Samples', latTarget: 'P0 target: input latency < 50 ms (p95, input → on screen)', latNote: 'Measured by the browser from the input event; the mouse and the monitor add their own latency. The simulation steps every 33 ms (30 Hz); waiting for the next step is part of the result.', latShort: 'input',
       feel: 'Rate the combat', feelTitle: 'How does the combat feel?', feelQ: ['Overall combat feel', 'Control responsiveness', 'Readability of telegraphs', 'Impact (hit-stop, sound, numbers)'], feelNote: 'Note (optional)', feelSave: 'Save rating', feelSaved: 'Ratings on this computer', feelAvg: 'Average', feelCopy: 'Copy results', feelCopied: 'Copied to the clipboard', feelTarget: 'P0 target: overall feel averages ≥ 4/5 from 5 players', feelPick: 'Pick a rating for every question.', gpuMs: 'GPU per frame', cpuMs: 'CPU per frame (update + render)', gpuName: 'Graphics', noTimer: 'not measurable in this browser', dmgDealt: 'Damage', hits: 'Hits', dodges: 'Successful dodges', taken: 'Damage taken',
@@ -41,7 +41,7 @@
 
   /* ---------- uložení a statistiky pro centrum ---------- */
   const SAVE_KEY = 'hollowsun.save.v1', STATS_KEY = 'gamecenter.stats.hollowsun';
-  const DEF = { v: 4, act1: null, whispers: [], gallowsKey: false, gallowsDone: false, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
+  const DEF = { v: 4, act1: null, story: null, whispers: [], gallowsKey: false, gallowsDone: false, clickMove: true, bestWave: 0, kills: 0, playTime: 0, bench: null, latency: null, feel: [], gear: null, sinceU: 0, items: 0, char: null, bossKills: 0, bossBest: 0 };
   // načtení s migrací (HSim.migrateSave: v1 z P0 → v2 s výbavou)
   let SAVE = (() => { try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return Object.assign({}, DEF, raw ? window.HSim.migrateSave(raw) : {}); } catch (e) { return Object.assign({}, DEF); } })();
   function persist() {
@@ -174,6 +174,7 @@
     if (k === 'l' && mode === 'assets') { AS.lodAuto = !AS.lodAuto; if (!AS.lodAuto) AS.lod = (AS.lod + 1) % 3; }
     if (mode === 'assets' && AS.char && '1234'.includes(k)) { AS.char.enabled = true; playClip(AS.char, CLIPS[Number(k) - 1]); }
     if (k === 'f') { fpsOn = !fpsOn; document.getElementById('fps').hidden = !fpsOn; }
+    if (mode === 'dialog') { if (k === ' ' || k === 'enter' || k === 'e') { e.preventDefault(); dlgNext(); } return; }
     if (mode !== 'play') return; audioInit();
     if (!e.repeat && ' qe12345rtwasd'.includes(k) && k.length === 1) { fresh = true; latInput(e.timeStamp); }
     if (k === ' ') { pend.dodge = true; e.preventDefault(); }
@@ -302,14 +303,14 @@
   let slowmo = 0;
   /* ---------- kampaň Act I: scéna zóny, objekty, minimapa (P1) ---------- */
   // barvy podlahy podle oblasti (šedý box): pole popelavá, Tollgate kamenná, Woods uhelná, Kiln rozžhavená
-  const ZONE_LOOK = { a1_ashfields: ['#2f2b28', '#4a4440'], a1_burnt_orchard: ['#2c2620', '#4d3b2c'], a1_tollgate: ['#2a2b2e', '#4f5259'], a1_charcoal_woods: ['#1f1d1c', '#3a3330'], a1_kiln: ['#33211a', '#5a2c18'], a1_chapel_crypt: ['#25242a', '#45434f'], a1_gallows: ['#28261f', '#4a4536'] };
+  const ZONE_LOOK = { a1_ashfields: ['#2f2b28', '#4a4440'], a1_burnt_orchard: ['#2c2620', '#4d3b2c'], a1_tollgate: ['#2a2b2e', '#4f5259'], a1_charcoal_woods: ['#1f1d1c', '#3a3330'], a1_kiln: ['#33211a', '#5a2c18'], a1_chapel_crypt: ['#25242a', '#45434f'], a1_cinderhold: ['#2e2924', '#5b4a3a'], a1_gallows: ['#28261f', '#4a4536'] };
   let ZONE_G = null; const ZOBJ = new Map(); const ZDOOR = []; const ZVISIT = new Set();
   const M_WHISPER = mat('#b9c8ff', { unlit: true, opacity: 0.55 }), M_SIDE = mat('#9a7cff', { unlit: true }), M_UNIQUE = mat('#ec7a3a', { emissive: '#5a2410' });
   const M_GOLD = mat('#e3b964', { emissive: '#5a3f12' }), M_GOLD_OFF = mat('#4a4033'), M_LANTERN = mat('#ffcf7a', { unlit: true }), M_GATE = mat('#e05a2a', { unlit: true }), M_DOOR = mat('#5a3a22');
   const ACT1 = window.HSWorld ? window.HSWorld.ACT1 : [];
   const zoneName = (id) => { const W = window.HSWorld; const a = W && W.area(id); if (!a) return id; return W.floorsOf(a.id) > 1 ? `${a.n} · ${t('floor')} ${W.floorOf(id)}` : a.n; };
   function zoneScene(on) {
-    if (ZONE_G) { ZONE_G.destroy(); ZONE_G = null; } ZOBJ.clear(); ZDOOR.length = 0; ZVISIT.clear();
+    if (ZONE_G) { ZONE_G.destroy(); ZONE_G = null; } ZOBJ.clear(); ZDOOR.length = 0; ZVISIT.clear(); for (const nm of ZNAMES) nm.el.remove(); ZNAMES.length = 0;
     GROUND.enabled = !on; if (on) ARENA_G.enabled = false;
     document.getElementById('minimap').hidden = !on; if (!on) return;
     const z = S.zone; const W = window.HSWorld; const look = ZONE_LOOK[z.area] || ZONE_LOOK.a1_ashfields;
@@ -335,11 +336,24 @@
       if (o.kind === 'lantern') { ent('cylinder', M.steel, [0, 1, 0], [0.2, 2, 0.2], g); parts.glow = ent('sphere', M_LANTERN, [0, 2.1, 0], [0.45, 0.45, 0.45], g, false); }
       else if (o.kind === 'chest') { parts.box = ent('box', o.unique ? M_UNIQUE : M_GOLD, [0, 0.35, 0], [1.1, 0.7, 0.7], g); }
       else if (o.kind === 'whisper') { parts.orb = ent('sphere', M_WHISPER, [0, 1.3, 0], [0.5, 0.5, 0.5], g, false); }
+      else if (o.kind === 'deco') { ent('cylinder', mWall, [0, 1.6, 0], [2.4, 3.2, 2.4], g); ent('cylinder', M_DOOR, [0, 3.4, 0], [1.2, 0.6, 1.2], g); }
+      else if (o.kind === 'npc') npcVisual(o, g, parts);
       else if (o.kind === 'side') { ent('box', mWall, [-1.1, 1.3, 0], [0.5, 2.6, 0.5], g); ent('box', mWall, [1.1, 1.3, 0], [0.5, 2.6, 0.5], g); ent('box', mWall, [0, 2.7, 0], [2.7, 0.4, 0.5], g); parts.glow = ent('box', S[o.need] ? M_SIDE : M_DOOR, [0, 1.2, 0], [1.7, 2.4, 0.08], g, false); }
       else if (o.kind === 'key') { parts.key = ent('box', M_GOLD, [0, 1, 0], [0.18, 0.5, 0.08], g, false); }
       else if (o.kind === 'gate') { ent('box', mWall, [-1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [0, 3.3, 0], [3.8, 0.5, 0.6], g); parts.glow = ent('box', M_GATE, [0, 1.5, 0], [2.6, 3, 0.1], g, false); }
       ZOBJ.set(o.id, { o, g, parts });
     }
+  }
+  // NPC Cinderholdu: rytíř z asset pipeline v barvách postavy (bez modelu kapsle), jmenovka nad hlavou, hledí na náměstí
+  const NPC_SETS = { np_teodor: mat('#2b3550', { gloss: 0.2 }), np_oduin: mat('#6b6f78', { gloss: 0.5 }), np_brannoc: mat('#5a3a22', { gloss: 0.2 }) };
+  const ZNAMES = [];
+  // jmenovky po umístění kamery v každém snímku (i během dialogu, kdy simulace stojí)
+  function placeNames() { for (const nm of ZNAMES) { cam.camera.worldToScreen(new pc.Vec3(nm.x, 2.4, nm.z), tmpV); nm.el.style.transform = `translate(${tmpV.x.toFixed(0)}px, ${tmpV.y.toFixed(0)}px) translate(-50%, -100%)`; } }
+  function npcVisual(o, g, parts) {
+    g.setLocalEulerAngles(0, (-Math.atan2(-o.z, -o.x) * 180) / Math.PI, 0);
+    const m = NPC_SETS[o.npc] || M.steel;
+    if (CH.res && !CH.gray) parts.c = charVisual(g, { M_ak_steel: m, M_ak_ember: M.furnace }, 1); else ent('capsule', m, [0, 0.9, 0], [0.9, 0.9, 0.9], g);
+    const n = HS.D.npcs.find((x) => x.id === o.npc); const el = document.createElement('div'); el.className = 'drop npcname'; el.textContent = n ? n.n : o.npc; dropsLayer.appendChild(el); ZNAMES.push({ el, x: o.x, z: o.z });
   }
   function syncZone() {
     if (!ZONE_G || !S.zone) return;
@@ -351,6 +365,7 @@
     }
     for (const d of ZDOOR) if (d.e.enabled && S.zoneKeys.has(d.lock)) d.e.enabled = false;
     const p = S.player; for (const r of S.zone.rooms) if (p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1) ZVISIT.add(r.id);
+    for (const { o, parts } of ZOBJ.values()) if (o.kind === 'npc' && parts.c) { charPin(parts.c); charLod(parts.c, o.x, o.z); }
     if (Math.floor(renderT * 10) % 3 === 0) drawMinimap();
   }
   // minimapa: navštívené místnosti světle, ostatní tmavě; Lantern zeleně, brána rudě, truhly a klíče zlatě
@@ -362,7 +377,7 @@
     g.clearRect(0, 0, W, Hh); g.fillStyle = '#07080ccc'; g.fillRect(0, 0, W, Hh);
     for (const c of z.corridors) for (const s of c.segs) { g.fillStyle = c.lock && !S.zoneKeys.has(c.lock) ? '#5a3a22' : '#2a3142'; g.fillRect(X(s.x0), Z(s.z0), (s.x1 - s.x0) * k, (s.z1 - s.z0) * k); }
     for (const r of z.rooms) { g.fillStyle = ZVISIT.has(r.id) ? '#5a5f6e' : '#1d222e'; g.fillRect(X(r.x0), Z(r.z0), r.w * k, r.h * k); }
-    for (const o of S.objs) { if (o.done && (o.kind === 'key' || o.kind === 'chest' || o.kind === 'whisper')) continue; g.fillStyle = { lantern: '#6fd18a', gate: '#ff5a2a', chest: o.unique ? '#ec7a3a' : '#e3b964', key: '#ffe7a6', whisper: '#b9c8ff', side: S[o.need] ? '#9a7cff' : '#5a3a22' }[o.kind]; g.beginPath(); g.arc(X(o.x), Z(o.z), o.kind === 'gate' ? 4 : 2.5, 0, Math.PI * 2); g.fill(); }
+    for (const o of S.objs) { if (o.done && (o.kind === 'key' || o.kind === 'chest' || o.kind === 'whisper')) continue; g.fillStyle = { lantern: '#6fd18a', gate: '#ff5a2a', chest: o.unique ? '#ec7a3a' : '#e3b964', key: '#ffe7a6', whisper: '#b9c8ff', side: S[o.need] ? '#9a7cff' : '#5a3a22', npc: '#e3b964', deco: '#3a3330' }[o.kind]; g.beginPath(); g.arc(X(o.x), Z(o.z), o.kind === 'gate' ? 4 : 2.5, 0, Math.PI * 2); g.fill(); }
     g.fillStyle = '#fff'; g.beginPath(); g.arc(X(S.player.x), Z(S.player.z), 3, 0, Math.PI * 2); g.fill();
   }
   function zoneObjective(id) { const a = window.HSWorld.area(id); const q = HS.D.quests.find((x) => x.area === (a ? a.id : id)); return q ? `${q.n}: ${q.steps.join(' · ')}` : a && a.d ? a.d : t('gateHint'); }
@@ -374,6 +389,61 @@
     const el = document.getElementById('whisper'); el.querySelector('.wn').textContent = `${t('whisperT')} ${SAVE.whispers.length}/${HS.D.whispers.length} · ${w.n}`; el.querySelector('.wt').textContent = `„${w.txt}“`; el.querySelector('.ww').textContent = '— ' + w.who; el.hidden = false;
     clearTimeout(whisperT); whisperT = setTimeout(() => { el.hidden = true; }, 9000); tone(330, 495, 1.2, 0.12, 'sine');
   }
+  /* ---------- dialogy questů (G.DIALOGS): scény podle HSWorld.STORY, volby a flagy do save ---------- */
+  // Hráč nemluví; Ysolde (hlas v hlavě) kurzívou. Rozhovor zastaví hru, barky běží jako titulky bez pauzy
+  // (délka repliky jako u VO: slova / 2,5 + 0,5 s). Viděné scény se nepřehrávají znovu.
+  const story = () => { if (!SAVE.story || typeof SAVE.story !== 'object') SAVE.story = {}; const st = SAVE.story; st.seen = Array.isArray(st.seen) ? st.seen : []; st.flags = st.flags && typeof st.flags === 'object' ? st.flags : {}; st.choices = st.choices && typeof st.choices === 'object' ? st.choices : {}; return st; };
+  const sceneKey = (sc) => sc.q + '/' + sc.at;
+  const speaker = (id) => { const n = HS.D.npcs.find((x) => x.id === id); return n ? n.n : id; };
+  function scenesFor(on, o) { o = o || {}; const step = S && S.zone ? S.zone.id : null; return window.HSWorld.STORY.filter((sc) => sc.on === on && (!sc.step || sc.step === step) && (!sc.npc || sc.npc === o.npc) && !story().seen.includes(sceneKey(sc))); }
+  function playScenes(list, done) { const sc = list.shift(); if (!sc) { if (done) done(); return; } playScene(sc, () => playScenes(list, done)); }
+  function playScene(sc, done) {
+    const d = (HS.D.dialogs[sc.q] || []).find((x) => x.at === sc.at); if (!d) { done(); return; }
+    story().seen.push(sceneKey(sc)); persist();
+    if (d.choice) choose(sc, d, done); else if (sc.bark) { bark(d.lines.slice()); done(); } else talk(d.lines.slice(), done);
+  }
+  let DLG = null, CHAMP = null;
+  function talk(lines, done) {
+    if (!S || (mode !== 'play' && mode !== 'dialog')) { if (done) done(); return; }
+    mode = 'dialog'; lmb = false; for (const k in keys) keys[k] = false; DLG = { lines, done }; dlgShow();
+  }
+  function dlgShow() {
+    const el = document.getElementById('dialog'); let ln = DLG.lines[0];
+    while (ln && !Array.isArray(ln)) { if (ln.whisper) showWhisper(ln.whisper); DLG.lines.shift(); ln = DLG.lines[0]; }
+    if (!ln) { dlgEnd(); return; }
+    el.hidden = false; el.classList.toggle('ysolde', ln[0] === 'np_ysolde'); el.querySelector('.who').textContent = speaker(ln[0]); el.querySelector('.txt').textContent = ln[1]; el.querySelector('.choices').innerHTML = ''; el.querySelector('.hint').textContent = t('dlgHint');
+    tone(ln[0] === 'np_ysolde' ? 440 : 220, ln[0] === 'np_ysolde' ? 520 : 240, 0.12, 0.05, 'sine');
+  }
+  function dlgNext() { if (!DLG || DLG.choice) return; DLG.lines.shift(); dlgShow(); }
+  function dlgEnd() { document.getElementById('dialog').hidden = true; const done = DLG && DLG.done; DLG = null; if (mode === 'dialog') { mode = 'play'; acc = 0; } if (done) done(); }
+  document.getElementById('dialog').addEventListener('mousedown', (e) => { e.stopPropagation(); if (e.target.closest('.btn')) return; dlgNext(); });
+  // volba: tlačítka v dialogu; flag a index volby do save. Souboj se šampionem (q1_03) přeruší repliky volby
+  function choose(sc, d, done) {
+    if (!S || (mode !== 'play' && mode !== 'dialog')) { done(); return; }
+    mode = 'dialog'; DLG = { lines: [], done: null, choice: true };
+    const el = document.getElementById('dialog'); el.hidden = false; el.classList.remove('ysolde'); el.querySelector('.who').textContent = sc.at; el.querySelector('.txt').textContent = ''; el.querySelector('.hint').textContent = '';
+    const box = el.querySelector('.choices'); box.innerHTML = '';
+    d.choice.forEach((ch, i) => { const b = document.createElement('button'); b.className = 'btn'; b.textContent = ch.c + (sc.q === 'q1_03' && i === 0 ? ` (${t('noGold')})` : ''); b.id = 'dlg-c' + i; b.onclick = () => pick(i); box.appendChild(b); });
+    function pick(i) {
+      const ch = d.choice[i]; const st = story(); st.choices[sc.q] = i; if (ch.flag) st.flags[ch.flag] = true; persist();
+      DLG = null; const lines = ch.lines.slice();
+      if (sc.fight === i) { talk(lines.slice(0, 1), () => { CHAMP = lines.slice(1); SIM.champion(S); handle(S.events.slice()); S.events.length = 0; done(); }); return; }
+      talk(lines, done);
+    }
+  }
+  // bark: titulky bez pauzy, jedna replika za druhou
+  let BARK = [], barkT = 0;
+  function bark(lines) { BARK.push(...lines); if (!barkT) barkStep(); }
+  function barkStep() {
+    const el = document.getElementById('bark'); const ln = BARK.shift(); barkT = 0;
+    if (!ln) { el.hidden = true; return; }
+    if (!Array.isArray(ln)) { if (ln.whisper) showWhisper(ln.whisper); barkStep(); return; }
+    el.innerHTML = ''; const b = document.createElement('b'); b.textContent = speaker(ln[0]) + ': '; el.appendChild(b); el.appendChild(document.createTextNode(ln[1])); el.hidden = false;
+    barkT = setTimeout(barkStep, (ln[1].split(/\s+/).length / 2.5 + 0.5) * 1000);
+  }
+  function clearStory() { BARK = []; clearTimeout(barkT); barkT = 0; document.getElementById('bark').hidden = true; document.getElementById('dialog').hidden = true; DLG = null; CHAMP = null; }
+  // v Cinderholdu: koho je třeba navštívit (cíl v HUD)
+  function townHint() { const need = S && S.needTalk ? [...S.needTalk] : []; return need.length ? `${t('talkTo')}: ${need.map(speaker).join(', ')}` : t('gateOpen'); }
   // vchod do tajné oblasti: hra se zastaví a nabídne vstup (Gallows Hill z Charcoal Woods)
   function sidePrompt(ev) {
     if (mode !== 'play') return; mode = 'over'; const a = window.HSWorld.area(ev.to);
@@ -386,12 +456,12 @@
     if (S.zone.side) SAVE.gallowsDone = true; // tajná oblast: kampaň zůstává v oblasti, odkud se vešlo
     else SAVE.act1 = { zone: ev.next || ACT1[ACT1.length - 1], done: false, deaths: ((SAVE.act1 && SAVE.act1.deaths) || 0) + ev.deaths };
     saveChar(); saveGear(); persist();
+    if (S.zone.town) { setTimeout(() => { if (S && mode === 'play') startCampaign(); }, 400); return; } // z města rovnou dál
     tone(330, 660, 0.6, 0.25, 'triangle');
     setTimeout(() => { if (!S || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${t('zoneDone')}: ${zoneName(ev.id)}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time / 60)} min</td></tr><tr><td>${t('kills')}</td><td class="n">${ev.kills}</td></tr><tr><td>${t('lvl')}</td><td class="n">${S.L}</td></tr></table><p>${S.zone.side ? t('back') : t('nextZone')}: <b>${zoneName(ev.next)}</b></p><div class="row"><button class="btn" id="b-next">${t('continue')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-next').onclick = startCampaign; document.getElementById('b-menu').onclick = menu; }, 900);
   }
   function victory(ev) {
     if (S.campaign) SAVE.act1 = { zone: 'a1_kiln_heart', done: true, deaths: (SAVE.act1 && SAVE.act1.deaths) || 0 };
-    if (S.campaign) setTimeout(() => showWhisper('wh_07'), 2500); // Bible: šepot „Poslední úder“ po porážce Kiln Wardena
     slowmo = 4; SAVE.bossKills = (SAVE.bossKills || 0) + 1; SAVE.bossBest = SAVE.bossBest ? Math.min(SAVE.bossBest, Math.round(ev.time)) : Math.round(ev.time); saveChar(); persist();
     document.getElementById('bossbar').hidden = true; tone(196, 392, 1.2, 0.3, 'triangle'); tone(294, 587, 1.4, 0.2, 'sine');
     setTimeout(() => { if (!S || !S.won || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${S.campaign ? t('act1Done') : t('victory')}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time)} s</td></tr><tr><td>${t('kills')}</td><td class="n">${S.kills}</td></tr><tr><td>${t('bossKills')}</td><td class="n">${SAVE.bossKills}</td></tr></table><p class="muted">${t('lootHint')}</p><div class="row"><button class="btn" id="b-collect">${t('collect')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-collect').onclick = () => { screen.innerHTML = ''; mode = 'play'; acc = 0; }; document.getElementById('b-feel').onclick = feelForm; document.getElementById('b-menu').onclick = menu; }, 4200);
@@ -418,7 +488,8 @@
         case 'evade': num(ev.x, ev.z, t('evade'), 'info', 2.4); break;
         case 'dodged': num(ev.x, ev.z, t('dodged'), 'info', 2.4); break;
         case 'nores': flashSkill(ev.skill); break;
-        case 'death': { const v = EV.get(ev.id); if (v) { v.dying = 0.001; if (v.c) { charMat(v.c, null); charClip(v.c, 'death', 1, 0.08); } } SFX.death(); break; }
+        case 'death': if (S.zone && S.kills >= 5) { const sc = scenesFor('kills'); if (sc.length) playScenes(sc); }
+        { const v = EV.get(ev.id); if (v) { v.dying = 0.001; if (v.c) { charMat(v.c, null); charClip(v.c, 'death', 1, 0.08); } } SFX.death(); break; }
         case 'over': music('none'); sting('AU_mus_sting_2'); gameOver(); break;
         case 'boss': document.getElementById('bossbar').hidden = false; document.getElementById('boss-n').textContent = ev.n; break;
         case 'phase': if (window.HSMusic) HSMusic.phase(ev.phase); num(S.player.x, S.player.z, t('phaseN')[ev.phase], 'lvl', 3); toast(t('phaseN')[ev.phase]); shake = Math.max(shake, 0.5); tone(110, 55, 0.9, 0.6, 'sawtooth'); break;
@@ -439,7 +510,10 @@
         case 'chest': noise(0.3, 1200, 400, 0.3); break;
         case 'respawn': toast(t('respawned')); break;
         case 'zonedone': zoneDone(ev); break;
-        case 'victory': music('none'); sting('AU_mus_sting_8'); victory(ev); break;
+        case 'victory': music('none'); sting('AU_mus_sting_8'); if (S.campaign) { SAVE.act1 = { zone: 'a1_kiln_heart', done: true, deaths: (SAVE.act1 && SAVE.act1.deaths) || 0 }; persist(); setTimeout(() => playScenes(scenesFor('victory'), () => victory(ev)), 1500); } else victory(ev); break;
+        case 'npc': { const sc = scenesFor('npc', { npc: ev.npc }); if (sc.length) playScenes(sc, () => { document.getElementById('hint').textContent = townHint(); }); else toast(speaker(ev.npc) + ' · ' + ((HS.D.npcs.find((x) => x.id === ev.npc) || {}).role || '')); document.getElementById('hint').textContent = townHint(); break; }
+        case 'gatelocked': toast(`${t('gateLocked')}: ${ev.need.map(speaker).join(', ')}`); break;
+        case 'champion': if (CHAMP && CHAMP.length) { const l = CHAMP; CHAMP = null; setTimeout(() => talk(l, null), 900); } break;
         case 'leap': noise(0.18, 300, 900, 0.25); break;
         case 'ecast': { const e = flat(meshFor('ringS', 0.75, 1, 360), ev.kind === 'ward' ? M_WARD : M.slam, ev.x, ev.z, 0, 1.4, 0.05); fx(e, ev.dur, (f, k) => f.e.setLocalScale(1.4 - k * 0.6, 1, 1.4 - k * 0.6)); tone(ev.kind === 'ward' ? 440 : 196, ev.kind === 'ward' ? 660 : 98, ev.dur, 0.12, 'sine'); break; }
         case 'interrupt': num(ev.x, ev.z, t('interruptT'), 'info', 2.6); tone(700, 300, 0.15, 0.2, 'square'); break;
@@ -668,7 +742,7 @@
   const opt = () => `<label class="opt" for="o-click"><input type="checkbox" id="o-click" ${SAVE.clickMove ? 'checked' : ''}> ${t('clickMove')}</label>`;
   function bindOpt() { const c = document.getElementById('o-click'); if (c) c.addEventListener('change', () => { SAVE.clickMove = c.checked; persist(); }); }
   function menu() {
-    if (typeof bossScene === 'function' && BOSS_G) bossScene(false); if (ZONE_G) zoneScene(false); document.getElementById('bossbar').hidden = true;
+    if (typeof bossScene === 'function' && BOSS_G) bossScene(false); if (ZONE_G) zoneScene(false); clearStory(); document.getElementById('bossbar').hidden = true;
     mode = 'menu'; document.getElementById('hud').hidden = true; music('menu');
     screen.innerHTML = `<div class="panel"><span class="muted">ECHOES OF THE HOLLOW SUN · ${t('sub')}</span><h1>Hollow Sun</h1><p>${t('pitch')}</p>${keysHtml()}${opt()}
       <div class="row"><button class="btn camp" id="b-camp">${t('campaign')} · ${SAVE.act1 && SAVE.act1.done ? t('act1Done') : SAVE.act1 ? t('campCont') + ': ' + zoneName(SAVE.act1.zone) : t('campNew')}</button><button class="btn" id="b-arena">${t('arena')}</button><button class="btn" id="b-boss" title="${t('bossRec')}">${t('boss')}</button><button class="btn" id="b-bench">${t('bench')}</button><button class="btn dim" id="b-lat">${t('latency')}</button><button class="btn dim" id="b-feel">${t('feel')}</button><button class="btn dim" id="b-assets">${t('assets')}</button><a class="btn dim" href="../../index.html">${t('back')}</a></div>
@@ -680,14 +754,16 @@
   function start(m, o) {
     o = o || {};
     leaveAssets(true); audioInit(); clearWorld(); screen.innerHTML = ''; document.getElementById('hud').hidden = false; acc = 0; hitstop = 0; lmb = false;
-    S = SIM.create({ zone: o.zone, gallowsKey: !!SAVE.gallowsKey, mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : m === 'act1' ? 'act1' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss' || m === 'act1', char: m === 'arena' || m === 'boss' || m === 'act1' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
+    clearStory();
+    S = SIM.create({ zone: o.zone, needTalk: m === 'act1' && window.HSWorld ? window.HSWorld.needTalk(o.zone, story().seen) : [], gallowsKey: !!SAVE.gallowsKey, mode: m === 'bench' ? 'bench' : m === 'boss' ? 'boss' : m === 'act1' ? 'act1' : 'arena', bossKills: SAVE.bossKills || 0, seed: m + '-' + Date.now(), invuln: m === 'bench' || m === 'latency', gear: SAVE.gear || undefined, sinceU: SAVE.sinceU || 0, loot: m === 'arena' || m === 'boss' || m === 'act1', char: m === 'arena' || m === 'boss' || m === 'act1' ? SAVE.char || undefined : undefined, level: m === 'latency' ? HS.D.level : undefined });
     S.campaign = !!o.campaign;
     if (S.progress) saveChar();
     music();
     document.getElementById('bossbar').hidden = !S.boss; bossScene(!!S.boss); zoneScene(!!S.zone); document.getElementById('whisper').hidden = true; slowmo = 0;
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
     camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
-    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : m === 'boss' ? t('bossHint') : m === 'act1' ? zoneObjective(S.zone.id) : t('hint');
+    document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : m === 'boss' ? t('bossHint') : m === 'act1' ? (S.zone.town ? townHint() : zoneObjective(S.zone.id)) : t('hint');
+    if (m === 'act1' || (m === 'boss' && S.campaign)) { const sc = scenesFor(m === 'boss' ? 'boss' : 'start'); if (sc.length) setTimeout(() => playScenes(sc), 350); }
     bench = m === 'bench' ? { t0: performance.now(), frames: [], cpu: [], simMs: 0, steps: 0, last: performance.now() } : null;
     GT.on = m === 'bench'; GT.ms = [];
   }
@@ -841,7 +917,7 @@
       hud();
     }
     if (mode === 'assets') updateAssets();
-    placeCamera(dt); updateNums(dt);
+    placeCamera(dt); updateNums(dt); placeNames();
     if (fpsOn) { const L = LAT.samples.slice(-20); document.getElementById('fps').textContent = Math.round(1 / Math.max(1e-3, dtRaw)) + ' FPS' + (L.length ? ` · ${t('latShort')} ${latStats(L).presentAvg} ms` : ''); }
   });
   function syncWorld(dt) {
@@ -908,7 +984,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, get dialog() { return DLG ? { choice: !!DLG.choice, lines: DLG.lines.length } : null; }, dlgNext, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();

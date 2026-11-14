@@ -11,7 +11,27 @@
   const CELL = 18; // m mezi středy buněk mřížky generátoru
   const UNIT = 2.5; // m na jednotku rozměru místnosti v generátoru (3–5 j. → 7,5–12,5 m)
   const CORR = 4; // m šířka chodby
-  const ACT1 = ['a1_ashfields', 'a1_burnt_orchard', 'a1_chapel_crypt', 'a1_chapel_crypt:2', 'a1_tollgate', 'a1_charcoal_woods', 'a1_kiln', 'a1_kiln_heart'];
+  // Cinderhold (hub) po Ashfields (q1_01 končí u jeho brány, Teodor zadá q1_02) a znovu po kryptě („id#2“: deník, kovárna)
+  const ACT1 = ['a1_ashfields', 'a1_cinderhold', 'a1_burnt_orchard', 'a1_chapel_crypt', 'a1_chapel_crypt:2', 'a1_cinderhold#2', 'a1_tollgate', 'a1_charcoal_woods', 'a1_kiln', 'a1_kiln_heart'];
+  // scény G.DIALOGS → spouštěče v kampani (prototyp): start kroku, NPC, zabití, boss, po bossovi.
+  // bark = titulky bez pauzy (Bible: dialog nikdy neblokuje boj); fight = volba, po které přijde souboj se šampionem
+  const STORY = [
+    { q: 'q1_01', at: 'Probuzení v hrobě', on: 'start', step: 'a1_ashfields' },
+    { q: 'q1_01', at: 'První ozvěna', on: 'kills', step: 'a1_ashfields', n: 5, bark: true },
+    { q: 'q1_01', at: 'Brána Cinderholdu', on: 'start', step: 'a1_cinderhold' },
+    { q: 'q1_02', at: 'Archiv v Cinderholdu', on: 'npc', npc: 'np_teodor', step: 'a1_cinderhold' },
+    { q: 'q1_02', at: 'Krypta', on: 'start', step: 'a1_chapel_crypt:2', bark: true },
+    { q: 'q1_02', at: 'Návrat s deníkem', on: 'npc', npc: 'np_teodor', step: 'a1_cinderhold#2' },
+    { q: 'q1_04', at: 'Kovárna v Cinderholdu', on: 'npc', npc: 'np_brannoc', step: 'a1_cinderhold#2' },
+    { q: 'q1_03', at: 'Ironbound Tollgate', on: 'start', step: 'a1_tollgate' },
+    { q: 'q1_03', at: 'Volba: clo', on: 'start', step: 'a1_tollgate', fight: 1 },
+    { q: 'q1_03', at: 'Charcoal Woods', on: 'start', step: 'a1_charcoal_woods', bark: true },
+    { q: 'q1_04', at: 'Heart of the Kiln', on: 'boss', bark: true },
+    { q: 'q1_04', at: 'Po souboji', on: 'victory' },
+    { q: 'q1_04', at: 'Volba: Kiln Shard', on: 'victory' },
+  ];
+  // s kým je třeba v Cinderholdu promluvit, než pustí brána dál (NPC scény kroku, které hráč ještě neviděl)
+  const needTalk = (step, seen) => STORY.filter((x) => x.on === 'npc' && x.step === step && !(seen || []).includes(x.q + '/' + x.at)).map((x) => x.npc);
   // tajné odbočky: odkud se vchází a co je potřeba (Bible: „Najít Rusty Gallows Key (drop: Smoldering Brute, 4 %)“)
   const SIDE = { a1_gallows: { from: 'a1_charcoal_woods', need: 'gallowsKey', drop: 'en_brute', chance: 0.04 } };
   // konec questu = konec kroku kampaně (q1_02 končí Archivním deníkem ve 2. patře, q1_03 průchodem Charcoal Woods)
@@ -28,9 +48,9 @@
     'a1_chapel_crypt:2': { size: 'M', diff: 3, density: 1.75, side: 2, special: 2, lv: [5, 6] },
     a1_gallows: { size: 'S', diff: 4, density: 1.5, side: 2, special: 0 },
   };
-  const areaOf = (step) => String(step).split(':')[0];
-  const floorOf = (step) => Number(String(step).split(':')[1] || 1);
-  const floorsOf = (areaId) => ACT1.filter((x) => areaOf(x) === areaId).length || 1;
+  const areaOf = (step) => String(step).split(/[:#]/)[0];
+  const floorOf = (step) => Number(String(step).split('#')[0].split(':')[1] || 1);
+  const floorsOf = (areaId) => ACT1.filter((x) => areaOf(x) === areaId && !x.includes('#')).length || 1;
   const area = (id) => HS.D.areas.find((a) => a.id === areaOf(id));
   const rect = (cx, cz, w, h) => ({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - h / 2, z1: cz + h / 2 });
   const inRect = (r, x, z, m) => x >= r.x0 + m && x <= r.x1 - m && z >= r.z0 + m && z <= r.z1 - m;
@@ -40,6 +60,7 @@
 
   function buildZone(areaId) {
     const a = area(areaId); const P = ZONE_P[areaId]; const step = areaId; const aid = areaOf(step);
+    if (a && a.type === 'town') return buildTown(step, a);
     if (!a || !P) throw new Error('Unknown zone ' + areaId);
     const prm = Object.assign({ seed: 'act1-' + areaId, theme: 'crypt', arena: 'pillars', floors: 1 }, P);
     const d = HS.genDungeon(prm); const r = HS.rng('act1-zone-' + areaId);
@@ -84,6 +105,19 @@
     return { id: areaId, area: aid, floor, floors, quest: QUEST_END[step] || null, side: !!SIDE[aid], n: a.n, lv, type: a.type, rooms, corridors, spawns, objs, mainLen: d.mainLen, keys: d.keys, ok: d.bossOk && d.allOk, route: route(rooms, corridors, d) };
   }
 
+  // Cinderhold: pevné město (inst fixed) – náměstí, archiv (Teodor), kovárna (Brannoc), kasárna Compactu (Oduin),
+  // Lantern u vstupu a brána ven na sever; vyhaslé pece kolem náměstí. Rozměry jsou hodnoty prototypu.
+  function buildTown(step, a) {
+    const R = (id, kind, cx, cz, w, h) => Object.assign(rect(cx, cz, w, h), { id, kind, main: true, depth: id, cx, cz, w, h, key: null, chest: false, elite: false, enemies: 0 });
+    const rooms = [R(0, 'entrance', 0, 15, 8, 10), R(1, 'normal', 0, 0, 30, 22), R(2, 'normal', -18, 0, 10, 10), R(3, 'normal', 18, 0, 10, 10), R(4, 'boss', 0, -14, 10, 10)]; // místnosti se překrývají = průchod
+    const at = { np_teodor: [-20, 0], np_brannoc: [20, 0], np_oduin: [-3, -13] };
+    const objs = [{ kind: 'lantern', x: 0, z: 16, room: 0 }, { kind: 'gate', x: 0, z: -17, room: 4 }];
+    for (const id of a.npcs || []) if (at[id]) objs.push({ kind: 'npc', npc: id, x: at[id][0], z: at[id][1], room: at[id][0] < -14 ? 2 : at[id][0] > 14 ? 3 : 4 });
+    for (const [x, z] of [[-11, -7], [11, -7], [-11, 7], [11, 7]]) objs.push({ kind: 'deco', what: 'furnace', x, z, room: 1 });
+    objs.forEach((o, i) => { o.id = i + 1; });
+    const route = [{ x: 0, z: 12 }, { x: 0, z: 0 }, { x: -19.5, z: 0 }, { x: 0, z: 0 }, { x: 19.5, z: 0 }, { x: 0, z: 0 }, { x: -3, z: -11 }, { x: 0, z: -15 }, { x: 0, z: -17 }];
+    return { id: step, area: a.id, floor: 1, floors: 1, quest: null, side: false, town: true, n: a.n, lv: a.lv, type: a.type, rooms, corridors: [], spawns: [], objs, mainLen: rooms.length, keys: [], ok: true, route };
+  }
   // průchozí místo? (místnosti + chodby, zamčené chodby bez klíče ne)
   function walkable(z, x, y, m, keys) {
     for (const rm of z.rooms) if (inRect(rm, x, y, m)) return true;
@@ -102,5 +136,5 @@
   }
   // další krok kampaně; z tajné odbočky zpět do oblasti, odkud se vešlo
   const next = (id) => { if (SIDE[id]) return SIDE[id].from; const i = ACT1.indexOf(id); return i >= 0 && i < ACT1.length - 1 ? ACT1[i + 1] : null; };
-  root.HSWorld = { ACT1, SIDE, QUEST_END, CELL, UNIT, CORR, ZONE_P, buildZone, walkable, next, area, areaOf, floorOf, floorsOf };
+  root.HSWorld = { ACT1, SIDE, QUEST_END, STORY, needTalk, CELL, UNIT, CORR, ZONE_P, buildZone, walkable, next, area, areaOf, floorOf, floorsOf };
 })(typeof window !== 'undefined' ? window : globalThis);
