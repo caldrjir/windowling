@@ -7,14 +7,20 @@ const G = {
   grid: new SpatialGrid(72), maxR: 30, shake: 0, flash: 0, hurtFlash: 0, timeScale: 1,
 };
 const _q = [], _q2 = [];
-const MAX_PARTICLES = 1400;
+const MAX_PARTICLES = 1000;
+// Srdce, magnety a bomby na mapě nezůstávají navždy a nehromadí se: v pozdní hře zaplnily celou mapu.
+const PICKUP_LIFE = 75, PICKUP_CAP = { heart: 12, magnet: 6, bomb: 6 };
 
 const xpNeed = l => Math.floor(5 + (l - 1) * 6 + Math.pow(l - 1, 1.55));
 const minutes = () => G.time / 60;
 const hpMul = () => { const m = minutes(); return (1 + m * 0.3 + m * m * 0.014) * G.sector.hp * (1 + G.od * 0.25); };
-const dmgMul = () => (1 + minutes() * 0.045) * G.sector.dmg * (1 + G.od * 0.1);
+// Za hranicí 15 minut (nekonečno) sílí i zásahy nepřátel, ať běh jednou skončí.
+const endlessMin = () => Math.max(0, G.time - RUN_LENGTH) / 60;
+const dmgMul = () => (1 + minutes() * 0.045) * G.sector.dmg * (1 + G.od * 0.1) * (1 + endlessMin() * 0.1);
 const spdMul = () => (1 + Math.min(minutes(), 20) * 0.012) * (1 + G.od * 0.03);
-const shardMul = () => G.sector.shards * (1 + G.od * 0.2) * G.st.greed;
+// V nekonečnu střepů postupně ubývá (po 30 minutách navíc už jen čtvrtina): jinak šlo za jeden
+// dlouhý běh vyfarmit víc, než stojí celá Kovárna.
+const shardMul = () => G.sector.shards * (1 + G.od * 0.2) * G.st.greed * Math.max(0.25, 1 - endlessMin() / 40);
 
 // ── Statistiky hráče ────────────────────────────────────────────────────────
 // Zisky (poškození, oblast, magnet, rychlost, štěstí…) se sčítají a násobí základ: „+10 %“ je vždy
@@ -132,13 +138,16 @@ function enemiesNear(x, y, r) {
 
 // ── Efekty a částice ────────────────────────────────────────────────────────
 function burst(x, y, color, n, spd = 220, size = 3, life = 0.6) {
+  // v plné hordě méně jisker na výbuch, ať vykreslování stíhá
+  const np = G.particles.length;
+  if (np > 400) n = Math.ceil(n * (np > 700 ? 0.3 : 0.6));
   for (let i = 0; i < n && G.particles.length < MAX_PARTICLES; i++) {
     const a = Math.random() * TAU, s = spd * (0.25 + Math.random() * 0.75);
     G.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: life * (0.5 + Math.random() * 0.5), max: life, size: size * (0.6 + Math.random() * 0.8), color, drag: 3 });
   }
 }
 function addText(x, y, txt, color, size = 14, life = 0.7) {
-  if (G.texts.length > 90) return;
+  if (G.texts.length > 60) return;
   G.texts.push({ x: x + rand(-6, 6), y, txt, color, size, life, max: life, vy: -55 });
 }
 // Otřesy o stupeň slabší než dřív: menší strop a vykreslení s menší amplitudou (render.js).
@@ -233,7 +242,11 @@ function mkPickup(kind, x, y, val = 0) {
   const a = Math.random() * TAU, s = rand(40, 130);
   return { kind, x, y, val, vx: Math.cos(a) * s, vy: Math.sin(a) * s, mag: false, sp: 0, t: Math.random() * 3, dead: false };
 }
-function dropPickup(kind, x, y, val = 0) { G.pickups.push(mkPickup(kind, x, y, val)); }
+function dropPickup(kind, x, y, val = 0) {
+  const cap = PICKUP_CAP[kind];
+  if (cap && G.pickups.reduce((n, p) => n + (p.kind === kind && !p.dead ? 1 : 0), 0) >= cap) return;
+  G.pickups.push(mkPickup(kind, x, y, val));
+}
 function dropGem(x, y, val) {
   if (G.gemCount > 320) {
     for (let tries = 0; tries < 6; tries++) {
@@ -260,7 +273,9 @@ function collect(pk) {
     case 'shard': {
       G.shards += pk.val;
       Sound.play.shard();
-      addText(p.x, p.y - 24, '+' + Math.max(1, Math.round(pk.val)) + ' ◆', '#e08bff', 14);
+      // střepy sebrané těsně po sobě (magnet) se sečtou do jednoho čísla
+      G.shardAcc = (G.shardAcc || 0) + pk.val;
+      if (G.time - (G.shardTextT || -9) > 0.3) shardText();
       break;
     }
     case 'heart': {
@@ -725,9 +740,12 @@ function upgradePool() {
   return pool;
 }
 
+// Mutace, která ještě nedosáhla stropu; když jsou všechny na stropu, hrst střepů.
 function mutationChoice(skip = []) {
-  const ids = Object.keys(MUTATIONS).filter(id => !skip.includes(id));
-  const id = pick(ids.length ? ids : Object.keys(MUTATIONS));
+  const open = Object.keys(MUTATIONS).filter(id => (G.mut[id] || 0) < MUT_MAX);
+  const ids = open.filter(id => !skip.includes(id));
+  if (!ids.length) return { kind: 'gold' };
+  const id = pick(ids);
   return { kind: 'mut', id, lvl: (G.mut[id] || 0) + 1 };
 }
 
@@ -745,7 +763,12 @@ function genChoices() {
   }
   // Když dojdou vylepšení, zbytek karet doplní mutace (nekonečné drobné posílení) a při nízkém zdraví oprava.
   if (out.length < n && G.p.hp < G.st.maxHp * 0.5) out.push({ kind: 'heal' });
-  while (out.length < n) out.push(mutationChoice(out.filter(c => c.kind === 'mut').map(c => c.id)));
+  while (out.length < n) {
+    const c = mutationChoice(out.filter(c => c.kind === 'mut').map(c => c.id));
+    if (c.kind === 'gold' && out.some(o => o.kind === 'gold')) break;
+    out.push(c);
+  }
+  if (out.length < 2 && !out.some(c => c.kind === 'heal')) out.push({ kind: 'heal' });
   return out;
 }
 
@@ -1154,12 +1177,20 @@ function updateEffects(dt) {
   }
 }
 
+function shardText() {
+  if (!G.shardAcc) return;
+  addText(G.p.x, G.p.y - 24, '+' + Math.max(1, Math.round(G.shardAcc)) + ' ◆', '#e08bff', 14);
+  G.shardAcc = 0; G.shardTextT = G.time;
+}
+
 function updatePickups(dt) {
   const p = G.p, mr = G.st.magnet;
   let gems = 0;
+  if (G.shardAcc && G.time - (G.shardTextT || -9) > 0.3) shardText();
   for (const pk of G.pickups) {
     if (pk.dead) continue;
     pk.t += dt;
+    if (PICKUP_CAP[pk.kind] && pk.t > PICKUP_LIFE) { pk.dead = true; continue; }
     if (pk.kind === 'gem') gems++;
     const dx = p.x - pk.x, dy = p.y - pk.y, dd = dx * dx + dy * dy;
     if (pk.kind === 'chest') {

@@ -15,7 +15,7 @@ const TIPS = L([
   'Rozbušky (bílé hvězdy) se před výbuchem rozblikají. Drž si odstup!',
   'Magnet vysaje <b>všechny krystaly</b> na mapě. Bomba vyčistí obrazovku.',
   'Úspěchy odemykají nové <b>piloty, zbraně a doplňky</b>. Co který odemyká, uvidíš v Úspěších.',
-  'Evoluční zbraň jde dál <b>přetížit</b> až na ★4. Když už není co vylepšit, nabídnou se <b>mutace</b> bez limitu.',
+  'Evoluční zbraň jde dál <b>přetížit</b> až na ★4. Když už není co vylepšit, nabídnou se <b>mutace</b>, každá až 10×.',
   'Po dobytí Sektoru II se v Kovárně otevře <b>Mistrovská dílna</b>: víc karet, víc slotů, rázový úskok…',
   '<b>Pancíř</b> ubírá procento z každého zásahu, takže chrání i proti nejsilnějším nepřátelům.',
   'V nekonečném režimu po porážce Monarchy roste síla prázdnoty každou minutou.',
@@ -30,7 +30,7 @@ const TIPS = L([
   'Detonators (white stars) start blinking before they explode. Keep your distance!',
   'The magnet pulls in <b>every crystal</b> on the map. The bomb clears the screen.',
   'Achievements unlock new <b>pilots, weapons and passives</b>. See what each one unlocks under Achievements.',
-  'An evolved weapon can be <b>overcharged</b> up to ★4. When nothing is left to upgrade, you get limitless <b>mutations</b>.',
+  'An evolved weapon can be <b>overcharged</b> up to ★4. When nothing is left to upgrade, you get <b>mutations</b>, each up to 10 times.',
   'Clearing Sector II opens the <b>Master Workshop</b> in the Forge: more cards, more slots, shock dash…',
   '<b>Armor</b> takes a percentage off every hit, so it protects even against the strongest enemies.',
   'In endless mode after the Monarch falls, the void grows stronger every minute.',
@@ -203,7 +203,7 @@ const UI = (() => {
         const seen = SAVE.seen[id], open = unlocked(d);
         return `<div class="fcard cx ${seen ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi">${icon(d.icon)}<div><h4>${seen || open ? d.name : '???'}</h4><p>${seen || open ? `${d.desc}${d.noPer ? '' : ' ' + L('za úroveň', 'per level')} · max. ${d.max}` : lockNote(d)}</p></div></div></div>`;
       }).join('') + `<div class="fcard cx" style="--c:#ffd166"><div class="fi">${icon('overcharge')}<div><h4>${L('Přetížení', 'Overcharge')}</h4><p>${L(`Evoluční zbraň se dál vylepšuje: ★1–★${OC_MAX}, každá hvězda +${pct(OC_DMG)} % poškození a −${pct(OC_CD)} % nabíjení.`, `An evolved weapon keeps improving: ★1–★${OC_MAX}, each star +${pct(OC_DMG)}% damage and −${pct(OC_CD)}% cooldown.`)}</p></div></div></div>
-        <div class="fcard cx" style="--c:#5dffa8"><div class="fi">${icon('mutation')}<div><h4>${L('Mutace', 'Mutations')}</h4><p>${L('Když už není co vylepšit, nabízí postup mutace: drobná posílení bez limitu.', 'When there is nothing left to upgrade, level-ups offer mutations: small boosts with no limit.')}</p></div></div></div>`;
+        <div class="fcard cx" style="--c:#5dffa8"><div class="fi">${icon('mutation')}<div><h4>${L('Mutace', 'Mutations')}</h4><p>${L(`Když už není co vylepšit, nabízí postup mutace: drobná posílení, od každého druhu nejvýš ${MUT_MAX}.`, `When there is nothing left to upgrade, level-ups offer mutations: small boosts, at most ${MUT_MAX} of each kind.`)}</p></div></div></div>`;
       else if (codexTab === 'evos') body = BASE_WEAPONS.map(id => {
         const b = WEAPONS[id], e = WEAPONS[b.evo], got = SAVE.evolutions[b.evo];
         return `<div class="fcard cx ${got ? '' : 'unknown'}" style="--c:${e.color}"><div class="fi">${icon(e.icon)}<div><h4>${got ? e.name : '???'}</h4><p>${got ? e.desc : L('Neobjevená evoluce.', 'Undiscovered evolution.')}</p></div></div>
@@ -409,7 +409,7 @@ const UI = (() => {
     }
     if (c.kind === 'mut') {
       const d = MUTATIONS[c.id], after = calcStats(G.pilot, SAVE.forge, G.passives, Object.assign({}, G.mut, { [c.id]: c.lvl }));
-      return { name: d.name, color: d.color, icon: 'mutation', badge: L('Mutace ', 'Mutation ') + c.lvl, desc: d.desc, stat: statLines(d.mod, after), type: L('Mutace · bez limitu', 'Mutation · no limit') };
+      return { name: d.name, color: d.color, icon: 'mutation', badge: L('Mutace ', 'Mutation ') + c.lvl + ' / ' + MUT_MAX, desc: d.desc, stat: statLines(d.mod, after), type: L('Mutace', 'Mutation') };
     }
     if (c.kind === 'evo') {
       const d = WEAPONS[c.id];
@@ -476,7 +476,7 @@ const UI = (() => {
       const d = PASSIVES[id];
       return `<div class="build-item" style="--c:${d.color}">${icon(d.icon)}<span>${d.name}</span>${pips(l, d.max)}</div>`;
     }).join('');
-    const m = Object.entries(G.mut).map(([id, l]) => `<div class="build-item" style="--c:${MUTATIONS[id].color}">${icon('mutation')}<span>${MUTATIONS[id].name}</span><b style="margin-left:auto">×${l}</b></div>`).join('');
+    const m = Object.entries(G.mut).map(([id, l]) => `<div class="build-item" style="--c:${MUTATIONS[id].color}">${icon('mutation')}<span>${MUTATIONS[id].name}</span><b style="margin-left:auto">${l} / ${MUT_MAX}</b></div>`).join('');
     return `<h4>${L('Zbraně', 'Weapons')} <small>${G.weapons.length} / ${G.st.wSlots}</small></h4><div class="build-list">${w}</div><h4>${L('Doplňky', 'Passives')} <small>${Object.keys(G.passives).length} / ${G.st.pSlots}</small></h4><div class="build-list">${p || `<span class="sum">${L('Zatím žádné', 'None yet')}</span>`}</div>${m ? `<h4>${L('Mutace', 'Mutations')}</h4><div class="build-list">${m}</div>` : ''}`;
   }
 

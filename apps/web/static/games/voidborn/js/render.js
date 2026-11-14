@@ -87,6 +87,17 @@ const Sprites = (() => {
     return get(`ship|${color}`, () => { const [c, x] = canvasFor(34); drawShip(x, color); return c; });
   }
 
+  // Výbuch předkreslený jednou: kreslit radiální přechod v každém snímku pro desítky výbuchů naráz
+  // stálo v pozdní hře skoro polovinu času snímku.
+  function boom(color) {
+    return get(`b|${color}`, () => {
+      const [c, x] = canvasFor(64);
+      const g = x.createRadialGradient(0, 0, 0, 0, 0, 64);
+      g.addColorStop(0, 'rgba(255,255,255,0.7)'); g.addColorStop(0.4, rgba(color, 0.5)); g.addColorStop(1, rgba(color, 0));
+      x.fillStyle = g; x.beginPath(); x.arc(0, 0, 64, 0, TAU); x.fill();
+      return c;
+    });
+  }
   function glow(color, r) {
     return get(`g|${color}|${r}`, () => {
       const [c, x] = canvasFor(r * 2.6);
@@ -163,7 +174,7 @@ const Sprites = (() => {
     });
   }
 
-  return { enemy, boss, bossCore, ship, drawShip, glow, blade, gem, pickup, path, clear: () => cache.clear() };
+  return { enemy, boss, bossCore, ship, drawShip, glow, boom, blade, gem, pickup, path, clear: () => cache.clear() };
 })();
 
 // ── Renderer ────────────────────────────────────────────────────────────────
@@ -275,6 +286,8 @@ const Render = (() => {
     for (let x = x0; x <= x1; x += step * 4) for (let y = y0; y <= y1; y += step * 4) ctx.fillRect(x - 2, y - 2, 4, 4);
   }
 
+  // srdce, magnety a bomby před zmizením blikají
+  const fading = pk => (pk.t > PICKUP_LIFE - 6 && (pk.t * 6) % 1 < 0.45 ? 0.3 : 1);
   const inView = (x, y, r) => Math.abs(x - G.cam.x) < G.viewW / 2 + r + 30 && Math.abs(y - G.cam.y) < G.viewH / 2 + r + 30;
 
   function drawGame() {
@@ -325,12 +338,9 @@ const Render = (() => {
         spr(Sprites.glow('#ffffff', 10), hx, hy, 0, 0.6 + q * 0.6, 0.9);
         ctx.globalCompositeOperation = 'source-over';
       } else if (f.k === 'flame') {
-        world();
         const a = Math.min(1, f.life / f.max * 1.6), rr = f.r * (0.75 + 0.25 * a);
         ctx.globalCompositeOperation = 'lighter';
-        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rr);
-        g.addColorStop(0, `rgba(255,240,190,${0.5 * a})`); g.addColorStop(0.45, rgba(f.color, 0.35 * a)); g.addColorStop(1, rgba(f.color, 0));
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, TAU); ctx.fill();
+        spr(Sprites.boom(f.color), f.x, f.y, 0, rr / 64, 0.8 * a);
         ctx.globalCompositeOperation = 'source-over';
       }
     }
@@ -350,8 +360,8 @@ const Render = (() => {
         const b = (pk.t % 1.2) / 1.2, pulse = q => Math.exp(-(((b - q) / 0.05) ** 2));
         world(); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,143,171,${(0.55 * (1 - b)).toFixed(3)})`;
         ctx.beginPath(); ctx.arc(pk.x, pk.y + bob, 15 + b * 22, 0, TAU); ctx.stroke();
-        spr(Sprites.pickup('heart'), pk.x, pk.y + bob, 0, 1 + 0.16 * pulse(0.05) + 0.1 * pulse(0.22));
-      } else spr(Sprites.pickup(pk.kind), pk.x, pk.y + bob, 0);
+        spr(Sprites.pickup('heart'), pk.x, pk.y + bob, 0, 1 + 0.16 * pulse(0.05) + 0.1 * pulse(0.22), fading(pk));
+      } else spr(Sprites.pickup(pk.kind), pk.x, pk.y + bob, 0, 1, fading(pk));
     }
 
     // nepřátelé
@@ -434,12 +444,11 @@ const Render = (() => {
           ctx.stroke();
         }
       } else if (f.k === 'boom') {
-        const t = 1 - f.life / f.max, rr = f.r * ease.outCubic(t);
-        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, Math.max(1, rr));
-        g.addColorStop(0, `rgba(255,255,255,${0.7 * (1 - t)})`); g.addColorStop(0.4, rgba(f.color, 0.5 * (1 - t))); g.addColorStop(1, rgba(f.color, 0));
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, Math.max(1, rr), 0, TAU); ctx.fill();
+        const t = 1 - f.life / f.max, rr = Math.max(1, f.r * ease.outCubic(t));
+        spr(Sprites.boom(f.color), f.x, f.y, 0, rr / 64, 1 - t);
+        world();
         ctx.strokeStyle = rgba(f.color, 0.8 * (1 - t)); ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(f.x, f.y, Math.max(1, rr), 0, TAU); ctx.stroke();
+        ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, TAU); ctx.stroke();
       }
     }
 
@@ -463,11 +472,13 @@ const Render = (() => {
     world();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    let font = '';
     for (const t of G.texts) {
       const a = Math.min(1, t.life / t.max * 2.5);
       const pop = t.life > t.max - 0.1 ? 1.3 : 1;
       ctx.globalAlpha = a;
-      ctx.font = `700 ${Math.round(t.size * pop)}px "Chakra Petch", sans-serif`;
+      const f = `700 ${Math.round(t.size * pop)}px "Chakra Petch", sans-serif`;
+      if (f !== font) { ctx.font = f; font = f; }
       ctx.strokeText(t.txt, t.x, t.y);
       ctx.fillStyle = t.color; ctx.fillText(t.txt, t.x, t.y);
     }

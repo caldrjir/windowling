@@ -41,7 +41,7 @@ if (LANG === 'en') (() => {
   for (const id in P) { PASSIVES[id].name = P[id][0]; PASSIVES[id].desc = P[id][1]; }
   const M = {
     might: ['Might Mutation', '+4% damage'], vigor: ['Vigor Mutation', '+10 max HP (filled at once)'], haste: ['Haste Mutation', '−3% cooldown'],
-    area: ['Reach Mutation', '+4% area of effect'], crit: ['Precision Mutation', '+2% crit chance, +10% crit damage'], greed: ['Greed Mutation', '+6% shards'],
+    area: ['Reach Mutation', '+4% area of effect'], crit: ['Precision Mutation', '+2% crit chance, +10% crit damage'],
   };
   for (const id in M) { MUTATIONS[id].name = M[id][0]; MUTATIONS[id].desc = M[id][1]; }
   const B = { warden: 'WARDEN', hive: 'HIVE', colossus: 'COLOSSUS', reaper: 'REAPER', monarch: 'VOID MONARCH' };

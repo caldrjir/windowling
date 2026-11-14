@@ -42,7 +42,16 @@ const Sound = (() => {
     last[name] = t; return true;
   }
 
+  // Strop efektů: nejvýš 24 zvukových uzlů za 100 ms. Magnet v pozdní hře jinak spustil stovky
+  // zvuků střepů najednou a zahltil zvuk i hru. Hudba (vlastní sběrnice) se nepočítá.
+  let budgetT = -1, budget = 0;
+  function spend() {
+    const t = ctx.currentTime;
+    if (t - budgetT > 0.1) { budgetT = t; budget = 0; }
+    return ++budget <= 24;
+  }
   function tone(o) {
+    if (!o.bus && !spend()) return;
     const t0 = (o.at || ctx.currentTime) + (o.delay || 0);
     const osc = ctx.createOscillator(); osc.type = o.type || 'sine';
     osc.frequency.setValueAtTime(o.f, t0);
@@ -59,6 +68,7 @@ const Sound = (() => {
     osc.start(t0); osc.stop(t0 + o.dur + 0.05);
   }
   function noise(o) {
+    if (!o.bus && !spend()) return;
     const t0 = (o.at || ctx.currentTime) + (o.delay || 0);
     const src = ctx.createBufferSource(); src.buffer = noiseBuf;
     const f = ctx.createBiquadFilter(); f.type = o.ft || 'bandpass';
@@ -87,7 +97,7 @@ const Sound = (() => {
       tone({ type: 'sine', f, dur: 0.1, vol: 0.055 });
       tone({ type: 'triangle', f: f * 2, dur: 0.05, vol: 0.018 });
     },
-    shard() { tone({ type: 'sine', f: 1568, dur: 0.16, vol: 0.06 }); tone({ type: 'sine', f: 2349, dur: 0.22, vol: 0.05, delay: 0.06 }); },
+    shard() { if (!ok('shard', 0.06)) return; tone({ type: 'sine', f: 1568, dur: 0.16, vol: 0.06 }); tone({ type: 'sine', f: 2349, dur: 0.22, vol: 0.05, delay: 0.06 }); },
     hurt() {
       if (!ok('hurt', 0.12)) return;
       tone({ type: 'sawtooth', f: 220, f2: 55, dur: 0.28, vol: 0.12, lp: 900 });
@@ -125,7 +135,7 @@ const Sound = (() => {
       noise({ f: 7000, dur: 1.2, vol: 0.03, q: 0.5, ft: 'highpass' });
     },
     achieve() { [0, 4, 7, 12].forEach((s, i) => tone({ type: 'sine', f: semi(s + 10), dur: 0.28, vol: 0.055, delay: i * 0.08 })); },
-    heal() { tone({ type: 'sine', f: 440, f2: 880, dur: 0.3, vol: 0.07 }); tone({ type: 'sine', f: 660, f2: 1320, dur: 0.3, vol: 0.04, delay: 0.08 }); },
+    heal() { if (!ok('heal', 0.1)) return; tone({ type: 'sine', f: 440, f2: 880, dur: 0.3, vol: 0.07 }); tone({ type: 'sine', f: 660, f2: 1320, dur: 0.3, vol: 0.04, delay: 0.08 }); },
     bomb() { noise({ f: 300, f2: 30, dur: 1.0, vol: 0.25, ft: 'lowpass' }); tone({ type: 'sine', f: 100, f2: 25, dur: 0.9, vol: 0.2 }); },
     die() { tone({ type: 'sawtooth', f: 320, f2: 28, dur: 1.6, vol: 0.14, lp: 1100 }); noise({ f: 300, f2: 40, dur: 1.4, vol: 0.15, ft: 'lowpass' }); },
     revive() { [12, 7, 4, 0, 12, 19, 24].forEach((s, i) => tone({ type: 'triangle', f: semi(s), dur: 0.3, vol: 0.06, delay: i * 0.07 })); },
