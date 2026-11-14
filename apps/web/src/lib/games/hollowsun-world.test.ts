@@ -92,6 +92,7 @@ describe('HOLLOW SUN Act I zones', () => {
 		for (const s of z.spawns) {
 			expect(s.L).toBeGreaterThanOrEqual(a?.lv[0] ?? 0);
 			expect(s.L).toBeLessThanOrEqual(a?.lv[1] ?? 0);
+			expect(a?.enemies).toContain(s.type); // all six Act I types, the Kiln Acolyte included
 		}
 		const kinds = z.objs.map((o) => o.kind);
 		expect(kinds.filter((k) => k === 'lantern')).toHaveLength(1);

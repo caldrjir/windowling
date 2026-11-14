@@ -8,7 +8,7 @@
   const PLAYER_R = 0.5, PLAYER_SPEED = 5.2, PICK_R = 1.3;
   const DODGE = { dist: 5.5, time: 0.3, iframes: 0.25, cd: 0.9 };
   const WINDUP = 0.4; // zásah přichází po 40 % času akce (Casting Lifecycle v Bible)
-  const ER = { en_thrall: 0.45, en_brute: 0.95, en_wisp: 0.35, en_hound: 0.5, en_bowman: 0.45, bo_kiln: 1.6 };
+  const ER = { en_thrall: 0.45, en_brute: 0.95, en_wisp: 0.35, en_hound: 0.5, en_bowman: 0.45, en_acolyte: 0.45, bo_kiln: 1.6 };
 
   function rng(seed) {
     let h = 1779033703 ^ String(seed).length;
@@ -116,7 +116,7 @@
   function rollDrop(s, e) {
     if (!s.loot) return;
     const r = HS.rng(s.seed + '#loot#' + s.lootN++); const type = e.elite || e.def.lt === 'lt_elite' ? 'elite' : e.def.lt === 'lt_rare' ? 'rare' : 'normal';
-    if (r() >= HS.B.dropChance[type]) return;
+    if (r() >= HS.B.dropChance[type] * (e.def.lt === 'lt_caster' ? 1.1 : 1)) return; // lt_caster: „normal × 1,1“
     let rar = HS.rollRarity(r, 0, type); s.sinceU++;
     if (rar !== 'unique' && s.sinceU >= HS.B.pityUnique && rar === 'rare') rar = 'unique';
     if (rar === 'unique') s.sinceU = 0;
@@ -186,12 +186,13 @@
     // složení vlny (prototyp arény): Thralli jako jádro, od 2. vlny smečka Houndů (3–5, Bible), Bowmen a Brute
     // až od prvního levelu svého rozsahu v Bible (Bowman 3+, Brute 5+)
     s.wave++; const ml = monsterLevel(s); const lv0 = (id) => HS.D.enemies.find((e) => e.id === id).lv[0]; const w = s.wave;
-    const nT = 4 + 2 * w, nH = w >= 2 ? 3 + (w % 3) : 0, nBw = ml >= lv0('en_bowman') ? Math.min(6, Math.floor((w + 1) / 2)) : 0, nB = ml >= lv0('en_brute') ? Math.floor(w / 2) : 0;
+    const nT = 4 + 2 * w, nH = w >= 2 ? 3 + (w % 3) : 0, nBw = ml >= lv0('en_bowman') ? Math.min(6, Math.floor((w + 1) / 2)) : 0, nB = ml >= lv0('en_brute') ? Math.floor(w / 2) : 0, nA = ml >= lv0('en_acolyte') ? Math.min(3, Math.floor(w / 3)) : 0;
     ring(s, nT, ARENA - 1).forEach(([x, z]) => spawn(s, 'en_thrall', x, z));
     if (nH) { const a = s.rnd() * Math.PI * 2; for (let i = 0; i < nH; i++) spawn(s, 'en_hound', Math.cos(a) * (ARENA - 2) + (s.rnd() - 0.5) * 3, Math.sin(a) * (ARENA - 2) + (s.rnd() - 0.5) * 3); }
     ring(s, nBw, ARENA - 1.5).forEach(([x, z]) => spawn(s, 'en_bowman', x, z));
     ring(s, nB, ARENA - 2).forEach(([x, z]) => spawn(s, 'en_brute', x, z));
-    s.events.push({ t: 'wave', wave: s.wave, n: nT + nH + nBw + nB });
+    ring(s, nA, ARENA - 1.5).forEach(([x, z]) => spawn(s, 'en_acolyte', x, z));
+    s.events.push({ t: 'wave', wave: s.wave, n: nT + nH + nBw + nB + nA });
   }
   function spawnBench(s, n) {
     const nB = Math.round(n / 5);
@@ -303,7 +304,9 @@
     const crit = s.rnd() < h.critChance; const S = s.ch.S;
     let dmg = (h.perHit / h.eCrit) * (crit ? S.critMult : 1) * (mult || 1) * (0.9 + s.rnd() * 0.2);
     dmg = Math.max(1, Math.round(dmg));
-    e.hp -= dmg; e.flash = 0.1; s.stats.hits++; s.stats.dmg += dmg; if (crit) s.stats.crits++;
+    const wd = wardAbsorb(s, e, dmg); e.hp -= dmg - wd; e.flash = 0.1; s.stats.hits++; s.stats.dmg += dmg - wd; if (crit) s.stats.crits++;
+    // Kiln Acolyte: zásah během vyvolání nebo štítu kouzlo přeruší (slabina „interrupt“ v Bible); cooldown běží
+    if (e.atk && (e.atk.def.shape === 'summon' || e.atk.def.shape === 'ward')) { e.cds[e.atk.i] = e.atk.def.cd; e.atk = null; e.recover = 0.6; s.stats.interrupts = (s.stats.interrupts || 0) + 1; s.events.push({ t: 'interrupt', id: e.id, x: e.x, z: e.z }); }
     // Searing Slam proti cíli s cejchem Brand: Burn trvá 6 s (ix v Bible), tempo hoření stejné
     if (sk.dot) e.burn.push({ left: sk.id === 'ak_slam' && e.brand > 0 ? 6 : sk.dot.dur, dps: (h.dot / h.hitChance) / sk.dot.dur });
     const kb = sk.id === 'ak_slam' ? 1.4 : sk.id === 'ak_charge' ? 2 : 0.6; const d = len(e.x - s.player.x, e.z - s.player.z) || 1;
@@ -317,6 +320,8 @@
     if (s.boss && e.id === s.boss.id) { bossLoot(s, e); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
     if (!e.noLoot) rollDrop(s, e); gainXp(s, e);
   }
+  // štít od Acolyta pohltí poškození dřív než HP
+  function wardAbsorb(s, e, dmg) { if (!(e.ward > 0)) return 0; const ab = Math.min(e.ward, dmg); e.ward -= ab; if (e.ward <= 0) { e.ward = 0; e.wardT = 0; s.events.push({ t: 'wardbreak', id: e.id, x: e.x, z: e.z }); } return ab; }
 
   function startSkill(s, id, aim) {
     const p = s.player; const slot = s.skills[id]; if (!slot || p.act || p.dodge || p.stun > 0) return false;
@@ -431,7 +436,7 @@
     const p = s.player; const a = atk.def;
     if (a.shape === 'circle') return len(p.x - tx, p.z - tz) <= a.range + PLAYER_R;
     if (a.shape === 'leap') return segDist(p.x, p.z, atk.from[0], atk.from[1], atk.to[0], atk.to[1]) <= a.w / 2 + PLAYER_R;
-    if (a.shape === 'arrow') return false;
+    if (a.shape === 'arrow' || a.shape === 'summon' || a.shape === 'ward') return false;
     const dx = p.x - e.x, dz = p.z - e.z; if (len(dx, dz) > a.range + PLAYER_R) return false;
     return angDiff(Math.atan2(dz, dx), atk.face) <= ((a.w / 2) * Math.PI) / 180 + 0.15;
   }
@@ -454,7 +459,8 @@
     for (const e of alive) {
       if (s.boss && e.id === s.boss.id) { e.flash = Math.max(0, e.flash - dt); if (e.brand > 0) e.brand -= dt; if (e.weak > 0) e.weak -= dt; continue; }
       e.flash = Math.max(0, e.flash - dt); if (e.brand > 0) e.brand -= dt; if (e.weak > 0) e.weak -= dt; if (e.taunt > 0) e.taunt -= dt;
-      if (e.burn.length) { let bd = 0; for (const b of e.burn) { const t = Math.min(dt, b.left); bd += b.dps * t; b.left -= dt; } e.burn = e.burn.filter((b) => b.left > 0); e.burnAcc = (e.burnAcc || 0) + bd; if (e.burnAcc >= 1) { const d = Math.floor(e.burnAcc); e.burnAcc -= d; e.hp -= d; s.stats.dmg += d; if (s.tick % 10 === 0) s.events.push({ t: 'burn', id: e.id, x: e.x, z: e.z, dmg: d }); if (e.hp <= 0) { kill(s, e); continue; } } }
+      if (e.wardT > 0) { e.wardT -= dt; if (e.wardT <= 0) { e.ward = 0; e.wardT = 0; } }
+      if (e.burn.length) { let bd = 0; for (const b of e.burn) { const t = Math.min(dt, b.left); bd += b.dps * t; b.left -= dt; } e.burn = e.burn.filter((b) => b.left > 0); e.burnAcc = (e.burnAcc || 0) + bd; if (e.burnAcc >= 1) { const d = Math.floor(e.burnAcc); e.burnAcc -= d; const wd = wardAbsorb(s, e, d); e.hp -= d - wd; s.stats.dmg += d - wd; if (s.tick % 10 === 0) s.events.push({ t: 'burn', id: e.id, x: e.x, z: e.z, dmg: d }); if (e.hp <= 0) { kill(s, e); continue; } } }
       // odstrčení se tlumí
       if (e.push[0] || e.push[1]) { move(s, e, e.push[0] * dt * 6, e.push[1] * dt * 6, e.r); e.push[0] *= 0.7; e.push[1] *= 0.7; if (Math.abs(e.push[0]) + Math.abs(e.push[1]) < 0.01) e.push = [0, 0]; }
       e.cds = e.cds.map((c) => Math.max(0, c - dt));
@@ -470,7 +476,9 @@
         if (e.atk.t >= e.atk.def.tele) {
           const ad = e.atk.def;
           if (ad.shape === 'leap') { const [tx, tz] = e.atk.to; move(s, e, tx - e.x, tz - e.z, e.r); s.events.push({ t: 'leap', id: e.id, x: e.x, z: e.z }); }
-          if (ad.shape === 'arrow') { s.proj.push({ id: s.nextId++, by: e.id, x: e.x + Math.cos(e.atk.face) * (e.r + 0.3), z: e.z + Math.sin(e.atk.face) * (e.r + 0.3), dx: Math.cos(e.atk.face), dz: Math.sin(e.atk.face), speed: ad.speed, left: ad.range, mul: ad.mul, fire: !!ad.fire }); s.events.push({ t: 'shoot', id: e.id, fire: !!ad.fire }); }
+          if (ad.shape === 'summon') acolyteSummon(s, e, ad);
+          if (ad.shape === 'ward') { const tg = s.enemies.find((o) => o.id === e.atk.target && !o.dead); if (tg) { tg.ward = Math.round(tg.hpMax * ad.amt); tg.wardT = ad.dur; s.events.push({ t: 'ward', id: tg.id, by: e.id, x: tg.x, z: tg.z, amt: tg.ward }); } }
+          if (ad.shape === 'arrow') { s.proj.push({ id: s.nextId++, by: e.id, x: e.x + Math.cos(e.atk.face) * (e.r + 0.3), z: e.z + Math.sin(e.atk.face) * (e.r + 0.3), dx: Math.cos(e.atk.face), dz: Math.sin(e.atk.face), speed: ad.speed, left: ad.range, mul: ad.mul, fire: !!ad.fire, orb: !!ad.orb }); s.events.push({ t: 'shoot', id: e.id, fire: !!ad.fire, orb: !!ad.orb }); }
           if (p.hp > 0 && inShape(s, e, e.atk, e.atk.tx, e.atk.tz)) hurtPlayer(s, e, e.atk.def); e.cds[e.atk.i] = e.atk.def.cd; const sui = e.atk.def.suicide; e.atk = null; e.recover = 0.35; if (sui) { e.noLoot = true; s.events.push({ t: 'slam', x: e.x, z: e.z, r: 2.5, hits: 0 }); kill(s, e); } }
         continue;
       }
@@ -483,6 +491,8 @@
         const a = atks[i]; if (e.cds[i] > 0) continue;
         if (a.shape === 'leap') { if (d - e.r >= a.min && d - e.r <= a.range && lineFree(s, e.x, e.z, p.x, p.z)) { chosen = i; break; } continue; }
         if (a.shape === 'arrow') { if (d <= a.range && lineFree(s, e.x, e.z, p.x, p.z)) { chosen = i; break; } continue; }
+        if (a.shape === 'summon') { if (d <= a.range && s.enemies.filter((o) => !o.dead && o.by === e.id).length + a.count <= a.max) { chosen = i; break; } continue; }
+        if (a.shape === 'ward') { if (wardTarget(s, e, a)) { chosen = i; break; } continue; }
         const reach = a.shape === 'circle' ? a.range * 0.8 : a.range + PLAYER_R * 0.5; if (d - e.r <= reach) { chosen = i; break; }
       }
       if (chosen >= 0) {
@@ -490,6 +500,8 @@
         let tshape = a.shape, tw = a.w || 360, tr = a.range;
         if (a.shape === 'leap') { const L = Math.min(a.range, d - e.r - PLAYER_R * 0.5); e.atk.from = [e.x, e.z]; e.atk.to = [e.x + (dx / d) * L, e.z + (dz / d) * L]; tshape = 'cone'; tw = 20; tr = L; }
         if (a.shape === 'arrow') { tshape = 'cone'; tw = 4; tr = Math.min(a.range, d + 2); }
+        // vyvolání a štít nikoho nezraní: místo telegraphu zóny svítí kouzlo u Acolyta (a dá se přerušit)
+        if (a.shape === 'summon' || a.shape === 'ward') { if (a.shape === 'ward') e.atk.target = wardTarget(s, e, a).id; s.events.push({ t: 'ecast', id: e.id, kind: a.shape, x: e.x, z: e.z, dur: a.tele, target: e.atk.target }); continue; }
         s.events.push({ t: 'tele', id: e.id, shape: tshape, x: e.x, z: e.z, face: e.face, r: tr, w: tw, dur: a.tele, kind: a.shape }); continue;
       }
       steer(s, e, dx, dz, d, dt);
@@ -501,12 +513,34 @@
     }
     for (const e of alive) { const dx = e.x - p.x, dz = e.z - p.z; const d = len(dx, dz); const min = e.r + PLAYER_R; if (d < min && d > 1e-6) { e.x = p.x + (dx / d) * min; e.z = p.z + (dz / d) * min; } }
   }
+  // Acolyte: komu dát štít – nejzraněnější bdělý spojenec v dosahu bez štítu (nejdřív ne-Acolyte)
+  function wardTarget(s, e, a) {
+    let best = null, bv = 2;
+    for (const o of s.enemies) { if (o.dead || o === e || !o.awake || o.ward > 0 || (s.boss && o.id === s.boss.id) || len(o.x - e.x, o.z - e.z) > a.range) continue; const v = o.hp / o.hpMax + (o.type === 'en_acolyte' ? 1 : 0); if (v < bv) { bv = v; best = o; } }
+    return best;
+  }
+  // Acolyte: 2 Thrallové z popela vedle něj; bez lootu (nefarmí se), nejvýš max živých na Acolyta
+  function acolyteSummon(s, e, a) {
+    const fx = Math.cos(e.face), fz = Math.sin(e.face);
+    for (let i = 0; i < a.count; i++) {
+      const sg = i % 2 ? 1 : -1; let x = e.x + fx * 1.2 - fz * 1.3 * sg, z = e.z + fz * 1.2 + fx * 1.3 * sg;
+      if (s.zone && !root.HSWorld.walkable(s.zone, x, z, ER[a.spawn], s.zoneKeys)) { x = e.x; z = e.z; }
+      const t = spawn(s, a.spawn, x, z, e.L); t.awake = true; t.summoned = true; t.noLoot = true; t.by = e.id;
+    }
+    s.events.push({ t: 'summon', id: e.id, x: e.x, z: e.z, n: a.count });
+  }
   // pohyb nepřátel podle archetypu v Bible: Hound obíhá a skáče zboku, Bowman drží 12–16 m a ustupuje, ostatní jdou přímo
   function steer(s, e, dx, dz, d, dt) {
     const v = e.speed * dt;
     if (e.type === 'en_bowman') {
       if (d < 12) move(s, e, (-dx / d) * v * 0.8, (-dz / d) * v * 0.8, e.r);
       else if (d > 16 || !lineFree(s, e.x, e.z, s.player.x, s.player.z)) { const sd = e.id % 2 ? 1 : -1; move(s, e, ((dx / d) * 0.7 - (dz / d) * 0.7 * sd) * v, ((dz / d) * 0.7 + (dx / d) * 0.7 * sd) * v, e.r); }
+      return;
+    }
+    // Kiln Acolyte zůstává za frontou (9–13 m) a couvá před hráčem
+    if (e.type === 'en_acolyte') {
+      if (d < 9) move(s, e, (-dx / d) * v * 0.85, (-dz / d) * v * 0.85, e.r);
+      else if (d > 13 || !lineFree(s, e.x, e.z, s.player.x, s.player.z)) { const sd = e.id % 2 ? 1 : -1; move(s, e, ((dx / d) * 0.7 - (dz / d) * 0.7 * sd) * v, ((dz / d) * 0.7 + (dx / d) * 0.7 * sd) * v, e.r); }
       return;
     }
     if (e.type === 'en_hound' && d < 7 && d > 2.2 && e.cds[1] > 0) { const sd = e.id % 2 ? 1 : -1; const k = d < 4 ? -0.3 : 0.2; move(s, e, ((-dz / d) * sd + (dx / d) * k) * v, ((dx / d) * sd + (dz / d) * k) * v, e.r); return; }

@@ -776,6 +776,33 @@ window.HS_DATA = {
    "lt": "lt_normal"
   },
   {
+   "id": "en_acolyte",
+   "n": "Kiln Acolyte",
+   "arche": "Caster",
+   "lv": [
+    4,
+    12
+   ],
+   "hpMul": 0.9,
+   "dmgMul": 1.3,
+   "aps": 0.5,
+   "ms": 2.8,
+   "armorMul": 0.4,
+   "res": {
+    "fire": 50,
+    "cold": -20
+   },
+   "abil": [
+    "Ohnivá koule (1,3×)",
+    "Zvednutí Thrallů (2 ks, cd 12 s)",
+    "Štít spojenci (cd 10 s)"
+   ],
+   "pattern": "Zůstává za frontou; priority target.",
+   "eva": 0,
+   "xpMul": 1.3,
+   "lt": "lt_caster"
+  },
+  {
    "id": "bo_kiln",
    "n": "The Kiln Warden (Brother Aldric)",
    "lv": 12,
@@ -949,6 +976,40 @@ window.HS_DATA = {
     "speed": 15,
     "cd": 6,
     "fire": true
+   }
+  ],
+  "en_acolyte": [
+   {
+    "n": "Ohnivá koule",
+    "mul": 1.3,
+    "tele": 0.8,
+    "range": 18,
+    "shape": "arrow",
+    "speed": 10,
+    "cd": 2.4,
+    "fire": true,
+    "orb": true
+   },
+   {
+    "n": "Zvednutí Thrallů",
+    "mul": 0,
+    "tele": 1.2,
+    "range": 16,
+    "shape": "summon",
+    "cd": 12,
+    "count": 2,
+    "spawn": "en_thrall",
+    "max": 4
+   },
+   {
+    "n": "Štít spojenci",
+    "mul": 0,
+    "tele": 0.7,
+    "range": 10,
+    "shape": "ward",
+    "cd": 10,
+    "amt": 0.3,
+    "dur": 6
    }
   ],
   "bo_kiln": []

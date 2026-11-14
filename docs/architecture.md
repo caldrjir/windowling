@@ -283,6 +283,13 @@ Act I types from the Bible:
 - Charred Bowman: from its Bible level 3. It keeps 12–16 m, backs off when approached and needs a
   clear line. It shoots arrows (1.1×, 20 m) and a fire arrow (1.6×, cd 6 s) as projectiles; pillars,
   the anvil, the kilns and the arena wall stop them, and the dodge's i-frames avoid them.
+- Kiln Acolyte (caster, from level 4; Burnt Orchard has none, the Great Kiln many): stays 9–13 m
+  behind the front line. It throws a slow fireball (1.3×) as a projectile, raises 2 Ashen Thralls
+  (cd 12 s, at most 4 alive per acolyte; raised Thralls drop no loot) and wards the most wounded
+  ally within 10 m with a barrier of 30 % of its max HP for 6 s (cd 10 s). The ward absorbs hits
+  and burns before HP. The raise and the ward are casts with a glow instead of a danger telegraph,
+  and any hit during the cast interrupts it (the Bible's weakness "interrupt"; the cooldown still
+  runs). Drops follow `lt_caster` (normal × 1.1). Arena waves add up to 3 acolytes from wave 3.
 
 The bite's telegraph, the cooldowns, the draw time and the arrow speed are prototype values marked
 in the exported `attacks`. Waves mix Thralls (4 + 2 × wave), the hound pack, Bowmen and Brutes,

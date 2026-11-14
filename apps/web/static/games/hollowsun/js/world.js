@@ -21,9 +21,9 @@
   const area = (id) => HS.D.areas.find((a) => a.id === id);
   const rect = (cx, cz, w, h) => ({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - h / 2, z1: cz + h / 2 });
   const inRect = (r, x, z, m) => x >= r.x0 + m && x <= r.x1 - m && z >= r.z0 + m && z <= r.z1 - m;
-  // Act I (Thrall, Brute, Wisp, Hound, Bowman) – typy z oblasti, které hra umí; Acolyte zatím nahrazuje Bowman
-  const KNOWN = ['en_thrall', 'en_brute', 'en_wisp', 'en_hound', 'en_bowman'];
-  const enemyPool = (a) => { const out = a.enemies.map((e) => (KNOWN.includes(e) ? e : e === 'en_acolyte' ? 'en_bowman' : 'en_thrall')); return out.length ? out : ['en_thrall']; };
+  // všech 6 typů Act I z Bible (Thrall, Brute, Wisp, Hound, Bowman, Acolyte); neznámý typ by nahradil Thrall
+  const KNOWN = ['en_thrall', 'en_brute', 'en_wisp', 'en_hound', 'en_bowman', 'en_acolyte'];
+  const enemyPool = (a) => { const out = a.enemies.map((e) => (KNOWN.includes(e) ? e : 'en_thrall')); return out.length ? out : ['en_thrall']; };
 
   function buildZone(areaId) {
     const a = area(areaId); const P = ZONE_P[areaId];

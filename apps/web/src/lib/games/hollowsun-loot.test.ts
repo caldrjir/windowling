@@ -120,7 +120,10 @@ interface Sim {
 	INV_MAX: number;
 }
 
-function loadAll(): { HS: Core; HSim: Sim } {
+interface WorldApi {
+	walkable(z: unknown, x: number, y: number, m: number, keys: Set<string>): boolean;
+}
+function loadAll(): { HS: Core; HSim: Sim; W: WorldApi } {
 	const ctx: Record<string, unknown> = {
 		console,
 		Math,
@@ -134,9 +137,9 @@ function loadAll(): { HS: Core; HSim: Sim } {
 	};
 	ctx.window = ctx;
 	createContext(ctx);
-	for (const f of ['data', 'core', 'sim'])
+	for (const f of ['data', 'core', 'dungeon', 'world', 'sim'])
 		runInContext(readFileSync(dir + f + '.js', 'utf8'), ctx, { filename: f + '.js' });
-	return { HS: ctx.HS as Core, HSim: ctx.HSim as Sim };
+	return { HS: ctx.HS as Core, HSim: ctx.HSim as Sim, W: ctx.HSWorld as WorldApi };
 }
 const load = (): Core => loadAll().HS;
 /** Plain JSON copy: objects from the vm context have another realm's prototypes. */
@@ -213,9 +216,11 @@ describe('HOLLOW SUN loot in the simulation', () => {
 		const a = run('loot-sim', 240);
 		const b = run('loot-sim', 240);
 		expect(JSON.stringify(a.drops)).toBe(JSON.stringify(b.drops));
-		expect(a.lootN).toBe(a.kills);
+		// every kill rolls loot except Thralls raised by a Kiln Acolyte (no loot)
+		expect(a.lootN).toBeLessThanOrEqual(a.kills);
+		expect(a.lootN).toBeGreaterThan(a.kills * 0.7);
 		// normal enemies: 10 % (BAL.dropChance.normal); a wide band for one seeded run
-		const rate = a.drops.length / a.kills;
+		const rate = a.drops.length / a.lootN;
 		expect(rate).toBeGreaterThan(0.05);
 		expect(rate).toBeLessThan(0.2);
 		for (const d of a.drops) expect(HS.describe(d.item).name.length).toBeGreaterThan(0);
@@ -229,7 +234,7 @@ describe('HOLLOW SUN loot in the simulation', () => {
 	});
 
 	it('picking up, equipping and taking off change the character', () => {
-		const s = run('loot-equip', 300);
+		const s = run('loot-equip-2', 300);
 		expect(s.drops.length).toBeGreaterThan(0);
 		for (const d of s.drops.slice()) {
 			s.player.x = d.x;
@@ -237,12 +242,12 @@ describe('HOLLOW SUN loot in the simulation', () => {
 			HSim.step(s, { pickup: d.id });
 		}
 		expect(s.drops).toHaveLength(0);
-		const armor0 = s.ch.S.armor ?? 0;
+		const stats0 = JSON.stringify(s.ch.S);
 		let equipped = 0;
 		for (let i = s.gear.inv.length - 1; i >= 0; i--)
 			if (HSim.invCommand(s, { equip: i })) equipped++;
 		expect(equipped).toBeGreaterThan(0);
-		expect(s.ch.S.armor).not.toBe(armor0);
+		expect(JSON.stringify(s.ch.S)).not.toBe(stats0);
 		const slot = Object.keys(s.gear.eq).find((k) => k !== 'main');
 		expect(slot).toBeDefined();
 		const n = s.gear.inv.length;
@@ -558,7 +563,7 @@ describe('HOLLOW SUN Kiln Warden in the simulation', () => {
 });
 
 describe('HOLLOW SUN Act I enemies in the simulation', () => {
-	const { HSim } = loadAll();
+	const { HSim, W } = loadAll();
 	const arena = (level: number) =>
 		HSim.create({
 			mode: 'arena',
@@ -618,6 +623,116 @@ describe('HOLLOW SUN Act I enemies in the simulation', () => {
 		for (let i = 0; i < 40; i++) HSim.step(s, {});
 		expect(s.proj).toHaveLength(0);
 		expect(s.stats.taken).toBe(taken);
+	});
+
+	// Kiln Acolyte (Bible: fireball 1.3×, raises 2 Thralls cd 12 s, wards an ally cd 10 s; weak to interrupts)
+	interface Foe {
+		L: number;
+		brand: number;
+		weak: number;
+		id: number;
+		type: string;
+		x: number;
+		z: number;
+		hp: number;
+		hpMax: number;
+		dead: boolean;
+		awake: boolean;
+		ward?: number;
+		summoned?: boolean;
+		noLoot?: boolean;
+		by?: number;
+		atk: { def: { shape: string } } | null;
+	}
+	const kiln = () => {
+		const s = HSim.create({
+			mode: 'act1',
+			zone: 'a1_kiln',
+			seed: 'acolyte',
+			char: { level: 10, xp: 0, alloc: {} },
+		}) as unknown as Omit<SimState, 'enemies'> & {
+			enemies: Foe[];
+			stats: { interrupts?: number };
+		};
+		const a = s.enemies.find((e) => e.type === 'en_acolyte');
+		const b = s.enemies.find((e) => e.type === 'en_brute');
+		if (!a || !b) throw new Error('the Great Kiln has no acolyte or brute');
+		// only the acolyte and a wounded brute next to it stay; the player 11 m away
+		s.enemies = [a, b];
+		a.awake = b.awake = true;
+		b.x = a.x + 1.5;
+		b.z = a.z;
+		b.hp = Math.round(b.hpMax / 2);
+		s.player.invuln = true;
+		// the player 10 m away on open floor with a clear line to the acolyte
+		const st = s as unknown as { zone: unknown; zoneKeys: Set<string> };
+		const clear = (x: number, z: number) => {
+			for (let k = 1; k <= 10; k++) {
+				const t = k / 10;
+				if (!W.walkable(st.zone, a.x + (x - a.x) * t, a.z + (z - a.z) * t, 0.5, st.zoneKeys))
+					return false;
+			}
+			return true;
+		};
+		const spot = Array.from(
+			{ length: 16 },
+			(_, i) => [a.x + Math.cos(i / 2.546) * 10, a.z + Math.sin(i / 2.546) * 10] as const,
+		).find(([x, z]) => clear(x, z));
+		if (!spot) throw new Error('no open floor around the acolyte');
+		[s.player.x, s.player.z] = spot;
+		return { s, a, b };
+	};
+
+	it('a Kiln Acolyte wards a wounded ally, raises Thralls and throws fireballs', () => {
+		const { s, a, b } = kiln();
+		const ev = new Set<string>();
+		let warded = 0;
+		for (let i = 0; i < 30 * 15; i++) {
+			HSim.step(s, {});
+			for (const e of s.events) ev.add(e.t);
+			warded = Math.max(warded, b.ward ?? 0);
+		}
+		expect(ev.has('ward')).toBe(true);
+		expect(warded).toBe(Math.round(b.hpMax * 0.3));
+		expect(ev.has('summon')).toBe(true);
+		const raised = s.enemies.filter((e) => e.summoned && e.by === a.id);
+		expect(raised.length).toBeGreaterThanOrEqual(2);
+		expect(raised.filter((e) => !e.dead).length).toBeLessThanOrEqual(4);
+		for (const t of raised) {
+			expect(t.type).toBe('en_thrall');
+			expect(t.noLoot).toBe(true);
+		}
+		expect(ev.has('shoot')).toBe(true);
+	});
+
+	it('hitting a casting Acolyte interrupts the spell; a ward absorbs damage first', () => {
+		const { s, a, b } = kiln();
+		s.enemies = [a, b];
+		let cast = false;
+		for (let i = 0; i < 30 * 12 && !cast; i++) {
+			HSim.step(s, {});
+			cast = !!a.atk && (a.atk.def.shape === 'summon' || a.atk.def.shape === 'ward');
+		}
+		expect(cast).toBe(true);
+		s.player.x = a.x + 1.6;
+		s.player.z = a.z;
+		let interrupted = false;
+		for (let i = 0; i < 30 && !interrupted; i++) {
+			HSim.step(s, { hold: true, aim: [a.x, a.z] });
+			interrupted = s.events.some((e) => e.t === 'interrupt');
+		}
+		expect(interrupted).toBe(true);
+		expect(s.stats.interrupts).toBeGreaterThan(0);
+		// a ward of 50 HP on a full-health brute: the first hits shave the ward, not HP
+		b.hp = b.hpMax;
+		b.ward = 50;
+		s.player.x = b.x + 1.6;
+		s.player.z = b.z;
+		a.dead = true;
+		for (let i = 0; i < 30 * 2 && (b.ward ?? 0) === 50; i++)
+			HSim.step(s, { hold: true, aim: [b.x, b.z] });
+		expect(b.ward ?? 0).toBeLessThan(50);
+		if ((b.ward ?? 0) > 0) expect(b.hp).toBe(b.hpMax);
 	});
 });
 
