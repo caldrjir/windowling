@@ -17,20 +17,43 @@ const spdMul = () => (1 + Math.min(minutes(), 20) * 0.012) * (1 + G.od * 0.03);
 const shardMul = () => G.sector.shards * (1 + G.od * 0.2) * G.st.greed;
 
 // ── Statistiky hráče ────────────────────────────────────────────────────────
-function computeStats() {
-  const b = { maxHp: 0, regen: 0, armor: 0, speed: 0, might: 0, area: 0, cdMul: 0, dur: 0, projSpd: 0, amount: 0, magnet: 0, luck: 0, growth: 0, greed: 0, crit: 0, revives: 0, rerolls: 0, skips: 0, dashMax: 0 };
-  const add = (m, mult = 1) => { for (const k in m) b[k] += m[k] * mult; };
-  add(G.pilot.mods);
-  for (const f of FORGE) { const l = SAVE.forge[f.id] || 0; if (l) b[f.mod[0]] += f.mod[1] * l; }
-  for (const id in G.passives) add(PASSIVES[id].mod, G.passives[id]);
-  const prevMax = G.st ? G.st.maxHp : null;
-  G.st = {
-    maxHp: Math.max(20, 100 + b.maxHp), regen: b.regen, armor: b.armor, speed: 205 * (1 + b.speed), might: 1 + b.might,
-    area: 1 + b.area, cdMul: Math.max(0.35, 1 + b.cdMul), dur: 1 + b.dur, projSpd: 1 + b.projSpd, amount: b.amount,
-    magnet: 90 * (1 + b.magnet), luck: 1 + b.luck, growth: 1 + b.growth, greed: 1 + b.greed, crit: 0.05 + b.crit,
-    revives: b.revives, rerolls: b.rerolls, skips: b.skips, dashMax: 1 + b.dashMax,
+// Zisky (poškození, oblast, magnet, rychlost, štěstí…) se sčítají a násobí základ: „+10 %“ je vždy
+// 10 % základu, je to čitelné a nic se nerozjede. Zkrácení nabíjení se naopak násobí z aktuální
+// hodnoty (−8 % z toho, co zbývá): sčítané slevy by se zrychlovaly a narazily na dno. Pancíř je
+// také procento z aktuálního zranění (armorFactor), takže drží hodnotu proti sílícím nepřátelům.
+function calcStats(pilot, forge, passives, mut) {
+  const b = {
+    maxHp: 0, regen: 0, armor: 0, speed: 0, might: 0, area: 0, dur: 0, projSpd: 0, amount: 0, magnet: 0, luck: 0, growth: 0,
+    greed: 0, crit: 0, critDmg: 0, revives: 0, rerolls: 0, skips: 0, dashMax: 0, shield: 0, startLvl: 0, cards: 0, wSlots: 0,
+    pSlots: 0, chestItems: 0, reviveFull: 0, evoLvl: 0, dashDmg: 0,
   };
+  let cd = 1;
+  const add = (m, mult = 1) => {
+    for (const k in m) {
+      if (k === 'cdMul') cd *= Math.pow(1 + m[k], mult);
+      else b[k] += m[k] * mult;
+    }
+  };
+  add(pilot.mods);
+  for (const f of FORGE) { const l = forge[f.id] || 0; if (l) add(f.mod, l); }
+  for (const id in passives) add(PASSIVES[id].mod, passives[id]);
+  for (const id in mut) add(MUTATIONS[id].mod, mut[id]);
+  return {
+    maxHp: Math.max(20, 100 + b.maxHp), regen: b.regen, armor: b.armor, speed: 205 * (1 + b.speed), might: 1 + b.might,
+    area: 1 + b.area, cdMul: Math.max(0.2, cd), dur: 1 + b.dur, projSpd: 1 + b.projSpd, amount: b.amount,
+    magnet: 90 * (1 + b.magnet), luck: 1 + b.luck, growth: 1 + b.growth, greed: 1 + b.greed, crit: Math.min(1, 0.05 + b.crit),
+    critMul: 2 + b.critDmg, revives: b.revives, rerolls: b.rerolls, skips: b.skips, dashMax: 1 + b.dashMax,
+    shieldCd: shieldCd(b.shield), startLvl: b.startLvl, cards: b.cards, wSlots: BASE_SLOTS + b.wSlots, pSlots: BASE_SLOTS + b.pSlots,
+    chestItems: b.chestItems, reviveFull: b.reviveFull > 0, evoLvl: 8 - Math.min(1, b.evoLvl), dashDmg: b.dashDmg,
+  };
+}
+
+function computeStats() {
+  const prevMax = G.st ? G.st.maxHp : null, hadShield = G.st ? G.st.shieldCd : 0;
+  G.st = calcStats(G.pilot, SAVE.forge, G.passives, G.mut || {});
   if (prevMax !== null && G.p && G.st.maxHp > prevMax) G.p.hp += G.st.maxHp - prevMax;
+  // nový štít je hned nabitý
+  if (G.p && G.st.shieldCd && !hadShield) { G.p.shieldOn = true; G.p.shieldT = 0; }
   for (const w of G.weapons) computeWeapon(w);
 }
 
@@ -43,6 +66,8 @@ function computeWeapon(w) {
   }
   const P = G.st;
   s.dmg *= P.might;
+  // přetížení evoluce: +25 % poškození a −5 % nabíjení za každou ★
+  if (def.evolved && w.oc) { s.dmg *= 1 + OC_DMG * w.oc; if (s.cd) s.cd *= Math.pow(1 - OC_CD, w.oc); }
   if (s.cd) s.cd *= P.cdMul;
   s.area = (s.area || 1) * P.area;
   if (s.dur) s.dur *= P.dur;
@@ -54,8 +79,8 @@ function computeWeapon(w) {
 const ownsFamily = id => G.weapons.some(w => w.id === id || WEAPONS[w.id].from === id);
 const getWeapon = id => G.weapons.find(w => w.id === id);
 
-function addWeapon(id) {
-  const w = { id, level: 1, t: 0.4, s: null };
+function addWeapon(id, level = 1) {
+  const w = { id, level: Math.min(8, level), t: 0.4, s: null, oc: 0 };
   computeWeapon(w);
   G.weapons.push(w);
   SAVE.seen[id] = true;
@@ -69,20 +94,20 @@ function newRun(pilotId, si, od) {
   Object.assign(G, {
     pilot, si, od, sector: SECTORS[si], time: 0, kills: 0, level: 1, xp: 0, xpNext: xpNeed(1), shards: 0,
     enemies: [], bullets: [], ebullets: [], pickups: [], effects: [], particles: [], texts: [],
-    weapons: [], passives: {}, st: null, boss: null, bossIdx: 0, warned: -1, nextBossT: BOSS_TIMES[0],
+    weapons: [], passives: {}, mut: {}, st: null, boss: null, bossIdx: 0, warned: -1, nextBossT: BOSS_TIMES[0],
     nextElite: 75, nextEvent: 50, spawnAcc: 0, uid: 0, dmgBy: {}, pendingLevels: 0, timeScale: 1,
     shake: 0, flash: 0, hurtFlash: 0, killTimes: [], noHit: 0, bossClean: true, newAch: [], endless: false,
     victory: false, gemCount: 0, gemCombo: 0, lastGemT: -9, dyingT: 0, hitsTaken: 0, evolvedRun: [],
     clearBonus: 0, choices: null, statTick: 0, ended: false, victoryT: 0, firstClear: false,
   });
-  G.p = { x: 0, y: 0, vx: 0, vy: 0, r: 12, face: -Math.PI / 2, hp: 100, inv: 2, dashT: 0, dvx: 0, dvy: 0, dashCharges: 1, dashRe: 0, tilt: 0 };
+  G.p = { x: 0, y: 0, vx: 0, vy: 0, r: 12, face: -Math.PI / 2, hp: 100, inv: 2, dashT: 0, dvx: 0, dvy: 0, dashCharges: 1, dashRe: 0, tilt: 0, shieldOn: false, shieldT: 0, dashHit: null };
   computeStats();
   G.p.hp = G.st.maxHp;
   G.p.dashCharges = G.st.dashMax;
   G.revives = G.st.revives;
   G.rerolls = 1 + G.st.rerolls;
   G.skips = 1 + G.st.skips;
-  addWeapon(pilot.weapon === 'random' ? pick(BASE_WEAPONS) : pilot.weapon);
+  addWeapon(pilot.weapon === 'random' ? pick(BASE_WEAPONS.filter(id => unlocked(WEAPONS[id]))) : pilot.weapon, 1 + G.st.startLvl);
   G.cam.x = 0; G.cam.y = 0;
   G.state = 'play';
   SAVE.lastPilot = pilot.id; SAVE.lastSector = si; SAVE.lastOd = od;
@@ -116,13 +141,14 @@ function addText(x, y, txt, color, size = 14, life = 0.7) {
   if (G.texts.length > 90) return;
   G.texts.push({ x: x + rand(-6, 6), y, txt, color, size, life, max: life, vy: -55 });
 }
-function addShake(v) { if (SAVE.settings.shake) G.shake = Math.min(24, G.shake + v); }
+// Otřesy o stupeň slabší než dřív: menší strop a vykreslení s menší amplitudou (render.js).
+function addShake(v) { if (SAVE.settings.shake) G.shake = Math.min(18, G.shake + v * 0.8); }
 
 // ── Poškození nepřátel ──────────────────────────────────────────────────────
-function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false) {
+function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false, forceCrit = false) {
   if (e.dead) return;
-  const crit = Math.random() < G.st.crit;
-  if (crit) dmg *= 2;
+  const crit = forceCrit || Math.random() < G.st.crit;
+  if (crit) dmg *= G.st.critMul;
   e.hp -= dmg;
   e.flash = 0.09;
   G.dmgBy[src] = (G.dmgBy[src] || 0) + dmg;
@@ -166,14 +192,14 @@ function killEnemy(e) {
   }
 }
 
-function explode(x, y, r, dmg, src, color, quiet = false) {
+function explode(x, y, r, dmg, src, color, quiet = false, forceCrit = false) {
   G.grid.query(x, y, r + G.maxR, _q2);
   for (const e of _q2) {
     if (e.dead) continue;
     const dd = d2(x, y, e.x, e.y);
     if (dd < (r + e.r) * (r + e.r)) {
       const d = Math.sqrt(dd) || 1;
-      hurtEnemy(e, dmg, src, (e.x - x) / d * 260, (e.y - y) / d * 260, true);
+      hurtEnemy(e, dmg, src, (e.x - x) / d * 260, (e.y - y) / d * 260, true, forceCrit);
     }
   }
   G.effects.push({ k: 'boom', x, y, r, life: 0.35, max: 0.35, color });
@@ -268,7 +294,16 @@ function collect(pk) {
 function hurtPlayer(dmg, srcX, srcY) {
   const p = G.p;
   if (p.inv > 0 || G.state !== 'play') return;
-  const d = Math.max(1, dmg - G.st.armor);
+  // Energetický štít pohltí celý zásah a začne se dobíjet.
+  if (p.shieldOn) {
+    p.shieldOn = false; p.shieldT = G.st.shieldCd; p.inv = 0.5;
+    Sound.play.select(); addShake(3);
+    addText(p.x, p.y - 24, L('BLOK', 'BLOCK'), '#7df9ff', 17);
+    G.effects.push({ k: 'ring', x: p.x, y: p.y, r: 14, maxR: 70, spd: 320, dmg: 0, knock: 0, life: 1, color: '#7df9ff', visual: true, delay: 0 });
+    if (srcX !== undefined) { const a = Math.atan2(p.y - srcY, p.x - srcX); p.vx += Math.cos(a) * 200; p.vy += Math.sin(a) * 200; }
+    return;
+  }
+  const d = Math.max(1, dmg * armorFactor(G.st.armor));
   p.hp -= d; p.inv = 0.5;
   G.hurtFlash = 1; G.noHit = 0; G.hitsTaken++;
   if (G.boss) G.bossClean = false;
@@ -284,7 +319,7 @@ function playerDown() {
   const p = G.p;
   if (G.revives > 0) {
     G.revives--;
-    p.hp = G.st.maxHp * 0.6; p.inv = 3;
+    p.hp = G.st.maxHp * (G.st.reviveFull ? 1 : 0.6); p.inv = G.st.reviveFull ? 5 : 3;
     Sound.play.revive(); G.flash = 1; addShake(20);
     for (const e of G.enemies) if (!e.dead && d2(e.x, e.y, p.x, p.y) < 420 * 420) {
       if (e.boss) { const a = Math.atan2(e.y - p.y, e.x - p.x); e.x += Math.cos(a) * 200; e.y += Math.sin(a) * 200; }
@@ -313,6 +348,7 @@ function updatePlayer(dt) {
     p.dvx = dx / l * 1150; p.dvy = dy / l * 1150; p.dashT = 0.16;
     p.inv = Math.max(p.inv, 0.3);
     p.dashCharges--;
+    p.dashHit = G.st.dashDmg ? new Set() : null;
     SAVE.stats.dashes++;
     Sound.play.dash();
   }
@@ -324,6 +360,17 @@ function updatePlayer(dt) {
   if (p.dashT > 0) {
     p.dashT -= dt;
     p.x += p.dvx * dt; p.y += p.dvy * dt;
+    // Rázový úskok: každý nepřítel v cestě dostane jednou ránu podle svého maximálního zdraví.
+    if (p.dashHit) {
+      G.grid.query(p.x, p.y, 34 + G.maxR, _q);
+      for (const e of _q) {
+        if (e.dead || p.dashHit.has(e.id) || d2(p.x, p.y, e.x, e.y) > (34 + e.r) * (34 + e.r)) continue;
+        p.dashHit.add(e.id);
+        const l = Math.hypot(p.dvx, p.dvy) || 1;
+        hurtEnemy(e, e.maxHp * (e.boss ? 0.015 : 0.15) * G.st.dashDmg, 'dash', p.dvx / l * 300, p.dvy / l * 300);
+        burst(e.x, e.y, '#55f6ff', 6, 220, 2.5, 0.35);
+      }
+    }
     p.vx = p.dvx * 0.25; p.vy = p.dvy * 0.25;
     if (G.particles.length < MAX_PARTICLES) G.particles.push({ x: p.x, y: p.y, vx: 0, vy: 0, life: 0.3, max: 0.3, size: 0, color: G.pilot.color, drag: 0, ghost: p.face });
   } else {
@@ -339,6 +386,10 @@ function updatePlayer(dt) {
   } else p.tilt = lerp(p.tilt, 0, dt * 6);
   if (p.inv > 0) p.inv -= dt;
   if (G.st.regen > 0) p.hp = Math.min(G.st.maxHp, p.hp + G.st.regen * dt);
+  if (G.st.shieldCd && !p.shieldOn) {
+    p.shieldT -= dt;
+    if (p.shieldT <= 0) { p.shieldOn = true; p.shieldT = 0; addText(p.x, p.y - 26, L('ŠTÍT', 'SHIELD'), '#7df9ff', 13); }
+  }
   // plamen motoru
   const spd = Math.hypot(p.vx, p.vy);
   if (spd > 30 && G.particles.length < MAX_PARTICLES && Math.random() < 0.9) {
@@ -618,12 +669,12 @@ function openChest(big) {
   const evos = upgradePool().filter(c => c.kind === 'evo');
   if (evos.length) { applyChoice(evos[0]); rewards.push(evos[0]); }
   const L = G.st.luck;
-  let count = big ? 3 : (Math.random() < 0.06 * L ? 5 : Math.random() < 0.25 * L ? 3 : 1);
+  let count = (big ? 3 : (Math.random() < 0.06 * L ? 5 : Math.random() < 0.25 * L ? 3 : 1)) + G.st.chestItems;
   if (evos.length) count = Math.max(0, count - 1);
   for (let i = 0; i < count; i++) {
     const pool = upgradePool().filter(c => c.kind !== 'evo');
-    if (!pool.length) break;
-    const c = weighted(pool, c => c.isNew ? c.w * 0.5 : c.w);
+    // když už není co vylepšit, truhla dá mutaci
+    const c = pool.length ? weighted(pool, c => c.isNew ? c.w * 0.5 : c.w) : mutationChoice();
     applyChoice(c); rewards.push(c);
   }
   const sh = Math.round(randi(8, 18) * shardMul() * (big ? 3 : 1));
@@ -654,16 +705,18 @@ function upgradePool() {
   const pool = [];
   for (const w of G.weapons) {
     const d = WEAPONS[w.id];
-    if (!d.evolved && w.level >= 8 && G.passives[d.evoWith]) pool.push({ kind: 'evo', id: d.evo, from: w.id, w: 100 });
+    if (!d.evolved && w.level >= G.st.evoLvl && G.passives[d.evoWith]) pool.push({ kind: 'evo', id: d.evo, from: w.id, w: 100 });
   }
   for (const w of G.weapons) {
     const d = WEAPONS[w.id];
     if (!d.evolved && w.level < 8) pool.push({ kind: 'weapon', id: w.id, lvl: w.level + 1, w: 1.25 });
+    // evoluční zbraň se dál přetěžuje (★1–★4)
+    if (d.evolved && (w.oc || 0) < OC_MAX) pool.push({ kind: 'oc', id: w.id, lvl: (w.oc || 0) + 1, w: 1.15 });
   }
-  if (G.weapons.length < 6) for (const id of BASE_WEAPONS) if (!ownsFamily(id)) pool.push({ kind: 'weapon', id, lvl: 1, isNew: true, w: 0.85 });
+  if (G.weapons.length < G.st.wSlots) for (const id of BASE_WEAPONS) if (!ownsFamily(id) && unlocked(WEAPONS[id])) pool.push({ kind: 'weapon', id, lvl: 1, isNew: true, w: 0.85 });
   const owned = Object.keys(G.passives);
   for (const id of owned) if (G.passives[id] < PASSIVES[id].max) pool.push({ kind: 'passive', id, lvl: G.passives[id] + 1, w: 1 });
-  if (owned.length < 6) for (const id in PASSIVES) if (!G.passives[id]) pool.push({ kind: 'passive', id, lvl: 1, isNew: true, w: PASSIVES[id].rare ? 0.3 : 0.75 });
+  if (owned.length < G.st.pSlots) for (const id in PASSIVES) if (!G.passives[id] && unlocked(PASSIVES[id])) pool.push({ kind: 'passive', id, lvl: 1, isNew: true, w: PASSIVES[id].rare ? 0.3 : 0.75 });
   // nápověda k evoluci
   for (const c of pool) if (c.kind === 'passive') {
     const w = G.weapons.find(w => !WEAPONS[w.id].evolved && WEAPONS[w.id].evoWith === c.id);
@@ -672,8 +725,14 @@ function upgradePool() {
   return pool;
 }
 
+function mutationChoice(skip = []) {
+  const ids = Object.keys(MUTATIONS).filter(id => !skip.includes(id));
+  const id = pick(ids.length ? ids : Object.keys(MUTATIONS));
+  return { kind: 'mut', id, lvl: (G.mut[id] || 0) + 1 };
+}
+
 function genChoices() {
-  const n = Math.random() < 0.06 + (G.st.luck - 1) * 0.5 ? 4 : 3;
+  const n = (Math.random() < 0.06 + (G.st.luck - 1) * 0.5 ? 4 : 3) + G.st.cards;
   const pool = upgradePool();
   const out = [];
   const evo = pool.find(c => c.kind === 'evo');
@@ -684,7 +743,9 @@ function genChoices() {
     out.push(c);
     rest = rest.filter(x => x !== c);
   }
-  if (!out.length) out.push({ kind: 'heal' }, { kind: 'gold' });
+  // Když dojdou vylepšení, zbytek karet doplní mutace (nekonečné drobné posílení) a při nízkém zdraví oprava.
+  if (out.length < n && G.p.hp < G.st.maxHp * 0.5) out.push({ kind: 'heal' });
+  while (out.length < n) out.push(mutationChoice(out.filter(c => c.kind === 'mut').map(c => c.id)));
   return out;
 }
 
@@ -692,6 +753,15 @@ function applyChoice(c) {
   if (c.kind === 'weapon') {
     if (c.isNew) addWeapon(c.id);
     else { const w = getWeapon(c.id); w.level++; computeWeapon(w); }
+  } else if (c.kind === 'oc') {
+    const w = getWeapon(c.id);
+    if (!w) return;
+    w.oc = (w.oc || 0) + 1; computeWeapon(w);
+    SAVE.stats.maxOc = Math.max(SAVE.stats.maxOc || 0, w.oc);
+    burst(G.p.x, G.p.y, WEAPONS[w.id].color, 30, 380, 3, 0.9);
+  } else if (c.kind === 'mut') {
+    G.mut[c.id] = (G.mut[c.id] || 0) + 1;
+    computeStats();
   } else if (c.kind === 'passive') {
     G.passives[c.id] = (G.passives[c.id] || 0) + 1;
     SAVE.seen[c.id] = true;
@@ -771,6 +841,9 @@ function checkAchievements(inRun) {
       Sound.play.achieve();
       UI.toast(a.name, `${a.desc} · +${a.reward} ◆`, a.icon);
       if (a.pilot) { const pl = PILOTS.find(p => p.id === a.pilot); setTimeout(() => UI.toast(L('Nový pilot: ', 'New pilot: ') + pl.name, pl.role + L(' je připraven(a) k letu', ' is ready to fly'), 'rocket', pl.color), 900); }
+      // zbraně a doplňky pro pokročilé, které tento úspěch odemyká
+      const opened = [...BASE_WEAPONS.map(id => WEAPONS[id]), ...Object.values(PASSIVES)].filter(o => o.unlock === a.id);
+      opened.forEach((o, i) => setTimeout(() => UI.toast((o.base ? L('Nová zbraň: ', 'New weapon: ') : L('Nový doplněk: ', 'New passive: ')) + o.name, o.desc, o.icon, o.color), 1800 + i * 900));
     }
   }
 }
@@ -1055,6 +1128,27 @@ function updateEffects(dt) {
         break;
       }
       case 'tele': if (f.follow) { f.x = f.follow.x; f.y = f.follow.y; f.a = f.follow.boss ? f.follow.boss.dashA : f.a; } f.life -= dt; break;
+      case 'strike': {
+        // orbitální úder: zaměřovací kruh, po zpoždění dopad
+        f.t += dt;
+        if (f.t >= f.delay) {
+          f.life = 0;
+          explode(f.x, f.y, f.r, f.dmg, f.src, f.color, true, f.crit);
+          burst(f.x, f.y, '#ffffff', 10, f.r * 4, 3, 0.5);
+          if (G.time - (G.boomSnd || 0) > 0.1) { G.boomSnd = G.time; Sound.play.explode(); addShake(1.5); }
+        }
+        break;
+      }
+      case 'flame': {
+        // ohnivá stopa Komety: pálí, co do ní vstoupí
+        f.life -= dt; f.tick -= dt;
+        if (f.tick <= 0) {
+          f.tick = 0.3;
+          G.grid.query(f.x, f.y, f.r + G.maxR, _q);
+          for (const e of _q) if (!e.dead && d2(f.x, f.y, e.x, e.y) < (f.r + e.r) * (f.r + e.r)) hurtEnemy(e, f.dmg, f.src, 0, 0, true);
+        }
+        break;
+      }
       default: f.life -= dt;
     }
   }

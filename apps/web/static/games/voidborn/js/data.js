@@ -45,6 +45,18 @@ const ICONS = {
   bomb: '<circle cx="11" cy="14" r="7"/><path d="M15.5 8.5l2-2M17 4l1.5 1.5M20 3.5l-1 1M19.5 7H21"/>',
   boss: '<path d="M3 7l4 4 5-7 5 7 4-4-2 12H5z"/><path d="M5 19h14"/>',
   wave: '<path d="M2 12c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-2"/><path d="M2 17c2.5-4 5-4 7.5 0s5 4 7.5 0 3.5-3 5-2" opacity=".5"/>',
+  disc: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M20.5 12h-3M12 20.5v-3M3.5 12h3"/>',
+  flame: '<path d="M12 21.5c-4 0-7-2.8-7-6.6 0-3.6 2.7-5.6 4-8.9 1.6 1.5 2.3 3 2.5 4.5 1.3-1.3 2-3.2 2-5.5 3.3 2.3 5.5 6 5.5 9.9 0 3.8-3 6.6-7 6.6z"/><path d="M12 21.5c-1.7 0-3-1.2-3-2.9 0-1.9 1.6-2.8 3-4.6 1.4 1.8 3 2.7 3 4.6 0 1.7-1.3 2.9-3 2.9z"/>',
+  meteor: '<circle cx="8.5" cy="15.5" r="5"/><path d="M12 12l8.5-8.5M14.5 15l6-6M9 9.5l6-6"/>',
+  shield: '<path d="M12 2.5l8 3v6c0 5-3.5 8.8-8 10.5-4.5-1.7-8-5.5-8-10.5v-6z"/><path d="M8 12l3 3 5-6"/>',
+  critamp: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M7.5 12h9"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>',
+  overcharge: '<path d="M13 2L4.5 13.5H11L9.5 22 19 9.5h-6.5z"/><path d="M19.5 2.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/>',
+  mutation: '<path d="M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/><path d="M8.5 6.5h7M8.5 17.5h7M10 12h4"/>',
+  slots: '<rect x="2.5" y="7" width="7.5" height="10" rx="1.5"/><rect x="14" y="7" width="7.5" height="10" rx="1.5"/><path d="M17.75 10v4M15.75 12h4"/>',
+  cards: '<rect x="2.5" y="5.5" width="7.5" height="12.5" rx="1.5"/><rect x="8.25" y="3.5" width="7.5" height="12.5" rx="1.5"/><rect x="14" y="6" width="7.5" height="12.5" rx="1.5"/>',
+  headstart: '<path d="M4.5 21V3.5M4.5 4h11l-2.2 3.5 2.2 3.5h-11"/><path d="M15.5 21l4-4-4-4"/>',
+  wind: '<path d="M3 8.5h11a3 3 0 10-3-3M3 12.5h15a3 3 0 11-3 3M3 16.5h7"/>',
+  dashblast: '<path d="M12 4.5l7 7.5-7 7.5"/><path d="M2.5 8h7M1.5 12h9M2.5 16h7"/><path d="M21 7.5v9" stroke-dasharray="2 2"/>',
 };
 function icon(id, cls = '') {
   return `<svg class="ico ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[id] || ICONS.star}</svg>`;
@@ -141,6 +153,40 @@ const WEAPONS = {
     ],
     evo: 'entropy', evoWith: 'regen',
   },
+  // Zbraně pro pokročilé: odemknou se úspěchem (unlock).
+  disc: {
+    name: 'Odrazový disk', color: '#7cffcb', icon: 'disc', unlock: 'clear1',
+    desc: 'Zářivý disk se odráží od nepřítele k nepříteli.',
+    base: { dmg: 16, cd: 1.5, amount: 1, speed: 560, bounce: 3, area: 1 },
+    up: [
+      [{ bounce: 1 }, '+1 odraz'], [{ dmg: 7 }, '+7 poškození'], [{ amount: 1 }, '+1 disk'],
+      [{ cd: -0.3 }, 'Rychlejší hod'], [{ bounce: 2 }, '+2 odrazy'], [{ dmg: 12 }, '+12 poškození'],
+      [{ amount: 1, bounce: 1 }, '+1 disk, +1 odraz'],
+    ],
+    evo: 'quantum', evoWith: 'luck',
+  },
+  plasma: {
+    name: 'Plazmový hořák', color: '#ff8a3d', icon: 'flame', unlock: 'clear2',
+    desc: 'Kužel plazmy spaluje vše před lodí. Krátký dosah, obrovské poškození.',
+    base: { dmg: 3, cd: 0.15, amount: 1, range: 150, arc: 0.9, area: 1 },
+    up: [
+      [{ dmg: 2 }, '+2 poškození'], [{ arc: 0.25 }, 'Širší kužel'], [{ range: 35 }, 'Delší plamen'],
+      [{ dmg: 3 }, '+3 poškození'], [{ cd: -0.03 }, 'Rychlejší hoření'], [{ dmg: 3, range: 20 }, '+3 poškození, delší plamen'],
+      [{ amount: 1 }, 'Druhý plamen'],
+    ],
+    evo: 'comet', evoWith: 'speed',
+  },
+  meteor: {
+    name: 'Orbitální úder', color: '#ff5d73', icon: 'meteor', unlock: 'evo4',
+    desc: 'Z oběžné dráhy dopadají střely do největších shluků nepřátel.',
+    base: { dmg: 55, cd: 2.6, amount: 1, area: 1, delay: 0.7 },
+    up: [
+      [{ amount: 1 }, '+1 úder'], [{ dmg: 25 }, '+25 poškození'], [{ area: 0.25 }, 'Větší dopad'],
+      [{ amount: 1 }, '+1 úder'], [{ cd: -0.5 }, 'Rychlejší nabíjení'], [{ dmg: 40 }, '+40 poškození'],
+      [{ amount: 2 }, '+2 údery'],
+    ],
+    evo: 'starfall', evoWith: 'critamp',
+  },
   // ── Evoluce ──
   hyperpulse: {
     name: 'Hyperpulz', color: '#fff27a', icon: 'pulse', evolved: true, from: 'pulse',
@@ -182,22 +228,58 @@ const WEAPONS = {
     desc: 'Pole absolutní nuly. Zabití uvnitř tě léčí.',
     base: { dmg: 16, cd: 0.32, area: 1.75, slow: 0.55, amount: 1, leech: 0.4 },
   },
+  quantum: {
+    name: 'Kvantový disk', color: '#c6fff0', icon: 'disc', evolved: true, from: 'disc',
+    desc: 'Disky se odrážejí skoro bez konce a s každým odrazem sílí.',
+    base: { dmg: 30, cd: 0.9, amount: 3, speed: 720, bounce: 12, area: 1.25, grow: 0.12 },
+  },
+  comet: {
+    name: 'Kometa', color: '#ffd27a', icon: 'flame', evolved: true, from: 'plasma',
+    desc: 'Široký plamen a ohnivá stopa za lodí. Čím rychleji letíš, tím víc pálí.',
+    base: { dmg: 16, cd: 0.1, amount: 2, range: 225, arc: 1.5, area: 1, trail: 1 },
+  },
+  starfall: {
+    name: 'Hvězdný pád', color: '#ffe3ea', icon: 'meteor', evolved: true, from: 'meteor',
+    desc: 'Déšť hvězd, které vždy zasáhnou kriticky.',
+    base: { dmg: 70, cd: 1.15, amount: 5, area: 1.35, delay: 0.45, crit: 1 },
+  },
 };
-const BASE_WEAPONS = ['pulse', 'orbit', 'arc', 'seeker', 'nova', 'lance', 'mines', 'aura'];
+const BASE_WEAPONS = ['pulse', 'orbit', 'arc', 'seeker', 'nova', 'lance', 'mines', 'aura', 'disc', 'plasma', 'meteor'];
 const EVOLUTIONS = BASE_WEAPONS.map(id => WEAPONS[id].evo);
+// Zbraně a doplňky pro pokročilé se odemykají úspěchem; seznam úspěchů ukazuje, co odemyká.
+const unlocked = o => !o.unlock || !!SAVE.achievements[o.unlock];
+// Přetížení evolučních zbraní: úrovně ★1–★4 za level-upy po evoluci.
+const OC_MAX = 4, OC_DMG = 0.25, OC_CD = 0.05;
+// Pancíř: každý bod sníží zbylé zranění o 7 % (z aktuální hodnoty, takže nikdy nedosáhne 100 %).
+const ARMOR_STEP = 0.07;
+const armorFactor = a => Math.pow(1 - ARMOR_STEP, Math.max(0, a));
+const BASE_SLOTS = 6;
 
 // ── Doplňky (pasivní) ───────────────────────────────────────────────────────
 const PASSIVES = {
   might: { name: 'Jádro síly', icon: 'might', color: '#ff6b6b', desc: '+10 % poškození', max: 5, mod: { might: 0.10 } },
-  haste: { name: 'Přetaktování', icon: 'haste', color: '#ffd166', desc: '−7 % doba nabíjení', max: 5, mod: { cdMul: -0.07 } },
+  haste: { name: 'Přetaktování', icon: 'haste', color: '#ffd166', desc: '−8 % doba nabíjení', max: 5, mod: { cdMul: -0.08 } },
   area: { name: 'Gyroskop', icon: 'area', color: '#06d6a0', desc: '+10 % oblast účinku', max: 5, mod: { area: 0.10 } },
   speed: { name: 'Trysky', icon: 'speed', color: '#4cc9f0', desc: '+8 % rychlost pohybu', max: 5, mod: { speed: 0.08 } },
-  armor: { name: 'Pancéřování', icon: 'armor', color: '#a0a6ff', desc: '+1 pancíř, +12 max. zdraví', max: 5, mod: { armor: 1, maxHp: 12 } },
+  armor: { name: 'Pancéřování', icon: 'armor', color: '#a0a6ff', desc: '+1 pancíř (−7 % zranění), +12 max. zdraví', max: 5, mod: { armor: 1, maxHp: 12 } },
   magnet: { name: 'Gravitační cívka', icon: 'magnet', color: '#f72585', desc: '+30 % dosah sběru', max: 5, mod: { magnet: 0.30 } },
   duration: { name: 'Fokusační čočka', icon: 'duration', color: '#b8f2e6', desc: '+10 % trvání a rychlost střel', max: 5, mod: { dur: 0.10, projSpd: 0.10 } },
   regen: { name: 'Nanoboti', icon: 'regen', color: '#80ffdb', desc: '+0,3 regenerace zdraví/s', max: 5, mod: { regen: 0.3 } },
   luck: { name: 'Kvantová kostka', icon: 'luck', color: '#cdb4db', desc: '+10 % štěstí, +4 % kritický zásah', max: 5, mod: { luck: 0.10, crit: 0.04 } },
   amount: { name: 'Duplikátor', icon: 'amount', color: '#ffbe0b', desc: '+1 projektil všech zbraní', max: 2, mod: { amount: 1 }, rare: true },
+  critamp: { name: 'Kritický zesilovač', icon: 'critamp', color: '#ff9e3d', desc: '+25 % kritické poškození, +3 % kritický zásah', max: 5, mod: { critDmg: 0.25, crit: 0.03 }, unlock: 'evo1' },
+  shield: { name: 'Energetický štít', icon: 'shield', color: '#7df9ff', desc: 'Pohltí jeden celý zásah. Dobití 30 s, každá další úroveň o 4 s rychleji.', max: 5, mod: { shield: 1 }, unlock: 'boss1', noPer: true },
+};
+const shieldCd = lvl => (lvl > 0 ? 34 - 4 * lvl : 0);
+
+// Mutace: nekonečná drobná posílení, když už není co vylepšovat (pozdní hra a nekonečný režim).
+const MUTATIONS = {
+  might: { name: 'Mutace síly', icon: 'might', color: '#ff6b6b', desc: '+4 % poškození', mod: { might: 0.04 } },
+  vigor: { name: 'Mutace odolnosti', icon: 'vitality', color: '#5dffa8', desc: '+10 max. zdraví (a hned je doplní)', mod: { maxHp: 10 } },
+  haste: { name: 'Mutace rychlosti', icon: 'haste', color: '#ffd166', desc: '−3 % doba nabíjení', mod: { cdMul: -0.03 } },
+  area: { name: 'Mutace dosahu', icon: 'area', color: '#06d6a0', desc: '+4 % oblast účinku', mod: { area: 0.04 } },
+  crit: { name: 'Mutace přesnosti', icon: 'crit', color: '#ff9e3d', desc: '+2 % kritický zásah, +10 % kritické poškození', mod: { crit: 0.02, critDmg: 0.10 } },
+  greed: { name: 'Mutace chamtivosti', icon: 'greed', color: '#e08bff', desc: '+6 % střepů', mod: { greed: 0.06 } },
 };
 
 // ── Nepřátelé ───────────────────────────────────────────────────────────────
@@ -267,27 +349,38 @@ const PILOTS = [
 ];
 
 // ── Kovárna (trvalá vylepšení) ──────────────────────────────────────────────
+// tier 2 = Mistrovská dílna: silnější a dražší vylepšení pro pokročilé, otevře se po dobytí Sektoru II.
 const FORGE = [
-  { id: 'might', name: 'Síla', icon: 'might', desc: '+5 % poškození', max: 5, cost: 60, mod: ['might', 0.05] },
-  { id: 'vitality', name: 'Vitalita', icon: 'vitality', desc: '+10 max. zdraví', max: 5, cost: 45, mod: ['maxHp', 10] },
-  { id: 'armor', name: 'Pancíř', icon: 'armor', desc: '+1 pancíř', max: 3, cost: 120, mod: ['armor', 1] },
-  { id: 'recovery', name: 'Regenerace', icon: 'regen', desc: '+0,1 zdraví/s', max: 5, cost: 70, mod: ['regen', 0.1] },
-  { id: 'haste', name: 'Přetaktování', icon: 'haste', desc: '−3 % nabíjení', max: 4, cost: 110, mod: ['cdMul', -0.03] },
-  { id: 'area', name: 'Dosah', icon: 'area', desc: '+5 % oblast účinku', max: 4, cost: 90, mod: ['area', 0.05] },
-  { id: 'speed', name: 'Trysky', icon: 'speed', desc: '+5 % rychlost', max: 4, cost: 55, mod: ['speed', 0.05] },
-  { id: 'duration', name: 'Stabilizace', icon: 'duration', desc: '+5 % trvání a rychlost střel', max: 4, cost: 80, mod: ['dur', 0.05] },
-  { id: 'magnet', name: 'Magnet', icon: 'magnet', desc: '+15 % dosah sběru', max: 4, cost: 45, mod: ['magnet', 0.15] },
-  { id: 'growth', name: 'Růst', icon: 'growth', desc: '+4 % zkušenosti', max: 5, cost: 90, mod: ['growth', 0.04] },
-  { id: 'greed', name: 'Chamtivost', icon: 'greed', desc: '+10 % střepů', max: 5, cost: 100, mod: ['greed', 0.10] },
-  { id: 'luck', name: 'Štěstí', icon: 'luck', desc: '+6 % štěstí', max: 5, cost: 80, mod: ['luck', 0.06] },
-  { id: 'crit', name: 'Precizita', icon: 'crit', desc: '+2 % kritický zásah', max: 5, cost: 90, mod: ['crit', 0.02] },
-  { id: 'reroll', name: 'Přehození', icon: 'reroll', desc: '+1 přehození za běh', max: 5, cost: 70, mod: ['rerolls', 1] },
-  { id: 'skip', name: 'Přeskočení', icon: 'skip', desc: '+1 přeskočení za běh', max: 3, cost: 60, mod: ['skips', 1] },
-  { id: 'dash', name: 'Impuls', icon: 'dash', desc: '+1 náboj úskoku', max: 2, cost: 380, mod: ['dashMax', 1] },
-  { id: 'revival', name: 'Fénix', icon: 'revival', desc: '+1 oživení za běh', max: 2, cost: 750, mod: ['revives', 1] },
-  { id: 'amount', name: 'Duplikátor', icon: 'amount', desc: '+1 projektil všech zbraní', max: 1, cost: 2400, mod: ['amount', 1] },
+  { id: 'might', name: 'Síla', icon: 'might', desc: '+5 % poškození', max: 5, cost: 60, mod: { might: 0.05 } },
+  { id: 'vitality', name: 'Vitalita', icon: 'vitality', desc: '+10 max. zdraví', max: 5, cost: 45, mod: { maxHp: 10 } },
+  { id: 'armor', name: 'Pancíř', icon: 'armor', desc: '+1 pancíř (−7 % zranění)', max: 3, cost: 120, mod: { armor: 1 } },
+  { id: 'recovery', name: 'Regenerace', icon: 'regen', desc: '+0,1 zdraví/s', max: 5, cost: 70, mod: { regen: 0.1 } },
+  { id: 'haste', name: 'Přetaktování', icon: 'haste', desc: '−3 % nabíjení', max: 4, cost: 110, mod: { cdMul: -0.03 } },
+  { id: 'area', name: 'Dosah', icon: 'area', desc: '+5 % oblast účinku', max: 4, cost: 90, mod: { area: 0.05 } },
+  { id: 'speed', name: 'Trysky', icon: 'speed', desc: '+5 % rychlost', max: 4, cost: 55, mod: { speed: 0.05 } },
+  { id: 'duration', name: 'Stabilizace', icon: 'duration', desc: '+5 % trvání a rychlost střel', max: 4, cost: 80, mod: { dur: 0.05, projSpd: 0.05 } },
+  { id: 'magnet', name: 'Magnet', icon: 'magnet', desc: '+15 % dosah sběru', max: 4, cost: 45, mod: { magnet: 0.15 } },
+  { id: 'growth', name: 'Růst', icon: 'growth', desc: '+4 % zkušenosti', max: 5, cost: 90, mod: { growth: 0.04 } },
+  { id: 'greed', name: 'Chamtivost', icon: 'greed', desc: '+10 % střepů', max: 5, cost: 100, mod: { greed: 0.10 } },
+  { id: 'luck', name: 'Štěstí', icon: 'luck', desc: '+6 % štěstí', max: 5, cost: 80, mod: { luck: 0.06 } },
+  { id: 'crit', name: 'Precizita', icon: 'crit', desc: '+2 % kritický zásah', max: 5, cost: 90, mod: { crit: 0.02 } },
+  { id: 'reroll', name: 'Přehození', icon: 'reroll', desc: '+1 přehození za běh', max: 5, cost: 70, mod: { rerolls: 1 } },
+  { id: 'skip', name: 'Přeskočení', icon: 'skip', desc: '+1 přeskočení za běh', max: 3, cost: 60, mod: { skips: 1 } },
+  { id: 'dash', name: 'Impuls', icon: 'dash', desc: '+1 náboj úskoku', max: 2, cost: 380, mod: { dashMax: 1 } },
+  { id: 'revival', name: 'Fénix', icon: 'revival', desc: '+1 oživení za běh', max: 2, cost: 750, mod: { revives: 1 } },
+  { id: 'amount', name: 'Duplikátor', icon: 'amount', desc: '+1 projektil všech zbraní', max: 1, cost: 2400, mod: { amount: 1 } },
+  { id: 'headstart', tier: 2, name: 'Náskok', icon: 'headstart', desc: 'Startovní zbraň začíná o úroveň výš', max: 3, cost: 900, mod: { startLvl: 1 } },
+  { id: 'critamp', tier: 2, name: 'Kritický zesilovač', icon: 'critamp', desc: '+15 % kritické poškození', max: 5, cost: 400, mod: { critDmg: 0.15 } },
+  { id: 'dashblast', tier: 2, name: 'Rázový úskok', icon: 'dashblast', desc: 'Úskok zraní nepřátele v cestě za 15 % jejich zdraví (bossy za 1,5 %)', max: 3, cost: 700, mod: { dashDmg: 1 } },
+  { id: 'loot', tier: 2, name: 'Bohatá kořist', icon: 'chest', desc: '+1 předmět v každé truhle', max: 2, cost: 1500, mod: { chestItems: 1 } },
+  { id: 'secondwind', tier: 2, name: 'Druhý dech', icon: 'wind', desc: 'Oživení obnoví celé zdraví a dá 5 s nezranitelnosti', max: 1, cost: 2500, mod: { reviveFull: 1 } },
+  { id: 'evomaster', tier: 2, name: 'Mistr evoluce', icon: 'star', desc: 'Zbraně se vyvinou už na úrovni 7', max: 1, cost: 3500, mod: { evoLvl: 1 } },
+  { id: 'cards', tier: 2, name: 'Široký výběr', icon: 'cards', desc: 'Při postupu vždy o kartu víc', max: 1, cost: 4500, mod: { cards: 1 } },
+  { id: 'pslot', tier: 2, name: 'Doplňkový slot', icon: 'slots', desc: '+1 místo pro doplněk (7 místo 6)', max: 1, cost: 5000, mod: { pSlots: 1 } },
+  { id: 'wslot', tier: 2, name: 'Arzenál', icon: 'slots', desc: '+1 místo pro zbraň (7 místo 6)', max: 1, cost: 6000, mod: { wSlots: 1 } },
 ];
 const forgeCost = (f, lvl) => Math.round(f.cost * Math.pow(lvl + 1, 1.6) / 5) * 5;
+const masterOpen = () => !!(SAVE.sectors.s2 && SAVE.sectors.s2.cleared);
 
 // ── Úspěchy ─────────────────────────────────────────────────────────────────
 // check(S, R): S = uložená data, R = aktuální běh (nebo null)
@@ -309,7 +402,13 @@ const ACHIEVEMENTS = [
   { id: 'clear5', name: 'Srdce zastaveno', desc: 'Dokonči Sektor V.', reward: 900, icon: 'trophy', prog: S => [+!!(S.sectors.s5 && S.sectors.s5.cleared), 1], pilot: 'omega' },
   { id: 'evo1', name: 'Metamorfóza', desc: 'Vyvij jakoukoli zbraň.', reward: 80, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 1], pilot: 'echo' },
   { id: 'evo4', name: 'Alchymista', desc: 'Objev 4 různé evoluce.', reward: 220, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 4] },
-  { id: 'evo8', name: 'Architekt zkázy', desc: 'Objev všech 8 evolucí.', reward: 700, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 8] },
+  { id: 'evo8', name: 'Architekt zkázy', desc: 'Objev 8 různých evolucí.', reward: 700, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 8] },
+  { id: 'evoAll', name: 'Pán prázdnoty', desc: 'Objev všech 11 evolucí.', reward: 1200, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 11] },
+  { id: 'oc4', name: 'Přetížení', desc: 'Přetiž evoluční zbraň na ★4.', reward: 300, icon: 'overcharge', prog: S => [S.stats.maxOc || 0, OC_MAX] },
+  { id: 't30', name: 'Nesmrtelný', desc: 'Přežij 30 minut v jednom běhu (nekonečný režim).', reward: 1000, icon: 'clock', prog: S => [S.stats.bestTime, 1800] },
+  { id: 'lvl100', name: 'Mutant', desc: 'Dosáhni úrovně 100 v jednom běhu.', reward: 600, icon: 'mutation', prog: S => [S.stats.maxLevel, 100] },
+  { id: 'masterAll', name: 'Velmistr', desc: 'Kup celou Mistrovskou dílnu.', reward: 2500, icon: 'forge', prog: S => [FORGE.filter(f => f.tier === 2).reduce((a, f) => a + Math.min(f.max, S.forge[f.id] || 0), 0), FORGE.filter(f => f.tier === 2).reduce((a, f) => a + f.max, 0)] },
+  { id: 'master', name: 'Mistrovská dílna', desc: 'Kup první vylepšení v Mistrovské dílně.', reward: 150, icon: 'forge', prog: S => [FORGE.filter(f => f.tier === 2).reduce((a, f) => a + (S.forge[f.id] || 0), 0), 1] },
   { id: 'lvl30', name: 'Nabitý', desc: 'Dosáhni úrovně 30 v jednom běhu.', reward: 60, icon: 'growth', prog: S => [S.stats.maxLevel, 30] },
   { id: 'lvl60', name: 'Přetížený', desc: 'Dosáhni úrovně 60 v jednom běhu.', reward: 250, icon: 'growth', prog: S => [S.stats.maxLevel, 60] },
   { id: 'od1', name: 'Overdrive', desc: 'Dokonči libovolný sektor na Overdrive 1.', reward: 120, icon: 'haste', prog: S => [S.stats.maxOdClear, 1] },

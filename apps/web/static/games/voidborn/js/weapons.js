@@ -253,9 +253,168 @@ const WB = {
     },
   },
 };
+// ── Zbraně pro pokročilé ────────────────────────────────────────────────────
+function nearestEnemies(x, y, maxD, k) {
+  const out = [];
+  for (const e of G.enemies) { if (e.dead) continue; const d = d2(x, y, e.x, e.y); if (d < maxD * maxD) out.push([d, e]); }
+  out.sort((a, b) => a[0] - b[0]);
+  return out.slice(0, k).map(o => o[1]);
+}
+// nejbližší nepřítel, kterého disk při tomto hodu ještě nezasáhl
+function discNext(d, range) {
+  G.grid.query(d.x, d.y, range + G.maxR, _wq);
+  let best = null, bd = range * range;
+  for (const e of _wq) {
+    if (e.dead || d.hit.has(e.id)) continue;
+    const dd = d2(d.x, d.y, e.x, e.y);
+    if (dd < bd) { bd = dd; best = e; }
+  }
+  return best;
+}
+
+WB.disc = {
+  update(w, dt) {
+    const s = w.s, p = G.p, color = WEAPONS[w.id].color;
+    w.discs = w.discs || [];
+    w.t -= dt;
+    if (w.t <= 0) {
+      const near = nearestEnemies(p.x, p.y, G.viewR * 0.7, s.amount);
+      if (!near.length) w.t = 0.2;
+      else {
+        w.t = s.cd;
+        for (let i = 0; i < s.amount; i++) {
+          const tgt = near[i % near.length], a = Math.atan2(tgt.y - p.y, tgt.x - p.x) + (i >= near.length ? rand(-0.4, 0.4) : 0);
+          w.discs.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, tgt, left: s.bounce, hit: new Set(), dmg: s.dmg, life: 3.2, back: false, spin: Math.random() * TAU });
+        }
+        Sound.play.blade();
+      }
+    }
+    const r = 9 * Math.sqrt(s.area), jump = 260 * s.area;
+    for (const d of w.discs) {
+      d.life -= dt; d.spin += dt * 16;
+      if (d.back) {
+        // vrací se k lodi a zmizí
+        const dx = p.x - d.x, dy = p.y - d.y, l = Math.hypot(dx, dy) || 1, st = s.speed * 1.35 * dt;
+        if (l < 22 || d.life < -1.5) { d.dead = true; continue; }
+        d.x += dx / l * Math.min(st, l); d.y += dy / l * Math.min(st, l);
+        continue;
+      }
+      if (!d.tgt || d.tgt.dead) d.tgt = discNext(d, jump * 1.4);
+      if (!d.tgt || d.life <= 0) { d.back = true; continue; }
+      const e = d.tgt, dx = e.x - d.x, dy = e.y - d.y, l = Math.hypot(dx, dy) || 1, st = s.speed * dt;
+      if (l <= st + e.r + r) {
+        hurtEnemy(e, d.dmg, w.id, dx / l * 140, dy / l * 140);
+        burst(e.x - dx / l * e.r, e.y - dy / l * e.r, color, 5, 200, 2.5, 0.3);
+        d.x = e.x - dx / l * (e.r + r); d.y = e.y - dy / l * (e.r + r);
+        d.hit.add(e.id);
+        if (s.grow) d.dmg *= 1 + s.grow;
+        if (--d.left < 0) { d.back = true; continue; }
+        d.tgt = discNext(d, jump);
+        if (!d.tgt) d.back = true;
+      } else { d.x += dx / l * st; d.y += dy / l * st; }
+    }
+    w.discs = w.discs.filter(d => !d.dead);
+  },
+  draw(w, ctx) {
+    if (!w.discs || !w.discs.length) return;
+    const s = w.s, col = WEAPONS[w.id].color, r = 9 * Math.sqrt(s.area);
+    ctx.globalCompositeOperation = 'lighter';
+    for (const d of w.discs) Render.spr(Sprites.glow(col, r * 1.2), d.x, d.y, 0, 1, 0.9);
+    ctx.globalCompositeOperation = 'source-over';
+    Render.world();
+    ctx.lineWidth = 2.2;
+    for (const d of w.discs) {
+      ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.arc(d.x, d.y, r, d.spin, d.spin + 4.6); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.arc(d.x, d.y, r * 0.45, -d.spin, -d.spin + 3.4); ctx.stroke();
+    }
+  },
+};
+
+WB.plasma = {
+  update(w, dt) {
+    const s = w.s, p = G.p, R = s.range * s.area, color = WEAPONS[w.id].color;
+    const tgt = nearestEnemy(p.x, p.y, R * 1.35);
+    const want = tgt ? Math.atan2(tgt.y - p.y, tgt.x - p.x) : p.face;
+    w.ang = w.ang === undefined ? want : w.ang + angDiff(w.ang, want) * Math.min(1, dt * 12);
+    w.on = clamp((w.on || 0) + (tgt ? dt * 7 : -dt * 4), 0, 1);
+    // Kometa: ohnivá stopa za lodí, hustší čím rychleji letí
+    if (s.trail) {
+      const sp = Math.hypot(p.vx, p.vy);
+      w.trailD = (w.trailD || 0) + sp * dt;
+      if (w.trailD > 22) {
+        w.trailD = 0;
+        G.effects.push({ k: 'flame', x: p.x + rand(-4, 4), y: p.y + rand(-4, 4), r: 26 * s.area, life: 1.7, max: 1.7, dmg: s.dmg * 1.2, tick: 0, src: w.id, color });
+      }
+    }
+    w.t -= dt;
+    if (w.t > 0 || !tgt) return;
+    w.t = s.cd;
+    const half = s.arc / 2;
+    G.grid.query(p.x, p.y, R + G.maxR, _wq);
+    for (let i = 0; i < s.amount; i++) {
+      const a = w.ang + i * TAU / s.amount;
+      for (const e of _wq) {
+        if (e.dead) continue;
+        const dx = e.x - p.x, dy = e.y - p.y, dd = Math.hypot(dx, dy) || 1;
+        if (dd > R + e.r) continue;
+        if (Math.abs(angDiff(a, Math.atan2(dy, dx))) > half + Math.atan2(e.r, dd)) continue;
+        hurtEnemy(e, s.dmg, w.id, dx / dd * 45, dy / dd * 45, true);
+      }
+      if (G.particles.length < MAX_PARTICLES) for (let k = 0; k < 3; k++) {
+        const pa = a + rand(-half, half), sp = R * rand(1.6, 2.6);
+        G.particles.push({ x: p.x + Math.cos(pa) * 16, y: p.y + Math.sin(pa) * 16, vx: Math.cos(pa) * sp, vy: Math.sin(pa) * sp, life: 0.35, max: 0.35, size: rand(2, 4), color: Math.random() < 0.4 ? '#fff2c0' : color, drag: 2.5 });
+      }
+    }
+  },
+  draw(w, ctx) {
+    if (!w.on) return;
+    const s = w.s, p = G.p, col = WEAPONS[w.id].color, half = s.arc / 2;
+    const R = s.range * s.area * (0.93 + 0.07 * Math.sin(G.time * 31)) * (0.4 + 0.6 * w.on);
+    Render.world();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < s.amount; i++) {
+      const a = w.ang + i * TAU / s.amount;
+      const g = ctx.createRadialGradient(p.x, p.y, 6, p.x, p.y, R);
+      g.addColorStop(0, `rgba(255,248,220,${0.75 * w.on})`); g.addColorStop(0.35, rgba(col, 0.42 * w.on)); g.addColorStop(1, rgba(col, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.arc(p.x, p.y, R, a - half, a + half); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+};
+
+WB.meteor = {
+  update(w, dt) {
+    w.t -= dt;
+    if (w.t > 0) return;
+    const s = w.s, p = G.p;
+    const cands = enemiesNear(p.x, p.y, G.viewR * 0.6);
+    if (!cands.length) { w.t = 0.3; return; }
+    w.t = s.cd;
+    const R = 70 * s.area, color = WEAPONS[w.id].color;
+    for (let i = 0; i < s.amount; i++) {
+      // z několika náhodných kandidátů ten v největším shluku
+      let best = cands[0], bn = -1;
+      for (let k = 0; k < 5; k++) {
+        const e = cands[(Math.random() * cands.length) | 0];
+        G.grid.query(e.x, e.y, R, _wq);
+        if (_wq.length > bn) { bn = _wq.length; best = e; }
+      }
+      const j = i ? R * 0.5 : 0;
+      G.effects.push({ k: 'strike', x: best.x + rand(-j, j), y: best.y + rand(-j, j), r: R, t: -i * 0.07, delay: s.delay, life: 1, dmg: s.dmg, src: w.id, color, crit: !!s.crit });
+    }
+    Sound.play.missile();
+  },
+};
+
 WB.hyperpulse = WB.pulse;
 WB.swarm = WB.seeker;
 WB.tesla = WB.arc;
 WB.supernova = WB.nova;
 WB.halo = WB.orbit;
 WB.entropy = WB.aura;
+WB.quantum = WB.disc;
+WB.comet = WB.plasma;
+WB.starfall = WB.meteor;

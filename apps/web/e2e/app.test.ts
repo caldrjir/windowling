@@ -268,6 +268,81 @@ test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
 	expect(errors).toEqual([]);
 });
 
+test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'one run is enough for the game logic');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	// A veteran: Sector II cleared, the achievements that unlock the advanced weapons and passives.
+	await page.addInitScript(() => {
+		localStorage.setItem(
+			'voidborn.save.v1',
+			JSON.stringify({
+				shards: 20000,
+				forge: { revival: 1 },
+				achievements: { clear1: 1, clear2: 1, evo1: 1, evo4: 1, boss1: 1 },
+				sectors: {
+					s1: { cleared: true, odUnlocked: 1, best: 900 },
+					s2: { cleared: true, odUnlocked: 1, best: 900 },
+				},
+			}),
+		);
+	});
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	await page.locator('[data-go="forge"]').click();
+	await expect(page.locator('.master-head')).not.toHaveClass(/locked/);
+	await page.locator('[data-buy="cards"]').click();
+	expect(await page.evaluate('SAVE.forge.cards')).toBe(1);
+	await page.locator('.back').click();
+	await page.locator('[data-go="hangar"]').click();
+	await page.locator('#startBtn').click();
+	// The revive left is visible in the run.
+	await expect(page.locator('#hudChips .hc.rv')).toContainText('1');
+
+	// The game's state is top-level `const`/functions of the page (not on window).
+	const run = (await page.evaluate(`(() => {
+		G.weapons = [];
+		addWeapon('disc', 8); addWeapon('plasma', 8); addWeapon('meteor', 8);
+		for (const id of ['luck', 'speed', 'critamp']) applyChoice({ kind: 'passive', id });
+		const evos = upgradePool().filter(c => c.kind === 'evo');
+		for (const c of evos) applyChoice(c);
+		applyChoice({ kind: 'oc', id: 'quantum', lvl: 1 });
+		for (let i = 0; i < 40; i++) spawnEnemyAt('drone', G.p.x + 150 + i * 4, G.p.y + (i % 8) * 30 - 120);
+		return {
+			evos: evos.map(c => c.id).sort(),
+			weapons: G.weapons.map(w => w.id + ':' + (w.oc || 0)),
+			cards: genChoices().length,
+			armor10: Math.round(armorFactor(10) * 1000),
+			stabilizer: calcStats(PILOTS[0], { duration: 4 }, {}, {}).projSpd,
+		};
+	})()`)) as Record<string, unknown>;
+	expect(run).toMatchObject({
+		evos: ['comet', 'quantum', 'starfall'],
+		weapons: ['quantum:1', 'comet:0', 'starfall:0'],
+		armor10: 484,
+		stabilizer: 1.2,
+	});
+	expect(run.cards).toBeGreaterThanOrEqual(4);
+	await page.waitForTimeout(1500);
+	// Nothing left to upgrade: level-ups offer mutations, which raise the stats without a limit.
+	const mut = (await page.evaluate(`(() => {
+		G.weapons.forEach(w => { w.oc = OC_MAX; });
+		for (const id in G.passives) G.passives[id] = PASSIVES[id].max;
+		computeStats();
+		G.st.wSlots = G.weapons.length; G.st.pSlots = Object.keys(G.passives).length;
+		const kinds = genChoices().map(c => c.kind);
+		const before = G.st.might;
+		applyChoice({ kind: 'mut', id: 'might', lvl: 1 });
+		return { kinds, gain: Math.round((G.st.might - before) * 100) };
+	})()`)) as { kinds: string[]; gain: number };
+	expect(mut.kinds).toContain('mut');
+	expect(mut.gain).toBe(4);
+	expect(errors).toEqual([]);
+});
+
 test('shows the stats a game saved in this browser', async ({ page }) => {
 	await page.goto('/');
 	await page.evaluate(() =>

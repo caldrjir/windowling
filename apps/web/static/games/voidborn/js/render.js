@@ -279,7 +279,7 @@ const Render = (() => {
 
   function drawGame() {
     const p = G.p, sec = G.sector;
-    frame(sec, G.cam.x, G.cam.y, G.shake * 0.6, G.flash * 0.6);
+    frame(sec, G.cam.x, G.cam.y, G.shake * 0.45, G.flash * 0.6);
 
     // efekty pod entitami
     world();
@@ -308,6 +308,30 @@ const Render = (() => {
         const a = 0.25 + 0.35 * ((f.life * 8) % 1);
         ctx.strokeStyle = rgba(f.color, a); ctx.lineWidth = f.w;
         ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x + Math.cos(f.a) * f.len, f.y + Math.sin(f.a) * f.len); ctx.stroke();
+      } else if (f.k === 'strike') {
+        // zaměřovací kruh se stahuje, shora padá stopa střely
+        if (f.t < 0) continue;
+        world();
+        const q = clamp(f.t / f.delay, 0, 1);
+        ctx.strokeStyle = rgba(f.color, 0.25 + 0.5 * q); ctx.lineWidth = 2;
+        ctx.setLineDash([7, 7]); ctx.lineDashOffset = -f.t * 60;
+        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = rgba(f.color, 0.08 + 0.12 * q);
+        ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 - q * 0.85), 0, TAU); ctx.fill();
+        ctx.globalCompositeOperation = 'lighter';
+        const hx = f.x + 260 * (1 - q), hy = f.y - 520 * (1 - q);
+        ctx.strokeStyle = rgba(f.color, 0.55); ctx.lineWidth = 7 * q + 2;
+        ctx.beginPath(); ctx.moveTo(hx + 50, hy - 100); ctx.lineTo(hx, hy); ctx.stroke();
+        spr(Sprites.glow('#ffffff', 10), hx, hy, 0, 0.6 + q * 0.6, 0.9);
+        ctx.globalCompositeOperation = 'source-over';
+      } else if (f.k === 'flame') {
+        world();
+        const a = Math.min(1, f.life / f.max * 1.6), rr = f.r * (0.75 + 0.25 * a);
+        ctx.globalCompositeOperation = 'lighter';
+        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rr);
+        g.addColorStop(0, `rgba(255,240,190,${0.5 * a})`); g.addColorStop(0.45, rgba(f.color, 0.35 * a)); g.addColorStop(1, rgba(f.color, 0));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, TAU); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
       }
     }
 
