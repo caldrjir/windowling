@@ -318,9 +318,12 @@ them to −16 LUFS / −1 dBTP (two-pass loudnorm) and encodes Opus 128 kb/s int
 the game stays silent, so `hollowsun` joins `OWN_MUSIC` in `static/games/music.js` together with the
 first tracks.
 
-Act I campaign (P1): "Kampaň: Act I" in the menu plays the Bible's Act I main path, following the
-areas' links: Ashfields (L1–3), Burnt Orchard (3–5), Ironbound Tollgate (5–7), Charcoal Woods
-(6–9), the Great Kiln (9–11), then the Kiln Warden in the Heart of the Kiln (L12, the boss mode).
+Act I campaign (P1): "Kampaň: Act I" in the menu plays the Bible's Act I main quests: Ashfields
+(L1–3, q1_01), Burnt Orchard (3–5), the Chapel of Embers crypt on two floors (4–5 and 5–6, q1_02,
+reached from the Ashfields), Ironbound Tollgate (5–7), Charcoal Woods (6–9, ends q1_03), the Great
+Kiln (9–11), then the Kiln Warden in the Heart of the Kiln (L12, the boss mode, q1_04). A campaign
+step is an area id, a further floor is `id:2`. Each new area borders one already visited (on foot,
+or by Lantern back to it).
 
 - Layout: each zone comes from the Bible's own dungeon generator. `js/dungeon.js` is G.genDungeon
   (14 steps), exported unchanged by the Bible exporter and checked by fixtures. `js/world.js` turns
@@ -328,8 +331,18 @@ areas' links: Ashfields (L1–3), Burnt Orchard (3–5), Ironbound Tollgate (5�
   not neighbours).
 - Content: a Lantern at the entrance, locks with their keys in side rooms, chests, the gate to the
   next area in the last main room, and the generator's enemy budget with types from the area's list.
-  Enemies are at the area's levels by depth, elites use the Bible's elite multipliers, and the Kiln
-  Acolyte still stands in as a Bowman.
+  Enemies are at the area's levels by depth and elites use the Bible's elite multipliers.
+- Whispers: each zone holds its area's whispers (G.WHISPERS, exported with the speaker's name) in
+  the deepest free side room, on the last floor; touching one shows the line and collects it in
+  the save (`whispers`). "Poslední úder" follows the Kiln Warden's defeat.
+- Quests: the step that ends a main quest grants its Bible XP when the gate is reached (q1_01 300,
+  q1_02 1,400, q1_03 3,200); q1_02's magic ring goes straight to the inventory. The prototype has no
+  gold or passive points.
+- Gallows Hill (secret, L8): a sealed entrance in a Charcoal Woods side room. The Rusty Gallows Key
+  drops from a Smoldering Brute in the campaign with 4 % (the Bible's unlock), rolled per brute with
+  its own seed so other rolls stay the same. With the key the entrance offers the area; it ends
+  with a unique chest next to the gate and leads back to the Charcoal Woods without moving the
+  campaign on (`gallowsKey`, `gallowsDone` in the save).
 - Simulation (`mode: 'act1'`): enemies sleep until they see the player (the Bible's detection
   ranges) and alarm allies within 8 m. Movement slides along the walls and steps round corners;
   walls block sight and arrows.
@@ -344,8 +357,8 @@ areas' links: Ashfields (L1–3), Burnt Orchard (3–5), Ironbound Tollgate (5�
 The generator parameters per zone are prototype values (`ZONE_P` in `world.js`); an XP estimate
 reaches level 11 at the end of the Great Kiln, matching the Bible's area levels. On the autopilot a
 zone takes about 3–11 minutes. `hollowsun-world.test.ts` checks that the zones follow the Bible's
-links, the levels and objects, that walking each route picks up the keys and reaches the gate, and
-the respawn; E2E clears a zone, moves on to the next and finishes Act I with the boss.
+main quests and links, the levels and objects, that walking each route picks up the keys and reaches the gate, and
+the respawn, the quests, the crypt floors, the Gallows Hill key and entrance; E2E clears a zone, moves on to the next and finishes Act I with the boss.
 
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three

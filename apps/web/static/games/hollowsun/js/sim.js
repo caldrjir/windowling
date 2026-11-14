@@ -165,7 +165,7 @@
     const S = s.ch.S;
     s.player = { x: 0, z: 0, face: 0, hp: S.hp, hpMax: S.hp, res: 30, resMax: S.res, act: null, dodge: null, dodgeCd: 0, stun: 0, moveTo: null, pick: null, barrier: 0, bulwark: 0, invuln: !!opts.invuln, dmgTaken: 0 };
     if (s.mode === 'act1') {
-      const z = root.HSWorld.buildZone(opts.zone || root.HSWorld.ACT1[0]); s.zone = z; s.zoneKeys = new Set(); s.pillars = []; s.deaths = 0; s.zoneDone = false; s.routeI = 0;
+      const z = root.HSWorld.buildZone(opts.zone || root.HSWorld.ACT1[0]); s.zone = z; s.gallowsKey = !!opts.gallowsKey; s.zoneKeys = new Set(); s.pillars = []; s.deaths = 0; s.zoneDone = false; s.routeI = 0;
       s.objs = z.objs.map((o) => Object.assign({ done: false }, o)); const lan = s.objs.find((o) => o.kind === 'lantern'); s.checkpoint = { x: lan.x, z: lan.z };
       s.player.x = lan.x; s.player.z = lan.z + 1.5;
       for (const sp of z.spawns) spawn(s, sp.type, sp.x, sp.z, sp.L, sp.elite);
@@ -319,6 +319,9 @@
     if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type });
     if (s.boss && e.id === s.boss.id) { bossLoot(s, e); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
     if (!e.noLoot) rollDrop(s, e); gainXp(s, e);
+    // Rusty Gallows Key: 4 % ze Smoldering Brute v kampani, jednou (vlastní RNG podle id, nemění ostatní hody)
+    const gk = root.HSWorld && root.HSWorld.SIDE.a1_gallows;
+    if (gk && s.zone && !s.gallowsKey && e.type === gk.drop && !e.summoned && HS.rng(s.seed + '#gallows#' + s.zone.id + '#' + e.id)() < gk.chance) { s.gallowsKey = true; s.events.push({ t: 'gallowskey', x: e.x, z: e.z }); }
   }
   // štít od Acolyta pohltí poškození dřív než HP
   function wardAbsorb(s, e, dmg) { if (!(e.ward > 0)) return 0; const ab = Math.min(e.ward, dmg); e.ward -= ab; if (e.ward <= 0) { e.ward = 0; e.wardT = 0; s.events.push({ t: 'wardbreak', id: e.id, x: e.x, z: e.z }); } return ab; }
@@ -562,14 +565,25 @@
     for (const o of s.objs) {
       if (o.done && o.kind !== 'lantern') continue; const d = len(o.x - p.x, o.z - p.z);
       if (o.kind === 'lantern' && d <= 2.2 && (s.checkpoint.x !== o.x || s.checkpoint.z !== o.z || !o.done)) { o.done = true; s.checkpoint = { x: o.x, z: o.z }; p.hp = p.hpMax; s.events.push({ t: 'lantern', id: o.id, x: o.x, z: o.z }); }
+      else if (o.kind === 'whisper' && d <= 2) { o.done = true; s.events.push({ t: 'whisper', wh: o.wh, x: o.x, z: o.z }); }
+      else if (o.kind === 'side') { if (d > 4) o.near = false; else if (d <= 2.2 && !o.near) { o.near = true; s.events.push(s[o.need] ? { t: 'side', to: o.to } : { t: 'sidelocked', to: o.to }); } }
       else if (o.kind === 'key' && d <= 2) { o.done = true; s.zoneKeys.add(o.key); s.events.push({ t: 'key', key: o.key, x: o.x, z: o.z }); }
       else if (o.kind === 'chest' && d <= 1.8) {
         // truhla: 2 předměty s raritou jako u elitního balíku (prototyp; Bible: poklady z generátoru, krok 11)
         o.done = true; const r = HS.rng(s.seed + '#chest#' + s.zone.id + '#' + o.id);
+        if (o.unique) { let u = null; for (let k = 0; k < 40 && !(u && u.rar === 'unique'); k++) u = HS.genItem(r, o.L, HS.D.cls.id, 'unique'); const dd = { id: s.nextId++, x: o.x, z: o.z + 1.2, item: u }; s.drops.push(dd); s.events.push({ t: 'drop', id: dd.id, x: dd.x, z: dd.z, rar: u.rar }); }
         for (let i = 0; i < 2; i++) { const item = HS.genItem(r, o.L, HS.D.cls.id, HS.rollRarity(r, 0, 'elite')); const dd = { id: s.nextId++, x: o.x + (i ? 0.9 : -0.9), z: o.z + 0.6, item }; s.drops.push(dd); s.events.push({ t: 'drop', id: dd.id, x: dd.x, z: dd.z, rar: item.rar }); }
         s.events.push({ t: 'chest', id: o.id, x: o.x, z: o.z });
-      } else if (o.kind === 'gate' && d <= 2.4 && !s.zoneDone) { s.zoneDone = true; o.done = true; s.events.push({ t: 'zonedone', id: s.zone.id, next: root.HSWorld.next(s.zone.id), kills: s.kills, deaths: s.deaths, time: s.t }); }
+      } else if (o.kind === 'gate' && d <= 2.4 && !s.zoneDone) { s.zoneDone = true; o.done = true; questReward(s); s.events.push({ t: 'zonedone', id: s.zone.id, next: root.HSWorld.next(s.zone.id), kills: s.kills, deaths: s.deaths, time: s.t }); }
     }
+  }
+  // odměna questu Bible na konci jeho kroku: XP a předmět rovnou do inventáře (gold a pasivní body prototyp nemá)
+  function questReward(s) {
+    const q = s.zone.quest && HS.D.quests.find((x) => x.id === s.zone.quest); if (!q || !s.progress) return;
+    const xp = (q.rewards && q.rewards.xp) || 0; let item = null;
+    if (/prsten/i.test((q.rewards && q.rewards.item) || '')) { item = HS.genItem(HS.rng(s.seed + '#quest#' + q.id), s.L, HS.D.cls.id, 'magic', 'ring'); if (s.gear.inv.length < INV_MAX) s.gear.inv.push(item); else { const dd = { id: s.nextId++, x: s.player.x, z: s.player.z, item }; s.drops.push(dd); } }
+    if (xp) grantXp(s, xp, s.player);
+    s.events.push({ t: 'quest', id: q.id, n: q.n, xp, item });
   }
   function step(s, inp) {
     s.events.length = 0; if (s.over) return s;

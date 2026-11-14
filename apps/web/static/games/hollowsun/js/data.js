@@ -311,7 +311,8 @@ window.HS_DATA = {
     "a1_ashfields"
    ],
    "inst": "fixed",
-   "d": "Opevněné hornické město kolem vyhaslých pecí. Hub Act I."
+   "d": "Opevněné hornické město kolem vyhaslých pecí. Hub Act I.",
+   "unlock": null
   },
   {
    "id": "a1_ashfields",
@@ -331,7 +332,8 @@ window.HS_DATA = {
     "a1_chapel_crypt"
    ],
    "inst": "hybrid",
-   "d": "Spálená pole s hromadnými hroby. Tutoriál pohybu a boje."
+   "d": "Spálená pole s hromadnými hroby. Tutoriál pohybu a boje.",
+   "unlock": null
   },
   {
    "id": "a1_burnt_orchard",
@@ -350,7 +352,8 @@ window.HS_DATA = {
     "a1_ashfields",
     "a1_tollgate"
    ],
-   "inst": "hybrid"
+   "inst": "hybrid",
+   "unlock": null
   },
   {
    "id": "a1_chapel_crypt",
@@ -368,7 +371,8 @@ window.HS_DATA = {
     "a1_ashfields"
    ],
    "inst": "proc",
-   "d": "Procedurální krypta (archetyp Crypt, 2 patra)."
+   "d": "Procedurální krypta (archetyp Crypt, 2 patra).",
+   "unlock": null
   },
   {
    "id": "a1_tollgate",
@@ -386,7 +390,11 @@ window.HS_DATA = {
     "a1_burnt_orchard",
     "a1_charcoal_woods"
    ],
-   "inst": "hybrid"
+   "inst": "hybrid",
+   "unlock": {
+    "q": "q1_02",
+    "t": "Dokončit „Chapel of Embers“"
+   }
   },
   {
    "id": "a1_charcoal_woods",
@@ -406,7 +414,8 @@ window.HS_DATA = {
     "a1_kiln",
     "a1_gallows"
    ],
-   "inst": "hybrid"
+   "inst": "hybrid",
+   "unlock": null
   },
   {
    "id": "a1_gallows",
@@ -423,7 +432,11 @@ window.HS_DATA = {
     "a1_charcoal_woods"
    ],
    "inst": "hybrid",
-   "d": "Tajná oblast: lore scéna + unikátní truhla."
+   "d": "Tajná oblast: lore scéna + unikátní truhla.",
+   "unlock": {
+    "q": null,
+    "t": "Najít Rusty Gallows Key (drop: Smoldering Brute, 4 %)"
+   }
   },
   {
    "id": "a1_kiln",
@@ -442,7 +455,11 @@ window.HS_DATA = {
     "a1_charcoal_woods",
     "a1_kiln_heart"
    ],
-   "inst": "fixed"
+   "inst": "fixed",
+   "unlock": {
+    "q": "q1_03",
+    "t": "Dokončit „The Toll of Iron“"
+   }
   },
   {
    "id": "a1_kiln_heart",
@@ -457,7 +474,8 @@ window.HS_DATA = {
     "a1_kiln",
     "a2_saltlantern"
    ],
-   "inst": "fixed"
+   "inst": "fixed",
+   "unlock": null
   }
  ],
  "quests": [
@@ -470,7 +488,13 @@ window.HS_DATA = {
     "Zabij 5 Ashen Thrallů (tutoriál útoku)",
     "Pojmi první ozvěnu (tutoriál Echo)",
     "Dojdi k bráně Cinderholdu"
-   ]
+   ],
+   "rewards": {
+    "xp": 300,
+    "gold": 50,
+    "item": "Startovní zbraň třídy",
+    "passive": 0
+   }
   },
   {
    "id": "q1_02",
@@ -481,7 +505,13 @@ window.HS_DATA = {
     "Projdi Burnt Orchard",
     "Vyčisti kryptu (procedurální, 2 patra)",
     "Získej Archivní deník"
-   ]
+   ],
+   "rewards": {
+    "xp": 1400,
+    "gold": 150,
+    "item": "Magic prsten (smart loot)",
+    "passive": 1
+   }
   },
   {
    "id": "q1_03",
@@ -491,7 +521,13 @@ window.HS_DATA = {
     "Promluv s maršálem Oduinem",
     "VOLBA: zaplať clo 500 zlata / poraž strážného šampiona",
     "Projdi Charcoal Woods"
-   ]
+   ],
+   "rewards": {
+    "xp": 3200,
+    "gold": 200,
+    "item": "—",
+    "passive": 0
+   }
   },
   {
    "id": "q1_04",
@@ -502,7 +538,71 @@ window.HS_DATA = {
     "Uhas 3 pece (mechanika)",
     "Poraž Kiln Wardena",
     "VOLBA: Kiln Shard"
-   ]
+   ],
+   "rewards": {
+    "xp": 6500,
+    "gold": 500,
+    "item": "Boss loot table",
+    "passive": 1
+   }
+  }
+ ],
+ "whispers": [
+  {
+   "id": "wh_01",
+   "area": "a1_ashfields",
+   "who": "Hrobník z Cinderholdu",
+   "n": "Hromadný hrob",
+   "txt": "Kopal jsem jámu pro třicet a jeden z nich dýchal. Celou cestu ke Cinderholdu mluvil cizím ženským hlasem.",
+   "find": "Scéna u hromadného hrobu (tutoriál, nelze minout)"
+  },
+  {
+   "id": "wh_02",
+   "area": "a1_chapel_crypt",
+   "who": "Kněz Choir of Solace",
+   "n": "Kázání o moru",
+   "txt": "Bůh Slunce nechce, abyste umírali. Dejte nám své mrtvé a my je uložíme do světla, odkud se nevracejí.",
+   "find": "Tajná místnost za kazatelnou v kryptě"
+  },
+  {
+   "id": "wh_03",
+   "area": "a1_kiln",
+   "who": "Bratr Aldric",
+   "n": "První kovaná ozvěna",
+   "txt": "Ozvěna vojáka se nechtěla rozplynout, tak jsem ji vložil do čepele. Meč se v noci třese, ale nepovolí.",
+   "find": "Oltář s kladivem za hlavní pecí"
+  },
+  {
+   "id": "wh_04",
+   "area": "a1_burnt_orchard",
+   "who": "Sadařka",
+   "n": "Den, kdy jablka hořela",
+   "txt": "Slunce zablikalo jako svíčka v průvanu. Pak spadlo něco teplejšího než ono a sad hořel bez plamene.",
+   "find": "Spálená studna uprostřed sadu"
+  },
+  {
+   "id": "wh_05",
+   "area": "a1_gallows",
+   "who": "Dezertér Ironbound",
+   "n": "Šibenice na kopci",
+   "txt": "Maršál Hask chtěl, abychom nosili ozvěny do boje. Odmítl jsem. Teď visím a moje ozvěna se dívá, jak mě odřezávají.",
+   "find": "Tajná oblast Gallows Hill"
+  },
+  {
+   "id": "wh_06",
+   "area": "a1_charcoal_woods",
+   "who": "Kovářka Brannoc",
+   "n": "Kovářčina přísaha",
+   "txt": "Aldric kul ozvěny, já budu kout jen ocel. Když to nebude stačit, ať zemřu jako kovářka, ne jako kovadlina.",
+   "find": "Opuštěný milíř (event Charcoal Woods)"
+  },
+  {
+   "id": "wh_07",
+   "area": "a1_kiln_heart",
+   "who": "Bratr Aldric",
+   "n": "Poslední úder",
+   "txt": "Ilsabet, přísahal jsem, že udržím oheň. Neřekla jsi mi, že oheň bude chtít mě.",
+   "find": "Po porážce Kiln Wardena"
   }
  ],
  "bosses": {

@@ -2,14 +2,20 @@
 // Echoes of the Hollow Sun – oblast Act I (P1). Zóna = rozložení z generátoru Bible (HS.genDungeon, 14 kroků)
 // převedené na herní geometrii: místnosti a chodby jako osově zarovnané obdélníky (průchozí plocha), zámky
 // a klíče, Lantern (checkpoint, D08), truhly, brána do další oblasti a nepřátelé z rozpočtu generátoru.
-// Hlavní cesta Act I podle odkazů oblastí v Bible: Ashfields → Burnt Orchard → Tollgate → Charcoal Woods →
-// Great Kiln → Heart of the Kiln (boss). Čistá a deterministická funkce (seed = id oblasti), testuje se v Node.
+// Kampaň jde po hlavních questech Bible: Ashfields (q1_01) → Burnt Orchard → krypta Chapel of Embers, 2 patra (q1_02,
+// z Ashfields přes Lantern) → Tollgate → Charcoal Woods (q1_03) → Great Kiln → Heart of the Kiln (q1_04, boss).
+// Gallows Hill je tajná odbočka z Charcoal Woods (klíč z Brutů). Krok kampaně je id oblasti, další patro „id:2“.
+// Čistá a deterministická funkce (seed = krok), testuje se v Node.
 (function (root) {
   const HS = root.HS;
   const CELL = 18; // m mezi středy buněk mřížky generátoru
   const UNIT = 2.5; // m na jednotku rozměru místnosti v generátoru (3–5 j. → 7,5–12,5 m)
   const CORR = 4; // m šířka chodby
-  const ACT1 = ['a1_ashfields', 'a1_burnt_orchard', 'a1_tollgate', 'a1_charcoal_woods', 'a1_kiln', 'a1_kiln_heart'];
+  const ACT1 = ['a1_ashfields', 'a1_burnt_orchard', 'a1_chapel_crypt', 'a1_chapel_crypt:2', 'a1_tollgate', 'a1_charcoal_woods', 'a1_kiln', 'a1_kiln_heart'];
+  // tajné odbočky: odkud se vchází a co je potřeba (Bible: „Najít Rusty Gallows Key (drop: Smoldering Brute, 4 %)“)
+  const SIDE = { a1_gallows: { from: 'a1_charcoal_woods', need: 'gallowsKey', drop: 'en_brute', chance: 0.04 } };
+  // konec questu = konec kroku kampaně (q1_02 končí Archivním deníkem ve 2. patře, q1_03 průchodem Charcoal Woods)
+  const QUEST_END = { a1_ashfields: 'q1_01', 'a1_chapel_crypt:2': 'q1_02', a1_charcoal_woods: 'q1_03' };
   // parametry generátoru pro zóny (prototyp; Bible je pro oblasti neudává): velikost, obtížnost, hustota, větve
   const ZONE_P = {
     a1_ashfields: { size: 'M', diff: 1, density: 1.25, side: 2, special: 1 },
@@ -17,8 +23,15 @@
     a1_tollgate: { size: 'L', diff: 3, density: 1.75, side: 3, special: 2 },
     a1_charcoal_woods: { size: 'L', diff: 4, density: 2, side: 4, special: 2 },
     a1_kiln: { size: 'L', diff: 5, density: 2, side: 4, special: 2 },
+    // krypta: 2 patra (Bible: „procedurální, 2 patra“), level oblasti 4–6 rozdělený na patra
+    a1_chapel_crypt: { size: 'M', diff: 3, density: 1.5, side: 2, special: 1, lv: [4, 5] },
+    'a1_chapel_crypt:2': { size: 'M', diff: 3, density: 1.75, side: 2, special: 2, lv: [5, 6] },
+    a1_gallows: { size: 'S', diff: 4, density: 1.5, side: 2, special: 0 },
   };
-  const area = (id) => HS.D.areas.find((a) => a.id === id);
+  const areaOf = (step) => String(step).split(':')[0];
+  const floorOf = (step) => Number(String(step).split(':')[1] || 1);
+  const floorsOf = (areaId) => ACT1.filter((x) => areaOf(x) === areaId).length || 1;
+  const area = (id) => HS.D.areas.find((a) => a.id === areaOf(id));
   const rect = (cx, cz, w, h) => ({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - h / 2, z1: cz + h / 2 });
   const inRect = (r, x, z, m) => x >= r.x0 + m && x <= r.x1 - m && z >= r.z0 + m && z <= r.z1 - m;
   // všech 6 typů Act I z Bible (Thrall, Brute, Wisp, Hound, Bowman, Acolyte); neznámý typ by nahradil Thrall
@@ -26,7 +39,7 @@
   const enemyPool = (a) => { const out = a.enemies.map((e) => (KNOWN.includes(e) ? e : 'en_thrall')); return out.length ? out : ['en_thrall']; };
 
   function buildZone(areaId) {
-    const a = area(areaId); const P = ZONE_P[areaId];
+    const a = area(areaId); const P = ZONE_P[areaId]; const step = areaId; const aid = areaOf(step);
     if (!a || !P) throw new Error('Unknown zone ' + areaId);
     const prm = Object.assign({ seed: 'act1-' + areaId, theme: 'crypt', arena: 'pillars', floors: 1 }, P);
     const d = HS.genDungeon(prm); const r = HS.rng('act1-zone-' + areaId);
@@ -43,7 +56,7 @@
       else { segs.push({ x0: Math.min(A.cx, B.cx) - CORR / 2, x1: Math.max(A.cx, B.cx) + CORR / 2, z0: A.cz - CORR / 2, z1: A.cz + CORR / 2 }); segs.push({ x0: B.cx - CORR / 2, x1: B.cx + CORR / 2, z0: Math.min(A.cz, B.cz), z1: Math.max(A.cz, B.cz) }); }
       corridors.push({ a: e.a, b: e.b, main: e.main, lock: e.lock || null, segs, corner: A.cz === B.cz || A.cx === B.cx ? null : [B.cx, A.cz] });
     }
-    const L0 = a.lv[0], L1 = a.lv[1]; const maxDepth = Math.max(1, ...rooms.map((x) => x.depth));
+    const lv = P.lv || a.lv; const L0 = lv[0], L1 = lv[1]; const maxDepth = Math.max(1, ...rooms.map((x) => x.depth));
     const levelAt = (rm) => Math.round(L0 + ((L1 - L0) * rm.depth) / maxDepth);
     const pool = enemyPool(a); const spawns = [];
     for (const rm of rooms) {
@@ -59,8 +72,16 @@
       if (rm.chest) objs.push({ kind: 'chest', x: rm.cx + rm.w * 0.25, z: rm.cz, room: rm.id, L: levelAt(rm) });
       if (rm.key) objs.push({ kind: 'key', key: rm.key, x: rm.cx, z: rm.cz, room: rm.id });
     }
+    // šepot (G.WHISPERS) ve vedlejší místnosti – u více pater v posledním; vchod do tajné odbočky v jiné
+    const free = rooms.filter((x) => !x.main && !x.key).sort((p, q) => q.depth - p.depth || p.id - q.id);
+    const spot = () => free.shift() || rooms[Math.floor(d.mainLen / 2)];
+    const floors = floorsOf(aid), floor = floorOf(step);
+    if (floor === floors) for (const w of HS.D.whispers.filter((x) => x.area === aid)) { const rm = spot(); objs.push({ kind: 'whisper', wh: w.id, x: rm.cx - rm.w * 0.25, z: rm.cz, room: rm.id }); }
+    for (const sid in SIDE) if (SIDE[sid].from === aid) { const rm = spot(); objs.push({ kind: 'side', to: sid, need: SIDE[sid].need, x: rm.cx, z: rm.cz - rm.h * 0.25, room: rm.id }); }
+    // tajná oblast: unikátní truhla v poslední místnosti (Bible: „lore scéna + unikátní truhla“)
+    if (a.type === 'secret') objs.push({ kind: 'chest', unique: true, x: exit.cx - exit.w * 0.25, z: exit.cz, room: exit.id, L: L1 });
     objs.forEach((o, i) => { o.id = i + 1; });
-    return { id: areaId, n: a.n, lv: a.lv, type: a.type, rooms, corridors, spawns, objs, mainLen: d.mainLen, keys: d.keys, ok: d.bossOk && d.allOk, route: route(rooms, corridors, d) };
+    return { id: areaId, area: aid, floor, floors, quest: QUEST_END[step] || null, side: !!SIDE[aid], n: a.n, lv, type: a.type, rooms, corridors, spawns, objs, mainLen: d.mainLen, keys: d.keys, ok: d.bossOk && d.allOk, route: route(rooms, corridors, d) };
   }
 
   // průchozí místo? (místnosti + chodby, zamčené chodby bez klíče ne)
@@ -79,6 +100,7 @@
     for (let i = 1; i < d.mainLen; i++) { const c = corridors.find((x) => x.main && x.b === i); if (c && c.lock && keyRoom[c.lock] != null) { go(keyRoom[c.lock]); } go(i); }
     return pts;
   }
-  const next = (id) => { const i = ACT1.indexOf(id); return i >= 0 && i < ACT1.length - 1 ? ACT1[i + 1] : null; };
-  root.HSWorld = { ACT1, CELL, UNIT, CORR, ZONE_P, buildZone, walkable, next, area };
+  // další krok kampaně; z tajné odbočky zpět do oblasti, odkud se vešlo
+  const next = (id) => { if (SIDE[id]) return SIDE[id].from; const i = ACT1.indexOf(id); return i >= 0 && i < ACT1.length - 1 ? ACT1[i + 1] : null; };
+  root.HSWorld = { ACT1, SIDE, QUEST_END, CELL, UNIT, CORR, ZONE_P, buildZone, walkable, next, area, areaOf, floorOf, floorsOf };
 })(typeof window !== 'undefined' ? window : globalThis);
