@@ -39,8 +39,12 @@
   be shown to friends; files it needs go under `/tajne/ruzek/`.
 - `static/wiki/<id>/` - game wikis: self-contained guide pages for games we play with friends
   (not games of the library), kept as their authors wrote them, behind the site password like
-  the games. `src/lib/wikis.ts` lists them on the hub's "Game wikis" tab (`/#wiki`); a wiki
-  links back to `/#wiki`. Like every static file they get no SvelteKit CSP.
+  the games. `src/lib/wikis.ts` lists them on the hub's "Game wikis" tab (`/#wiki`) with their
+  pages per language (the card opens the hub's language) and outside links (e.g. the Fandom
+  wiki); a wiki links back to `/#wiki`. Like every static file they get no SvelteKit CSP. The
+  English Gray Zone Warfare guide (`static/wiki/gzw/en/`) is generated from the Czech one by
+  `node apps/web/scripts/wiki-gzw-en.mjs`, which fails and names the text when the authors change
+  a Czech sentence it has no translation for.
 
 ### Games - `apps/web/static/games/<id>/`
 

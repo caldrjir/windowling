@@ -11,7 +11,7 @@
 		type GameCategory,
 		type GameTexts,
 	} from '$lib/games/registry';
-	import { WIKIS, type Wiki, type WikiTexts } from '$lib/wikis';
+	import { WIKIS, wikiPage, type Wiki, type WikiLang, type WikiTexts } from '$lib/wikis';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
@@ -1103,30 +1103,36 @@
 		</p>
 		<div class="wiki-grid">
 			{#each WIKIS as w (w.id)}
-				<a
-					class="wiki-card"
-					href={asset(w.path)}
-					style:--wa={w.colors[0]}
-					style:--wb={w.colors[1]}
-					data-testid="wiki-{w.id}"
-				>
-					<span class="wk-mark">{w.mark}</span>
-					<span class="wk-body">
-						<small>{w.game}</small>
-						<b>{wx(w, 'title')}</b>
-						<span class="wk-desc">{wx(w, 'description')}</span>
-						<span class="wk-tags">
-							{#each wx(w, 'sections') as s (s)}<span>{s}</span>{/each}
+				<div class="wiki-item" style:--wa={w.colors[0]} style:--wb={w.colors[1]}>
+					<a class="wiki-card" href={asset(wikiPage(w, lang))} data-testid="wiki-{w.id}">
+						<span class="wk-mark">{w.mark}</span>
+						<span class="wk-body">
+							<small>{w.game}</small>
+							<b>{wx(w, 'title')}</b>
+							<span class="wk-desc">{wx(w, 'description')}</span>
+							<span class="wk-tags">
+								{#each wx(w, 'sections') as s (s)}<span>{s}</span>{/each}
+							</span>
+							<span class="wk-meta"
+								>{L('Data pro verzi', 'Data for version')}
+								{w.version} · {(Object.keys(w.pages) as WikiLang[])
+									.map((l) => (l === 'cs' ? L('česky', 'Czech') : L('anglicky', 'English')))
+									.join(L(' i ', ' and '))}</span
+							>
 						</span>
-						<span class="wk-meta"
-							>{L('Data pro verzi', 'Data for version')}
-							{w.version} · {w.lang === 'cs'
-								? L('česky', 'in Czech')
-								: L('anglicky', 'in English')}</span
-						>
-					</span>
-					<span class="wk-go">{L('Otevřít', 'Open')} →</span>
-				</a>
+						<span class="wk-go">{L('Otevřít', 'Open')} →</span>
+					</a>
+					<div class="wk-links">
+						{#each Object.entries(w.pages) as [l, p] (l)}
+							<a href={asset(p)} hreflang={l} data-testid="wiki-{w.id}-{l}"
+								>{l === 'cs' ? 'Česky' : 'English'}</a
+							>
+						{/each}
+						{#each w.links as x (x.href)}
+							<a href={x.href} target="_blank" rel="external noopener">{x.label} ↗</a>
+						{/each}
+					</div>
+				</div>
 			{/each}
 		</div>
 	</section>

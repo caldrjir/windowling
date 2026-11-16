@@ -544,10 +544,30 @@ test('the Game wikis tab opens the Gray Zone Warfare field guide, which works an
 	// Loot shows the item icons.
 	await page.locator('.tabs [data-tab="loot"]').click();
 	await expect(page.locator('#loot-t img.ico').first()).toBeVisible();
+	// The Fandom wiki is one click away.
+	await expect(page.getByRole('link', { name: 'Fandom wiki ↗' })).toHaveAttribute(
+		'href',
+		'https://gray-zone-warfare.fandom.com/wiki/Gray_Zone_Warfare_Wiki',
+	);
+
+	// The English version: the same guide, translated, and back to Czech.
+	await page.getByRole('link', { name: 'EN', exact: true }).click();
+	await expect(page).toHaveURL(/\/wiki\/gzw\/en\/?$/);
+	await expect(page).toHaveTitle('GZW Field Guide');
+	await page.locator('.tabs [data-tab="munice"]').click();
+	await page.locator('#ammo-cls [data-cls="6"]').click();
+	await expect(page.locator('#ammo-sum')).toContainText('penetrate');
+	await page.locator('.tabs [data-tab="loot"]').click();
+	await expect(page.locator('#loot-cat')).toContainText('Evidence and IDs');
+	await page.getByRole('link', { name: 'CZ', exact: true }).click();
+	await expect(page).toHaveTitle('GZW Polní příručka');
 
 	// Back to the center lands on its wiki tab.
 	await page.getByRole('link', { name: '← Game Center' }).click();
 	await expect(page.getByTestId('wiki')).toBeVisible();
+	// Under the card: both languages and the Fandom wiki.
+	await expect(page.getByTestId('wiki-gzw-en')).toHaveAttribute('href', '/wiki/gzw/en/');
+	await expect(page.getByTestId('wiki').getByRole('link', { name: 'Fandom wiki ↗' })).toBeVisible();
 	await page.getByTestId('tab-library').click();
 	await expect(page.getByTestId('library')).toBeVisible();
 	expect(errors).toEqual([]);

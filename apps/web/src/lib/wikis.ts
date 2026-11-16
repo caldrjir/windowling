@@ -1,12 +1,19 @@
 /**
  * Game wikis: guides and cheat sheets for games we play with friends (not games of the library).
- * Each wiki is a self-contained static page under `static/wiki/<id>/`, listed on the hub's
- * "Game wikis" tab.
+ * Each wiki is a self-contained static page under `static/wiki/<id>/` (other languages in
+ * subfolders, e.g. `en/`), listed on the hub's "Game wikis" tab.
  */
+export type WikiLang = 'cs' | 'en';
+
 export interface WikiTexts {
 	title: string;
 	description: string;
 	sections: string[];
+}
+
+export interface WikiLink {
+	label: string;
+	href: string;
 }
 
 export interface Wiki extends WikiTexts {
@@ -17,9 +24,10 @@ export interface Wiki extends WikiTexts {
 	mark: string;
 	/** The game version the data is for. */
 	version: string;
-	/** Language the wiki itself is written in. */
-	lang: 'cs' | 'en';
-	path: string;
+	/** The wiki's pages by language; the card opens the one in the hub's language. */
+	pages: Partial<Record<WikiLang, string>>;
+	/** Other places to read about the game, opened in a new tab. */
+	links: WikiLink[];
 	/** Accent and background of the card. */
 	colors: [string, string];
 	en: WikiTexts;
@@ -31,8 +39,13 @@ export const WIKIS: Wiki[] = [
 		game: 'Gray Zone Warfare',
 		mark: 'GZW',
 		version: '0.5.1',
-		lang: 'cs',
-		path: '/wiki/gzw/',
+		pages: { cs: '/wiki/gzw/', en: '/wiki/gzw/en/' },
+		links: [
+			{
+				label: 'Fandom wiki',
+				href: 'https://gray-zone-warfare.fandom.com/wiki/Gray_Zone_Warfare_Wiki',
+			},
+		],
 		colors: ['#d4b062', '#111512'],
 		title: 'Polní příručka',
 		description:
@@ -46,3 +59,8 @@ export const WIKIS: Wiki[] = [
 		},
 	},
 ];
+
+/** The wiki page in the given language, or the first one it has. */
+export function wikiPage(w: Wiki, lang: WikiLang): string {
+	return w.pages[lang] ?? Object.values(w.pages)[0] ?? '/';
+}

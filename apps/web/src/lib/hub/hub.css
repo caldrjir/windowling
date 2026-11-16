@@ -401,7 +401,29 @@ main {
 	grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
 	gap: 16px;
 }
+.wiki-item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.wk-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 14px;
+	padding: 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+.wk-links a {
+	color: var(--muted);
+	text-decoration: none;
+}
+.wk-links a:hover,
+.wk-links a:focus-visible {
+	color: var(--wa);
+}
 .wiki-card {
+	flex: 1;
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	gap: 6px 18px;
