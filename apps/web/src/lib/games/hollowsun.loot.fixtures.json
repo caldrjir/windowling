@@ -1,5 +1,5 @@
 {
-	"source": "Echoes of the Hollow Sun – Game Design Bible v25",
+	"source": "Echoes of the Hollow Sun – Game Design Bible v33",
 	"note": "G.genItem, G.rollRarity, G.itemMods a calcChar/computeHit s výbavou z Bible – test parity lootu (P1).",
 	"items": [
 		{

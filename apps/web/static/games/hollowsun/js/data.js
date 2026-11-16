@@ -1,8 +1,8 @@
 'use strict';
 // GENEROVÁNO z Game Design Bible (needitovat ručně) – data pro prototyp P0.
-// Zdroj: Echoes of the Hollow Sun – Game Design Bible v25 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
+// Zdroj: Echoes of the Hollow Sun – Game Design Bible v33 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
 window.HS_DATA = {
- "source": "Echoes of the Hollow Sun – Game Design Bible v25 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
+ "source": "Echoes of the Hollow Sun – Game Design Bible v33 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)",
  "generated": "2026-11-04",
  "BAL": {
   "hpBase": 60,
@@ -963,6 +963,434 @@ window.HS_DATA = {
    }
   }
  ],
+ "vo": [
+  {
+   "id": "AU_vo_q1_01_01",
+   "q": "q1_01",
+   "at": "Probuzení v hrobě",
+   "role": "np_ysolde",
+   "text": "Dýchej. Ne tak rychle – pomalu. Jsi naživu, i když tě zakopali s ostatními.",
+   "en": "Breathe. Not so fast – slowly. You are alive, even though they buried you with the others.",
+   "atEn": "Waking in the Grave",
+   "dur": 6.1
+  },
+  {
+   "id": "AU_vo_q1_01_02",
+   "q": "q1_01",
+   "at": "Probuzení v hrobě",
+   "role": "np_ysolde",
+   "text": "Neboj se mě. Jsem hlas, který ti zůstal v hrudi. Ozvěna. Myslím, že tvoje první.",
+   "en": "Do not be afraid of me. I am the voice that stayed in your chest. An echo. Your first, I think.",
+   "atEn": "Waking in the Grave",
+   "dur": 6.5
+  },
+  {
+   "id": "AU_vo_q1_01_03",
+   "q": "q1_01",
+   "at": "Probuzení v hrobě",
+   "role": "v:Hrobník z Cinderholdu",
+   "text": "Pane na nebi, ten je teplej! Utíkej ke Cinderholdu, než přijdou Thrallové!",
+   "en": "Lord above, this one is warm! Run for Cinderhold before the Thralls come!",
+   "atEn": "Waking in the Grave",
+   "dur": 5.3
+  },
+  {
+   "id": "AU_vo_q1_01_04",
+   "q": "q1_01",
+   "at": "První ozvěna",
+   "role": "np_ysolde",
+   "text": "Ten voják po sobě nechal ozvěnu. Sáhni po ní. Bude to pálit – to znamená, že to funguje.",
+   "en": "That soldier left an echo behind. Reach for it. It will burn – that means it is working.",
+   "atEn": "The First Echo",
+   "dur": 7.7
+  },
+  {
+   "id": "AU_vo_q1_01_05",
+   "q": "q1_01",
+   "at": "První ozvěna",
+   "role": "np_ysolde",
+   "text": "Jeho vůle teď vede tvou ruku. Jen jich nenabírej moc. Kdo to přehnal, rozmazal se.",
+   "en": "His will guides your hand now. Just do not take too many. Those who overdid it blurred away.",
+   "atEn": "The First Echo",
+   "dur": 6.5
+  },
+  {
+   "id": "AU_vo_q1_01_06",
+   "q": "q1_01",
+   "at": "Brána Cinderholdu",
+   "role": "v:Strážný Compactu",
+   "text": "Stát! Z hrobu se nikdo nevrací. Jestli jsi Thrall, umřeš podruhé.",
+   "en": "Halt! Nobody comes back from the grave. If you are a Thrall, you will die twice.",
+   "atEn": "The Gate of Cinderhold",
+   "dur": 4.9
+  },
+  {
+   "id": "AU_vo_q1_01_07",
+   "q": "q1_01",
+   "at": "Brána Cinderholdu",
+   "role": "np_teodor",
+   "text": "Pusťte ho. Thrall nekrvácí a tenhle krvácí docela vydatně. Beru si ho na starost.",
+   "en": "Let him through. Thralls do not bleed, and this one bleeds quite generously. I will take charge of him.",
+   "atEn": "The Gate of Cinderhold",
+   "dur": 6.1
+  },
+  {
+   "id": "AU_vo_q1_01_08",
+   "q": "q1_01",
+   "at": "Brána Cinderholdu",
+   "role": "np_teodor",
+   "text": "Nesete v sobě cizí hlas, že? Neodpovídejte tady. V archivu je víc stínu a míň uší.",
+   "en": "You carry a stranger’s voice, don’t you? Do not answer here. The archive has more shadow and fewer ears.",
+   "atEn": "The Gate of Cinderhold",
+   "dur": 6.9
+  },
+  {
+   "id": "AU_vo_q1_02_01",
+   "q": "q1_02",
+   "at": "Archiv v Cinderholdu",
+   "role": "np_teodor",
+   "text": "Ozvěny vznikají jen ze silné vůle. Kdo vám dal tu svou, nevím. Ale vím, kde hledat.",
+   "en": "Echoes are born only from a strong will. Who gave you yours, I do not know. But I know where to look.",
+   "atEn": "The Archive in Cinderhold",
+   "dur": 6.9
+  },
+  {
+   "id": "AU_vo_q1_02_02",
+   "q": "q1_02",
+   "at": "Archiv v Cinderholdu",
+   "role": "np_teodor",
+   "text": "Pod Kaplí žárů jsem kdysi uložil deník. Archivní, ne svůj. Přineste ho a nečtěte ho cestou.",
+   "en": "Beneath the Chapel of Embers I once stored a journal. The archive’s, not mine. Bring it back, and do not read it on the way.",
+   "atEn": "The Archive in Cinderhold",
+   "dur": 6.9
+  },
+  {
+   "id": "AU_vo_q1_02_03",
+   "q": "q1_02",
+   "at": "Archiv v Cinderholdu",
+   "role": "np_ysolde",
+   "text": "Kdysi? Mluví, jako by tu byl déle než ta kaple.",
+   "en": "Once? He talks as if he has been here longer than the chapel.",
+   "atEn": "The Archive in Cinderhold",
+   "dur": 4.5
+  },
+  {
+   "id": "AU_vo_q1_02_04",
+   "q": "q1_02",
+   "at": "Krypta",
+   "role": "np_ysolde",
+   "text": "Tady se kázalo o světle bez konce. Cítíš to? Kámen si to pamatuje líp než lidé.",
+   "en": "They preached about endless light here. Can you feel it? Stone remembers better than people.",
+   "atEn": "The Crypt",
+   "dur": 6.9
+  },
+  {
+   "id": "AU_vo_q1_02_05",
+   "q": "q1_02",
+   "at": "Návrat s deníkem",
+   "role": "np_teodor",
+   "text": "Děkuji. Stránka o Velkém Lumenovi chybí. Někdo ji vytrhl dřív než vy.",
+   "en": "Thank you. The page about the Great Lumen is missing. Someone tore it out before you came.",
+   "atEn": "Return with the Journal",
+   "dur": 5.3
+  },
+  {
+   "id": "AU_vo_q1_02_06",
+   "q": "q1_02",
+   "at": "Návrat s deníkem",
+   "role": "np_teodor",
+   "text": "Kiln Shard drží Bratr Aldric. Covenant tvrdí, že kove zbraně. Já se bojím, že kove ozvěny.",
+   "en": "Brother Aldric holds the Kiln Shard. The Covenant claims he forges weapons. I fear he forges echoes.",
+   "atEn": "Return with the Journal",
+   "dur": 6.9
+  },
+  {
+   "id": "AU_vo_q1_03_01",
+   "q": "q1_03",
+   "at": "Ironbound Tollgate",
+   "role": "np_oduin",
+   "text": "Compact drží tuhle silnici čtyřicet let. Kdo po ní jde, platí. Pět set zlatých, nebo můj šampion.",
+   "en": "The Compact has held this road for forty years. Whoever walks it, pays. Five hundred gold, or my champion.",
+   "atEn": "Ironbound Tollgate",
+   "dur": 7.3
+  },
+  {
+   "id": "AU_vo_q1_03_02",
+   "q": "q1_03",
+   "at": "Ironbound Tollgate",
+   "role": "np_oduin",
+   "text": "Neber to osobně, Beareře. Města nepadají kvůli zlým lidem. Padají kvůli prázdným pokladnám.",
+   "en": "Do not take it personally, Bearer. Cities do not fall because of wicked men. They fall because of empty treasuries.",
+   "atEn": "Ironbound Tollgate",
+   "dur": 5.7
+  },
+  {
+   "id": "AU_vo_q1_03_03",
+   "q": "q1_03",
+   "at": "Volba: clo",
+   "role": "np_oduin",
+   "text": "Rozumný člověk. Řeknu Brannoc, ať ti dává lepší ceny. Ať se ví, že Compact vrací, co bere.",
+   "en": "A reasonable soul. I will tell Brannoc to give you better prices. Let it be known the Compact gives back what it takes.",
+   "atEn": "Choice: The Toll",
+   "dur": 7.3,
+   "choice": "Zaplatit 500 zlatých",
+   "choiceEn": "Pay 500 gold"
+  },
+  {
+   "id": "AU_vo_q1_03_04",
+   "q": "q1_03",
+   "at": "Volba: clo",
+   "role": "np_oduin",
+   "text": "Jak chceš. Až padneš, nečekej, že tě pohřbíme podruhé.",
+   "en": "As you wish. When you fall, do not expect us to bury you twice.",
+   "atEn": "Choice: The Toll",
+   "dur": 4.1,
+   "choice": "Utkat se se šampionem",
+   "choiceEn": "Fight the champion"
+  },
+  {
+   "id": "AU_vo_q1_03_05",
+   "q": "q1_03",
+   "at": "Volba: clo",
+   "role": "np_oduin",
+   "text": "Projdi. A nikomu neříkej, jak snadno to šlo.",
+   "en": "Go through. And tell no one how easily it went.",
+   "atEn": "Choice: The Toll",
+   "dur": 3.7,
+   "choice": "Utkat se se šampionem",
+   "choiceEn": "Fight the champion"
+  },
+  {
+   "id": "AU_vo_q1_03_06",
+   "q": "q1_03",
+   "at": "Charcoal Woods",
+   "role": "np_ysolde",
+   "text": "Chce úlomek jako zbraň. Zapamatuj si jeho tvář.",
+   "en": "He wants the shard as a weapon. Remember his face.",
+   "atEn": "Charcoal Woods",
+   "dur": 3.7
+  },
+  {
+   "id": "AU_vo_q1_04_01",
+   "q": "q1_04",
+   "at": "Kovárna v Cinderholdu",
+   "role": "np_brannoc",
+   "text": "Aldric mě učil. Jestli z něj tam dole ještě něco zbylo, vyřiď mu, že jeho učnice kove bez duchů.",
+   "en": "Aldric taught me. If anything of him is left down there, tell him his apprentice forges without ghosts.",
+   "atEn": "The Forge in Cinderhold",
+   "dur": 8.1
+  },
+  {
+   "id": "AU_vo_q1_04_02",
+   "q": "q1_04",
+   "at": "Heart of the Kiln",
+   "role": "np_aldric",
+   "text": "Přísahal jsem Ilsabet, že udržím oheň. Teď oheň drží mě. Odejdi, nebo se staň železem.",
+   "en": "I swore to Ilsabet that I would keep the fire. Now the fire keeps me. Leave, or become iron.",
+   "atEn": "Heart of the Kiln",
+   "dur": 6.5
+  },
+  {
+   "id": "AU_vo_q1_04_03",
+   "q": "q1_04",
+   "at": "Po souboji",
+   "role": "np_aldric",
+   "text": "Úlomek… nechte ho vychladnout. Ne. Vezmi si ho. Ne. Už nevím, kdo z nás mluví.",
+   "en": "The shard… let it cool. No. Take it. No. I no longer know which of us is speaking.",
+   "atEn": "After the Fight",
+   "dur": 6.5
+  },
+  {
+   "id": "AU_vo_q1_04_04",
+   "q": "q1_04",
+   "at": "Volba: Kiln Shard",
+   "role": "np_ysolde",
+   "text": "Je horký. Je těžký. A je teď tvůj. Covenant ti to neodpustí.",
+   "en": "It is hot. It is heavy. And it is yours now. The Covenant will not forgive you.",
+   "atEn": "Choice: The Kiln Shard",
+   "dur": 5.3,
+   "choice": "Pojmout Aldrikovu ozvěnu",
+   "choiceEn": "Absorb Aldric’s echo"
+  },
+  {
+   "id": "AU_vo_q1_04_05",
+   "q": "q1_04",
+   "at": "Volba: Kiln Shard",
+   "role": "np_teodor",
+   "text": "Udělal jste totéž co Aldric. Doufám, že s lepším koncem.",
+   "en": "You did the same as Aldric. I hope with a better ending.",
+   "atEn": "Choice: The Kiln Shard",
+   "dur": 4.5,
+   "choice": "Pojmout Aldrikovu ozvěnu",
+   "choiceEn": "Absorb Aldric’s echo"
+  },
+  {
+   "id": "AU_vo_q1_04_06",
+   "q": "q1_04",
+   "at": "Volba: Kiln Shard",
+   "role": "v:Posel Covenantu",
+   "text": "Matriarcha vám děkuje. Úlomek bude zapečetěn v lucerně, kde nikomu neublíží.",
+   "en": "The Matriarch thanks you. The shard will be sealed in a lantern, where it can harm no one.",
+   "atEn": "Choice: The Kiln Shard",
+   "dur": 4.9,
+   "choice": "Vrátit úlomek Covenantu",
+   "choiceEn": "Return the shard to the Covenant"
+  },
+  {
+   "id": "AU_vo_q1_04_07",
+   "q": "q1_04",
+   "at": "Volba: Kiln Shard",
+   "role": "np_ysolde",
+   "text": "Zapečetěn. Tak se u nich říká tomu, když něco schovávají.",
+   "en": "Sealed. That is what they call it when they hide something.",
+   "atEn": "Choice: The Kiln Shard",
+   "dur": 4.5,
+   "choice": "Vrátit úlomek Covenantu",
+   "choiceEn": "Return the shard to the Covenant"
+  },
+  {
+   "id": "AU_vo_wh_01",
+   "wh": "wh_01",
+   "role": "v:Hrobník z Cinderholdu",
+   "text": "Kopal jsem jámu pro třicet a jeden z nich dýchal. Celou cestu ke Cinderholdu mluvil cizím ženským hlasem.",
+   "en": "I was digging a pit for thirty, and one of them was breathing. All the way to Cinderhold he spoke with a strange woman’s voice.",
+   "dur": 14
+  },
+  {
+   "id": "AU_vo_wh_02",
+   "wh": "wh_02",
+   "role": "v:Kněz Choir of Solace",
+   "text": "Bůh Slunce nechce, abyste umírali. Dejte nám své mrtvé a my je uložíme do světla, odkud se nevracejí.",
+   "en": "The Sun God does not want you to die. Give us your dead, and we will lay them in the light, from which no one returns.",
+   "dur": 18
+  },
+  {
+   "id": "AU_vo_wh_03",
+   "wh": "wh_03",
+   "role": "np_aldric",
+   "text": "Ozvěna vojáka se nechtěla rozplynout, tak jsem ji vložil do čepele. Meč se v noci třese, ale nepovolí.",
+   "en": "A soldier’s echo would not fade, so I set it into a blade. The sword trembles at night, but it holds.",
+   "dur": 20
+  },
+  {
+   "id": "AU_vo_wh_04",
+   "wh": "wh_04",
+   "role": "v:Sadařka",
+   "text": "Slunce zablikalo jako svíčka v průvanu. Pak spadlo něco teplejšího než ono a sad hořel bez plamene.",
+   "en": "The sun flickered like a candle in a draught. Then something warmer than the sun fell, and the orchard burned without a flame.",
+   "dur": 16
+  },
+  {
+   "id": "AU_vo_wh_05",
+   "wh": "wh_05",
+   "role": "v:Dezertér Ironbound",
+   "text": "Maršál Hask chtěl, abychom nosili ozvěny do boje. Odmítl jsem. Teď visím a moje ozvěna se dívá, jak mě odřezávají.",
+   "en": "Marshal Hask wanted us to carry echoes into battle. I refused. Now I hang, and my echo watches them cut me down.",
+   "dur": 15
+  },
+  {
+   "id": "AU_vo_wh_06",
+   "wh": "wh_06",
+   "role": "np_brannoc",
+   "text": "Aldric kul ozvěny, já budu kout jen ocel. Když to nebude stačit, ať zemřu jako kovářka, ne jako kovadlina.",
+   "en": "Aldric forged echoes; I will forge only steel. If that is not enough, let me die a smith, not an anvil.",
+   "dur": 13
+  },
+  {
+   "id": "AU_vo_wh_07",
+   "wh": "wh_07",
+   "role": "np_aldric",
+   "text": "Ilsabet, přísahal jsem, že udržím oheň. Neřekla jsi mi, že oheň bude chtít mě.",
+   "en": "Ilsabet, I swore I would keep the fire. You never told me the fire would want me.",
+   "dur": 12
+  }
+ ],
+ "en": {
+  "dialogs": {
+   "q1_01": {
+    "scenes": {
+     "Probuzení v hrobě": "Waking in the Grave",
+     "První ozvěna": "The First Echo",
+     "Brána Cinderholdu": "The Gate of Cinderhold"
+    },
+    "choices": []
+   },
+   "q1_02": {
+    "scenes": {
+     "Archiv v Cinderholdu": "The Archive in Cinderhold",
+     "Krypta": "The Crypt",
+     "Návrat s deníkem": "Return with the Journal"
+    },
+    "choices": []
+   },
+   "q1_03": {
+    "scenes": {
+     "Ironbound Tollgate": "Ironbound Tollgate",
+     "Volba: clo": "Choice: The Toll",
+     "Charcoal Woods": "Charcoal Woods"
+    },
+    "choices": [
+     "Pay 500 gold",
+     "Fight the champion"
+    ]
+   },
+   "q1_04": {
+    "scenes": {
+     "Kovárna v Cinderholdu": "The Forge in Cinderhold",
+     "Heart of the Kiln": "Heart of the Kiln",
+     "Po souboji": "After the Fight",
+     "Volba: Kiln Shard": "Choice: The Kiln Shard"
+    },
+    "choices": [
+     "Absorb Aldric’s echo",
+     "Return the shard to the Covenant"
+    ]
+   }
+  },
+  "whispers": {
+   "wh_01": {
+    "n": "The Mass Grave",
+    "txt": "I was digging a pit for thirty, and one of them was breathing. All the way to Cinderhold he spoke with a strange woman’s voice."
+   },
+   "wh_02": {
+    "n": "A Sermon on the Plague",
+    "txt": "The Sun God does not want you to die. Give us your dead, and we will lay them in the light, from which no one returns."
+   },
+   "wh_03": {
+    "n": "The First Forged Echo",
+    "txt": "A soldier’s echo would not fade, so I set it into a blade. The sword trembles at night, but it holds."
+   },
+   "wh_04": {
+    "n": "The Day the Apples Burned",
+    "txt": "The sun flickered like a candle in a draught. Then something warmer than the sun fell, and the orchard burned without a flame."
+   },
+   "wh_05": {
+    "n": "Gallows on the Hill",
+    "txt": "Marshal Hask wanted us to carry echoes into battle. I refused. Now I hang, and my echo watches them cut me down."
+   },
+   "wh_06": {
+    "n": "The Smith’s Oath",
+    "txt": "Aldric forged echoes; I will forge only steel. If that is not enough, let me die a smith, not an anvil."
+   },
+   "wh_07": {
+    "n": "The Last Blow",
+    "txt": "Ilsabet, I swore I would keep the fire. You never told me the fire would want me."
+   }
+  },
+  "names": {
+   "np_ysolde": "Ysolde",
+   "np_teodor": "Teodor Lisk",
+   "np_oduin": "Marshal Oduin Hask",
+   "np_brannoc": "Smith Brannoc",
+   "np_aldric": "Brother Aldric",
+   "Hrobník z Cinderholdu": "Gravedigger of Cinderhold",
+   "Strážný Compactu": "Compact Guard",
+   "Posel Covenantu": "Covenant Envoy",
+   "Kněz Choir of Solace": "Priest of the Choir of Solace",
+   "Sadařka": "Orchard Keeper",
+   "Dezertér Ironbound": "Ironbound Deserter"
+  }
+ },
  "whispers": [
   {
    "id": "wh_01",

@@ -409,6 +409,15 @@ Gold and passive skills (P1):
   level. Their stats go into `calcChar` as modifiers; Kindling Fury adds Cinders on every hit and
   Unquenched adds more damage under 35 % HP. Respec costs `F.respecPoint` (D13: free up to L12). The character
   save keeps `passives`, cleaned to the points of its level.
+- Voices (P1): the game is voiced in English; Czech players hear the English voice with Czech text as
+  subtitles. The Bible holds the English translation of Act I (G.DIALOGS_EN, G.WHISPERS_EN,
+  G.NAMES_EN), so with the English language the dialogs, choices, scene titles and whispers show in
+  English. data.js lists every voiced line (D.vo: the dialogs' lines including choice branches and
+  the seven whispers) with a Bible-style file name (`AU_vo_q1_02_03`, `AU_vo_wh_05`), its role and
+  both texts. The game plays a line's recording from `assets/vo/en` when it shows the line (talks,
+  subtitles, whisper cards; subtitles last at least as long as the recording) and stays text only
+  without one. Czech voices can be added later in `assets/vo/cs`: the game uses them for Czech when
+  that manifest has lines. Recordings come from `scripts/hollowsun-vo.mjs` (see development.md).
 - Damage types (P1): the core computes the player's resistances like the Bible's calcChar –
   (resAll + res_<type>) × 100 plus the act penalty (none in Act I), capped at 75 % (+ max res) and
   the hard cap 90 % – and shows fire resistance in the inventory. Enemy hits are physical unless the

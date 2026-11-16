@@ -1,6 +1,6 @@
 'use strict';
 // GENEROVÁNO z Game Design Bible (needitovat ručně) – generátor dungeonů G.genDungeon (14 kroků), beze změny.
-// Zdroj: Echoes of the Hollow Sun – Game Design Bible v25 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
+// Zdroj: Echoes of the Hollow Sun – Game Design Bible v33 (https://claude.ai/artifact/2AEuTsGxsBrYAzdqQX7R2c)
 (function (root) {
   const HS = root.HS;
   const G = { rng: HS.rng, DG_SIZES: HS.D.dungeon.sizes, DG_THEMES: HS.D.dungeon.themes };

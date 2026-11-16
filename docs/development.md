@@ -86,6 +86,17 @@ Convention: each completed iteration is at least one minor release.
   `pnpm --filter @windowling/web hollowsun:music D:/hollowsun-audio` (needs `ffmpeg` with libopus
   on the PATH or `FFMPEG`). The script cuts the loops on bar lines, masters them to −16 LUFS and
   writes Opus files plus a manifest that `hollowsun-music.test.ts` checks.
+- HOLLOW SUN voices (English; Czech players get Czech subtitles):
+  `pnpm --filter @windowling/web hollowsun:vo -- --sheet` writes the Act I lines to record (a CSV and
+  a Markdown sheet grouped by role, with each line's file name) into `D:/hollowsun-audio/vo/en`.
+  Design one voice per role in ElevenLabs (Voice Design, prompts in
+  `apps/web/scripts/hollowsun-vo.json`), record each role's voice name and `recorded.en` (plan, date)
+  there (D32), save the downloads as `<id>.mp3` – or let `pnpm --filter @windowling/web hollowsun:vo --
+--generate` make the missing lines through the ElevenLabs API (key `ELEVENLABS_API_KEY` in
+  `apps/web/.env`, restricted to Text to Speech and Voices: Read; `--only=AU_vo_…` regenerates single
+  lines) – and run `pnpm --filter @windowling/web hollowsun:vo`:
+  it trims silence, masters to −16 LUFS and writes Opus 48 kb/s mono plus a manifest into
+  `assets/vo/en` that `hollowsun-vo.test.ts` checks. `--lang=cs` is ready for Czech voices later.
 - HOLLOW SUN balance: `pnpm --filter @windowling/web hollowsun:playthrough [seed] [step,step]` plays
   the whole Act I campaign headless (about 2–4 minutes) and prints time, level, deaths, hits to kill
   and hits survived per step. Run it after changing zones, enemies, loot or XP.

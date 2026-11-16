@@ -383,18 +383,36 @@
   function zoneObjective(id) { const a = window.HSWorld.area(id); const q = HS.D.quests.find((x) => x.area === (a ? a.id : id)); return q ? `${q.n}: ${q.steps.join(' · ')}` : a && a.d ? a.d : t('gateHint'); }
   // šepot: karta s textem a mluvčím (G.WHISPERS), sbírá se do save
   let whisperT = 0;
+  /* ---------- hlasy (VO): nahrávky z assets/vo (scripts/hollowsun-vo.mjs); bez nich zůstane jen text ---------- */
+  const VO = { files: new Map(), byText: new Map(), byWh: new Map(), cur: null };
+  for (const v of HS.D.vo || []) { VO.byText.set(v.text, v.id); if (v.wh) VO.byWh.set(v.wh, v.id); }
+  // hra je namluvená anglicky; v češtině jde anglický hlas s českým textem (titulky). Až budou české nahrávky
+  // (assets/vo/cs), použijí se při české volbě samy
+  let VO_DIR = 'assets/vo/en/';
+  const voLoad = (dir) => fetch(dir + 'manifest.json').then((r) => (r.ok ? r.json() : null)).then((m) => (m && m.lines && m.lines.length ? (VO_DIR = dir, m.lines) : null)).catch(() => null);
+  (LANG === 'cs' ? voLoad('assets/vo/cs/') : Promise.resolve(null)).then((ls) => ls || voLoad('assets/vo/en/')).then((ls) => { for (const l of ls || []) VO.files.set(l.id, l); });
+  // přehraje repliku (podle textu nebo id šepotu); vrací délku v s, nebo 0 bez nahrávky
+  function voPlay(text, wh) {
+    voStop(); const id = wh ? VO.byWh.get(wh) : VO.byText.get(text); const f = id && VO.files.get(id); if (!f) return 0;
+    try { const a = new Audio(VO_DIR + f.file); a.volume = 0.9; a.play().catch(() => {}); VO.cur = a; } catch (e) { return 0; }
+    return f.seconds;
+  }
+  function voStop() { if (VO.cur) { VO.cur.pause(); VO.cur = null; } }
   function showWhisper(id) {
     const w = HS.D.whispers.find((x) => x.id === id); if (!w) return;
     if (!SAVE.whispers.includes(id)) { SAVE.whispers.push(id); persist(); }
-    const el = document.getElementById('whisper'); el.querySelector('.wn').textContent = `${t('whisperT')} ${SAVE.whispers.length}/${HS.D.whispers.length} · ${w.n}`; el.querySelector('.wt').textContent = `„${w.txt}“`; el.querySelector('.ww').textContent = '— ' + w.who; el.hidden = false;
-    clearTimeout(whisperT); whisperT = setTimeout(() => { el.hidden = true; }, 9000); tone(330, 495, 1.2, 0.12, 'sine');
+    const el = document.getElementById('whisper'); const we = EN && EN.whispers[id]; el.querySelector('.wn').textContent = `${t('whisperT')} ${SAVE.whispers.length}/${HS.D.whispers.length} · ${we ? we.n : w.n}`; el.querySelector('.wt').textContent = we ? `“${we.txt}”` : `„${w.txt}“`; el.querySelector('.ww').textContent = '— ' + speaker(w.who); el.hidden = false;
+    const vs = voPlay(null, id); clearTimeout(whisperT); whisperT = setTimeout(() => { el.hidden = true; }, Math.max(9000, vs * 1000 + 1500)); tone(330, 495, 1.2, 0.12, 'sine');
   }
   /* ---------- dialogy questů (G.DIALOGS): scény podle HSWorld.STORY, volby a flagy do save ---------- */
   // Hráč nemluví; Ysolde (hlas v hlavě) kurzívou. Rozhovor zastaví hru, barky běží jako titulky bez pauzy
   // (délka repliky jako u VO: slova / 2,5 + 0,5 s). Viděné scény se nepřehrávají znovu.
   const story = () => { if (!SAVE.story || typeof SAVE.story !== 'object') SAVE.story = {}; const st = SAVE.story; st.seen = Array.isArray(st.seen) ? st.seen : []; st.flags = st.flags && typeof st.flags === 'object' ? st.flags : {}; st.choices = st.choices && typeof st.choices === 'object' ? st.choices : {}; return st; };
   const sceneKey = (sc) => sc.q + '/' + sc.at;
-  const speaker = (id) => { const n = HS.D.npcs.find((x) => x.id === id); return n ? n.n : id; };
+  const EN = LANG === 'en' && HS.D.en; // lokalizace EN z Bible (G.DIALOGS_EN, G.WHISPERS_EN, G.NAMES_EN)
+  const speaker = (id) => { if (EN && EN.names[id]) return EN.names[id]; const n = HS.D.npcs.find((x) => x.id === id); return n ? n.n : id; };
+  const EN_TEXT = new Map((HS.D.vo || []).filter((v) => v.en).map((v) => [v.text, v.en]));
+  const say = (text) => (EN && EN_TEXT.get(text)) || text;
   function scenesFor(on, o) { o = o || {}; const step = S && S.zone ? S.zone.id : null; return window.HSWorld.STORY.filter((sc) => sc.on === on && (!sc.step || sc.step === step) && (!sc.npc || sc.npc === o.npc) && !story().seen.includes(sceneKey(sc))); }
   function playScenes(list, done) { const sc = list.shift(); if (!sc) { if (done) done(); return; } playScene(sc, () => playScenes(list, done)); }
   function playScene(sc, done) {
@@ -411,19 +429,19 @@
     const el = document.getElementById('dialog'); let ln = DLG.lines[0];
     while (ln && !Array.isArray(ln)) { if (ln.whisper) showWhisper(ln.whisper); DLG.lines.shift(); ln = DLG.lines[0]; }
     if (!ln) { dlgEnd(); return; }
-    el.hidden = false; el.classList.toggle('ysolde', ln[0] === 'np_ysolde'); el.querySelector('.who').textContent = speaker(ln[0]); el.querySelector('.txt').textContent = ln[1]; el.querySelector('.choices').innerHTML = ''; el.querySelector('.hint').textContent = t('dlgHint');
-    tone(ln[0] === 'np_ysolde' ? 440 : 220, ln[0] === 'np_ysolde' ? 520 : 240, 0.12, 0.05, 'sine');
+    el.hidden = false; el.classList.toggle('ysolde', ln[0] === 'np_ysolde'); el.querySelector('.who').textContent = speaker(ln[0]); el.querySelector('.txt').textContent = say(ln[1]); el.querySelector('.choices').innerHTML = ''; el.querySelector('.hint').textContent = t('dlgHint');
+    if (!voPlay(ln[1])) tone(ln[0] === 'np_ysolde' ? 440 : 220, ln[0] === 'np_ysolde' ? 520 : 240, 0.12, 0.05, 'sine');
   }
-  function dlgNext() { if (!DLG || DLG.choice) return; DLG.lines.shift(); dlgShow(); }
-  function dlgEnd() { document.getElementById('dialog').hidden = true; const done = DLG && DLG.done; DLG = null; if (mode === 'dialog') { mode = 'play'; acc = 0; } if (done) done(); }
+  function dlgNext() { if (!DLG || DLG.choice) return; voStop(); DLG.lines.shift(); dlgShow(); }
+  function dlgEnd() { voStop(); document.getElementById('dialog').hidden = true; const done = DLG && DLG.done; DLG = null; if (mode === 'dialog') { mode = 'play'; acc = 0; } if (done) done(); }
   document.getElementById('dialog').addEventListener('mousedown', (e) => { e.stopPropagation(); if (e.target.closest('.btn')) return; dlgNext(); });
   // volba: tlačítka v dialogu; flag a index volby do save. Souboj se šampionem (q1_03) přeruší repliky volby
   function choose(sc, d, done) {
     if (!S || (mode !== 'play' && mode !== 'dialog')) { done(); return; }
     mode = 'dialog'; DLG = { lines: [], done: null, choice: true };
-    const el = document.getElementById('dialog'); el.hidden = false; el.classList.remove('ysolde'); el.querySelector('.who').textContent = sc.at; el.querySelector('.txt').textContent = ''; el.querySelector('.hint').textContent = '';
+    const el = document.getElementById('dialog'); el.hidden = false; el.classList.remove('ysolde'); el.querySelector('.who').textContent = (EN && EN.dialogs[sc.q] && EN.dialogs[sc.q].scenes[sc.at]) || sc.at; el.querySelector('.txt').textContent = ''; el.querySelector('.hint').textContent = '';
     const box = el.querySelector('.choices'); box.innerHTML = '';
-    d.choice.forEach((ch, i) => { const b = document.createElement('button'); b.className = 'btn'; const toll = sc.q === 'q1_03' && i === 0; b.textContent = ch.c + (toll ? ` (${t('goldHave')} ${S.gold})` : ''); if (toll && S.gold < 500) b.disabled = true; b.id = 'dlg-c' + i; b.onclick = () => pick(i); box.appendChild(b); });
+    d.choice.forEach((ch, i) => { const b = document.createElement('button'); b.className = 'btn'; const toll = sc.q === 'q1_03' && i === 0; b.textContent = ((EN && EN.dialogs[sc.q] && EN.dialogs[sc.q].choices[i]) || ch.c) + (toll ? ` (${t('goldHave')} ${S.gold})` : ''); if (toll && S.gold < 500) b.disabled = true; b.id = 'dlg-c' + i; b.onclick = () => pick(i); box.appendChild(b); });
     function pick(i) {
       if (sc.q === 'q1_03' && i === 0) { S.events.length = 0; if (!SIM.invCommand(S, { pay: 500 })) return; handle(S.events.slice()); S.events.length = 0; } // Bible: clo 500 zlatých
       const ch = d.choice[i]; const st = story(); st.choices[sc.q] = i; if (ch.flag) st.flags[ch.flag] = true; persist();
@@ -439,10 +457,10 @@
     const el = document.getElementById('bark'); const ln = BARK.shift(); barkT = 0;
     if (!ln) { el.hidden = true; return; }
     if (!Array.isArray(ln)) { if (ln.whisper) showWhisper(ln.whisper); barkStep(); return; }
-    el.innerHTML = ''; const b = document.createElement('b'); b.textContent = speaker(ln[0]) + ': '; el.appendChild(b); el.appendChild(document.createTextNode(ln[1])); el.hidden = false;
-    barkT = setTimeout(barkStep, (ln[1].split(/\s+/).length / 2.5 + 0.5) * 1000);
+    el.innerHTML = ''; const b = document.createElement('b'); b.textContent = speaker(ln[0]) + ': '; el.appendChild(b); el.appendChild(document.createTextNode(say(ln[1]))); el.hidden = false;
+    const vs = voPlay(ln[1]); barkT = setTimeout(barkStep, Math.max(ln[1].split(/\s+/).length / 2.5 + 0.5, vs + 0.3) * 1000);
   }
-  function clearStory() { BARK = []; clearTimeout(barkT); barkT = 0; document.getElementById('bark').hidden = true; document.getElementById('dialog').hidden = true; DLG = null; CHAMP = null; }
+  function clearStory() { voStop(); BARK = []; clearTimeout(barkT); barkT = 0; document.getElementById('bark').hidden = true; document.getElementById('dialog').hidden = true; DLG = null; CHAMP = null; }
   // v Cinderholdu: koho je třeba navštívit (cíl v HUD)
   function townHint() { const need = S && S.needTalk ? [...S.needTalk] : []; return need.length ? `${t('talkTo')}: ${need.map(speaker).join(', ')}` : t('gateOpen'); }
   // vchod do tajné oblasti: hra se zastaví a nabídne vstup (Gallows Hill z Charcoal Woods)
@@ -1038,7 +1056,7 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, openForge, closeForge, get forge() { return mode === 'forge'; }, get dialog() { return DLG ? { choice: !!DLG.choice, lines: DLG.lines.length } : null; }, dlgNext, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, openForge, closeForge, get forge() { return mode === 'forge'; }, get vo() { return { lines: (HS.D.vo || []).length, recorded: VO.files.size, playing: !!VO.cur }; }, get dialog() { return DLG ? { choice: !!DLG.choice, lines: DLG.lines.length } : null; }, dlgNext, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   app.start(); menu(); persist();

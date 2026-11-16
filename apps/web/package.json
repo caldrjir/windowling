@@ -10,6 +10,7 @@
 		"hollowsun:assets": "node scripts/hollowsun-assets.mjs",
 		"hollowsun:music": "node scripts/hollowsun-music.mjs",
 		"hollowsun:playthrough": "node scripts/hollowsun-playthrough.mjs",
+		"hollowsun:vo": "node scripts/hollowsun-vo.mjs",
 		"typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"test:e2e": "playwright test",
 		"cf-typegen": "wrangler types src/worker-configuration.d.ts",
