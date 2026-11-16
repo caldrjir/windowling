@@ -232,8 +232,22 @@ the ⚡ best-buy button and the steward (bought for legends, which are then spen
 chronicle counts legends earned in total) both use it, and the steward also buys while the
 player is away (`Econ.offline` steps through the time in up to 240 slices). The save's `lb`
 holds the leaderboard values: legends on `best:score` and `free:<category>:score` for fortune,
-best income (both as log10 × 1000), buildings, creatures, taps, generations and achievements.
+best income and apprentices (as log10 × 1000), buildings, creatures, taps, generations and
+achievements (values are capped below the server's 10^10).
 `NEWS` in `data.js` feeds the "what's new" popover, shown once per version (`seen.news`).
+
+The guild (`CECH` in `data.js`, `S.cech` in the save) is a chain of generators: each of the
+8 ranks trains the rank below (`a` amounts with fractions, `b` bought, which sets prices and
+seals), and the apprentices multiply all income by `(1 + pct)^log10(1 + apprentices)`. Over a
+stretch with constant rates the amounts are an exact polynomial in time (`cechEvolve`), so
+`Econ.advance` evolves the guild exactly per segment and integrates the income over the growing
+multiplier with Simpson's rule; a big step and many small ones agree to 10^-4 %. Higher ranks
+unlock with legends. `bestBuy` ranks guild purchases by the time the extra income repays the
+price (`cechPayback`, searched over the polynomial), so the ⚡ button and the steward buy for the
+guild too. The balance was tuned with a Node bot playing 21 days (an active and a casual
+profile) against the version without the guild: the base game multiplies any income bonus many
+times over by climbing the trades faster, so the guild starts at a few percent per tenfold and
+grows with the chronicle.
 
 ## Online puzzles - `apps/web/src/worker/duel`
 

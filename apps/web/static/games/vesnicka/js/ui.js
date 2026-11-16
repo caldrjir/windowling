@@ -2,13 +2,15 @@
 // ── VESNIČKA · rozhraní: horní lišta, panel se záložkami, oznámení, okna ─────────────
 const UI = (() => {
   const $ = (s, el = document) => el.querySelector(s);
+  /** Kulaté číslo bez zbytečných nul („10 mil.“ místo „10,0 mil.“). */
+  const fmtNice = n => fmt(n).replace(new RegExp(`(\\${SEP}\\d*?)0+(?=\\D|$)`), '$1').replace(new RegExp(`\\${SEP}(?=\\D|$)`), '');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   let S = null, H = null, tab = 'build', amount = 1, structKey = '', board = 'best:score';
-  const U_ICON = { kaplicka: '⛪', skola: '🏫', posta: '📯', silnice: '🛣️', zeleznice: '🚂', elektrina: '💡', rozhlas: '📢', pohadky: '📖', bylinkarka: '🌿', lucerna: '🏮', pranostiky: '🌦️', fletna: '🎶', kalendar: '📅', ponocny: '🌙', vecernice: '⭐' };
-  const C_ICON = { bludicka: '✨', vodnik: '🐸', cert: '😈', krakonos: '⛰️', hospodaricek: '🧙', nesro: '🎒' };
+  const U_ICON = { cr_rad: '📃', cr_zkouska: '🎓', cr_pokladnice: '💰', cr_korouhev: '🎏', cr_zemsky: '🗺️', kaplicka: '⛪', skola: '🏫', posta: '📯', silnice: '🛣️', zeleznice: '🚂', elektrina: '💡', rozhlas: '📢', pohadky: '📖', bylinkarka: '🌿', lucerna: '🏮', pranostiky: '🌦️', fletna: '🎶', kalendar: '📅', ponocny: '🌙', vecernice: '⭐' };
+  const C_ICON = { bludicka: '✨', vodnik: '🐸', cert: '😈', krakonos: '⛰️', hospodaricek: '🧙', vseved: '🧓', nesro: '🎒' };
   const cName = id => (id === 'nesro' ? NESRO.name : (C_INDEX[id] || {}).name || '');
-  const BUFF_ICON = { vodnik: '🫖', cert: '🔥', krakonos: '⛰️', blessing: '🌟', nesro: '🥧' };
-  const BUFF_NAME = { vodnik: L('Vodníkův hrníček', 'Goblin’s pot'), cert: L('Čertovská síla', 'Devilish strength'), krakonos: L('Krakonošova štědrost', 'Krakonoš’s gift'), blessing: L('Požehnání', 'Blessing'), nesro: L('Nesrovy koláče', 'Nesro’s kolache') };
+  const BUFF_ICON = { vodnik: '🫖', cert: '🔥', krakonos: '⛰️', blessing: '🌟', nesro: '🥧', vseved: '📖' };
+  const BUFF_NAME = { vodnik: L('Vodníkův hrníček', 'Goblin’s pot'), cert: L('Čertovská síla', 'Devilish strength'), krakonos: L('Krakonošova štědrost', 'Krakonoš’s gift'), blessing: L('Požehnání', 'Blessing'), nesro: L('Nesrovy koláče', 'Nesro’s kolache'), vseved: L('Vševědova moudrost: cech vyučí ×10', 'Know-all’s wisdom: the guild trains ×10') };
   const clockAt = sec => new Date(Date.now() + sec * 1000).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
   const coinSvg = '<svg class="coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f2c14e" stroke="#a8771e" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#c9952e" stroke-width="1.2"/><path d="M9.5 9.5h5M12 9.5v6" stroke="#a8771e" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
@@ -19,7 +21,8 @@ const UI = (() => {
     $('#rate').textContent = L(`+${fmt(r, 1)} za s`, `+${fmt(r, 1)} /s`);
     const sn = seasonAt(Date.now());
     $('#season').innerHTML = `<span>${SEASONS[sn].icon}</span><span class="sn">${SEASONS[sn].name}</span><b>${fmtClock(seasonLeft(Date.now()))}</b>`;
-    $('#buffs').innerHTML = (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : '×' + b.mul}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
+    const cm = Econ.cMul(S);
+    $('#buffs').innerHTML = (Econ.cechOpen(S) && cm > 1.0005 ? `<span class="buff b-cech" title="${esc(L('Cech: učni zvedají výnos vesnice', 'Guild: apprentices lift the village’s income'))}"><i>👥</i>×${fmt(cm, 1)}</span>` : '') + (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : '×' + b.mul}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
     const side = Scene.creatureSide();
     const cr = Scene.creature;
     for (const [id, s] of [['#edgeL', -1], ['#edgeR', 1]]) {
@@ -29,6 +32,7 @@ const UI = (() => {
     }
     quick();
     const nd = $('#newsBtn .dot'); if (nd) nd.hidden = (S.seen.news || 0) >= NEWS_VERSION;
+    if (tabsKey !== String(Econ.cechOpen(S))) tabs();
     // odznáčky na záložkách
     const upgN = Econ.upgAvailable(S).filter(u => Econ.upgCost(S, u) <= S.coins).length;
     badge('upg', upgN);
@@ -53,11 +57,14 @@ const UI = (() => {
 
   // ── Záložky ──
   const TABS = [
-    ['build', '🏡', L('Řemesla', 'Trades')], ['upg', '🔨', L('Vylepšení', 'Upgrades')], ['legend', '📜', L('Kronika', 'Chronicle')],
+    ['build', '🏡', L('Řemesla', 'Trades')], ['cech', '👥', L('Cech', 'Guild')], ['upg', '🔨', L('Vylepšení', 'Upgrades')], ['legend', '📜', L('Kronika', 'Chronicle')],
     ['tasks', '✅', L('Úkoly', 'Tasks')], ['more', '☰', L('Více', 'More')],
   ];
+  let tabsKey = '';
   function tabs() {
-    $('#tabs').innerHTML = TABS.map(([id, ic, name]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}"><i>${ic}</i><span>${name}</span><b class="bd" hidden></b></button>`).join('');
+    tabsKey = String(Econ.cechOpen(S));
+    if (tab === 'cech' && !Econ.cechOpen(S)) tab = 'build';
+    $('#tabs').innerHTML = TABS.filter(([id]) => id !== 'cech' || Econ.cechOpen(S)).map(([id, ic, name]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}"><i>${ic}</i><span>${name}</span><b class="bd" hidden></b></button>`).join('');
   }
   function setTab(id) {
     tab = id;
@@ -69,6 +76,7 @@ const UI = (() => {
   function render() {
     const body = $('#body');
     if (tab === 'build') renderBuild(body);
+    else if (tab === 'cech') renderCech(body);
     else if (tab === 'upg') renderUpg(body);
     else if (tab === 'legend') renderLegend(body);
     else if (tab === 'tasks') renderTasks(body);
@@ -143,11 +151,82 @@ const UI = (() => {
     return { at: ms, icon: '⭐', title: L(`Do mistrovství: výnos ×${Econ.milestoneBase(S)}`, `To mastery: output ×${Econ.milestoneBase(S)}`) };
   }
 
+  // ── Cech ──
+  /** Stupně, které jsou vidět: všechny, co máš, a první, který ještě nemáš. */
+  function visibleCech() { const out = []; for (let i = 0; i < CECH.length; i++) { out.push(i); if (!(S.cech.a[i] >= 1)) break; } return out; }
+  const cechKey = () => `c${visibleCech().map(i => `${i}${Econ.cechTierOpen(S, i) ? 'o' : ''}${S.cech.a[i] >= 1 ? 'h' : ''}`).join(',')}:${seasonAt(Date.now()) === 3}`;
+  function cechLock(i) {
+    const t = CECH[i];
+    if (Econ.legendsTotal(S) < t.leg) return `🔒 ${L(`Odemkne se s ${fmtNice(t.leg)} pověstmi (máš ${fmt(Econ.legendsTotal(S))}).`, `Unlocks with ${fmtNice(t.leg)} legends (you have ${fmt(Econ.legendsTotal(S))}).`)}`;
+    return `🔒 ${L(`Nejdřív potřebuješ: ${CECH[i - 1].name}`, `First you need: ${CECH[i - 1].name}`)}`;
+  }
+  function renderCech(body) {
+    const vis = visibleCech(), winter = seasonAt(Date.now()) === 3;
+    structKey = cechKey();
+    body.innerHTML = `<div class="cech-head"><span class="ch-i">👥</span><div class="ch-t"><small id="cSub"></small><b id="cMul"></b><span id="cNext"></span></div></div>
+      <p class="hint-card cech-hint">${L('<b>Generátor generuje generátor:</b> každý stupeň cechu vyučí ten pod sebou, tovaryši učně, mistři tovaryše… Učni pracují v řemeslech a každý desetinásobek učňů (10, 100, 1 000…) zvedne výnos vesnice.', '<b>Generators make generators:</b> every guild rank trains the one below, journeymen train apprentices, masters train journeymen… Apprentices work in your trades and every tenfold of them (10, 100, 1,000…) lifts the village’s income.')} ${winter ? `❄️ <b>${L(`Je zima: cech vyučí ×${Econ.cSeason(S, 3)}.`, `It is winter: the guild trains ×${Econ.cSeason(S, 3)}.`)}</b>` : `❄️ ${L(`V zimě cech vyučí ×${Econ.cSeason(S, 3)}.`, `In winter the guild trains ×${Econ.cSeason(S, 3)}.`)}`}</p>
+      <div class="amounts" role="group" aria-label="${L('Kolik kupovat', 'How many to buy')}">${[1, 10, 100, 'max'].map(a => `<button data-amt="${a}" aria-pressed="${amount === a}">${a === 'max' ? 'MAX' : '×' + a}</button>`).join('')}</div>
+      <div class="rows">${vis.map(i => { const t = CECH[i], open = Econ.cechTierOpen(S, i), has = S.cech.a[i] >= 1;
+        return `<div class="row crow${has ? '' : ' locked'}" data-c="${i}">
+          <span class="cico" aria-hidden="true">${t.icon}</span>
+          <div class="info"><div class="nm"><b>${t.name}</b><span class="cnt"></span><span class="mx"></span></div>
+          <div class="sub">${has ? '<span class="prod"></span>' : `<span class="desc">${open ? t.desc : cechLock(i)}</span>`}</div>
+          ${has ? '<div class="ms"><i></i><span></span></div>' : ''}</div>
+          <div class="btns">${open ? `<button class="buy" data-cbuy="${i}"><small></small><b></b></button>` : ''}</div></div>`; }).join('')}</div>
+      ${vis.length < CECH.length ? `<p class="more-hint">${L(`Další stupně cechu: ${CECH.length - vis.length}`, `More guild ranks to discover: ${CECH.length - vis.length}`)}</p>` : ''}`;
+  }
+  function refreshCech() {
+    if (cechKey() !== structKey) renderCech($('#body'));
+    const sn = seasonAt(Date.now()), m = Econ.cMul(S), a0 = S.cech.a[0];
+    const mEl = $('#cMul'); if (mEl) mEl.textContent = L(`výnos ×${fmt(m, 2)}`, `income ×${fmt(m, 2)}`);
+    const sub = $('#cSub'), pct = trunc(Econ.cechPct(S) * 100, 1).replace(new RegExp(`\\${SEP}0$`), '');
+    if (sub) sub.textContent = L(`Učni zvedají výnos celé vesnice: každý desetinásobek +${pct}\u00a0%`, `Apprentices lift the whole village’s income: every tenfold +${pct}%`);
+    const nx = $('#cNext');
+    if (nx) {
+      const ten = Econ.cMulOf(S, Math.max(10, a0 * 10)), hr = Econ.cechAhead(S, 3600, sn);
+      nx.textContent = L(`Při 10× víc učních ×${fmt(ten, 2)}`, `At 10× the apprentices ×${fmt(ten, 2)}`) + (S.cech.a[1] >= 1 ? L(` · za hodinu ×${fmt(hr.mul, 2)}`, ` · in an hour ×${fmt(hr.mul, 2)}`) : '');
+    }
+    for (const row of document.querySelectorAll('#body .crow')) {
+      const i = +row.dataset.c, t = CECH[i], a = S.cech.a[i], b = S.cech.b[i];
+      row.querySelector('.cnt').textContent = a >= 1 ? fmt(a) : '';
+      const pr = row.querySelector('.prod');
+      if (pr) {
+        const grow = i + 1 < CECH.length && S.cech.a[i + 1] >= 1 ? S.cech.a[i + 1] * Econ.cRate(S, i + 1, sn) : 0;
+        const what = i ? L(`${t.verb}: +${fmt(a * Econ.cRate(S, i, sn), 1)} za s`, `${t.verb}: +${fmt(a * Econ.cRate(S, i, sn), 1)} /s`) : L('pracují v řemeslech', 'work in the trades');
+        pr.textContent = `${what} · ${L(`koupeno ${fmt(b)}`, `bought ${fmt(b)}`)}${grow ? L(` · přibývá +${fmt(grow, 1)} za s`, ` · growing +${fmt(grow, 1)} /s`) : ''}`;
+      }
+      const ms = row.querySelector('.ms');
+      if (ms) {
+        const nxs = Econ.nextSeal(b), prev = [0, ...CECH_SEALS].filter(v => v <= b).pop();
+        ms.querySelector('i').style.width = nxs ? `${((b - prev) / (nxs - prev)) * 100}%` : '100%';
+        ms.querySelector('span').textContent = nxs ? `🔏 ${b}/${nxs} → ${i ? L('pečeť: vyučí ×2', 'seal: trains ×2') : L('pečeť: učni +5 %', 'seal: apprentices +5%')}` : L('Všechny cechovní pečeti', 'All guild seals');
+      }
+      const btn = row.querySelector('.buy');
+      if (btn) {
+        const k = amount === 'max' ? Math.max(1, Econ.cechMax(S, i)) : amount, cost = Econ.cechCost(S, i, k);
+        btn.disabled = cost > S.coins;
+        btn.querySelector('small').textContent = `${t.act} ×${k}`;
+        btn.querySelector('b').innerHTML = coinSvg + fmt(cost);
+        btn.classList.toggle('sale', Econ.buff(S, 'cost') < 1);
+        const mx = Econ.cechMax(S, i);
+        row.querySelector('.mx').textContent = mx ? `max +${mx}` : '';
+      }
+    }
+  }
+
   // ── Vylepšení ──
-  function uIcon(u) { return u.kind === 'b' ? `<canvas class="uico" data-ub="${BUILDINGS[u.b].id}"></canvas>` : `<span class="uemo">${u.kind === 'tap' ? '✋' : U_ICON[u.id] || '✨'}</span>`; }
+  function uIcon(u) { return u.kind === 'b' ? `<canvas class="uico" data-ub="${BUILDINGS[u.b].id}"></canvas>` : `<span class="uemo">${u.kind === 'tap' ? '✋' : u.kind === 'c' ? CECH[u.c].icon : U_ICON[u.id] || '✨'}</span>`; }
+  /** Účinek vylepšení; u cechovního řádu i o kolik se zvedne násobek od učňů. */
+  function uEffect(u) {
+    if (u.kind !== 'cb' || S.upg[u.id]) return u.effect;
+    const now = Econ.cMul(S); S.upg[u.id] = 1; const after = Econ.cMul(S); delete S.upg[u.id];
+    return `${u.effect}: ×${fmt(now, 2)} → ×${fmt(after, 2)}`;
+  }
   function reqText(u) {
     const r = u.req || {};
     if (r.b != null) return L(`Potřebuješ ${r.n}× ${BUILDINGS[r.b].name}`, `Needs ${r.n}× ${BUILDINGS[r.b].name}`);
+    if (r.cb != null) return L(`Kup do cechu ${r.n}× ${CECH[r.cb].name}`, `Buy ${r.n}× ${CECH[r.cb].name} for the guild`);
+    if (r.ucni != null) return L(`Měj ${fmt(r.ucni)} učňů`, `Have ${fmt(r.ucni)} apprentices`);
     if (r.taps != null) return L(`Klepni do vesnice ${r.taps}×`, `Tap the village ${r.taps} times`);
     if (r.total != null) return L(`Měj ${r.total} budov`, `Own ${r.total} buildings`);
     if (r.caught != null) return L(`Chyť ${r.caught} ${r.caught < 5 ? 'bytosti' : 'bytostí'}`, `Catch ${r.caught} creatures`);
@@ -158,9 +237,9 @@ const UI = (() => {
     const soon = UPGRADES.filter(u => !S.upg[u.id] && !Econ.reqMet(S, u)).sort((a, b) => a.cost - b.cost).slice(0, 3);
     structKey = 'u' + av.map(u => u.id).join(',');
     body.innerHTML = `${av.length ? `<button class="btn wide" id="buyAll"></button>` : ''}
-      <div class="cards">${av.map(u => `<div class="card" data-u="${u.id}">${uIcon(u)}<div class="info"><b>${u.name}</b><small>${u.sub}</small><span class="eff">${u.effect}</span></div><button class="buy" data-ubuy="${u.id}"><b></b></button></div>`).join('') || `<p class="empty">${L('Teď tu nic není. Stav dál a vylepšení přibudou.', 'Nothing here right now. Keep building and upgrades will appear.')}</p>`}</div>
+      <div class="cards">${av.map(u => `<div class="card" data-u="${u.id}">${uIcon(u)}<div class="info"><b>${u.name}</b><small>${u.sub}</small><span class="eff">${uEffect(u)}</span></div><button class="buy" data-ubuy="${u.id}"><b></b></button></div>`).join('') || `<p class="empty">${L('Teď tu nic není. Stav dál a vylepšení přibudou.', 'Nothing here right now. Keep building and upgrades will appear.')}</p>`}</div>
       ${soon.length ? `<h3>${L('Brzy', 'Coming up')}</h3><div class="cards soon">${soon.map(u => `<div class="card dim">${uIcon(u)}<div class="info"><b>${u.name}</b><small>${u.sub}</small><span class="eff">${reqText(u)}</span></div></div>`).join('')}</div>` : ''}
-      ${owned.length ? `<details class="owned"><summary>${L(`Koupená vylepšení (${owned.length})`, `Bought upgrades (${owned.length})`)}</summary><div class="chips">${owned.map(u => `<span class="chip" title="${esc(u.effect)}">${u.kind === 'b' ? '' : (u.kind === 'tap' ? '✋' : U_ICON[u.id] || '✨') + ' '}${u.name}${u.kind === 'b' ? ` · ${u.sub}` : ''}</span>`).join('')}</div></details>` : ''}`;
+      ${owned.length ? `<details class="owned"><summary>${L(`Koupená vylepšení (${owned.length})`, `Bought upgrades (${owned.length})`)}</summary><div class="chips">${owned.map(u => `<span class="chip" title="${esc(u.effect)}">${u.kind === 'b' ? '' : (u.kind === 'tap' ? '✋' : u.kind === 'c' ? CECH[u.c].icon : U_ICON[u.id] || '✨') + ' '}${u.name}${u.kind === 'b' || u.kind === 'c' ? ` · ${u.sub}` : ''}</span>`).join('')}</div></details>` : ''}`;
     for (const cv of body.querySelectorAll('canvas.uico')) Scene.icon(cv, cv.dataset.ub, Math.max(1, Scene.LV(S.owned[cv.dataset.ub])), 40);
   }
   function refreshUpg() {
@@ -202,7 +281,7 @@ const UI = (() => {
         <button class="btn gold wide" id="prestige" ${p > 0 ? '' : 'disabled'}>${L('Předat vesnici', 'Pass it on')}</button>
       </div>
       <h3>${L('Kronika rodu', 'Family chronicle')}</h3>
-      <div class="perks">${PERKS.map(pk => `<div class="perk${tot >= pk.n ? ' on' : ''}"><span class="pn">${fmt(pk.n)}</span><div><b>${pk.name}</b><small>${pk.desc}</small></div><i>${tot >= pk.n ? '✔' : '🔒'}</i></div>`).join('')}</div>
+      <div class="perks">${PERKS.map(pk => `<div class="perk${tot >= pk.n ? ' on' : ''}"><span class="pn">${fmtNice(pk.n)}</span><div><b>${pk.name}</b><small>${pk.desc}</small></div><i>${tot >= pk.n ? '✔' : '🔒'}</i></div>`).join('')}</div>
       <h3>${L('Žebříčky', 'Leaderboards')}</h3>
       <p class="muted">${L('Klepni na hráče a porovnej se s ním.', 'Tap a player to compare yourself with them.')}</p>
       <div class="chips boards" role="tablist">${BOARDS.map(d => `<button class="chip" data-board="${d.key}" aria-selected="${d.key === board}">${d.icon} ${d.name}</button>`).join('')}</div>
@@ -289,6 +368,7 @@ const UI = (() => {
       [L('Čas ve hře', 'Time played'), fmtDur(st.playTime)], [L('Pokolení', 'Generation'), S.gen], [L('Vyděláno celkem', 'Earned in total'), fmt(S.earnedAll)],
       [L('Vyděláno v tomto pokolení', 'Earned this generation'), fmt(S.earnedGen)], [L('Nejvyšší výnos', 'Best income'), fmt(st.bestRate, 1) + L(' za s', ' /s')],
       [L('Postaveno budov', 'Buildings built'), fmt(st.bought)], [L('Nejvíc budov naráz', 'Most buildings at once'), fmt(st.maxBuildings)], ...(S.steward ? [[L('Šafář nakoupil', 'Steward purchases'), fmt(st.stewardBuys)]] : []), [L('Koupeno vylepšení', 'Upgrades bought'), fmt(st.upgrades)], [L('Klepnutí', 'Taps'), fmt(S.taps)],
+      ...(Econ.cechOpen(S) ? [[`👥 ${L('Násobek od učňů', 'Apprentice multiplier')}`, '×' + fmt(Econ.cMul(S), 2)], [`🧹 ${L('Nejvíc učňů', 'Most apprentices')}`, fmt(st.ucniMax)], [L('Do cechu koupeno', 'Bought for the guild'), fmt(st.cechBought)], [L('Cechovní pečeti', 'Guild seals'), fmt(st.cechSeals)]] : []),
       ...CREATURES.map(c => [`${C_ICON[c.id]} ${c.name}`, fmt(S.caught[c.id] || 0)]), [L('Utekly ti', 'Got away'), fmt(st.missed)],
       [L('Bez tebe vesnice vydělává', 'Earns without you for'), fmtDur(Econ.offlineCap(S))],
     ];
@@ -322,6 +402,7 @@ const UI = (() => {
       L('Při <b>25, 50, 100…</b> kusech jednoho řemesla získáš <b>mistrovství</b>: výnos řemesla se zdvojnásobí.', 'At <b>25, 50, 100…</b> of one trade you reach a <b>mastery</b>: that trade’s output doubles.'),
       L('<b>Roční období</b> se střídají každých 5 minut a jsou stejná pro všechny. Řemesla v sezóně vydělávají dvojnásob.', '<b>Seasons</b> change every 5 minutes and are the same for everyone. Trades in season earn double.'),
       L('Občas se ve vsi zjeví <b>pohádková bytost</b>. Klepni na ni, než zmizí: bludička najde poklad, vodník půjčí hrníček štěstí, čert dá sílu do klepání, Krakonoš zlevní stavby a hospodáříček postaví budovy zdarma.', 'Now and then a <b>fairy-tale creature</b> appears. Tap it before it vanishes: the will-o’-wisp finds treasure, the water goblin lends his lucky pot, the devil powers your taps, Krakonoš cuts prices and the house sprite builds for free.'),
+      L('S první <b>Kovárnou</b> se otevře <b>Cech</b>: generátor generuje generátor. Každý stupeň vyučí ten pod sebou (král vydává listiny, … mistři vychovají tovaryše, tovaryši učně) a <b>učni zvedají výnos celé vesnice</b>: každý desetinásobek učňů o 6 % a víc. Cech roste sám i bez tebe, v zimě dvakrát rychleji. Při 10, 25, 50… koupených kusech dostane stupeň <b>cechovní pečeť</b>.', 'With your first <b>Smithy</b> the <b>Guild</b> opens: generators make generators. Every rank trains the one below (kings issue charters, … masters raise journeymen, journeymen train apprentices) and <b>apprentices lift the whole village’s income</b>: every tenfold of them by 6% and more. The guild grows on its own, even without you, twice as fast in winter. At 10, 25, 50… bought, a rank earns a <b>guild seal</b>.'),
       L('Až vyděláš hodně, <b>předej vesnici dalšímu pokolení</b> v Kronice. Začneš znovu, ale každá pověst zrychlí všechno o 5 % a odemyká trvalé výhody.', 'Once you have earned a lot, <b>pass the village on</b> in the Chronicle. You start over, but every legend speeds everything up by 5% and unlocks lasting perks.'),
       L('Po přihlášení v herním centru se vesnice ukládá do účtu a pokračuje na jiném zařízení.', 'Sign in at the game center and the village is saved to your account and continues on other devices.'),
     ].map(x => `<li>${x}</li>`).join('')}</ul>`;
@@ -330,6 +411,7 @@ const UI = (() => {
   function refresh() {
     hud();
     if (tab === 'build') { if (buildKey() !== structKey) renderBuild($('#body')); refreshBuild(); }
+    else if (tab === 'cech') refreshCech();
     else if (tab === 'upg') refreshUpg();
     else if (tab === 'tasks') refreshTasks();
     else if (tab === 'legend') { const el = $('#legN'); if (el && el.textContent !== fmt(S.legends)) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; const hb = $('#hire'); if (hb) hb.disabled = S.legends < STEWARD_COST; }
@@ -358,15 +440,17 @@ const UI = (() => {
     let hold = null;
     const stopHold = () => { clearTimeout(hold); clearInterval(hold); hold = null; };
     body.addEventListener('pointerdown', e => {
-      const b = e.target.closest('[data-buy]');
+      const b = e.target.closest('[data-buy], [data-cbuy]');
       if (!b || b.disabled) return;
       stopHold();
-      hold = setTimeout(() => { hold = setInterval(() => { if (!handlers.buy(+b.dataset.buy, amount, true)) stopHold(); }, 110); }, 450);
+      const go = () => (b.dataset.cbuy != null ? handlers.cbuy(+b.dataset.cbuy, amount, true) : handlers.buy(+b.dataset.buy, amount, true));
+      hold = setTimeout(() => { hold = setInterval(() => { if (!go()) stopHold(); }, 110); }, 450);
     });
     for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) body.addEventListener(ev, stopHold);
     body.addEventListener('click', e => {
       const t = e.target;
       const b = t.closest('[data-buy]'); if (b) { handlers.buy(+b.dataset.buy, amount); return; }
+      const cb = t.closest('[data-cbuy]'); if (cb) { handlers.cbuy(+cb.dataset.cbuy, amount); return; }
       const to = t.closest('[data-to]'); if (to) { handlers.buy(+to.dataset.to, +to.dataset.n); return; }
       if (t.closest('#smartBuy')) { handlers.smart(); return; }
       if (t.closest('#hire')) { handlers.hire(); return; }
@@ -423,5 +507,5 @@ const UI = (() => {
     $('#newsBtn .nl').textContent = L('Novinky', 'What’s new');
     render();
   }
-  return { init, render, refresh, toast, modal, closeModal, setTab, soundIcon, coinSvg, C_ICON, cName, clockAt, help, toggleNews, compare, get tab() { return tab; }, set state(v) { S = v; } };
+  return { init, render, refresh, toast, modal, closeModal, setTab, soundIcon, tabs, coinSvg, C_ICON, cName, clockAt, help, toggleNews, compare, get tab() { return tab; }, set state(v) { S = v; } };
 })();

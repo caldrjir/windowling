@@ -157,6 +157,101 @@ test('VESNIČKA: tap, build, catch a creature, pass the village on and earn whil
 	expect(errors).toEqual([]);
 });
 
+test('VESNIČKA guild: the smith founds it, ranks train the ranks below and it grows while away', async ({
+	page,
+	context,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto(URL);
+	await page.locator('.sheet .btn').click();
+	await expect(page.locator('[data-tab="cech"]')).toHaveCount(0);
+
+	// The first smithy founds the guild: a new tab, five apprentices and a journeyman as a gift.
+	await run(page, 'Game.S.coins = 3e5; Game.S.owned.pole = 10; Game.S.owned.pekarna = 1;');
+	await page.locator('.row[data-b="4"] .buy').click();
+	await expect(page.locator('#toasts')).toContainText('Kovář založil v obci cech');
+	await page.locator('[data-tab="cech"]').click();
+	await expect(page.locator('.crow[data-c="0"] .cnt')).toHaveText('5');
+	await expect(page.locator('.crow[data-c="1"] .cnt')).toHaveText('1');
+	await expect(page.locator('#cMul')).toContainText('výnos ×');
+	await expect(page.locator('#cSub')).toContainText('každý desetinásobek +6\u00a0%');
+
+	// Buying: the apprentice works in the trades, the journeyman trains apprentices.
+	await run(page, 'Game.S.coins = 1e7;');
+	await page.locator('[data-cbuy="0"]').click();
+	await page.locator('[data-cbuy="1"]').click();
+	expect(await run(page, 'return Game.S.cech.b.slice(0, 2);')).toEqual([1, 1]);
+	await expect(page.locator('#buffs .b-cech')).toBeVisible();
+	// Generators make generators: ten minutes of training add apprentices without buying.
+	const grown = await run<{ before: number; after: number; mul: [number, number] }>(
+		page,
+		'const S = Game.S, before = S.cech.a[0], m0 = Econ.cMul(S), t = Date.now(); Econ.advance(S, t, t + 600e3); return { before, after: S.cech.a[0], mul: [m0, Econ.cMul(S)] };',
+	);
+	expect(grown.after).toBeGreaterThan(grown.before + 100);
+	expect(grown.mul[1]).toBeGreaterThan(grown.mul[0]);
+	// Ten bought earn a guild seal.
+	await run(page, 'Game.S.coins = 1e12;');
+	await page.locator('[data-amt="10"]').click();
+	await page.locator('[data-cbuy="0"]').click();
+	await expect(page.locator('#toasts')).toContainText('Cechovní pečeť');
+	expect(await run(page, 'return [Game.S.cech.b[0], Game.S.stats.cechSeals];')).toEqual([11, 1]);
+	// The next rank shows up once you have the one below; higher ones need legends.
+	await page.locator('[data-amt="1"]').click();
+	await page.locator('[data-cbuy="2"]').click();
+	await expect(page.locator('.crow[data-c="3"]')).toContainText('Odemkne se s 5 pověstmi');
+	expect(
+		await run<boolean>(page, 'return document.documentElement.scrollWidth <= innerWidth;'),
+	).toBe(true);
+
+	// Grandpa Know-all makes the guild train ten times as much for a while.
+	await run(
+		page,
+		"Scene.clearCreature(); Scene.spawnCreature('vseved', 60); Scene.focusCreature();",
+	);
+	await page.waitForTimeout(800);
+	const at = await run<{ x: number; y: number }>(page, 'return Scene.creatureScreen();');
+	await page.locator('#cv').click({ position: { x: Math.round(at.x), y: Math.round(at.y) } });
+	expect(await run(page, "return Game.S.buffs.find((b) => b.id === 'vseved').kind;")).toBe('cech');
+
+	// The guild is saved, grows while the game is closed and is welcomed back.
+	await run(page, 'Game.save();');
+	const lb = await run<Record<string, number>>(
+		page,
+		'return JSON.parse(localStorage.getItem("vesnicka.save.v1")).lb;',
+	);
+	expect(lb['free:ucni:score']).toBeGreaterThan(1000); // log10(apprentices) × 1000
+	const save = await run<string>(
+		page,
+		'const o = JSON.parse(localStorage.getItem("vesnicka.save.v1")); o.t -= 2 * 3600 * 1000; o.seen.news = 99; return JSON.stringify(o);',
+	);
+	const ucni = await run<number>(page, 'return Game.S.cech.a[0];');
+	await page.close();
+	const back = await context.newPage();
+	back.on('pageerror', (e) => errors.push(e.message));
+	await back.addInitScript((v) => {
+		if (!sessionStorage.getItem('vesnicka.e2e')) {
+			localStorage.setItem('vesnicka.save.v1', v);
+			sessionStorage.setItem('vesnicka.e2e', '1');
+		}
+	}, save);
+	await back.goto(URL);
+	await expect(back.locator('.sheet')).toContainText('Cech mezitím vyučil');
+	await back.locator('.sheet .btn').click();
+	expect(await run<number>(back, 'return Game.S.cech.a[0];')).toBeGreaterThan(ucni * 2);
+	await expect(back.locator('[data-tab="cech"]')).toBeVisible();
+
+	// A new generation starts the guild again; the guild stays founded.
+	await run(back, 'Game.S.earnedAll = 3e10;');
+	await back.locator('[data-tab="legend"]').click();
+	await back.locator('#prestige').click();
+	await back.locator('.sheet .btn.gold').click();
+	expect(
+		await run(back, 'return [Game.S.cech.b.every((n) => n === 0), Econ.cechOpen(Game.S)];'),
+	).toEqual([true, true]);
+	expect(errors).toEqual([]);
+});
+
 test('VESNIČKA music: the season by day, the night, volume and mute', async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (e) => errors.push(e.message));

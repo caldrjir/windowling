@@ -36,7 +36,9 @@ against a live opponent, and races of up to 8 players on the same puzzle in ever
 village. Tapping and 14 trades (field to astronomical clock) earn groschen, also while the game
 is closed (8 hours, more with upgrades and legends); masteries, upgrades, seasons that change
 every 5 minutes for everyone, creatures from Czech tales as random events (will-o'-wisp, water
-goblin, devil, Krakonoš, house sprite), daily tasks, 51 achievements, and prestige: passing the
+goblin, devil, Krakonoš, house sprite, Grandpa Know-all), a guild opened by the first smithy
+where generators make generators (8 ranks from apprentice to king, each training the one below;
+every tenfold of apprentices lifts all income, more in winter), daily tasks, achievements, and prestige: passing the
 village to the next generation turns earnings into legends (+5 % each) that unlock a family
 chronicle of lasting perks. Day and night follow the player's clock. A ⚡ best-buy button buys
 whatever pays for itself fastest, a "to the next upgrade" button per trade fills the gap to the

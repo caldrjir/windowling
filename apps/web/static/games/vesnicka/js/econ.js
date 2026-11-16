@@ -11,7 +11,9 @@ const Econ = (() => {
       owned: Object.fromEntries(BUILDINGS.map(b => [b.id, 0])),
       upg: {}, legends: 0, spent: 0, steward: false, gen: 1, taps: 0, caught: {}, buffs: [], ach: {},
       daily: null, nextCreature: 25,
-      stats: { playTime: 0, bought: 0, upgrades: 0, milestones: 0, seasons: {}, night: 0, awayMax: 0, dailyAll: 0, bestRate: 0, started: now(), genStart: now(), missed: 0, maxBuildings: 0, stewardBuys: 0, nesro: 0 },
+      // Cech: a = kolik kusů každého stupně je (i vyučených, s desetinami), b = kolik se jich koupilo (podle toho cena a pečeti).
+      cech: { a: CECH.map(() => 0), b: CECH.map(() => 0) },
+      stats: { playTime: 0, bought: 0, upgrades: 0, milestones: 0, seasons: {}, night: 0, awayMax: 0, dailyAll: 0, bestRate: 0, started: now(), genStart: now(), missed: 0, maxBuildings: 0, stewardBuys: 0, nesro: 0, cechOpen: 0, ucniMax: 0, cechBought: 0, cechSeals: 0 },
       settings: { sound: true, sci: false, quick: true, auto: true, music: true, musicVol: 55, sfxVol: 100, mute: false },
       seen: {},
       t: now(),
@@ -21,7 +23,12 @@ const Econ = (() => {
   // ── Součty ──
   const total = S => BUILDINGS.reduce((a, b) => a + (S.owned[b.id] || 0), 0);
   const caughtAll = S => CREATURES.reduce((a, c) => a + (S.caught[c.id] || 0), 0);
-  const upgSum = (S, kind) => { let v = 0; for (const id in S.upg) { const u = U_INDEX[id]; if (u && u.kind === kind) v += u.v; } return v; };
+  // Vylepšení podle druhu (sčítají se často, ať se neprochází všech ~170 pokaždé).
+  const BY_KIND = {};
+  for (const u of UPGRADES) (BY_KIND[u.kind] = BY_KIND[u.kind] || []).push(u);
+  const upgSum = (S, kind) => { let v = 0; for (const u of BY_KIND[kind] || []) if (S.upg[u.id]) v += u.v; return v; };
+  const TIER_IDS = BUILDINGS.map(b => TIER_REQ.map((_, t) => b.id + (t + 1)));
+  const CTIER_IDS = CECH.map(t => CECH_TIER_REQ.map((_, k) => 'c' + t.id + (k + 1)));
   /** Pověsti získané celkem (i utracené za šafáře): podle nich se odemyká kronika. */
   const legendsTotal = S => S.legends + (S.spent || 0);
   const perks = S => PERKS.filter(p => legendsTotal(S) >= p.n);
@@ -32,7 +39,7 @@ const Econ = (() => {
   const milestoneBase = S => perkMax(S, 'milestone') || 2;
   const seasonMul = S => 2 + upgSum(S, 'season') + perkSum(S, 'season');
   const buff = (S, kind) => S.buffs.filter(b => b.kind === kind).reduce((a, b) => a * b.mul, 1);
-  const upgCount = (S, i) => { let k = 0; for (let t = 1; t <= TIER_REQ.length; t++) if (S.upg[BUILDINGS[i].id + t]) k++; return k; };
+  const upgCount = (S, i) => { let k = 0; for (const id of TIER_IDS[i]) if (S.upg[id]) k++; return k; };
 
   /** Násobek jednoho řemesla (mistrovství, vylepšení, sezóna). */
   function bMul(S, i, season) {
@@ -40,15 +47,69 @@ const Econ = (() => {
     return Math.pow(milestoneBase(S), milestonesOf(S.owned[b.id])) * Math.pow(2, upgCount(S, i)) * (b.season === season ? seasonMul(S) : 1);
   }
   const achCount = S => Object.keys(S.ach).length;
-  /** Násobek celé vesnice: úspěchy, pověsti, vesnická vylepšení, kouzla bytostí. */
-  function gMul(S, buffs = true) {
-    return (1 + ACH_BONUS * achCount(S)) * (1 + LEGEND_BONUS * S.legends) * (1 + upgSum(S, 'g')) * (buffs ? buff(S, 'rate') : 1);
+
+  // ── Cech ──
+  const NC = CECH.length;
+  const cechOpen = S => !!S.stats.cechOpen;
+  const sealsOf = n => { let k = 0; while (k < CECH_SEALS.length && n >= CECH_SEALS[k]) k++; return k; };
+  const nextSeal = n => CECH_SEALS.find(m => m > n) || null;
+  const cUpg = (S, i) => { let k = 0; for (const id of CTIER_IDS[i]) if (S.upg[id]) k++; return k; };
+  /** Stupeň je k mání: dost pověstí a od nižšího stupně aspoň jeden kus. */
+  const cechTierOpen = (S, i) => cechOpen(S) && legendsTotal(S) >= CECH[i].leg && (i === 0 || S.cech.a[i - 1] >= 1 || S.cech.b[i] > 0);
+  /** Násobek vyučování stupně i >= 1 (pečeti, vylepšení, kronika). */
+  const cTierMul = (S, i) => Math.pow(2, sealsOf(S.cech.b[i]) + cUpg(S, i)) * (perkMax(S, 'cech') || 1);
+  /** Jak dobře učni pracují (pečeti a vylepšení učňů). */
+  const cU = S => Math.pow(CECH_SEAL_U, sealsOf(S.cech.b[0])) * Math.pow(CECH_UPG_U, cUpg(S, 0));
+  const cSeason = (S, season) => (season === 3 ? CECH_WINTER + perkSum(S, 'cwinter') : 1);
+  /** Kolik kusů nižšího stupně vyučí jeden kus stupně i za sekundu (i >= 1). */
+  const cRate = (S, i, season = seasonAt(now()), buffs = true) => CECH_RATE * cTierMul(S, i) * cSeason(S, season) * (buffs ? buff(S, 'cech') : 1);
+  /** Kolik přidá každý desetinásobek učňů (0,08 = +8 %). */
+  const cechPct = S => CECH_PCT + upgSum(S, 'cb') + perkSum(S, 'cbase');
+  const cechAl = S => Math.log10(1 + cechPct(S));
+  // (1 + pct) ^ log10(1 + učni) = (1 + učni) ^ log10(1 + pct)
+  const mOf = (ucni, al) => Math.pow(1 + ucni, al);
+  /** Násobek výnosu od učňů: každý desetinásobek učňů ho zvedne o cechPct. */
+  const cMulOf = (S, ucni, al = cechAl(S)) => mOf(ucni, al) * cU(S);
+  const cMul = S => (cechOpen(S) ? cMulOf(S, S.cech.a[0]) : 1);
+  /**
+   * Přesný vývoj cechu za čas tau se stálými rychlostmi p (p[i]: kolik kusů stupně i-1 vyučí kus stupně i za s):
+   * a_j(tau) = součet přes m >= j: a_m · p_{j+1}·…·p_m · tau^(m-j) / (m-j)!  (mnohočlen v čase, jako v pohádce o kaši).
+   */
+  function cechEvolve(a, p, tau) {
+    const out = a.slice();
+    for (let j = 0; j < NC; j++) {
+      let v = a[j], f = 1;
+      for (let m = j + 1; m < NC; m++) { f *= (p[m] * tau) / (m - j); if (!a[m]) continue; v += a[m] * f; }
+      out[j] = Math.min(1e300, v);
+    }
+    return out;
+  }
+  /** Učni za tau sekund (koeficienty mnohočlenu a0(tau) = c0 + c1 tau + c2 tau² + …). */
+  function ucniPoly(a, p) {
+    const c = [a[0]];
+    let f = 1;
+    for (let m = 1; m < NC; m++) { f *= p[m] / m; c.push(a[m] * f); }
+    return c;
+  }
+  const polyAt = (c, x) => { let v = 0; for (let k = c.length - 1; k >= 0; k--) v = v * x + c[k]; return v; };
+  /** Integrál násobku učňů přes [0, tau] (Simpsonovo pravidlo; n sudé). */
+  function cMulIntegral(S, c, tau, n = 8, U = cU(S), al = cechAl(S)) {
+    const h = tau / n;
+    let sum = 0;
+    for (let k = 0; k <= n; k++) sum += (k === 0 || k === n ? 1 : k % 2 ? 4 : 2) * mOf(Math.max(0, polyAt(c, k * h)), al);
+    return (U * sum * h) / 3;
+  }
+  const cRates = (S, season, buffs = true) => CECH.map((_, i) => (i ? cRate(S, i, season, buffs) : 0));
+
+  /** Násobek celé vesnice: úspěchy, pověsti, vesnická vylepšení, cech, kouzla bytostí. */
+  function gMul(S, buffs = true, chain = true) {
+    return (1 + ACH_BONUS * achCount(S)) * (1 + LEGEND_BONUS * S.legends) * (1 + upgSum(S, 'g')) * (perkMax(S, 'golden') || 1) * (chain ? cMul(S) : 1) * (buffs ? buff(S, 'rate') : 1);
   }
   const bRate = (S, i, season = seasonAt(now()), buffs = true) => BUILDINGS[i].prod * S.owned[BUILDINGS[i].id] * bMul(S, i, season) * gMul(S, buffs);
-  function rate(S, season = seasonAt(now()), buffs = true) {
+  function rate(S, season = seasonAt(now()), buffs = true, chain = true) {
     let r = 0;
     for (let i = 0; i < BUILDINGS.length; i++) if (S.owned[BUILDINGS[i].id]) r += BUILDINGS[i].prod * S.owned[BUILDINGS[i].id] * bMul(S, i, season);
-    return r * gMul(S, buffs);
+    return r * gMul(S, buffs, chain);
   }
   /** Kolik vydělá jedno klepnutí do vesnice. */
   function tapValue(S, season) {
@@ -85,8 +146,52 @@ const Econ = (() => {
     S.stats.milestones += ev.milestones.length;
     return ev;
   }
+  // ── Nákupy do cechu ──
+  function cechCost(S, i, n = 1) {
+    const t = CECH[i], k = S.cech.b[i];
+    return t.cost * Math.pow(t.grow, k) * (Math.pow(t.grow, n) - 1) / (t.grow - 1) * discount(S);
+  }
+  function cechMax(S, i) {
+    const t = CECH[i], first = t.cost * Math.pow(t.grow, S.cech.b[i]) * discount(S);
+    if (S.coins < first || !cechTierOpen(S, i)) return 0;
+    let n = Math.floor(Math.log(1 + (S.coins * (t.grow - 1)) / first) / Math.log(t.grow));
+    while (n > 1 && cechCost(S, i, n) > S.coins) n--;
+    return Math.max(1, n);
+  }
+  /** Koupí n kusů stupně cechu (n = 'max'); vrací události (nové pečeti, první kus). */
+  function cechBuy(S, i, n) {
+    if (!cechTierOpen(S, i)) return null;
+    if (n === 'max') n = cechMax(S, i);
+    if (!(n >= 1)) return null;
+    const cost = cechCost(S, i, n);
+    if (cost > S.coins * (1 + 1e-9)) return null;
+    const before = S.cech.b[i], first = S.cech.a[i] < 1;
+    S.coins = Math.max(0, S.coins - cost);
+    S.cech.b[i] = before + n;
+    S.cech.a[i] += n;
+    S.stats.cechBought += n;
+    const ev = { n, first, seals: [] };
+    for (const m of CECH_SEALS) if (before < m && before + n >= m) ev.seals.push(m);
+    S.stats.cechSeals += ev.seals.length;
+    return ev;
+  }
+  /** Cech se otevře s první kovárnou (a zůstane otevřený i dalším pokolením). */
+  function cechCheck(S) {
+    if (S.stats.cechOpen || !(S.owned[CECH_OPEN] > 0)) return false;
+    S.stats.cechOpen = now();
+    CECH_GIFT.forEach((n, i) => { S.cech.a[i] += n; });
+    return true;
+  }
+  /** Vyhlídka za tau sekund: kolik bude učňů a jaký násobek (pro rozhraní a šafáře). */
+  function cechAhead(S, tau, season = seasonAt(now())) {
+    const a = cechEvolve(S.cech.a, cRates(S, season), tau);
+    return { ucni: a[0], mul: cMulOf(S, a[0]) };
+  }
+
   function reqMet(S, u) {
     const r = u.req || {};
+    if (r.cb != null && S.cech.b[r.cb] < r.n) return false;
+    if (r.ucni != null && S.cech.a[0] < r.ucni) return false;
     if (r.b != null && S.owned[BUILDINGS[r.b].id] < r.n) return false;
     if (r.taps != null && S.taps < r.taps) return false;
     if (r.total != null && total(S) < r.total) return false;
@@ -128,6 +233,8 @@ const Econ = (() => {
     const E = evalCtx(S), live = Math.max(1e-9, rate(S) + tapsPerSec * tapValue(S));
     const last = BUILDINGS.reduce((a, b, i) => (S.owned[b.id] ? i : a), -1);
     let best = null;
+    // Kolik sekund návratnosti smí mít nákup za cost, aby ještě porazil nejlepší dosavadní.
+    const limitFor = cost => (best ? best.score - Math.max(0, (cost - S.coins) / live) : Infinity);
     const consider = (o, cost, gain) => {
       if (!(gain > 0) || !isFinite(cost)) return;
       const wait = Math.max(0, (cost - S.coins) / live), score = wait + cost / gain;
@@ -144,25 +251,52 @@ const Econ = (() => {
       else if (u.kind === 'g') gain = E.avg * u.v / (1 + upgSum(S, 'g'));
       else if (u.kind === 'season') gain = E.g * E.B * u.v / 4;
       else if (u.kind === 'tap') { if (tapsPerSec > 0) { S.upg[u.id] = 1; const a = tapValue(S); delete S.upg[u.id]; gain = (a - tapValue(S)) * tapsPerSec; } }
+      else if (u.kind === 'c' || u.kind === 'cb') { const c = upgCost(S, u), tau = cechPayback(S, E, () => { S.upg[u.id] = 1; }, () => { delete S.upg[u.id]; }, c, limitFor(c)); gain = tau ? c / tau : 0; }
       else gain = E.avg * 0.04; // bytosti, kouzla, delší výdělek bez hráče
       consider({ kind: 'u', id: u.id, name: u.name, sub: u.sub }, upgCost(S, u), gain);
     }
+    if (cechOpen(S)) for (let i = 0; i < NC; i++) {
+      if (!cechTierOpen(S, i)) continue;
+      const c = cechCost(S, i, 1), tau = cechPayback(S, E, () => { S.cech.b[i]++; S.cech.a[i]++; }, () => { S.cech.b[i]--; S.cech.a[i]--; }, c, limitFor(c));
+      if (tau) consider({ kind: 'c', i, name: CECH[i].name, sub: L('Cech', 'Guild') }, c, c / tau);
+    }
     return best;
+  }
+  /**
+   * Za kolik sekund se změna cechu (nákup kusu nebo vylepšení) zaplatí: hledá tau, kdy přírůstek
+   * výnosu za [0, tau] dosáhne ceny. Cech roste jako mnohočlen, takže vyšší stupně se zaplatí až časem.
+   */
+  function cechPayback(S, E, apply, revert, cost, limit = Infinity) {
+    if (!(limit > 0)) return null;
+    const g = cMul(S), base = g > 0 ? E.avg / g : 0;
+    if (!(base > 0)) return null;
+    const avgS = (3 + cSeason(S, 3)) / 4; // průměr přes roční období (zima je sezóna cechu)
+    const state = () => ({ c: ucniPoly(S.cech.a, CECH.map((_, k) => (k ? CECH_RATE * cTierMul(S, k) * avgS : 0))), U: cU(S), pw: cechAl(S) });
+    const A = state();
+    apply(); const B = state(); revert();
+    const gain = (tau, n = 6) => base * (cMulIntegral(S, B.c, tau, n, B.U, B.pw) - cMulIntegral(S, A.c, tau, n, A.U, A.pw));
+    let hi = 4;
+    while (gain(hi, 4) < cost) { hi *= 4; if (hi > 6e7 || hi / 4 > limit) return null; }
+    let lo = hi / 4;
+    for (let k = 0; k < 7; k++) { const mid = (lo + hi) / 2; if (gain(mid) >= cost) hi = mid; else lo = mid; }
+    return hi;
   }
   /** Koupí jednu věc z bestBuy; vrací ji (s událostí stavby) nebo null. */
   function buyThing(S, b) {
     if (!b || b.cost > S.coins * (1 + 1e-9)) return null;
     if (b.kind === 'b') { const ev = buy(S, b.i, 1); return ev ? Object.assign({}, b, { ev }) : null; }
+    if (b.kind === 'c') { const ev = cechBuy(S, b.i, 1); return ev ? Object.assign({}, b, { ev }) : null; }
     return buyUpg(S, b.id) ? b : null;
   }
   /** Šafář nakoupí, co se vyplatí, dokud na to jsou groše (nejvýš max věcí). */
   function stewardBuy(S, tapsPerSec = 0, max = 40) {
-    const out = { n: 0, buildings: 0, upgrades: 0, milestones: [], firsts: [] };
+    const out = { n: 0, buildings: 0, upgrades: 0, cech: 0, milestones: [], firsts: [], seals: [], cfirsts: [] };
     for (let k = 0; k < max; k++) {
       const got = buyThing(S, bestBuy(S, tapsPerSec));
       if (!got) break;
       out.n++;
       if (got.kind === 'b') { out.buildings++; for (const m of got.ev.milestones) out.milestones.push([got.i, m]); if (got.ev.first) out.firsts.push(got.i); }
+      else if (got.kind === 'c') { out.cech++; for (const m of got.ev.seals) out.seals.push([got.i, m]); if (got.ev.first) out.cfirsts.push(got.i); }
       else out.upgrades++;
     }
     S.stats.stewardBuys += out.n;
@@ -187,6 +321,7 @@ const Econ = (() => {
       if (c.id === 'vodnik' && season === 3) return 0; // v zimě spí pod ledem
       if (c.id === 'hospodaricek' && total(S) < 10) return 0;
       if (c.id === 'cert' && S.taps < 20) return 0; // čert až když hráč umí klepat
+      if (c.id === 'vseved' && !(S.cech.a[1] >= 1)) return 0; // Vševěd až když má cech koho učit
       return c.w * (c.id === 'krakonos' && season === 3 ? 2 : 1);
     });
     // Vzácný host: kamarád ze vsi, který se občas zastaví (až po prvních bytostech).
@@ -214,6 +349,7 @@ const Econ = (() => {
     } else if (id === 'vodnik') addBuff(S, id, 'rate', c.mul, c.dur * durMul(S));
     else if (id === 'cert') addBuff(S, id, 'tap', c.mul, c.dur * durMul(S));
     else if (id === 'krakonos') addBuff(S, id, 'cost', 0.5, c.dur * durMul(S));
+    else if (id === 'vseved') addBuff(S, id, 'cech', c.mul, c.dur * durMul(S));
     else if (id === 'hospodaricek') {
       let n = 0;
       for (const b of BUILDINGS) if (S.owned[b.id]) { const k = Math.max(1, Math.floor(S.owned[b.id] * 0.05)); S.owned[b.id] += k; n += k; }
@@ -231,11 +367,18 @@ const Econ = (() => {
     let t = fromMs / 1000;
     const end = Math.min(toMs / 1000, t + cap);
     let got = 0;
+    const chain = cechOpen(S) && S.cech.a.some(x => x > 0);
     while (t < end - 1e-6) {
       let next = Math.min(end, (Math.floor(t / SEASON_LEN + 1e-9) + 1) * SEASON_LEN);
       for (const b of S.buffs) next = Math.min(next, t + b.t);
-      const dt = Math.max(0, next - t);
-      got += rate(S, seasonAt(t * 1000 + 1)) * dt;
+      const dt = Math.max(0, next - t), season = seasonAt(t * 1000 + 1);
+      if (chain && dt > 0) {
+        // Cech roste během úseku přesně (mnohočlen), výnos se sečte přes rostoucí násobek učňů.
+        const p = cRates(S, season), c = ucniPoly(S.cech.a, p);
+        got += rate(S, season, true, false) * cMulIntegral(S, c, dt, dt > 2 ? 16 : 2);
+        S.cech.a = cechEvolve(S.cech.a, p, dt);
+        if (S.cech.a[0] > S.stats.ucniMax) S.stats.ucniMax = S.cech.a[0];
+      } else got += rate(S, season) * dt;
       for (const b of S.buffs) b.t -= dt;
       S.buffs = S.buffs.filter(b => b.t > 1e-6);
       t = next + (dt === 0 ? 1e-3 : 0);
@@ -252,7 +395,7 @@ const Econ = (() => {
    */
   function offline(S, fromMs, toMs) {
     const away = Math.max(0, (toMs - fromMs) / 1000), cap = offlineCap(S), earnSec = Math.min(away, cap);
-    const before = S.earnedAll, out = { away, cap, earnSec, capped: away > cap, buys: 0, buildings: 0, upgrades: 0 };
+    const before = S.earnedAll, ucni0 = S.cech.a[0], wasOpen = cechOpen(S), out = { away, cap, earnSec, capped: away > cap, buys: 0, buildings: 0, upgrades: 0, cech: 0 };
     if (S.steward && S.settings.auto && earnSec > 120) {
       const n = Math.min(240, Math.ceil(earnSec / 60)), step = (earnSec * 1000) / n;
       let t = fromMs;
@@ -260,11 +403,14 @@ const Econ = (() => {
         advance(S, t, t + step);
         t += step;
         const b = stewardBuy(S, 0, 60);
-        out.buys += b.n; out.buildings += b.buildings; out.upgrades += b.upgrades;
+        out.buys += b.n; out.buildings += b.buildings; out.upgrades += b.upgrades; out.cech += b.cech;
+        cechCheck(S);
       }
       advance(S, t, toMs, 0); // kouzla dobíhají i za limitem
     } else advance(S, fromMs, toMs, cap);
     out.got = S.earnedAll - before;
+    out.ucni = Math.max(0, S.cech.a[0] - ucni0);
+    out.cechOpened = !wasOpen && cechOpen(S);
     if (away > S.stats.awayMax) S.stats.awayMax = away;
     return out;
   }
@@ -286,9 +432,10 @@ const Econ = (() => {
     if (tot > S.stats.maxBuildings) S.stats.maxBuildings = tot;
     const h = new Date(ms).getHours();
     if (h < 4) S.stats.night = 1;
+    const opened = cechCheck(S);
     S.nextCreature -= dt;
-    if (S.nextCreature <= 0) { S.nextCreature = nextGap(S); return { creature: pickCreature(S, season) }; }
-    return null;
+    if (S.nextCreature <= 0) { S.nextCreature = nextGap(S); return { creature: pickCreature(S, season), cechOpened: opened }; }
+    return opened ? { cechOpened: true } : null;
   }
   function tap(S, season) {
     const v = tapValue(S, season);
@@ -325,6 +472,11 @@ const Econ = (() => {
     const start = perkMax(S, 'start');
     if (start >= 1) S.owned.pole = 10;
     if (start >= 2) for (const b of BUILDINGS.slice(0, 4)) S.owned[b.id] = Math.max(S.owned[b.id], 10);
+    // Cech začíná znovu; kronika přidá kusy zdarma (koupené počty zůstanou nulové, cenu nezvednou).
+    S.cech = { a: CECH.map(() => 0), b: CECH.map(() => 0) };
+    const cs = perkMax(S, 'cstart');
+    if (cs >= 1) { S.cech.a[0] = 10; S.cech.a[1] = 3; }
+    if (cs >= 2) for (let i = 0; i < 4; i++) S.cech.a[i] = Math.max(S.cech.a[i], 10);
     S.stats.genStart = now();
     S.nextCreature = Math.min(S.nextCreature, 30);
     return p;
@@ -390,6 +542,7 @@ const Econ = (() => {
     if (o.owned) for (const b of BUILDINGS) S.owned[b.id] = Math.max(0, Math.floor(num(o.owned[b.id])));
     if (o.upg) for (const id in o.upg) if (U_INDEX[id]) S.upg[id] = 1;
     if (o.caught) for (const c of CREATURES) if (o.caught[c.id]) S.caught[c.id] = Math.floor(num(o.caught[c.id]));
+    if (o.cech && Array.isArray(o.cech.a) && Array.isArray(o.cech.b)) for (let i = 0; i < NC; i++) { S.cech.a[i] = Math.min(1e300, Math.max(0, num(o.cech.a[i]))); S.cech.b[i] = Math.max(0, Math.floor(num(o.cech.b[i]))); }
     if (o.ach) for (const id in o.ach) if (A_INDEX[id]) S.ach[id] = num(o.ach[id], 1);
     if (Array.isArray(o.buffs)) S.buffs = o.buffs.filter(b => b && typeof b.id === 'string' && num(b.t) > 0 && num(b.mul) > 0).map(b => ({ id: b.id, kind: b.kind, mul: b.mul, t: b.t, max: num(b.max, b.t) }));
     if (o.daily && typeof o.daily.day === 'string' && Array.isArray(o.daily.tasks)) S.daily = Object.assign({ seasons: {}, bonus: false }, o.daily);
@@ -400,7 +553,8 @@ const Econ = (() => {
   }
   /** Výsledky do žebříčků (sync.js je posílá na /api/scores): celá čísla, velká čísla jako log10 × 1000. */
   function boards(S) {
-    const lb = {}, put = (b, v) => { v = Math.floor(v); if (v > 0 && v < 1e10) lb[b] = v; };
+    // Server bere hodnoty do 10^10; nad tím zůstane hráč na stropu (pověsti po týdnech hraní s cechem).
+    const lb = {}, put = (b, v) => { v = Math.floor(v); if (v > 0 && isFinite(v)) lb[b] = Math.min(v, 9999999999); };
     put('best:score', legendsTotal(S));
     // čas ve hře posílá sync.js za každou hru sám (total:played)
     for (const d of BOARDS) if (d.key !== 'best:score' && d.key !== 'total:played') put(d.key, d.log ? (d.get(S) > 1 ? Math.log10(d.get(S)) * 1000 : 0) : d.get(S));
@@ -415,7 +569,7 @@ const Econ = (() => {
   function hubStats(S) {
     return {
       playTime: Math.round(S.stats.playTime), lastPlayed: now(), progress: Math.min(1, achCount(S) / ACHIEVEMENTS.length),
-      stats: { legends: legendsTotal(S), generation: S.gen, buildings: total(S), earned: fmt(S.earnedAll), creatures: caughtAll(S), achievements: `${achCount(S)} / ${ACHIEVEMENTS.length}` },
+      stats: { legends: legendsTotal(S), generation: S.gen, buildings: total(S), earned: fmt(S.earnedAll), creatures: caughtAll(S), achievements: `${achCount(S)} / ${ACHIEVEMENTS.length}`, ...(cechOpen(S) ? { apprentices: fmt(S.cech.a[0]) } : {}) },
     };
   }
 
@@ -423,5 +577,7 @@ const Econ = (() => {
     fresh, total, caughtAll, upgSum, legendsTotal, hireSteward, bestBuy, buyThing, stewardBuy, offline, dailyLeft, boards, perks, perkSum, perkMax, milestonesOf, nextMilestone, milestoneBase, seasonMul, buff, upgCount, bMul, gMul, bRate, rate, tapValue, achCount,
     discount, costOf, maxAfford, buy, reqMet, upgCost, upgAvailable, buyUpg, addBuff, freqMul, nextGap, pickCreature, catchCreature, durMul,
     earn, offlineCap, advance, tick, tap, legendsFor, pending, nextLegendAt, prestige, checkAch, daily, dailyProgress, dailyReward, claimDaily, load, serialize, hubStats,
+    cechOpen, cechTierOpen, cechCost, cechMax, cechBuy, cechCheck, cechAhead, cechEvolve, cMul, cMulOf, cRate, cTierMul, cU, cechPct, cSeason, cUpg, sealsOf, nextSeal,
+    cechInfo: S => (cechOpen(S) ? `cech ×${fmt(cMul(S), 1)} učni ${fmt(S.cech.a[0])} b[${S.cech.b.join(',')}]` : 'cech –'),
   };
 })();
