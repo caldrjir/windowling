@@ -118,7 +118,7 @@
   const cam = new pc.Entity(); cam.addComponent('camera', { clearColor: new pc.Color(0.04, 0.045, 0.06), fov: 46, nearClip: 0.5, farClip: 140 }); app.root.addChild(cam);
   const YAW = (45 * Math.PI) / 180, PITCH = (50 * Math.PI) / 180; let zoom = 18; const camT = new pc.Vec3(); let shake = 0;
   function placeCamera(dt) {
-    const p = S ? S.player : { x: 0, z: 0 }; camT.lerp(camT, new pc.Vec3(p.x, 0, p.z), Math.min(1, dt * 8));
+    const p = S ? { x: RP[0], z: RP[1] } : { x: 0, z: 0 }; camT.lerp(camT, new pc.Vec3(p.x, 0, p.z), Math.min(1, dt * 8));
     const off = new pc.Vec3(Math.sin(YAW) * Math.cos(PITCH) * zoom, Math.sin(PITCH) * zoom, Math.cos(YAW) * Math.cos(PITCH) * zoom);
     shake = Math.max(0, shake - dt * 1.6); const sx = (Math.random() - 0.5) * shake, sz = (Math.random() - 0.5) * shake;
     cam.setPosition(camT.x + off.x + sx, off.y, camT.z + off.z + sz); cam.lookAt(camT.x + sx, 0, camT.z + sz);
@@ -239,7 +239,9 @@
   function charMat(c, m) { if (c.mat === m) return; c.mat = m; for (const x of c.mis) x.mi.material = m || x.base; }
   // po vyhodnocení animace: kořenová kost zůstane na místě (pozici drží simulace)
   function charPin(c) { if (c.bone) c.bone.setLocalPosition(0, 0, 0); }
-  let PC = null, lastP = null; // rytíř hráče
+  let PC = null; // rytíř hráče
+  // plynulý pohyb: simulace běží 30× za s, obraz častěji – hráč se kreslí mezi poslední a novou pozicí kroku
+  let prevP = null; const RP = [0, 0];
   function charsReady() {
     if (CH.gray || !CH.res) return;
     PC = charVisual(P, null, 1); PG.enabled = false;
@@ -471,13 +473,16 @@
     document.getElementById('b-stay').onclick = () => { screen.innerHTML = ''; mode = 'play'; acc = 0; };
   }
   function startCampaign() { const z = (SAVE.act1 && SAVE.act1.zone) || ACT1[0]; if (z === 'a1_kiln_heart') start('boss', { campaign: true }); else start('act1', { zone: z }); }
+  // po dojití k bráně: panel (nebo přechod z města) až ve chvíli, kdy se hraje – pauza, inventář nebo dialog
+  // v tu chvíli by ho jinak zahodily a hráč by u už použité brány uvízl
+  function whenPlaying(fn, delay) { const s0 = S; const tick = () => { if (S !== s0) return; if (mode === 'play') fn(); else setTimeout(tick, 250); }; setTimeout(tick, delay); }
   function zoneDone(ev) {
     if (S.zone.side) SAVE.gallowsDone = true; // tajná oblast: kampaň zůstává v oblasti, odkud se vešlo
     else SAVE.act1 = { zone: ev.next || ACT1[ACT1.length - 1], done: false, deaths: ((SAVE.act1 && SAVE.act1.deaths) || 0) + ev.deaths };
     saveChar(); saveGear(); persist();
-    if (S.zone.town) { setTimeout(() => { if (S && mode === 'play') startCampaign(); }, 400); return; } // z města rovnou dál
+    if (S.zone.town) { whenPlaying(startCampaign, 400); return; } // z města rovnou dál
     tone(330, 660, 0.6, 0.25, 'triangle');
-    setTimeout(() => { if (!S || mode !== 'play') return; mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${t('zoneDone')}: ${zoneName(ev.id)}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time / 60)} min</td></tr><tr><td>${t('kills')}</td><td class="n">${ev.kills}</td></tr><tr><td>${t('lvl')}</td><td class="n">${S.L}</td></tr></table><p>${S.zone.side ? t('back') : t('nextZone')}: <b>${zoneName(ev.next)}</b></p><div class="row"><button class="btn" id="b-next">${t('continue')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-next').onclick = startCampaign; document.getElementById('b-menu').onclick = menu; }, 900);
+    whenPlaying(() => { mode = 'over'; screen.innerHTML = `<div class="panel"><h2>${t('zoneDone')}: ${zoneName(ev.id)}</h2><table class="res"><tr><td>${t('victoryT')}</td><td class="n">${Math.round(ev.time / 60)} min</td></tr><tr><td>${t('kills')}</td><td class="n">${ev.kills}</td></tr><tr><td>${t('lvl')}</td><td class="n">${S.L}</td></tr></table><p>${S.zone.side ? t('back') : t('nextZone')}: <b>${zoneName(ev.next)}</b></p><div class="row"><button class="btn" id="b-next">${t('continue')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-next').onclick = startCampaign; document.getElementById('b-menu').onclick = menu; }, 900);
   }
   function victory(ev) {
     if (S.campaign) SAVE.act1 = { zone: 'a1_kiln_heart', done: true, deaths: (SAVE.act1 && SAVE.act1.deaths) || 0 };
@@ -833,7 +838,7 @@
     music();
     document.getElementById('bossbar').hidden = !S.boss; bossScene(!!S.boss); zoneScene(!!S.zone); document.getElementById('whisper').hidden = true; slowmo = 0;
     LAT.on = m === 'latency'; LAT.pend = null; if (LAT.on) LAT.samples = [];
-    camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
+    prevP = null; RP[0] = S.player.x; RP[1] = S.player.z; camT.set(S.player.x, 0, S.player.z); mode = m === 'bench' ? 'bench' : 'play';
     document.getElementById('hint').textContent = m === 'bench' ? t('benchRun') : m === 'latency' ? `${t('latHint')} 0/${LAT.need}` : m === 'boss' ? t('bossHint') : m === 'act1' ? (S.zone.town ? townHint() : zoneObjective(S.zone.id)) : t('hint');
     if (m === 'act1' || (m === 'boss' && S.campaign)) { const sc = scenesFor(m === 'boss' ? 'boss' : 'start'); if (sc.length) setTimeout(() => playScenes(sc), 350); }
     bench = m === 'bench' ? { t0: performance.now(), frames: [], cpu: [], simMs: 0, steps: 0, last: performance.now() } : null;
@@ -945,7 +950,7 @@
     window.HSGame.assets = { loaded: AS.loaded, total: AS.items.length, error: AS.error, items: AS.items.map((it) => ({ id: it.a.id, ok: it.ok, ms: it.ms })), clips: AS.res ? AS.res.animations.map((a) => a.resource.name) : [], clip: AS.clip, crowd: AS.crowdRes, measuring: !!AS.measure };
   }
 
-  function pause() { mode = 'paused'; screen.innerHTML = `<div class="panel"><h2>${t('paused')}</h2>${keysHtml()}${opt()}<div class="row"><button class="btn" id="b-res">${t('resume')}</button><button class="btn dim" id="b-rst">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-res').onclick = resume; document.getElementById('b-rst').onclick = () => start('arena'); document.getElementById('b-menu').onclick = menu; bindOpt(); }
+  function pause() { mode = 'paused'; screen.innerHTML = `<div class="panel"><h2>${t('paused')}</h2>${keysHtml()}${opt()}<div class="row"><button class="btn" id="b-resume">${t('resume')}</button><button class="btn dim" id="b-rst">${t('restart')}</button><button class="btn dim" id="b-menu">${t('menu')}</button></div></div>`; document.getElementById('b-resume').onclick = resume; document.getElementById('b-rst').onclick = () => (S.campaign || S.zone ? startCampaign() : start(S.mode === 'boss' ? 'boss' : 'arena')); /* b-res je pruh Cinders v HUD */ document.getElementById('b-menu').onclick = menu; bindOpt(); }
   function resume() { screen.innerHTML = ''; mode = 'play'; acc = 0; }
   function gameOver() {
     mode = 'over'; SAVE.bestWave = Math.max(SAVE.bestWave, S.wave); SAVE.kills += S.kills; saveChar(); persist();
@@ -977,7 +982,7 @@
         acc += dt;
         while (acc >= SIM.TICK || (fresh && mode === 'play' && acc >= 0)) {
           fresh = false; steps++;
-          const t0 = performance.now(); const inp = mode === 'bench' ? SIM.autopilot(S) : readInput(); SIM.step(S, inp);
+          const t0 = performance.now(); const inp = mode === 'bench' ? SIM.autopilot(S) : readInput(); prevP = [S.player.x, S.player.z]; SIM.step(S, inp);
           if (bench) { bench.simMs += performance.now() - t0; bench.steps++; }
           lastEvents = S.events.slice(); handle(lastEvents); acc -= SIM.TICK; if (mode !== 'play' && mode !== 'bench') break;
         }
@@ -994,20 +999,25 @@
   });
   function syncWorld(dt) {
     const p = S.player;
-    P.setLocalPosition(p.x, 0, p.z); P.setLocalEulerAngles(0, (-p.face * 180) / Math.PI, 0); glow.setLocalPosition(p.x, 2.2, p.z);
+    // poloha mezi kroky simulace (po okamžitém kroku na vstup ukáže rovnou novou; teleport nebo respawn se neprolíná)
+    const a = acc < 0 ? 1 : Math.min(1, acc / SIM.TICK); const jump = !prevP || Math.hypot(p.x - prevP[0], p.z - prevP[1]) > 3;
+    RP[0] = jump ? p.x : prevP[0] + (p.x - prevP[0]) * a; RP[1] = jump ? p.z : prevP[1] + (p.z - prevP[1]) * a;
+    P.setLocalPosition(RP[0], 0, RP[1]); P.setLocalEulerAngles(0, (-p.face * 180) / Math.PI, 0); glow.setLocalPosition(RP[0], 2.2, RP[1]);
     // švih zbraně podle rozpracované akce
     if (p.act && p.act.id !== 'ak_charge') { const k = Math.min(1, p.act.t / p.act.dur); const sw = p.act.id === 'ak_slam' ? -100 + 190 * Math.min(1, k / 0.4) : -75 + 150 * Math.min(1, k / 0.45); pivot.setLocalEulerAngles(p.act.id === 'ak_slam' ? 0 : 0, sw, p.act.id === 'ak_slam' ? Math.max(-80, sw * 0.6) : 0); }
     else pivot.setLocalEulerAngles(0, -35, 0);
     if (PC) {
       // hráč: útok zpomalený/zrychlený tak, aby švih padl do okna zásahu akce (~45 % trvání)
-      const moved = lastP ? Math.hypot(p.x - lastP[0], p.z - lastP[1]) : 0; lastP = [p.x, p.z];
+      // běží? podle rychlosti v posledním kroku simulace (posun mezi snímky je u 30 Hz simulace často nulový)
+      const vel = prevP ? Math.hypot(p.x - prevP[0], p.z - prevP[1]) / SIM.TICK : 0;
       if (p.dodge) charClip(PC, 'run', 2.2);
       else if (p.act && p.act.id === 'ak_charge') charClip(PC, 'run', 2, 0.08, p.act);
       else if (p.act) charClip(PC, 'attack', Math.min(3, SWING / (0.45 * p.act.dur)), 0.06, p.act);
       else if (p.stun > 0) charClip(PC, 'idle', 0.5);
-      else if (dt > 0 && moved / dt > 0.5) charClip(PC, 'run', 1.25);
+      // běh: chodidlo projde za půl cyklu (0,4 s) ~1,4 m, takže rychlost klipu = rychlost / 3,5 m/s (bez klouzání)
+      else if (vel > 0.5) charClip(PC, 'run', (5.2 * S.ch.S.ms) / 3.5); // 5,2 m/s = PLAYER_SPEED v sim.js
       else charClip(PC, 'idle', 1);
-      charPin(PC); charLod(PC, p.x, p.z); P.setLocalScale(1, 1, 1);
+      charPin(PC); charLod(PC, RP[0], RP[1]); P.setLocalScale(1, 1, 1);
     } else P.setLocalScale(1, p.dodge ? 0.75 : 1, 1);
     for (const [id, v] of EV) { // umírající: dohrají smrt i poté, co je simulace zahodí
       if (v.dying <= 0) continue; v.dying += dt;
@@ -1028,7 +1038,7 @@
         if (e.atk) charClip(v.c, 'attack', Math.max(0.3, Math.min(2.5, SWING / e.atk.def.tele)), 0.08, e.atk);
         else if (e.stun > 0) charClip(v.c, 'idle', 0.4);
         else if (v.c.clip === 'attack' && v.c.e.anim.baseLayer.activeStateProgress < 1) { /* dohraje švih */ }
-        else if (dt > 0 && Math.hypot(v.x - px, v.z - pz) / dt > 0.4) charClip(v.c, 'run', Math.max(0.6, e.speed / 4.5));
+        else if (dt > 0 && Math.hypot(v.x - px, v.z - pz) / dt > 0.4) charClip(v.c, 'run', Math.max(0.6, e.speed / 3.5));
         else charClip(v.c, 'idle', 1);
         charMat(v.c, e.flash > 0 ? M.flash : e.stun > 0 ? M.stun : null); charPin(v.c); charLod(v.c, v.x, v.z);
         if (e.ward > 0 && !v.wardE) { const k = CH_SCALE[e.type] || 1; v.wardE = ent('sphere', M_WARD, [0, 1 * k, 0], [1.3 * k, 2.1 * k, 1.3 * k], v.root, false); } else if (!(e.ward > 0) && v.wardE) { v.wardE.destroy(); v.wardE = null; }

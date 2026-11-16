@@ -31,6 +31,11 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 
 	await page.locator('#b-arena').click();
 	await expect(page.locator('#hud')).toBeVisible();
+	// Esc pauses; the resume button must resume (its id once clashed with the HUD's Cinders bar)
+	await page.keyboard.press('Escape');
+	await expect(page.locator('#b-resume')).toBeVisible();
+	await page.locator('#b-resume').click();
+	await expect.poll(() => run<string>(page, 'return HSGame.mode;')).toBe('play');
 	const result = await run<{
 		wave: number;
 		kills: number;

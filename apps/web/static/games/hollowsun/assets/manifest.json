@@ -44,7 +44,7 @@
 		{
 			"id": "CH_ak_body",
 			"file": "CH_ak_body.glb",
-			"bytes": 99856,
+			"bytes": 95628,
 			"materials": [
 				"M_ak_steel",
 				"M_ak_ember"
@@ -101,7 +101,7 @@
 					}
 				]
 			},
-			"rawBytes": 555164,
+			"rawBytes": 555312,
 			"compression": [
 				"EXT_meshopt_compression",
 				"KHR_mesh_quantization"

@@ -231,12 +231,15 @@ def clips(arm):
     fr = range(0, 25, 3)
     out.append(clip(arm, "run", 24, {
         "spine": [(f, (-0.18, 0, 0)) for f in (0, 24)],
-        "thigh_L": [(f, (0.55 * ph(f), 0, 0)) for f in fr],
-        "thigh_R": [(f, (-0.55 * ph(f), 0, 0)) for f in fr],
-        "shin_L": [(f, (-0.6 * max(0.0, ph(f, 0.25)), 0, 0)) for f in fr],
-        "shin_R": [(f, (-0.6 * max(0.0, -ph(f, 0.25)), 0, 0)) for f in fr],
-        "upperarm_L": [(f, (-0.6 * ph(f), 0, -0.1)) for f in fr],
-        "upperarm_R": [(f, (0.6 * ph(f), 0, 0.1)) for f in fr],
+        # a moderate stride (±0.35 rad; ±0.55 spread the feet 1.5 m apart, like doing the splits)
+        "thigh_L": [(f, (0.35 * ph(f), 0, 0)) for f in fr],
+        "thigh_R": [(f, (-0.35 * ph(f), 0, 0)) for f in fr],
+        # the knees stay soft on the ground (0.1) and flex backwards while the leg swings forward
+        # (a negative thigh angle is forward), so the foot trails behind the knee
+        "shin_L": [(f, (0.1 + 0.7 * max(0.0, -ph(f, 0.25)), 0, 0)) for f in fr],
+        "shin_R": [(f, (0.1 + 0.7 * max(0.0, ph(f, 0.25)), 0, 0)) for f in fr],
+        "upperarm_L": [(f, (-0.45 * ph(f), 0, -0.1)) for f in fr],
+        "upperarm_R": [(f, (0.45 * ph(f), 0, 0.1)) for f in fr],
         "pelvis": [(f, (0, 0, 0), (0, 0.04 * abs(ph(f)), 0)) for f in fr],
     }))
     # attack 0.9 s: wind-up, overhead swing of the right arm, step forward = root motion 0.6 m
@@ -271,12 +274,21 @@ def knight():
     arm = rig()
     bm = bmesh.new()
     seg = 32
-    parts = []  # (first vertex, end vertex, bone)
+    # rigid skin written into the bmesh deform layer while each part is built: the mesh may order its
+    # vertices differently from creation order, so index ranges put parts on the wrong bones (an arm
+    # weighted to a foot stretched into a long plank when the run clip played)
+    deform = bm.verts.layers.deform.verify()
+    groups = []
 
     def part(bone, build):
-        a = len(bm.verts)
+        before = set(bm.verts)
         build()
-        parts.append((a, len(bm.verts), bone))
+        if bone not in groups:
+            groups.append(bone)
+        gi = groups.index(bone)
+        for v in bm.verts:
+            if v not in before:
+                v[deform][gi] = 1.0
 
     part("pelvis", lambda: add_cylinder(bm, 0, 0, 0.26, 0.85, 1.05, seg, 0))
     part("pelvis", lambda: add_cylinder(bm, 0, 0, 0.29, 0.98, 1.06, seg, 1))  # belt
@@ -298,10 +310,9 @@ def knight():
         part("shin_" + s, lambda x=x: add_cylinder(bm, 0.14 * x, 0, 0.1, 0.1, 0.52, seg, 0))
         part("foot_" + s, lambda x=x: add_box(bm, (0.14 * x - 0.07, -0.2, 0), (0.14 * x + 0.07, 0.07, 0.1), 0))
     lod0 = finish("CH_ak_body_LOD0", bm, [steel, ember], 2.0)
-    # rigid skin: every part follows its bone with weight 1
-    for a, b, bone in parts:
-        vg = lod0.vertex_groups.get(bone) or lod0.vertex_groups.new(name=bone)
-        vg.add(list(range(a, b)), 1.0, "REPLACE")
+    # the vertex groups in the order of the deform layer's indices (every part follows its bone with weight 1)
+    for bone in groups:
+        lod0.vertex_groups.new(name=bone)
     lod0.parent = arm
     lod0.modifiers.new("Armature", "ARMATURE").object = arm
     lods = [lod0]
