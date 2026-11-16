@@ -68,7 +68,8 @@ volume sliders and one mute button.
 - Account: Google sign-in button, or the player's name and avatar with sign-out.
 - Game wikis tab (`/#wiki`): guides and cheat sheets for games we play with friends, e.g. the
   Gray Zone Warfare field guide (ammo penetration by armour class, loot sell prices, vendor
-  reputation), in Czech. Each wiki is one static page under `static/wiki/<id>/`.
+  reputation), in Czech and English, with a link to the Fandom wiki. Each wiki is a static page
+  under `static/wiki/<id>/` (other languages in subfolders).
 
 ## Roadmap (high level)
 
