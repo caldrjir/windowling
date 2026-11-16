@@ -288,7 +288,8 @@
     const t = Math.max(0, Math.min(1, ((ax - sx) * dx + (az - sz) * dz) / l2)); return len(sx + dx * t - ax, sz + dz * t - az) < ar;
   }
   const inCone = (sx, sz, face, w, R, px, pz) => len(px - sx, pz - sz) <= R + PLAYER_R && angDiff(Math.atan2(pz - sz, px - sx), face) <= ((w / 2) * Math.PI) / 180;
-  function bossHurt(s, e, mul, stun) { const b = s.boss; hurtPlayer(s, e, { mul: mul * (b.enrage ? 1.5 : 1), stun }); }
+  // poškození bosse: kladivo a kovadlina fyzické, oheň pecí, dech měchů, hořící zem a pára Quench Slamu ohnivé
+  function bossHurt(s, e, mul, stun, phys) { const b = s.boss; hurtPlayer(s, e, { mul: mul * (b.enrage ? 1.5 : 1), stun, fire: !phys }); }
   function spawnBoss(s) {
     const e = spawn(s, 'bo_kiln', 0, -7); e.r = BOSS.r; e.heavy = true; e.speed = BOSS.speed; e.face = Math.PI / 2;
     s.boss = { id: e.id, phase: 1, t: 0, invuln: 0, enrage: false, ground: BOSS.R, cds: Object.fromEntries(KB.abil.map((a) => [a.n, 2 + s.rnd() * 2])), act: null, breath: null, kilns: BOSS.kilns.map(([x, z]) => ({ x, z, face: Math.atan2(-z, -x), alive: true, q: 0 })), stoke: 0 };
@@ -310,7 +311,7 @@
   }
   function bossResolve(s, e, act) {
     const p = s.player; const a = ABIL[act.n]; const b = s.boss;
-    if (act.n === 'Hammerfall' || act.n === 'Anvil Toss') { if (len(p.x - act.x, p.z - act.z) <= act.r + PLAYER_R) bossHurt(s, e, a.dmg, act.n === 'Hammerfall' ? 0.3 : 0); s.events.push({ t: 'slam', x: act.x, z: act.z, r: act.r, hits: 0 }); s.events.push({ t: 'shake', amp: 0.4 }); }
+    if (act.n === 'Hammerfall' || act.n === 'Anvil Toss') { if (len(p.x - act.x, p.z - act.z) <= act.r + PLAYER_R) bossHurt(s, e, a.dmg, act.n === 'Hammerfall' ? 0.3 : 0, true); s.events.push({ t: 'slam', x: act.x, z: act.z, r: act.r, hits: 0 }); s.events.push({ t: 'shake', amp: 0.4 }); }
     else if (act.n === 'Bellows Breath') { b.breath = { t: 0, face: act.face, tick: 0 }; s.events.push({ t: 'breath', x: e.x, z: e.z, face: act.face, r: 10, w: 60, dur: 2 }); }
     else if (act.n === 'Stoke the Kilns') { for (const k of b.kilns) { if (!k.alive) continue; s.events.push({ t: 'kilnfire', x: k.x, z: k.z, face: k.face, r: 12, w: 90 }); if (inCone(k.x, k.z, k.face, 90, 12, p.x, p.z) && !behindAnvil(k.x, k.z, p.x, p.z)) bossHurt(s, e, a.dmg); } }
     else if (act.n === 'Quench Slam') { const safe = act.safe.some(([x, z]) => len(p.x - x, p.z - z) <= BOSS.safeR); s.events.push({ t: 'quench', safe }); s.events.push({ t: 'shake', amp: 0.6 }); if (!safe) bossHurt(s, e, a.dmg); }
@@ -516,11 +517,12 @@
     // armor a evasion proti levelu útočníka (F.armorDR, F.evadeChance v Bible)
     if (s.rnd() < HS.F.evadeChance(S.eva, L)) { s.events.push({ t: 'evade', x: p.x, z: p.z }); return; }
     const raw = HS.F.enemyDmg(L, e.def.dmgMul * a.mul * (e.elite ? HS.B.eliteDmg : 1)) * (0.9 + s.rnd() * 0.2) * (e.weak > 0 ? 0.85 : 1);
-    let dmg = Math.max(1, Math.round(raw * (1 - HS.F.armorDR(S.armor, L))));
+    // Bible: Armor = fyzická mitigace; ohnivé poškození tlumí jen odolnost ohni (záporná ho zvyšuje)
+    const fire = !!a.fire; let dmg = Math.max(1, Math.round(raw * (fire ? 1 - S.resist.fire.eff / 100 : 1 - HS.F.armorDR(S.armor, L))));
     if (p.barrier > 0) { const ab = Math.min(p.barrier, dmg); p.barrier -= ab; dmg -= ab; s.events.push({ t: 'absorb', amt: Math.round(ab), x: p.x, z: p.z }); if (!dmg) return; }
     s.stats.taken += dmg; if (!p.invuln) p.hp -= dmg;
     if (a.stun) { p.stun = Math.max(p.stun, a.stun); p.act = null; }
-    s.events.push({ t: 'hurt', dmg, x: p.x, z: p.z, by: e.type }); s.events.push({ t: 'shake', amp: a.mul >= 1.5 ? 0.3 : 0.15 });
+    s.events.push({ t: 'hurt', dmg, x: p.x, z: p.z, by: e.type, type: fire ? 'fire' : 'phys' }); s.events.push({ t: 'shake', amp: a.mul >= 1.5 ? 0.3 : 0.15 });
     if (p.hp <= 0 && !p.invuln && s.zone) { const cp = s.checkpoint; p.hp = p.hpMax; p.x = cp.x; p.z = cp.z + 1.5; p.act = null; p.dodge = null; p.stun = 0; p.moveTo = null; p.pick = null; s.deaths++; s.routeI = 0; s.events.push({ t: 'respawn', x: p.x, z: p.z, deaths: s.deaths }); return; }
     if (p.hp <= 0 && !p.invuln) { p.hp = 0; s.over = true; s.events.push({ t: 'over', wave: s.wave, kills: s.kills }); }
   }
@@ -624,7 +626,7 @@
     for (const pr of s.proj) {
       const st = pr.speed * TICK; pr.x += pr.dx * st; pr.z += pr.dz * st; pr.left -= st;
       if (pr.left <= 0 || (s.zone ? !root.HSWorld.walkable(s.zone, pr.x, pr.z, 0, s.zoneKeys) : len(pr.x, pr.z) > (s.arenaR || ARENA)) || s.pillars.some(([x, z, r]) => len(pr.x - x, pr.z - z) < r)) { s.events.push({ t: 'projend', id: pr.id }); continue; }
-      if (p.hp > 0 && len(pr.x - p.x, pr.z - p.z) <= PLAYER_R + 0.15) { const by = s.enemies.find((x) => x.id === pr.by) || { L: s.L, def: { dmgMul: 1 }, weak: 0 }; hurtPlayer(s, by, { mul: pr.mul }); s.events.push({ t: 'projend', id: pr.id, hit: true }); continue; }
+      if (p.hp > 0 && len(pr.x - p.x, pr.z - p.z) <= PLAYER_R + 0.15) { const by = s.enemies.find((x) => x.id === pr.by) || { L: s.L, def: { dmgMul: 1 }, weak: 0 }; hurtPlayer(s, by, { mul: pr.mul, fire: pr.fire }); s.events.push({ t: 'projend', id: pr.id, hit: true }); continue; }
       keep.push(pr);
     }
     s.proj = keep;

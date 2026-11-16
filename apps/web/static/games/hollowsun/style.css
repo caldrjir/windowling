@@ -145,3 +145,4 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #inv .cur { display: flex; gap: 16px; font: 600 13px/1 var(--f-mono); }
 #inv .cur .em { color: #ff8a3a; } #inv .cur .du { color: #cfd6e6; } #inv .cur .su { color: #ffe08a; }
 #inv .forge-tip { border: 1px solid #2a3142; padding: 10px 12px; background: #0a0c11; display: grid; gap: 4px; font-size: 12px; }
+.dmg.hurt.fire { color: #ff8a3a; } /* P1: ohnivé poškození hráče */

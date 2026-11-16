@@ -146,6 +146,9 @@
     };
     S.more = []; if (m.moreDmg) S.more.push(m.moreDmg);
     S.lowHpMore = m.lowHpMore || 0;
+    // odolnosti (Bible): (resAll + res_<typ>) × 100 + postih aktu (Act I: 0), strop resCap (+ resMax) a resHardCap
+    S.resMax = B.resCap + (m.resMax || 0) * 100; S.resist = {};
+    for (const e of ['fire', 'cold', 'light', 'nec', 'rad']) { const raw = ((m.resAll || 0) + (m['res_' + e] || 0)) * 100 + (B.actResPenalty[0] || 0); S.resist[e] = { raw: Math.round(raw), eff: Math.round(Math.min(S.resMax, Math.min(B.resHardCap, raw))) }; }
     S.dr = F.armorDR(S.armor, L); S.evade = F.evadeChance(S.eva, L);
     return { L, A, S, m, items, al, weapon: weaponOf(items) };
   }

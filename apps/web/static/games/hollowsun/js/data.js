@@ -1449,7 +1449,8 @@ window.HS_DATA = {
     "range": 2.5,
     "shape": "circle",
     "cd": 99,
-    "suicide": true
+    "suicide": true,
+    "fire": true
    }
   ],
   "en_hound": [

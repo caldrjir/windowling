@@ -3907,6 +3907,52 @@
 			[60, 57, 600],
 			[70, 62, 700]
 		],
+		"resist": [
+			{
+				"level": 1,
+				"extra": {},
+				"resist": {
+					"fire": { "raw": 0, "eff": 0 },
+					"cold": { "raw": 0, "eff": 0 },
+					"light": { "raw": 0, "eff": 0 },
+					"nec": { "raw": 0, "eff": 0 },
+					"rad": { "raw": 0, "eff": 0 }
+				}
+			},
+			{
+				"level": 6,
+				"extra": { "res_fire": 0.1 },
+				"resist": {
+					"fire": { "raw": 10, "eff": 10 },
+					"cold": { "raw": 0, "eff": 0 },
+					"light": { "raw": 0, "eff": 0 },
+					"nec": { "raw": 0, "eff": 0 },
+					"rad": { "raw": 0, "eff": 0 }
+				}
+			},
+			{
+				"level": 12,
+				"extra": { "res_fire": 0.6, "resAll": 0.3 },
+				"resist": {
+					"fire": { "raw": 90, "eff": 75 },
+					"cold": { "raw": 30, "eff": 30 },
+					"light": { "raw": 30, "eff": 30 },
+					"nec": { "raw": 30, "eff": 30 },
+					"rad": { "raw": 30, "eff": 30 }
+				}
+			},
+			{
+				"level": 12,
+				"extra": { "res_cold": -0.2 },
+				"resist": {
+					"fire": { "raw": 0, "eff": 0 },
+					"cold": { "raw": -20, "eff": -20 },
+					"light": { "raw": 0, "eff": 0 },
+					"nec": { "raw": 0, "eff": 0 },
+					"rad": { "raw": 0, "eff": 0 }
+				}
+			}
+		],
 		"craftCost": [
 			{
 				"ilvl": 1,

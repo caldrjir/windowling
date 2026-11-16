@@ -1000,3 +1000,71 @@ describe('HOLLOW SUN forge (Brannoc) = Game Design Bible', () => {
 		expect(s.cur.ember).toBeGreaterThanOrEqual(1);
 	});
 });
+
+describe('HOLLOW SUN damage types and resistances = Game Design Bible', () => {
+	const { HS, HSim } = loadAll();
+	type Res = Record<string, { raw: number; eff: number }>;
+	const item = { base: 'wb_mace', tier: 0, affixes: [], rar: 'common' };
+
+	it('player resistances follow calcChar: (resAll + res) x 100, capped', () => {
+		for (const row of fixtures.progress.resist) {
+			const ch = HS.calcChar(row.level, [{ ...item }], {}, row.extra as Record<string, number>);
+			expect((ch.S as unknown as { resist: Res }).resist).toEqual(row.resist);
+		}
+	});
+
+	it('fire hits skip armor and are cut by fire resistance; physical hits by armor', () => {
+		// average of 40 arrows (damage rolls 0.9-1.1) at a player without evasion
+		const avg = (plate: boolean, fire: boolean) => {
+			// in Cinderhold: no waves of enemies that would add their own (physical) hits
+			const s = HSim.create({
+				mode: 'act1',
+				zone: 'a1_cinderhold',
+				seed: 'dmg',
+				char: { level: 10, xp: 0, alloc: {}, passives: plate ? { ak_p3: 5 } : {} },
+			}) as SimState & {
+				events: { t: string; dmg?: number; type?: string }[];
+				proj: unknown[];
+				ch: { S: { eva: number; armor: number; resist: Record<string, { eff: number }> } };
+			};
+			s.enemies.length = 0;
+			s.ch.S.eva = 0;
+			let sum = 0;
+			let n = 0;
+			let type = '';
+			for (let k = 0; k < 40; k++) {
+				s.player.hp = s.player.hpMax;
+				s.proj.push({
+					id: 900 + k,
+					by: -1,
+					x: s.player.x,
+					z: s.player.z - 1,
+					dx: 0,
+					dz: 1,
+					speed: 18,
+					left: 5,
+					mul: 1,
+					fire,
+				});
+				for (let i = 0; i < 10; i++) {
+					HSim.step(s, {});
+					for (const e of s.events)
+						if (e.t === 'hurt') {
+							sum += e.dmg ?? 0;
+							n++;
+							type = e.type ?? '';
+						}
+				}
+			}
+			return { dmg: sum / n, type, res: s.ch.S.resist.fire?.eff ?? 0, armor: s.ch.S.armor };
+		};
+		const bare = avg(false, true);
+		const plated = avg(true, true);
+		const phys = avg(false, false);
+		expect(bare.type).toBe('fire');
+		expect(phys.type).toBe('phys');
+		expect(plated.res).toBe(10); // Smoldering Plate 5/5: +2 % fire resistance per rank
+		expect(plated.dmg / bare.dmg).toBeCloseTo(0.9, 1);
+		expect(phys.dmg).toBeLessThan(bare.dmg); // armor works on physical hits only
+	});
+});

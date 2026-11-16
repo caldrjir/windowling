@@ -407,9 +407,17 @@ Gold and passive skills (P1):
 - The Ash Knight's six class passives (G.SKILLS, `k: 'passive'`) take points from D04
   (`F.passivePoints`, one per level plus quest points ≈ L / 6), each up to its max rank and from its
   level. Their stats go into `calcChar` as modifiers; Kindling Fury adds Cinders on every hit and
-  Unquenched adds more damage under 35 % HP. Fire resistance from Smoldering Plate has no effect yet
-  (enemy damage has no type). Respec costs `F.respecPoint` (D13: free up to L12). The character
+  Unquenched adds more damage under 35 % HP. Respec costs `F.respecPoint` (D13: free up to L12). The character
   save keeps `passives`, cleaned to the points of its level.
+- Damage types (P1): the core computes the player's resistances like the Bible's calcChar –
+  (resAll + res_<type>) × 100 plus the act penalty (none in Act I), capped at 75 % (+ max res) and
+  the hard cap 90 % – and shows fire resistance in the inventory. Enemy hits are physical unless the
+  ability is a fire one: the Ember Wisp's explosion, the Bowman's fire arrow, the Acolyte's fireball
+  and the Kiln Warden's kiln fire, Bellows Breath, burning ground and Quench Slam steam (Hammerfall
+  and Anvil Toss stay physical). Following the Bible, armor mitigates physical damage only; fire is
+  cut by fire resistance alone (negative resistance raises it). Fire hits on the player show in orange.
+  The playthrough barely moved (45–47 minutes, similar deaths), since armor only takes 14–20 % in
+  Act I.
 - Forge (P1): talking to Brannoc in Cinderhold opens her forge with the Bible's smith operations
   from G.CRAFT and their prices from G.CRAFT_COST – Salvage (Common 0–1 / Magic 1–2 Ember Shard, Rare
   2–4 Hollow Dust, Unique 10 Dust + 20 % Sunmote), Reforge Magic, Imbue (Magic with 2 affixes →
