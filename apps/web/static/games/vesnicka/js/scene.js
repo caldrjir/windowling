@@ -1014,6 +1014,26 @@ const Scene = (() => {
       line(c, -8, -36, -12, -24, '#3f8a5a', 4);
       ell(c, -13, -21, 7, 4, '#a8784a', OL); for (let i = 0; i < 3; i++) circ(c, -17 + i * 4, -24, 2.2, '#e3a75a', OL);
     },
+    // Děd Vševěd: stařeček se zlatými vlasy a vousem, s holí a zářící knihou moudrosti.
+    vseved(c, age) {
+      const sway = Math.sin(age * 1.6) * 1.5, glow = 0.6 + 0.4 * Math.sin(age * 4);
+      line(c, 15, 2, 13 + sway, -58, '#7a5a3c', 3); circ(c, 13 + sway, -60, 3, '#a8784a', OL);
+      poly(c, [-14, 0, 14, 0, 10, -40, -10, -40], '#4a3f8a', OL);
+      for (const [x, y] of [[-6, -10], [5, -22], [-3, -30], [7, -6]]) circ(c, x, y, 1.3, '#ffe25a');
+      line(c, -9, -36, -14, -20, '#4a3f8a', 4.5); line(c, 9, -36, 13, -22, '#4a3f8a', 4.5);
+      // kniha v rukou září
+      const g = c.createRadialGradient(-1, -22, 1, -1, -22, 16);
+      g.addColorStop(0, `rgba(255,236,140,${0.75 * glow})`); g.addColorStop(1, 'rgba(255,236,140,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(-1, -22, 16, 0, TAU); c.fill();
+      poly(c, [-10, -26, -1, -23, 8, -26, 8, -17, -1, -14, -10, -17], '#f4ecd6', OL, 1); line(c, -1, -23, -1, -14, '#c9a86a', 1);
+      // zlaté vlasy a vous
+      poly(c, [-10, -50, 10, -50, 12, -36, 6, -40, 0, -26, -6, -40, -12, -36], '#f2c14e', OL, 1);
+      circ(c, 0, -50, 8.5, '#f0d9b8', OL);
+      c.beginPath(); c.arc(0, -52, 9, Math.PI * 1.05, Math.PI * 1.95); c.fillStyle = '#f2c14e'; c.fill();
+      poly(c, [-6, -47, 6, -47, 4, -38, 0, -33, -4, -38], '#ffd75a', OL, 1);
+      circ(c, -3, -51, 1.2, '#2a2a2a'); circ(c, 3, -51, 1.2, '#2a2a2a');
+      for (let i = 0; i < 3; i++) { const a2 = age * 2.2 + i * 2.1; circ(c, Math.cos(a2) * 18, -54 + Math.sin(a2) * 8, 1.4, `rgba(255,226,90,${glow})`); }
+    },
     hospodaricek(c, age) {
       const bob = Math.abs(Math.sin(age * 3)) * 3;
       c.translate(0, -bob);
@@ -1252,6 +1272,7 @@ const Scene = (() => {
       else if (next) { items.push([y, () => plot(c, k, x, y)]); next = false; }
     }
     for (const v of villagers) items.push([v.y, () => person(c, v)]);
+    for (const v of guildFolk) items.push([v.y, () => guildPerson(c, v)]);
     // elektrické sloupy stojí za cestou mezi staveními a kreslí se podle hloubky (před domy za nimi)
     if (S && S.upg.elektrina) POLES.forEach((x, i) => items.push([roadY(x) - 17, () => pole(c, x, POLES[i + 1])]));
     items.sort((a, b) => a[0] - b[0]);
@@ -1259,6 +1280,7 @@ const Scene = (() => {
     drawParts(c);
     updParts(frameDt);
     updVillagers(frameDt, tot);
+    updGuild(frameDt);
     // noc a soumrak
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (night > 0.02) { c.fillStyle = `rgba(14,22,58,${night * 0.58})`; c.fillRect(0, 0, vw, vh); }
@@ -1331,6 +1353,48 @@ const Scene = (() => {
       if (Math.random() < dt * 0.02) v.dir *= -1;
       v.y = roadY(v.x) + v.off;
     }
+  }
+  // Lidé z cechu: s každým stupněm přibudou ve vsi učni s koštětem, tovaryši s rancem, mistři, cechmistři,
+  // korouhevníci, konšelé, heroldi s listinou a nakonec král. Čím víc kusů, tím víc jich chodí (podle řádů).
+  const guildFolk = [];
+  let guildKey = '';
+  function updGuild(dt) {
+    const want = [];
+    if (S && S.cech && Econ.cechOpen(S)) CECH.forEach((tr, j) => { const a = S.cech.a[j]; if (a >= 1) want.push(Math.min(j ? 3 : 5, 1 + Math.floor(Math.log10(a) / 4))); else want.push(0); });
+    const key = want.join(',');
+    if (key !== guildKey) {
+      guildKey = key;
+      const r = Math.random;
+      want.forEach((n, j) => {
+        let have = guildFolk.filter(v => v.kind === j).length;
+        while (have < n) { const x = 20 + r() * (W - 40); guildFolk.push({ kind: j, x, dir: r() < 0.5 ? -1 : 1, v: j === 7 ? 9 : 12 + r() * 10, off: (r() - 0.5) * 14, y: 0, ph: r() * 6, pause: 0, col: ['#8a5a34', '#3a4a6a', '#6a3a2a', '#2a2a32', '#b8452a', '#3e6f4a', '#5a3a8a', '#b82a2a'][j] }); have++; }
+        while (have > n) { guildFolk.splice(guildFolk.findIndex(v => v.kind === j), 1); have--; }
+      });
+    }
+    for (const v of guildFolk) {
+      if (v.pause > 0) v.pause -= dt; else { v.x += v.dir * v.v * dt; if (Math.random() < dt * 0.05) v.pause = 1 + Math.random() * 3; }
+      if (v.x < 10) v.dir = 1; if (v.x > W - 10) v.dir = -1;
+      if (Math.random() < dt * 0.02) v.dir *= -1;
+      v.y = roadY(v.x) + v.off;
+    }
+  }
+  function guildPerson(c, v) {
+    const step = v.pause > 0 ? 0 : Math.sin(t * 8 + v.ph), x = v.x, y = v.y, d = v.dir, j = v.kind;
+    line(c, x - 1.5, y - 7, x - 1.5 - step * 2, y, '#2a2018', 1.8); line(c, x + 1.5, y - 7, x + 1.5 + step * 2, y, '#2a2018', 1.8);
+    if (j === 7) poly(c, [x - 6 * d, y - 2, x + 2 * d, y - 2, x + 3 * d, y - 16, x - 3 * d, y - 17], '#b82a2a', OL, 1); // královský plášť
+    poly(c, [x - 3.5, y - 7, x + 3.5, y - 7, x + 3.5, y - 16, x - 3.5, y - 16], v.col, OL, 1);
+    if (j === 0 || j === 2) rect(c, x - 2.6, y - 13, 5.2, 7, '#c9a46a'); // zástěra
+    if (j === 5) { c.beginPath(); c.arc(x, y - 15, 2.6, 0.2, Math.PI - 0.2); c.strokeStyle = '#f2c14e'; c.lineWidth = 1.2; c.stroke(); } // řetěz konšela
+    circ(c, x, y - 19, 3.4, '#f0d0a8', OL);
+    if (j === 0) { line(c, x + 3 * d, y - 4, x + 6 * d, y - 22, '#8a6a3a', 1.3); poly(c, [x + 2 * d, y - 4, x + 5 * d, y - 4, x + 4 * d, y, x + 1 * d, y], '#d8b25a'); } // koště
+    else if (j === 1) { line(c, x - 2 * d, y - 16, x - 9 * d, y - 24, '#7a5a3c', 1.3); circ(c, x - 9 * d, y - 25, 3, '#a8784a', OL); ell(c, x, y - 21.5, 5.5, 1.4, '#2a2a2a'); rect(c, x - 3, y - 24.5, 6, 3, '#2a2a2a'); } // ranec a širák
+    else if (j === 2) { c.beginPath(); c.arc(x, y - 21, 3.6, Math.PI, 0); c.fillStyle = '#6a3a2a'; c.fill(); line(c, x + 3.5 * d, y - 12, x + 8 * d, y - 9, '#8a8a92', 2); } // čepice a pila
+    else if (j === 3) { rect(c, x - 3, y - 29, 6, 7, '#1a1a22', OL); ell(c, x, y - 22, 5, 1.3, '#1a1a22'); line(c, x + 4 * d, y, x + 4 * d, y - 18, '#5a3a22', 1.3); circ(c, x + 4 * d, y - 18.5, 1.4, '#f2c14e'); } // cylindr a hůl
+    else if (j === 4) { line(c, x + 4 * d, y, x + 4 * d, y - 36, '#5a3a22', 1.4); poly(c, [x + 4 * d, y - 36, x + 15 * d, y - 33, x + 4 * d, y - 28], '#d7141a', OL, 1); poly(c, [x + 4 * d, y - 31, x + 13 * d, y - 30, x + 4 * d, y - 27], '#ffffff'); } // korouhev
+    else if (j === 5) { ell(c, x, y - 21.5, 4.6, 1.6, '#3e6f4a'); }
+    else if (j === 6) { rect(c, x + 3 * d - (d < 0 ? 5 : 0), y - 15, 5, 7, '#f4ecd6', OL); line(c, x + 5.5 * d, y - 8, x + 5.5 * d, y - 6, '#c43a3a', 1.6); poly(c, [x - 4, y - 21, x + 4, y - 21, x + 2, y - 26, x - 2, y - 26], '#5a3a8a'); } // listina s pečetí, baret
+    else if (j === 7) { poly(c, [x - 3.6, y - 21, x + 3.6, y - 21, x + 3.6, y - 25, x + 2, y - 23.5, x, y - 26, x - 2, y - 23.5, x - 3.6, y - 25], '#f2c14e', '#a8771e', 0.8); } // koruna
+    if (snow) ell(c, x, y - 1, 1, 0.5, '#fff');
   }
   function person(c, v) {
     const step = v.pause > 0 ? 0 : Math.sin(t * 9 + v.ph), x = v.x, y = v.y;

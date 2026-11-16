@@ -74,6 +74,30 @@ const B_INDEX = Object.fromEntries(BUILDINGS.map((b, i) => [b.id, i]));
 // Mistrovství: při tolika kusech jednoho řemesla se jeho výnos zdvojnásobí.
 const MILESTONES = [25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000];
 
+// ── Cech: generátor generuje generátor ──
+// Každý stupeň vyučí ten pod sebou (CECH_RATE kusů za sekundu za kus), učni pracují v řemeslech
+// a zvedají výnos celé vesnice: každý desetinásobek učňů přidá CECH_PCT (násobek = (1 + pct) ^ log10(1 + učni)).
+// Učni tak můžou růst do obřích čísel (mnohočlen v čase) a výnos přitom roste rozumně.
+// cost: první kus (cena roste s každým koupeným, vyučené kusy ji nezvedají), leg: kolik pověstí je potřeba.
+const CECH = [
+  { id: 'ucen', icon: '🧹', cost: 1e4, grow: 1.3, leg: 0, act: L('Přijmout', 'Recruit'), name: L('Učeň', 'Apprentice'), many: L('Učni', 'Apprentices'), verb: '', desc: L('Zametá dílnu, nosí vodu a kouká mistrům pod ruce. Pracuje ve všech řemeslech.', 'Sweeps the workshop, fetches water and watches the masters. Works in every trade.') },
+  { id: 'tovarys', icon: '🎒', cost: 4e5, grow: 1.45, leg: 0, act: L('Přijmout', 'Recruit'), name: L('Tovaryš', 'Journeyman'), many: L('Tovaryši', 'Journeymen'), verb: L('vyučí učně', 'trains apprentices'), desc: L('Vrátil se z vandru s rancem zkušeností a hned učí další.', 'Back from his wander years with a bundle of experience, teaching the next ones.') },
+  { id: 'mistr', icon: '🪚', cost: 3e7, grow: 1.6, leg: 0, act: L('Přijmout', 'Recruit'), name: L('Mistr', 'Master'), many: L('Mistři', 'Masters'), verb: L('vychová tovaryše', 'raises journeymen'), desc: L('Složil mistrovský kus a má vlastní dílnu.', 'Made his masterpiece and runs his own workshop.') },
+  { id: 'cechmistr', icon: '🎩', cost: 4e9, grow: 1.75, leg: 5, act: L('Zvolit', 'Elect'), name: L('Cechmistr', 'Guild master'), many: L('Cechmistři', 'Guild masters'), verb: L('vychová mistry', 'raises masters'), desc: L('Hlídá cechovní truhlici a zkouší mladé mistry.', 'Guards the guild chest and examines young masters.') },
+  { id: 'cech', icon: '🚩', cost: 1e12, grow: 1.9, leg: 50, act: L('Založit', 'Found'), name: L('Cech', 'Guild'), many: L('Cechy', 'Guilds'), verb: L('volí cechmistry', 'elects guild masters'), desc: L('Bratrstvo jednoho řemesla s korouhví a vlastním oltářem.', 'A brotherhood of one trade, with its banner and its own altar.') },
+  { id: 'dum', icon: '🏛️', cost: 5e14, grow: 2.05, leg: 1000, act: L('Postavit', 'Build'), name: L('Cechovní dům', 'Guild hall'), many: L('Cechovní domy', 'Guild halls'), verb: L('zakládá cechy', 'founds guilds'), desc: L('Pod jednou střechou se schází všechny cechy kraje.', 'All the guilds of the land meet under one roof.') },
+  { id: 'listina', icon: '🖋️', cost: 5e17, grow: 2.2, leg: 20000, act: L('Vydat', 'Issue'), name: L('Královská listina', 'Royal charter'), many: L('Královské listiny', 'Royal charters'), verb: L('povoluje cechovní domy', 'permits guild halls'), desc: L('Pergamen s visací pečetí: privilegia pro celé město.', 'A parchment with a hanging seal: privileges for a whole town.') },
+  { id: 'kral', icon: '👑', cost: 1e21, grow: 2.35, leg: 300000, act: L('Korunovat', 'Crown'), name: L('Král', 'King'), many: L('Králové', 'Kings'), verb: L('vydává královské listiny', 'issues royal charters'), desc: L('Pohádkový král, který má řemesla rád.', 'A fairy-tale king who loves the crafts.') },
+];
+const CECH_RATE = 0.1; // každý vyučí jednoho za 10 sekund
+const CECH_PCT = 0.06; // každý desetinásobek učňů: výnos +6 % (vylepšení a kronika přidají)
+const CECH_SEAL_U = 1.05, CECH_UPG_U = 1.1; // pečeť a vylepšení učňů: jejich práce +5 % a +10 %
+const CECH_WINTER = 2; // zima je sezóna cechu
+const CECH_OPEN = 'kovarna'; // kovář založí cech
+const CECH_GIFT = [5, 1]; // a přivede pět učňů a prvního tovaryše (zdarma)
+// Cechovní pečeti: při tolika koupených kusech jednoho stupně vyučí dvakrát víc (učni pracují o 5 % lépe).
+const CECH_SEALS = [10, 25, 50, 75, 100, 150, 200];
+
 // ── Vylepšení ──
 // Řemesla: každé má 8 stupňů (×2), dostupné od daného počtu kusů.
 const TIER_REQ = [1, 10, 25, 50, 100, 150, 200, 300];
@@ -127,6 +151,24 @@ const MAGIC_UPGRADES = [
   ['vecernice', 'dur', 0.3, 5e17, { caught: 120 }, L('Večernice', 'Evening star'), L('Kouzla bytostí trvají o 30 % déle', 'Creature spells last 30% longer')],
 ];
 MAGIC_UPGRADES.forEach(([id, kind, v, cost, req, name, effect]) => UPGRADES.push({ id, kind, v, cost, req, name, sub: L('Kouzla', 'Magic'), effect }));
+// Cech: každý stupeň má tři vylepšení (×2), dostupná od daného počtu koupených kusů.
+const CECH_TIER_REQ = [1, 10, 30];
+const CECH_TIER_NAMES = [L('Výuční řád', 'Rules of apprenticeship'), L('Vandrovní knížka', 'Wanderer’s book'), L('Cechovní privilegium', 'Guild privilege')];
+CECH.forEach((t, ci) => CECH_TIER_REQ.forEach((req, ti) => UPGRADES.push({
+  id: `c${t.id}${ti + 1}`, kind: 'c', c: ci, cost: t.cost * Math.pow(t.grow, req) * 12, req: { cb: ci, n: req },
+  name: CECH_TIER_NAMES[ti], sub: t.name, effect: ci ? L(`${t.name}: ${t.verb} ×2`, `${t.name}: ${t.verb} ×2`) : L('Učni pracují o 10 % lépe', 'Apprentices work 10% better'),
+})));
+// Cechovní řád: každý desetinásobek učňů přidá o 0,5 % víc.
+const CECH_BASE_UPGRADES = [
+  ['cr_rad', 1e3, 2e7, L('Cechovní řád', 'Guild ordinance'), L('Psaná pravidla, kdo smí učit a kdo se učit.', 'Written rules on who may teach and who may learn.')],
+  ['cr_zkouska', 1e5, 5e10, L('Mistrovská zkouška', 'Master’s examination'), L('Bez mistrovského kusu nikdo mistrem nebude.', 'Nobody becomes a master without a masterpiece.')],
+  ['cr_pokladnice', 1e8, 1e15, L('Cechovní pokladnice', 'Guild treasury'), L('Truhlice se třemi zámky na horší časy.', 'A chest with three locks for harder times.')],
+  ['cr_korouhev', 1e12, 1e21, L('Cechovní korouhev', 'Guild banner'), L('Na každé pouti jde cech pod svou korouhví.', 'At every fair the guild marches under its banner.')],
+  ['cr_zemsky', 1e18, 1e28, L('Zemský cech', 'Guild of the land'), L('Cechy celé země pod jednou pečetí.', 'The guilds of the whole land under one seal.')],
+];
+CECH_BASE_UPGRADES.forEach(([id, n, cost, name, desc]) => UPGRADES.push({
+  id, kind: 'cb', v: 0.005, cost, req: { ucni: n }, name, sub: L('Cech', 'Guild'), desc, effect: L('Každý desetinásobek učňů +0,5 % navíc', 'Every tenfold of apprentices +0.5% more'),
+}));
 const U_INDEX = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
 U_INDEX.kaplicka.effect += L(' · roste s mistrovstvími', ' · grows with masteries');
 
@@ -138,6 +180,7 @@ const CREATURES = [
   { id: 'cert', w: 15, life: 11, dur: 20, mul: 25, name: L('Čert', 'Devil'), text: L('dal ti čertovskou sílu: klepnutí ×25', 'gave you devilish strength: taps ×25') },
   { id: 'krakonos', w: 13, life: 14, dur: 30, name: L('Krakonoš', 'Krakonoš'), text: L('je štědrý: všechno o polovinu levnější', 'is generous: everything half price') },
   { id: 'hospodaricek', w: 4, life: 10, name: L('Hospodáříček', 'House sprite'), text: L('ti přes noc postavil budovy zdarma', 'built you free buildings overnight') },
+  { id: 'vseved', w: 9, life: 13, dur: 30, mul: 10, name: L('Děd Vševěd', 'Grandpa Know-all'), text: L('prozradil cechu moudrost svých zlatých vlasů: cech vyučí ×10', 'shared the wisdom of his golden hairs with the guild: it trains ×10') },
 ];
 const C_INDEX = Object.fromEntries(CREATURES.map(c => [c.id, c]));
 const CREATURE_GAP = [70, 160]; // sekundy mezi bytostmi
@@ -153,14 +196,26 @@ const LEGEND_BONUS = 0.05; // každá pověst +5 % výnosu
 const PERKS = [
   { n: 1, id: 'offline', v: 4, name: L('Rodová pověst', 'Family legend'), desc: L('Vesnice vydělává bez tebe o 4 hodiny déle.', 'The village earns 4 hours longer without you.') },
   { n: 5, id: 'start', v: 1, name: L('Dědečkův pluh', 'Grandpa’s plough'), desc: L('Každé pokolení začíná s 10 políčky.', 'Every generation starts with 10 fields.') },
+  { n: 8, id: 'cstart', v: 1, name: L('Cechovní truhlice', 'The guild chest'), desc: L('Každé pokolení začíná s 10 učni a 3 tovaryši (zdarma, cenu nezvednou).', 'Every generation starts with 10 apprentices and 3 journeymen (free, they do not raise prices).') },
   { n: 15, id: 'hands', name: L('Babiččina truhla', 'Grandma’s chest'), desc: L('Vylepšení rukou zůstávají i dalším pokolením.', 'Hand upgrades stay for the next generations.') },
   { n: 40, id: 'freq', v: 0.25, name: L('Ranní rosa', 'Morning dew'), desc: L('Bytosti chodí o 25 % častěji.', 'Creatures come 25% more often.') },
+  { n: 70, id: 'cwinter', v: 1, name: L('Dlouhé zimní večery', 'Long winter evenings'), desc: L('V zimě cech vyučí ×3 místo ×2.', 'In winter the guild trains ×3 instead of ×2.') },
   { n: 100, id: 'start', v: 2, name: L('Selská hlava', 'Farmer’s wit'), desc: L('Každé pokolení začíná s 10 kusy prvních čtyř řemesel.', 'Every generation starts with 10 of each of the first four trades.') },
   { n: 250, id: 'season', v: 1, name: L('Moudrost předků', 'Wisdom of the elders'), desc: L('Sezónní řemesla vydělávají o jeden násobek víc.', 'In-season trades earn one more multiple.') },
   { n: 600, id: 'offline', v: 12, name: L('Strážce vsi', 'Village guardian'), desc: L('Vesnice vydělává bez tebe o dalších 12 hodin déle.', 'The village earns another 12 hours longer without you.') },
   { n: 1500, id: 'cheap', v: 0.1, name: L('Krakonošův přítel', 'Friend of Krakonoš'), desc: L('Všechny budovy jsou o 10 % levnější.', 'All buildings are 10% cheaper.') },
+  { n: 2500, id: 'cstart', v: 2, name: L('Rodinná dílna', 'The family workshop'), desc: L('Každé pokolení začíná s 10 kusy prvních čtyř stupňů cechu.', 'Every generation starts with 10 of each of the first four guild ranks.') },
+  { n: 3000, id: 'cech', v: 2, name: L('Cechovní tradice', 'Guild tradition'), desc: L('Všechny stupně cechu vyučí dvakrát víc.', 'Every guild rank trains twice as much.') },
   { n: 4000, id: 'auto', v: 3, name: L('Hospodáříček na stálo', 'A sprite for good'), desc: L('Hospodáříček za tebe klepe třikrát za sekundu.', 'The house sprite taps for you three times a second.') },
   { n: 10000, id: 'milestone', v: 3, name: L('Zlatý věk', 'Golden age'), desc: L('Každé mistrovství ztrojnásobí výnos místo zdvojnásobení.', 'Every mastery triples output instead of doubling it.') },
+  { n: 30000, id: 'cbase', v: 0.01, name: L('Slavný cech', 'A famous guild'), desc: L('Každý desetinásobek učňů zvedne výnos o 1 % víc.', 'Every tenfold of apprentices lifts income by 1% more.') },
+  { n: 100000, id: 'cech', v: 4, name: L('Pohádkový cech', 'A fairy-tale guild'), desc: L('Všechny stupně cechu vyučí čtyřikrát víc místo dvakrát.', 'Every guild rank trains four times as much instead of twice.') },
+  { n: 400000, id: 'cbase', v: 0.01, name: L('Cech všech cechů', 'Guild of all guilds'), desc: L('Každý desetinásobek učňů zvedne výnos o 1 % víc.', 'Every tenfold of apprentices lifts income by 1% more.') },
+  { n: 1500000, id: 'golden', v: 10, name: L('Vesnice z pohádky', 'A village from a fairy tale'), desc: L('Všechny výnosy ×10.', 'All income ×10.') },
+  { n: 1e7, id: 'cbase', v: 0.01, name: L('Cech na věky', 'A guild for the ages'), desc: L('Každý desetinásobek učňů zvedne výnos o 1 % víc.', 'Every tenfold of apprentices lifts income by 1% more.') },
+  { n: 5e7, id: 'cwinter', v: 1, name: L('Zimní cechovní slavnosti', 'Winter guild feasts'), desc: L('V zimě cech vyučí o další násobek víc.', 'In winter the guild trains one more multiple.') },
+  { n: 2e8, id: 'golden', v: 100, name: L('Zlatá stověžatá', 'The golden city of a hundred spires'), desc: L('Všechny výnosy ×100 místo ×10.', 'All income ×100 instead of ×10.') },
+  { n: 1e9, id: 'cbase', v: 0.01, name: L('Pohádka o cechu', 'The tale of the guild'), desc: L('Každý desetinásobek učňů zvedne výnos o 1 % víc.', 'Every tenfold of apprentices lifts income by 1% more.') },
 ];
 const OFFLINE_BASE = 8; // hodin
 const STEWARD_COST = 3; // pověsti za šafáře
@@ -185,7 +240,7 @@ const ach = (id, name, desc, test, hidden) => ACHIEVEMENTS.push({ id, name, desc
 [[1, L('První brázda', 'First furrow')], [50, L('Dvůr', 'Farmyard')], [150, L('Osada', 'Hamlet')], [400, L('Ves', 'Village')], [800, L('Městys', 'Market town')], [1500, L('Město', 'Town')], [3000, L('Královské město', 'Royal town')]]
   .forEach(([n, name]) => ach('total' + n, name, n === 1 ? L('Postav první budovu', 'Build your first building') : L(`Měj ${n} budov`, `Own ${n} buildings`), S => Econ.total(S) >= n));
 [[1e3, L('Plný měšec', 'Full purse')], [1e6, L('Milionář', 'Millionaire')], [1e9, L('Boháč', 'Rich man')], [1e12, L('Pan statkář', 'Landowner')], [1e15, L('Kupec', 'Merchant prince')], [1e18, L('Bankéř', 'Banker')],
-  [1e21, L('Hrabě', 'Count')], [1e24, L('Kníže', 'Prince')], [1e27, L('Král', 'King')], [1e30, L('Císař', 'Emperor')], [1e36, L('Pohádkové bohatství', 'Fairy-tale riches')], [1e45, L('Za devatero horami', 'Beyond nine mountains')]]
+  [1e21, L('Hrabě', 'Count')], [1e24, L('Kníže', 'Prince')], [1e27, L('Král', 'King')], [1e30, L('Císař', 'Emperor')], [1e36, L('Pohádkové bohatství', 'Fairy-tale riches')], [1e45, L('Za devatero horami', 'Beyond nine mountains')], [1e60, L('Za devatero řekami', 'Beyond nine rivers')], [1e80, L('Pohádka bez konce', 'A tale without end')]]
   .forEach(([n, name]) => ach('earn' + n.toExponential(0), name, L(`Vydělej celkem ${fmt(n)} grošů`, `Earn ${fmt(n)} groschen in total`), S => S.earnedAll >= n));
 [[1, L('Kohoutí kokrhání', 'Cock-a-doodle')], [100, L('Ranní rozcvička', 'Morning exercise')], [1000, L('Pilná ručka', 'Busy hand')], [10000, L('Neúnavný', 'Tireless')], [50000, L('Klepací šampion', 'Tapping champion')]]
   .forEach(([n, name]) => ach('tap' + n, name, L(`Klepni ${n}× do vesnice`, `Tap the village ${n} times`), S => S.taps >= n));
@@ -206,6 +261,10 @@ ach('night', L('Noční sova', 'Night owl'), L('Hraj mezi půlnocí a čtvrtou r
 ach('away8', L('Vesnice nespí', 'The village never sleeps'), L('Vrať se po osmi hodinách', 'Come back after eight hours'), S => S.stats.awayMax >= 8 * 3600);
 ach('daily', L('Den jako malovaný', 'A perfect day'), L('Splň všechny úkoly dne', 'Complete all daily tasks'), S => S.stats.dailyAll > 0);
 ach('daily7', L('Týden na statku', 'A week on the farm'), L('Splň všechny úkoly dne sedmkrát', 'Complete all daily tasks seven times'), S => S.stats.dailyAll >= 7);
+CECH.forEach((t, i) => ach('cech_' + t.id, [L('První učeň', 'First apprentice'), L('Na vandru', 'On the road'), L('Mistrovský kus', 'Masterpiece'), L('Cechmistr', 'Guild master'), L('Pod korouhví', 'Under the banner'), L('Cechovní dům', 'Guild hall'), L('Královská pečeť', 'Royal seal'), L('Král řemesel', 'King of crafts')][i],
+  L(`Měj v cechu: ${t.name}`, `Have in your guild: ${t.name}`), S => S.cech.a[i] >= 1));
+[[1e3, L('Plná dílna', 'A full workshop')], [1e6, L('Milion učňů', 'A million apprentices')], [1e9, L('Učňovské město', 'A town of apprentices')], [1e15, L('Země řemesel', 'A land of crafts')], [1e24, L('Řemeslný zázrak', 'A crafty miracle')], [1e36, L('Nekonečná dílna', 'The endless workshop')], [1e48, L('Říše řemesel', 'An empire of crafts')], [1e64, L('Do skonání věků', 'Until the end of days')]]
+  .forEach(([n, name]) => ach('ucni' + n.toExponential(0), name, L(`Měj ${fmt(n)} učňů`, `Have ${fmt(n)} apprentices`), S => S.stats.ucniMax >= n));
 ach('steward', L('Pan správce', 'Lord of the manor'), L('Najmi šafáře', 'Hire a steward'), S => S.steward);
 ach('nesro', L('Kamarád Nesro', 'Nesro’s friend'), L('Potkej na návsi Nesra', 'Meet Nesro on the village green'), S => S.stats.nesro > 0, true);
 
@@ -217,6 +276,7 @@ const BOARDS = [
   { key: 'free:budovy:score', name: L('Budovy', 'Buildings'), icon: '🏡', get: S => S.stats.maxBuildings },
   { key: 'free:bytosti:score', name: L('Bytosti', 'Creatures'), icon: '✨', get: S => Econ.caughtAll(S) },
   { key: 'free:klepnuti:score', name: L('Klepnutí', 'Taps'), icon: '👆', get: S => S.taps },
+  { key: 'free:ucni:score', name: L('Učni', 'Apprentices'), icon: '🧹', log: true, get: S => S.stats.ucniMax },
   { key: 'free:pokoleni:score', name: L('Pokolení', 'Generations'), icon: '👪', get: S => S.gen - 1 },
   { key: 'free:uspechy:score', name: L('Úspěchy', 'Achievements'), icon: '🏅', get: S => Econ.achCount(S) },
   { key: 'total:played', name: L('Čas ve hře', 'Time played'), icon: '⏱️', time: true, get: S => S.stats.playTime },
@@ -226,6 +286,13 @@ const boardValue = (d, v) => (d.log ? fmt(Math.pow(10, v / 1000)) + (d.unit || '
 
 // ── Novinky (okénko vlevo nahoře; ukáže se samo, dokud hráč aktuální verzi neviděl) ──
 const NEWS = [
+  { v: 7, date: L('16. listopadu 2026', 'November 16, 2026'), items: [
+    ['👥', L('<b>Cech: generátor generuje generátor.</b> S první kovárnou založí kovář v obci cech. Tovaryši vyučí učně, mistři tovaryše, cechmistři mistry… až po krále. Učni pracují v řemeslech a každý desetinásobek učňů zvedne výnos celé vesnice.', '<b>The Guild: generators make generators.</b> With your first smithy the smith founds a guild. Journeymen train apprentices, masters train journeymen, guild masters train masters… all the way up to the king. Apprentices work in your trades and every tenfold of them lifts the whole village’s income.')],
+    ['🔏', L('Osm stupňů cechu, cechovní pečeti při 10, 25, 50… kusech, nová vylepšení a cechovní řády. Vyšší stupně se odemykají s pověstmi.', 'Eight guild ranks, guild seals at 10, 25, 50… bought, new upgrades and guild ordinances. Higher ranks unlock with legends.')],
+    ['❄️', L('Zima je sezóna cechu: v dílnách se učí dvakrát víc. Cech roste i bez tebe, přesně podle vzorce.', 'Winter is the guild’s season: twice the training in the workshops. The guild grows without you too, exactly by the formula.')],
+    ['🧓', L('Nová bytost <b>Děd Vševěd</b>: když ho chytíš, cech na chvíli vyučí desetkrát víc.', 'A new creature, <b>Grandpa Know-all</b>: catch him and the guild trains ten times as much for a while.')],
+    ['📖', L('Kronika má nové výhody až po miliardu pověstí, nové úspěchy, žebříček Učni a šafář s Nejlepší koupí nakupují i do cechu. Po návsi chodí lidé z cechu.', 'The chronicle has new perks up to a billion legends, new achievements, an Apprentices leaderboard, and the steward and the best buy buy for the guild too. Guild folk walk the green.')],
+  ] },
   { v: 6, date: L('12. listopadu 2026', 'November 12, 2026'), items: [
     ['⚒️', L('Kovárna je roubená na kamenné podezdívce: z otevřených vrat žhne výheň, u boční zdi stojí kamenný komín a s počtem kusů přibudou podkovy, necky, kolo, kovář s kladivem a nakonec kůň u bidla.', 'The smithy is a log house on a stone base: the forge glows through the open doors, a stone chimney stands by the side wall, and with your count come horseshoes, a trough, a wheel, a smith with his hammer and at last a horse at the rail.')],
   ] },

@@ -118,6 +118,19 @@ button * { pointer-events: none; }
 .buy:disabled { background: #d9ccb2; box-shadow: 0 3px 0 #c4b494; color: #8a7a62; text-shadow: none; cursor: default; }
 .buy.sale:not(:disabled) { background: linear-gradient(#ffcf5a, #f2a92e); box-shadow: 0 3px 0 #c98a1a; }
 .more-hint { text-align: center; color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+/* Cech */
+.cech-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 9px 12px; border-radius: 14px; background: linear-gradient(#e8f3da, #d6e9c2); box-shadow: 0 2px 0 #bcd6a0; }
+.ch-i { font-size: 30px; line-height: 1; }
+.ch-t { display: flex; flex-direction: column; min-width: 0; }
+.ch-t small { font-size: 11.5px; font-weight: 800; color: var(--muted); }
+.ch-t b { font-size: 22px; font-weight: 900; color: var(--green2); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.ch-t span { font-size: 11.5px; font-weight: 700; color: #4a6a3a; }
+.cech-hint { font-size: 12.5px; }
+.cico { width: 52px; height: 52px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: linear-gradient(#f8ecd0, #efdcb4); font-size: 28px; line-height: 1; }
+.row.locked .cico { filter: grayscale(1) opacity(.55); }
+.crow .cnt { font-variant-numeric: tabular-nums; }
+.crow .prod { overflow-wrap: anywhere; }
+.buff.b-cech { background: rgba(47,96,58,.85); }
 .mx { margin-left: auto; font-size: 11px; font-weight: 800; color: var(--muted); }
 .btns { flex: none; display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
 .to { padding: 3px 6px; border-radius: 9px; background: #fff1c4; color: #6b4a10; font-size: 10.5px; font-weight: 900; box-shadow: 0 2px 0 #e8c77a; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 2px; }

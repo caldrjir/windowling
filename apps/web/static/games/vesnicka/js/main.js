@@ -28,6 +28,7 @@ const Game = (() => {
   function catchUp(fromMs, toMs, welcome) {
     if ((toMs - fromMs) / 1000 < 1) return;
     const o = Econ.offline(S, fromMs, toMs);
+    if (o.cechOpened && !welcome) cechOpened();
     if (o.away < 60 || o.got <= 0) return;
     if (welcome) welcomeBack(o);
     else UI.toast(`${UI.coinSvg} ${L(`Zatímco jsi byl pryč: +${fmt(o.got)}`, `While you were away: +${fmt(o.got)}`)}${o.buys ? ` · 🤵 ${o.buys}` : ''}`);
@@ -42,7 +43,9 @@ const Game = (() => {
       <div class="eff"><div class="effbar"><i style="width:${pct}%"></i></div>
         <div class="effrow"><span>${L('Vydělávala', 'Earning')} <b>${fmtDur(o.earnSec)}</b></span><span>${o.capped ? L(`zahálela <b>${fmtDur(idle)}</b>`, `idle <b>${fmtDur(idle)}</b>`) : ''}</span></div>
         <p class="effp">${L(`Využito <b>${pct} %</b> času · zhruba ${fmt(perHour)} grošů za hodinu`, `<b>${pct}%</b> of the time used · about ${fmt(perHour)} groschen an hour`)}</p></div>
-      ${o.buys ? `<p>🤵 ${L(`Šafář mezitím koupil <b>${o.buildings}</b> budov a <b>${o.upgrades}</b> vylepšení.`, `Meanwhile the steward bought <b>${o.buildings}</b> buildings and <b>${o.upgrades}</b> upgrades.`)}</p>` : ''}
+      ${o.cechOpened ? `<p>⚒️ <b>${L('Kovář mezitím založil v obci cech!', 'Meanwhile the smith founded a guild in the village!')}</b> ${L('Podívej se do nové záložky Cech.', 'Have a look at the new Guild tab.')}</p>` : ''}
+      ${o.ucni >= 1 ? `<p>👥 ${L(`Cech mezitím vyučil <b>${fmt(o.ucni)}</b> učňů: výnos teď ×${fmt(Econ.cMul(S), 2)}.`, `Meanwhile the guild trained <b>${fmt(o.ucni)}</b> apprentices: income now ×${fmt(Econ.cMul(S), 2)}.`)}</p>` : ''}
+      ${o.buys ? `<p>🤵 ${L(`Šafář mezitím koupil <b>${o.buildings}</b> budov, <b>${o.upgrades}</b> vylepšení a <b>${o.cech}</b> do cechu.`, `Meanwhile the steward bought <b>${o.buildings}</b> buildings, <b>${o.upgrades}</b> upgrades and <b>${o.cech}</b> for the guild.`)}</p>` : ''}
       <p class="muted">${o.capped
         ? L(`Bez tebe vesnička vydělává nejvýš ${fmtDur(o.cap)}, pak zahálí. Příště se vrať do ${fmtDur(o.cap)} (když odejdeš teď, tak nejpozději v ${UI.clockAt(o.cap)}). Déle vydrží s Ponocným a s kronikou.`, `Without you the village earns for at most ${fmtDur(o.cap)}, then it idles. Next time come back within ${fmtDur(o.cap)} (if you leave now, by ${UI.clockAt(o.cap)}). The Night watchman and the chronicle make it last longer.`)
         : L(`Vesnička vydělávala celou dobu. Bez tebe vydrží ${fmtDur(o.cap)}: když odejdeš teď, vrať se nejpozději v ${UI.clockAt(o.cap)}.`, `The village earned the whole time. It lasts ${fmtDur(o.cap)} without you: if you leave now, come back by ${UI.clockAt(o.cap)}.`)}</p></div>`,
@@ -75,10 +78,29 @@ const Game = (() => {
     return true;
   }
   // Rychlý nákup a šafář: koupí to, co se nejrychleji zaplatí.
+  function cbuy(i, amount, quiet) {
+    const ev = Econ.cechBuy(S, i, amount);
+    if (!ev) { if (!quiet) Sound.play.no(); return false; }
+    afterCech(i, ev, quiet);
+    afterChange();
+    return true;
+  }
+  function afterCech(i, ev, quiet) {
+    const t = CECH[i];
+    if (ev.first) { Sound.play.first(); UI.toast(`${t.icon} <b>${t.name}</b> · ${t.desc}`, 'big'); }
+    else if (!quiet) Sound.play.buy(); else Sound.play.tap();
+    for (const m of ev.seals) { Sound.play.milestone(); UI.toast(`🔏 <b>${L('Cechovní pečeť', 'Guild seal')}: ${t.name} ${m}×</b> · ${i ? L(`${t.verb} ×2`, `${t.verb} ×2`) : L('učni +5 %', 'apprentices +5%')}`, 'gold'); }
+  }
+  function cechOpened() {
+    Sound.play.bell();
+    UI.tabs();
+    UI.toast(`⚒️ <b>${L('Kovář založil v obci cech!', 'The smith founded a guild in the village!')}</b> ${L('Přivedl prvního tovaryše a pět učňů. Podívej se do záložky Cech.', 'He brought the first journeyman and five apprentices. Have a look at the Guild tab.')}`, 'big');
+  }
   function quickBuy(b) {
     const got = Econ.buyThing(S, b);
     if (!got) { Sound.play.no(); return; }
     if (got.kind === 'b') afterBuilt(got.i, got.ev, false);
+    else if (got.kind === 'c') afterCech(got.i, got.ev, false);
     else { Sound.play.upgrade(); UI.toast(`⚡ <b>${got.name}</b> · ${U_INDEX[got.id].effect}`); }
     afterChange();
   }
@@ -87,12 +109,14 @@ const Game = (() => {
     if (!r.n) { Sound.play.no(); UI.toast(L('🤵 Teď se nic nevyplatí, počkej na groše.', '🤵 Nothing worth buying yet, wait for groschen.')); return; }
     Sound.play.upgrade();
     stewardNews(r);
-    UI.toast(`🤵 ${L(`Šafář koupil ${r.buildings} budov a ${r.upgrades} vylepšení.`, `The steward bought ${r.buildings} buildings and ${r.upgrades} upgrades.`)}`);
+    UI.toast(`🤵 ${L(`Šafář koupil ${r.buildings} budov, ${r.upgrades} vylepšení a ${r.cech} do cechu.`, `The steward bought ${r.buildings} buildings, ${r.upgrades} upgrades and ${r.cech} for the guild.`)}`);
     afterChange();
   }
   function stewardNews(r) {
     for (const i of r.firsts) { const b = BUILDINGS[i]; Sound.play.first(); UI.toast(`<b>${b.name}</b> · ${b.desc}`, 'big'); }
     for (const [i, m] of r.milestones.slice(-2)) UI.toast(`⭐ <b>${L('Mistrovství', 'Mastery')}: ${BUILDINGS[i].name} ${m}×</b>`, 'gold');
+    for (const i of r.cfirsts) { const t = CECH[i]; Sound.play.first(); UI.toast(`${t.icon} <b>${t.name}</b> · ${t.desc}`, 'big'); }
+    for (const [i, m] of r.seals.slice(-1)) UI.toast(`🔏 <b>${L('Cechovní pečeť', 'Guild seal')}: ${CECH[i].name} ${m}×</b>`, 'gold');
   }
   let stewAgg = 0, stewAggT = 0;
   function stewardTick(dt) {
@@ -142,7 +166,7 @@ const Game = (() => {
     const p = Econ.pending(S);
     if (p < 1) return;
     UI.modal(`<div class="welcome"><div class="wico">📜</div><h2>${L('Předat vesnici?', 'Pass the village on?')}</h2>
-      <p>${L(`Získáš <b>+${fmt(p)}</b> pověstí. Budovy, vylepšení a groše začnou znovu od nuly, pověsti, úspěchy a kronika zůstanou.`, `You gain <b>+${fmt(p)}</b> legends. Buildings, upgrades and groschen start again from zero; legends, achievements and the chronicle stay.`)}</p></div>`,
+      <p>${L(`Získáš <b>+${fmt(p)}</b> pověstí. Budovy, vylepšení, cech a groše začnou znovu od nuly, pověsti, úspěchy a kronika zůstanou.`, `You gain <b>+${fmt(p)}</b> legends. Buildings, upgrades, the guild and groschen start again from zero; legends, achievements and the chronicle stay.`)}</p></div>`,
     [{ text: L('Předat', 'Pass it on'), cls: 'gold', fn: () => {
       const before = Econ.perks(S).length, got = Econ.prestige(S);
       Scene.clearCreature(); Scene.panTo(0, false);
@@ -209,6 +233,7 @@ const Game = (() => {
     dt = Math.max(0, Math.min(0.25, dt));
     if (dt > 0) {
       const ev = Econ.tick(S, dt);
+      if (ev && ev.cechOpened) cechOpened();
       if (ev && ev.creature && !Scene.creature) {
         const c = ev.creature === 'nesro' ? NESRO : C_INDEX[ev.creature];
         Scene.spawnCreature(ev.creature, c.life);
@@ -241,7 +266,7 @@ const Game = (() => {
     applySettings();
     Scene.init(document.getElementById('cv'));
     Scene.on.tap = onTap; Scene.on.creature = onCreature;
-    UI.init(S, { buy, upg, buyAll, prestige, claim, setting, volume, reset, quick: quickBuy, smart, hire, tps, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
+    UI.init(S, { buy, cbuy, upg, buyAll, prestige, claim, setting, volume, reset, quick: quickBuy, smart, hire, tps, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
     Econ.daily(S);
     if (isNew) { S.seen.news = NEWS_VERSION; intro(); }
     else {
@@ -259,5 +284,5 @@ const Game = (() => {
     requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  return { get S() { return S; }, save, buy, upg, onTap, onCreature, prestige, claim, quickBuy, smart, hire };
+  return { get S() { return S; }, save, buy, cbuy, upg, onTap, onCreature, prestige, claim, quickBuy, smart, hire };
 })();

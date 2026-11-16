@@ -2792,19 +2792,26 @@ export const PUZZLE_GAMES: Game[] = [
 		category: 'relax',
 		tagline: 'Vesnice, která roste, i když spíš.',
 		description:
-			'Idle budovatelská hra z české pohádkové vesnice. Klepej, stav řemesla od políčka po orloj a vydělávej groše i ve chvílích, kdy zrovna nehraješ. Střídají se roční období, ve vsi se zjevují bludičky, vodník, čert i Krakonoš a s vydělaným jměním předáš vesnici dalšímu pokolení. Pověsti o ní pak zrychlí všechno další.',
+			'Idle budovatelská hra z české pohádkové vesnice. Klepej, stav řemesla od políčka po orloj a vydělávej groše i ve chvílích, kdy zrovna nehraješ. V cechu vyučí tovaryši učně, mistři tovaryše a tak dál až po krále: generátor generuje generátor a učni zvedají výnos celé vsi. Střídají se roční období, ve vsi se zjevují bludičky, vodník, čert i Krakonoš a s vydělaným jměním předáš vesnici dalšímu pokolení. Pověsti o ní pak zrychlí všechno další.',
 		genres: ['Idle', 'Budování', 'Relax'],
-		features: ['14 řemesel', 'Pohádkové bytosti', 'Šafář a pověsti', 'Žebříčky v 9 kategoriích'],
+		features: [
+			'14 řemesel',
+			'Cech s 8 stupni',
+			'Pohádkové bytosti',
+			'Šafář a pověsti',
+			'Žebříčky v 10 kategoriích',
+		],
 		en: {
 			tagline: 'A village that grows while you sleep.',
 			description:
-				'An idle building game set in a Czech fairy-tale village. Tap, build trades from a field to an astronomical clock and keep earning groschen even while you are away. The seasons change, will-o’-wisps, a water goblin, a devil and the mountain spirit Krakonoš drop by, and once you have made a fortune you pass the village on to the next generation. Its legends then speed everything up.',
+				'An idle building game set in a Czech fairy-tale village. Tap, build trades from a field to an astronomical clock and keep earning groschen even while you are away. In the guild journeymen train apprentices, masters train journeymen and so on up to the king: generators make generators, and the apprentices lift the whole village’s income. The seasons change, will-o’-wisps, a water goblin, a devil and the mountain spirit Krakonoš drop by, and once you have made a fortune you pass the village on to the next generation. Its legends then speed everything up.',
 			genres: ['Idle', 'Building', 'Relax'],
 			features: [
 				'14 trades',
+				'A guild of 8 ranks',
 				'Fairy-tale creatures',
 				'Steward & legends',
-				'Leaderboards in 9 categories',
+				'Leaderboards in 10 categories',
 			],
 		},
 		statLabels: {
@@ -2813,6 +2820,7 @@ export const PUZZLE_GAMES: Game[] = [
 			buildings: ['Budovy', 'Buildings'],
 			earned: ['Vyděláno celkem', 'Earned in total'],
 			creatures: ['Chycené bytosti', 'Creatures caught'],
+			apprentices: ['Učni', 'Apprentices'],
 			achievements: ['Úspěchy', 'Achievements'],
 		},
 		record: { board: 'best:score', label: ['Nejvíc pověstí', 'Most legends'] },
