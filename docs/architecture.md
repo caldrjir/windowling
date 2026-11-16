@@ -375,6 +375,28 @@ the respawn, the quests, the crypt floors, the Gallows Hill key and entrance, th
 the Bible dialogs, the Cinderhold gate and the champion; E2E clears a zone, reads the opening scene,
 meets Teodor in Cinderhold and finishes Act I with the boss and the Kiln Shard choice.
 
+Campaign balance (P1): `pnpm --filter @windowling/web hollowsun:playthrough [seed] [steps]` runs
+the whole Act I campaign headless (the Bible's P1 tests "E2E playthrough bot" and "TTK telemetry").
+The bot follows each zone's route, fights what catches up with it and hunts Bowmen and Acolytes,
+collects loot and gold, equips better gear (Cleave DPS × EHP), spends points and passives, and
+prints per step the time, level, kills, deaths, gold, hits to kill a Thrall of the area's level
+(Bible target 2–4) and enemy hits survived (target ≥ 20). It is a gauge, not a player: it does not
+dodge the boss's mechanics. The first runs led to these changes:
+
+- Raised Thralls give no XP and an Acolyte keeps at most two alive: the bot farmed them from L10 to
+  L13 in the Great Kiln, which took 21 minutes.
+- Great Kiln density 2 → 1.7 and the crypt floors 1.5 / 1.75 → 1.25 / 1.5 (the crypt, all Bowmen and
+  Acolytes, had the most deaths).
+- The autopilot (also used by tests and the benchmark) checks a skill's real cost (it used to stand
+  on "no resources" once costs grew), finds its way back to the route through the room graph,
+  attacks only enemies it can walk to, puts the Acolyte first; shoved enemies stay on walkable
+  ground (one could end up inside a wall where nothing could hit it).
+
+A run now takes about 42–47 minutes of game time (the Bible's slice: 45–60 minutes for a person),
+with 1.5–2.8 hits to kill and 30–60 hits survived. The bot reaches the Kiln Warden at L9–10 (boss
+L12) and beat him (in about 3.5 minutes) in one of three runs; this gap is left for the playtest
+telemetry (D31).
+
 Gold and passive skills (P1):
 
 - Gold drops by the Bible's loot tables (`lt_normal`/`lt_caster` 6 %, `lt_elite` 20 %, `lt_rare`

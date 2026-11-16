@@ -710,7 +710,7 @@ describe('HOLLOW SUN Act I enemies in the simulation', () => {
 		expect(ev.has('summon')).toBe(true);
 		const raised = s.enemies.filter((e) => e.summoned && e.by === a.id);
 		expect(raised.length).toBeGreaterThanOrEqual(2);
-		expect(raised.filter((e) => !e.dead).length).toBeLessThanOrEqual(4);
+		expect(raised.filter((e) => !e.dead).length).toBeLessThanOrEqual(2);
 		for (const t of raised) {
 			expect(t.type).toBe('en_thrall');
 			expect(t.noLoot).toBe(true);
@@ -742,7 +742,7 @@ describe('HOLLOW SUN Act I enemies in the simulation', () => {
 		s.player.x = b.x + 1.6;
 		s.player.z = b.z;
 		a.dead = true;
-		for (let i = 0; i < 30 * 2 && (b.ward ?? 0) === 50; i++)
+		for (let i = 0; i < 30 * 6 && (b.ward ?? 0) === 50; i++)
 			HSim.step(s, { hold: true, aim: [b.x, b.z] });
 		expect(b.ward ?? 0).toBeLessThan(50);
 		if ((b.ward ?? 0) > 0) expect(b.hp).toBe(b.hpMax);

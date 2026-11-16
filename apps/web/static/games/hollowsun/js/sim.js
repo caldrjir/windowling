@@ -337,7 +337,7 @@
   function kill(s, e) {
     if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type });
     if (s.boss && e.id === s.boss.id) { bossLoot(s, e); dropGold(s, e, HS.D.econ.bossGold * e.L); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
-    if (!e.noLoot) { rollDrop(s, e); dropGold(s, e); } gainXp(s, e);
+    if (!e.noLoot) { rollDrop(s, e); dropGold(s, e); } if (!e.summoned) gainXp(s, e); // vyvolaní Thrallové bez XP: v průchodu kampaní je jinak šlo farmit (L10 → 13 ve Velké peci)
     // šampion Tollgate (q1_03, volba souboje): odměna Rare zbraň (Bible)
     if (e.champion) { const item = HS.genItem(HS.rng(s.seed + '#champion'), e.L, HS.D.cls.id, 'rare', 'main'); const dd = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(dd); s.events.push({ t: 'drop', id: dd.id, x: dd.x, z: dd.z, rar: item.rar }); s.events.push({ t: 'champion', id: e.id, x: e.x, z: e.z }); }
     // Rusty Gallows Key: 4 % ze Smoldering Brute v kampani, jednou (vlastní RNG podle id, nemění ostatní hody)
@@ -533,9 +533,9 @@
     // oddělení nepřátel (měkké kolize)
     for (let i = 0; i < alive.length; i++) for (let j = i + 1; j < alive.length; j++) {
       const a = alive[i], b = alive[j]; const dx = b.x - a.x, dz = b.z - a.z; const d = len(dx, dz); const min = a.r + b.r; if (d >= min || d < 1e-6) continue;
-      const k = ((min - d) / d) * 0.5; const wa = b.r / (a.r + b.r), wb = a.r / (a.r + b.r); a.x -= dx * k * wa; a.z -= dz * k * wa; b.x += dx * k * wb; b.z += dz * k * wb;
+      const k = ((min - d) / d) * 0.5; const wa = b.r / (a.r + b.r), wb = a.r / (a.r + b.r); shove(s, a, -dx * k * wa, -dz * k * wa); shove(s, b, dx * k * wb, dz * k * wb);
     }
-    for (const e of alive) { const dx = e.x - p.x, dz = e.z - p.z; const d = len(dx, dz); const min = e.r + PLAYER_R; if (d < min && d > 1e-6) { e.x = p.x + (dx / d) * min; e.z = p.z + (dz / d) * min; } }
+    for (const e of alive) { const dx = e.x - p.x, dz = e.z - p.z; const d = len(dx, dz); const min = e.r + PLAYER_R; if (d < min && d > 1e-6) { shove(s, e, p.x + (dx / d) * min - e.x, p.z + (dz / d) * min - e.z); } }
   }
   // Acolyte: komu dát štít – nejzraněnější bdělý spojenec v dosahu bez štítu (nejdřív ne-Acolyte)
   function wardTarget(s, e, a) {
@@ -543,7 +543,7 @@
     for (const o of s.enemies) { if (o.dead || o === e || !o.awake || o.ward > 0 || (s.boss && o.id === s.boss.id) || len(o.x - e.x, o.z - e.z) > a.range) continue; const v = o.hp / o.hpMax + (o.type === 'en_acolyte' ? 1 : 0); if (v < bv) { bv = v; best = o; } }
     return best;
   }
-  // Acolyte: 2 Thrallové z popela vedle něj; bez lootu (nefarmí se), nejvýš max živých na Acolyta
+  // Acolyte: 2 Thrallové z popela vedle něj; bez lootu a XP (nefarmí se), nejvýš max živých na Acolyta
   function acolyteSummon(s, e, a) {
     const fx = Math.cos(e.face), fz = Math.sin(e.face);
     for (let i = 0; i < a.count; i++) {
@@ -553,6 +553,8 @@
     }
     s.events.push({ t: 'summon', id: e.id, x: e.x, z: e.z, n: a.count });
   }
+  // odstrčení (měkké kolize): v zóně nikdy mimo průchozí plochu (jinak by nepřítel uvízl ve zdi, kam nejde zasáhnout)
+  function shove(s, e, dx, dz) { if (s.zone && !root.HSWorld.walkable(s.zone, e.x + dx, e.z + dz, e.r * 0.5, s.zoneKeys)) return; e.x += dx; e.z += dz; }
   // pohyb nepřátel podle archetypu v Bible: Hound obíhá a skáče zboku, Bowman drží 12–16 m a ustupuje, ostatní jdou přímo
   function steer(s, e, dx, dz, d, dt) {
     const v = e.speed * dt;
@@ -632,28 +634,67 @@
     if (s.mode === 'bench' && s.enemies.every((e) => e.dead)) { s.enemies = []; spawnBench(s, 50); }
     return s;
   }
+  // autopilot mimo trasu (odběhl v boji do vedlejší místnosti): cesta po grafu místností a chodeb (BFS, zamčené
+  // chodby bez klíče ne) k místnosti dalšího bodu trasy; vrací střed další místnosti, případně roh chodby
+  function detour(s, t) {
+    const z = s.zone; const p = s.player; const inR = (q, x, y) => x >= q.x0 && x <= q.x1 && y >= q.z0 && y <= q.z1;
+    const here = z.rooms.find((q) => inR(q, p.x, p.z));
+    if (!here) {
+      // v chodbě: ke konci chodby, ze kterého je to k cíli blíž (BFS po místnostech); u chodby do L přes roh
+      const c = z.corridors.find((k) => k.segs.some((g) => inR(g, p.x, p.z))); if (!c) return null;
+      let goal0 = z.rooms.find((q) => inR(q, t.x, t.z)); if (!goal0) { const R = z.route; for (let i = s.routeI; i < R.length && !goal0; i++) if (R[i].room != null) goal0 = z.rooms[R[i].room]; }
+      const dist = (from) => { if (!goal0) return 0; const seen = { [from]: 0 }; const q = [from]; while (q.length) { const cur = q.shift(); if (cur === goal0.id) return seen[cur]; for (const k of z.corridors) { if (k.lock && !s.zoneKeys.has(k.lock)) continue; const o = k.a === cur ? k.b : k.b === cur ? k.a : null; if (o == null || o in seen) continue; seen[o] = seen[cur] + 1; q.push(o); } } return 1e9; };
+      const toB = dist(c.b) <= dist(c.a); const to = z.rooms[toB ? c.b : c.a];
+      if (c.corner) { const onFirst = inR(c.segs[0], p.x, p.z) && !inR(c.segs[1], p.x, p.z), onSecond = inR(c.segs[1], p.x, p.z) && !inR(c.segs[0], p.x, p.z); if ((toB && onFirst) || (!toB && onSecond)) return { x: c.corner[0], z: c.corner[1] }; }
+      return { x: to.cx, z: to.cz };
+    }
+    let goal = z.rooms.find((q) => inR(q, t.x, t.z));
+    if (!goal) { const R = z.route; for (let i = s.routeI; i < R.length && !goal; i++) if (R[i].room != null) goal = z.rooms[R[i].room]; }
+    if (!goal || goal.id === here.id) return { x: here.cx, z: here.cz };
+    const prev = { [here.id]: null }; const q = [here.id];
+    while (q.length) { const cur = q.shift(); if (cur === goal.id) break; for (const c of z.corridors) { if (c.lock && !s.zoneKeys.has(c.lock)) continue; const o = c.a === cur ? c.b : c.b === cur ? c.a : null; if (o == null || o in prev) continue; prev[o] = [cur, c]; q.push(o); } }
+    if (!(goal.id in prev)) return { x: here.cx, z: here.cz };
+    let n = goal.id; while (prev[n] && prev[n][0] !== here.id) n = prev[n][0];
+    const c = prev[n][1]; const nx = z.rooms[n];
+    // další cíl: roh chodby (L), nebo střed další místnosti; když k němu není přímá cesta, nejdřív střed vlastní místnosti
+    const nt = c.corner ? { x: c.corner[0], z: c.corner[1] } : { x: nx.cx, z: nx.cz };
+    const k = Math.ceil(len(nt.x - p.x, nt.z - p.z) / 0.5); let ok = true;
+    for (let i = 1; i <= k && ok; i++) { const f = i / k; if (!root.HSWorld.walkable(z, p.x + (nt.x - p.x) * f, p.z + (nt.z - p.z) * f, 0.3, s.zoneKeys)) ok = false; }
+    return ok ? nt : { x: here.cx, z: here.cz };
+  }
+  // dojde autopilot k nepříteli přímo (průchozí cesta s okrajem, kontrola jen do dosahu útoku)? Za rohem ho nechá být
+  function walkTo(s, e, d) { const p = s.player; const reach = Math.max(0, d - 1.5); const n = Math.ceil(reach / 0.5); for (let i = 1; i <= n; i++) { const k = (i / n) * (reach / d); if (!root.HSWorld.walkable(s.zone, p.x + (e.x - p.x) * k, p.z + (e.z - p.z) * k, 0.4, s.zoneKeys)) return false; } return true; }
   // jednoduchý autopilot pro benchmark a testy: drží se u středu, seká nejbližšího a občas použije Slam a Charge
   function autopilot(s) {
     const p = s.player; let best = null, bd = 1e9;
-    for (const e of s.enemies) { if (e.dead || (s.zone && !e.awake)) continue; const d = len(e.x - p.x, e.z - p.z); if (s.zone && (d > 7 || !lineFree(s, p.x, p.z, e.x, e.z))) continue; if (d < bd) { bd = d; best = e; } }
+    // Kiln Acolyte je podle Bible „priority target“: do 12 m má přednost (jinak nekonečně vyvolává Thrally)
+    for (const e of s.enemies) { if (e.dead || (s.zone && !e.awake)) continue; const d = len(e.x - p.x, e.z - p.z); const pri = e.type === 'en_acolyte'; if (s.zone && (d > (pri ? 12 : 7) || !lineFree(s, p.x, p.z, e.x, e.z) || !walkTo(s, e, d))) continue; const v = pri ? d - 6 : d; if (v < bd) { bd = v; best = e; } }
+    if (best) bd = len(best.x - p.x, best.z - p.z);
     if (!best && s.zone) {
       const R = s.zone.route; while (s.routeI < R.length && len(R[s.routeI].x - p.x, R[s.routeI].z - p.z) < 1.2) s.routeI++;
       let t = R[Math.min(s.routeI, R.length - 1)];
       // mimo linii trasy (po boji): nejdřív do středu místnosti, ve které stojí, odtud vede trasa chodbou
       const W = root.HSWorld; const n = Math.ceil(len(t.x - p.x, t.z - p.z) / 0.5); let clear = true;
       for (let i = 1; i <= n && clear; i++) { const k = i / n; if (!W.walkable(s.zone, p.x + (t.x - p.x) * k, p.z + (t.z - p.z) * k, 0.3, s.zoneKeys)) clear = false; }
-      if (!clear) { const rm = s.zone.rooms.find((q) => p.x >= q.x0 && p.x <= q.x1 && p.z >= q.z0 && p.z <= q.z1); if (rm) t = { x: rm.cx, z: rm.cz }; }
+      if (!clear) t = detour(s, t) || t;
       return { move: [t.x - p.x, t.z - p.z] };
     }
     if (!best) return {};
     const aim = [best.x, best.z]; const inp = { aim };
     const tele = s.enemies.some((e) => e.atk && e.atk.def.mul >= 1.2 && e.atk.t > e.atk.def.tele - 0.35 && len(e.x - p.x, e.z - p.z) < 4);
     if (tele && p.dodgeCd <= 0) { inp.dodge = true; inp.move = [p.x - best.x || 1, p.z - best.z]; return inp; }
-    const ready = (id) => s.skills[id].on && s.skills[id].cd <= 0;
-    if (bd > 3 && ready('ak_charge') && p.res >= 20) inp.cast = 'ak_charge';
-    else if (p.res >= 40 && ready('ak_slam') && bd < 3.5) inp.cast = 'ak_slam';
+    // skill jen se zdroji na jeho cenu (cena roste s úrovní skillu; dřív pevná čísla → autopilot stál na „nores“)
+    const ready = (id) => s.skills[id].on && s.skills[id].cd <= 0 && p.res >= Math.max(0, s.skills[id].hit.en_thrall.cost || 0);
+    if (bd > 3 && ready('ak_charge')) inp.cast = 'ak_charge';
+    else if (ready('ak_slam') && bd < 3.5) inp.cast = 'ak_slam';
     else if (bd <= s.skills.ak_cleave.sk.r + best.r) inp.hold = true;
-    else inp.move = [best.x - p.x, best.z - p.z];
+    else {
+      // k nepříteli: bez přímé průchozí cesty (roh, stěna) objížďkou po místnostech
+      let t = { x: best.x, z: best.z };
+      // cesta se kontroluje jen do dosahu útoku (nepřítel v rohu místnosti sám neprojde okrajovou kontrolou)
+      if (s.zone) { const reach = Math.max(0, bd - 1.5); const n = Math.ceil(reach / 0.5); for (let i = 1; i <= n; i++) { const k = (i / n) * (reach / bd); if (!root.HSWorld.walkable(s.zone, p.x + (best.x - p.x) * k, p.z + (best.z - p.z) * k, 0.4, s.zoneKeys)) { t = detour(s, t) || t; break; } } }
+      inp.move = [t.x - p.x, t.z - p.z];
+    }
     return inp;
   }
   root.HSim = { sanitizePassives, passiveSpent, champion, updateZone, TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };

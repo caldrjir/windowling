@@ -42,10 +42,11 @@
     a1_burnt_orchard: { size: 'L', diff: 2, density: 1.5, side: 3, special: 1 },
     a1_tollgate: { size: 'L', diff: 3, density: 1.75, side: 3, special: 2 },
     a1_charcoal_woods: { size: 'L', diff: 4, density: 2, side: 4, special: 2 },
-    a1_kiln: { size: 'L', diff: 5, density: 2, side: 4, special: 2 },
+    a1_kiln: { size: 'L', diff: 5, density: 1.7, side: 4, special: 2 }, // kalibrace průchodem kampaní: dřív 2 (21 min, nejdelší zóna, farmení vyvolaných Thrallů)
     // krypta: 2 patra (Bible: „procedurální, 2 patra“), level oblasti 4–6 rozdělený na patra
-    a1_chapel_crypt: { size: 'M', diff: 3, density: 1.5, side: 2, special: 1, lv: [4, 5] },
-    'a1_chapel_crypt:2': { size: 'M', diff: 3, density: 1.75, side: 2, special: 2, lv: [5, 6] },
+    // krypta je samí střelci a Acolyti: řidší než pole (kalibrace: dřív 1,5 / 1,75 a nejvíc smrtí v kampani)
+    a1_chapel_crypt: { size: 'M', diff: 3, density: 1.25, side: 2, special: 1, lv: [4, 5] },
+    'a1_chapel_crypt:2': { size: 'M', diff: 3, density: 1.5, side: 2, special: 2, lv: [5, 6] },
     a1_gallows: { size: 'S', diff: 4, density: 1.5, side: 2, special: 0 },
   };
   const areaOf = (step) => String(step).split(/[:#]/)[0];

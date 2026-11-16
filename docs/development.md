@@ -86,6 +86,9 @@ Convention: each completed iteration is at least one minor release.
   `pnpm --filter @windowling/web hollowsun:music D:/hollowsun-audio` (needs `ffmpeg` with libopus
   on the PATH or `FFMPEG`). The script cuts the loops on bar lines, masters them to −16 LUFS and
   writes Opus files plus a manifest that `hollowsun-music.test.ts` checks.
+- HOLLOW SUN balance: `pnpm --filter @windowling/web hollowsun:playthrough [seed] [step,step]` plays
+  the whole Act I campaign headless (about 2–4 minutes) and prints time, level, deaths, hits to kill
+  and hits survived per step. Run it after changing zones, enemies, loot or XP.
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without
   credentials). E2E checks the hub, the language contract, launching VOIDBORN and stats.
 

@@ -1451,7 +1451,7 @@ window.HS_DATA = {
     "cd": 12,
     "count": 2,
     "spawn": "en_thrall",
-    "max": 4
+    "max": 2
    },
    {
     "n": "Štít spojenci",
