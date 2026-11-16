@@ -293,7 +293,7 @@ test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop'
 	await page.goto('/games/voidborn/index.html');
 	await page.mouse.click(100, 100);
 	await page.locator('[data-go="forge"]').click();
-	await expect(page.locator('.master-head')).not.toHaveClass(/locked/);
+	await expect(page.locator('.master-head:not(.void)')).not.toHaveClass(/locked/);
 	await page.locator('[data-buy="cards"]').click();
 	expect(await page.evaluate('SAVE.forge.cards')).toBe(1);
 	await page.locator('.back').click();
@@ -340,6 +340,101 @@ test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop'
 	})()`)) as { kinds: string[]; gain: number };
 	expect(mut.kinds).toContain('mut');
 	expect(mut.gain).toBe(4);
+	expect(errors).toEqual([]);
+});
+
+test('VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the anomaly sectors', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'one run is enough for the game logic');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	// All five main sectors cleared: the Void Workshop and the four anomaly sectors are open.
+	await page.addInitScript(() => {
+		if (sessionStorage.getItem('seeded')) return;
+		sessionStorage.setItem('seeded', '1');
+		const sectors: Record<string, object> = {};
+		for (const id of ['s1', 's2', 's3', 's4', 's5'])
+			sectors[id] = { cleared: true, odUnlocked: 1, best: 900 };
+		localStorage.setItem(
+			'voidborn.save.v1',
+			JSON.stringify({ shards: 50000, achievements: { clear1: 1, clear2: 1 }, sectors }),
+		);
+	});
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	await page.locator('[data-go="hangar"]').click();
+	await expect(page.locator('.sectors.anom .sector')).toHaveCount(4);
+	await expect(page.locator('.sectors.anom .sector.locked')).toHaveCount(0);
+	await page.locator('.screen.active .back').click();
+
+	await page.locator('[data-go="forge"]').click();
+	await expect(page.locator('.master-head.void')).not.toHaveClass(/locked/);
+	await page.locator('[data-buy="deepmut"]').click();
+	expect(await page.evaluate('SAVE.forge.deepmut')).toBe(1);
+	await page.locator('.screen.active .back').click();
+
+	// Auto-pick on, the first weapon moved one place up in the priorities.
+	await page.locator('[data-go="settings"]').click();
+	await page.locator('[data-tog="autoPick"]').click();
+	await page.locator('[data-go="prio"]').click();
+	const sixth = await page.evaluate<string>('SAVE.settings.prio?.[5] ?? PRIO_DEFAULT[5]');
+	await page.locator('[data-prio="up:5"]').click();
+	expect(await page.evaluate('[SAVE.settings.autoPick, SAVE.settings.prio[4]]')).toEqual([
+		true,
+		sixth,
+	]);
+
+	// The game's state is top-level `const`/functions of the page (not on window).
+	const run = (await page.evaluate(`(() => {
+		UI.hideOverlay(); Game.start('vex', 0, 0);
+		G.pickups.length = 0;
+		for (let i = 0; i < 40; i++) { const g = mkPickup('gem', 400 + (i % 5) * 8, 300 + Math.floor(i / 5) * 8, 1); g.age = 1; G.pickups.push(g); }
+		for (let i = 0; i < 12; i++) { const g = mkPickup('shard', -400 + i * 5, 300, 2); g.age = 1; G.pickups.push(g); }
+		const sum = G.pickups.reduce((a, p) => a + p.val, 0);
+		mergePickups(); G.pickups = G.pickups.filter(p => !p.dead);
+		const merged = { count: G.pickups.length, sum: G.pickups.reduce((a, p) => a + p.val, 0) };
+		G.pendingLevels = 5; updateGame(0.016);
+		const auto = { state: G.state, level: G.level };
+		G.weapons[0].level = 8; G.passives = {}; computeStats();
+		const evo = upgradePool().filter(c => c.kind === 'evo').map(c => c.id);
+		return { sum, merged, auto, evo, start: G.startWeapon, mutMax: G.st.mutMax };
+	})()`)) as {
+		sum: number;
+		merged: { count: number; sum: number };
+		auto: { state: string; level: number };
+		evo: string[];
+		start: string;
+		mutMax: number;
+	};
+	// Pickups close together merge into fewer ones of the same total value.
+	expect(run.merged.sum).toBe(run.sum);
+	expect(run.merged.count).toBeLessThan(10);
+	// Five level-ups at once are picked without stopping the run.
+	expect(run.auto.state).toBe('play');
+	// The pilot's starting weapon evolves even without its catalyst passive.
+	expect(run.start).toBe('pulse');
+	expect(run.evo).toEqual(['hyperpulse']);
+	expect(run.mutMax).toBeGreaterThan(10);
+
+	// Each anomaly sector runs with its own rule.
+	for (const [index, check] of [
+		[5, 'G.sector.meteors && G.meteors.length > 0'],
+		[
+			6,
+			`Object.keys(currentPool()).join() === G.monoType && G.enemies.some(e => e.type === G.monoType)`,
+		],
+		[7, 'G.sector.well && !!G.well'],
+		[8, 'G.sector.dark && G.time > 1'],
+	] as const) {
+		await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0); G.nextMeteor = 0;`);
+		await expect
+			.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
+				message: `sector ${index + 1}`,
+			})
+			.toBe(true);
+	}
 	expect(errors).toEqual([]);
 });
 

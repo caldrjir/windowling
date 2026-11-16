@@ -8,9 +8,9 @@ function defaultSave() {
     v: 1, shards: 0, forge: {}, achievements: {}, evolutions: {}, seen: {}, sectors: {},
     stats: {
       kills: 0, bossKills: 0, runs: 0, time: 0, shardsTotal: 0, dashes: 0, bestTime: 0, maxLevel: 0,
-      maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0,
+      maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0,
     },
-    settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false },
+    settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, prio: null },
     lastPilot: 'vex', lastSector: 0, lastOd: 0,
   };
 }
@@ -58,5 +58,10 @@ function resetSave() {
 }
 
 const pilotUnlocked = p => !p.unlock || !!SAVE.achievements[p.unlock];
-const sectorUnlocked = i => i === 0 || !!(SAVE.sectors[SECTORS[i - 1].id] && SAVE.sectors[SECTORS[i - 1].id].cleared);
+const sectorCleared = id => !!(SAVE.sectors[id] && SAVE.sectors[id].cleared);
+// Hlavní sektory jdou po sobě, anomálie (VI–IX) otevře dobytí sektoru req.
+const sectorReq = i => (SECTORS[i].req || (i > 0 ? SECTORS[i - 1].id : null));
+const sectorUnlocked = i => !sectorReq(i) || sectorCleared(sectorReq(i));
+/** Sektory, které dobytí sektoru sid nově zpřístupní. */
+const unlockedBy = sid => SECTORS.filter((s, i) => sectorReq(i) === sid);
 const sectorMaxOd = i => { const s = SAVE.sectors[SECTORS[i].id]; return s ? Math.min(MAX_OD, s.odUnlocked || 0) : 0; };
