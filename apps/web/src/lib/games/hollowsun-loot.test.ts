@@ -56,6 +56,7 @@ interface Core {
 		passivePoints(level: number): number;
 		respecPoint(level: number): number;
 	};
+	CRAFT_COST: Record<string, (ilvl: number, n?: number) => Record<string, number>>;
 	D: {
 		passives: { id: string; mx: number; req: number; stat: string; v: number }[];
 		econ: {
@@ -63,7 +64,9 @@ interface Core {
 			goldMax: number;
 			sell: Record<string, number>;
 			goldChance: Record<string, number>;
+			emberChance: Record<string, number>;
 		};
+		craft: { id: string }[];
 	};
 	bulwarkBarrier(ch: Char, sl: number): number;
 	describe(item: Item): { name: string; lines: unknown[] };
@@ -859,5 +862,141 @@ describe('HOLLOW SUN gold and passive skills = Game Design Bible', () => {
 		town.gold = 620;
 		expect(HSim.invCommand(town, { pay: 500 })).toBe(true);
 		expect(town.gold).toBe(120);
+	});
+});
+
+describe('HOLLOW SUN forge (Brannoc) = Game Design Bible', () => {
+	const { HS, HSim } = loadAll();
+	type Forge = SimState & {
+		gold: number;
+		cur: Record<string, number>;
+		events: { t: string; why?: string; gain?: Record<string, number> }[];
+	};
+	const town = (gold = 2000, cur: Record<string, number> = { ember: 20, dust: 30 }) =>
+		HSim.create({
+			mode: 'act1',
+			zone: 'a1_cinderhold#2',
+			seed: 'forge',
+			gold,
+			cur,
+			char: { level: 8, xp: 0, alloc: {} },
+		}) as Forge;
+	const affs = (it: Item | undefined): [string, number, number][] =>
+		(it?.affixes ?? []) as [string, number, number][];
+	const item = (rar: string, seed = 'f') =>
+		Object.assign(HS.genItem(HS.rng(seed), 8, 'ak', rar), { ilvl: 8 });
+
+	it('costs follow G.CRAFT_COST and the Act I smith operations are exported', () => {
+		expect(HS.D.craft.map((c) => c.id)).toEqual([
+			'cr_salvage',
+			'cr_reforge_m',
+			'cr_imbue',
+			'cr_reforge_r',
+			'cr_temper',
+			'cr_unravel',
+		]);
+		for (const row of fixtures.progress.craftCost) {
+			const L = row.ilvl;
+			expect(HS.CRAFT_COST.cr_reforge_m?.(L)).toEqual(row.reforge_m);
+			expect(HS.CRAFT_COST.cr_imbue?.(L)).toEqual(row.imbue);
+			row.reforge_r.forEach((c, n) =>
+				expect(HS.CRAFT_COST.cr_reforge_r?.(L, [0, 1, 3][n])).toEqual(c),
+			);
+			expect(HS.CRAFT_COST.cr_temper?.(L)).toEqual(row.temper);
+			expect(HS.CRAFT_COST.cr_unravel?.(L)).toEqual(row.unravel);
+		}
+		expect(HS.D.econ.emberChance.lt_normal).toBe(0.02);
+		expect(HS.D.econ.emberChance.lt_elite).toBe(0.1);
+	});
+
+	it('the forge works only in Cinderhold and charges its price', () => {
+		const field = HSim.create({
+			mode: 'arena',
+			seed: 'f',
+			gold: 999,
+			cur: { ember: 9 },
+			char: { level: 8, xp: 0, alloc: {} },
+		}) as Forge;
+		field.gear.inv.push(item('magic'));
+		expect(HSim.invCommand(field, { craft: 'cr_reforge_m', inv: 0 })).toBe(false);
+		const s = town(100, { ember: 2 });
+		s.gear.inv.push(item('magic'));
+		expect(HSim.invCommand(s, { craft: 'cr_reforge_m', inv: 0 })).toBe(false); // 3 Ember needed
+		expect(s.events.at(-1)?.why).toBe('cost');
+		s.cur.ember = 3;
+		const before = JSON.stringify(s.gear.inv[0]);
+		expect(HSim.invCommand(s, { craft: 'cr_reforge_m', inv: 0 })).toBe(true);
+		expect(s.cur.ember).toBe(0);
+		expect(s.gold).toBe(100 - 5 * 8);
+		const after = s.gear.inv[0];
+		expect(after?.rar).toBe('magic');
+		expect(affs(after).length).toBeGreaterThanOrEqual(1);
+		expect(affs(after).length).toBeLessThanOrEqual(2);
+		expect(JSON.stringify(after)).not.toBe(before);
+	});
+
+	it('salvage, imbue, rare reforge, temper and unravel follow the Bible rules', () => {
+		const s = town();
+		// salvage: Common 0-1 Ember, Magic 1-2 Ember, Rare 2-4 Dust; never an equipped item
+		s.gear.inv.push(item('rare', 'sv'));
+		const dust = s.cur.dust ?? 0;
+		expect(HSim.invCommand(s, { craft: 'cr_salvage', inv: s.gear.inv.length - 1 })).toBe(true);
+		const got = (s.cur.dust ?? 0) - dust;
+		expect(got).toBeGreaterThanOrEqual(2);
+		expect(got).toBeLessThanOrEqual(4);
+		expect(HSim.invCommand(s, { craft: 'cr_salvage', eq: 'main' })).toBe(false);
+		// imbue: Magic with 2 affixes becomes Rare with 3-4
+		let magic = item('magic', 'im');
+		for (let k = 0; affs(magic).length !== 2 && k < 50; k++) magic = item('magic', 'im' + k);
+		s.gear.inv.push(magic);
+		expect(HSim.invCommand(s, { craft: 'cr_imbue', inv: s.gear.inv.length - 1 })).toBe(true);
+		const imb = s.gear.inv.at(-1);
+		expect(imb?.rar).toBe('rare');
+		expect(affs(imb).length).toBeGreaterThanOrEqual(3);
+		expect(affs(imb).length).toBeLessThanOrEqual(4);
+		// rare reforge: the price grows by 15 % per earlier reforge
+		const i = s.gear.inv.length - 1;
+		const g0 = s.gold;
+		HSim.invCommand(s, { craft: 'cr_reforge_r', inv: i });
+		const g1 = s.gold;
+		HSim.invCommand(s, { craft: 'cr_reforge_r', inv: i });
+		expect(g0 - g1).toBe(Math.round(20 * 8));
+		expect(g1 - s.gold).toBe(Math.round(20 * 8 * 1.15));
+		// temper keeps the affixes and their tiers, rerolls the values
+		const ids = affs(s.gear.inv[i]).map((a) => String(a[0]) + a[1]);
+		expect(HSim.invCommand(s, { craft: 'cr_temper', inv: i })).toBe(true);
+		expect(affs(s.gear.inv[i]).map((a) => String(a[0]) + a[1])).toEqual(ids);
+		// unravel only on a Rare with at least 4 affixes, removes one
+		let r4 = item('rare', 'un');
+		for (let k = 0; affs(r4).length < 4 && k < 50; k++) r4 = item('rare', 'un' + k);
+		s.gear.inv.push(r4);
+		const n = affs(r4).length;
+		expect(HSim.invCommand(s, { craft: 'cr_unravel', inv: s.gear.inv.length - 1 })).toBe(true);
+		expect(affs(s.gear.inv.at(-1))).toHaveLength(n - 1);
+		s.gear.inv.push(item('magic', 'x'));
+		expect(HSim.invCommand(s, { craft: 'cr_unravel', inv: s.gear.inv.length - 1 })).toBe(false);
+	});
+
+	it('Ember Shards drop by the loot tables and are picked up like gold', () => {
+		const s = HSim.create({
+			mode: 'arena',
+			seed: 'ember',
+			invuln: true,
+			char: { level: 6, xp: 0, alloc: {} },
+		}) as Forge & {
+			coins: { x: number; z: number; n: number; cur?: string }[];
+		};
+		// the autopilot may walk over a shard itself; either way it ends up in the currencies
+		let ember: { x: number; z: number; n: number; cur?: string } | undefined;
+		for (let i = 0; i < 30 * 900 && !ember && !(s.cur.ember ?? 0); i++) {
+			HSim.step(s, HSim.autopilot(s));
+			ember = s.coins.find((c) => c.cur === 'ember');
+		}
+		if (ember) {
+			s.player.x = ember.x;
+			s.player.z = ember.z;
+			HSim.step(s, {});
+		}
+		expect(s.cur.ember).toBeGreaterThanOrEqual(1);
 	});
 });

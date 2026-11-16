@@ -410,6 +410,16 @@ Gold and passive skills (P1):
   Unquenched adds more damage under 35 % HP. Fire resistance from Smoldering Plate has no effect yet
   (enemy damage has no type). Respec costs `F.respecPoint` (D13: free up to L12). The character
   save keeps `passives`, cleaned to the points of its level.
+- Forge (P1): talking to Brannoc in Cinderhold opens her forge with the Bible's smith operations
+  from G.CRAFT and their prices from G.CRAFT_COST – Salvage (Common 0–1 / Magic 1–2 Ember Shard, Rare
+  2–4 Hollow Dust, Unique 10 Dust + 20 % Sunmote), Reforge Magic, Imbue (Magic with 2 affixes →
+  Rare with 3–4), Reforge Rare (price × 1.15 per earlier reforge), Temper (values within the tier)
+  and Unravel (Rare with ≥ 4 affixes loses one). Sockets, runes, Sunmote and Echo operations belong
+  to later stations. Ember Shards drop by the loot tables (`lt_normal` 2 %, `lt_caster` 3 %,
+  `lt_elite` 10 %) and the Kiln Warden drops Hollow Dust; both are picked up like gold and saved in
+  `cur`. Affixes for crafting come from `HS.addAffixes`, the same roll genItem uses, so the item
+  parity with the Bible stays. Items remember their item level (`ilvl`, set on drop); older items
+  use the character's level within their tier.
 
 Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
 and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three

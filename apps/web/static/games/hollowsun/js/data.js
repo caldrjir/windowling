@@ -362,7 +362,71 @@ window.HS_DATA = {
    "d": "Pod 35 % HP: +6 % more damage za rank."
   }
  ],
+ "craft": [
+  {
+   "id": "cr_salvage",
+   "n": "Salvage",
+   "cost": "zdarma",
+   "cond": "Jakýkoli předmět (ne questový)",
+   "prob": "100 %",
+   "res": "Common → 0–1 Ember; Magic → 1–2 Ember; Rare → 2–4 Dust; Unique → 10 Dust + 20 % šance na Sunmote",
+   "risk": "Předmět zničen (undo 1× za session z „Recently salvaged“)"
+  },
+  {
+   "id": "cr_reforge_m",
+   "n": "Reforge (Magic)",
+   "cost": "3 Ember + 5 × ilvl gold",
+   "cond": "Magic",
+   "prob": "Nové 1–2 affixy z poolu",
+   "res": "Nový Magic",
+   "risk": "Ztráta dobrých affixů"
+  },
+  {
+   "id": "cr_imbue",
+   "n": "Imbue",
+   "cost": "4 Dust + 10 × ilvl gold",
+   "cond": "Magic se 2 affixy",
+   "prob": "100 %, +1–2 affixy",
+   "res": "Rare (3–4 affixy)",
+   "risk": "Žádné"
+  },
+  {
+   "id": "cr_reforge_r",
+   "n": "Reforge (Rare)",
+   "cost": "6 Dust + 20 × ilvl × 1,15^n gold",
+   "cond": "Rare",
+   "prob": "Přerolování všech affixů; lze zamknout 1 affix (+10 Dust)",
+   "res": "Nový Rare",
+   "risk": "Rostoucí cena (n = počet reforgů tohoto předmětu)"
+  },
+  {
+   "id": "cr_temper",
+   "n": "Temper",
+   "cost": "1 Ember + 1 Dust",
+   "cond": "Magic/Rare/Unique",
+   "prob": "Přeroluje hodnoty v tieru",
+   "res": "Lepší/horší čísla",
+   "risk": "Může zhoršit"
+  },
+  {
+   "id": "cr_unravel",
+   "n": "Unravel",
+   "cost": "8 Dust",
+   "cond": "Rare se ≥ 4 affixy",
+   "prob": "Odstraní náhodný affix (s 1 zámkem cíleně za 20 Dust)",
+   "res": "Rare −1 affix",
+   "risk": "Může odstranit dobrý affix"
+  }
+ ],
  "econ": {
+  "emberChance": {
+   "lt_normal": 0.02,
+   "lt_caster": 0.03,
+   "lt_elite": 0.1,
+   "lt_rare": 0
+  },
+  "bossDust": 2,
+  "uniqueSunmote": 0.2,
   "goldMin": 2,
   "goldMax": 5,
   "sell": {

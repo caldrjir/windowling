@@ -61,15 +61,28 @@
     const rar = forceRar || rollRarity(r, 0, 'normal');
     if (rar === 'unique') { const us = L0.uniques.filter((u) => u.base === base.id && u.req <= ilvl + 3); if (us.length) { const u = r.pick(us); return { base: u.base, tier: Math.max(u.tier, tier), unique: u.id, affixes: [], rar: 'unique', q: r() }; } return genItem(r, ilvl, cls, 'rare', slot); }
     const n = rar === 'common' ? 0 : rar === 'magic' ? r.int(1, 2) : r.wpick([[3, 30], [4, 35], [5, 25], [6, 10]]);
-    const affixes = []; const used = new Set(); let pre = 0, suf = 0;
+    return { base: base.id, tier, affixes: addAffixes(r, base, ilvl, rar, n, []), rar };
+  }
+  // n dalších affixů k existujícím (skupina jen jednou; Magic 1 prefix + 1 suffix, Rare 3 + 3) – genItem i crafting u kovářky
+  function addAffixes(r, base, ilvl, rar, n, have) {
+    const affixes = have.slice(); const used = new Set(have.map((x) => get(x[0]).group)); let pre = have.filter((x) => get(x[0]).kind === 'prefix').length, suf = have.length - pre;
     for (let i = 0; i < n; i++) {
       const cand = L0.affixes.filter((a) => a.slots.includes(base.slot) && !used.has(a.group) && a.tiers.some((t) => t[0] <= ilvl) && (a.kind === 'prefix' ? pre < (rar === 'magic' ? 1 : 3) : suf < (rar === 'magic' ? 1 : 3)));
       if (!cand.length) break; const af = r.wpick(cand.map((a) => [a, a.w])); used.add(af.group); if (af.kind === 'prefix') pre++; else suf++;
       const allowed = af.tiers.map((t, idx) => [idx, t]).filter(([, t]) => t[0] <= ilvl); const ti = r.wpick(allowed.map(([idx]) => [idx, idx + 1]));
       affixes.push([af.id, ti, Math.round(r() * 100) / 100]);
     }
-    return { base: base.id, tier, affixes, rar };
+    return affixes;
   }
+  // ceny operací kovářky (G.CRAFT_COST v Bible)
+  const CRAFT_COST = {
+    cr_reforge_m: (ilvl) => ({ ember: 3, gold: 5 * ilvl }),
+    cr_imbue: (ilvl) => ({ dust: 4, gold: 10 * ilvl }),
+    cr_reforge_r: (ilvl, n) => ({ dust: 6, gold: Math.round(20 * ilvl * Math.pow(1.15, n || 0)) }),
+    cr_temper: () => ({ ember: 1, dust: 1 }),
+    cr_unravel: () => ({ dust: 8 }),
+    cr_salvage: () => ({}),
+  };
   function addMod(m, key, v) { m[key] = (m[key] || 0) + v; }
   function affixValue(a) { const af = get(a[0]); const t = af.tiers[Math.min(a[1] || 0, af.tiers.length - 1)]; return t[1] + (t[2] - t[1]) * (a[2] ?? 0.5); }
   function itemMods(inst) {
@@ -212,5 +225,5 @@
 
   // Ashen Bulwark: štít = (15 % + 1 % × úroveň skillu) Max HP (G.BARRIERS.ak_bulwark)
   const bulwarkBarrier = (ch, sl) => (0.15 + 0.01 * sl) * ch.S.hp;
-  root.HS = { D, B, F, rng, bulwarkBarrier, seedHash, get, alloc, calcChar, weaponOf, itemMods, rollRarity, genItem, starterGear, describe, refEnemy, skillBase, computeHit, skill: (id) => D.skills.find((s) => s.id === id) };
+  root.HS = { D, B, F, CRAFT_COST, addAffixes, rng, bulwarkBarrier, seedHash, get, alloc, calcChar, weaponOf, itemMods, rollRarity, genItem, starterGear, describe, refEnemy, skillBase, computeHit, skill: (id) => D.skills.find((s) => s.id === id) };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -3906,6 +3906,44 @@
 			[42, 47, 420],
 			[60, 57, 600],
 			[70, 62, 700]
+		],
+		"craftCost": [
+			{
+				"ilvl": 1,
+				"reforge_m": { "ember": 3, "gold": 5 },
+				"imbue": { "dust": 4, "gold": 10 },
+				"reforge_r": [
+					{ "dust": 6, "gold": 20 },
+					{ "dust": 6, "gold": 23 },
+					{ "dust": 6, "gold": 30 }
+				],
+				"temper": { "ember": 1, "dust": 1 },
+				"unravel": { "dust": 8 }
+			},
+			{
+				"ilvl": 6,
+				"reforge_m": { "ember": 3, "gold": 30 },
+				"imbue": { "dust": 4, "gold": 60 },
+				"reforge_r": [
+					{ "dust": 6, "gold": 120 },
+					{ "dust": 6, "gold": 138 },
+					{ "dust": 6, "gold": 183 }
+				],
+				"temper": { "ember": 1, "dust": 1 },
+				"unravel": { "dust": 8 }
+			},
+			{
+				"ilvl": 12,
+				"reforge_m": { "ember": 3, "gold": 60 },
+				"imbue": { "dust": 4, "gold": 120 },
+				"reforge_r": [
+					{ "dust": 6, "gold": 240 },
+					{ "dust": 6, "gold": 276 },
+					{ "dust": 6, "gold": 365 }
+				],
+				"temper": { "ember": 1, "dust": 1 },
+				"unravel": { "dust": 8 }
+			}
 		]
 	},
 	"boss": {

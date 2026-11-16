@@ -52,6 +52,8 @@
   /* ---------- postup postavy (P1): XP, levely, body atributů ---------- */
   const ATTRS = ['str', 'dex', 'int', 'wil', 'vit'];
   const sumAlloc = (al) => ATTRS.reduce((t, k) => t + (al[k] || 0), 0);
+  // měny kovárny: jen známé, celá nezáporná čísla
+  function sanitizeCur(c) { const out = {}; for (const k of ['ember', 'dust', 'sunmote']) out[k] = Math.max(0, Math.floor(Number((c || {})[k]) || 0)); return out; }
   function newChar(level) { const L = level || 1; return { level: L, xp: 0, alloc: level ? HS.alloc(L) : {}, points: 0, passives: {} }; }
   // pasivní dovednosti: známé id, rank ≤ max, požadovaný level, celkem nejvýš body z D04 (přebytek se zahodí v pořadí dat)
   function sanitizePassives(p, L) { const out = {}; let left = HS.F.passivePoints(L); for (const ps of HS.D.passives) { const r = Math.max(0, Math.min(ps.mx, Math.floor(Number((p || {})[ps.id]) || 0), left)); if (r && ps.req <= L) { out[ps.id] = r; left -= r; } } return out; }
@@ -118,6 +120,7 @@
     if (cmd.respecPassives) { const c = s.char; const n = passiveSpent(c); const cost = HS.F.respecPoint(s.L) * n; if (!n || s.gold < cost) return false; s.gold -= cost; c.passives = {}; refreshChar(s); s.events.push({ t: 'respec', points: n, cost }); return true; }
     // prodej u obchodníka (jen v Cinderholdu): Common 1 / Magic 3 / Rare 10 / Unique 25 × L (Bible)
     if (cmd.sell != null) { if (!s.zone || !s.zone.town) return false; const it = g.inv[cmd.sell]; if (!it) return false; const price = (HS.D.econ.sell[it.rar] || 1) * s.L; g.inv.splice(cmd.sell, 1); s.gold += price; s.events.push({ t: 'sell', item: it, gold: price }); return true; }
+    if (cmd.craft) return craft(s, cmd);
     if (cmd.pay) { if (s.gold < cmd.pay) return false; s.gold -= cmd.pay; s.events.push({ t: 'pay', gold: cmd.pay }); return true; }
     if (cmd.autoAlloc) { const c = s.char; if (c.points <= 0) return false; const pr = HS.D.cls.primary; const a = Math.round((c.points * 2) / 3); c.alloc[pr] = (c.alloc[pr] || 0) + a; c.alloc.vit = (c.alloc.vit || 0) + c.points - a; c.points = 0; refreshChar(s); s.events.push({ t: 'alloc', attr: 'auto' }); return true; }
     return false;
@@ -132,14 +135,57 @@
     if (rar !== 'unique' && s.sinceU >= HS.B.pityUnique && rar === 'rare') rar = 'unique';
     if (rar === 'unique') s.sinceU = 0;
     const item = HS.genItem(r, e.L, HS.D.cls.id, rar);
-    const d = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(d);
+    item.ilvl = e.L; const d = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(d);
     s.events.push({ t: 'drop', id: d.id, x: d.x, z: d.z, rar: item.rar });
+  }
+  /* ---------- kovárna Brannoc (G.CRAFT): jen v Cinderholdu, na předmět v batohu nebo nasazený ---------- */
+  // item level: uložený při dropu; u starších předmětů level postavy omezený rozsahem tieru předmětu (Bible počítá ceny i affixy z ilvl)
+  const ilvlOf = (s, it) => { if (it.ilvl) return it.ilvl; const T = HS.B.tierReqLevel; const t = it.tier || 0; return Math.max(T[t] || 1, Math.min(s.L, (T[t + 1] || 999) - 1)); };
+  function craftCheck(s, op, it) {
+    if (!it) return 'item'; if (it.quest) return 'quest';
+    const nA = (it.affixes || []).length;
+    if (op === 'cr_salvage') return null;
+    if (op === 'cr_reforge_m') return it.rar === 'magic' ? null : 'rar';
+    if (op === 'cr_imbue') return it.rar === 'magic' && nA === 2 ? null : 'rar';
+    if (op === 'cr_reforge_r') return it.rar === 'rare' ? null : 'rar';
+    if (op === 'cr_temper') return ['magic', 'rare', 'unique'].includes(it.rar) ? null : 'rar';
+    if (op === 'cr_unravel') return it.rar === 'rare' && nA >= 4 ? null : 'rar';
+    return 'op';
+  }
+  function craftCost(s, op, it) { const f = HS.CRAFT_COST[op]; return f ? f(ilvlOf(s, it), it.reforged || 0) : null; }
+  function craft(s, cmd) {
+    const g = s.gear; const op = cmd.craft; const fail = (why) => { s.events.push({ t: 'craftfail', op, why }); return false; };
+    if (!s.zone || !s.zone.town) return fail('town');
+    const it = cmd.eq ? g.eq[cmd.eq] : g.inv[cmd.inv]; const bad = craftCheck(s, op, it); if (bad) return fail(bad);
+    if (op === 'cr_salvage' && cmd.eq) return fail('equipped');
+    const cost = craftCost(s, op, it); const have = { gold: s.gold, ember: s.cur.ember || 0, dust: s.cur.dust || 0 };
+    for (const k in cost) if ((have[k] || 0) < cost[k]) return fail('cost');
+    for (const k in cost) { if (k === 'gold') s.gold -= cost[k]; else s.cur[k] -= cost[k]; }
+    const r = HS.rng(s.seed + '#craft#' + s.craftN++); const base = HS.get(it.base); const L = ilvlOf(s, it); const before = JSON.parse(JSON.stringify(it)); let gain = null;
+    if (op === 'cr_salvage') {
+      // Common 0–1 Ember, Magic 1–2 Ember, Rare 2–4 Dust, Unique 10 Dust + 20 % Sunmote
+      gain = it.rar === 'common' ? { ember: r.int(0, 1) } : it.rar === 'magic' ? { ember: r.int(1, 2) } : it.rar === 'rare' ? { dust: r.int(2, 4) } : { dust: 10, sunmote: r() < HS.D.econ.uniqueSunmote ? 1 : 0 };
+      for (const k in gain) s.cur[k] = (s.cur[k] || 0) + gain[k]; g.inv.splice(cmd.inv, 1);
+    } else if (op === 'cr_reforge_m') it.affixes = HS.addAffixes(r, base, L, 'magic', r.int(1, 2), []);
+    else if (op === 'cr_imbue') { it.affixes = HS.addAffixes(r, base, L, 'rare', r.int(1, 2), it.affixes); it.rar = 'rare'; }
+    else if (op === 'cr_reforge_r') { it.affixes = HS.addAffixes(r, base, L, 'rare', Math.max(3, it.affixes.length), []); it.reforged = (it.reforged || 0) + 1; }
+    else if (op === 'cr_temper') { if (it.rar === 'unique') it.q = Math.round(r() * 100) / 100; else it.affixes = it.affixes.map((a) => [a[0], a[1], Math.round(r() * 100) / 100]); }
+    else if (op === 'cr_unravel') it.affixes.splice(r.int(0, it.affixes.length - 1), 1);
+    if (cmd.eq) refreshChar(s);
+    s.events.push({ t: 'craft', op, before, item: op === 'cr_salvage' ? null : it, cost, gain });
+    return true;
   }
   // gold z loot tabulky nepřítele (lt_normal 6 %, lt_elite 20 %, lt_rare 50 %), 2–5 × L; vlastní RNG podle id nepřítele
   function dropGold(s, e, amount) {
     if (!s.loot || s.mode === 'bench') return; const E = HS.D.econ; let n = amount || 0;
     if (!n) { const r = HS.rng(s.seed + '#gold#' + e.id); const lt = e.elite ? 'lt_elite' : e.def.lt in E.goldChance ? e.def.lt : 'lt_normal'; if (r() >= E.goldChance[lt]) return; n = r.int(E.goldMin, E.goldMax) * e.L; }
     const c = { id: s.nextId++, x: e.x + 0.4, z: e.z - 0.3, n }; s.coins.push(c); s.events.push({ t: 'coins', id: c.id, x: c.x, z: c.z, n });
+  }
+  // Ember Shard z loot tabulky (lt_normal 2 %, lt_caster 3 %, lt_elite 10 %), 1 kus; boss: Hollow Dust (G.BAL.econ.boss.dust)
+  function dropCurrency(s, e, cur, n) {
+    if (!s.loot || s.mode === 'bench') return; const E = HS.D.econ;
+    if (!cur) { const r = HS.rng(s.seed + '#ember#' + e.id); const lt = e.elite ? 'lt_elite' : e.def.lt in E.emberChance ? e.def.lt : 'lt_normal'; if (r() >= E.emberChance[lt]) return; cur = 'ember'; n = 1; }
+    const c = { id: s.nextId++, x: e.x - 0.4, z: e.z + 0.3, n, cur }; s.coins.push(c); s.events.push({ t: 'coins', id: c.id, x: c.x, z: c.z, n, cur });
   }
   // uložená výbava: jen známé báze a sloty, nejvýš INV_MAX předmětů; bez zbraně výchozí palcát
   function sanitizeGear(g, L) {
@@ -175,7 +221,7 @@
     const gear = sanitizeGear(opts.gear, L);
     const s = {
       L, char, progress: !fixed, ch: null, skills, gear, seed: String(opts.seed || 'hollow-p0'), rnd: rng(opts.seed || 'hollow-p0'), t: 0, tick: 0, mode: opts.mode || 'arena', wave: 0, kills: 0, over: false, nextId: 1,
-      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss', 'act1'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [], coins: [], gold: Math.max(0, Math.floor(Number(opts.gold) || 0)),
+      loot: opts.loot != null ? !!opts.loot : ['arena', 'boss', 'act1'].includes(opts.mode || 'arena'), proj: [], lootN: 0, sinceU: opts.sinceU || 0, drops: [], coins: [], gold: Math.max(0, Math.floor(Number(opts.gold) || 0)), cur: sanitizeCur(opts.cur), craftN: 0,
       player: null, enemies: [], pillars: PILLARS, events: [], stats: { hits: 0, crits: 0, dmg: 0, taken: 0, dodged: 0, casts: {}, items: 0 },
     };
     refreshChar(s);
@@ -336,8 +382,8 @@
   }
   function kill(s, e) {
     if (e.dead) return; e.dead = true; s.kills++; s.events.push({ t: 'death', id: e.id, x: e.x, z: e.z, type: e.type });
-    if (s.boss && e.id === s.boss.id) { bossLoot(s, e); dropGold(s, e, HS.D.econ.bossGold * e.L); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
-    if (!e.noLoot) { rollDrop(s, e); dropGold(s, e); } if (!e.summoned) gainXp(s, e); // vyvolaní Thrallové bez XP: v průchodu kampaní je jinak šlo farmit (L10 → 13 ve Velké peci)
+    if (s.boss && e.id === s.boss.id) { bossLoot(s, e); dropGold(s, e, HS.D.econ.bossGold * e.L); dropCurrency(s, e, 'dust', HS.D.econ.bossDust); gainXp(s, e, BOSS.xpMul); if (s.bossKills === 0 && HS.D.bossQuest) grantXp(s, HS.D.bossQuest.xp, e); s.bossKills++; s.won = true; s.boss.act = null; s.events.push({ t: 'victory', time: s.boss.t, phase: s.boss.phase }); for (const w of s.enemies) if (!w.dead && w.type === 'en_wisp') { w.dead = true; } return; }
+    if (!e.noLoot) { rollDrop(s, e); dropGold(s, e); dropCurrency(s, e); } if (!e.summoned) gainXp(s, e); // vyvolaní Thrallové bez XP: v průchodu kampaní je jinak šlo farmit (L10 → 13 ve Velké peci)
     // šampion Tollgate (q1_03, volba souboje): odměna Rare zbraň (Bible)
     if (e.champion) { const item = HS.genItem(HS.rng(s.seed + '#champion'), e.L, HS.D.cls.id, 'rare', 'main'); const dd = { id: s.nextId++, x: e.x, z: e.z, item }; s.drops.push(dd); s.events.push({ t: 'drop', id: dd.id, x: dd.x, z: dd.z, rar: item.rar }); s.events.push({ t: 'champion', id: e.id, x: e.x, z: e.z }); }
     // Rusty Gallows Key: 4 % ze Smoldering Brute v kampani, jednou (vlastní RNG podle id, nemění ostatní hody)
@@ -618,7 +664,7 @@
     const e = spawn(s, 'en_brute', x, z, L, true); e.awake = true; e.champion = true; s.events.push({ t: 'champspawn', id: e.id, x, z }); return e;
   }
   // gold se sbírá sám, když hráč projde kolem (1,6 m)
-  function updateCoins(s) { const p = s.player; s.coins = s.coins.filter((c) => { if (len(c.x - p.x, c.z - p.z) > 1.6) return true; s.gold += c.n; s.events.push({ t: 'gold', id: c.id, n: c.n, x: c.x, z: c.z, total: s.gold }); return false; }); }
+  function updateCoins(s) { const p = s.player; s.coins = s.coins.filter((c) => { if (len(c.x - p.x, c.z - p.z) > 1.6) return true; if (c.cur) { s.cur[c.cur] = (s.cur[c.cur] || 0) + c.n; s.events.push({ t: 'currency', id: c.id, cur: c.cur, n: c.n, x: c.x, z: c.z }); return false; } s.gold += c.n; s.events.push({ t: 'gold', id: c.id, n: c.n, x: c.x, z: c.z, total: s.gold }); return false; }); }
   function step(s, inp) {
     s.events.length = 0; if (s.over) return s;
     s.tick++; s.t += TICK;
@@ -697,5 +743,5 @@
     }
     return inp;
   }
-  root.HSim = { sanitizePassives, passiveSpent, champion, updateZone, TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
+  root.HSim = { craftCheck, craftCost, sanitizeCur, sanitizePassives, passiveSpent, champion, updateZone, TICK, ARENA, PLAYER_R, DODGE, EQ_SLOTS, INV_MAX, ATTRS, create, step, autopilot, rng, invCommand, canEquip, slotFor, equipped, defaultGear, sanitizeGear, sanitizeChar, newChar, migrateSave, monsterLevel };
 })(typeof window !== 'undefined' ? window : globalThis);
