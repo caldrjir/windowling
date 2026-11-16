@@ -154,7 +154,7 @@ function onKey(e) {
   }
   if (st === 'menu' && code === 'Escape') {
     if (UI.overlayOpen()) { UI.hideOverlay(); return; }
-    if (UI.current && UI.current !== 'menu') { Sound.play.back(); UI.show('menu'); }
+    if (UI.current && UI.current !== 'menu') { Sound.play.back(); UI.show(UI.current === 'prio' ? 'settings' : 'menu'); }
   }
 }
 

@@ -52,6 +52,10 @@ if (LANG === 'en') (() => {
     ['Emerald Void', 'Living matter that splits and multiplies. Speed is everything.'],
     ['Golden Horizon', 'The edge of the event horizon. Bullets fly from every side.'],
     ['Heart of the Void', 'The end of everything. No one has ever come back.'],
+    ['Meteor Storm', 'Meteors streak through a belt of wreckage. A warning line shows their path: dodge, or let one crush the horde.'],
+    ['Monoculture', 'A single kind of enemy, in enormous numbers. Every two and a half minutes the void switches to another.'],
+    ['Event Horizon', 'A wandering black hole pulls you in and creeps after you. Enemies it swallows are crushed.'],
+    ['Darkness', 'Light reaches only a little way around the ship. What lies beyond, you learn when it hits you.'],
   ];
   SECTORS.forEach((s, i) => { s.name = S[i][0]; s.desc = S[i][1]; });
   const PL = {
@@ -76,6 +80,11 @@ if (LANG === 'en') (() => {
     dashblast: ['Shock Dash', 'Your dash hits enemies in its path for 15% of their health (bosses 1.5%)'], loot: ['Rich Loot', '+1 item in every chest'],
     secondwind: ['Second Wind', 'A revive restores full health and gives 5 s of invulnerability'], evomaster: ['Evolution Master', 'Weapons evolve at level 7 already'],
     cards: ['Wide Choice', 'One more card on every level-up'], pslot: ['Passive Slot', '+1 passive slot (7 instead of 6)'], wslot: ['Arsenal', '+1 weapon slot (7 instead of 6)'],
+    dashcd: ['Quick Recharge', '−12% dash recharge time'], medkit: ['Med Kit', 'Hearts heal 10 more'], bounty: ['Elite Hunter', '+25% shards from elites, bosses and chests'],
+    kit: ['Loadout', 'Every run starts with a random passive'], bossbane: ['Giant Slayer', '+10% damage to bosses and elites'],
+    execute: ['Executioner', 'Regular enemies below 5% health (per level) die at once'], ocstart: ['Head-start Evolution', 'An evolved weapon starts one ★ higher'],
+    deepmut: ['Deep Mutation', 'Every mutation cap +5'], gravwave: ['Gravity Wave', 'Every 40 s pulls in all crystals and shards on the map'],
+    voidwill: ['Will of the Void', 'In endless mode enemies grow 25% slower'], fan: ['Fan of Cards', 'One more card on every level-up'],
   };
   for (const f of FORGE) { f.name = F[f.id][0]; f.desc = F[f.id][1]; }
   const A = {
@@ -93,6 +102,10 @@ if (LANG === 'en') (() => {
     rich: ['Collector', 'Collect 5,000 shards in total.'], forge1: ['Blacksmith', 'Buy your first upgrade in the Forge.'], forgeAll: ['Master Smith', 'Buy 50 upgrade levels in the Forge.'],
     arsenal: ['Arsenal', 'Hold 6 weapons at once in a single run.'], untouch: ['Untouchable', 'Go 3 minutes straight without getting hit.'],
     massacre: ['Massacre', 'Destroy 250 enemies within 10 seconds.'], clean: ['Not a Scratch', 'Defeat a boss without getting hit during the fight.'],
+    clear6: ['Through the Stone Storm', 'Complete Sector VI.'], clear7: ['One Kind Is Not Enough', 'Complete Sector VII.'],
+    clear8: ['Escape the Horizon', 'Complete Sector VIII.'], clear9: ['Light in the Dark', 'Complete Sector IX.'],
+    sectorsAll: ['Lord of All Sectors', 'Complete all 9 sectors.'], meteorKills: ['Rockslide', 'Let meteors and the black hole destroy 300 enemies.'],
+    voidAll: ['Void Smith', 'Buy the whole Void Workshop.'],
     runs10: ['Veteran', 'Play 10 runs.'], runs50: ['Legend', 'Play 50 runs.'], dash500: ['Acrobat', 'Dash 500 times.'], pilots: ['Full Squadron', 'Unlock all pilots.'],
   };
   for (const a of ACHIEVEMENTS) { a.name = A[a.id][0]; a.desc = A[a.id][1]; }

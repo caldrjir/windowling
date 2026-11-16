@@ -124,14 +124,45 @@ const Sprites = (() => {
     });
   }
 
-  function gem(color, r) {
-    return get(`gem|${color}|${r}`, () => {
-      const [c, x] = canvasFor(r + 10);
-      x.shadowColor = color; x.shadowBlur = 10;
-      x.beginPath(); x.moveTo(0, -r); x.lineTo(r * 0.7, 0); x.lineTo(0, r); x.lineTo(-r * 0.7, 0); x.closePath();
+  // Krystal: kosočtverec, slitý shluk (dva krystaly), šestiboký krystal nebo hvězda (čím víc jich splynulo).
+  function crystalPath(x, r, shape) {
+    x.beginPath();
+    if (shape === 'h') for (let i = 0; i < 6; i++) { const a = i * TAU / 6 - Math.PI / 2, q = i % 3 === 0 ? 1 : 0.82; x[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r * q, Math.sin(a) * r); }
+    else if (shape === 's') for (let i = 0; i < 10; i++) { const a = i * TAU / 10 - Math.PI / 2, q = i % 2 ? 0.45 : 1; x[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r * q, Math.sin(a) * r * q); }
+    else { x.moveTo(0, -r); x.lineTo(r * 0.7, 0); x.lineTo(0, r); x.lineTo(-r * 0.7, 0); }
+    x.closePath();
+  }
+  function gem(color, r, shape = 'd') {
+    return get(`gem|${color}|${r}|${shape}`, () => {
+      const [c, x] = canvasFor(r + 12);
+      x.shadowColor = color; x.shadowBlur = shape === 'd' ? 10 : 14;
+      if (shape === 'c') {
+        // shluk: menší krystal za větším, mírně natočený
+        x.save(); x.translate(-r * 0.45, r * 0.15); x.rotate(-0.5); crystalPath(x, r * 0.7, 'd');
+        x.fillStyle = rgba(color, 0.4); x.fill(); x.strokeStyle = color; x.lineWidth = 1.4; x.stroke(); x.restore();
+        x.save(); x.translate(r * 0.2, 0); crystalPath(x, r, 'd');
+      } else { x.save(); crystalPath(x, r, shape); }
       x.fillStyle = rgba(color, 0.55); x.fill(); x.strokeStyle = color; x.lineWidth = 1.6; x.stroke();
       x.beginPath(); x.moveTo(0, -r * 0.5); x.lineTo(r * 0.3, 0); x.lineTo(0, r * 0.1); x.closePath();
       x.fillStyle = 'rgba(255,255,255,0.85)'; x.fill();
+      x.restore();
+      return c;
+    });
+  }
+  // Střep podle toho, kolik jich splynulo: fialový kosočtverec, dvojitý, šestiboký, zlatá hvězda.
+  function shard(tier) {
+    return get(`shard|${tier}`, () => {
+      const col = ['#e08bff', '#b47bff', '#ff7ae6', '#ffe08a'][tier], r = [11, 12, 13.5, 15][tier];
+      const [c, x] = canvasFor(r + 14);
+      x.lineJoin = 'round'; x.shadowColor = col; x.shadowBlur = 14 + tier * 3; x.strokeStyle = col; x.lineWidth = 2.4; x.fillStyle = rgba(col, 0.3);
+      if (tier === 0 || tier === 1) {
+        if (tier === 1) { x.save(); x.translate(-5, 2); x.rotate(-0.45); x.beginPath(); x.moveTo(0, -8); x.lineTo(5, -1.5); x.lineTo(0, 8); x.lineTo(-5, -1.5); x.closePath(); x.fill(); x.stroke(); x.restore(); x.translate(3, 0); }
+        x.beginPath(); x.moveTo(0, -r); x.lineTo(r * 0.64, -2); x.lineTo(0, r); x.lineTo(-r * 0.64, -2); x.closePath(); x.fill(); x.stroke();
+        x.beginPath(); x.moveTo(-r * 0.64, -2); x.lineTo(r * 0.64, -2); x.stroke();
+      } else {
+        crystalPath(x, r, tier === 2 ? 'h' : 's'); x.fillStyle = rgba(col, 0.38); x.fill(); x.stroke();
+        x.fillStyle = 'rgba(255,255,255,0.8)'; x.beginPath(); x.arc(0, 0, r * 0.22, 0, TAU); x.fill();
+      }
       return c;
     });
   }
@@ -174,14 +205,17 @@ const Sprites = (() => {
     });
   }
 
-  return { enemy, boss, bossCore, ship, drawShip, glow, boom, blade, gem, pickup, path, clear: () => cache.clear() };
+  return { enemy, boss, bossCore, ship, drawShip, glow, boom, blade, gem, shard, pickup, path, clear: () => cache.clear() };
 })();
 
 // ── Renderer ────────────────────────────────────────────────────────────────
 const Render = (() => {
   let cv, ctx, W = 1280, H = 720, dpr = 1, zoom = 1, k = 1, ox = 0, oy = 0;
   let bg = null, bgKey = '', vign = null, stars = [];
-  const GEM_COL = v => v < 2.5 ? ['#4cc9f0', 5] : v < 8 ? ['#06ffa5', 6] : v < 30 ? ['#ff4fd8', 7.5] : ['#ffd166', 9.5];
+  const GEM_COL = v => v < 2.5 ? ['#4cc9f0', 5] : v < 8 ? ['#06ffa5', 6] : v < 30 ? ['#ff4fd8', 7.5] : v < 120 ? ['#ffd166', 9.5] : v < 500 ? ['#ff8a5c', 10.5] : ['#ffffff', 11.5];
+  // tvar podle počtu slitých krystalů (a střepů)
+  const GEM_SHAPE = n => (n >= 20 ? 's' : n >= 6 ? 'h' : n >= 2 ? 'c' : 'd');
+  const SHARD_TIER = n => (n >= 20 ? 3 : n >= 6 ? 2 : n >= 2 ? 1 : 0);
 
   function init(canvas) {
     cv = canvas; ctx = cv.getContext('2d');
@@ -345,11 +379,23 @@ const Render = (() => {
       }
     }
 
+    // anomálie: černá díra a varovné čáry meteoritů (pod předměty a nepřáteli)
+    if (G.well) drawWell(G.well);
+    if (G.meteors) for (const m of G.meteors) if (m.warn > 0) {
+      world();
+      const q = 1 - m.warn / 1.3, pulse = 0.35 + 0.35 * ((m.warn * 6) % 1);
+      ctx.strokeStyle = `rgba(255,90,40,${(0.18 + 0.4 * q) * pulse * 2})`; ctx.lineWidth = m.r * 2 * (0.4 + 0.6 * q);
+      ctx.setLineDash([26, 18]); ctx.lineDashOffset = -G.time * 220;
+      ctx.beginPath(); ctx.moveTo(m.sx, m.sy); ctx.lineTo(m.sx + Math.cos(m.a) * m.len, m.sy + Math.sin(m.a) * m.len); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     // předměty
     for (const pk of G.pickups) {
       if (!inView(pk.x, pk.y, 20)) continue;
       const bob = Math.sin(pk.t * 4) * 2;
-      if (pk.kind === 'gem') { const [c, r] = GEM_COL(pk.val); spr(Sprites.gem(c, r), pk.x, pk.y + bob, 0); }
+      if (pk.kind === 'gem') { const [c, r] = GEM_COL(pk.val); spr(Sprites.gem(c, r, GEM_SHAPE(pk.n || 1)), pk.x, pk.y + bob, 0); }
+      else if (pk.kind === 'shard') spr(Sprites.shard(SHARD_TIER(pk.n || 1)), pk.x, pk.y + bob, 0);
       else if (pk.kind === 'chest') {
         ctx.globalCompositeOperation = 'lighter';
         spr(Sprites.glow('#ffd166', 16), pk.x, pk.y, 0, 1 + Math.sin(pk.t * 5) * 0.15, 0.5);
@@ -468,6 +514,21 @@ const Render = (() => {
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
 
+    // meteority v letu
+    if (G.meteors) for (const m of G.meteors) if (m.warn <= 0 && inView(m.x, m.y, 60)) {
+      ctx.globalCompositeOperation = 'lighter';
+      spr(Sprites.glow('#ff7a1a', 24), m.x, m.y, 0, m.r / 14, 0.8);
+      ctx.globalCompositeOperation = 'source-over';
+      world();
+      ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.rot);
+      ctx.fillStyle = '#5a3a2a'; ctx.strokeStyle = '#ffb36b'; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let i = 0; i < 9; i++) { const a = i * TAU / 9, q = 0.78 + 0.22 * Math.sin(i * 2.7); ctx[i ? 'lineTo' : 'moveTo'](Math.cos(a) * m.r * q, Math.sin(a) * m.r * q); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,190,110,0.5)'; ctx.beginPath(); ctx.arc(-m.r * 0.25, -m.r * 0.2, m.r * 0.22, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+
     // čísla poškození
     world();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -488,6 +549,7 @@ const Render = (() => {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const pointers = [];
     if (G.boss) pointers.push([G.boss.x, G.boss.y, G.boss.color, 14]);
+    if (G.well) pointers.push([G.well.x, G.well.y, '#c58bff', 13]);
     for (const pk of G.pickups) if (pk.kind === 'chest') pointers.push([pk.x, pk.y, '#ffd166', 10]);
     for (const [x, y, col, sz] of pointers) {
       const sx = (x - G.cam.x) * zoom + W / 2, sy = (y - G.cam.y) * zoom + H / 2;
@@ -500,6 +562,7 @@ const Render = (() => {
       ctx.restore();
     }
 
+    if (sec.dark) drawDark(p);
     // vinětace a záblesky
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(vign, 0, 0, cv.width, cv.height);
@@ -511,6 +574,43 @@ const Render = (() => {
       ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
     }
     if (G.flash > 0.01) { ctx.fillStyle = `rgba(255,255,255,${G.flash * 0.35})`; ctx.fillRect(0, 0, cv.width, cv.height); }
+  }
+
+  // Bloudící černá díra: tmavý vír s akrečním prstencem a slabým okrajem dosahu.
+  function drawWell(w) {
+    if (!inView(w.x, w.y, w.r * 4)) return;
+    world();
+    const t = w.t, R = w.r * 3.4;
+    const g = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, R);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(w.r / R, 'rgba(6,0,16,0.97)'); g.addColorStop(0.55, 'rgba(123,60,255,0.18)'); g.addColorStop(1, 'rgba(123,60,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(w.x, w.y, R, 0, TAU); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeStyle = rgba(i % 2 ? '#ff4fd8' : '#c58bff', 0.5 - i * 0.08); ctx.lineWidth = 3 - i * 0.5;
+      const rr = w.r * (1.08 + i * 0.32), a0 = t * (2.4 - i * 0.4) + i * 1.7;
+      ctx.beginPath(); ctx.ellipse(w.x, w.y, rr, rr * 0.92, 0, a0, a0 + 2.6); ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = 'rgba(255,79,216,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, TAU); ctx.stroke();
+  }
+  // Temnota: světlo jen kolem lodi; za ním z nepřátel svítí jen slabé oči.
+  function drawDark(p) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const sx = ((p.x - G.cam.x) * zoom + W / 2) * dpr, sy = ((p.y - G.cam.y) * zoom + H / 2) * dpr;
+    const r0 = 150 * zoom * dpr, r1 = 330 * zoom * dpr;
+    const g = ctx.createRadialGradient(sx, sy, r0, sx, sy, r1);
+    g.addColorStop(0, 'rgba(0,0,4,0)'); g.addColorStop(0.55, 'rgba(0,0,4,0.75)'); g.addColorStop(1, 'rgba(0,0,4,0.95)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+    world();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const e of G.enemies) {
+      if (!inView(e.x, e.y, e.r) || d2(e.x, e.y, p.x, p.y) < 260 * 260) continue;
+      const a = e.boss ? 0.7 : 0.35, s = Math.max(1.6, e.r * 0.16);
+      ctx.fillStyle = rgba(e.boss ? '#ff4d5e' : e.color, a);
+      ctx.beginPath(); ctx.arc(e.x - s * 1.6, e.y - s * 0.4, s, 0, TAU); ctx.arc(e.x + s * 1.6, e.y - s * 0.4, s, 0, TAU); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   // ── Pozadí menu (atraktivní ukázka) ───────────────────────────────────────

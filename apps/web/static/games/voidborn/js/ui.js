@@ -58,7 +58,7 @@ const UI = (() => {
   const hc = {};
 
   const pips = (n, max, cls = '') => `<div class="pips ${cls}">${Array.from({ length: max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
-  const topbar = (small, title, extra = '') => `<div class="topbar"><button class="back" data-go="menu" title="${L('Zpět', 'Back')} (Esc)">←</button><h2><small>${small}</small>${title}</h2><div class="spacer"></div>${extra}<div class="chip shard">${icon('shard')} ${fmtNum(SAVE.shards)}</div></div>`;
+  const topbar = (small, title, extra = '', back = 'menu') => `<div class="topbar"><button class="back" data-go="${back}" title="${L('Zpět', 'Back')} (Esc)">←</button><h2><small>${small}</small>${title}</h2><div class="spacer"></div>${extra}<div class="chip shard">${icon('shard')} ${fmtNum(SAVE.shards)}</div></div>`;
   const langSwitch = () => `<div class="lang">${['cs', 'en'].map(l => `<button class="${l === LANG ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`;
 
   // ── Obrazovky ─────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ const UI = (() => {
       const S = SAVE.stats;
       const cleared = SECTORS.filter(s => SAVE.sectors[s.id] && SAVE.sectors[s.id].cleared).length;
       const achN = Object.keys(SAVE.achievements).length;
-      const canBuy = FORGE.some(f => (f.tier !== 2 || masterOpen()) && (SAVE.forge[f.id] || 0) < f.max && SAVE.shards >= forgeCost(f, SAVE.forge[f.id] || 0));
+      const canBuy = FORGE.some(f => forgeOpen(f) && (SAVE.forge[f.id] || 0) < f.max && SAVE.shards >= forgeCost(f, SAVE.forge[f.id] || 0));
       const prog = (achN / ACHIEVEMENTS.length + cleared / SECTORS.length) / 2;
       el.innerHTML = `
         <div class="menu-left">
@@ -128,18 +128,13 @@ const UI = (() => {
             <div class="role">${pl.role}</div>
             <h3>${pl.name}</h3>
             <p>${pl.desc}</p>
-            <div class="perk">${icon(wid ? WEAPONS[wid].icon : 'luck')}<div><small>${L('Startovní zbraň', 'Starting weapon')}</small>${wid ? WEAPONS[wid].name : L('Náhodná', 'Random')}</div></div>
+            <div class="perk">${icon(wid ? WEAPONS[wid].icon : 'luck')}<div><small>${L('Startovní zbraň · evoluce zaručena', 'Starting weapon · evolution guaranteed')}</small>${wid ? WEAPONS[wid].name : L('Náhodná', 'Random')}</div></div>
             <div class="perk">${icon('star')}<div><small>${L('Schopnost', 'Perk')}</small>${pl.perk}</div></div>
           </div>
         </div>
-        <div class="sectors">${SECTORS.map((s, i) => {
-          const un = sectorUnlocked(i), r = SAVE.sectors[s.id];
-          return `<button class="sector ${un ? '' : 'locked'} ${i === hs.sector ? 'sel' : ''}" data-sector="${i}" style="--s1:${s.bg[0]};--s2:${s.bg[1]};--a:${s.accent}">
-            <div class="rn">${s.roman}</div><div class="sn">${un ? s.name : L('Neznámý sektor', 'Unknown sector')}</div>
-            <div class="sx">${un ? `${L('Odolnost', 'Toughness')} ×${s.hp} · ${L('Střepy', 'Shards')} ×${s.shards}` : L('Dokonči předchozí sektor', 'Clear the previous sector')}</div>
-            ${r && r.cleared ? `<div class="done">${icon('trophy')}</div>` : ''}
-          </button>`;
-        }).join('')}</div>
+        <div class="sectors">${SECTORS.slice(0, BASE_SECTORS).map((s, i) => sectorCard(s, i)).join('')}</div>
+        <div class="anom-head">${icon('meteor')}<div><h3>${L('ANOMÁLIE', 'ANOMALIES')}</h3><p>${L('Sektory s vlastním pravidlem. Každý otevře dobytí jednoho z hlavních sektorů.', 'Sectors with a rule of their own. Each one opens once you clear one of the main sectors.')}</p></div></div>
+        <div class="sectors anom">${SECTORS.slice(BASE_SECTORS).map((s, j) => sectorCard(s, BASE_SECTORS + j)).join('')}</div>
         <div class="launch">
           <div class="sdesc"><b>${L('Sektor', 'Sector')} ${sec.roman} · ${sec.name}</b>${sec.desc}<br>${L('Nejlepší čas', 'Best time')}: ${fmtTime(rec ? rec.best || 0 : 0)} · ${L('Cíl: přežij 15:00 a poraz Monarchu', 'Goal: survive 15:00 and defeat the Monarch')}</div>
           <div class="od">
@@ -155,11 +150,12 @@ const UI = (() => {
     },
 
     forge(el) {
+      const vopen = voidOpen();
       const spent = FORGE.reduce((s, f) => { let c = 0; for (let l = 0; l < (SAVE.forge[f.id] || 0); l++) c += forgeCost(f, l); return s + c; }, 0);
       const open = masterOpen();
       const card = (f, locked) => {
         const l = SAVE.forge[f.id] || 0, maxed = l >= f.max, cost = maxed ? 0 : forgeCost(f, l);
-        return `<div class="fcard ${maxed ? 'maxed' : ''} ${f.tier === 2 ? 'master' : ''} ${locked ? 'locked' : ''}" id="fc-${f.id}">
+        return `<div class="fcard ${maxed ? 'maxed' : ''} ${f.tier === 2 ? 'master' : f.tier === 3 ? 'master void' : ''} ${locked ? 'locked' : ''}" id="fc-${f.id}">
           <div class="fi">${icon(f.icon)}<div><h4>${f.name}</h4><p>${f.desc}</p></div></div>
           ${pips(l, f.max)}
           <button class="btn buy ${maxed ? 'ghost' : ''}" data-buy="${f.id}" ${locked || maxed || SAVE.shards < cost ? 'disabled' : ''}>${locked ? `${icon('lock')} ${fmtNum(cost)}` : maxed ? L('Maximum', 'Maxed') : `${icon('shard')} ${fmtNum(cost)}`}</button>
@@ -167,9 +163,11 @@ const UI = (() => {
       };
       el.innerHTML = `
         ${topbar(L('TRVALÁ VYLEPŠENÍ', 'PERMANENT UPGRADES'), L('KOVÁRNA', 'FORGE'), spent ? `<button class="btn ghost" data-act="refund">${icon('reroll')} ${L('Vrátit vše', 'Refund all')}</button>` : '')}
-        <div class="grid-cards">${FORGE.filter(f => f.tier !== 2).map(f => card(f, false)).join('')}</div>
+        <div class="grid-cards">${FORGE.filter(f => !f.tier).map(f => card(f, false)).join('')}</div>
         <div class="master-head ${open ? '' : 'locked'}">${icon(open ? 'forge' : 'lock')}<div><h3>${L('MISTROVSKÁ DÍLNA', 'MASTER WORKSHOP')}</h3><p>${open ? L('Silnější a dražší vylepšení pro zkušené piloty.', 'Stronger, pricier upgrades for seasoned pilots.') : L('Otevře se po dobytí Sektoru II.', 'Opens once you clear Sector II.')}</p></div></div>
-        <div class="grid-cards">${FORGE.filter(f => f.tier === 2).map(f => card(f, !open)).join('')}</div>`;
+        <div class="grid-cards">${FORGE.filter(f => f.tier === 2).map(f => card(f, !open)).join('')}</div>
+        <div class="master-head void ${vopen ? '' : 'locked'}">${icon(vopen ? 'vortex' : 'lock')}<div><h3>${L('PRÁZDNOTOVÁ DÍLNA', 'VOID WORKSHOP')}</h3><p>${vopen ? L('Vylepšení pro konec hry a nekonečný režim.', 'Upgrades for the end game and endless mode.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
+        <div class="grid-cards">${FORGE.filter(f => f.tier === 3).map(f => card(f, !vopen)).join('')}</div>`;
     },
 
     ach(el) {
@@ -207,7 +205,7 @@ const UI = (() => {
       else if (codexTab === 'evos') body = BASE_WEAPONS.map(id => {
         const b = WEAPONS[id], e = WEAPONS[b.evo], got = SAVE.evolutions[b.evo];
         return `<div class="fcard cx ${got ? '' : 'unknown'}" style="--c:${e.color}"><div class="fi">${icon(e.icon)}<div><h4>${got ? e.name : '???'}</h4><p>${got ? e.desc : L('Neobjevená evoluce.', 'Undiscovered evolution.')}</p></div></div>
-          <div class="recipe">${SAVE.seen[id] ? b.name : '???'} (${L('úr.', 'lv.')} 8) + ${got ? PASSIVES[b.evoWith].name : '???'}</div></div>`;
+          <div class="recipe">${SAVE.seen[id] ? b.name : '???'} (${L('úr.', 'lv.')} 8) + ${got ? PASSIVES[b.evoWith].name : '???'}${got ? `<br><small>${L('Startovní zbraň pilota se vyvine i bez doplňku.', 'A pilot’s starting weapon evolves even without the passive.')}</small>` : ''}</div></div>`;
       }).join('');
       else body = Object.entries(ENEMIES).filter(([k]) => k !== 'mini').map(([k, d]) => {
         const names = ENEMY_NAMES[k];
@@ -223,6 +221,17 @@ const UI = (() => {
       });
     },
 
+    // Pořadí priorit pro automatický výběr karet: šipkami nahoru a dolů.
+    prio(el) {
+      const order = prioList(SAVE.settings.prio);
+      el.innerHTML = `${topbar(L('AUTOMATICKÝ VÝBĚR', 'AUTO-PICK'), L('PRIORITY', 'PRIORITIES'), `<button class="btn ghost" data-prio="reset">${icon('reroll')} ${L('Výchozí', 'Default')}</button>`, 'settings')}
+        <div class="settings prio">
+          <div class="row"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu vyhraje karta, která je v tomhle pořadí nejvýš. Startovní zbraň a klíč k evoluci jsou zvlášť, takže je můžeš upřednostnit před ostatními.', 'On level-up the card highest in this order wins. The starting weapon and evolution keys are separate entries, so you can put them before everything else.')}</small></label><button class="toggle ${SAVE.settings.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
+          <ol class="prio-list">${order.map((k, i) => { const f = prioInfo(k); return `<li style="--c:${f.color}" class="${f.locked ? 'locked' : ''}"><b class="pn">${i + 1}</b>${icon(f.icon)}<span>${f.name}${f.sub ? `<small>${f.sub}</small>` : ''}</span>
+            <button class="pa" data-prio="up:${i}" ${i === 0 ? 'disabled' : ''} aria-label="${L('Výš', 'Up')}">▲</button><button class="pa" data-prio="down:${i}" ${i === order.length - 1 ? 'disabled' : ''} aria-label="${L('Níž', 'Down')}">▼</button></li>`; }).join('')}</ol>
+        </div>`;
+    },
+
     settings(el) {
       const s = SAVE.settings;
       el.innerHTML = `${topbar(L('KONFIGURACE', 'CONFIGURATION'), L('NASTAVENÍ', 'SETTINGS'))}
@@ -231,6 +240,7 @@ const UI = (() => {
           <div class="row"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
           <div class="row"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
           ${window.GCMusic ? `<div class="row"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}
+          <div class="row"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu se hra nezastaví: vybere kartu nejvýš v pořadí priorit', 'Level-ups no longer pause: the card highest in your priority order is picked')}</small></label><button class="btn" data-go="prio">${icon('auto')} ${L('Priority', 'Priorities')}</button><button class="toggle ${s.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
           <div class="row"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
           <div class="row"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
           <div class="row"><label>${L('Počítadlo FPS', 'FPS counter')}</label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>
@@ -246,6 +256,17 @@ const UI = (() => {
         </div>`;
     },
   };
+
+  const SECTOR_RULE = s => (s.meteors ? L('Meteority', 'Meteors') : s.mono ? L('Jediný druh', 'One kind only') : s.well ? L('Černá díra', 'Black hole') : s.dark ? L('Tma', 'Darkness') : '');
+  function sectorCard(s, i) {
+    const un = sectorUnlocked(i), r = SAVE.sectors[s.id], req = SECTORS.find(x => x.id === sectorReq(i));
+    const rule = SECTOR_RULE(s);
+    return `<button class="sector ${un ? '' : 'locked'} ${i === hs.sector ? 'sel' : ''}" data-sector="${i}" style="--s1:${s.bg[0]};--s2:${s.bg[1]};--a:${s.accent}">
+      <div class="rn">${s.roman}</div><div class="sn">${un ? s.name : L('Neznámý sektor', 'Unknown sector')}</div>
+      <div class="sx">${un ? `${rule ? `<b class="rule">${rule}</b> · ` : ''}${L('Odolnost', 'Toughness')} ×${s.hp} · ${L('Střepy', 'Shards')} ×${s.shards}` : s.req ? L(`Dokonči Sektor ${req.roman}`, `Clear Sector ${req.roman}`) : L('Dokonči předchozí sektor', 'Clear the previous sector')}</div>
+      ${r && r.cleared ? `<div class="done">${icon('trophy')}</div>` : ''}
+    </button>`;
+  }
 
   function show(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -273,7 +294,7 @@ const UI = (() => {
       if (!b) lastHover = null;
     });
     document.addEventListener('click', e => {
-      const t = e.target.closest('[data-go],[data-pilot],[data-sector],[data-od],[data-buy],[data-tab],[data-tog],[data-act],[data-pick],[data-lang],#startBtn,#pauseBtn');
+      const t = e.target.closest('[data-go],[data-pilot],[data-sector],[data-od],[data-buy],[data-tab],[data-tog],[data-act],[data-pick],[data-lang],[data-prio],#startBtn,#pauseBtn');
       if (!t) return;
       if (t.blur) t.blur();
       const ds = t.dataset;
@@ -299,6 +320,8 @@ const UI = (() => {
         Game.togglePause();
       } else if (ds.buy) {
         buy(ds.buy);
+      } else if (ds.prio) {
+        movePrio(ds.prio);
       } else if (ds.tab) {
         codexTab = ds.tab; Sound.play.click(); rerender();
       } else if (ds.tog) {
@@ -338,7 +361,7 @@ const UI = (() => {
 
   function buy(id) {
     const f = FORGE.find(f => f.id === id), l = SAVE.forge[id] || 0;
-    if (l >= f.max || (f.tier === 2 && !masterOpen())) return;
+    if (l >= f.max || !forgeOpen(f)) return;
     const cost = forgeCost(f, l);
     if (SAVE.shards < cost) { Sound.play.error(); return; }
     SAVE.shards -= cost;
@@ -393,11 +416,42 @@ const UI = (() => {
     }).join('');
   }
 
+  function prioInfo(k) {
+    if (k === 'evo') return { name: L('Evoluce', 'Evolution'), icon: 'star', color: '#ffd166', sub: L('Zbraň se změní ve svou evoluci', 'A weapon turns into its evolution') };
+    if (k === 'start') return { name: L('Startovní zbraň', 'Starting weapon'), icon: 'rocket', color: '#55f6ff', sub: L('Vylepšení zbraně, se kterou pilot začíná', 'Upgrades for the weapon the pilot starts with') };
+    if (k === 'catalyst') return { name: L('Klíč k evoluci', 'Evolution key'), icon: 'growth', color: '#5dffa8', sub: L('Doplněk, který některé tvé zbrani chybí k evoluci', 'A passive one of your weapons still needs to evolve') };
+    if (k === 'oc') return { name: L('Přetížení evoluce ★', 'Evolution overcharge ★'), icon: 'overcharge', color: '#ffd166' };
+    if (k === 'mut') return { name: L('Mutace', 'Mutations'), icon: 'mutation', color: '#5dffa8' };
+    if (k === 'heal') return { name: L('Nanoopravy', 'Nano-repair'), icon: 'heal', color: '#5dffa8', sub: L('Jen při nízkém zdraví', 'Only at low health') };
+    if (k === 'gold') return { name: L('Hromádka střepů', 'Shard pile'), icon: 'shard', color: '#e08bff' };
+    const [t, id] = k.split(':'), d = t === 'w' ? WEAPONS[id] : PASSIVES[id], open = unlocked(d);
+    return { name: open ? d.name : '???', icon: d.icon, color: d.color, sub: t === 'w' ? L('Zbraň', 'Weapon') : L('Doplněk', 'Passive'), locked: !open };
+  }
+  // Automatický výběr: krátce ukáže, co se vybralo (nad lodí).
+  function autoPicked(list) {
+    list.slice(-3).forEach((c, i) => {
+      const f = choiceInfo(c);
+      addText(G.p.x, G.p.y - 40 - i * 18, '▲ ' + f.name + (f.badge && f.badge !== 'Bonus' ? ' · ' + f.badge : ''), f.color, 14, 1.6);
+    });
+    if (list.length > 3) addText(G.p.x, G.p.y - 40 - 3 * 18, L(`a ${list.length - 3} další`, `and ${list.length - 3} more`), '#ffffff', 12, 1.6);
+  }
+  function movePrio(arg) {
+    let order = prioList(SAVE.settings.prio);
+    if (arg === 'reset') order = PRIO_DEFAULT.slice();
+    else {
+      const [dir, si] = arg.split(':'), i = +si, j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= order.length) return;
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    SAVE.settings.prio = order; persist(); Sound.play.click(); rerender();
+  }
+
   function choiceInfo(c) {
     const lvl = L('Úroveň ', 'Level '), nw = L('Nové', 'New');
     if (c.kind === 'weapon') {
       const d = WEAPONS[c.id];
-      return { name: d.name, color: d.color, icon: d.icon, badge: c.isNew ? nw : lvl + c.lvl, isNew: c.isNew, desc: c.isNew ? d.desc : d.up[c.lvl - 2][1], type: L('Zbraň', 'Weapon'), lvl: c.lvl, max: 8 };
+      const start = c.id === G.startWeapon;
+      return { name: d.name, color: d.color, icon: d.icon, badge: c.isNew ? nw : lvl + c.lvl, isNew: c.isNew, desc: c.isNew ? d.desc : d.up[c.lvl - 2][1], type: L('Zbraň', 'Weapon') + (start ? L(' · startovní, evoluce zaručena', ' · starting, evolution guaranteed') : ''), lvl: c.lvl, max: 8 };
     }
     if (c.kind === 'passive') {
       const d = PASSIVES[c.id], after = calcStats(G.pilot, SAVE.forge, Object.assign({}, G.passives, { [c.id]: c.lvl }), G.mut);
@@ -409,7 +463,7 @@ const UI = (() => {
     }
     if (c.kind === 'mut') {
       const d = MUTATIONS[c.id], after = calcStats(G.pilot, SAVE.forge, G.passives, Object.assign({}, G.mut, { [c.id]: c.lvl }));
-      return { name: d.name, color: d.color, icon: 'mutation', badge: L('Mutace ', 'Mutation ') + c.lvl + ' / ' + MUT_MAX, desc: d.desc, stat: statLines(d.mod, after), type: L('Mutace', 'Mutation') };
+      return { name: d.name, color: d.color, icon: 'mutation', badge: L('Mutace ', 'Mutation ') + c.lvl + ' / ' + G.st.mutMax, desc: d.desc, stat: statLines(d.mod, after), type: L('Mutace', 'Mutation') };
     }
     if (c.kind === 'evo') {
       const d = WEAPONS[c.id];
@@ -476,7 +530,7 @@ const UI = (() => {
       const d = PASSIVES[id];
       return `<div class="build-item" style="--c:${d.color}">${icon(d.icon)}<span>${d.name}</span>${pips(l, d.max)}</div>`;
     }).join('');
-    const m = Object.entries(G.mut).map(([id, l]) => `<div class="build-item" style="--c:${MUTATIONS[id].color}">${icon('mutation')}<span>${MUTATIONS[id].name}</span><b style="margin-left:auto">${l} / ${MUT_MAX}</b></div>`).join('');
+    const m = Object.entries(G.mut).map(([id, l]) => `<div class="build-item" style="--c:${MUTATIONS[id].color}">${icon('mutation')}<span>${MUTATIONS[id].name}</span><b style="margin-left:auto">${l} / ${G.st.mutMax}</b></div>`).join('');
     return `<h4>${L('Zbraně', 'Weapons')} <small>${G.weapons.length} / ${G.st.wSlots}</small></h4><div class="build-list">${w}</div><h4>${L('Doplňky', 'Passives')} <small>${Object.keys(G.passives).length} / ${G.st.pSlots}</small></h4><div class="build-list">${p || `<span class="sum">${L('Zatím žádné', 'None yet')}</span>`}</div>${m ? `<h4>${L('Mutace', 'Mutations')}</h4><div class="build-list">${m}</div>` : ''}`;
   }
 
@@ -503,6 +557,8 @@ const UI = (() => {
             <span>${L('Oživení', 'Revives')}</span><b>${G.revives}${s.reviveFull ? L(' (plné zdraví)', ' (full health)') : ''}</b>
             <span>${L('Přehození / Přeskočení', 'Rerolls / Skips')}</span><b>${G.rerolls} / ${G.skips}</b>
           </div>
+          <h4>${L('Karty', 'Cards')}</h4>
+          <div class="kv"><span>${L('Automatický výběr podle priorit', 'Auto-pick by priority')}</span><button class="toggle ${SAVE.settings.autoPick ? 'on' : ''}" data-act="auto"></button></div>
           <h4>${L('Zvuk', 'Audio')}</h4>
           <div class="kv"><span>${L('Efekty', 'Effects')}</span><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.sfx}" data-vol="sfx"><span>${L('Hudba', 'Music')}</span><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.music}" data-vol="music"></div>
         </div>
@@ -512,6 +568,7 @@ const UI = (() => {
         <button class="btn danger" data-act="quit">${L('Opustit misi', 'Abandon mission')}</button>
       </div></div>`, {
       resume: () => Game.togglePause(),
+      auto: () => { SAVE.settings.autoPick = !SAVE.settings.autoPick; persist(); Sound.play.click(); showPause(); },
       quit: () => confirm(L('Opustit misi?', 'Abandon the mission?'), L('Nasbírané střepy si ponecháš, ale běh skončí.', 'You keep the shards you collected, but the run ends.'), () => { hideOverlay(); endRun('quit'); }),
       __restore: () => showPause(),
     });
@@ -556,13 +613,13 @@ const UI = (() => {
   }
 
   function showVictory() {
-    const next = G.firstClear && G.si < SECTORS.length - 1;
+    const opened = G.firstClear ? unlockedBy(G.sector.id) : [], next = opened.length > 0;
     overlay(`<div class="ov">
       <div class="ov-title title-win">${L('SEKTOR DOBYT', 'SECTOR CLEARED')}</div>
       <div class="ov-sub">${L('Monarcha prázdnoty padl', 'The Void Monarch has fallen')}</div>
       <div class="ov-panel" style="max-width:560px;margin:30px auto;text-align:center">
         <div class="big-shards" style="justify-content:center">${icon('shard')} +${G.clearBonus}</div>
-        <p class="sum" style="margin-top:12px;line-height:1.6">${next ? L(`Odemčen <b style="color:var(--gold)">Sektor ${SECTORS[G.si + 1].roman}</b> a `, `Unlocked <b style="color:var(--gold)">Sector ${SECTORS[G.si + 1].roman}</b> and `) : ''}${G.od < MAX_OD ? L(`Overdrive ${G.od + 1} pro tento sektor.`, `Overdrive ${G.od + 1} for this sector.`) : L('Dosáhl jsi maximálního Overdrive.', 'You reached the maximum Overdrive.')}<br>${L('V nekonečném režimu můžeš pokračovat a sbírat další střepy — prázdnota ale poroste každou minutou.', 'You can keep going in endless mode and collect more shards — but the void grows stronger every minute.')}</p>
+        <p class="sum" style="margin-top:12px;line-height:1.6">${next ? L(`Odemčen <b style="color:var(--gold)">${opened.map(s => 'Sektor ' + s.roman).join(' a ')}</b> a `, `Unlocked <b style="color:var(--gold)">${opened.map(s => 'Sector ' + s.roman).join(' and ')}</b> and `) : ''}${G.od < MAX_OD ? L(`Overdrive ${G.od + 1} pro tento sektor.`, `Overdrive ${G.od + 1} for this sector.`) : L('Dosáhl jsi maximálního Overdrive.', 'You reached the maximum Overdrive.')}<br>${L('V nekonečném režimu můžeš pokračovat a sbírat další střepy — prázdnota ale poroste každou minutou.', 'You can keep going in endless mode and collect more shards — but the void grows stronger every minute.')}</p>
       </div>
       <div class="ov-actions">
         <button class="btn primary" data-act="endless">${icon('wave')} ${L('Pokračovat do nekonečna', 'Continue into endless')}</button>
@@ -597,7 +654,7 @@ const UI = (() => {
     set('sectorTag', 'text', `${L('SEKTOR', 'SECTOR')} ${G.sector.roman} · OD ${G.od}${G.endless ? ' · ∞' : ''}`);
     set('killStat', 'html', `${icon('skull')} ${fmtNum(G.kills)}`);
     set('shardStat', 'html', `${icon('shard')} ${fmtNum(G.shards)}`);
-    const re = Math.round(p.dashRe / 2.6 * 20);
+    const re = Math.round(p.dashRe / s.dashCd * 20);
     set('dashPips', 'html', Array.from({ length: s.dashMax }, (_, i) => i < p.dashCharges ? '<i class="on"></i>' : i === p.dashCharges ? `<i><b style="width:${re * 5}%"></b></i>` : '<i></i>').join(''));
     // co dřív v běhu vidět nebylo: zbývající oživení, štít, pancíř a regenerace
     const chips = [];
@@ -605,6 +662,8 @@ const UI = (() => {
     if (s.shieldCd) chips.push(`<span class="hc sh ${p.shieldOn ? 'on' : ''}" title="${L('Energetický štít', 'Energy shield')}">${icon('shield')}${p.shieldOn ? '' : `<b>${Math.ceil(p.shieldT)}s</b>`}</span>`);
     if (s.armor) chips.push(`<span class="hc ar" title="${L('Pancíř: méně přijatého zranění', 'Armor: less damage taken')}">${icon('armor')}<b>−${pct(1 - armorFactor(s.armor))}${L(' %', '%')}</b></span>`);
     if (s.regen) chips.push(`<span class="hc rg" title="${L('Regenerace zdraví za sekundu', 'Health regen per second')}">${icon('regen')}<b>+${s.regen.toFixed(1)}</b></span>`);
+    if (SAVE.settings.autoPick) chips.push(`<span class="hc au" title="${L('Automatický výběr karet', 'Auto-pick cards')}">${icon('auto')}<b>AUTO</b></span>`);
+    if (G.sector.mono && G.monoType) chips.push(`<span class="hc mo" title="${L('Monokultura: teď jen tento druh', 'Monoculture: only this kind for now')}">${icon('skull')}<b>${ENEMY_NAMES[G.monoType][0]}</b></span>`);
     set('hudChips', 'html', chips.join(''));
     if (G.boss) set('bossFill', 'w', Math.max(0, G.boss.hp / G.boss.maxHp * 100).toFixed(1) + '%');
     set('fps', 'text', SAVE.settings.fps ? fps + ' FPS · ' + G.enemies.length + L(' nepřátel', ' enemies') : '');
@@ -645,6 +704,6 @@ const UI = (() => {
     init, show, rerender, get current() { return current; }, overlayOpen, hideOverlay, confirm,
     showLevelUp, moveFocus, get focusIdx() { return focusIdx; }, get openedAt() { return openedAt; },
     showChest, showPause, showGameOver, showVictory, act: k => { const fn = actions[k]; if (fn) fn(); },
-    hudShow, hudUpdate, refreshLoadout, bossBar, banner, toast, hs,
+    hudShow, hudUpdate, refreshLoadout, bossBar, banner, toast, hs, autoPicked,
   };
 })();

@@ -16,7 +16,7 @@ const minutes = () => G.time / 60;
 const hpMul = () => { const m = minutes(); return (1 + m * 0.3 + m * m * 0.014) * G.sector.hp * (1 + G.od * 0.25); };
 // Za hranicí 15 minut (nekonečno) sílí i zásahy nepřátel, ať běh jednou skončí.
 const endlessMin = () => Math.max(0, G.time - RUN_LENGTH) / 60;
-const dmgMul = () => (1 + minutes() * 0.045) * G.sector.dmg * (1 + G.od * 0.1) * (1 + endlessMin() * 0.1);
+const dmgMul = () => (1 + minutes() * 0.045) * G.sector.dmg * (1 + G.od * 0.1) * (1 + endlessMin() * 0.1 * (1 - G.st.voidWill));
 const spdMul = () => (1 + Math.min(minutes(), 20) * 0.012) * (1 + G.od * 0.03);
 // V nekonečnu střepů postupně ubývá (po 30 minutách navíc už jen čtvrtina): jinak šlo za jeden
 // dlouhý běh vyfarmit víc, než stojí celá Kovárna.
@@ -32,6 +32,7 @@ function calcStats(pilot, forge, passives, mut) {
     maxHp: 0, regen: 0, armor: 0, speed: 0, might: 0, area: 0, dur: 0, projSpd: 0, amount: 0, magnet: 0, luck: 0, growth: 0,
     greed: 0, crit: 0, critDmg: 0, revives: 0, rerolls: 0, skips: 0, dashMax: 0, shield: 0, startLvl: 0, cards: 0, wSlots: 0,
     pSlots: 0, chestItems: 0, reviveFull: 0, evoLvl: 0, dashDmg: 0,
+    dashCd: 0, heartHeal: 0, bounty: 0, kit: 0, bossDmg: 0, execute: 0, ocStart: 0, mutMax: 0, gravWave: 0, voidWill: 0,
   };
   let cd = 1;
   const add = (m, mult = 1) => {
@@ -51,6 +52,8 @@ function calcStats(pilot, forge, passives, mut) {
     critMul: 2 + b.critDmg, revives: b.revives, rerolls: b.rerolls, skips: b.skips, dashMax: 1 + b.dashMax,
     shieldCd: shieldCd(b.shield), startLvl: b.startLvl, cards: b.cards, wSlots: BASE_SLOTS + b.wSlots, pSlots: BASE_SLOTS + b.pSlots,
     chestItems: b.chestItems, reviveFull: b.reviveFull > 0, evoLvl: 8 - Math.min(1, b.evoLvl), dashDmg: b.dashDmg,
+    dashCd: 2.6 * Math.max(0.4, 1 - b.dashCd), heartHeal: 30 + b.heartHeal, bounty: 1 + b.bounty, kit: b.kit, bossDmg: 1 + b.bossDmg,
+    execute: Math.min(0.3, b.execute), ocStart: Math.min(OC_MAX, b.ocStart), mutMax: MUT_MAX + b.mutMax, gravWave: b.gravWave > 0, voidWill: Math.min(0.75, b.voidWill),
   };
 }
 
@@ -105,6 +108,7 @@ function newRun(pilotId, si, od) {
     shake: 0, flash: 0, hurtFlash: 0, killTimes: [], noHit: 0, bossClean: true, newAch: [], endless: false,
     victory: false, gemCount: 0, gemCombo: 0, lastGemT: -9, dyingT: 0, hitsTaken: 0, evolvedRun: [],
     clearBonus: 0, choices: null, statTick: 0, ended: false, victoryT: 0, firstClear: false,
+    startWeapon: null, mergeT: 0, gravT: 40, nextMeteor: 7, monoType: null, nextMono: MONO_PERIOD, well: null, wellHurt: 0,
   });
   G.p = { x: 0, y: 0, vx: 0, vy: 0, r: 12, face: -Math.PI / 2, hp: 100, inv: 2, dashT: 0, dvx: 0, dvy: 0, dashCharges: 1, dashRe: 0, tilt: 0, shieldOn: false, shieldT: 0, dashHit: null };
   computeStats();
@@ -113,7 +117,15 @@ function newRun(pilotId, si, od) {
   G.revives = G.st.revives;
   G.rerolls = 1 + G.st.rerolls;
   G.skips = 1 + G.st.skips;
-  addWeapon(pilot.weapon === 'random' ? pick(BASE_WEAPONS.filter(id => unlocked(WEAPONS[id]))) : pilot.weapon, 1 + G.st.startLvl);
+  // Startovní zbraň pilota se vyvine vždy, i bez doplňku-katalyzátoru (upgradePool).
+  G.startWeapon = pilot.weapon === 'random' ? pick(BASE_WEAPONS.filter(id => unlocked(WEAPONS[id]))) : pilot.weapon;
+  addWeapon(G.startWeapon, 1 + G.st.startLvl);
+  // Výbava z Kovárny: náhodný doplněk na první úrovni.
+  if (G.st.kit) {
+    const ids = Object.keys(PASSIVES).filter(id => unlocked(PASSIVES[id]) && !PASSIVES[id].rare);
+    if (ids.length) applyChoice({ kind: 'passive', id: pick(ids), lvl: 1, isNew: true });
+  }
+  sectorStart();
   G.cam.x = 0; G.cam.y = 0;
   G.state = 'play';
   SAVE.lastPilot = pilot.id; SAVE.lastSector = si; SAVE.lastOd = od;
@@ -158,7 +170,10 @@ function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false, forceCrit = false
   if (e.dead) return;
   const crit = forceCrit || Math.random() < G.st.crit;
   if (crit) dmg *= G.st.critMul;
+  if (e.boss || e.elite) dmg *= G.st.bossDmg;
   e.hp -= dmg;
+  // Popravčí: běžný nepřítel pod prahem zdraví rovnou padne.
+  if (G.st.execute && !e.boss && !e.elite && e.hp > 0 && e.hp < e.maxHp * G.st.execute) e.hp = 0;
   e.flash = 0.09;
   G.dmgBy[src] = (G.dmgBy[src] || 0) + dmg;
   if (!e.boss) {
@@ -191,7 +206,7 @@ function killEnemy(e) {
   const L = G.st.luck;
   if (e.elite) {
     G.pickups.push(mkPickup('chest', e.x, e.y));
-    for (let i = 0; i < 6; i++) dropPickup('shard', e.x, e.y, 2 * shardMul());
+    for (let i = 0; i < 6; i++) dropPickup('shard', e.x, e.y, 2 * shardMul() * G.st.bounty);
   } else {
     const r = Math.random();
     if (r < 0.011 * L) dropPickup('shard', e.x, e.y, shardMul());
@@ -240,7 +255,27 @@ function shoot(o) {
 // ── Sběratelné předměty ─────────────────────────────────────────────────────
 function mkPickup(kind, x, y, val = 0) {
   const a = Math.random() * TAU, s = rand(40, 130);
-  return { kind, x, y, val, vx: Math.cos(a) * s, vy: Math.sin(a) * s, mag: false, sp: 0, t: Math.random() * 3, dead: false };
+  return { kind, x, y, val, n: 1, age: 0, vx: Math.cos(a) * s, vy: Math.sin(a) * s, mag: false, sp: 0, t: Math.random() * 3, dead: false };
+}
+// Krystaly a střepy, které leží blízko sebe, se potichu slijí do jednoho s jejich součtem
+// (a jiným tvarem a barvou podle velikosti). Méně předmětů na mapě, stejná hodnota.
+const MERGE_R = 30, _cells = new Map();
+function mergePickups() {
+  _cells.clear();
+  const R2 = MERGE_R * MERGE_R;
+  for (const pk of G.pickups) {
+    if (pk.dead || pk.mag || pk.age < 0.35 || (pk.kind !== 'gem' && pk.kind !== 'shard')) continue;
+    const cx = Math.floor(pk.x / MERGE_R), cy = Math.floor(pk.y / MERGE_R), sh = pk.kind === 'shard' ? 1 : 0;
+    let into = null;
+    for (let ix = cx - 1; ix <= cx + 1 && !into; ix++) for (let iy = cy - 1; iy <= cy + 1 && !into; iy++) {
+      const list = _cells.get((ix * 92837111) ^ (iy * 689287499) ^ sh);
+      if (list) for (const o of list) if (!o.dead && o.kind === pk.kind && d2(o.x, o.y, pk.x, pk.y) < R2) { into = o; break; }
+    }
+    if (into) { into.val += pk.val; into.n += pk.n; pk.dead = true; continue; }
+    const key = (cx * 92837111) ^ (cy * 689287499) ^ sh;
+    const list = _cells.get(key);
+    if (list) list.push(pk); else _cells.set(key, [pk]);
+  }
 }
 function dropPickup(kind, x, y, val = 0) {
   const cap = PICKUP_CAP[kind];
@@ -279,7 +314,7 @@ function collect(pk) {
       break;
     }
     case 'heart': {
-      const h = Math.min(G.st.maxHp - p.hp, 30);
+      const h = Math.min(G.st.maxHp - p.hp, G.st.heartHeal);
       p.hp += h; Sound.play.heal();
       addText(p.x, p.y - 24, '+' + Math.round(h), '#5dffa8', 18);
       burst(p.x, p.y, '#5dffa8', 14, 180);
@@ -369,7 +404,7 @@ function updatePlayer(dt) {
   }
   if (p.dashCharges < G.st.dashMax) {
     p.dashRe += dt;
-    if (p.dashRe >= 2.6) { p.dashRe = 0; p.dashCharges++; }
+    if (p.dashRe >= G.st.dashCd) { p.dashRe = 0; p.dashCharges++; }
   } else p.dashRe = 0;
 
   if (p.dashT > 0) {
@@ -416,6 +451,7 @@ function updatePlayer(dt) {
 
 // ── Režisér vln ─────────────────────────────────────────────────────────────
 function currentPool() {
+  if (G.sector.mono && G.monoType) return { [G.monoType]: 1 };
   const m = minutes();
   let base = WAVES[0][1];
   for (const w of WAVES) if (m >= w[0]) base = w[1];
@@ -468,8 +504,10 @@ function director(dt) {
     G.nextBossT = G.bossIdx < BOSS_TIMES.length ? BOSS_TIMES[G.bossIdx] : (G.endless ? G.nextBossT + 300 : Infinity);
   }
   if (G.state !== 'play') return;
+  sectorTick(dt);
   // běžný přísun
-  const rate = (1.1 + t / 60 * 0.95) * S.spawn * (1 + G.od * 0.08) * (G.boss ? 0.4 : 1) * (G.endless ? 1 + (t - RUN_LENGTH) / 300 : 1);
+  const rate = (1.1 + t / 60 * 0.95) * S.spawn * (1 + G.od * 0.08) * (G.boss ? 0.4 : 1) * (G.endless ? 1 + (t - RUN_LENGTH) / 300 * (1 - G.st.voidWill) : 1)
+    * (S.mono && G.monoType ? MONO_TYPES[G.monoType] : 1);
   const cap = Math.min(G.endless ? 460 : 400, 110 + t * 0.4);
   G.spawnAcc += rate * dt;
   const pool = currentPool();
@@ -492,7 +530,7 @@ function spawnEvent(pool) {
   const kind = pick(m < 3 ? ['ring', 'horde'] : ['ring', 'horde', 'stream']);
   if (kind === 'ring') {
     const n = Math.floor(22 + m * 3), R = G.viewR * 0.62;
-    const type = m < 4 ? 'swarmer' : pick(['swarmer', 'drone', 'wisp', 'mini']);
+    const type = G.sector.mono && G.monoType ? G.monoType : m < 4 ? 'swarmer' : pick(['swarmer', 'drone', 'wisp', 'mini']);
     for (let i = 0; i < n; i++) { const a = i / n * TAU; spawnEnemyAt(type, p.x + Math.cos(a) * R, p.y + Math.sin(a) * R); }
     UI.banner(L('OBKLÍČENÍ', 'SURROUNDED'), L('Prorazte kruh!', 'Break the circle!'), 'warn');
   } else if (kind === 'horde') {
@@ -503,10 +541,102 @@ function spawnEvent(pool) {
     const a = Math.random() * TAU, n = Math.floor(30 + m * 3);
     for (let i = 0; i < n; i++) {
       const off = rand(-G.viewR, G.viewR), back = G.viewR * 0.9 + rand(0, 300);
-      const e = spawnEnemyAt('wisp', p.x - Math.cos(a) * back - Math.sin(a) * off, p.y - Math.sin(a) * back + Math.cos(a) * off);
+      const e = spawnEnemyAt(G.sector.mono && G.monoType ? G.monoType : 'wisp', p.x - Math.cos(a) * back - Math.sin(a) * off, p.y - Math.sin(a) * back + Math.cos(a) * off);
       e.stream = a;
     }
     UI.banner(L('PROUD', 'STREAM'), L('Roj přilétá z jedné strany', 'A swarm incoming from one side'), 'warn');
+  }
+}
+
+// ── Anomálie sektorů (VI–IX) ────────────────────────────────────────────────
+function sectorStart() {
+  const S = G.sector;
+  G.meteors = []; G.monoShown = false;
+  if (S.mono) G.monoType = pick(Object.keys(MONO_TYPES));
+  if (S.well) { const a = Math.random() * TAU; G.well = { x: Math.cos(a) * 760, y: Math.sin(a) * 760, r: 74, R: 1500, t: 0, hurt: 0 }; }
+}
+function monoBanner() { UI.banner(L('MONOKULTURA', 'MONOCULTURE'), L('Teď jen: ', 'Now only: ') + ENEMY_NAMES[G.monoType][0], 'warn'); }
+function sectorTick(dt) {
+  const S = G.sector;
+  if (S.mono) {
+    if (!G.monoShown && G.time > 1.2) { G.monoShown = true; monoBanner(); }
+    if (G.time >= G.nextMono) {
+      G.nextMono += MONO_PERIOD;
+      G.monoType = pick(Object.keys(MONO_TYPES).filter(k => k !== G.monoType));
+      monoBanner();
+    }
+  }
+  if (S.meteors) {
+    G.nextMeteor -= dt;
+    if (G.nextMeteor <= 0) {
+      const m = minutes();
+      G.nextMeteor = Math.max(1.4, 5.2 - m * 0.22) * rand(0.75, 1.25);
+      const volley = m > 6 && Math.random() < 0.3 ? 3 : m > 3 && Math.random() < 0.3 ? 2 : 1;
+      const a = Math.random() * TAU, off = rand(-170, 170);
+      for (let i = 0; i < volley; i++) launchMeteor(a, off + (i - (volley - 1) / 2) * 200);
+    }
+    updateMeteors(dt);
+  }
+  if (S.well && G.well) updateWell(dt);
+}
+// Meteorit: nejdřív varovná čára přes obrazovku (kolem hráče), pak kámen proletí. Hráče zraní,
+// běžné nepřátele v cestě rozdrtí (elity a bossy jen zraní).
+function launchMeteor(a, off) {
+  const p = G.p, cx = Math.cos(a), cy = Math.sin(a), len = G.viewR + 280;
+  const mx = p.x - cy * off, my = p.y + cx * off;
+  G.meteors.push({ sx: mx - cx * len, sy: my - cy * len, x: mx - cx * len, y: my - cy * len, a, len: len * 2, warn: 1.3, d: 0, spd: 1350, r: rand(22, 32), dmg: 30 * dmgMul(), hit: false, boss: false, rot: Math.random() * TAU, done: false });
+}
+function hazardKill(e, kx, ky) {
+  if (e.boss) return;
+  if (e.elite) { hurtEnemy(e, e.maxHp * 0.25, 'hazard', kx, ky, true); return; }
+  SAVE.stats.hazardKills = (SAVE.stats.hazardKills || 0) + 1;
+  killEnemy(e);
+}
+function updateMeteors(dt) {
+  const p = G.p;
+  for (const m of G.meteors) {
+    if (m.warn > 0) { m.warn -= dt; if (m.warn <= 0) Sound.play.missile(); continue; }
+    m.d += m.spd * dt; m.rot += dt * 5;
+    m.x = m.sx + Math.cos(m.a) * m.d; m.y = m.sy + Math.sin(m.a) * m.d;
+    if (!m.hit && d2(m.x, m.y, p.x, p.y) < (m.r + p.r) * (m.r + p.r)) { m.hit = true; hurtPlayer(m.dmg, m.x, m.y); }
+    G.grid.query(m.x, m.y, m.r + G.maxR, _q);
+    for (const e of _q) {
+      if (e.dead || d2(m.x, m.y, e.x, e.y) > (m.r + e.r) * (m.r + e.r)) continue;
+      if (e.boss) { if (!m.boss) { m.boss = true; hurtEnemy(e, e.maxHp * 0.04, 'hazard', 0, 0, true); } }
+      else if (!e.mHit || e.mHit !== m) { e.mHit = m; hazardKill(e, Math.cos(m.a) * 500, Math.sin(m.a) * 500); }
+    }
+    if (G.particles.length < MAX_PARTICLES) for (let i = 0; i < 2; i++) {
+      const b = m.a + Math.PI + rand(-0.35, 0.35);
+      G.particles.push({ x: m.x, y: m.y, vx: Math.cos(b) * rand(80, 260), vy: Math.sin(b) * rand(80, 260), life: 0.5, max: 0.5, size: rand(3, 6), color: i ? '#ffcf6b' : '#ff7a1a', drag: 2 });
+    }
+    if (m.d >= m.len) m.done = true;
+  }
+  if (G.meteors.some(m => m.done)) G.meteors = G.meteors.filter(m => !m.done);
+}
+// Bloudící černá díra: táhne hráče i nepřátele, plíží se za hráčem; jádro pálí hráče a drtí nepřátele.
+function updateWell(dt) {
+  const w = G.well, p = G.p;
+  w.t += dt;
+  const dx = p.x - w.x, dy = p.y - w.y, d = Math.hypot(dx, dy) || 1;
+  const crawl = 32 + minutes() * 2.2;
+  w.x += dx / d * crawl * dt; w.y += dy / d * crawl * dt;
+  if (d < w.R && p.dashT <= 0) {
+    const f = 150 * Math.pow(1 - d / w.R, 1.5) + (d < 380 ? 45 : 0);
+    p.x -= dx / d * f * dt; p.y -= dy / d * f * dt;
+  }
+  w.hurt -= dt;
+  if (d < w.r + p.r && w.hurt <= 0) { w.hurt = 0.5; hurtPlayer(22 * dmgMul(), w.x, w.y); }
+  for (const e of G.enemies) {
+    if (e.dead) continue;
+    const ex = w.x - e.x, ey = w.y - e.y, ed = Math.hypot(ex, ey) || 1;
+    if (ed > w.R) continue;
+    const pull = (e.boss ? 0.25 : 1) * (200 * Math.pow(1 - ed / w.R, 1.3) + 25);
+    e.x += ex / ed * Math.min(pull * dt, ed); e.y += ey / ed * Math.min(pull * dt, ed);
+    if (!e.boss && ed < w.r + e.r * 0.4) hazardKill(e, 0, 0);
+  }
+  if (G.particles.length < MAX_PARTICLES && Math.random() < 0.8) {
+    const a = Math.random() * TAU, rr = w.r * rand(1.6, 3.2);
+    G.particles.push({ x: w.x + Math.cos(a) * rr, y: w.y + Math.sin(a) * rr, vx: -Math.cos(a - 0.9) * rr * 1.4, vy: -Math.sin(a - 0.9) * rr * 1.4, life: 0.6, max: 0.6, size: rand(2, 4), color: pick(['#c58bff', '#ff4fd8', '#7b3cff']), drag: 1.5 });
   }
 }
 
@@ -657,7 +787,7 @@ function bossKilled(e) {
   G.ebullets.length = 0;
   const ck = mkPickup('chest', e.x, e.y, 1); ck.val = 1; G.pickups.push(ck);
   const n = 14 + G.bossIdx * 4;
-  for (let i = 0; i < n; i++) dropPickup('shard', e.x, e.y, 3 * shardMul());
+  for (let i = 0; i < n; i++) dropPickup('shard', e.x, e.y, 3 * shardMul() * G.st.bounty);
   dropGem(e.x, e.y, 60 * (1 + minutes() * 0.1));
   if (B.final && !G.victory) {
     G.victory = true;
@@ -692,7 +822,7 @@ function openChest(big) {
     const c = pool.length ? weighted(pool, c => c.isNew ? c.w * 0.5 : c.w) : mutationChoice();
     applyChoice(c); rewards.push(c);
   }
-  const sh = Math.round(randi(8, 18) * shardMul() * (big ? 3 : 1));
+  const sh = Math.round(randi(8, 18) * shardMul() * (big ? 3 : 1) * G.st.bounty);
   G.shards += sh;
   G.state = 'chest';
   Sound.play.chest();
@@ -720,7 +850,7 @@ function upgradePool() {
   const pool = [];
   for (const w of G.weapons) {
     const d = WEAPONS[w.id];
-    if (!d.evolved && w.level >= G.st.evoLvl && G.passives[d.evoWith]) pool.push({ kind: 'evo', id: d.evo, from: w.id, w: 100 });
+    if (!d.evolved && w.level >= G.st.evoLvl && (G.passives[d.evoWith] || w.id === G.startWeapon)) pool.push({ kind: 'evo', id: d.evo, from: w.id, w: 100 });
   }
   for (const w of G.weapons) {
     const d = WEAPONS[w.id];
@@ -734,7 +864,7 @@ function upgradePool() {
   if (owned.length < G.st.pSlots) for (const id in PASSIVES) if (!G.passives[id] && unlocked(PASSIVES[id])) pool.push({ kind: 'passive', id, lvl: 1, isNew: true, w: PASSIVES[id].rare ? 0.3 : 0.75 });
   // nápověda k evoluci
   for (const c of pool) if (c.kind === 'passive') {
-    const w = G.weapons.find(w => !WEAPONS[w.id].evolved && WEAPONS[w.id].evoWith === c.id);
+    const w = G.weapons.find(w => !WEAPONS[w.id].evolved && WEAPONS[w.id].evoWith === c.id && w.id !== G.startWeapon);
     if (w) c.evoHint = w.id;
   }
   return pool;
@@ -742,7 +872,7 @@ function upgradePool() {
 
 // Mutace, která ještě nedosáhla stropu; když jsou všechny na stropu, hrst střepů.
 function mutationChoice(skip = []) {
-  const open = Object.keys(MUTATIONS).filter(id => (G.mut[id] || 0) < MUT_MAX);
+  const open = Object.keys(MUTATIONS).filter(id => (G.mut[id] || 0) < G.st.mutMax);
   const ids = open.filter(id => !skip.includes(id));
   if (!ids.length) return { kind: 'gold' };
   const id = pick(ids);
@@ -792,8 +922,9 @@ function applyChoice(c) {
   } else if (c.kind === 'evo') {
     const i = G.weapons.findIndex(w => w.id === c.from);
     if (i < 0) return;
-    const w = { id: c.id, level: 1, t: 0.3, s: null };
+    const w = { id: c.id, level: 1, t: 0.3, s: null, oc: G.st.ocStart };
     computeWeapon(w);
+    if (w.oc) SAVE.stats.maxOc = Math.max(SAVE.stats.maxOc || 0, w.oc);
     G.weapons[i] = w;
     const isNewEvo = !SAVE.evolutions[c.id];
     SAVE.evolutions[c.id] = true; SAVE.seen[c.id] = true;
@@ -809,7 +940,33 @@ function applyChoice(c) {
   }
 }
 
+/** Kde je karta v pořadí priorit (menší = dřív); karta může patřit pod víc položek, platí ta vyšší. */
+function prioIndex(c, order) {
+  const keys = c.kind === 'weapon' ? [...(c.id === G.startWeapon ? ['start'] : []), 'w:' + c.id]
+    : c.kind === 'passive' ? [...(c.evoHint ? ['catalyst'] : []), 'p:' + c.id] : [c.kind];
+  let best = Infinity;
+  for (const k of keys) { const i = order.indexOf(k); if (i >= 0 && i < best) best = i; }
+  return best;
+}
+function autoPickBest(choices) {
+  const order = prioList(SAVE.settings.prio);
+  return choices.reduce((b, c) => (prioIndex(c, order) < prioIndex(b, order) ? c : b));
+}
+// Automatický výběr: hra se nezastaví, vybere kartu nejvýš v pořadí priorit a jen ji krátce ukáže.
+function autoLevelUp() {
+  const picked = [];
+  while (G.pendingLevels > 0 && picked.length < 60) {
+    const c = autoPickBest(genChoices());
+    applyChoice(c); picked.push(c);
+    G.pendingLevels--;
+  }
+  Sound.play.levelup();
+  UI.refreshLoadout();
+  UI.autoPicked(picked);
+  levelRing();
+}
 function openLevelUp() {
+  if (SAVE.settings.autoPick) { autoLevelUp(); return; }
   G.state = 'levelup';
   G.choices = genChoices();
   Sound.play.levelup();
@@ -841,10 +998,13 @@ function afterLevelPick() {
   UI.refreshLoadout();
   if (G.pendingLevels > 0) { G.choices = genChoices(); UI.showLevelUp(G.choices, true); return; }
   G.state = 'play';
-  G.p.inv = Math.max(G.p.inv, 0.6);
   Sound.muffle(false);
   UI.hideOverlay();
-  // rázová vlna úrovně
+  levelRing();
+}
+// rázová vlna úrovně: odhodí blízké nepřátele
+function levelRing() {
+  G.p.inv = Math.max(G.p.inv, 0.6);
   for (const e of G.enemies) if (!e.dead && !e.boss) {
     const dd = d2(e.x, e.y, G.p.x, G.p.y);
     if (dd < 180 * 180) { const d = Math.sqrt(dd) || 1; e.kx += (e.x - G.p.x) / d * 500; e.ky += (e.y - G.p.y) / d * 500; }
@@ -1187,9 +1347,20 @@ function updatePickups(dt) {
   const p = G.p, mr = G.st.magnet;
   let gems = 0;
   if (G.shardAcc && G.time - (G.shardTextT || -9) > 0.3) shardText();
+  G.mergeT -= dt;
+  if (G.mergeT <= 0) { G.mergeT = 0.25; mergePickups(); }
+  if (G.st.gravWave) {
+    G.gravT -= dt;
+    if (G.gravT <= 0) {
+      G.gravT = 40;
+      for (const g of G.pickups) if (g.kind === 'gem' || g.kind === 'shard') g.mag = true;
+      G.effects.push({ k: 'ring', x: p.x, y: p.y, r: 10, maxR: G.viewR, spd: 1800, dmg: 0, knock: 0, life: 1, color: '#f72585', visual: true, delay: 0 });
+      Sound.play.select();
+    }
+  }
   for (const pk of G.pickups) {
     if (pk.dead) continue;
-    pk.t += dt;
+    pk.t += dt; pk.age += dt;
     if (PICKUP_CAP[pk.kind] && pk.t > PICKUP_LIFE) { pk.dead = true; continue; }
     if (pk.kind === 'gem') gems++;
     const dx = p.x - pk.x, dy = p.y - pk.y, dd = dx * dx + dy * dy;
