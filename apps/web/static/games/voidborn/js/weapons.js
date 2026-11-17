@@ -170,20 +170,13 @@ const WB = {
     draw(w, ctx) {
       const s = w.s, p = G.p, R = 72 * s.area, col = WEAPONS[w.id].color;
       w.pulse = Math.max(0, (w.pulse || 0) - 0.06);
-      Render.world();
       ctx.globalCompositeOperation = 'lighter';
-      const g = ctx.createRadialGradient(p.x, p.y, R * 0.2, p.x, p.y, R);
-      g.addColorStop(0, rgba(col, 0));
-      g.addColorStop(0.75, rgba(col, 0.07 + w.pulse * 0.05));
-      g.addColorStop(1, rgba(col, 0.2 + w.pulse * 0.12));
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, TAU); ctx.fill();
-      ctx.strokeStyle = rgba(col, 0.55);
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([6, 10]);
-      ctx.lineDashOffset = -w.spin * 40;
-      ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, TAU); ctx.stroke();
-      ctx.setLineDash([]);
+      // pole i čárkovaný okraj jako sprity (dřív přechod a čárkovaná čára v každém snímku);
+      // záblesk zásahu = průhlednost spritu nakresleného v plné síle záblesku
+      const field = Sprites.radial(`aura|${col}`, [[0, rgba(col, 0)], [0.2, rgba(col, 0)], [0.75, rgba(col, 0.12)], [1, rgba(col, 0.32)]]);
+      Render.spr(field, p.x, p.y, 0, R / 128, (0.2 + w.pulse * 0.12) / 0.32);
+      Render.spr(Sprites.dashRing(col, 128, 1.5 * 128 / Math.max(40, R), 6 * 128 / Math.max(40, R), 10 * 128 / Math.max(40, R), 0.55), p.x, p.y, w.spin * 40 / R, R / 128);
+      Render.world();
       for (let i = 0; i < 6; i++) {
         const a = w.spin + i * TAU / 6;
         ctx.fillStyle = rgba(col, 0.7);
@@ -234,21 +227,10 @@ const WB = {
     },
     draw(w, ctx) {
       const s = w.s, p = G.p, col = WEAPONS[w.id].color, width = s.width * s.area;
-      Render.world();
       ctx.globalCompositeOperation = 'lighter';
-      ctx.lineCap = 'round';
-      for (let i = 0; i < s.amount; i++) {
-        const a = w.ang + i * TAU / s.amount;
-        const ex = p.x + Math.cos(a) * s.len, ey = p.y + Math.sin(a) * s.len;
-        const g = ctx.createLinearGradient(p.x, p.y, ex, ey);
-        g.addColorStop(0, rgba(col, 0.5)); g.addColorStop(1, rgba(col, 0));
-        ctx.strokeStyle = g; ctx.lineWidth = width * 2.2;
-        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ex, ey); ctx.stroke();
-        const g2 = ctx.createLinearGradient(p.x, p.y, ex, ey);
-        g2.addColorStop(0, 'rgba(255,255,255,0.95)'); g2.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.strokeStyle = g2; ctx.lineWidth = width * 0.45;
-        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ex, ey); ctx.stroke();
-      }
+      // paprsky jako natažený sprite (dřív dva lineární přechody na paprsek v každém snímku)
+      const img = Sprites.beam(col, true);
+      for (let i = 0; i < s.amount; i++) Render.sprLine(img, p.x, p.y, w.ang + i * TAU / s.amount, s.len, width * 2.2);
       ctx.globalCompositeOperation = 'source-over';
     },
   },
@@ -321,14 +303,9 @@ WB.disc = {
     ctx.globalCompositeOperation = 'lighter';
     for (const d of w.discs) Render.spr(Sprites.glow(col, r * 1.2), d.x, d.y, 0, 1, 0.9);
     ctx.globalCompositeOperation = 'source-over';
-    Render.world();
-    ctx.lineWidth = 2.2;
-    for (const d of w.discs) {
-      ctx.strokeStyle = col;
-      ctx.beginPath(); ctx.arc(d.x, d.y, r, d.spin, d.spin + 4.6); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-      ctx.beginPath(); ctx.arc(d.x, d.y, r * 0.45, -d.spin, -d.spin + 3.4); ctx.stroke();
-    }
+    // oblouky disků jako otáčené sprity (dřív dvě cesty na disk v každém snímku)
+    const outer = Sprites.arcLine(col, 10, 2.2, 4.6), inner = Sprites.arcLine('#ffffff', 4.5, 2.2, 3.4, 0.9), sc = r / 10;
+    for (const d of w.discs) { Render.spr(outer, d.x, d.y, d.spin, sc); Render.spr(inner, d.x, d.y, -d.spin, sc); }
   },
 };
 
@@ -370,17 +347,12 @@ WB.plasma = {
   },
   draw(w, ctx) {
     if (!w.on) return;
-    const s = w.s, p = G.p, col = WEAPONS[w.id].color, half = s.arc / 2;
+    const s = w.s, p = G.p, col = WEAPONS[w.id].color;
     const R = s.range * s.area * (0.93 + 0.07 * Math.sin(G.time * 31)) * (0.4 + 0.6 * w.on);
-    Render.world();
     ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < s.amount; i++) {
-      const a = w.ang + i * TAU / s.amount;
-      const g = ctx.createRadialGradient(p.x, p.y, 6, p.x, p.y, R);
-      g.addColorStop(0, `rgba(255,248,220,${0.75 * w.on})`); g.addColorStop(0.35, rgba(col, 0.42 * w.on)); g.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.arc(p.x, p.y, R, a - half, a + half); ctx.closePath(); ctx.fill();
-    }
+    // kužel jako sprite (dřív radiální přechod a výseč v každém snímku)
+    const img = Sprites.cone(col, s.arc);
+    for (let i = 0; i < s.amount; i++) Render.spr(img, p.x, p.y, w.ang + i * TAU / s.amount, R / 128, w.on);
     ctx.globalCompositeOperation = 'source-over';
   },
 };
@@ -453,14 +425,10 @@ WB.sentry = {
       Render.spr(Sprites.glow(col, 7), p.x + Math.cos(a0) * R, p.y + Math.sin(a0) * R, 0, 1, 0.75);
     }
     ctx.globalCompositeOperation = 'source-over';
-    Render.world();
-    ctx.lineWidth = 1.6; ctx.strokeStyle = col; ctx.fillStyle = 'rgba(10,20,30,0.85)';
+    const img = Sprites.drone(col);
     for (let k = 0; k < n; k++) {
-      const a0 = w.ang + k * TAU / n, x = p.x + Math.cos(a0) * R, y = p.y + Math.sin(a0) * R;
-      const a = (w.aim && w.aim[k] !== undefined) ? w.aim[k] : a0, c = Math.cos(a), sn = Math.sin(a);
-      ctx.beginPath();
-      ctx.moveTo(x + c * 9, y + sn * 9); ctx.lineTo(x - sn * 6, y + c * 6); ctx.lineTo(x - c * 5, y - sn * 5); ctx.lineTo(x + sn * 6, y - c * 6);
-      ctx.closePath(); ctx.fill(); ctx.stroke();
+      const a0 = w.ang + k * TAU / n;
+      Render.spr(img, p.x + Math.cos(a0) * R, p.y + Math.sin(a0) * R, (w.aim && w.aim[k] !== undefined) ? w.aim[k] : a0);
     }
   },
 };

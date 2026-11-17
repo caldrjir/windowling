@@ -7,7 +7,8 @@ const G = {
   grid: new SpatialGrid(72), maxR: 30, shake: 0, flash: 0, hurtFlash: 0, timeScale: 1,
 };
 const _q = [], _q2 = [];
-const MAX_PARTICLES = 1000;
+// Strop jisker: každá je samostatný příkaz canvasu (záznam výkonu: jiskry byly většina příkazů snímku).
+const MAX_PARTICLES = 600;
 // Srdce, magnety a bomby na mapě nezůstávají navždy a nehromadí se: v pozdní hře zaplnily celou mapu.
 const PICKUP_LIFE = 75, PICKUP_CAP = { heart: 12, magnet: 6, bomb: 6 };
 
@@ -161,7 +162,7 @@ function enemiesNear(x, y, r) {
 function burst(x, y, color, n, spd = 220, size = 3, life = 0.6) {
   // v plné hordě méně jisker na výbuch, ať vykreslování stíhá
   const np = G.particles.length;
-  if (np > 300) n = Math.ceil(n * (np > 800 ? 0.12 : np > 550 ? 0.3 : 0.6));
+  if (np > 200) n = Math.ceil(n * (np > 480 ? 0.12 : np > 340 ? 0.3 : 0.6));
   for (let i = 0; i < n && G.particles.length < MAX_PARTICLES; i++) {
     const a = Math.random() * TAU, s = spd * (0.25 + Math.random() * 0.75);
     G.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: life * (0.5 + Math.random() * 0.5), max: life, size: size * (0.6 + Math.random() * 0.8), color, drag: 3 });
@@ -1239,12 +1240,11 @@ function stepWorld(dt, frozen) {
   pt = PerfLog.lap('u.pickups', pt);
   updateParticles(dt); pt = PerfLog.lap('u.particles', pt);
 
-  // úklid
-  G.enemies = G.enemies.filter(e => !e.dead);
-  if (G.bullets.some(b => b.dead)) G.bullets = G.bullets.filter(b => !b.dead);
-  if (G.ebullets.some(b => b.dead)) G.ebullets = G.ebullets.filter(b => !b.dead);
-  if (G.pickups.some(b => b.dead)) G.pickups = G.pickups.filter(b => !b.dead);
-  G.effects = G.effects.filter(f => f.life > 0);
+  // úklid na místě: žádná nová pole v každém snímku (méně práce pro garbage collector)
+  dropDead(G.enemies); dropDead(G.bullets); dropDead(G.ebullets); dropDead(G.pickups);
+  let fw = 0;
+  for (let i = 0; i < G.effects.length; i++) { const f = G.effects[i]; if (f.life > 0) G.effects[fw++] = f; }
+  G.effects.length = fw;
 
   // kamera
   const k = 1 - Math.exp(-dt * 8);
@@ -1254,6 +1254,12 @@ function stepWorld(dt, frozen) {
   G.flash = Math.max(0, G.flash - dt * 2.2);
   G.hurtFlash = Math.max(0, G.hurtFlash - dt * 2.5);
   PerfLog.lap('u.cleanup', pt);
+}
+
+function dropDead(arr) {
+  let w = 0;
+  for (let i = 0; i < arr.length; i++) { const o = arr[i]; if (!o.dead) arr[w++] = o; }
+  arr.length = w;
 }
 
 function updateEnemies(dt, frozen) {

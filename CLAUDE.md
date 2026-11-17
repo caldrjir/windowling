@@ -126,3 +126,10 @@ pnpm db:generate --name x  # create a migration after editing packages/database/
   classes needs a new `migrations` tag in `wrangler.jsonc`.
 - Env is validated by `parseServerEnv` (`apps/web/src/lib/server/env.ts`). Add new vars there,
   to `.env.example`, and to `docs/development.md`.
+- VOIDBORN has its own SemVer in `static/games/voidborn/js/version.js` (shown next to the FPS counter,
+  in Settings and in the performance log). Bump it in every change to the game and add a line to the
+  log comment there: PATCH = fixes and performance, MINOR = new content or features, MAJOR = a change
+  that breaks existing saves.
+- VOIDBORN rendering: draw repeated or soft shapes as cached sprites (`Sprites.*` + `drawImage`), not
+  per-frame gradients, dashed lines, `shadowBlur` or changing paths; players' performance logs showed
+  the time goes to the browser's canvas rasterization, not to the game's JavaScript.

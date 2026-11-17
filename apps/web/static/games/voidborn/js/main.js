@@ -87,6 +87,7 @@ const Input = (() => {
 // ── Ovládání hry ────────────────────────────────────────────────────────────
 const Game = {
   start(pilotId, si, od) {
+    Render.resetQuality(); emaMs = 16; slowT = 0;
     Sound.init();
     UI.hideOverlay();
     UI.show(null);
@@ -172,21 +173,34 @@ function enterMenu() {
 let lastT = performance.now(), fpsAcc = 0, fpsN = 0, fps = 60, saveAcc = 0;
 // záznam výkonu: časy předchozího snímku (délku snímku určuje až příští requestAnimationFrame)
 let plU = 0, plD = 0, plH = 0, plS = 0;
+// Stavy, kdy hra stojí (pauza, výběr karet, truhla, výsledky): obraz se nemění, takže se nepřekresluje
+// (jinak by prohlížeč 240× za vteřinu znovu kreslil scénu i rozmazané pozadí překryvu).
+const STILL = new Set(['paused', 'levelup', 'chest', 'victory', 'over']);
+let attractAcc = 0, emaMs = 16, slowT = 0;
 function loop(now) {
   requestAnimationFrame(loop);
-  if (PerfLog.on) PerfLog.frame(now - lastT, plU, plD, plH, plS);
-  const dt = Math.min(0.05, (now - lastT) / 1000);
+  const rawMs = now - lastT;
+  if (PerfLog.on) PerfLog.frame(rawMs, plU, plD, plH, plS);
+  const dt = Math.min(0.05, rawMs / 1000);
   lastT = now;
   fpsAcc += dt; fpsN++;
   if (fpsAcc >= 0.5) { fps = Math.round(fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; }
   if (G.state === 'menu') {
-    Render.drawAttract(dt);
+    // pozadí menu stačí kreslit nejvýš 60× za vteřinu
+    attractAcc += dt;
+    if (attractAcc >= 1 / 62 || Render.dirty) { Render.drawAttract(attractAcc); attractAcc = 0; Render.dirty = false; }
   } else {
     const t0 = PerfLog.t();
     updateGame(dt);
     const t1 = PerfLog.t();
-    Render.drawGame();
+    if (!STILL.has(G.state) || Render.dirty) { Render.drawGame(); Render.dirty = false; }
     const t2 = PerfLog.t();
+    // automatická kvalita: když průměrný snímek trvá přes 26 ms (pod ~38 FPS) déle než 3 s, ubere rozlišení
+    if (G.state === 'play' && rawMs < 250) {
+      emaMs += (rawMs - emaMs) * 0.05;
+      slowT = emaMs > 26 ? slowT + dt : Math.max(0, slowT - dt);
+      if (slowT > 3) { slowT = 0; emaMs = 16; Render.degrade(); }
+    }
     if (G.state !== 'over') UI.hudUpdate(fps);
     if (PerfLog.on) { plU = t1 - t0; plD = t2 - t1; plH = PerfLog.t() - t2; plS = Render.sprN; }
     if (G.state === 'play') {

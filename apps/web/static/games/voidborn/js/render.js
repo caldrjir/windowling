@@ -1,9 +1,15 @@
 'use strict';
 // ── Sprity: předrenderované neonové tvary (shadowBlur jen jednou) ───────────
-const SPR = 2;
+// Vše, co se dá, se kreslí jednou do spritu a ve hře se jen otáčí a škáluje přes drawImage (rychlá
+// cesta GPU canvasu). Gradienty, čárkované čáry, stíny a měnící se cesty v každém snímku stojí GPU
+// rasterizaci mimo JS (záznam výkonu: 80 % délky snímku). SPR = rozlišení spritů vůči světu: podle
+// skutečného zvětšení obrazovky (dpr × zoom), ne víc, ať textury zbytečně nebobtnají.
+let SPR = 2;
 const Sprites = (() => {
   const cache = new Map();
   const get = (key, fn) => { let s = cache.get(key); if (!s) { s = fn(); cache.set(key, s); } return s; };
+  // nové rozlišení spritů (při změně velikosti okna): staré se zahodí a nakreslí znovu podle potřeby
+  function setScale(v) { v = clamp(Math.ceil(v * 4) / 4, 1, 2); if (v !== SPR) { SPR = v; cache.clear(); } }
 
   function path(x, shape, r) {
     x.beginPath();
@@ -23,6 +29,7 @@ const Sprites = (() => {
 
   function canvasFor(halfWorld) {
     const c = makeCanvas(halfWorld * 2 * SPR, halfWorld * 2 * SPR);
+    c.spr = SPR;
     const x = c.getContext('2d');
     x.scale(SPR, SPR); x.translate(halfWorld, halfWorld);
     c.hw = halfWorld;
@@ -205,20 +212,114 @@ const Sprites = (() => {
     });
   }
 
-  return { enemy, boss, bossCore, ship, drawShip, glow, boom, blade, gem, shard, pickup, path, clear: () => cache.clear() };
+  // ── Sprity efektů, které se dřív kreslily gradientem nebo cestou v každém snímku ──
+  // radiální přechod v kruhu o poloměru R (ve světě); stops = [[poloha, barva], …]
+  // (square: vyplní celý čtverec, za poloměrem zůstane poslední barva – maska tmy)
+  function radial(key, stops, R = 128, square = false) {
+    return get(`rad|${key}`, () => {
+      const [c, x] = canvasFor(R);
+      const g = x.createRadialGradient(0, 0, 0, 0, 0, R);
+      for (const [o, col] of stops) g.addColorStop(o, col);
+      x.fillStyle = g;
+      if (square) x.fillRect(-R, -R, R * 2, R * 2); else { x.beginPath(); x.arc(0, 0, R, 0, TAU); x.fill(); }
+      return c;
+    });
+  }
+  // černá díra Singularity (kreslí se s průhledností podle doby trvání)
+  const hole = color => radial(`hole|${color}`, [[0, 'rgba(0,0,0,0.95)'], [0.25, 'rgba(10,0,25,0.85)'], [0.5, rgba(color, 0.18)], [1, rgba(color, 0)]]);
+  // oblouk o poloměru R a délce span (rad) od úhlu 0; otáčí se celým spritem
+  function arcLine(color, R, lw, span, alpha = 1) {
+    return get(`arc|${color}|${R}|${lw}|${span}|${alpha}`, () => {
+      const [c, x] = canvasFor(R + lw);
+      x.strokeStyle = rgba(color, alpha); x.lineWidth = lw; x.lineCap = 'round';
+      x.beginPath(); x.arc(0, 0, R, 0, span); x.stroke();
+      return c;
+    });
+  }
+  // čárkovaný kruh (zaměřovač úderu, okraj pole); posun čárek = otočení spritu
+  function dashRing(color, R, lw, dash, gap, alpha = 1) {
+    return get(`dring|${color}|${R}|${lw}|${dash}|${gap}|${alpha}`, () => {
+      const [c, x] = canvasFor(R + lw);
+      x.strokeStyle = rgba(color, alpha); x.lineWidth = lw; x.setLineDash([dash, gap]);
+      x.beginPath(); x.arc(0, 0, R, 0, TAU); x.stroke();
+      return c;
+    });
+  }
+  // mina: šestiúhelník (při aktivaci slabší), aktivní mina blikající tečkou uprostřed
+  function mine(color, state) {
+    return get(`mine|${color}|${state}`, () => {
+      const [c, x] = canvasFor(12);
+      x.strokeStyle = rgba(color, state ? 0.8 : 0.35); x.lineWidth = 2; x.lineJoin = 'round';
+      x.beginPath();
+      for (let i = 0; i < 6; i++) { const a = i * TAU / 6; x[i ? 'lineTo' : 'moveTo'](Math.cos(a) * 9, Math.sin(a) * 9); }
+      x.closePath(); x.stroke();
+      if (state === 2) { x.fillStyle = color; x.beginPath(); x.arc(0, 0, 3, 0, TAU); x.fill(); }
+      return c;
+    });
+  }
+  // dron Strážních dronů (míří doprava)
+  function drone(color) {
+    return get(`drone|${color}`, () => {
+      const [c, x] = canvasFor(12);
+      x.lineWidth = 1.6; x.strokeStyle = color; x.fillStyle = 'rgba(10,20,30,0.85)'; x.lineJoin = 'round';
+      x.beginPath(); x.moveTo(9, 0); x.lineTo(0, 6); x.lineTo(-5, 0); x.lineTo(0, -6); x.closePath(); x.fill(); x.stroke();
+      return c;
+    });
+  }
+  // kužel plamene (Plazmový hořák, Kometa): výseč s přechodem, špička ve středu spritu, míří doprava
+  function cone(color, arc) {
+    arc = Math.round(arc * 20) / 20;
+    return get(`cone|${color}|${arc}`, () => {
+      const R = 128, [c, x] = canvasFor(R);
+      const g = x.createRadialGradient(0, 0, 6, 0, 0, R);
+      g.addColorStop(0, 'rgba(255,248,220,0.75)'); g.addColorStop(0.35, rgba(color, 0.42)); g.addColorStop(1, rgba(color, 0));
+      x.fillStyle = g; x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, R, -arc / 2, arc / 2); x.closePath(); x.fill();
+      return c;
+    });
+  }
+  // paprsek jako pruh 256 × 64 (natahuje se na délku a šířku): fade = slábne ke konci
+  function beam(color, fade) {
+    return get(`beam|${color}|${fade}`, () => {
+      const c = makeCanvas(256, 64), x = c.getContext('2d');
+      const outer = x.createLinearGradient(0, 0, 256, 0), inner = x.createLinearGradient(0, 0, 256, 0);
+      outer.addColorStop(0, rgba(color, fade ? 0.5 : 0.45)); outer.addColorStop(1, rgba(color, fade ? 0 : 0.45));
+      inner.addColorStop(0, 'rgba(255,255,255,0.95)'); inner.addColorStop(1, `rgba(255,255,255,${fade ? 0 : 0.95})`);
+      x.fillStyle = outer; x.fillRect(0, 0, 256, 64);
+      x.fillStyle = inner; x.fillRect(0, 32 - 6.5, 256, 13);
+      return c;
+    });
+  }
+  // ukazatel mimo obrazovku se září (dřív shadowBlur v každém snímku)
+  function pointer(color, sz) {
+    return get(`ptr|${color}|${sz}`, () => {
+      const [c, x] = canvasFor(sz + 14);
+      x.fillStyle = color; x.shadowColor = color; x.shadowBlur = 12;
+      x.beginPath(); x.moveTo(sz, 0); x.lineTo(-sz * 0.6, sz * 0.7); x.lineTo(-sz * 0.6, -sz * 0.7); x.closePath(); x.fill();
+      return c;
+    });
+  }
+
+  return { enemy, boss, bossCore, ship, drawShip, glow, boom, blade, gem, shard, pickup, path, radial, hole, arcLine, dashRing, mine, drone, cone, beam, pointer, setScale, clear: () => cache.clear() };
 })();
 
 // ── Renderer ────────────────────────────────────────────────────────────────
 const Render = (() => {
   let cv, ctx, W = 1280, H = 720, dpr = 1, zoom = 1, k = 1, ox = 0, oy = 0;
-  let bg = null, bgKey = '', vign = null, stars = [];
+  let bg = null, bgKey = '', vign = null, dangerV = null, stars = [];
+  // Rozlišení vykreslování: canvas se kreslí v menším rozlišení a prohlížeč ho roztáhne (MDN: menší
+  // canvas zvětšit je levnější než velký zmenšovat). Auto drží rozpočet ~2,3 Mpx (zhruba 2048 × 1120)
+  // a když hra dlouho nestíhá (průměr snímku nad 26 ms), ubere v běhu ještě po 10 % (nejvýš o 30 %).
+  const PX_BUDGET = 2.3e6;
+  let drop = 0, scale = 1, dirty = true;
+  const QUALITY = { high: 1, low: 0.7 };
   const GEM_COL = v => v < 2.5 ? ['#4cc9f0', 5] : v < 8 ? ['#06ffa5', 6] : v < 30 ? ['#ff4fd8', 7.5] : v < 120 ? ['#ffd166', 9.5] : v < 500 ? ['#ff8a5c', 10.5] : ['#ffffff', 11.5];
   // tvar podle počtu slitých krystalů (a střepů)
   const GEM_SHAPE = n => (n >= 20 ? 's' : n >= 6 ? 'h' : n >= 2 ? 'c' : 'd');
   const SHARD_TIER = n => (n >= 20 ? 3 : n >= 6 ? 2 : n >= 2 ? 1 : 0);
 
   function init(canvas) {
-    cv = canvas; ctx = cv.getContext('2d');
+    // alpha: false: canvas je vždy celý zakrytý pozadím, prohlížeč ho pak skládá jako neprůhledný
+    cv = canvas; ctx = cv.getContext('2d', { alpha: false });
     // hvězdné dlaždice pro paralaxu
     for (let l = 0; l < 3; l++) {
       const c = makeCanvas(512, 512), x = c.getContext('2d');
@@ -234,19 +335,48 @@ const Render = (() => {
   }
 
   function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+    const dpr0 = Math.min(window.devicePixelRatio || 1, 1.75);
     W = window.innerWidth; H = window.innerHeight;
+    const q = SAVE.settings.quality || 'auto';
+    scale = QUALITY[q] || clamp(Math.sqrt(PX_BUDGET / (W * H * dpr0 * dpr0)), 0.55, 1) - drop;
+    scale = clamp(scale, 0.5, 1);
+    dpr = dpr0 * scale;
     cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr);
     zoom = clamp(Math.min(W, H) / 800, 0.6, 1.2);
     if (W < 700) zoom = clamp(Math.min(W, H) / 640, 0.5, 1);
     G.viewW = W / zoom; G.viewH = H / zoom; G.viewR = Math.hypot(G.viewW, G.viewH) / 2;
-    bgKey = '';
-    PerfLog.ev('resize', [W, H, dpr, Math.round(zoom * 1000) / 1000]);
+    Sprites.setScale(dpr * zoom);
+    bgKey = ''; dirty = true;
+    PerfLog.ev('resize', [W, H, Math.round(dpr * 1000) / 1000, Math.round(zoom * 1000) / 1000, Math.round(scale * 100) / 100]);
     vign = makeCanvas(W, H);
     const v = vign.getContext('2d');
     const g = v.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.72)');
     v.fillStyle = g; v.fillRect(0, 0, W, H);
+    // červená vinětace při zásahu a nízkém zdraví (kreslí se s průhledností, dřív gradient v každém snímku)
+    dangerV = makeCanvas(W / 2, H / 2);
+    const dv = dangerV.getContext('2d'), w2 = W / 2, h2 = H / 2;
+    const dg = dv.createRadialGradient(w2 / 2, h2 / 2, Math.min(w2, h2) * 0.3, w2 / 2, h2 / 2, Math.hypot(w2, h2) * 0.55);
+    dg.addColorStop(0, 'rgba(255,0,40,0)'); dg.addColorStop(1, 'rgba(255,0,40,1)');
+    dv.fillStyle = dg; dv.fillRect(0, 0, w2, h2);
+  }
+  // Automatická kvalita: když hra dlouho nestíhá, ubere rozlišení (jen v Auto, nejvýš o 30 %).
+  function degrade() {
+    if ((SAVE.settings.quality || 'auto') !== 'auto' || drop >= 0.3 || scale <= 0.55) return false;
+    drop = Math.round((drop + 0.1) * 10) / 10;
+    resize();
+    PerfLog.ev('quality', Math.round(scale * 100) / 100);
+    return true;
+  }
+  function resetQuality() { if (drop) { drop = 0; resize(); } }
+  // kreslení na obrazovku podél úsečky: sprite (natažený) od bodu x,y pod úhlem a
+  function sprLine(img, x, y, a, len, thick, alpha = 1) {
+    sprN++;
+    const c = Math.cos(a) * k, s = Math.sin(a) * k;
+    ctx.setTransform(c, s, -s, c, ox + x * k, oy + y * k);
+    if (alpha !== 1) ctx.globalAlpha = alpha;
+    ctx.drawImage(img, 0, -thick / 2, len, thick);
+    if (alpha !== 1) ctx.globalAlpha = 1;
   }
 
   function buildBg(sec) {
@@ -337,26 +467,15 @@ const Render = (() => {
 
     // efekty pod entitami
     world();
+    let mines = 0;
     for (const f of G.effects) {
-      if (f.k === 'mine') {
-        const blink = (f.t * (f.life < 1.5 ? 10 : 3)) % 1 < 0.5;
-        world();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.strokeStyle = rgba(f.color, f.arm > 0 ? 0.35 : 0.8); ctx.lineWidth = 2;
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + f.t; i ? ctx.lineTo(f.x + Math.cos(a) * 9, f.y + Math.sin(a) * 9) : ctx.moveTo(f.x + Math.cos(a) * 9, f.y + Math.sin(a) * 9); }
-        ctx.closePath(); ctx.stroke();
-        if (blink && f.arm <= 0) { ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(f.x, f.y, 3, 0, TAU); ctx.fill(); }
-        ctx.globalCompositeOperation = 'source-over';
-      } else if (f.k === 'hole') {
-        world();
+      if (f.k === 'mine') { mines++; continue; }
+      if (f.k === 'hole') {
+        if (!inView(f.x, f.y, f.r)) continue;
         const t = f.t || 0, fade = Math.min(1, t * 4, f.life * 2);
-        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-        g.addColorStop(0, `rgba(0,0,0,${0.95 * fade})`); g.addColorStop(0.25, `rgba(10,0,25,${0.85 * fade})`);
-        g.addColorStop(0.5, rgba(f.color, 0.18 * fade)); g.addColorStop(1, rgba(f.color, 0));
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.fill();
-        ctx.strokeStyle = rgba(f.color, 0.8 * fade); ctx.lineWidth = 2.5;
-        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.22 + i * 0.06), t * (3 + i) + i * 2, t * (3 + i) + i * 2 + 2.2); ctx.stroke(); }
+        spr(Sprites.hole(f.color), f.x, f.y, 0, f.r / 128, fade);
+        const arc = Sprites.arcLine(f.color, 100, 2.5, 2.2, 0.8);
+        for (let i = 0; i < 3; i++) spr(arc, f.x, f.y, t * (3 + i) + i * 2, f.r * (0.22 + i * 0.06) / 100, fade);
       } else if (f.k === 'tele') {
         world();
         const a = 0.25 + 0.35 * ((f.life * 8) % 1);
@@ -364,12 +483,11 @@ const Render = (() => {
         ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x + Math.cos(f.a) * f.len, f.y + Math.sin(f.a) * f.len); ctx.stroke();
       } else if (f.k === 'strike') {
         // zaměřovací kruh se stahuje, shora padá stopa střely
-        if (f.t < 0) continue;
+        if (f.t < 0 || !inView(f.x, f.y, f.r + 300)) continue;
         world();
         const q = clamp(f.t / f.delay, 0, 1);
-        ctx.strokeStyle = rgba(f.color, 0.25 + 0.5 * q); ctx.lineWidth = 2;
-        ctx.setLineDash([7, 7]); ctx.lineDashOffset = -f.t * 60;
-        ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        spr(Sprites.dashRing(f.color, 64, 2, 7, 7), f.x, f.y, f.t * 60 / Math.max(20, f.r), f.r / 64, 0.25 + 0.5 * q);
+        world();
         ctx.fillStyle = rgba(f.color, 0.08 + 0.12 * q);
         ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 - q * 0.85), 0, TAU); ctx.fill();
         ctx.globalCompositeOperation = 'lighter';
@@ -379,11 +497,22 @@ const Render = (() => {
         spr(Sprites.glow('#ffffff', 10), hx, hy, 0, 0.6 + q * 0.6, 0.9);
         ctx.globalCompositeOperation = 'source-over';
       } else if (f.k === 'flame') {
+        if (!inView(f.x, f.y, f.r)) continue;
         const a = Math.min(1, f.life / f.max * 1.6), rr = f.r * (0.75 + 0.25 * a);
         ctx.globalCompositeOperation = 'lighter';
         spr(Sprites.boom(f.color), f.x, f.y, 0, rr / 64, 0.8 * a);
         ctx.globalCompositeOperation = 'source-over';
       }
+    }
+    // miny najednou a v jednom režimu prolínání (dřív každá vlastní cesta a přepnutí režimu)
+    if (mines) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (const f of G.effects) {
+        if (f.k !== 'mine' || !inView(f.x, f.y, 12)) continue;
+        const blink = (f.t * (f.life < 1.5 ? 10 : 3)) % 1 < 0.5;
+        spr(Sprites.mine(f.color, f.arm > 0 ? 0 : blink ? 2 : 1), f.x, f.y, f.t || 0, 1);
+      }
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     pt = PerfLog.lap('d.under', pt);
@@ -468,10 +597,12 @@ const Render = (() => {
     pt = PerfLog.lap('d.player', pt);
     // střely
     ctx.globalCompositeOperation = 'lighter';
+    // hodně střel naráz: menší záře (stejné střely, méně překreslených pixelů)
+    const bulletGlow = G.bullets.length > 120 ? 0.7 : 1;
     for (const b of G.bullets) {
       if (!inView(b.x, b.y, 20)) continue;
       const a = Math.atan2(b.vy, b.vx);
-      sprStretch(Sprites.glow(b.color, b.r), b.x, b.y, a, b.kind === 'missile' ? 1.6 : 2.2, 1);
+      sprStretch(Sprites.glow(b.color, bulletGlow === 1 ? b.r : Math.round(b.r * bulletGlow * 2) / 2), b.x, b.y, a, b.kind === 'missile' ? 1.6 : 2.2, 1);
     }
     for (const b of G.ebullets) {
       if (!inView(b.x, b.y, 20)) continue;
@@ -484,18 +615,16 @@ const Render = (() => {
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const f of G.effects) {
       if (f.k === 'ring') {
-        if (f.delay > 0) continue;
+        if (f.delay > 0 || !inView(f.x, f.y, f.r + 30)) continue;
         const t = f.r / f.maxR, a = 1 - t;
         ctx.strokeStyle = rgba(f.color, a * 0.85); ctx.lineWidth = (f.thick || 6) * (1 - t * 0.5);
         ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.stroke();
         ctx.strokeStyle = rgba(f.color, a * 0.25); ctx.lineWidth = (f.thick || 6) * 3;
         ctx.beginPath(); ctx.arc(f.x, f.y, Math.max(0, f.r - 10), 0, TAU); ctx.stroke();
       } else if (f.k === 'beam') {
-        const t = f.life / f.max, ex = f.x + Math.cos(f.a) * f.len, ey = f.y + Math.sin(f.a) * f.len;
-        ctx.strokeStyle = rgba(f.color, 0.45 * t); ctx.lineWidth = f.w * 2.6 * (0.5 + t * 0.5);
-        ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(ex, ey); ctx.stroke();
-        ctx.strokeStyle = `rgba(255,255,255,${0.95 * t})`; ctx.lineWidth = f.w * 0.55 * t;
-        ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(ex, ey); ctx.stroke();
+        const t = f.life / f.max;
+        sprLine(Sprites.beam(f.color, false), f.x, f.y, f.a, f.len, f.w * 2.6 * (0.5 + t * 0.5), t);
+        world();
       } else if (f.k === 'bolt') {
         const t = f.life / f.max;
         for (const [lw, col] of [[9, rgba(f.color, 0.3 * t)], [3, rgba(f.color, t)], [1.2, `rgba(255,255,255,${t})`]]) {
@@ -505,6 +634,7 @@ const Render = (() => {
           ctx.stroke();
         }
       } else if (f.k === 'boom') {
+        if (!inView(f.x, f.y, f.r)) continue;
         const t = 1 - f.life / f.max, rr = Math.max(1, f.r * ease.outCubic(t));
         spr(Sprites.boom(f.color), f.x, f.y, 0, rr / 64, 1 - t);
         world();
@@ -516,15 +646,18 @@ const Render = (() => {
     pt = PerfLog.lap('d.over', pt);
     // částice
     world();
+    let pa = -1, pc = '';
     for (const q of G.particles) {
       if (q.ghost !== undefined) {
         spr(Sprites.ship(q.color), q.x, q.y, q.ghost, 1, q.life / q.max * 0.5);
-        world();
+        world(); pa = -1;
         continue;
       }
-      const a = q.life / q.max, s = q.size * (0.4 + a * 0.6);
-      ctx.globalAlpha = a;
-      ctx.fillStyle = q.color;
+      if (q.x < G.cam.x - G.viewW / 2 - 20 || q.x > G.cam.x + G.viewW / 2 + 20 || q.y < G.cam.y - G.viewH / 2 - 20 || q.y > G.cam.y + G.viewH / 2 + 20) continue;
+      // průhlednost po dvacetinách a barvu nastavit jen při změně: méně příkazů pro GPU proces
+      const a = q.life / q.max, s = q.size * (0.4 + a * 0.6), qa = Math.ceil(a * 20) / 20;
+      if (qa !== pa) { ctx.globalAlpha = qa; pa = qa; }
+      if (q.color !== pc) { ctx.fillStyle = q.color; pc = q.color; }
       ctx.fillRect(q.x - s / 2, q.y - s / 2, s, s);
     }
     ctx.globalAlpha = 1;
@@ -576,10 +709,9 @@ const Render = (() => {
       if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
       const a = Math.atan2(sy - H / 2, sx - W / 2);
       const m = 34, tx = clamp(sx, m, W - m), ty = clamp(sy, m + 50, H - m);
-      ctx.save(); ctx.translate(tx, ty); ctx.rotate(a);
-      ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.moveTo(sz, 0); ctx.lineTo(-sz * 0.6, sz * 0.7); ctx.lineTo(-sz * 0.6, -sz * 0.7); ctx.closePath(); ctx.fill();
-      ctx.restore();
+      const img = Sprites.pointer(col, sz), c = Math.cos(a) * dpr, sn = Math.sin(a) * dpr;
+      ctx.setTransform(c, sn, -sn, c, tx * dpr, ty * dpr);
+      ctx.drawImage(img, -img.hw, -img.hw, img.hw * 2, img.hw * 2);
     }
 
     if (sec.dark) drawDark(p);
@@ -589,9 +721,9 @@ const Render = (() => {
     const low = p.hp / G.st.maxHp;
     const danger = Math.max(G.hurtFlash * 0.8, low < 0.3 && G.state === 'play' ? (0.3 - low) * 1.6 * (0.6 + 0.4 * Math.sin(G.time * 6)) : 0);
     if (danger > 0.01) {
-      const g = ctx.createRadialGradient(cv.width / 2, cv.height / 2, Math.min(cv.width, cv.height) * 0.3, cv.width / 2, cv.height / 2, Math.hypot(cv.width, cv.height) * 0.55);
-      g.addColorStop(0, 'rgba(255,0,40,0)'); g.addColorStop(1, `rgba(255,0,40,${Math.min(0.42, danger)})`);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.globalAlpha = Math.min(0.42, danger);
+      ctx.drawImage(dangerV, 0, 0, cv.width, cv.height);
+      ctx.globalAlpha = 1;
     }
     if (G.flash > 0.01) { ctx.fillStyle = `rgba(255,255,255,${G.flash * 0.35})`; ctx.fillRect(0, 0, cv.width, cv.height); }
     PerfLog.lap('d.overlay', pt);
@@ -618,9 +750,8 @@ const Render = (() => {
     if (!inView(w.x, w.y, w.r * 4)) return;
     world();
     const t = w.t, R = w.r * 3.4;
-    const g = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, R);
-    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(w.r / R, 'rgba(6,0,16,0.97)'); g.addColorStop(0.55, 'rgba(123,60,255,0.18)'); g.addColorStop(1, 'rgba(123,60,255,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(w.x, w.y, R, 0, TAU); ctx.fill();
+    spr(Sprites.radial('well', [[0, 'rgba(0,0,0,1)'], [1 / 3.4, 'rgba(6,0,16,0.97)'], [0.55, 'rgba(123,60,255,0.18)'], [1, 'rgba(123,60,255,0)']]), w.x, w.y, 0, R / 128);
+    world();
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < 4; i++) {
       ctx.strokeStyle = rgba(i % 2 ? '#ff4fd8' : '#c58bff', 0.5 - i * 0.08); ctx.lineWidth = 3 - i * 0.5;
@@ -635,10 +766,14 @@ const Render = (() => {
   function drawDark(p) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const sx = ((p.x - G.cam.x) * zoom + W / 2) * dpr, sy = ((p.y - G.cam.y) * zoom + H / 2) * dpr;
-    const r0 = 150 * zoom * dpr, r1 = 330 * zoom * dpr;
-    const g = ctx.createRadialGradient(sx, sy, r0, sx, sy, r1);
-    g.addColorStop(0, 'rgba(0,0,4,0)'); g.addColorStop(0.55, 'rgba(0,0,4,0.75)'); g.addColorStop(1, 'rgba(0,0,4,0.95)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+    const r1 = 330 * zoom * dpr;
+    // světlo kolem lodi jako sprite (přechod 150 → 330), zbytek obrazovky čtyři obdélníky tmy
+    const m = Sprites.radial('dark', [[0, 'rgba(0,0,4,0)'], [150 / 330, 'rgba(0,0,4,0)'], [150 / 330 + 0.55 * 180 / 330, 'rgba(0,0,4,0.75)'], [1, 'rgba(0,0,4,0.95)']], 128, true);
+    ctx.drawImage(m, sx - r1, sy - r1, r1 * 2, r1 * 2);
+    ctx.fillStyle = 'rgba(0,0,4,0.95)';
+    const x0 = Math.max(0, sx - r1), x1 = Math.min(cv.width, sx + r1), y0 = Math.max(0, sy - r1), y1 = Math.min(cv.height, sy + r1);
+    ctx.fillRect(0, 0, cv.width, y0); ctx.fillRect(0, y1, cv.width, cv.height - y1);
+    ctx.fillRect(0, y0, x0, y1 - y0); ctx.fillRect(x1, y0, cv.width - x1, y1 - y0);
     world();
     ctx.globalCompositeOperation = 'lighter';
     for (const e of G.enemies) {
@@ -681,5 +816,7 @@ const Render = (() => {
   }
   function setAttractSector(s) { attract.sector = s; }
 
-  return { init, resize, drawGame, drawAttract, setAttractSector, world, spr, get ctx() { return ctx; }, get zoom() { return zoom; }, get sprN() { return sprN; } };
+  return { init, resize, degrade, resetQuality, drawGame, drawAttract, setAttractSector, world, spr, sprLine,
+    get ctx() { return ctx; }, get zoom() { return zoom; }, get sprN() { return sprN; }, get scale() { return scale; },
+    get dirty() { return dirty; }, set dirty(v) { dirty = v; } };
 })();
