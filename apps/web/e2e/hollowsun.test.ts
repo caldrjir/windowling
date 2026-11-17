@@ -58,8 +58,11 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 			timeout: 30_000,
 		})
 		.toBeGreaterThanOrEqual(result.kills);
+	// skinned enemy visuals appear on the next rendered frames, too
+	await expect
+		.poll(() => run<number>(page, 'return HSGame.chars.enemies;'), { timeout: 30_000 })
+		.toBeGreaterThan(0);
 	const chars = await run<{ enemies: number; clip: string }>(page, 'return HSGame.chars;');
-	expect(chars.enemies).toBeGreaterThan(0);
 	expect(['idle', 'run', 'attack']).toContain(chars.clip);
 
 	// Stats for the center are written in the shared format.
