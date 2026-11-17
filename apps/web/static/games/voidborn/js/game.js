@@ -33,6 +33,7 @@ function calcStats(pilot, forge, passives, mut) {
     greed: 0, crit: 0, critDmg: 0, revives: 0, rerolls: 0, skips: 0, dashMax: 0, shield: 0, startLvl: 0, cards: 0, wSlots: 0,
     pSlots: 0, chestItems: 0, reviveFull: 0, evoLvl: 0, dashDmg: 0,
     dashCd: 0, heartHeal: 0, bounty: 0, kit: 0, bossDmg: 0, execute: 0, ocStart: 0, mutMax: 0, gravWave: 0, voidWill: 0,
+    ocMax: 0, echo: 0, startEvo: 0,
   };
   let cd = 1;
   const add = (m, mult = 1) => {
@@ -53,7 +54,8 @@ function calcStats(pilot, forge, passives, mut) {
     shieldCd: shieldCd(b.shield), startLvl: b.startLvl, cards: b.cards, wSlots: BASE_SLOTS + b.wSlots, pSlots: BASE_SLOTS + b.pSlots,
     chestItems: b.chestItems, reviveFull: b.reviveFull > 0, evoLvl: 8 - Math.min(1, b.evoLvl), dashDmg: b.dashDmg,
     dashCd: 2.6 * Math.max(0.4, 1 - b.dashCd), heartHeal: 30 + b.heartHeal, bounty: 1 + b.bounty, kit: b.kit, bossDmg: 1 + b.bossDmg,
-    execute: Math.min(0.3, b.execute), ocStart: Math.min(OC_MAX, b.ocStart), mutMax: MUT_MAX + b.mutMax, gravWave: b.gravWave > 0, voidWill: Math.min(0.75, b.voidWill),
+    execute: Math.min(0.3, b.execute), ocStart: Math.min(OC_MAX + b.ocMax, b.ocStart), mutMax: MUT_MAX + b.mutMax, gravWave: b.gravWave > 0, voidWill: Math.min(0.75, b.voidWill),
+    ocMax: OC_MAX + b.ocMax, echo: Math.min(0.5, b.echo), startEvo: b.startEvo > 0,
   };
 }
 
@@ -103,7 +105,7 @@ function newRun(pilotId, si, od) {
   Object.assign(G, {
     pilot, si, od, sector: SECTORS[si], time: 0, kills: 0, level: 1, xp: 0, xpNext: xpNeed(1), shards: 0,
     enemies: [], bullets: [], ebullets: [], pickups: [], effects: [], particles: [], texts: [],
-    weapons: [], passives: {}, mut: {}, st: null, boss: null, bossIdx: 0, warned: -1, nextBossT: BOSS_TIMES[0],
+    weapons: [], passives: {}, mut: {}, st: null, boss: null, bossIdx: 0, warned: -1, nextBossT: (SECTORS[si].bossTimes || BOSS_TIMES)[0],
     nextElite: 75, nextEvent: 50, spawnAcc: 0, uid: 0, dmgBy: {}, pendingLevels: 0, timeScale: 1,
     shake: 0, flash: 0, hurtFlash: 0, killTimes: [], noHit: 0, bossClean: true, newAch: [], endless: false,
     victory: false, gemCount: 0, gemCombo: 0, lastGemT: -9, dyingT: 0, hitsTaken: 0, evolvedRun: [],
@@ -119,7 +121,12 @@ function newRun(pilotId, si, od) {
   G.skips = 1 + G.st.skips;
   // Startovní zbraň pilota se vyvine vždy, i bez doplňku-katalyzátoru (upgradePool).
   G.startWeapon = pilot.weapon === 'random' ? pick(BASE_WEAPONS.filter(id => unlocked(WEAPONS[id]))) : pilot.weapon;
-  addWeapon(G.startWeapon, 1 + G.st.startLvl);
+  // Mistrovské dílo „Zrozen z prázdnoty“: startovní zbraň začíná rovnou vyvinutá.
+  const evoId = WEAPONS[G.startWeapon].evo;
+  if (G.st.startEvo && evoId) {
+    addWeapon(evoId, 1);
+    const w = getWeapon(evoId); w.oc = G.st.ocStart; computeWeapon(w);
+  } else addWeapon(G.startWeapon, 1 + G.st.startLvl);
   // Výbava z Kovárny: náhodný doplněk na první úrovni.
   if (G.st.kit) {
     const ids = Object.keys(PASSIVES).filter(id => unlocked(PASSIVES[id]) && !PASSIVES[id].rare);
@@ -152,7 +159,7 @@ function enemiesNear(x, y, r) {
 function burst(x, y, color, n, spd = 220, size = 3, life = 0.6) {
   // v plné hordě méně jisker na výbuch, ať vykreslování stíhá
   const np = G.particles.length;
-  if (np > 400) n = Math.ceil(n * (np > 700 ? 0.3 : 0.6));
+  if (np > 300) n = Math.ceil(n * (np > 800 ? 0.12 : np > 550 ? 0.3 : 0.6));
   for (let i = 0; i < n && G.particles.length < MAX_PARTICLES; i++) {
     const a = Math.random() * TAU, s = spd * (0.25 + Math.random() * 0.75);
     G.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: life * (0.5 + Math.random() * 0.5), max: life, size: size * (0.6 + Math.random() * 0.8), color, drag: 3 });
@@ -258,26 +265,56 @@ function mkPickup(kind, x, y, val = 0) {
   return { kind, x, y, val, n: 1, age: 0, vx: Math.cos(a) * s, vy: Math.sin(a) * s, mag: false, sp: 0, t: Math.random() * 3, dead: false };
 }
 // Krystaly a střepy, které leží blízko sebe, se potichu slijí do jednoho s jejich součtem
-// (a jiným tvarem a barvou podle velikosti). Méně předmětů na mapě, stejná hodnota.
-const MERGE_R = 30, _cells = new Map();
+// (a jiným tvarem a barvou podle velikosti). Méně předmětů na mapě = méně kreslení, stejná hodnota.
+// Čím víc jich leží, tím větší okruh slévání; mimo obrazovku se slévají v ještě větším okruhu
+// a nově padlý krystal rovnou přibude k tomu, který už leží poblíž (nevznikne nový).
+const MERGE_OFF = 420, _gridOn = new Map(), _gridOff = new Map();
+let _rOn = 56;
+const mergeRadius = n => 56 + Math.min(144, Math.max(0, n - 20) * 1.2);
+const _ck = (cx, cy, k) => ((cx * 92837111) ^ (cy * 689287499)) * 4 + k;
+const _pkKey = pk => (pk.kind === 'shard' ? 1 : 0) + (pk.mag ? 2 : 0);
+const _onScreen = (x, y) => Math.abs(x - G.cam.x) < G.viewW / 2 + 60 && Math.abs(y - G.cam.y) < G.viewH / 2 + 60;
+function _findNear(grid, R, x, y, k) {
+  const cx = Math.floor(x / R), cy = Math.floor(y / R), R2 = R * R;
+  for (let ix = cx - 1; ix <= cx + 1; ix++) for (let iy = cy - 1; iy <= cy + 1; iy++) {
+    const list = grid.get(_ck(ix, iy, k));
+    if (list) for (const o of list) if (!o.dead && _pkKey(o) === k && d2(o.x, o.y, x, y) < R2) return o;
+  }
+  return null;
+}
+function _insert(grid, R, pk, k) {
+  const key = _ck(Math.floor(pk.x / R), Math.floor(pk.y / R), k), list = grid.get(key);
+  if (list) list.push(pk); else grid.set(key, [pk]);
+}
 function mergePickups() {
-  _cells.clear();
-  const R2 = MERGE_R * MERGE_R;
+  _gridOn.clear(); _gridOff.clear();
+  let n = 0;
+  for (const pk of G.pickups) if (!pk.dead && (pk.kind === 'gem' || pk.kind === 'shard')) n++;
+  _rOn = mergeRadius(n);
   for (const pk of G.pickups) {
-    if (pk.dead || pk.mag || pk.age < 0.35 || (pk.kind !== 'gem' && pk.kind !== 'shard')) continue;
-    const cx = Math.floor(pk.x / MERGE_R), cy = Math.floor(pk.y / MERGE_R), sh = pk.kind === 'shard' ? 1 : 0;
-    let into = null;
-    for (let ix = cx - 1; ix <= cx + 1 && !into; ix++) for (let iy = cy - 1; iy <= cy + 1 && !into; iy++) {
-      const list = _cells.get((ix * 92837111) ^ (iy * 689287499) ^ sh);
-      if (list) for (const o of list) if (!o.dead && o.kind === pk.kind && d2(o.x, o.y, pk.x, pk.y) < R2) { into = o; break; }
-    }
+    if (pk.dead || (pk.kind !== 'gem' && pk.kind !== 'shard')) continue;
+    const on = _onScreen(pk.x, pk.y), k = _pkKey(pk);
+    // letící k hráči se slévají jen mezi sebou a v malém okruhu; čerstvě padlé se nejdřív rozletí
+    const R = pk.mag ? 26 : on ? _rOn : MERGE_OFF, grid = on ? _gridOn : _gridOff;
+    if (on && !pk.mag && pk.age < 0.15) continue;
+    const into = _findNear(grid, R, pk.x, pk.y, k);
     if (into) { into.val += pk.val; into.n += pk.n; pk.dead = true; continue; }
-    const key = (cx * 92837111) ^ (cy * 689287499) ^ sh;
-    const list = _cells.get(key);
-    if (list) list.push(pk); else _cells.set(key, [pk]);
+    _insert(grid, R, pk, k);
   }
 }
+/** Krystal nebo střep, který právě padl: přibude k ležícímu poblíž, jinak vznikne nový. */
+function dropMerged(kind, x, y, val) {
+  const k = kind === 'shard' ? 1 : 0, on = _onScreen(x, y), R = on ? _rOn : MERGE_OFF, grid = on ? _gridOn : _gridOff;
+  const into = _findNear(grid, R, x, y, k);
+  if (into) { into.val += val; into.n++; return null; }
+  const pk = mkPickup(kind, x, y, val);
+  if (kind === 'gem') { pk.vx *= 0.4; pk.vy *= 0.4; }
+  G.pickups.push(pk);
+  _insert(grid, R, pk, k);
+  return pk;
+}
 function dropPickup(kind, x, y, val = 0) {
+  if (kind === 'shard') { dropMerged(kind, x, y, val); return; }
   const cap = PICKUP_CAP[kind];
   if (cap && G.pickups.reduce((n, p) => n + (p.kind === kind && !p.dead ? 1 : 0), 0) >= cap) return;
   G.pickups.push(mkPickup(kind, x, y, val));
@@ -289,8 +326,7 @@ function dropGem(x, y, val) {
       if (g && g.kind === 'gem' && !g.mag) { g.val += val; return; }
     }
   }
-  const g = mkPickup('gem', x, y, val); g.vx *= 0.4; g.vy *= 0.4;
-  G.pickups.push(g);
+  dropMerged('gem', x, y, val);
 }
 
 function collect(pk) {
@@ -498,10 +534,12 @@ function director(dt) {
     UI.banner(L('⚠ VAROVÁNÍ', '⚠ WARNING'), BOSSES[key].name + L(' se blíží', ' is approaching'), 'boss');
     Sound.play.warning();
   }
-  if (t >= G.nextBossT) {
+  // v Aréně titánů počká další boss, dokud předchozí žije (jinak by se přetahovali o ukazatel zdraví)
+  if (t >= G.nextBossT && !(S.rush && G.boss)) {
     spawnBoss(bossKeyFor(G.bossIdx), G.bossIdx);
     G.bossIdx++;
-    G.nextBossT = G.bossIdx < BOSS_TIMES.length ? BOSS_TIMES[G.bossIdx] : (G.endless ? G.nextBossT + 300 : Infinity);
+    const bt = bossTimes();
+    G.nextBossT = G.bossIdx < bt.length ? bt[G.bossIdx] : (G.endless ? G.nextBossT + 300 : Infinity);
   }
   if (G.state !== 'play') return;
   sectorTick(dt);
@@ -516,7 +554,7 @@ function director(dt) {
     if (G.enemies.length < cap) { const sp = spawnPos(); spawnEnemyAt(pickType(pool), sp.x, sp.y); }
   }
   if (t >= G.nextElite) {
-    G.nextElite += rand(60, 85);
+    G.nextElite += rand(60, 85) * (S.rush ? 0.5 : 1);
     const sp = spawnPos(); spawnEnemyAt(pickType(pool), sp.x, sp.y, { elite: true });
   }
   if (t >= G.nextEvent && !G.boss && G.enemies.length < 330) {
@@ -552,8 +590,10 @@ function spawnEvent(pool) {
 function sectorStart() {
   const S = G.sector;
   G.meteors = []; G.monoShown = false;
+  _gridOn.clear(); _gridOff.clear(); // mřížka slévání nesmí držet předměty z minulého běhu
   if (S.mono) G.monoType = pick(Object.keys(MONO_TYPES));
   if (S.well) { const a = Math.random() * TAU; G.well = { x: Math.cos(a) * 760, y: Math.sin(a) * 760, r: 74, R: 1500, t: 0, hurt: 0 }; }
+  G.zone = S.zone ? { x: 0, y: 0, r: ZONE.big, fx: 0, fy: 0, fr: ZONE.big, tx: 0, ty: 0, tr: ZONE.big, phase: 'calm', t: ZONE.calm, out: 0 } : null;
 }
 function monoBanner() { UI.banner(L('MONOKULTURA', 'MONOCULTURE'), L('Teď jen: ', 'Now only: ') + ENEMY_NAMES[G.monoType][0], 'warn'); }
 function sectorTick(dt) {
@@ -578,6 +618,36 @@ function sectorTick(dt) {
     updateMeteors(dt);
   }
   if (S.well && G.well) updateWell(dt);
+  if (G.zone) updateZone(dt);
+}
+// Kolaps: zóna se po klidu smrští kolem nového středu (hráč musí za ní), chvíli drží a zase se rozšíří.
+// Mimo zónu ubírá prázdnota každou sekundu část zdraví (pancíř ani štít nepomůžou).
+function updateZone(dt) {
+  const z = G.zone, p = G.p, m = minutes();
+  z.t -= dt;
+  if (z.t <= 0) {
+    z.fx = z.x; z.fy = z.y; z.fr = z.r;
+    if (z.phase === 'calm') {
+      const a = Math.random() * TAU, d = rand(450, 850);
+      z.tx = p.x + Math.cos(a) * d; z.ty = p.y + Math.sin(a) * d; z.tr = Math.max(300, 460 - m * 8);
+      z.phase = 'shrink'; z.t = ZONE.shrink;
+      UI.banner(L('KOLAPS', 'COLLAPSE'), L('Zóna se smršťuje: drž se uvnitř!', 'The zone is shrinking: stay inside!'), 'warn');
+      Sound.play.warning();
+    } else if (z.phase === 'shrink') { z.phase = 'hold'; z.t = ZONE.hold; }
+    else if (z.phase === 'hold') { z.tx = z.x; z.ty = z.y; z.tr = ZONE.big; z.phase = 'grow'; z.t = ZONE.grow; }
+    else { z.phase = 'calm'; z.t = ZONE.calm; }
+  }
+  if (z.phase === 'shrink' || z.phase === 'grow') {
+    const len = z.phase === 'shrink' ? ZONE.shrink : ZONE.grow, q = 1 - z.t / len, e = q * q * (3 - 2 * q);
+    z.x = lerp(z.fx, z.tx, e); z.y = lerp(z.fy, z.ty, e); z.r = lerp(z.fr, z.tr, e);
+  }
+  const out = Math.hypot(p.x - z.x, p.y - z.y) > z.r;
+  z.out = out ? z.out + dt : 0;
+  if (out && G.state === 'play') {
+    p.hp -= G.st.maxHp * (0.07 + m * 0.004) * dt;
+    G.hurtFlash = Math.max(G.hurtFlash, 0.35); G.noHit = 0;
+    if (p.hp <= 0) playerDown();
+  }
 }
 // Meteorit: nejdřív varovná čára přes obrazovku (kolem hráče), pak kámen proletí. Hráče zraní,
 // běžné nepřátele v cestě rozdrtí (elity a bossy jen zraní).
@@ -641,15 +711,17 @@ function updateWell(dt) {
 }
 
 // ── Bossové ─────────────────────────────────────────────────────────────────
+// Časy bossů: Aréna titánů má vlastní, hustší přehlídku.
+const bossTimes = () => G.sector.bossTimes || BOSS_TIMES;
 function bossKeyFor(i) {
-  if (i < BOSS_TIMES.length) return G.sector.bosses[i];
+  if (i < bossTimes().length) return G.sector.bosses[i];
   return pick(Object.keys(BOSSES));
 }
 function spawnBoss(key, idx) {
   const d = BOSSES[key];
   const a = Math.random() * TAU, p = G.p;
-  const final = idx === BOSS_TIMES.length - 1;
-  const mult = idx >= BOSS_TIMES.length ? 1 + (idx - BOSS_TIMES.length + 1) * 0.6 : 1;
+  const bt = bossTimes(), final = idx === bt.length - 1;
+  const mult = idx >= bt.length ? 1 + (idx - bt.length + 1) * 0.6 : 1;
   const e = {
     id: ++G.uid, type: 'boss', d: { shape: d.shape, mass: 1000 }, x: p.x + Math.cos(a) * G.viewR * 0.75, y: p.y + Math.sin(a) * G.viewR * 0.75,
     vx: 0, vy: 0, kx: 0, ky: 0, r: d.r, color: d.color, hp: d.hp * (1 + minutes() * 0.36) * G.sector.hp * (1 + G.od * 0.25) * mult, speed: d.speed * (1 + G.od * 0.03), dmg: d.dmg * dmgMul(), xp: 0,
@@ -818,8 +890,20 @@ function openChest(big) {
   if (evos.length) count = Math.max(0, count - 1);
   for (let i = 0; i < count; i++) {
     const pool = upgradePool().filter(c => c.kind !== 'evo');
-    // když už není co vylepšit, truhla dá mutaci
-    const c = pool.length ? weighted(pool, c => c.isNew ? c.w * 0.5 : c.w) : mutationChoice();
+    // když už není co vylepšit, truhla dá mutaci; s automatickým výběrem vybere podle priorit
+    // z nabídky tří karet (jako při postupu)
+    const offer = [];
+    let rest = pool;
+    while (offer.length < (SAVE.settings.autoPick ? 3 : 1) && rest.length) {
+      const o = weighted(rest, c => c.isNew ? c.w * 0.5 : c.w);
+      offer.push(o); rest = rest.filter(x => x !== o);
+    }
+    if (!pool.length) for (let k = 0; k < (SAVE.settings.autoPick ? 3 : 1); k++) {
+      const m = mutationChoice(offer.map(o => o.id));
+      if (m.kind === 'gold' && offer.length) break;
+      offer.push(m);
+    }
+    const c = SAVE.settings.autoPick ? autoPickBest(offer) : offer[0];
     applyChoice(c); rewards.push(c);
   }
   const sh = Math.round(randi(8, 18) * shardMul() * (big ? 3 : 1) * G.st.bounty);
@@ -856,7 +940,7 @@ function upgradePool() {
     const d = WEAPONS[w.id];
     if (!d.evolved && w.level < 8) pool.push({ kind: 'weapon', id: w.id, lvl: w.level + 1, w: 1.25 });
     // evoluční zbraň se dál přetěžuje (★1–★4)
-    if (d.evolved && (w.oc || 0) < OC_MAX) pool.push({ kind: 'oc', id: w.id, lvl: (w.oc || 0) + 1, w: 1.15 });
+    if (d.evolved && (w.oc || 0) < G.st.ocMax) pool.push({ kind: 'oc', id: w.id, lvl: (w.oc || 0) + 1, w: 1.15 });
   }
   if (G.weapons.length < G.st.wSlots) for (const id of BASE_WEAPONS) if (!ownsFamily(id) && unlocked(WEAPONS[id])) pool.push({ kind: 'weapon', id, lvl: 1, isNew: true, w: 0.85 });
   const owned = Object.keys(G.passives);
@@ -940,24 +1024,52 @@ function applyChoice(c) {
   }
 }
 
-/** Kde je karta v pořadí priorit (menší = dřív); karta může patřit pod víc položek, platí ta vyšší. */
+/** Pod které položky pořadí karta patří (startovní zbraň je i svou zbraní, katalyzátor i svým doplňkem). */
+function prioKeys(c) {
+  const start = id => (id === G.startWeapon ? ['start'] : []);
+  if (c.kind === 'weapon') return [...start(c.id), 'w:' + c.id];
+  if (c.kind === 'passive') return [...(c.evoHint ? ['catalyst'] : []), 'p:' + c.id];
+  if (c.kind === 'evo') return [...start(c.from), 'evo'];
+  if (c.kind === 'oc') return [...start(WEAPONS[c.id].from), 'oc'];
+  if (c.kind === 'mut') return ['m:' + c.id];
+  return [c.kind];
+}
+/** Kde je karta v pořadí priorit (menší = dřív); platí její nejvyšší položka. Evoluce a přetížení
+ *  rozhoduje mezi sebou pořadí zbraní, ze kterých vznikly. */
 function prioIndex(c, order) {
-  const keys = c.kind === 'weapon' ? [...(c.id === G.startWeapon ? ['start'] : []), 'w:' + c.id]
-    : c.kind === 'passive' ? [...(c.evoHint ? ['catalyst'] : []), 'p:' + c.id] : [c.kind];
   let best = Infinity;
-  for (const k of keys) { const i = order.indexOf(k); if (i >= 0 && i < best) best = i; }
-  return best;
+  for (const k of prioKeys(c)) { const i = order.indexOf(k); if (i >= 0 && i < best) best = i; }
+  const fam = c.kind === 'evo' ? c.from : c.kind === 'oc' ? WEAPONS[c.id].from : null;
+  const sub = fam ? order.indexOf('w:' + fam) : -1;
+  return best * 1000 + (sub >= 0 ? sub : 999);
 }
 function autoPickBest(choices) {
   const order = prioList(SAVE.settings.prio);
   return choices.reduce((b, c) => (prioIndex(c, order) < prioIndex(b, order) ? c : b));
 }
+// Mistrovské dílo Ozvěna: s šancí G.st.echo dá postup navíc i nejlepší ze zbylých karet nabídky
+// (podle pořadí priorit). Karta musí po první volbě pořád platit (místo, úroveň, zbraň).
+function stillValid(c) {
+  if (c.kind === 'heal' || c.kind === 'gold') return true;
+  if (c.kind === 'mut') return (G.mut[c.id] || 0) < G.st.mutMax;
+  return upgradePool().some(o => o.kind === c.kind && o.id === c.id && o.lvl === c.lvl);
+}
+function echoPick(offer, first) {
+  if (!G.st.echo || Math.random() >= G.st.echo) return null;
+  const rest = offer.filter(c => c !== first && stillValid(c));
+  if (!rest.length) return null;
+  const c = autoPickBest(rest);
+  applyChoice(c);
+  return Object.assign({}, c, { echo: true });
+}
 // Automatický výběr: hra se nezastaví, vybere kartu nejvýš v pořadí priorit a jen ji krátce ukáže.
 function autoLevelUp() {
   const picked = [];
   while (G.pendingLevels > 0 && picked.length < 60) {
-    const c = autoPickBest(genChoices());
+    const offer = genChoices(), c = autoPickBest(offer);
     applyChoice(c); picked.push(c);
+    const e = echoPick(offer, c);
+    if (e) picked.push(e);
     G.pendingLevels--;
   }
   Sound.play.levelup();
@@ -976,6 +1088,8 @@ function openLevelUp() {
 function pickChoice(i) {
   if (G.state !== 'levelup' || !G.choices || !G.choices[i]) return;
   applyChoice(G.choices[i]);
+  const e = echoPick(G.choices, G.choices[i]);
+  if (e) UI.autoPicked([e]);
   Sound.play.select();
   afterLevelPick();
 }
@@ -1348,7 +1462,7 @@ function updatePickups(dt) {
   let gems = 0;
   if (G.shardAcc && G.time - (G.shardTextT || -9) > 0.3) shardText();
   G.mergeT -= dt;
-  if (G.mergeT <= 0) { G.mergeT = 0.25; mergePickups(); }
+  if (G.mergeT <= 0) { G.mergeT = 0.15; mergePickups(); }
   if (G.st.gravWave) {
     G.gravT -= dt;
     if (G.gravT <= 0) {

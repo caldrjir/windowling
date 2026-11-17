@@ -381,6 +381,7 @@ const Render = (() => {
 
     // anomálie: černá díra a varovné čáry meteoritů (pod předměty a nepřáteli)
     if (G.well) drawWell(G.well);
+    if (G.zone) drawZone(G.zone);
     if (G.meteors) for (const m of G.meteors) if (m.warn > 0) {
       world();
       const q = 1 - m.warn / 1.3, pulse = 0.35 + 0.35 * ((m.warn * 6) % 1);
@@ -550,6 +551,7 @@ const Render = (() => {
     const pointers = [];
     if (G.boss) pointers.push([G.boss.x, G.boss.y, G.boss.color, 14]);
     if (G.well) pointers.push([G.well.x, G.well.y, '#c58bff', 13]);
+    if (G.zone && (G.zone.out > 0 || G.zone.phase === 'shrink')) pointers.push(G.zone.phase === 'shrink' ? [G.zone.tx, G.zone.ty, '#ffffff', 13] : [G.zone.x, G.zone.y, '#e08bff', 15]);
     for (const pk of G.pickups) if (pk.kind === 'chest') pointers.push([pk.x, pk.y, '#ffd166', 10]);
     for (const [x, y, col, sz] of pointers) {
       const sx = (x - G.cam.x) * zoom + W / 2, sy = (y - G.cam.y) * zoom + H / 2;
@@ -577,6 +579,22 @@ const Render = (() => {
   }
 
   // Bloudící černá díra: tmavý vír s akrečním prstencem a slabým okrajem dosahu.
+  // Kolaps: mimo zónu tmavě fialový závoj, okraj zóny a (při smršťování) kam se zóna stáhne
+  function drawZone(z) {
+    world();
+    const hw = G.viewW / 2 + 80, hh = G.viewH / 2 + 80;
+    ctx.fillStyle = z.out > 0 ? 'rgba(70,0,40,0.5)' : 'rgba(40,0,34,0.42)';
+    ctx.beginPath(); ctx.rect(G.cam.x - hw, G.cam.y - hh, hw * 2, hh * 2); ctx.arc(z.x, z.y, z.r, 0, TAU, true); ctx.fill('evenodd');
+    const pulse = 0.6 + 0.4 * Math.sin(G.time * 5);
+    ctx.lineWidth = 4; ctx.strokeStyle = `rgba(224,139,255,${0.55 + 0.35 * pulse})`;
+    ctx.setLineDash([22, 12]); ctx.lineDashOffset = -G.time * 60;
+    ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, TAU); ctx.stroke();
+    if (z.phase === 'shrink') {
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.setLineDash([8, 10]);
+      ctx.beginPath(); ctx.arc(z.tx, z.ty, z.tr, 0, TAU); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
   function drawWell(w) {
     if (!inView(w.x, w.y, w.r * 4)) return;
     world();

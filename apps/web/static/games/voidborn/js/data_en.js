@@ -24,6 +24,12 @@ if (LANG === 'en') (() => {
     quantum: ['Quantum Disc', 'Discs bounce almost endlessly and grow stronger with every bounce.'],
     comet: ['Comet', 'A wide flame and a trail of fire behind the ship. The faster you fly, the more it burns.'],
     starfall: ['Starfall', 'A rain of stars that always land critical hits.'],
+    sentry: ['Sentry Drones', 'Drones circling your ship fire at the nearest enemies on their own.', ['+1 drone', '+5 damage', 'Faster fire rate', 'Longer range, pierce +1', '+1 drone', '+8 damage', '+1 drone, faster fire rate']],
+    voidray: ['Void Ray', 'A beam latches onto an enemy and burns hotter the longer it holds on.', ['+1.5 damage', 'Longer range', '+1 beam', 'Heats up faster', '+2 damage', '+1 beam', 'Higher heat cap, +1.5 damage']],
+    cluster: ['Cascade', 'A bomb lands in a pack of enemies and bursts into smaller charges.', ['+2 charges', '+16 damage', '+1 bomb', 'Bigger explosions', 'Faster recharge', '+24 damage', '+1 bomb, +2 charges']],
+    armada: ['Armada', 'A whole squadron of drones fires twin piercing shots in every direction.'],
+    devourer: ['Devourer', 'Beams jump to further enemies and heat up to ten times their damage.'],
+    chainreact: ['Chain Reaction', 'Every charge bursts again. The whole battlefield in flames.'],
   };
   for (const id in W) {
     const [name, desc, ups] = W[id], d = WEAPONS[id];
@@ -56,6 +62,9 @@ if (LANG === 'en') (() => {
     ['Monoculture', 'A single kind of enemy, in enormous numbers. Every two and a half minutes the void switches to another.'],
     ['Event Horizon', 'A wandering black hole pulls you in and creeps after you. Enemies it swallows are crushed.'],
     ['Darkness', 'Light reaches only a little way around the ship. What lies beyond, you learn when it hits you.'],
+    ['Arena of Titans', 'Bosses arrive every two and a half minutes and elites come twice as often. Survive the whole parade.'],
+    ['Collapse', 'The safe zone keeps shrinking and moving elsewhere. Outside it, the void tears you apart.'],
+    ['The End of Everything', 'Meteors, a black hole and darkness all at once. There is no way further.'],
   ];
   SECTORS.forEach((s, i) => { s.name = S[i][0]; s.desc = S[i][1]; });
   const PL = {
@@ -85,6 +94,15 @@ if (LANG === 'en') (() => {
     execute: ['Executioner', 'Regular enemies below 5% health (per level) die at once'], ocstart: ['Head-start Evolution', 'An evolved weapon starts one ★ higher'],
     deepmut: ['Deep Mutation', 'Every mutation cap +5'], gravwave: ['Gravity Wave', 'Every 40 s pulls in all crystals and shards on the map'],
     voidwill: ['Will of the Void', 'In endless mode enemies grow 25% slower'], fan: ['Fan of Cards', 'One more card on every level-up'],
+    e_might: ['Eternal Might', '+5% damage'], e_vigor: ['Eternal Vigor', '+20 max HP, +0.15 HP/s'], e_haste: ['Eternal Tempo', '−2% cooldown'],
+    e_area: ['Eternal Reach', '+4% area of effect and duration'], e_crit: ['Eternal Precision', '+1% crit chance, +6% crit damage'],
+    e_growth: ['Eternal Insight', '+5% experience, +3% luck'], e_greed: ['Eternal Harvest', '+6% shards'],
+    bp_sentry: ['Blueprint: Sentry Drones', 'Unlocks the new weapon Sentry Drones (evolves with Energy Shield)'],
+    bp_voidray: ['Blueprint: Void Ray', 'Unlocks the new weapon Void Ray (evolves with Crit Amplifier)'],
+    bp_cluster: ['Blueprint: Cascade', 'Unlocks the new weapon Cascade (evolves with Gyroscope)'],
+    phoenix: ['Eternal Phoenix', '+1 revive per run'], ocmax: ['Beyond the Limit', 'Evolutions can be overcharged one ★ higher (★5 and ★6)'],
+    echo: ['Echo', '25% chance a level-up also grants the second-best card'], bigslots: ['Grand Arsenal', '+1 weapon slot and +1 passive slot'],
+    voidborn: ['Voidborn', 'Your starting weapon begins already evolved'],
   };
   for (const f of FORGE) { f.name = F[f.id][0]; f.desc = F[f.id][1]; }
   const A = {
@@ -95,7 +113,7 @@ if (LANG === 'en') (() => {
     clear1: ['Nebula Cleared', 'Complete Sector I.'], clear2: ['Belt Breached', 'Complete Sector II.'], clear3: ['Emerald Hunter', 'Complete Sector III.'],
     clear4: ['Beyond the Horizon', 'Complete Sector IV.'], clear5: ['Heart Stopped', 'Complete Sector V.'],
     evo1: ['Metamorphosis', 'Evolve any weapon.'], evo4: ['Alchemist', 'Discover 4 different evolutions.'], evo8: ['Architect of Ruin', 'Discover 8 different evolutions.'],
-    evoAll: ['Lord of the Void', 'Discover all 11 evolutions.'], t30: ['Undying', 'Survive 30 minutes in a single run (endless mode).'],
+    evoAll: ['Lord of the Void', 'Discover 11 different evolutions.'], t30: ['Undying', 'Survive 30 minutes in a single run (endless mode).'],
     lvl100: ['Mutant', 'Reach level 100 in a single run.'], masterAll: ['Grandmaster', 'Buy the whole Master Workshop.'], oc4: ['Overcharge', 'Overcharge an evolved weapon to ★4.'], master: ['Master Workshop', 'Buy your first upgrade in the Master Workshop.'],
     lvl30: ['Charged', 'Reach level 30 in a single run.'], lvl60: ['Overloaded', 'Reach level 60 in a single run.'],
     od1: ['Overdrive', 'Complete any sector on Overdrive 1.'], od5: ['Red Zone', 'Complete any sector on Overdrive 5.'], od10: ['Beyond the Limit', 'Complete any sector on Overdrive 10.'],
@@ -104,8 +122,13 @@ if (LANG === 'en') (() => {
     massacre: ['Massacre', 'Destroy 250 enemies within 10 seconds.'], clean: ['Not a Scratch', 'Defeat a boss without getting hit during the fight.'],
     clear6: ['Through the Stone Storm', 'Complete Sector VI.'], clear7: ['One Kind Is Not Enough', 'Complete Sector VII.'],
     clear8: ['Escape the Horizon', 'Complete Sector VIII.'], clear9: ['Light in the Dark', 'Complete Sector IX.'],
-    sectorsAll: ['Lord of All Sectors', 'Complete all 9 sectors.'], meteorKills: ['Rockslide', 'Let meteors and the black hole destroy 300 enemies.'],
+    sectorsAll: ['Lord of All Sectors', 'Complete all 12 sectors.'], meteorKills: ['Rockslide', 'Let meteors and the black hole destroy 300 enemies.'],
     voidAll: ['Void Smith', 'Buy the whole Void Workshop.'],
+    clear10: ['The Parade Is Over', 'Complete Sector X.'], clear11: ['In the Middle of the Collapse', 'Complete Sector XI.'],
+    clear12: ['After the End of Everything', 'Complete Sector XII.'], evo14: ['Complete Metamorphosis', 'Discover all 14 evolutions.'],
+    oc6: ['Past the Overcharge Limit', 'Overcharge an evolved weapon to ★6.'], piece1: ['Masterpiece', 'Buy your first Masterpiece in the Forge.'],
+    piecesAll: ['Gallery of Masters', 'Buy every Masterpiece.'], eternal10: ['Eternal Smith', 'Buy 10 levels in the Eternal Workshop.'],
+    eternal50: ['Infinity', 'Buy 50 levels in the Eternal Workshop.'],
     runs10: ['Veteran', 'Play 10 runs.'], runs50: ['Legend', 'Play 50 runs.'], dash500: ['Acrobat', 'Dash 500 times.'], pilots: ['Full Squadron', 'Unlock all pilots.'],
   };
   for (const a of ACHIEVEMENTS) { a.name = A[a.id][0]; a.desc = A[a.id][1]; }
