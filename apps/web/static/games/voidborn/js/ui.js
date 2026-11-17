@@ -57,6 +57,20 @@ const UI = (() => {
   let openedAt = 0;
   const hc = {};
 
+  // Součet vylepšení Věčné dílny na dané úrovni (např. „+35 % poškození“).
+  const fmtDec = v => (LANG === 'cs' ? String(v).replace('.', ',') : String(v));
+  const fmtP = v => fmtDec(Math.round(v * 1000) / 10);
+  function forgeTotal(f, l) {
+    const T = {
+      might: v => L(`+${fmtP(v)} % poškození`, `+${fmtP(v)}% damage`), maxHp: v => L(`+${Math.round(v)} zdraví`, `+${Math.round(v)} HP`),
+      regen: v => L(`+${fmtDec(Math.round(v * 100) / 100)} zdraví/s`, `+${fmtDec(Math.round(v * 100) / 100)} HP/s`),
+      area: v => L(`+${fmtP(v)} % oblast`, `+${fmtP(v)}% area`), dur: v => L(`+${fmtP(v)} % trvání`, `+${fmtP(v)}% duration`),
+      crit: v => L(`+${fmtP(v)} % krit.`, `+${fmtP(v)}% crit`), critDmg: v => L(`+${fmtP(v)} % krit. poškození`, `+${fmtP(v)}% crit damage`),
+      growth: v => L(`+${fmtP(v)} % zkušeností`, `+${fmtP(v)}% XP`), luck: v => L(`+${fmtP(v)} % štěstí`, `+${fmtP(v)}% luck`),
+      greed: v => L(`+${fmtP(v)} % střepů`, `+${fmtP(v)}% shards`),
+    };
+    return Object.entries(f.mod).map(([k, v]) => (k === 'cdMul' ? L(`−${fmtP(1 - Math.pow(1 + v, l))} % nabíjení`, `−${fmtP(1 - Math.pow(1 + v, l))}% cooldown`) : T[k] ? T[k](v * l) : '')).filter(Boolean).join(', ');
+  }
   const pips = (n, max, cls = '') => `<div class="pips ${cls}">${Array.from({ length: max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
   const topbar = (small, title, extra = '', back = 'menu') => `<div class="topbar"><button class="back" data-go="${back}" title="${L('Zpět', 'Back')} (Esc)">←</button><h2><small>${small}</small>${title}</h2><div class="spacer"></div>${extra}<div class="chip shard">${icon('shard')} ${fmtNum(SAVE.shards)}</div></div>`;
   const langSwitch = () => `<div class="lang">${['cs', 'en'].map(l => `<button class="${l === LANG ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`;
@@ -134,7 +148,9 @@ const UI = (() => {
         </div>
         <div class="sectors">${SECTORS.slice(0, BASE_SECTORS).map((s, i) => sectorCard(s, i)).join('')}</div>
         <div class="anom-head">${icon('meteor')}<div><h3>${L('ANOMÁLIE', 'ANOMALIES')}</h3><p>${L('Sektory s vlastním pravidlem. Každý otevře dobytí jednoho z hlavních sektorů.', 'Sectors with a rule of their own. Each one opens once you clear one of the main sectors.')}</p></div></div>
-        <div class="sectors anom">${SECTORS.slice(BASE_SECTORS).map((s, j) => sectorCard(s, BASE_SECTORS + j)).join('')}</div>
+        <div class="sectors anom">${SECTORS.map((s, i) => [s, i]).filter(([s, i]) => i >= BASE_SECTORS && !s.deep).map(([s, i]) => sectorCard(s, i)).join('')}</div>
+        <div class="anom-head deep">${icon('skull')}<div><h3>${L('HLUBINY', 'THE DEEP')}</h3><p>${L('Sektory pro konec hry. Otevírají se jeden po druhém od dobytí Sektoru IX.', 'Sectors for the end game. They open one after another once you clear Sector IX.')}</p></div></div>
+        <div class="sectors deep">${SECTORS.map((s, i) => [s, i]).filter(([s]) => s.deep).map(([s, i]) => sectorCard(s, i)).join('')}</div>
         <div class="launch">
           <div class="sdesc"><b>${L('Sektor', 'Sector')} ${sec.roman} · ${sec.name}</b>${sec.desc}<br>${L('Nejlepší čas', 'Best time')}: ${fmtTime(rec ? rec.best || 0 : 0)} · ${L('Cíl: přežij 15:00 a poraz Monarchu', 'Goal: survive 15:00 and defeat the Monarch')}</div>
           <div class="od">
@@ -155,9 +171,10 @@ const UI = (() => {
       const open = masterOpen();
       const card = (f, locked) => {
         const l = SAVE.forge[f.id] || 0, maxed = l >= f.max, cost = maxed ? 0 : forgeCost(f, l);
-        return `<div class="fcard ${maxed ? 'maxed' : ''} ${f.tier === 2 ? 'master' : f.tier === 3 ? 'master void' : ''} ${locked ? 'locked' : ''}" id="fc-${f.id}">
+        const cls = { 2: 'master', 3: 'master void', 4: 'master eternal', 5: 'master piece' }[f.tier] || '';
+        return `<div class="fcard ${maxed ? 'maxed' : ''} ${cls} ${locked ? 'locked' : ''}" id="fc-${f.id}">
           <div class="fi">${icon(f.icon)}<div><h4>${f.name}</h4><p>${f.desc}</p></div></div>
-          ${pips(l, f.max)}
+          ${f.max === Infinity ? `<div class="lvl-inf">${L('Úroveň', 'Level')} <b>${l}</b>${l ? ` · ${L('celkem', 'total')} ${forgeTotal(f, l)}` : ''}</div>` : pips(l, f.max)}
           <button class="btn buy ${maxed ? 'ghost' : ''}" data-buy="${f.id}" ${locked || maxed || SAVE.shards < cost ? 'disabled' : ''}>${locked ? `${icon('lock')} ${fmtNum(cost)}` : maxed ? L('Maximum', 'Maxed') : `${icon('shard')} ${fmtNum(cost)}`}</button>
         </div>`;
       };
@@ -167,7 +184,11 @@ const UI = (() => {
         <div class="master-head ${open ? '' : 'locked'}">${icon(open ? 'forge' : 'lock')}<div><h3>${L('MISTROVSKÁ DÍLNA', 'MASTER WORKSHOP')}</h3><p>${open ? L('Silnější a dražší vylepšení pro zkušené piloty.', 'Stronger, pricier upgrades for seasoned pilots.') : L('Otevře se po dobytí Sektoru II.', 'Opens once you clear Sector II.')}</p></div></div>
         <div class="grid-cards">${FORGE.filter(f => f.tier === 2).map(f => card(f, !open)).join('')}</div>
         <div class="master-head void ${vopen ? '' : 'locked'}">${icon(vopen ? 'vortex' : 'lock')}<div><h3>${L('PRÁZDNOTOVÁ DÍLNA', 'VOID WORKSHOP')}</h3><p>${vopen ? L('Vylepšení pro konec hry a nekonečný režim.', 'Upgrades for the end game and endless mode.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
-        <div class="grid-cards">${FORGE.filter(f => f.tier === 3).map(f => card(f, !vopen)).join('')}</div>`;
+        <div class="grid-cards">${FORGE.filter(f => f.tier === 3).map(f => card(f, !vopen)).join('')}</div>
+        <div class="master-head eternal ${vopen ? '' : 'locked'}">${icon(vopen ? 'infinity' : 'lock')}<div><h3>${L('VĚČNÁ DÍLNA', 'ETERNAL WORKSHOP')}</h3><p>${vopen ? L('Vylepšení bez stropu. Každá další úroveň stojí víc, síla roste dál.', 'Upgrades with no cap. Every further level costs more, and the power keeps growing.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
+        <div class="grid-cards">${FORGE.filter(f => f.tier === 4).map(f => card(f, !vopen)).join('')}</div>
+        <div class="master-head piece ${vopen ? '' : 'locked'}">${icon(vopen ? 'crown' : 'lock')}<div><h3>${L('MISTROVSKÁ DÍLA', 'MASTERPIECES')}</h3><p>${vopen ? L('Velké cíle za desítky tisíc střepů: nové zbraně, víc míst, ★5 a ★6 a vyvinutá startovní zbraň.', 'Big goals for tens of thousands of shards: new weapons, more slots, ★5 and ★6 and an evolved starting weapon.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
+        <div class="grid-cards">${FORGE.filter(f => f.tier === 5).map(f => card(f, !vopen)).join('')}</div>`;
     },
 
     ach(el) {
@@ -191,7 +212,10 @@ const UI = (() => {
       const unknown = L('Zatím neobjeveno.', 'Not discovered yet.');
       let body = '';
       // Zamčené zbraně a doplňky ukazují, který úspěch je odemkne.
-      const lockNote = o => { const a = ACHIEVEMENTS.find(a => a.id === o.unlock); return `${icon('lock')} ${L('Odemkne úspěch', 'Unlocked by')} „${a.name}“: ${a.desc}`; };
+      const lockNote = o => {
+        if (o.forge) { const f = FORGE.find(f => f.id === o.forge); return `${icon('lock')} ${L('Odemkne Mistrovské dílo', 'Unlocked by the Masterpiece')} „${f.name}“ (${fmtNum(f.cost)} ◆)`; }
+        const a = ACHIEVEMENTS.find(a => a.id === o.unlock); return `${icon('lock')} ${L('Odemkne úspěch', 'Unlocked by')} „${a.name}“: ${a.desc}`;
+      };
       if (codexTab === 'weapons') body = BASE_WEAPONS.map(id => {
         const d = WEAPONS[id], seen = SAVE.seen[id], open = unlocked(d);
         return `<div class="fcard cx ${seen ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi">${icon(d.icon)}<div><h4>${seen || open ? d.name : '???'}</h4><p>${seen ? d.desc : open ? `${d.desc} <i>${L('Zatím nepoužita.', 'Not used yet.')}</i>` : lockNote(d)}</p></div></div>
@@ -257,7 +281,8 @@ const UI = (() => {
     },
   };
 
-  const SECTOR_RULE = s => (s.meteors ? L('Meteority', 'Meteors') : s.mono ? L('Jediný druh', 'One kind only') : s.well ? L('Černá díra', 'Black hole') : s.dark ? L('Tma', 'Darkness') : '');
+  const SECTOR_RULE = s => (s.meteors && s.well && s.dark ? L('Všechny anomálie', 'Every anomaly') : s.rush ? L('Přehlídka bossů', 'Boss parade') : s.zone ? L('Smršťující se zóna', 'Shrinking zone')
+    : s.meteors ? L('Meteority', 'Meteors') : s.mono ? L('Jediný druh', 'One kind only') : s.well ? L('Černá díra', 'Black hole') : s.dark ? L('Tma', 'Darkness') : '');
   function sectorCard(s, i) {
     const un = sectorUnlocked(i), r = SAVE.sectors[s.id], req = SECTORS.find(x => x.id === sectorReq(i));
     const rule = SECTOR_RULE(s);
@@ -417,11 +442,11 @@ const UI = (() => {
   }
 
   function prioInfo(k) {
-    if (k === 'evo') return { name: L('Evoluce', 'Evolution'), icon: 'star', color: '#ffd166', sub: L('Zbraň se změní ve svou evoluci', 'A weapon turns into its evolution') };
-    if (k === 'start') return { name: L('Startovní zbraň', 'Starting weapon'), icon: 'rocket', color: '#55f6ff', sub: L('Vylepšení zbraně, se kterou pilot začíná', 'Upgrades for the weapon the pilot starts with') };
+    if (k === 'evo') return { name: L('Evoluce', 'Evolution'), icon: 'star', color: '#ffd166', sub: L('Zbraň se změní ve svou evoluci; mezi zbraněmi rozhoduje jejich pořadí níž', 'A weapon turns into its evolution; between weapons, their order below decides') };
+    if (k === 'start') return { name: L('Startovní zbraň', 'Starting weapon'), icon: 'rocket', color: '#55f6ff', sub: L('Vylepšení, evoluce i přetížení zbraně, se kterou pilot začíná', 'Upgrades, evolution and overcharge of the weapon the pilot starts with') };
     if (k === 'catalyst') return { name: L('Klíč k evoluci', 'Evolution key'), icon: 'growth', color: '#5dffa8', sub: L('Doplněk, který některé tvé zbrani chybí k evoluci', 'A passive one of your weapons still needs to evolve') };
-    if (k === 'oc') return { name: L('Přetížení evoluce ★', 'Evolution overcharge ★'), icon: 'overcharge', color: '#ffd166' };
-    if (k === 'mut') return { name: L('Mutace', 'Mutations'), icon: 'mutation', color: '#5dffa8' };
+    if (k === 'oc') return { name: L('Přetížení evoluce ★', 'Evolution overcharge ★'), icon: 'overcharge', color: '#ffd166', sub: L('Mezi zbraněmi rozhoduje jejich pořadí níž', 'Between weapons, their order below decides') };
+    if (k.startsWith('m:')) { const m = MUTATIONS[k.slice(2)]; return { name: m.name, icon: 'mutation', color: m.color, sub: m.desc }; }
     if (k === 'heal') return { name: L('Nanoopravy', 'Nano-repair'), icon: 'heal', color: '#5dffa8', sub: L('Jen při nízkém zdraví', 'Only at low health') };
     if (k === 'gold') return { name: L('Hromádka střepů', 'Shard pile'), icon: 'shard', color: '#e08bff' };
     const [t, id] = k.split(':'), d = t === 'w' ? WEAPONS[id] : PASSIVES[id], open = unlocked(d);
@@ -431,7 +456,7 @@ const UI = (() => {
   function autoPicked(list) {
     list.slice(-3).forEach((c, i) => {
       const f = choiceInfo(c);
-      addText(G.p.x, G.p.y - 40 - i * 18, '▲ ' + f.name + (f.badge && f.badge !== 'Bonus' ? ' · ' + f.badge : ''), f.color, 14, 1.6);
+      addText(G.p.x, G.p.y - 40 - i * 18, (c.echo ? L('↻ Ozvěna: ', '↻ Echo: ') : '▲ ') + f.name + (f.badge && f.badge !== 'Bonus' ? ' · ' + f.badge : ''), f.color, 14, 1.6);
     });
     if (list.length > 3) addText(G.p.x, G.p.y - 40 - 3 * 18, L(`a ${list.length - 3} další`, `and ${list.length - 3} more`), '#ffffff', 12, 1.6);
   }
@@ -459,7 +484,7 @@ const UI = (() => {
     }
     if (c.kind === 'oc') {
       const d = WEAPONS[c.id];
-      return { name: d.name, color: '#ffd166', icon: 'overcharge', badge: L('Přetížení ', 'Overcharge ') + '★' + c.lvl, desc: L(`+${pct(OC_DMG)} % poškození, −${pct(OC_CD)} % nabíjení (celkem +${pct(OC_DMG * c.lvl)} % poškození)`, `+${pct(OC_DMG)}% damage, −${pct(OC_CD)}% cooldown (+${pct(OC_DMG * c.lvl)}% damage in total)`), type: L('Přetížení evoluce', 'Evolution overcharge'), stars: [c.lvl, OC_MAX], evo: true };
+      return { name: d.name, color: '#ffd166', icon: 'overcharge', badge: L('Přetížení ', 'Overcharge ') + '★' + c.lvl, desc: L(`+${pct(OC_DMG)} % poškození, −${pct(OC_CD)} % nabíjení (celkem +${pct(OC_DMG * c.lvl)} % poškození)`, `+${pct(OC_DMG)}% damage, −${pct(OC_CD)}% cooldown (+${pct(OC_DMG * c.lvl)}% damage in total)`), type: L('Přetížení evoluce', 'Evolution overcharge'), stars: [c.lvl, G.st.ocMax], evo: true };
     }
     if (c.kind === 'mut') {
       const d = MUTATIONS[c.id], after = calcStats(G.pilot, SAVE.forge, G.passives, Object.assign({}, G.mut, { [c.id]: c.lvl }));
@@ -650,7 +675,7 @@ const UI = (() => {
     set('hpTxt', 'text', Math.ceil(Math.max(0, p.hp)) + ' / ' + Math.round(s.maxHp));
     set('lvlTag', 'text', L('ÚR ', 'LV ') + G.level);
     set('timer', 'text', fmtTime(G.time));
-    set('timer', 'cls', G.time >= BOSS_TIMES[2] - 60 && !G.victory ? 'final' : '');
+    set('timer', 'cls', G.time >= bossTimes()[bossTimes().length - 1] - 60 && !G.victory ? 'final' : '');
     set('sectorTag', 'text', `${L('SEKTOR', 'SECTOR')} ${G.sector.roman} · OD ${G.od}${G.endless ? ' · ∞' : ''}`);
     set('killStat', 'html', `${icon('skull')} ${fmtNum(G.kills)}`);
     set('shardStat', 'html', `${icon('shard')} ${fmtNum(G.shards)}`);
@@ -663,6 +688,10 @@ const UI = (() => {
     if (s.armor) chips.push(`<span class="hc ar" title="${L('Pancíř: méně přijatého zranění', 'Armor: less damage taken')}">${icon('armor')}<b>−${pct(1 - armorFactor(s.armor))}${L(' %', '%')}</b></span>`);
     if (s.regen) chips.push(`<span class="hc rg" title="${L('Regenerace zdraví za sekundu', 'Health regen per second')}">${icon('regen')}<b>+${s.regen.toFixed(1)}</b></span>`);
     if (SAVE.settings.autoPick) chips.push(`<span class="hc au" title="${L('Automatický výběr karet', 'Auto-pick cards')}">${icon('auto')}<b>AUTO</b></span>`);
+    if (G.zone) {
+      const z = G.zone, lbl = { calm: L('Smrštění za', 'Shrinks in'), shrink: L('Smršťuje se', 'Shrinking'), hold: L('Rozšíří se za', 'Grows in'), grow: L('Rozšiřuje se', 'Growing') }[z.phase];
+      chips.push(`<span class="hc zo ${z.out > 0 ? 'out' : ''}" title="${L('Bezpečná zóna', 'Safe zone')}">${icon('zone')}<b>${z.out > 0 ? L('MIMO ZÓNU', 'OUTSIDE') : `${lbl} ${Math.ceil(z.t)} s`}</b></span>`);
+    }
     if (G.sector.mono && G.monoType) chips.push(`<span class="hc mo" title="${L('Monokultura: teď jen tento druh', 'Monoculture: only this kind for now')}">${icon('skull')}<b>${ENEMY_NAMES[G.monoType][0]}</b></span>`);
     set('hudChips', 'html', chips.join(''));
     if (G.boss) set('bossFill', 'w', Math.max(0, G.boss.hp / G.boss.maxHp * 100).toFixed(1) + '%');

@@ -409,6 +409,189 @@ WB.meteor = {
   },
 };
 
+// ── Zbraně pro konec hry ────────────────────────────────────────────────────
+// nejbližší nepřítel v dosahu (přes mřížku), volitelně jiný než ty v `skip`
+function nearestIn(x, y, range, skip) {
+  G.grid.query(x, y, range + G.maxR, _wq);
+  let best = null, bd = range * range;
+  for (const e of _wq) {
+    if (e.dead || (skip && skip.has(e))) continue;
+    const dd = d2(x, y, e.x, e.y);
+    if (dd < bd) { bd = dd; best = e; }
+  }
+  return best;
+}
+
+// Strážní drony / Armáda: drony krouží kolem lodi a střídavě pálí po nejbližším nepříteli.
+WB.sentry = {
+  update(w, dt) {
+    const s = w.s, p = G.p, n = s.amount, color = WEAPONS[w.id].color;
+    w.ang = (w.ang || 0) + dt * 1.1;
+    w.aim = w.aim || [];
+    w.t -= dt;
+    let guard = 0;
+    while (w.t <= 0 && guard++ < 4) {
+      w.t += s.cd / n;
+      const k = (w.k = ((w.k || 0) + 1) % n), R = 56 + n * 5;
+      const a0 = w.ang + k * TAU / n, x = p.x + Math.cos(a0) * R, y = p.y + Math.sin(a0) * R;
+      const tgt = nearestIn(x, y, s.range * s.area);
+      if (!tgt) { w.t = Math.max(w.t, 0.15); break; }
+      const a = Math.atan2(tgt.y - y, tgt.x - x);
+      w.aim[k] = a;
+      const life = (s.range * s.area * 1.25) / s.speed;
+      for (const off of s.twin ? [-5, 5] : [0]) {
+        shoot({ x: x - Math.sin(a) * off, y: y + Math.cos(a) * off, a, spd: s.speed, r: 4.5 * Math.sqrt(s.area), dmg: s.dmg, pierce: s.pierce || 0, life, src: w.id, color });
+      }
+      if (G.time - (w.snd || 0) > 0.09) { w.snd = G.time; Sound.play.shoot(); }
+    }
+  },
+  draw(w, ctx) {
+    const s = w.s, p = G.p, n = s.amount, R = 56 + n * 5, col = WEAPONS[w.id].color;
+    ctx.globalCompositeOperation = 'lighter';
+    for (let k = 0; k < n; k++) {
+      const a0 = w.ang + k * TAU / n;
+      Render.spr(Sprites.glow(col, 7), p.x + Math.cos(a0) * R, p.y + Math.sin(a0) * R, 0, 1, 0.75);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    Render.world();
+    ctx.lineWidth = 1.6; ctx.strokeStyle = col; ctx.fillStyle = 'rgba(10,20,30,0.85)';
+    for (let k = 0; k < n; k++) {
+      const a0 = w.ang + k * TAU / n, x = p.x + Math.cos(a0) * R, y = p.y + Math.sin(a0) * R;
+      const a = (w.aim && w.aim[k] !== undefined) ? w.aim[k] : a0, c = Math.cos(a), sn = Math.sin(a);
+      ctx.beginPath();
+      ctx.moveTo(x + c * 9, y + sn * 9); ctx.lineTo(x - sn * 6, y + c * 6); ctx.lineTo(x - c * 5, y - sn * 5); ctx.lineTo(x + sn * 6, y - c * 6);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+  },
+};
+
+// Paprsek prázdnoty / Pohlcovač: paprsek drží cíl a s každým zásahem se rozžhaví (až na rampMax×).
+// Při změně cíle zchladne na polovinu. Pohlcovač přeskakuje z cíle na další nepřátele (chain).
+WB.voidray = {
+  update(w, dt) {
+    const s = w.s, p = G.p, n = s.amount, range = s.range * s.area;
+    w.beams = w.beams || [];
+    while (w.beams.length < n) w.beams.push({ tgt: null, heat: 0, links: [] });
+    w.beams.length = n;
+    const taken = new Set();
+    for (const b of w.beams) {
+      if (b.tgt && (b.tgt.dead || d2(p.x, p.y, b.tgt.x, b.tgt.y) > range * range * 1.3 || taken.has(b.tgt))) { b.tgt = null; b.heat *= 0.5; }
+      if (!b.tgt) b.tgt = nearestIn(p.x, p.y, range, taken) || nearestIn(p.x, p.y, range);
+      if (b.tgt) taken.add(b.tgt); else b.heat = Math.max(0, b.heat - dt * 2);
+    }
+    w.t -= dt;
+    if (w.t > 0) return;
+    w.t = s.cd;
+    for (const b of w.beams) {
+      b.links = [];
+      if (!b.tgt) continue;
+      const mult = Math.min(s.rampMax, 1 + b.heat), dmg = s.dmg * mult;
+      b.heat += s.ramp;
+      const tgt = b.tgt;
+      hurtEnemy(tgt, dmg, w.id, 0, 0, true);
+      if (s.chain) {
+        const hit = new Set([tgt]);
+        let cur = tgt;
+        for (let c = 0; c < s.chain; c++) {
+          const nx = nearestIn(cur.x, cur.y, 170 * s.area, hit);
+          if (!nx) break;
+          hit.add(nx); b.links.push([cur.x, cur.y, nx.x, nx.y]);
+          hurtEnemy(nx, dmg * 0.5, w.id, 0, 0, true);
+          cur = nx;
+        }
+      }
+      if (Math.random() < 0.3 && G.particles.length < MAX_PARTICLES) burst(tgt.x, tgt.y, WEAPONS[w.id].color, 2, 140, 2, 0.25);
+    }
+    if (G.time - (w.snd || 0) > 0.45 && w.beams.some(b => b.tgt)) { w.snd = G.time; Sound.play.zap(); }
+  },
+  draw(w, ctx) {
+    if (!w.beams) return;
+    const s = w.s, p = G.p, col = WEAPONS[w.id].color;
+    Render.world();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (const b of w.beams) {
+      if (!b.tgt || b.tgt.dead) continue;
+      const q = Math.min(1, (Math.min(s.rampMax, 1 + b.heat) - 1) / Math.max(1, s.rampMax - 1));
+      const flick = 0.85 + 0.15 * Math.sin(G.time * 40 + b.heat);
+      ctx.strokeStyle = rgba(col, 0.35 * flick); ctx.lineWidth = 7 + q * 9;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(b.tgt.x, b.tgt.y); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${(0.55 + 0.4 * q) * flick})`; ctx.lineWidth = 1.5 + q * 2.5;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(b.tgt.x, b.tgt.y); ctx.stroke();
+      if (b.links.length) {
+        ctx.strokeStyle = rgba(col, 0.6 * flick); ctx.lineWidth = 2 + q * 2;
+        ctx.beginPath();
+        for (const [x1, y1, x2, y2] of b.links) { ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); }
+        ctx.stroke();
+      }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+};
+
+// Kaskáda / Řetězová reakce: bomba přiletí obloukem do hloučku nepřátel, vybuchne a rozprskne se
+// na menší nálože (Řetězová reakce: i ty se rozprsknou znovu).
+WB.cluster = {
+  update(w, dt) {
+    const s = w.s, p = G.p, color = WEAPONS[w.id].color;
+    w.bombs = w.bombs || [];
+    w.t -= dt;
+    if (w.t <= 0) {
+      const cands = enemiesNear(p.x, p.y, G.viewR * 0.6);
+      if (!cands.length) w.t = 0.3;
+      else {
+        w.t = s.cd;
+        const R = 64 * s.area;
+        for (let i = 0; i < s.amount; i++) {
+          let best = cands[0], bn = -1;
+          for (let k = 0; k < 5; k++) {
+            const e = cands[(Math.random() * cands.length) | 0];
+            G.grid.query(e.x, e.y, R, _wq);
+            if (_wq.length > bn) { bn = _wq.length; best = e; }
+          }
+          w.bombs.push({ x0: p.x, y0: p.y, tx: best.x + rand(-20, 20), ty: best.y + rand(-20, 20), t: -i * 0.08, T: 0.55, gen: 0, dmg: s.dmg, r: R, h: 90 });
+        }
+        Sound.play.missile();
+      }
+    }
+    const maxGen = s.gen || 1, add = [];
+    for (const b of w.bombs) {
+      b.t += dt;
+      if (b.t < b.T) continue;
+      b.dead = true;
+      explode(b.tx, b.ty, b.r, b.dmg, w.id, color, b.gen > 0);
+      if (b.gen < maxGen) {
+        const n = b.gen === 0 ? s.frag : Math.max(2, Math.floor(s.frag / 2));
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * TAU, d = rand(40, 110) * Math.sqrt(s.area) * (b.gen ? 0.7 : 1);
+          add.push({ x0: b.tx, y0: b.ty, tx: b.tx + Math.cos(a) * d, ty: b.ty + Math.sin(a) * d, t: 0, T: rand(0.22, 0.4), gen: b.gen + 1, dmg: b.dmg * 0.4, r: b.r * 0.62, h: 34 });
+        }
+      }
+    }
+    w.bombs = w.bombs.filter(b => !b.dead);
+    if (w.bombs.length < 400) for (const b of add) w.bombs.push(b);
+  },
+  draw(w, ctx) {
+    if (!w.bombs || !w.bombs.length) return;
+    const col = WEAPONS[w.id].color;
+    ctx.globalCompositeOperation = 'lighter';
+    for (const b of w.bombs) {
+      if (b.t < 0) continue;
+      const q = Math.min(1, b.t / b.T), x = lerp(b.x0, b.tx, q), y = lerp(b.y0, b.ty, q) - Math.sin(q * Math.PI) * b.h;
+      Render.spr(Sprites.glow(col, b.gen ? 4 : 7), x, y, 0, 1, 0.95);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    Render.world();
+    ctx.strokeStyle = rgba(col, 0.45); ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (const b of w.bombs) if (!b.gen && b.t >= 0) { ctx.moveTo(b.tx + b.r * 0.5, b.ty); ctx.arc(b.tx, b.ty, b.r * 0.5, 0, TAU); }
+    ctx.stroke();
+  },
+};
+
+WB.armada = WB.sentry;
+WB.devourer = WB.voidray;
+WB.chainreact = WB.cluster;
 WB.hyperpulse = WB.pulse;
 WB.swarm = WB.seeker;
 WB.tesla = WB.arc;

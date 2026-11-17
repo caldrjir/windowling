@@ -293,7 +293,9 @@ test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop'
 	await page.goto('/games/voidborn/index.html');
 	await page.mouse.click(100, 100);
 	await page.locator('[data-go="forge"]').click();
-	await expect(page.locator('.master-head:not(.void)')).not.toHaveClass(/locked/);
+	await expect(page.locator('.master-head:not(.void):not(.eternal):not(.piece)')).not.toHaveClass(
+		/locked/,
+	);
 	await page.locator('[data-buy="cards"]').click();
 	expect(await page.evaluate('SAVE.forge.cards')).toBe(1);
 	await page.locator('.back').click();
@@ -429,6 +431,99 @@ test('VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the
 		[8, 'G.sector.dark && G.time > 1'],
 	] as const) {
 		await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0); G.nextMeteor = 0;`);
+		await expect
+			.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
+				message: `sector ${index + 1}`,
+			})
+			.toBe(true);
+	}
+	expect(errors).toEqual([]);
+});
+
+test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the deep sectors', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'one run is enough for the game logic');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	// Sectors I–IX cleared and plenty of shards.
+	await page.addInitScript(() => {
+		if (sessionStorage.getItem('seeded')) return;
+		sessionStorage.setItem('seeded', '1');
+		const sectors: Record<string, object> = {};
+		for (let i = 1; i <= 9; i++) sectors[`s${i}`] = { cleared: true, odUnlocked: 1, best: 900 };
+		localStorage.setItem(
+			'voidborn.save.v1',
+			JSON.stringify({ shards: 500000, achievements: { clear1: 1 }, sectors }),
+		);
+	});
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	await page.locator('[data-go="forge"]').click();
+	await expect(page.locator('.master-head.eternal')).not.toHaveClass(/locked/);
+	await expect(page.locator('.master-head.piece')).not.toHaveClass(/locked/);
+	// An Eternal Workshop upgrade has no cap and every level costs more.
+	await page.locator('[data-buy="e_might"]').click();
+	await page.locator('[data-buy="e_might"]').click();
+	await expect(page.locator('#fc-e_might .lvl-inf')).toContainText('2');
+	expect(
+		await page.evaluate(`[SAVE.forge.e_might, forgeCost(FORGE.find(f => f.id === 'e_might'), 2)]`),
+	).toEqual([2, 9400]);
+	for (const id of ['bp_sentry', 'bp_voidray', 'bp_cluster', 'voidborn', 'echo'])
+		await page.locator(`[data-buy="${id}"]`).click();
+	expect(await page.evaluate('unlocked(WEAPONS.sentry) && unlocked(WEAPONS.cluster)')).toBe(true);
+	await page.locator('.screen.active .back').click();
+
+	// The deep sectors open one after another from Sector IX.
+	await page.locator('[data-go="hangar"]').click();
+	await expect(page.locator('.sectors.deep .sector')).toHaveCount(3);
+	await expect(page.locator('.sectors.deep .sector.locked')).toHaveCount(2);
+	await page.locator('.screen.active .back').click();
+
+	// The game's state is top-level `const`/functions of the page (not on window).
+	const run = (await page.evaluate(`(() => {
+		UI.hideOverlay(); Game.start('vex', 0, 0);
+		const start = G.weapons.map(w => w.id), might = G.st.might;
+		// a crystal that drops next to one already lying there joins it
+		G.pickups.length = 0; mergePickups();
+		for (let i = 0; i < 20; i++) dropGem(G.p.x + 300, G.p.y + 100, 1);
+		const gems = G.pickups.filter(p => p.kind === 'gem');
+		const drop = { count: gems.length, sum: gems.reduce((a, p) => a + p.val, 0) };
+		// Echo (forced on): a level-up also applies the best of the remaining cards
+		const offer = genChoices(), first = autoPickBest(offer);
+		applyChoice(first); G.st.echo = 1;
+		const echo = echoPick(offer, first);
+		const echoed = !!echo && echo.echo && echo !== first && offer.some(c => c.kind === echo.kind && c.id === echo.id);
+		G.weapons = []; for (const id of ['sentry', 'voidray', 'cluster']) addWeapon(id, 8);
+		for (let i = 0; i < 50; i++) spawnEnemyAt('brute', G.p.x + 120 + (i % 10) * 30, G.p.y - 120 + Math.floor(i / 10) * 50);
+		G.dmgBy = {};
+		return { start, might, drop, echoed };
+	})()`)) as {
+		start: string[];
+		might: number;
+		drop: { count: number; sum: number };
+		echoed: boolean;
+	};
+	// Voidborn: the starting weapon begins evolved; Eternal Might adds 5 % per level.
+	expect(run.start).toEqual(['hyperpulse']);
+	expect(run.might).toBeCloseTo(1.1);
+	expect(run.drop).toEqual({ count: 1, sum: 20 });
+	expect(run.echoed).toBe(true);
+	// All three new weapons deal damage.
+	await expect
+		.poll(() =>
+			page.evaluate(`['sentry', 'voidray', 'cluster'].every(id => (G.dmgBy[id] || 0) > 0)`),
+		)
+		.toBe(true);
+
+	// Each deep sector runs with its own rule.
+	for (const [index, check] of [
+		[9, 'G.sector.rush && G.nextBossT === 150'],
+		[10, `!!G.zone && (G.p.x = G.zone.x + G.zone.r + 400, G.p.hp < G.st.maxHp)`],
+		[11, 'G.sector.meteors && G.sector.dark && !!G.well'],
+	] as const) {
+		await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0);`);
 		await expect
 			.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
 				message: `sector ${index + 1}`,
