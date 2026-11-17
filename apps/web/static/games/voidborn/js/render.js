@@ -241,6 +241,7 @@ const Render = (() => {
     if (W < 700) zoom = clamp(Math.min(W, H) / 640, 0.5, 1);
     G.viewW = W / zoom; G.viewH = H / zoom; G.viewR = Math.hypot(G.viewW, G.viewH) / 2;
     bgKey = '';
+    PerfLog.ev('resize', [W, H, dpr, Math.round(zoom * 1000) / 1000]);
     vign = makeCanvas(W, H);
     const v = vign.getContext('2d');
     const g = v.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.62);
@@ -273,7 +274,9 @@ const Render = (() => {
 
   // nastaví transformaci světa
   function world() { ctx.setTransform(k, 0, 0, k, ox, oy); }
+  let sprN = 0; // vykreslené sprity za snímek (záznam výkonu)
   function spr(img, x, y, a, sc = 1, alpha = 1) {
+    sprN++;
     const c = Math.cos(a) * sc * k, s = Math.sin(a) * sc * k;
     ctx.setTransform(c, s, -s, c, ox + x * k, oy + y * k);
     if (alpha !== 1) ctx.globalAlpha = alpha;
@@ -281,6 +284,7 @@ const Render = (() => {
     if (alpha !== 1) ctx.globalAlpha = 1;
   }
   function sprStretch(img, x, y, a, sx, sy, alpha = 1) {
+    sprN++;
     const c = Math.cos(a) * k, s = Math.sin(a) * k;
     ctx.setTransform(c * sx, s * sx, -s * sy, c * sy, ox + x * k, oy + y * k);
     ctx.globalAlpha = alpha;
@@ -326,7 +330,10 @@ const Render = (() => {
 
   function drawGame() {
     const p = G.p, sec = G.sector;
+    sprN = 0;
+    let pt = PerfLog.t();
     frame(sec, G.cam.x, G.cam.y, G.shake * 0.45, G.flash * 0.6);
+    pt = PerfLog.lap('d.bg', pt);
 
     // efekty pod entitami
     world();
@@ -379,6 +386,7 @@ const Render = (() => {
       }
     }
 
+    pt = PerfLog.lap('d.under', pt);
     // anomálie: černá díra a varovné čáry meteoritů (pod předměty a nepřáteli)
     if (G.well) drawWell(G.well);
     if (G.zone) drawZone(G.zone);
@@ -391,6 +399,7 @@ const Render = (() => {
       ctx.setLineDash([]);
     }
 
+    pt = PerfLog.lap('d.anomaly', pt);
     // předměty
     for (const pk of G.pickups) {
       if (!inView(pk.x, pk.y, 20)) continue;
@@ -411,6 +420,7 @@ const Render = (() => {
       } else spr(Sprites.pickup(pk.kind), pk.x, pk.y + bob, 0, 1, fading(pk));
     }
 
+    pt = PerfLog.lap('d.pickups', pt);
     // nepřátelé
     for (const e of G.enemies) {
       if (!inView(e.x, e.y, e.r + 20)) continue;
@@ -437,8 +447,10 @@ const Render = (() => {
       }
     }
 
+    pt = PerfLog.lap('d.enemies', pt);
     // zbraně s vlastním vykreslením
-    for (const w of G.weapons) { const b = WB[w.id]; if (b && b.draw) b.draw(w, ctx); }
+    for (const w of G.weapons) { const b = WB[w.id]; if (b && b.draw) { const wt = PerfLog.t(); b.draw(w, ctx); PerfLog.lapW(w.id, 1, wt); } }
+    pt = PerfLog.lap('d.weapons', pt);
 
     // hráč
     if (G.state !== 'dying' && G.state !== 'over') {
@@ -453,6 +465,7 @@ const Render = (() => {
       ctx.beginPath(); ctx.arc(p.x, p.y, G.st.magnet, 0, TAU); ctx.stroke();
     }
 
+    pt = PerfLog.lap('d.player', pt);
     // střely
     ctx.globalCompositeOperation = 'lighter';
     for (const b of G.bullets) {
@@ -465,6 +478,7 @@ const Render = (() => {
       spr(Sprites.glow(b.color, b.r), b.x, b.y, 0, 1 + Math.sin(G.time * 20 + b.x) * 0.08);
     }
 
+    pt = PerfLog.lap('d.bullets', pt);
     // efekty nad entitami
     world();
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -499,6 +513,7 @@ const Render = (() => {
       }
     }
 
+    pt = PerfLog.lap('d.over', pt);
     // částice
     world();
     for (const q of G.particles) {
@@ -515,6 +530,7 @@ const Render = (() => {
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
 
+    pt = PerfLog.lap('d.particles', pt);
     // meteority v letu
     if (G.meteors) for (const m of G.meteors) if (m.warn <= 0 && inView(m.x, m.y, 60)) {
       ctx.globalCompositeOperation = 'lighter';
@@ -530,6 +546,7 @@ const Render = (() => {
       ctx.restore();
     }
 
+    pt = PerfLog.lap('d.meteors', pt);
     // čísla poškození
     world();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -546,6 +563,7 @@ const Render = (() => {
     }
     ctx.globalAlpha = 1;
 
+    pt = PerfLog.lap('d.texts', pt);
     // ukazatele mimo obrazovku
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const pointers = [];
@@ -576,6 +594,7 @@ const Render = (() => {
       ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
     }
     if (G.flash > 0.01) { ctx.fillStyle = `rgba(255,255,255,${G.flash * 0.35})`; ctx.fillRect(0, 0, cv.width, cv.height); }
+    PerfLog.lap('d.overlay', pt);
   }
 
   // Bloudící černá díra: tmavý vír s akrečním prstencem a slabým okrajem dosahu.
@@ -662,5 +681,5 @@ const Render = (() => {
   }
   function setAttractSector(s) { attract.sector = s; }
 
-  return { init, resize, drawGame, drawAttract, setAttractSector, world, spr, get ctx() { return ctx; }, get zoom() { return zoom; } };
+  return { init, resize, drawGame, drawAttract, setAttractSector, world, spr, get ctx() { return ctx; }, get zoom() { return zoom; }, get sprN() { return sprN; } };
 })();

@@ -533,6 +533,62 @@ test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the
 	expect(errors).toEqual([]);
 });
 
+test('VOIDBORN performance log is off by default and downloads after a run', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'one run is enough for the game logic');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	// Off by default: a run records nothing and the end screen offers no log.
+	// The game's state is top-level `const`/functions of the page (not on window).
+	expect(
+		await page.evaluate(
+			`(() => { Game.start('vex', 0, 0); const on = PerfLog.on; endRun('quit'); return [SAVE.settings.perfLog, on]; })()`,
+		),
+	).toEqual([false, false]);
+	await expect(page.locator('.perf-dl')).toHaveCount(0);
+	await page.evaluate(`Game.toMenu('menu')`);
+
+	await page.locator('[data-go="settings"]').click();
+	await page.locator('[data-tog="perfLog"]').click();
+	expect(await page.evaluate('SAVE.settings.perfLog')).toBe(true);
+	await page.locator('.screen.active .back').click();
+	await page.locator('[data-go="hangar"]').click();
+	await page.locator('#startBtn').click();
+	await expect(page.locator('#hudChips .hc.rec')).toBeVisible();
+	// At least two one-second rows.
+	await expect.poll(() => page.evaluate('PerfLog.on && G.time > 2.5')).toBe(true);
+	await page.evaluate(`endRun('quit')`);
+	const [download] = await Promise.all([
+		page.waitForEvent('download'),
+		page.locator('.perf-dl [data-act="perflog"]').click(),
+	]);
+	expect(download.suggestedFilename()).toMatch(/^voidborn-log-\d{8}-\d{6}\.json$/);
+	const log = (await page.evaluate(`(() => {
+		const l = JSON.parse(PerfLog.lastLog().json);
+		return { cols: l.columns.length, rows: l.rows.length, width: l.rows[0].length, frames: l.summary.frames,
+			reason: l.result.reason, events: l.events.map(e => e[2]), stored: !!localStorage.getItem('voidborn.perflog') };
+	})()`)) as {
+		cols: number;
+		rows: number;
+		width: number;
+		frames: number;
+		reason: string;
+		events: string[];
+		stored: boolean;
+	};
+	expect(log.rows).toBeGreaterThanOrEqual(2);
+	expect(log.width).toBe(log.cols);
+	expect(log.frames).toBeGreaterThan(30);
+	expect(log.reason).toBe('quit');
+	expect(log.events).toEqual(expect.arrayContaining(['start', 'end']));
+	expect(log.stored).toBe(true);
+	expect(errors).toEqual([]);
+});
+
 test('shows the stats a game saved in this browser', async ({ page }) => {
 	await page.goto('/');
 	await page.evaluate(() =>

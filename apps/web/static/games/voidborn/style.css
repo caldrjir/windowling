@@ -281,6 +281,11 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var
 .hc.rv.off { opacity: .45; }
 .hc.au { --c: #7cffcb; border-color: rgba(124,255,203,.4); }
 .hc.mo { --c: #7cffcb; border-color: rgba(124,255,203,.4); }
+.hc.rec { --c: #ff5d73; }
+.hc.rec .dot { width: 7px; height: 7px; border-radius: 50%; background: #ff3b5c; box-shadow: 0 0 6px #ff3b5c; animation: blink 1.2s infinite; transform: none; }
+.perf-dl { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 14px 0 0; padding: 10px 14px; border: 1px solid rgba(255,93,115,.4); background: rgba(255,59,92,.08); font-size: 14px; color: var(--muted); }
+.perf-dl .ico { width: 20px; height: 20px; color: #ff8a9b; flex: none; }
+.perf-dl span { flex: 1; }
 .hc.zo { --c: #e08bff; border-color: rgba(224,139,255,.45); }
 .hc.zo.out { --c: #ffffff; background: rgba(255,47,109,.45); border-color: #ff4d5e; animation: blink .6s steps(2) infinite; }
 .hc.sh { --c: #7df9ff; opacity: .55; }
