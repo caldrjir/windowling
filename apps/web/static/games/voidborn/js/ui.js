@@ -257,7 +257,8 @@ const UI = (() => {
     },
 
     settings(el) {
-      const s = SAVE.settings;
+      const s = SAVE.settings, pl = PerfLog.lastLog();
+      const perfLast = pl && pl.created ? `${new Date(pl.created).toLocaleString(LANG === 'cs' ? 'cs-CZ' : 'en-GB')}${pl.seconds ? ` · ${fmtTime(pl.seconds)}` : ''}` : '';
       el.innerHTML = `${topbar(L('KONFIGURACE', 'CONFIGURATION'), L('NASTAVENÍ', 'SETTINGS'))}
         <div class="settings">
           <div class="row"><label>${L('Jazyk', 'Language')}<small>Čeština / English</small></label>${langSwitch()}</div>
@@ -268,6 +269,7 @@ const UI = (() => {
           <div class="row"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
           <div class="row"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
           <div class="row"><label>${L('Počítadlo FPS', 'FPS counter')}</label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>
+          <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>
           <div class="keys">
             <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>${L('Pohyb (nebo šipky / gamepad)', 'Move (or arrows / gamepad)')}</span>
             <span><kbd>${L('Mezerník', 'Space')}</kbd></span><span>${L('Úskok — krátká nezranitelnost', 'Dash — brief invulnerability')}</span>
@@ -370,6 +372,7 @@ const UI = (() => {
   }
 
   const globalActs = {
+    perflog() { PerfLog.download(); Sound.play.click(); },
     refund() {
       confirm(L('Vrátit vylepšení?', 'Refund upgrades?'), L('Všechny utracené střepy se ti vrátí a můžeš je rozdělit znovu.', 'All spent shards are returned so you can spend them again.'), () => {
         let sum = 0;
@@ -626,11 +629,13 @@ const UI = (() => {
           ${G.evolvedRun.length ? `<h4>${L('Evoluce v tomto běhu', 'Evolutions this run')}</h4>${G.evolvedRun.map(id => `<div class="ach-mini" style="--c:${WEAPONS[id].color}">${icon(WEAPONS[id].icon)}<span>${WEAPONS[id].name}</span></div>`).join('')}` : ''}
         </div>
       </div>
+      ${G.perfLogged && PerfLog.lastLog() ? `<div class="perf-dl">${icon('book')}<span>${L('Záznam výkonu z tohoto běhu je připravený. Stáhni ho a pošli vývojáři.', 'The performance log of this run is ready. Download it and send it to the developer.')}</span><button class="btn" data-act="perflog">${L('Stáhnout log', 'Download log')}</button></div>` : ''}
       <div class="ov-actions">
         <button class="btn primary" data-act="again">${icon('reroll')} ${L('Znovu', 'Retry')} <kbd>Enter</kbd></button>
         <button class="btn" data-act="hangar">${icon('rocket')} ${L('Hangár', 'Hangar')}</button>
         <button class="btn ghost" data-act="menu">Menu</button>
       </div></div>`, {
+      perflog: () => { PerfLog.download(); Sound.play.click(); },
       again: () => Game.start(G.pilot.id, G.si, G.od),
       hangar: () => Game.toMenu('hangar'),
       menu: () => Game.toMenu('menu'),
@@ -688,6 +693,7 @@ const UI = (() => {
     if (s.armor) chips.push(`<span class="hc ar" title="${L('Pancíř: méně přijatého zranění', 'Armor: less damage taken')}">${icon('armor')}<b>−${pct(1 - armorFactor(s.armor))}${L(' %', '%')}</b></span>`);
     if (s.regen) chips.push(`<span class="hc rg" title="${L('Regenerace zdraví za sekundu', 'Health regen per second')}">${icon('regen')}<b>+${s.regen.toFixed(1)}</b></span>`);
     if (SAVE.settings.autoPick) chips.push(`<span class="hc au" title="${L('Automatický výběr karet', 'Auto-pick cards')}">${icon('auto')}<b>AUTO</b></span>`);
+    if (PerfLog.on) chips.push(`<span class="hc rec" title="${L('Záznam výkonu běží', 'Performance log is recording')}"><i class="dot"></i><b>LOG</b></span>`);
     if (G.zone) {
       const z = G.zone, lbl = { calm: L('Smrštění za', 'Shrinks in'), shrink: L('Smršťuje se', 'Shrinking'), hold: L('Rozšíří se za', 'Grows in'), grow: L('Rozšiřuje se', 'Growing') }[z.phase];
       chips.push(`<span class="hc zo ${z.out > 0 ? 'out' : ''}" title="${L('Bezpečná zóna', 'Safe zone')}">${icon('zone')}<b>${z.out > 0 ? L('MIMO ZÓNU', 'OUTSIDE') : `${lbl} ${Math.ceil(z.t)} s`}</b></span>`);

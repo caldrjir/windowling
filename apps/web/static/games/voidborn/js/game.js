@@ -135,6 +135,8 @@ function newRun(pilotId, si, od) {
   sectorStart();
   G.cam.x = 0; G.cam.y = 0;
   G.state = 'play';
+  PerfLog.begin();
+  G.perfLogged = PerfLog.on;
   SAVE.lastPilot = pilot.id; SAVE.lastSector = si; SAVE.lastOd = od;
 }
 
@@ -412,12 +414,14 @@ function playerDown() {
       else killEnemy(e);
     }
     G.ebullets.length = 0;
+    PerfLog.ev('revive');
     G.effects.push({ k: 'ring', x: p.x, y: p.y, r: 10, maxR: 520, spd: 1400, dmg: 0, knock: 0, life: 1, color: '#ffd166', visual: true, delay: 0 });
     UI.banner(L('OŽIVENÍ', 'REVIVED'), L('Fénix tě vrátil do boje', 'The Phoenix brought you back'), 'gold');
     return;
   }
   p.hp = 0;
   G.state = 'dying'; G.dyingT = 2.2;
+  PerfLog.ev('death');
   Sound.play.die();
   Sound.music('menu');
   addShake(24);
@@ -566,6 +570,7 @@ function director(dt) {
 function spawnEvent(pool) {
   const p = G.p, m = minutes();
   const kind = pick(m < 3 ? ['ring', 'horde'] : ['ring', 'horde', 'stream']);
+  PerfLog.ev('wave', kind);
   if (kind === 'ring') {
     const n = Math.floor(22 + m * 3), R = G.viewR * 0.62;
     const type = G.sector.mono && G.monoType ? G.monoType : m < 4 ? 'swarmer' : pick(['swarmer', 'drone', 'wisp', 'mini']);
@@ -732,6 +737,7 @@ function spawnBoss(key, idx) {
   G.enemies.push(e);
   G.boss = e;
   G.bossClean = true;
+  PerfLog.ev('boss', key);
   UI.bossBar(d.name, 1);
   Sound.music('boss');
   addShake(10);
@@ -846,6 +852,7 @@ function updateBoss(e, dt) {
 }
 
 function bossKilled(e) {
+  PerfLog.ev('bossKilled', e.boss.key);
   const B = e.boss;
   G.boss = null;
   UI.bossBar(null);
@@ -882,6 +889,7 @@ function markVictory() {
 
 // ── Truhly ──────────────────────────────────────────────────────────────────
 function openChest(big) {
+  PerfLog.ev('chest', big ? 'big' : 'small');
   const rewards = [];
   const evos = upgradePool().filter(c => c.kind === 'evo');
   if (evos.length) { applyChoice(evos[0]); rewards.push(evos[0]); }
@@ -1012,6 +1020,7 @@ function applyChoice(c) {
     G.weapons[i] = w;
     const isNewEvo = !SAVE.evolutions[c.id];
     SAVE.evolutions[c.id] = true; SAVE.seen[c.id] = true;
+    PerfLog.ev('evo', c.id);
     G.evolvedRun.push(c.id);
     G.flash = 1; addShake(12);
     Sound.play.evolve();
@@ -1072,6 +1081,7 @@ function autoLevelUp() {
     if (e) picked.push(e);
     G.pendingLevels--;
   }
+  PerfLog.ev('levelup', { n: picked.length, lvl: G.level });
   Sound.play.levelup();
   UI.refreshLoadout();
   UI.autoPicked(picked);
@@ -1080,6 +1090,7 @@ function autoLevelUp() {
 function openLevelUp() {
   if (SAVE.settings.autoPick) { autoLevelUp(); return; }
   G.state = 'levelup';
+  PerfLog.ev('levelup', { n: G.pendingLevels, lvl: G.level, manual: true });
   G.choices = genChoices();
   Sound.play.levelup();
   Sound.muffle(true);
@@ -1169,6 +1180,7 @@ function endRun(reason) {
   checkAchievements(true);
   persist();
   G.state = 'over';
+  PerfLog.end(reason);
   Sound.muffle(false);
   Sound.music('menu');
   UI.showGameOver({ reason, earned, victory: G.victory });
@@ -1186,8 +1198,9 @@ function updateGame(rawDt) {
   G.timeScale = Math.min(1, G.timeScale + rawDt * 0.9);
   const dt = rawDt * G.timeScale;
   G.time += dt;
-  updatePlayer(dt);
-  director(dt);
+  let pt = PerfLog.t();
+  updatePlayer(dt); pt = PerfLog.lap('u.player', pt);
+  director(dt); PerfLog.lap('u.director', pt);
   stepWorld(dt, false);
   if (G.victoryT > 0) {
     G.victoryT -= rawDt;
@@ -1195,30 +1208,36 @@ function updateGame(rawDt) {
   }
   G.statTick += rawDt;
   if (G.statTick >= 1) {
+    const st = PerfLog.t();
     G.statTick = 0;
     trackStats();
     checkAchievements(true);
     Sound.setLevel(G.time > 600 ? 2 : G.time > 180 ? 1 : 0);
+    PerfLog.lap('u.stats', st);
   }
   if (G.pendingLevels > 0 && G.state === 'play') openLevelUp();
 }
 
 function stepWorld(dt, frozen) {
   const p = G.p;
+  let pt = PerfLog.t();
   // mřížka
   G.grid.clear();
   let maxR = 10;
   for (const e of G.enemies) { G.grid.insert(e); if (e.r > maxR) maxR = e.r; }
   G.maxR = maxR;
+  pt = PerfLog.lap('u.grid', pt);
 
-  if (!frozen) for (const w of G.weapons) { const b = WB[w.id]; if (b) b.update(w, dt); }
+  if (!frozen) for (const w of G.weapons) { const b = WB[w.id]; if (b) { const wt = PerfLog.t(); b.update(w, dt); PerfLog.lapW(w.id, 0, wt); } }
+  pt = PerfLog.lap('u.weapons', pt);
 
-  updateEnemies(dt, frozen);
-  updateBullets(dt);
-  updateEBullets(dt, frozen);
-  updateEffects(dt);
+  updateEnemies(dt, frozen); pt = PerfLog.lap('u.enemies', pt);
+  updateBullets(dt); pt = PerfLog.lap('u.bullets', pt);
+  updateEBullets(dt, frozen); pt = PerfLog.lap('u.ebullets', pt);
+  updateEffects(dt); pt = PerfLog.lap('u.effects', pt);
   if (!frozen) updatePickups(dt);
-  updateParticles(dt);
+  pt = PerfLog.lap('u.pickups', pt);
+  updateParticles(dt); pt = PerfLog.lap('u.particles', pt);
 
   // úklid
   G.enemies = G.enemies.filter(e => !e.dead);
@@ -1234,6 +1253,7 @@ function stepWorld(dt, frozen) {
   G.shake = Math.max(0, G.shake - dt * 40);
   G.flash = Math.max(0, G.flash - dt * 2.2);
   G.hurtFlash = Math.max(0, G.hurtFlash - dt * 2.5);
+  PerfLog.lap('u.cleanup', pt);
 }
 
 function updateEnemies(dt, frozen) {
@@ -1462,7 +1482,7 @@ function updatePickups(dt) {
   let gems = 0;
   if (G.shardAcc && G.time - (G.shardTextT || -9) > 0.3) shardText();
   G.mergeT -= dt;
-  if (G.mergeT <= 0) { G.mergeT = 0.15; mergePickups(); }
+  if (G.mergeT <= 0) { G.mergeT = 0.15; const mt = PerfLog.t(); mergePickups(); PerfLog.lap('u.merge', mt); }
   if (G.st.gravWave) {
     G.gravT -= dt;
     if (G.gravT <= 0) {

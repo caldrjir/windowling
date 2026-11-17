@@ -104,12 +104,13 @@ const Game = {
   },
   togglePause() {
     if (G.state === 'play') {
-      G.state = 'paused'; Sound.muffle(true); UI.showPause();
+      G.state = 'paused'; Sound.muffle(true); UI.showPause(); PerfLog.ev('pause');
     } else if (G.state === 'paused') {
-      G.state = 'play'; Sound.muffle(false); UI.hideOverlay(); Input.clear();
+      G.state = 'play'; Sound.muffle(false); UI.hideOverlay(); Input.clear(); PerfLog.ev('resume');
     }
   },
   toMenu(screen) {
+    PerfLog.end('menu');
     G.state = 'menu';
     UI.hideOverlay();
     UI.hudShow(false);
@@ -169,8 +170,11 @@ function enterMenu() {
 
 // ── Smyčka ──────────────────────────────────────────────────────────────────
 let lastT = performance.now(), fpsAcc = 0, fpsN = 0, fps = 60, saveAcc = 0;
+// záznam výkonu: časy předchozího snímku (délku snímku určuje až příští requestAnimationFrame)
+let plU = 0, plD = 0, plH = 0, plS = 0;
 function loop(now) {
   requestAnimationFrame(loop);
+  if (PerfLog.on) PerfLog.frame(now - lastT, plU, plD, plH, plS);
   const dt = Math.min(0.05, (now - lastT) / 1000);
   lastT = now;
   fpsAcc += dt; fpsN++;
@@ -178,12 +182,16 @@ function loop(now) {
   if (G.state === 'menu') {
     Render.drawAttract(dt);
   } else {
+    const t0 = PerfLog.t();
     updateGame(dt);
+    const t1 = PerfLog.t();
     Render.drawGame();
+    const t2 = PerfLog.t();
     if (G.state !== 'over') UI.hudUpdate(fps);
+    if (PerfLog.on) { plU = t1 - t0; plD = t2 - t1; plH = PerfLog.t() - t2; plS = Render.sprN; }
     if (G.state === 'play') {
       saveAcc += dt;
-      if (saveAcc > 20) { saveAcc = 0; persist(); }
+      if (saveAcc > 20) { saveAcc = 0; const st = PerfLog.t(); persist(); if (PerfLog.on) PerfLog.ev('persist', Math.round((PerfLog.t() - st) * 100) / 100); }
     }
   }
   Input.endFrame();
@@ -198,7 +206,7 @@ function boot() {
   Render.setAttractSector(SECTORS[clamp(SAVE.lastSector || 0, 0, SECTORS.length - 1)]);
   UI.show('title');
   document.getElementById('s-title').addEventListener('pointerdown', enterMenu);
-  document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') Game.togglePause(); });
+  document.addEventListener('visibilitychange', () => { PerfLog.ev(document.hidden ? 'hidden' : 'visible'); if (document.hidden && G.state === 'play') Game.togglePause(); });
   window.addEventListener('blur', () => { if (G.state === 'play') Game.togglePause(); });
   window.addEventListener('beforeunload', () => {
     if (['play', 'paused', 'levelup', 'chest', 'victory'].includes(G.state)) endRun('quit');

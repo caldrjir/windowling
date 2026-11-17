@@ -10,7 +10,7 @@ function defaultSave() {
       kills: 0, bossKills: 0, runs: 0, time: 0, shardsTotal: 0, dashes: 0, bestTime: 0, maxLevel: 0,
       maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0,
     },
-    settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, prio: null },
+    settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, prio: null, perfLog: false },
     lastPilot: 'vex', lastSector: 0, lastOd: 0,
   };
 }
