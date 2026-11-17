@@ -86,6 +86,26 @@
     const m = new pc.StandardMaterial(); m.diffuseMap = tex; m.diffuseMapTiling = new pc.Vec2(SIM.ARENA / 2, SIM.ARENA / 2); m.gloss = 0.1; m.update(); M.ground = m;
   })();
 
+  // textury prostředí ze Scenaria (D34): kámen krypty na podlaze a zdech zón, tónovaný barvou zóny;
+  // dokud se nenačtou, zůstanou jednobarevné materiály (a mřížka arény)
+  const ZTEX = { floor: null, wall: null }, ZMAT = new Map();
+  for (const k of ['floor', 'wall']) {
+    const a = new pc.Asset('T_crypt_' + k, 'texture', { url: 'assets/tex/T_crypt_' + k + '.webp' }, { anisotropy: 8 });
+    a.once('load', () => {
+      const tx = a.resource; tx.addressU = pc.ADDRESS_REPEAT; tx.addressV = pc.ADDRESS_REPEAT; ZTEX[k] = tx;
+      if (k === 'floor') { M.ground.diffuseMap = tx; M.ground.diffuseMapTiling = new pc.Vec2(SIM.ARENA / 3, SIM.ARENA / 3); M.ground.update(); }
+    });
+    app.assets.add(a); app.assets.load(a);
+  }
+  // materiál s texturou opakovanou podle velikosti boxu (dlaždice 3 m na podlaze, 2,5 m na zdi)
+  function zoneMat(kind, hex, tu, tv) {
+    const tex = ZTEX[kind]; if (!tex) return null;
+    const key = kind + hex + tu.toFixed(1) + '|' + tv.toFixed(1); let m = ZMAT.get(key); if (m) return m;
+    const c = col(hex), mx = Math.max(c.r, c.g, c.b, 0.01);
+    m = new pc.StandardMaterial(); m.diffuseMap = tex; m.diffuseMapTiling = new pc.Vec2(tu, tv);
+    m.diffuse = new pc.Color(0.6 + (0.4 * c.r) / mx, 0.6 + (0.4 * c.g) / mx, 0.6 + (0.4 * c.b) / mx); m.gloss = kind === 'floor' ? 0.22 : 0.12; m.update();
+    ZMAT.set(key, m); return m;
+  }
   function ent(type, m, pos, scale, parent, shadows) {
     const e = new pc.Entity(); e.addComponent('render', { type, material: m, castShadows: shadows !== false, receiveShadows: true });
     if (pos) e.setLocalPosition(pos[0], pos[1], pos[2]); if (scale) e.setLocalScale(scale[0], scale[1], scale[2]);
@@ -205,24 +225,29 @@
 
   /* ---------- postavy z asset pipeline: rytíř se skinem a animacemi (CH_ak_body) ---------- */
   // Simulace určuje pozici i načasování; animace se jí přizpůsobí (root motion útoku se vynuluje).
-  const CH = { res: null, gray: /[?&]gray\b/.test(location.search) };
+  const CH = { res: null, knight: undefined, gray: /[?&]gray\b/.test(location.search) };
   const M_BOSS = mat('#2a1d18', { gloss: 0.5, emissive: '#3a1206' });
   const M_BONE = mat('#b9ad98', { gloss: 0.2 }), M_HOUND = mat('#2b2420', { gloss: 0.3 }), M_BOW = mat('#5a3a22');
   const M_ROBE = mat('#4a3426', { gloss: 0.15 }), M_ORB = mat('#ff8a3a', { unlit: true }), M_WARD = mat('#ffcf7a', { unlit: true, opacity: 0.2 }); // normální blend: aditivní ignoruje opacity
   const CH_SETS = { en_acolyte: { M_ak_steel: M_ROBE, M_ak_ember: M.furnace }, en_bowman: { M_ak_steel: M_BONE, M_ak_ember: M.eyes }, en_thrall: { M_ak_steel: M.thrall, M_ak_ember: M.eyes }, en_brute: { M_ak_steel: M.brute, M_ak_ember: M.furnace }, bo_kiln: { M_ak_steel: M_BOSS, M_ak_ember: M.furnace } };
+  // modely nepřátel ze Scenaria (D34): typ → asset; humanoidi na RIG_hero, pes zatím bez kostry
+  const EN_MODEL = { en_thrall: 'EN_thrall', en_brute: 'EN_brute', en_bowman: 'EN_bowman', en_acolyte: 'EN_acolyte', en_hound: 'EN_hound', bo_kiln: 'BO_kiln' };
+  CH.models = {}; CH.pending = 0;
   const CH_SCALE = { en_thrall: 1, en_brute: 1.45, bo_kiln: 2.3, en_bowman: 0.95, en_acolyte: 0.95 };
   const SWING = 0.47; // s: švih v klipu AN_hero_attack (snímek 14 z 27)
   // Acolyte drží v pravé ruce žhavou kouli (Kiln Acolyte: mnich v kožené zástěře s kovářskými kleštěmi)
   function orbFor(c) { const sock = c.e.findByName('socket_hand_R'); if (sock) ent('sphere', M_ORB, [0, -0.25, 0], [0.22, 0.22, 0.22], sock, false); }
   function bowFor(c) { const sock = c.e.findByName('socket_hand_R'); if (sock) ent('box', M_BOW, [0, -0.1, 0], [0.06, 1.3, 0.06], sock, false); }
-  function charVisual(parent, set, scale) {
+  // hráč: rytíř ze Scenaria (CH_ak_knight, D34) s vlastními texturami; nepřátelé zatím na CH_ak_body s barvami
+  function charVisual(parent, set, scale, res, id) {
+    res = res || CH.res; id = id || 'CH_ak_body';
     const holder = new pc.Entity(); holder.setLocalEulerAngles(0, 90, 0); if (scale) holder.setLocalScale(scale, scale, scale); parent.addChild(holder); // model hledí na +Z, simulace na +X
-    const e = CH.res.instantiateRenderEntity(); holder.addChild(e);
-    const lods = [0, 1, 2].map((l) => e.findByName('CH_ak_body_LOD' + l));
+    const e = res.instantiateRenderEntity(); holder.addChild(e);
+    const lods = [0, 1, 2].map((l) => e.findByName(id + '_LOD' + l));
     const mis = []; lods.forEach((n) => { for (const r of n.findComponents('render')) for (const mi of r.meshInstances) mis.push({ mi, base: (set && set[mi.material.name]) || mi.material }); });
     for (const m of mis) m.mi.material = m.base;
     e.addComponent('anim', { activate: true });
-    for (const a of CH.res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_hero_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
+    for (const a of res.animations) { const tr = a.resource; const name = tr.name.replace(/^AN_hero_/, ''); e.anim.assignAnimation(name, tr, undefined, 1, name === 'idle' || name === 'run'); }
     const c = { e, holder, lods, mis, bone: e.findByName('root'), clip: null, key: null, lod: -1, mat: null };
     charClip(c, 'idle', 1, 0); return c;
   }
@@ -243,8 +268,9 @@
   // plynulý pohyb: simulace běží 30× za s, obraz častěji – hráč se kreslí mezi poslední a novou pozicí kroku
   let prevP = null; const RP = [0, 0];
   function charsReady() {
-    if (CH.gray || !CH.res) return;
-    PC = charVisual(P, null, 1); PG.enabled = false;
+    // čeká i na rytíře a modely nepřátel (null = nenačetl se, pak CH_ak_body s barvami nebo boxy)
+    if (CH.gray || !CH.res || CH.knight === undefined || CH.pending > 0) return;
+    PC = CH.knight ? charVisual(P, null, 1, CH.knight, 'CH_ak_knight') : charVisual(P, null, 1); PG.enabled = false;
     // čepel v socketu pravé ruky: zbraň sleduje animaci
     const sock = PC.e.findByName('socket_hand_R'); if (sock) { ent('box', M.blade, [0, -0.55, 0], [0.07, 1.0, 0.16], sock); ent('box', M.steel, [0, -0.02, 0], [0.26, 0.06, 0.08], sock); }
     for (const v of EV.values()) if (v.dying >= 0) v.stale = true; // šedé nepřátele vymění syncWorld
@@ -255,6 +281,12 @@
   function enemyVisual(e) {
     if (e.type === 'en_hound') {
       const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z); const body = new pc.Entity(); root.addChild(body);
+      const hm = CH.models.en_hound;
+      if (hm && !CH.gray) { // model hledí na +Z, simulace na +X; ve hře stačí LOD1
+        const holder = new pc.Entity(); holder.setLocalEulerAngles(0, 90, 0); body.addChild(holder); const m = hm.instantiateRenderEntity(); holder.addChild(m);
+        for (let l = 0; l < 3; l++) { const n = m.findByName('EN_hound_LOD' + l); if (n) n.enabled = l === 1; }
+        const v = { root, body, base: null, hound: true, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v;
+      }
       ent('box', M_HOUND, [0, 0.55, 0], [1.05, 0.38, 0.42], body); ent('box', M_HOUND, [0.62, 0.72, 0], [0.42, 0.3, 0.32], body); ent('box', M.eyes, [0.84, 0.76, 0], [0.06, 0.07, 0.24], body, false); ent('box', M.furnace, [0, 0.58, 0], [0.5, 0.2, 0.44], body, false);
       for (const [x, zz] of [[0.36, 0.14], [0.36, -0.14], [-0.36, 0.14], [-0.36, -0.14]]) ent('box', M_HOUND, [x, 0.22, zz], [0.11, 0.44, 0.11], body);
       const v = { root, body, base: null, hound: true, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v;
@@ -262,7 +294,9 @@
     if (e.type === 'en_wisp') { const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z); const body = ent('sphere', M.furnace, [0, 1.1, 0], [0.55, 0.55, 0.55], root, false); ent('sphere', M.ghost, [0, 1.1, 0], [1.1, 1.1, 1.1], root, false); const v = { root, body, base: M.furnace, wisp: true, dying: 0, x: e.x, z: e.z }; EV.set(e.id, v); return v; }
     if (CH.res && !CH.gray) {
       const root = new pc.Entity(); app.root.addChild(root); root.setLocalPosition(e.x, 0, e.z);
-      const v = { root, c: charVisual(root, CH_SETS[e.type] || CH_SETS.en_thrall, CH_SCALE[e.type] || 1), dying: 0, x: e.x, z: e.z }; if (e.type === 'en_bowman') bowFor(v.c); if (e.type === 'en_acolyte') orbFor(v.c); EV.set(e.id, v); return v;
+      const own = CH.models[e.type];
+      const c = own ? charVisual(root, null, CH_SCALE[e.type] || 1, own, EN_MODEL[e.type]) : charVisual(root, CH_SETS[e.type] || CH_SETS.en_thrall, CH_SCALE[e.type] || 1);
+      const v = { root, c, dying: 0, x: e.x, z: e.z }; if (e.type === 'en_bowman') bowFor(v.c); if (e.type === 'en_acolyte') orbFor(v.c); EV.set(e.id, v); return v;
     }
     const root = new pc.Entity(); app.root.addChild(root); const big = e.type === 'en_brute';
     const body = ent('capsule', big ? M.brute : M.thrall, [0, big ? 1.25 : 0.85, 0], big ? [1.9, 1.25, 1.9] : [0.9, 0.85, 0.9], root);
@@ -320,13 +354,13 @@
     ZONE_G = new pc.Entity(); app.root.addChild(ZONE_G);
     const all = new Set(z.keys.map((k) => k[0]));
     const rects = [...z.rooms, ...z.corridors.flatMap((c) => c.segs)];
-    for (const r of rects) ent('box', mFloor, [(r.x0 + r.x1) / 2, -0.05, (r.z0 + r.z1) / 2], [r.x1 - r.x0, 0.1, r.z1 - r.z0], ZONE_G, false);
+    for (const r of rects) ent('box', zoneMat('floor', look[0], (r.x1 - r.x0) / 3, (r.z1 - r.z0) / 3) || mFloor, [(r.x0 + r.x1) / 2, -0.05, (r.z0 + r.z1) / 2], [r.x1 - r.x0, 0.1, r.z1 - r.z0], ZONE_G, false);
     // zdi: tam, kde těsně za hranou obdélníku už není průchozí plocha (vzorkování po 0,5 m)
     const H = 1.6, T = 0.6, STEP = 0.5;
     for (const r of rects) {
       for (const [ax, az, bx, bz, nx, nz] of [[r.x0, r.z0, r.x1, r.z0, 0, -1], [r.x0, r.z1, r.x1, r.z1, 0, 1], [r.x0, r.z0, r.x0, r.z1, -1, 0], [r.x1, r.z0, r.x1, r.z1, 1, 0]]) {
         const L = Math.hypot(bx - ax, bz - az); const n = Math.max(1, Math.round(L / STEP)); let run = -1;
-        const flush = (i) => { if (run < 0) return; const t0 = run / n, t1 = i / n; const sl = L * (t1 - t0) + T; const cx = ax + (bx - ax) * ((t0 + t1) / 2) + nx * (T / 2), cz = az + (bz - az) * ((t0 + t1) / 2) + nz * (T / 2); ent('box', mWall, [cx, H / 2, cz], nx ? [T, H, sl] : [sl, H, T], ZONE_G); run = -1; };
+        const flush = (i) => { if (run < 0) return; const t0 = run / n, t1 = i / n; const sl = L * (t1 - t0) + T; const cx = ax + (bx - ax) * ((t0 + t1) / 2) + nx * (T / 2), cz = az + (bz - az) * ((t0 + t1) / 2) + nz * (T / 2); ent('box', zoneMat('wall', look[1], sl / 2.5, H / 2.5) || mWall, [cx, H / 2, cz], nx ? [T, H, sl] : [sl, H, T], ZONE_G); run = -1; };
         for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; const px = ax + (bx - ax) * t + nx * 0.3, pz = az + (bz - az) * t + nz * 0.3; const solid = !W.walkable(z, px, pz, 0, all); if (solid && run < 0) run = i; if (!solid) flush(i); }
         flush(n);
       }
@@ -904,7 +938,9 @@
           if (err || !asset) { AS.error = String(err); panel(); return; }
           item.ms = Math.round(performance.now() - t0); item.ok = true; AS.loaded++;
           const e = asset.resource.instantiateRenderEntity(); AS.root.addChild(e); item.e = e;
-          if (a.id.startsWith('CH_')) { e.setLocalPosition(0, 0, 0); e.setLocalScale(1.6, 1.6, 1.6); AS.char = e; AS.res = asset.resource; if (asset.resource.animations.length) setupAnim(e, asset.resource, 'idle'); }
+          // CH_ak_body ve středu (klipy, LOD, dav); postavy ze Scenaria (CH_ak_knight, EN_*, BO_*) v řadě vedle něj
+          if (a.id === 'CH_ak_body') { e.setLocalPosition(0, 0, 0); e.setLocalScale(1.6, 1.6, 1.6); AS.char = e; AS.res = asset.resource; if (asset.resource.animations.length) setupAnim(e, asset.resource, 'idle'); }
+          else if (/^(CH|EN|BO)_/.test(a.id)) { const k = man.assets.filter((x) => /^(CH|EN|BO)_/.test(x.id) && x.id !== 'CH_ak_body').indexOf(a); e.setLocalPosition((k % 2 ? -1 : 1) * 2.4 * (1 + Math.floor(k / 2)), 0, 0); e.setLocalScale(1.6, 1.6, 1.6); for (let l = 1; l < 3; l++) { const n = e.findByName(a.id + '_LOD' + l); if (n) n.enabled = false; } if (asset.resource.animations.length) setupAnim(e, asset.resource, 'idle'); }
           // sockety jako malé koule (kontrola, že jsou na hranách modulu a ve středu dveří)
           for (const name of a.sockets) { const n = e.findByName(name); if (n) ent('sphere', sockMat, [0, 0.15, 0], [0.3, 0.3, 0.3], n, false); }
           panel();
@@ -939,11 +975,12 @@
   function panel() {
     const el = document.getElementById('assetPanel'); el.hidden = false;
     el.innerHTML = `<h2>${t('assetsTitle')}</h2><span class="muted">${t('assetsHint')}</span>` + (AS.error ? `<p class="bad">${AS.error}</p>` : '') +
-      (AS.items.length ? `<table class="res">${AS.items.map((it) => `<tr><td><b>${it.a.id}</b><br><span class="muted">${it.a.parts.map((p) => p.name.replace(it.a.id + '_', '') + ' ' + p.tris).join(' · ')} ${t('tris')}</span></td><td class="n">${it.ok ? it.ms + ' ms<br>' + Math.round(it.a.bytes / 1024) + ' kB' : t('loading')}</td></tr><tr><td colspan="2" class="muted">${t('mats')}: ${it.a.materials.join(', ')} · ${t('sockets')}: ${it.a.sockets.length}</td></tr>`).join('')}</table>` : `<p>${t('loading')}</p>`) +
+      // ovládání nahoře, seznam assetů pod ním (s postavami ze Scenaria je dlouhý; panel se posouvá)
       (AS.res && AS.res.animations.length ? `<p class="muted">${t('clip')}:</p><div class="row clips">${CLIPS.map((c, i) => `<button class="btn dim${AS.clip === c ? ' on' : ''}" data-clip="${c}">${i + 1} · ${t(c)}</button>`).join('')}</div>` +
         `<div class="row"><button class="btn dim" id="b-as-crowd" ${AS.measure ? 'disabled' : ''}>${AS.measure ? t('crowdRun') : t('crowd')}</button></div>` +
         (AS.crowdRes ? `<p class="muted">${t('crowdRes')}: <b>${AS.crowdRes.avg} FPS</b> · p95 ${AS.crowdRes.p95} ms</p>` : '') : '') +
-      `<p id="as-lod" class="muted"></p><div class="row"><button class="btn dim" id="b-as-back">${t('menu')}</button></div>`;
+      `<p id="as-lod" class="muted"></p><div class="row"><button class="btn dim" id="b-as-back">${t('menu')}</button></div>` +
+      (AS.items.length ? `<table class="res">${AS.items.map((it) => `<tr><td><b>${it.a.id}</b><br><span class="muted">${it.a.parts.map((p) => p.name.replace(it.a.id + '_', '') + ' ' + p.tris).join(' · ')} ${t('tris')}</span></td><td class="n">${it.ok ? it.ms + ' ms<br>' + Math.round(it.a.bytes / 1024) + ' kB' : t('loading')}</td></tr><tr><td colspan="2" class="muted">${t('mats')}: ${it.a.materials.join(', ')} · ${t('sockets')}: ${it.a.sockets.length}</td></tr>`).join('')}</table>` : `<p>${t('loading')}</p>`);
     document.getElementById('b-as-back').onclick = () => leaveAssets();
     for (const b of el.querySelectorAll('[data-clip]')) b.onclick = () => { if (AS.char) { AS.char.enabled = true; playClip(AS.char, b.dataset.clip); } };
     const bc = document.getElementById('b-as-crowd'); if (bc) bc.onclick = crowd;
@@ -1069,5 +1106,10 @@
   window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, openForge, closeForge, get forge() { return mode === 'forge'; }, get vo() { return { lines: (HS.D.vo || []).length, recorded: VO.files.size, playing: !!VO.cur }; }, get dialog() { return DLG ? { choice: !!DLG.choice, lines: DLG.lines.length } : null; }, dlgNext, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
+  if (!CH.gray) loadGlb('CH_ak_knight.glb', (err, asset) => { if (err || !asset) console.warn('CH_ak_knight', err); CH.knight = asset ? asset.resource : null; charsReady(); });
+  if (!CH.gray) for (const [type, id] of Object.entries(EN_MODEL)) {
+    CH.pending++;
+    loadGlb(id + '.glb', (err, asset) => { if (err || !asset) console.warn(id, err); CH.models[type] = asset ? asset.resource : null; CH.pending--; charsReady(); });
+  }
   app.start(); menu(); persist();
 })();

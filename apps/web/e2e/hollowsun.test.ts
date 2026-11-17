@@ -69,7 +69,7 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 	expect(errors).toEqual([]);
 });
 
-test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page }, info) => {
+test('HOLLOW SUN: the asset pipeline test loads every GLB asset', async ({ page }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'HOLLOW SUN is a desktop game');
 	test.setTimeout(90_000);
 	const errors: string[] = [];
@@ -81,13 +81,23 @@ test('HOLLOW SUN: the asset pipeline test loads both GLB assets', async ({ page 
 		.poll(() => run<number>(page, 'return (HSGame.assets && HSGame.assets.loaded) || 0;'), {
 			timeout: 60_000,
 		})
-		.toBe(2);
+		.toBe(9);
 	const assets = await run<{ error: string | null; items: { id: string; ok: boolean }[] }>(
 		page,
 		'return HSGame.assets;',
 	);
 	expect(assets.error).toBeNull();
-	expect(assets.items.map((i) => i.id)).toEqual(['DM_crypt_rS_X_a', 'CH_ak_body']);
+	expect(assets.items.map((i) => i.id)).toEqual([
+		'DM_crypt_rS_X_a',
+		'CH_ak_body',
+		'CH_ak_knight',
+		'EN_thrall',
+		'EN_brute',
+		'EN_bowman',
+		'EN_acolyte',
+		'EN_hound',
+		'BO_kiln',
+	]);
 
 	// Skinned character: the four clips play, the attack carries root motion forward (+Z).
 	const clips = await run<string[]>(page, 'return HSGame.assets.clips;');

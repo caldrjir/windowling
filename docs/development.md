@@ -97,6 +97,19 @@ Convention: each completed iteration is at least one minor release.
   lines) – and run `pnpm --filter @windowling/web hollowsun:vo`:
   it trims silence, masters to −16 LUFS and writes Opus 48 kb/s mono plus a manifest into
   `assets/vo/en` that `hollowsun-vo.test.ts` checks. `--lang=cs` is ready for Czech voices later.
+- HOLLOW SUN visual art (D34, Scenario): `pnpm --filter @windowling/web hollowsun:art -- --sheet`
+  writes every prompt (style board, UI kit, menu art, icons from `data.js`, portraits) into
+  `D:/hollowsun-art`; `-- --generate --set=style` generates a set through the Scenario API (key and
+  secret `SCENARIO_API_KEY` / `SCENARIO_API_SECRET` in `apps/web/.env`) into `D:/hollowsun-art/raw`
+  with a review gallery (`raw/index.html`). Sets other than `style` need the custom style models
+  trained on the chosen style board (ids under `models` in `apps/web/scripts/hollowsun-art.json`).
+  The player's knight `CH_ak_knight`, the Act I enemies `EN_*` and the boss `BO_kiln` come from
+  Scenario concepts turned into meshes by Meshy 7.1:
+  `BLENDER=D:\Blender\blender.exe pnpm --filter @windowling/web hollowsun:assets -- --char=EN_brute=<meshy.glb>`
+  (repeatable) rigs each to `RIG_hero` (`scripts/blender/hollowsun_char.py`: distance skinning, arms
+  lowered from the A-pose, LODs, ember emission, WebP textures ≤ 1024 px; `EN_hound` stays a static
+  mesh) and replaces only those manifest entries. Heights, LOD targets and budgets are in `SPECS`.
+  Zone floors and walls use the tileable `assets/tex/T_crypt_*.webp` from the same style board.
 - HOLLOW SUN balance: `pnpm --filter @windowling/web hollowsun:playthrough [seed] [step,step]` plays
   the whole Act I campaign headless (about 2–4 minutes) and prints time, level, deaths, hits to kill
   and hits survived per step. Run it after changing zones, enemies, loot or XP.

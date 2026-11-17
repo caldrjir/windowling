@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 /**
  * HOLLOW SUN asset pipeline (P0): every GLB in static/games/hollowsun/assets must pass the
  * checks the Game Design Bible's asset specification asks of CI – compression (Meshopt +
- * quantization, KTX2 for textures), naming, triangle budget, at most 2 materials per mesh, LODs,
+ * quantization, KTX2 or WebP ≤ 1024 px for textures), naming, triangle budget, at most 2 materials per mesh, LODs,
  * module footprint on the 2 m grid, door sockets, vertex-colour AO – plus basic glTF integrity.
  * The GLBs are decoded here the same way the game decodes them (meshoptimizer's decoder).
  */
@@ -67,8 +67,14 @@ interface Gltf {
 		channels: { sampler: number; target: { node: number; path: string } }[];
 		samplers: { input: number; output: number }[];
 	}[];
-	images?: { mimeType?: string }[];
-	textures?: { source?: number; extensions?: { KHR_texture_basisu?: { source: number } } }[];
+	images?: { mimeType?: string; bufferView?: number }[];
+	textures?: {
+		source?: number;
+		extensions?: {
+			KHR_texture_basisu?: { source: number };
+			EXT_texture_webp?: { source: number };
+		};
+	}[];
 }
 interface ManifestAsset {
 	id: string;
@@ -99,6 +105,17 @@ function at<T>(arr: readonly T[] | undefined, i: number | undefined): T {
 	const v = arr && i !== undefined ? arr[i] : undefined;
 	if (v === undefined) throw new Error(`Missing index ${String(i)}`);
 	return v;
+}
+/** Width and height from a WebP header (lossy VP8, lossless VP8L or extended VP8X). */
+function webpSize(d: DataView): [number, number] {
+	const tag = String.fromCharCode(d.getUint8(12), d.getUint8(13), d.getUint8(14), d.getUint8(15));
+	if (tag === 'VP8 ') return [d.getUint16(26, true) & 0x3fff, d.getUint16(28, true) & 0x3fff];
+	if (tag === 'VP8L') {
+		const b = d.getUint32(21, true);
+		return [(b & 0x3fff) + 1, ((b >> 14) & 0x3fff) + 1];
+	}
+	const u24 = (o: number) => d.getUint8(o) | (d.getUint8(o + 1) << 8) | (d.getUint8(o + 2) << 16);
+	return [u24(24) + 1, u24(27) + 1];
 }
 function attr(p: Primitive, name: string): number {
 	const i = p.attributes[name];
@@ -200,7 +217,9 @@ const manifest = JSON.parse(readFileSync(dir + 'manifest.json', 'utf8')) as {
 	assets: ManifestAsset[];
 };
 const MODULE_RE = /^DM_(crypt|abbey|glass|gloam|sundial)_r(S|M|L)_(D|I|L|T|X)_[a-c]$/;
-const CHAR_RE = /^CH_(ak|rb|gc|ns)_[a-z]+_LOD[0-2]$/;
+// characters: player classes CH_<class>_<part>, enemies EN_<type>, bosses BO_<boss> (Asset Tracker ids)
+const CHAR_RE = /^(CH_(ak|rb|gc|ns)_[a-z]+|EN_[a-z]+|BO_[a-z]+)_LOD[0-2]$/;
+const isChar = (id: string) => /^(CH|EN|BO)_/.test(id);
 const DOORS: Record<string, number> = { D: 1, I: 2, L: 2, T: 3, X: 4 };
 const COMPRESSION = ['EXT_meshopt_compression', 'KHR_mesh_quantization'];
 // Bible: one shared humanoid skeleton (D16) with at most 65 bones; clips AN_<rig>_<action> at 30 FPS,
@@ -236,17 +255,32 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 			).toBe(true);
 	});
 
-	it('is compressed: Meshopt geometry, quantized attributes, KTX2 textures', () => {
-		expect(asset.compression).toEqual(COMPRESSION);
-		expect(g.json.extensionsRequired ?? []).toEqual(expect.arrayContaining(COMPRESSION));
-		for (const v of g.json.bufferViews)
-			expect(v.extensions?.EXT_meshopt_compression, 'every buffer view').toBeDefined();
-		expect(asset.bytes).toBeLessThan(asset.rawBytes * 0.5);
-		// textures only as Basis Universal in KTX2 (none yet: the P0 assets use vertex colours)
+	it('is compressed: Meshopt geometry, quantized attributes, KTX2 or WebP textures', () => {
+		const textured = (g.json.textures ?? []).length > 0;
+		// textures: Basis Universal in KTX2, or WebP (EXT_texture_webp) at most 1024 px while the
+		// node.js gltfpack cannot encode KTX2 and the game has no Basis transcoder (CH_ak_knight, D34)
+		const webp = textured && (g.json.textures ?? []).some((t) => t.extensions?.EXT_texture_webp);
+		expect(asset.compression).toEqual(webp ? [...COMPRESSION, 'EXT_texture_webp'] : COMPRESSION);
+		expect(g.json.extensionsRequired ?? []).toEqual(expect.arrayContaining(asset.compression));
+		const imageViews = new Set((g.json.images ?? []).map((i) => i.bufferView));
+		g.json.bufferViews.forEach((v, i) => {
+			if (!imageViews.has(i))
+				expect(v.extensions?.EXT_meshopt_compression, 'every geometry buffer view').toBeDefined();
+		});
+		// geometry at most half its raw size; images are already encoded and copied as they are
+		let img = 0;
+		for (const i of imageViews) img += at(g.json.bufferViews, i).byteLength;
+		expect(asset.bytes - img).toBeLessThan((asset.rawBytes - img) * 0.5);
 		for (const tex of g.json.textures ?? []) {
-			const src = tex.extensions?.KHR_texture_basisu?.source;
+			const src =
+				tex.extensions?.KHR_texture_basisu?.source ?? tex.extensions?.EXT_texture_webp?.source;
 			expect(tex.source, 'no PNG/JPEG fallback').toBeUndefined();
-			expect(at(g.json.images, src).mimeType).toBe('image/ktx2');
+			const img = at(g.json.images, src);
+			expect(['image/ktx2', 'image/webp']).toContain(img.mimeType);
+			if (img.mimeType === 'image/webp') {
+				const [w, h] = webpSize(g.view(img.bufferView ?? -1));
+				expect(Math.max(w, h), 'texture size').toBeLessThanOrEqual(1024);
+			}
 		}
 	});
 
@@ -258,7 +292,7 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 		});
 		for (const m of g.json.meshes)
 			expect(new Set(m.primitives.map((p) => p.material)).size).toBeLessThanOrEqual(2);
-		if (asset.id.startsWith('CH_')) {
+		if (isChar(asset.id)) {
 			expect(asset.parts.map((p) => p.name.slice(-4))).toEqual(['LOD0', 'LOD1', 'LOD2']);
 			const t = asset.parts.map((p) => p.tris);
 			expect(at(t, 0)).toBeGreaterThan(at(t, 1));
@@ -291,7 +325,8 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 			}
 	});
 
-	it.runIf(asset.id.startsWith('CH_'))(
+	// rigged characters (quadrupeds such as EN_hound are static meshes until they get their own rig)
+	it.runIf(isChar(asset.id) && !!asset.meta.rig)(
 		'is skinned to the shared rig within the bone budget',
 		() => {
 			const skins = g.json.skins ?? [];
@@ -309,7 +344,7 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 				for (const p of m.primitives) {
 					const joints = g.read(attr(p, 'JOINTS_0'));
 					const weights = g.read(attr(p, 'WEIGHTS_0'));
-					expect(Math.max(...joints)).toBeLessThan(skin.joints.length);
+					expect(joints.reduce((m, j) => Math.max(m, j), 0)).toBeLessThan(skin.joints.length);
 					for (let i = 0; i < weights.length; i += 4) {
 						const sum =
 							at(weights, i) + at(weights, i + 1) + at(weights, i + 2) + at(weights, i + 3);
@@ -324,7 +359,7 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 		},
 	);
 
-	it.runIf(asset.id.startsWith('CH_'))(
+	it.runIf(isChar(asset.id) && !!asset.meta.rig)(
 		'has the animation clips: names, 30 FPS, loops, root motion',
 		() => {
 			const anims = g.json.animations ?? [];

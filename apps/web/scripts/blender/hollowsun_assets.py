@@ -336,9 +336,14 @@ def knight():
     return export("CH_ak_body", lods, [steel, ember], [hand], meta, rig=arm)
 
 
-manifest = {"generated": "scripts/blender/hollowsun_assets.py (Blender %s)" % bpy.app.version_string, "assets": [crypt_room(), knight()]}
-with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8") as f:
-    json.dump(manifest, f, indent="\t")
-    f.write("\n")
-for a in manifest["assets"]:
-    print("HSASSET", a["id"], a["bytes"], " ".join("%s:%d" % (p["name"], p["tris"]) for p in a["parts"]))
+def main(builders):
+    manifest = {"generated": "scripts/blender/hollowsun_assets.py (Blender %s)" % bpy.app.version_string, "assets": [b() for b in builders]}
+    with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent="\t")
+        f.write("\n")
+    for a in manifest["assets"]:
+        print("HSASSET", a["id"], a["bytes"], " ".join("%s:%d" % (p["name"], p["tris"]) for p in a["parts"]))
+
+
+if __name__ == "__main__":  # hollowsun_knight.py imports the rig and clips from here
+    main([crypt_room, knight])

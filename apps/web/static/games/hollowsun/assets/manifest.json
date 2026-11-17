@@ -5,50 +5,29 @@
 			"id": "DM_crypt_rS_X_a",
 			"file": "DM_crypt_rS_X_a.glb",
 			"bytes": 20128,
-			"materials": [
-				"M_crypt_stone",
-				"M_crypt_trim"
-			],
+			"materials": ["M_crypt_stone", "M_crypt_trim"],
 			"parts": [
 				{
 					"name": "DM_crypt_rS_X_a",
 					"tris": 1148
 				}
 			],
-			"sockets": [
-				"socket_door_N",
-				"socket_door_S",
-				"socket_door_W",
-				"socket_door_E"
-			],
+			"sockets": ["socket_door_N", "socket_door_S", "socket_door_W", "socket_door_E"],
 			"meta": {
-				"cells": [
-					5,
-					5
-				],
+				"cells": [5, 5],
 				"cellSize": 2,
-				"size": [
-					10,
-					4,
-					10
-				],
+				"size": [10, 4, 10],
 				"trisBudget": 3000,
 				"source": "blender"
 			},
 			"rawBytes": 84440,
-			"compression": [
-				"EXT_meshopt_compression",
-				"KHR_mesh_quantization"
-			]
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization"]
 		},
 		{
 			"id": "CH_ak_body",
 			"file": "CH_ak_body.glb",
 			"bytes": 95628,
-			"materials": [
-				"M_ak_steel",
-				"M_ak_ember"
-			],
+			"materials": ["M_ak_steel", "M_ak_ember"],
 			"parts": [
 				{
 					"name": "CH_ak_body_LOD0",
@@ -63,16 +42,10 @@
 					"tris": 242
 				}
 			],
-			"sockets": [
-				"socket_hand_R"
-			],
+			"sockets": ["socket_hand_R"],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [
-					25000,
-					9000,
-					3000
-				],
+				"trisBudget": [25000, 9000, 3000],
 				"source": "blender",
 				"rig": {
 					"name": "RIG_hero",
@@ -102,10 +75,394 @@
 				]
 			},
 			"rawBytes": 555312,
-			"compression": [
-				"EXT_meshopt_compression",
-				"KHR_mesh_quantization"
-			]
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization"]
+		},
+		{
+			"id": "CH_ak_knight",
+			"file": "CH_ak_knight.glb",
+			"bytes": 1575376,
+			"materials": ["M_ak_knight"],
+			"parts": [
+				{
+					"name": "CH_ak_knight_LOD0",
+					"tris": 20608
+				},
+				{
+					"name": "CH_ak_knight_LOD1",
+					"tris": 8000
+				},
+				{
+					"name": "CH_ak_knight_LOD2",
+					"tris": 2600
+				}
+			],
+			"sockets": ["socket_hand_R"],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [25000, 9000, 3000],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				},
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 4506472,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+		},
+		{
+			"id": "EN_thrall",
+			"file": "EN_thrall.glb",
+			"bytes": 1061824,
+			"materials": ["M_en_thrall"],
+			"parts": [
+				{
+					"name": "EN_thrall_LOD0",
+					"tris": 9240
+				},
+				{
+					"name": "EN_thrall_LOD1",
+					"tris": 3600
+				},
+				{
+					"name": "EN_thrall_LOD2",
+					"tris": 1300
+				}
+			],
+			"sockets": ["socket_hand_R"],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [10000, 4000, 1500],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				},
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 2501376,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+		},
+		{
+			"id": "EN_brute",
+			"file": "EN_brute.glb",
+			"bytes": 1130480,
+			"materials": ["M_en_brute"],
+			"parts": [
+				{
+					"name": "EN_brute_LOD0",
+					"tris": 9258
+				},
+				{
+					"name": "EN_brute_LOD1",
+					"tris": 3600
+				},
+				{
+					"name": "EN_brute_LOD2",
+					"tris": 1300
+				}
+			],
+			"sockets": ["socket_hand_R"],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [10000, 4000, 1500],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				},
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 2547684,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+		},
+		{
+			"id": "EN_bowman",
+			"file": "EN_bowman.glb",
+			"bytes": 875236,
+			"materials": ["M_en_bowman"],
+			"parts": [
+				{
+					"name": "EN_bowman_LOD0",
+					"tris": 9023
+				},
+				{
+					"name": "EN_bowman_LOD1",
+					"tris": 3600
+				},
+				{
+					"name": "EN_bowman_LOD2",
+					"tris": 1300
+				}
+			],
+			"sockets": ["socket_hand_R"],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [10000, 4000, 1500],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				},
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 2463088,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+		},
+		{
+			"id": "EN_acolyte",
+			"file": "EN_acolyte.glb",
+			"bytes": 954592,
+			"materials": ["M_en_acolyte"],
+			"parts": [
+				{
+					"name": "EN_acolyte_LOD0",
+					"tris": 9356
+				},
+				{
+					"name": "EN_acolyte_LOD1",
+					"tris": 3600
+				},
+				{
+					"name": "EN_acolyte_LOD2",
+					"tris": 1299
+				}
+			],
+			"sockets": ["socket_hand_R"],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [10000, 4000, 1500],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				},
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 2353804,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+		},
+		{
+			"id": "EN_hound",
+			"file": "EN_hound.glb",
+			"bytes": 1390188,
+			"materials": ["M_en_hound"],
+			"parts": [
+				{
+					"name": "EN_hound_LOD0",
+					"tris": 9378
+				},
+				{
+					"name": "EN_hound_LOD1",
+					"tris": 3600
+				},
+				{
+					"name": "EN_hound_LOD2",
+					"tris": 1300
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 0.95,
+				"trisBudget": [10000, 4000, 1500],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				}
+			},
+			"rawBytes": 2392808,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+		},
+		{
+			"id": "BO_kiln",
+			"file": "BO_kiln.glb",
+			"bytes": 1993820,
+			"materials": ["M_bo_kiln"],
+			"parts": [
+				{
+					"name": "BO_kiln_LOD0",
+					"tris": 30759
+				},
+				{
+					"name": "BO_kiln_LOD1",
+					"tris": 12000
+				},
+				{
+					"name": "BO_kiln_LOD2",
+					"tris": 4500
+				}
+			],
+			"sockets": ["socket_hand_R"],
+			"meta": {
+				"height": 1.78,
+				"trisBudget": [45000, 15000, 5000],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-17 (D34)"
+				},
+				"rig": {
+					"name": "RIG_hero",
+					"bones": 20
+				},
+				"clips": [
+					{
+						"name": "AN_hero_idle",
+						"frames": 60,
+						"seconds": 2
+					},
+					{
+						"name": "AN_hero_run",
+						"frames": 24,
+						"seconds": 0.8
+					},
+					{
+						"name": "AN_hero_attack",
+						"frames": 27,
+						"seconds": 0.9
+					},
+					{
+						"name": "AN_hero_death",
+						"frames": 36,
+						"seconds": 1.2
+					}
+				]
+			},
+			"rawBytes": 6338452,
+			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
 		}
 	]
 }
