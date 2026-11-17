@@ -268,7 +268,8 @@ const UI = (() => {
           <div class="row"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu se hra nezastaví: vybere kartu nejvýš v pořadí priorit', 'Level-ups no longer pause: the card highest in your priority order is picked')}</small></label><button class="btn" data-go="prio">${icon('auto')} ${L('Priority', 'Priorities')}</button><button class="toggle ${s.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
           <div class="row"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
           <div class="row"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
-          <div class="row"><label>${L('Počítadlo FPS', 'FPS counter')}</label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>
+          <div class="row"><label>${L('Kvalita vykreslování', 'Rendering quality')}<small>${L('Auto hlídá rozlišení podle obrazovky a při sekání ho sníží. Úsporná kreslí v 70 % rozlišení.', 'Auto keeps the resolution in budget for your screen and lowers it when the game stutters. Saver draws at 70% resolution.')}</small></label><button class="btn" data-act="quality">${{ auto: 'Auto', high: L('Plná', 'Full'), low: L('Úsporná', 'Saver') }[s.quality || 'auto']}</button></div>
+          <div class="row"><label>${L('Počítadlo FPS', 'FPS counter')}<small>VOIDBORN v${GAME_VERSION}</small></label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>
           <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>
           <div class="keys">
             <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>${L('Pohyb (nebo šipky / gamepad)', 'Move (or arrows / gamepad)')}</span>
@@ -373,6 +374,11 @@ const UI = (() => {
 
   const globalActs = {
     perflog() { PerfLog.download(); Sound.play.click(); },
+    quality() {
+      const order = ['auto', 'high', 'low'], q = SAVE.settings.quality || 'auto';
+      SAVE.settings.quality = order[(order.indexOf(q) + 1) % order.length];
+      persist(); Sound.play.click(); Render.resize(); rerender();
+    },
     refund() {
       confirm(L('Vrátit vylepšení?', 'Refund upgrades?'), L('Všechny utracené střepy se ti vrátí a můžeš je rozdělit znovu.', 'All spent shards are returned so you can spend them again.'), () => {
         let sum = 0;
@@ -672,7 +678,13 @@ const UI = (() => {
     else if (prop === 'w') el.style.width = val;
     else if (prop === 'cls') el.className = val;
   }
-  function hudUpdate(fps) {
+  // HUD stačí obnovovat 30× za vteřinu: každá změna DOM znamená přepočet stylů, rozvržení a vykreslení
+  // (na 240Hz monitoru jinak 240×). Čísla se mění jen jako text, ikony zůstávají.
+  let hudT = 0;
+  function hudUpdate(fps, force) {
+    const now = performance.now();
+    if (!force && now - hudT < 33) return;
+    hudT = now;
     const p = G.p, s = G.st;
     set('xpFill', 'w', (G.xp / G.xpNext * 100).toFixed(1) + '%');
     const hpw = Math.max(0, p.hp / s.maxHp * 100).toFixed(1) + '%';
@@ -682,8 +694,9 @@ const UI = (() => {
     set('timer', 'text', fmtTime(G.time));
     set('timer', 'cls', G.time >= bossTimes()[bossTimes().length - 1] - 60 && !G.victory ? 'final' : '');
     set('sectorTag', 'text', `${L('SEKTOR', 'SECTOR')} ${G.sector.roman} · OD ${G.od}${G.endless ? ' · ∞' : ''}`);
-    set('killStat', 'html', `${icon('skull')} ${fmtNum(G.kills)}`);
-    set('shardStat', 'html', `${icon('shard')} ${fmtNum(G.shards)}`);
+    if (!hc.statIcons) { hc.statIcons = 1; $('#killStat').innerHTML = `${icon('skull')} <span id="killN"></span>`; $('#shardStat').innerHTML = `${icon('shard')} <span id="shardN"></span>`; }
+    set('killN', 'text', fmtNum(G.kills));
+    set('shardN', 'text', fmtNum(G.shards));
     const re = Math.round(p.dashRe / s.dashCd * 20);
     set('dashPips', 'html', Array.from({ length: s.dashMax }, (_, i) => i < p.dashCharges ? '<i class="on"></i>' : i === p.dashCharges ? `<i><b style="width:${re * 5}%"></b></i>` : '<i></i>').join(''));
     // co dřív v běhu vidět nebylo: zbývající oživení, štít, pancíř a regenerace
@@ -701,7 +714,7 @@ const UI = (() => {
     if (G.sector.mono && G.monoType) chips.push(`<span class="hc mo" title="${L('Monokultura: teď jen tento druh', 'Monoculture: only this kind for now')}">${icon('skull')}<b>${ENEMY_NAMES[G.monoType][0]}</b></span>`);
     set('hudChips', 'html', chips.join(''));
     if (G.boss) set('bossFill', 'w', Math.max(0, G.boss.hp / G.boss.maxHp * 100).toFixed(1) + '%');
-    set('fps', 'text', SAVE.settings.fps ? fps + ' FPS · ' + G.enemies.length + L(' nepřátel', ' enemies') : '');
+    set('fps', 'text', (SAVE.settings.fps ? fps + ' FPS · ' + G.enemies.length + L(' nepřátel', ' enemies') + ' · ' : '') + 'v' + GAME_VERSION);
   }
   function refreshLoadout() {
     $('#wSlots').innerHTML = G.weapons.map(w => {

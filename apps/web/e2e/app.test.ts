@@ -589,6 +589,27 @@ test('VOIDBORN performance log is off by default and downloads after a run', asy
 	expect(errors).toEqual([]);
 });
 
+test('VOIDBORN shows its version and the rendering quality can be lowered', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	// The game's state is top-level `const`/functions of the page (not on window).
+	const version = await page.evaluate<string>('GAME_VERSION');
+	expect(version).toMatch(/^\d+\.\d+\.\d+$/);
+	await page.locator('[data-go="settings"]').click();
+	await expect(page.locator('.screen.active')).toContainText(`v${version}`);
+	// Auto -> Full -> Saver: the canvas is drawn at 70 % of the resolution.
+	await page.locator('[data-act="quality"]').click();
+	await page.locator('[data-act="quality"]').click();
+	expect(await page.evaluate(`[SAVE.settings.quality, Render.scale]`)).toEqual(['low', 0.7]);
+	await page.locator('.screen.active .back').click();
+	await page.locator('[data-go="hangar"]').click();
+	await page.locator('#startBtn').click();
+	await expect(page.locator('#fps')).toContainText(`v${version}`);
+	expect(errors).toEqual([]);
+});
+
 test('shows the stats a game saved in this browser', async ({ page }) => {
 	await page.goto('/');
 	await page.evaluate(() =>

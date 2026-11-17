@@ -73,12 +73,12 @@ const PerfLog = (() => {
     const now = performance.now(), cv = document.getElementById('cv');
     const settings = Object.assign({}, SAVE.settings); delete settings.prio;
     log = {
-      game: 'VOIDBORN', format: FORMAT, created: new Date().toISOString(), t0: now, notes: NOTES,
+      game: 'VOIDBORN', version: typeof GAME_VERSION === 'string' ? GAME_VERSION : null, format: FORMAT, created: new Date().toISOString(), t0: now, notes: NOTES,
       meta: {
         lang: LANG, ua: navigator.userAgent, platform: (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform,
         mobile: navigator.userAgentData ? navigator.userAgentData.mobile : null, cores: navigator.hardwareConcurrency || null, memoryGB: navigator.deviceMemory || null,
         screen: [screen.width, screen.height], dpr: window.devicePixelRatio || 1, viewport: [innerWidth, innerHeight], canvas: cv ? [cv.width, cv.height] : null,
-        zoom: r(Render.zoom, 3), touch: matchMedia('(pointer: coarse)').matches, gpu: gpu(), music: music(), settings,
+        zoom: r(Render.zoom, 3), renderScale: r(Render.scale), touch: matchMedia('(pointer: coarse)').matches, gpu: gpu(), music: music(), settings,
       },
       run: {
         pilot: G.pilot.id, sector: G.sector.id, sectorName: G.sector.name, od: G.od, startWeapon: G.startWeapon,

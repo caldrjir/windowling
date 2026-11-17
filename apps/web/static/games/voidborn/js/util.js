@@ -38,12 +38,27 @@ function fmtNum(n) {
   return n.toLocaleString(typeof LANG !== 'undefined' && LANG === 'en' ? 'en-US' : 'cs-CZ');
 }
 
+const _rgb = new Map(), _rgba = new Map();
 function hexToRgb(hex) {
-  const h = hex.replace('#', '');
-  const f = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-  return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)];
+  let v = _rgb.get(hex);
+  if (!v) {
+    const h = hex.replace('#', '');
+    const f = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    v = [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)];
+    _rgb.set(hex, v);
+  }
+  return v;
 }
-function rgba(hex, a) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
+// Barva s průhledností: volá se v každém snímku stokrát, proto se řetězce pamatují (průhlednost
+// zaokrouhlená na tisíciny, rozdíl není vidět) a nevzniká smetí pro garbage collector.
+function rgba(hex, a) {
+  const q = Math.round(a * 1000);
+  let m = _rgba.get(hex);
+  if (!m) { m = new Map(); _rgba.set(hex, m); }
+  let s = m.get(q);
+  if (s === undefined) { const [r, g, b] = hexToRgb(hex); s = `rgba(${r},${g},${b},${q / 1000})`; if (m.size < 1200) m.set(q, s); }
+  return s;
+}
 
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
