@@ -50,11 +50,14 @@ test('HOLLOW SUN: menu, arena waves, combat events and stats', async ({ page }, 
 	);
 	expect(result.hits).toBeGreaterThan(20);
 	expect(result.kills).toBeGreaterThan(5);
-	// A few rendered frames with the new state (telegraphs, effects, damage numbers).
-	await page.waitForTimeout(500);
-	// the arena keeps running in real time (burns can still kill), so at least the stepped kills
-	const shown = Number((await page.locator('#kills').innerText()).replace(/\D+/g, ''));
-	expect(shown).toBeGreaterThanOrEqual(result.kills);
+	// The HUD shows the new state once a frame renders (slow in software rendering with the textured
+	// 3D enemies); the arena keeps running in real time (burns can still kill), so at least the
+	// stepped kills
+	await expect
+		.poll(async () => Number((await page.locator('#kills').innerText()).replace(/\D+/g, '')), {
+			timeout: 30_000,
+		})
+		.toBeGreaterThanOrEqual(result.kills);
 	const chars = await run<{ enemies: number; clip: string }>(page, 'return HSGame.chars;');
 	expect(chars.enemies).toBeGreaterThan(0);
 	expect(['idle', 'run', 'attack']).toContain(chars.clip);
