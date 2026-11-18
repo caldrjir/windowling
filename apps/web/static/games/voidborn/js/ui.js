@@ -419,15 +419,34 @@ const UI = (() => {
       });
     },
 
-    // Pořadí priorit pro automatický výběr karet: šipkami nahoru a dolů.
+    // Pořadí priorit pro automatický výběr karet: kompaktní mřížka, která se celá vejde na obrazovku
+    // (čte se shora dolů a pak dalším sloupcem; počet řádků podle výšky okna, prioLayout). Položky se
+    // přetahují myší (celé) nebo prstem (za úchyt), šipky posunou o jedno místo. Popis položky pod
+    // myší se ukáže v liště nahoře.
     prio(el) {
-      const order = prioList(SAVE.settings.prio);
+      const order = prioList(SAVE.settings.prio), n = order.length;
       el.innerHTML = `${topbar(L('AUTOMATICKÝ VÝBĚR', 'AUTO-PICK'), L('PRIORITY', 'PRIORITIES'), `<button class="btn ghost" data-prio="reset">${icon('reroll')} ${L('Výchozí', 'Default')}</button>`, 'settings')}
-        <div class="settings prio">
-          <div class="row"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu vyhraje karta, která je v tomhle pořadí nejvýš. Startovní zbraň a klíč k evoluci jsou zvlášť, takže je můžeš upřednostnit před ostatními.', 'On level-up the card highest in this order wins. The starting weapon and evolution keys are separate entries, so you can put them before everything else.')}</small></label><button class="toggle ${SAVE.settings.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
-          <ol class="prio-list">${order.map((k, i) => { const f = prioInfo(k); return `<li style="--c:${f.color}" class="${f.locked ? 'locked' : ''}"><b class="pn">${i + 1}</b>${icon(f.icon)}<span>${f.name}${f.sub ? `<small>${f.sub}</small>` : ''}</span>
-            <button class="pa" data-prio="up:${i}" ${i === 0 ? 'disabled' : ''} aria-label="${L('Výš', 'Up')}">▲</button><button class="pa" data-prio="down:${i}" ${i === order.length - 1 ? 'disabled' : ''} aria-label="${L('Níž', 'Down')}">▼</button></li>`; }).join('')}</ol>
+        <div class="prio-wrap">
+          <div class="prio-head">
+            <div class="ph-tog"><b>${L('Automatický výběr karet', 'Auto-pick cards')}</b><button class="toggle ${SAVE.settings.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
+            <div class="prio-info" id="prioInfo">${prioHelp()}</div>
+          </div>
+          <ol class="prio-list" id="prioList">${order.map((k, i) => {
+            const f = prioInfo(k), [c, tag] = prioCat(k);
+            return `<li data-k="${k}" class="cat-${c} ${f.locked ? 'locked' : ''} ${i < 3 ? 'top' : ''}" style="--c:${f.color}">
+              <span class="grip" aria-hidden="true">⠿</span><b class="pn">${i + 1}</b><span class="pic">${icon(f.icon)}</span>
+              <span class="pt">${f.name}</span><em class="tag cat-${c}">${tag}</em>
+              <span class="pmv"><button class="pa" data-prio="up:${i}" ${i === 0 ? 'disabled' : ''} aria-label="${L('Výš', 'Up')}">▲</button><button class="pa" data-prio="down:${i}" ${i === n - 1 ? 'disabled' : ''} aria-label="${L('Níž', 'Down')}">▼</button></span></li>`;
+          }).join('')}</ol>
         </div>`;
+      const list = el.querySelector('#prioList'), info = el.querySelector('#prioInfo');
+      prioDrag(list, el);
+      // popis položky pod myší (nebo s fokusem) v liště nahoře
+      const show = li => { info.innerHTML = li ? prioHelp(li.dataset.k) : prioHelp(); };
+      list.addEventListener('pointerover', e => { if (!document.body.classList.contains('dragging')) show(e.target.closest('#prioList > li')); });
+      list.addEventListener('pointerleave', () => show(null));
+      list.addEventListener('focusin', e => show(e.target.closest('#prioList > li')));
+      requestAnimationFrame(() => prioLayout(list));
     },
 
     // Nastavení po skupinách přes celou šířku; vpravo ukázka, jak nastavení pod myší vypadá zapnuté a vypnuté.
@@ -681,6 +700,91 @@ const UI = (() => {
       addText(G.p.x, G.p.y - 40 - i * 18, (c.echo ? L('↻ Ozvěna: ', '↻ Echo: ') : '▲ ') + f.name + (f.badge && f.badge !== 'Bonus' ? ' · ' + f.badge : ''), f.color, 14, 1.6);
     });
     if (list.length > 3) addText(G.p.x, G.p.y - 40 - 3 * 18, L(`a ${list.length - 3} další`, `and ${list.length - 3} more`), '#ffffff', 12, 1.6);
+  }
+  const prioCat = k => (k.startsWith('w:') ? ['w', L('Zbraň', 'Weapon')] : k.startsWith('p:') ? ['p', L('Doplněk', 'Passive')] : k.startsWith('m:') ? ['m', L('Mutace', 'Mutation')]
+    : k === 'heal' || k === 'gold' ? ['x', L('Náhradní', 'Fallback')] : ['r', L('Pravidlo', 'Rule')]);
+  // Lišta nad seznamem: návod, nebo popis položky pod myší.
+  function prioHelp(k) {
+    if (!k) return `<p>${icon('auto')} <span>${L('Při postupu vyhraje karta, která je v pořadí nejvýš. <b>Přetáhni</b> položku na nové místo (na telefonu za úchyt <i class="gr">⠿</i>), nebo ji posuň šipkami. Najeď na položku a uvidíš, co znamená.', 'On level-up the card highest in this order wins. <b>Drag</b> an entry to a new place (on a phone by its handle <i class="gr">⠿</i>) or nudge it with the arrows. Hover an entry to see what it means.')}</span></p>`;
+    const f = prioInfo(k), [c, tag] = prioCat(k), i = prioList(SAVE.settings.prio).indexOf(k) + 1;
+    const sub = c === 'w' ? L('Zbraň: nová, další úroveň i evoluce a přetížení této zbraně.', 'Weapon: new, next level, its evolution and overcharge.')
+      : c === 'p' ? L('Doplněk: nový i další úroveň.', 'Passive: new or the next level.') : f.sub || '';
+    return `<p class="pi-k" style="--c:${f.color}"><span class="pic">${icon(f.icon)}</span><span><b>${i}. ${f.name}</b> <em class="tag cat-${c}">${tag}</em><br>${sub}</span></p>`;
+  }
+  // Mřížka priorit se vejde na obrazovku: řádků kolik se vejde na výšku, sloupců kolik je potřeba.
+  // Na úzkém displeji (telefon) se 37 položek vejít nedá: tam jeden sloupec a obrazovka se posouvá.
+  function prioLayout(list) {
+    if (!list || !list.isConnected) return;
+    if (innerWidth <= 760) { list.style.removeProperty('--rows'); list.style.removeProperty('--cols'); list.classList.remove('fit', 'narrow'); return; }
+    list.classList.add('fit'); // v mřížce má seznam výšku zbytku obrazovky (ne podle obsahu)
+    const n = list.children.length, H = list.clientHeight, W = list.clientWidth, gap = 6;
+    let rowH = 40, rows = Math.max(5, Math.floor((H + gap) / (rowH + gap))), cols = Math.ceil(n / rows);
+    // moc sloupců na šířku: menší řádky
+    if (W / cols < 230) { rowH = 34; rows = Math.max(5, Math.floor((H + gap) / (rowH + gap))); cols = Math.ceil(n / rows); }
+    rows = Math.ceil(n / cols); // vyrovnané sloupce
+    list.style.setProperty('--rows', rows); list.style.setProperty('--cols', cols); list.style.setProperty('--rh', rowH + 'px');
+    list.classList.toggle('narrow', W / cols < 300);
+  }
+  window.addEventListener('resize', () => { if (current === 'prio') prioLayout($('#prioList')); });
+  // Přetahování priorit: ukazatelové události (myš i dotyk). Položka se zvedne do „ducha“, který
+  // jde za prstem, a v seznamu se průběžně přesouvá prázdné místo; u okraje se obrazovka posouvá.
+  function prioDrag(list, screen) {
+    let d = null;
+    const renumber = () => [...list.children].forEach((li, i) => { li.querySelector('.pn').textContent = i + 1; li.classList.toggle('top', i < 3); });
+    function hit(x, y) {
+      const t = document.elementFromPoint(x, y), over = t && t.closest('#prioList > li');
+      if (!over || over === d.li) return;
+      const r = over.getBoundingClientRect(), after = y > r.top + r.height / 2;
+      const ref = after ? over.nextElementSibling : over;
+      if (ref === d.li || d.li.nextElementSibling === ref) return; // už tam je
+      list.insertBefore(d.li, ref);
+      renumber();
+    }
+    function tick() {
+      if (!d || !d.on) return;
+      if (d.vy) { screen.scrollTop += d.vy; hit(d.x, d.y); }
+      d.raf = requestAnimationFrame(tick);
+    }
+    function end(e) {
+      if (!d || (e && e.pointerId !== d.id)) return;
+      const was = d; d = null;
+      cancelAnimationFrame(was.raf);
+      if (!was.on) return;
+      was.ghost.remove(); was.li.classList.remove('ph'); document.body.classList.remove('dragging');
+      const order = [...list.children].map(li => li.dataset.k);
+      if (order.join() !== was.before) { SAVE.settings.prio = order; persist(); Sound.play.click(); }
+      rerender();
+    }
+    list.addEventListener('pointerdown', e => {
+      const li = e.target.closest('li');
+      if (!li || e.button > 0 || e.target.closest('.pa')) return;
+      // na dotyk jen za úchyt: jinde prst seznam posouvá
+      if (e.pointerType !== 'mouse' && !e.target.closest('.grip')) return;
+      d = { li, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, on: false, vy: 0, before: [...list.children].map(x => x.dataset.k).join() };
+      // zachytí celý seznam (ne položku: ta se při přesunu v DOM odpojí a zachycení by ztratila)
+      try { list.setPointerCapture(e.pointerId); } catch (x) { /* */ }
+      if (e.pointerType !== 'mouse') e.preventDefault();
+    });
+    list.addEventListener('pointermove', e => {
+      if (!d || e.pointerId !== d.id) return;
+      d.x = e.clientX; d.y = e.clientY;
+      if (!d.on) {
+        if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 6) return;
+        const r = d.li.getBoundingClientRect();
+        d.dx = e.clientX - r.left; d.dy = e.clientY - r.top;
+        d.ghost = d.li.cloneNode(true); d.ghost.className += ' prio-ghost'; d.ghost.style.width = r.width + 'px';
+        document.body.appendChild(d.ghost); document.body.classList.add('dragging');
+        d.li.classList.add('ph'); d.on = true; Sound.play.select();
+        d.raf = requestAnimationFrame(tick);
+      }
+      d.ghost.style.transform = `translate(${e.clientX - d.dx}px, ${e.clientY - d.dy}px) rotate(-1.5deg)`;
+      const sr = screen.getBoundingClientRect(), edge = 70;
+      d.vy = e.clientY < sr.top + edge ? -Math.ceil((sr.top + edge - e.clientY) / 6) : e.clientY > sr.bottom - edge ? Math.ceil((e.clientY - sr.bottom + edge) / 6) : 0;
+      hit(e.clientX, e.clientY);
+    });
+    list.addEventListener('pointerup', end);
+    list.addEventListener('pointercancel', end);
+    list.addEventListener('lostpointercapture', end);
   }
   function movePrio(arg) {
     let order = prioList(SAVE.settings.prio);

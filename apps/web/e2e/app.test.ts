@@ -388,6 +388,17 @@ test('VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the
 		true,
 		sixth,
 	]);
+	// Entries can be dragged too: the first one dropped below the third.
+	const first = await page.evaluate<string>('SAVE.settings.prio[0]');
+	const from = await page.locator('#prioList > li').nth(0).boundingBox();
+	const to = await page.locator('#prioList > li').nth(2).boundingBox();
+	if (!from || !to) throw new Error('no priority entries');
+	await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(to.x + to.width / 2, to.y + to.height * 0.8, { steps: 10 });
+	await page.mouse.up();
+	expect(await page.evaluate(`SAVE.settings.prio.indexOf(${JSON.stringify(first)})`)).toBe(2);
+	await expect(page.locator('#prioList > li').nth(2)).toHaveAttribute('data-k', first);
 
 	// The game's state is top-level `const`/functions of the page (not on window).
 	const run = (await page.evaluate(`(() => {

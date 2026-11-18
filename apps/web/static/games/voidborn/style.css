@@ -288,16 +288,55 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .lw.locked { opacity: .35; }
 .sector .sx .rule { color: var(--a); font-weight: 700; }
 /* Priority automatického výběru */
-.prio-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.prio-list li { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--c); }
-.prio-list li.locked { opacity: .5; }
-.prio-list .pn { width: 24px; text-align: right; font-family: var(--f-display); color: var(--muted); font-size: 14px; }
-.prio-list .ico { width: 22px; height: 22px; color: var(--c); flex: none; }
-.prio-list span { flex: 1; font-weight: 600; min-width: 0; }
-.prio-list span small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
-.prio-list .pa { width: 34px; height: 30px; border: 1px solid var(--line-2); background: rgba(255,255,255,.04); color: #fff; font-size: 12px; }
-.prio-list .pa:disabled { opacity: .25; }
+.prio-wrap { display: flex; flex-direction: column; gap: 12px; }
+/* jedna lišta: přepínač + návod / popis položky pod myší */
+.prio-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.ph-tog { display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: var(--panel); border: 1px solid var(--line); }
+.ph-tog b { font-weight: 600; letter-spacing: .05em; }
+.prio-info { display: flex; align-items: center; min-height: 58px; padding: 8px 16px; background: rgba(14,8,34,.45); border: 1px solid var(--line); }
+.prio-info p { display: flex; gap: 10px; align-items: center; color: #c9c8ea; font-size: 13.5px; line-height: 1.45; }
+.prio-info p > .ico { color: var(--cyan); font-size: 18px; flex: none; }
+.prio-info b { color: #fff; }
+.prio-info .gr { font-style: normal; color: var(--cyan); }
+.prio-info .pi-k .tag { margin-left: 6px; vertical-align: 1px; }
+/* Seřazený seznam: čte se shora dolů, pak dalším sloupcem (na počítači mřížka na celou obrazovku). */
+.prio-list { list-style: none; margin: 0; padding: 0; columns: 3 340px; column-gap: 12px; }
+.prio-list.fit { flex: 1; min-height: 0; columns: auto; display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--rows, 13), var(--rh, 40px));
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 6px 12px; align-content: start; }
+.prio-list li, .prio-ghost { display: grid; grid-template-columns: 12px 24px 28px minmax(0, 1fr) auto auto; align-items: center; gap: 8px;
+  padding: 0 6px 0 4px; height: 40px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--c); user-select: none; -webkit-user-select: none; }
+.prio-list li { break-inside: avoid; margin-bottom: 6px; cursor: grab; transition: background .15s, border-color .15s, opacity .15s; }
+.prio-list.fit li { margin: 0; height: auto; }
+.prio-list li:hover { background: var(--panel-2); border-color: var(--line-2); border-left-color: var(--c); }
+.prio-list li.locked .pt, .prio-list li.locked .pic { opacity: .45; }
+.prio-list li.ph { opacity: .3; border-style: dashed; border-left-style: solid; }
+.prio-ghost { position: fixed; left: 0; top: 0; z-index: 200; margin: 0; pointer-events: none; background: var(--panel-2); cursor: grabbing;
+  box-shadow: 0 18px 44px rgba(0,0,0,.55), 0 0 0 1px var(--c), 0 0 26px -6px var(--c); }
+body.dragging, body.dragging * { cursor: grabbing !important; }
+.prio-list .grip, .prio-ghost .grip { color: var(--dim); font-size: 14px; line-height: 1; text-align: center; touch-action: none; }
+.prio-list li:hover .grip { color: var(--muted); }
+.prio-list .pn, .prio-ghost .pn { font-family: var(--f-display); font-size: 14px; font-weight: 800; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.prio-list li.top .pn { color: var(--gold); text-shadow: 0 0 12px rgba(255,209,102,.45); }
+.pic { width: 28px; height: 28px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--c) 14%, transparent); border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); }
+.pic .ico { color: var(--c); font-size: 16px; }
+.prio-list .pt, .prio-ghost .pt { min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prio-list.narrow .tag { display: none; }
+.prio-list.narrow li { grid-template-columns: 12px 24px 28px minmax(0, 1fr) auto; }
+.tag { font-style: normal; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; padding: 2px 5px; border: 1px solid; white-space: nowrap; }
+.tag.cat-r { color: #ffd166; border-color: rgba(255,209,102,.4); }
+.tag.cat-w { color: #55f6ff; border-color: rgba(85,246,255,.35); }
+.tag.cat-p { color: #c4b5ff; border-color: rgba(196,181,255,.35); }
+.tag.cat-m { color: #5dffa8; border-color: rgba(93,255,168,.35); }
+.tag.cat-x { color: var(--muted); border-color: var(--line-2); }
+.prio-list .pmv, .prio-ghost .pmv { display: flex; flex-direction: column; gap: 2px; }
+.prio-list .pa, .prio-ghost .pa { width: 26px; height: 15px; border: 1px solid var(--line-2); background: rgba(255,255,255,.04); color: #fff; font-size: 8px; line-height: 1; cursor: pointer; }
+.prio-list .pa:disabled { opacity: .2; cursor: default; }
 .prio-list .pa:not(:disabled):hover { border-color: var(--c); color: var(--c); }
+/* na počítači se obrazovka priorit neposouvá: mřížka zabere zbytek výšky */
+@media (min-width: 761px) {
+  #s-prio.active { display: flex; flex-direction: column; overflow: hidden; }
+  #s-prio .prio-wrap { flex: 1; min-height: 0; }
+}
 .row .btn + .toggle { margin-left: 4px; }
 .ov-panel h4 small { letter-spacing: .1em; color: var(--dim); margin-left: 6px; }
 @keyframes bought { 0% { box-shadow: inset 0 0 0 2px var(--cyan), 0 0 40px var(--cyan); } 100% { box-shadow: none; } }
@@ -550,6 +589,8 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var
   .hangar { grid-template-columns: 1fr; }
   #s-forge.active { display: block; overflow-y: auto; }
   .set-wrap { grid-template-columns: minmax(0, 1fr); }
+  .prio-head { grid-template-columns: minmax(0, 1fr); }
+  .ph-tog { justify-content: space-between; }
   .set-pv { display: none; }
   .forge { grid-template-columns: 1fr; }
   .fstage { flex: none; height: min(52vh, 440px); }
@@ -567,6 +608,10 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var
   .fstage { height: 46vh; min-height: 280px; }
   .fs-groups { grid-template-columns: 1fr; }
   .ach-fame { flex-direction: column; align-items: flex-start; }
+  .prio-list li, .prio-ghost { grid-template-columns: 24px 24px 28px minmax(0, 1fr) auto; height: 46px; }
+  .prio-list .tag, .prio-ghost .tag { display: none; }
+  .prio-list .grip { font-size: 20px; color: var(--muted); }
+  .prio-list .pa { width: 34px; height: 19px; font-size: 9px; }
   .ach-fame .af-left { text-align: left; }
   .setg { padding: 10px; }
   .setg .row { padding: 12px; gap: 12px; }
