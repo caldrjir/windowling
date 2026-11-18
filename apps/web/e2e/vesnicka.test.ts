@@ -7,6 +7,15 @@ test.use({ locale: 'cs-CZ' });
 const URL = '/games/vesnicka/index.html';
 const run = <T>(page: Page, code: string): Promise<T> =>
 	page.evaluate(`(() => { ${code} })()`) as Promise<T>;
+// Toasts come in bursts and a phone keeps only two on screen, so a newer one can push out the one
+// a test waits for: record every toast that appears and check the record instead.
+const recordToasts = (page: Page) =>
+	run(
+		page,
+		"window.toastLog = []; new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) window.toastLog.push(n.textContent); }).observe(document.getElementById('toasts'), { childList: true });",
+	);
+const toastLog = (page: Page) =>
+	run<string[]>(page, 'return window.toastLog;').then((l) => l.join(' | '));
 
 test('VESNIČKA: tap, build, catch a creature, pass the village on and earn while away', async ({
 	page,
@@ -170,9 +179,10 @@ test('VESNIČKA guild: the smith founds it, ranks train the ranks below and it g
 	await expect(page.locator('[data-tab="cech"]')).toHaveCount(0);
 
 	// The first smithy founds the guild: a new tab, five apprentices and a journeyman as a gift.
+	await recordToasts(page);
 	await run(page, 'Game.S.coins = 3e5; Game.S.owned.pole = 10; Game.S.owned.pekarna = 1;');
 	await page.locator('.row[data-b="4"] .buy').click();
-	await expect(page.locator('#toasts')).toContainText('Kovář založil v obci cech');
+	await expect.poll(() => toastLog(page)).toContain('Kovář založil v obci cech');
 	await page.locator('[data-tab="cech"]').click();
 	await expect(page.locator('.crow[data-c="0"] .cnt')).toHaveText('5');
 	await expect(page.locator('.crow[data-c="1"] .cnt')).toHaveText('1');
@@ -196,7 +206,7 @@ test('VESNIČKA guild: the smith founds it, ranks train the ranks below and it g
 	await run(page, 'Game.S.coins = 1e12; Game.S.stats.buys = 10;');
 	await page.locator('.crow[data-c="0"] [data-ra="10"]').click();
 	await page.locator('[data-cbuy="0"]').click();
-	await expect(page.locator('#toasts')).toContainText('Cechovní pečeť');
+	await expect.poll(() => toastLog(page)).toContain('Cechovní pečeť');
 	expect(await run(page, 'return [Game.S.cech.b[0], Game.S.stats.cechSeals];')).toEqual([11, 1]);
 	// The next rank shows up once you have the one below; higher ones need legends.
 	await page.locator('[data-cbuy="2"]').click();
