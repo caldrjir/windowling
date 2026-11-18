@@ -218,9 +218,10 @@ const manifest = JSON.parse(readFileSync(dir + 'manifest.json', 'utf8')) as {
 	assets: ManifestAsset[];
 };
 const MODULE_RE = /^DM_(crypt|abbey|glass|gloam|sundial)_r(S|M|L)_(D|I|L|T|X)_[a-c]$/;
-// characters: player classes CH_<class>_<part>, enemies EN_<type>, bosses BO_<boss> (Asset Tracker ids)
-const CHAR_RE = /^(CH_(ak|rb|gc|ns)_[a-z]+|EN_[a-z]+|BO_[a-z]+)_LOD[0-2]$/;
-const isChar = (id: string) => /^(CH|EN|BO)_/.test(id);
+// characters: player classes CH_<class>_<part>, enemies EN_<type>, bosses BO_<boss> (Asset Tracker ids);
+// props PR_<biome>_<kind> share the pipeline (static meshes with LODs, no rig)
+const CHAR_RE = /^(CH_(ak|rb|gc|ns)_[a-z]+|EN_[a-z]+|BO_[a-z]+|PR_[a-z]+_[a-z]+)_LOD[0-2]$/;
+const isChar = (id: string) => /^(CH|EN|BO|PR)_/.test(id);
 const DOORS: Record<string, number> = { D: 1, I: 2, L: 2, T: 3, X: 4 };
 const COMPRESSION = ['EXT_meshopt_compression', 'KHR_mesh_quantization'];
 // Bible: one shared humanoid skeleton (D16) with at most 65 bones; clips AN_<rig>_<action> at 30 FPS,
@@ -495,5 +496,22 @@ describe('icons', () => {
 		const c = credits.icons[`ic_${id}`];
 		expect(c?.prompt.length).toBeGreaterThan(10);
 		expect(credits.sheets[c?.sheet ?? '']?.scenario).toMatch(/^asset_/);
+	});
+});
+
+// Props (D34): every PR_* asset in the manifest has its concept, mesh and prompt recorded.
+describe('props', () => {
+	const credits = JSON.parse(readFileSync(dir + 'credits.json', 'utf8')) as {
+		props: Record<string, { concept: string; mesh: string; prompt: string }>;
+	};
+	const props = manifest.assets.filter((a) => a.id.startsWith('PR_'));
+	it('has props', () => {
+		expect(props.length).toBeGreaterThan(0);
+	});
+	it.each(props.map((a) => a.id))('%s is recorded', (id) => {
+		const c = credits.props[id];
+		expect(c?.concept).toMatch(/^asset_/);
+		expect(c?.mesh).toMatch(/^asset_/);
+		expect(c?.prompt.length).toBeGreaterThan(10);
 	});
 });

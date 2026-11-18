@@ -128,8 +128,43 @@
   // scéna
   const GROUND = ent('plane', M.ground, [0, 0, 0], [SIM.ARENA * 2.4, 1, SIM.ARENA * 2.4], null, false);
   const ARENA_G = new pc.Entity(); app.root.addChild(ARENA_G); // aréna vln; boss má vlastní kovárnu (BOSS_G)
-  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; const r = SIM.ARENA + 0.6; const b = ent('box', M.rim, [Math.cos(a) * r, 0.5 + (i % 3) * 0.25, Math.sin(a) * r], [1.6, 1 + (i % 3) * 0.5, 0.8], ARENA_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
-  for (const [x, z, r] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) ent('cylinder', M.pillar, [x, 1.25, z], [r * 2, 2.5, r * 2], ARENA_G);
+  const ARENA_GRAY = [];
+  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; const r = SIM.ARENA + 0.6; const b = ent('box', M.rim, [Math.cos(a) * r, 0.5 + (i % 3) * 0.25, Math.sin(a) * r], [1.6, 1 + (i % 3) * 0.5, 0.8], ARENA_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); ARENA_GRAY.push(b); }
+  for (const [x, z, r] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) ARENA_GRAY.push(ent('cylinder', M.pillar, [x, 1.25, z], [r * 2, 2.5, r * 2], ARENA_G));
+  /* ---------- rekvizity PR_* ze Scenaria (D34): sloupy, zdi, lucerny, truhly, pánve, kovadlina ----------
+     Ukazuje se LOD1 (izometrická kamera je daleko), velikost podle šedého boxu, který nahrazují; dokud se
+     model nenačte (nebo ?gray), zůstává šedý box. Kolize se nemění – řídí je simulace (S.pillars, zdi zóny). */
+  const PR_IDS = ['PR_crypt_pillar', 'PR_crypt_wall', 'PR_crypt_lantern', 'PR_crypt_chest', 'PR_crypt_brazier', 'PR_kiln_anvil', 'PR_crypt_arch'];
+  const PR = {}; let prPending = 0;
+  function prMeasure(id, res) {
+    const e = res.instantiateRenderEntity(); const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+    const n = e.findByName(id + '_LOD1') || e;
+    for (const r of n.findComponents('render')) for (const mi of r.meshInstances) { const b = mi.aabb; const mn = b.getMin(), mx = b.getMax(); [mn.x, mn.y, mn.z].forEach((v, k) => { lo[k] = Math.min(lo[k], v); }); [mx.x, mx.y, mx.z].forEach((v, k) => { hi[k] = Math.max(hi[k], v); }); }
+    e.destroy(); return { x: hi[0] - lo[0], y: hi[1] - lo[1], z: hi[2] - lo[2] };
+  }
+  // fit: w = šířka v nejdelší vodorovné ose, h = výška; long = otočit nejdelší osou podél rotY
+  function prop(id, parent, x, z, rotY, fit) {
+    const p = PR[id]; if (!p) return null;
+    const e = p.res.instantiateRenderEntity(); for (const l of [0, 1, 2]) { const n = e.findByName(id + '_LOD' + l); if (n) n.enabled = l === 1; }
+    const h = new pc.Entity(); h.addChild(e); (parent || app.root).addChild(h);
+    const s = fit.h ? fit.h / p.size.y : fit.w / Math.max(p.size.x, p.size.z);
+    h.setLocalPosition(x, 0, z); h.setLocalEulerAngles(0, (rotY || 0) + (fit.long && p.size.z > p.size.x ? 90 : 0), 0); h.setLocalScale(s, s, s); return h;
+  }
+  function propRing(id, parent, n, r, fitW) { for (let i = 0; i < n; i++) { const a = ((i + 0.5) / n) * Math.PI * 2; prop(id, parent, Math.cos(a) * r, Math.sin(a) * r, (-a * 180) / Math.PI + 90 + (i % 2) * 180, { w: fitW, long: true }); } }
+  function dressArena() {
+    if (!PR.PR_crypt_wall || !PR.PR_crypt_pillar) return;
+    for (const b of ARENA_GRAY) b.enabled = false;
+    const r = SIM.ARENA + 1.0; propRing('PR_crypt_wall', ARENA_G, 24, r, ((2 * Math.PI * r) / 24) * 1.12);
+    for (const [x, z, pr] of SIM.create({ mode: 'bench', benchCount: 0 }).pillars) prop('PR_crypt_pillar', ARENA_G, x, z, (x * 37 + z * 11) % 360, { w: pr * 2.1 });
+    // pánve na okraji (hráč je nedosáhne: okraj arény je SIM.ARENA) se světlem, aby okraj žhnul i z dálky
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + 0.2, x = Math.cos(a) * (SIM.ARENA + 0.15), z = Math.sin(a) * (SIM.ARENA + 0.15);
+      prop('PR_crypt_brazier', ARENA_G, x, z, i * 40, { h: 1.3 });
+      const l = new pc.Entity(); l.addComponent('light', { type: 'omni', color: new pc.Color(1, 0.5, 0.18), intensity: 1.8, range: 6, castShadows: false }); l.setLocalPosition(x, 1.6, z); ARENA_G.addChild(l);
+    }
+    // dvojice pánví u vstupu mezi sloupy na ose Z
+    for (const zz of [-1, 1]) for (const xx of [-1, 1]) prop('PR_crypt_brazier', ARENA_G, xx * 2.6, zz * 11, 0, { h: 1.1 });
+  }
   const sun = new pc.Entity(); sun.addComponent('light', { type: 'directional', color: new pc.Color(1, 0.82, 0.62), intensity: 1.4, castShadows: true, shadowDistance: 45, shadowResolution: 2048, shadowBias: 0.3, normalOffsetBias: 0.05 });
   sun.setLocalEulerAngles(68, 35, 0); app.root.addChild(sun);
   const glow = new pc.Entity(); glow.addComponent('light', { type: 'omni', color: new pc.Color(1, 0.45, 0.15), intensity: 1.2, range: 9, castShadows: false }); app.root.addChild(glow);
@@ -324,9 +359,17 @@
   function bossScene(on) {
     ARENA_G.enabled = !on; if (BOSS_G) { BOSS_G.destroy(); BOSS_G = null; smold = null; smoldKey = ''; } if (!on) return;
     BOSS_G = new pc.Entity(); app.root.addChild(BOSS_G); const R = S.arenaR;
-    for (let i = 0; i < 34; i++) { const a = (i / 34) * Math.PI * 2; const b = ent('box', M.rim, [Math.cos(a) * (R + 0.6), 1, Math.sin(a) * (R + 0.6)], [2.9, 2 + (i % 2) * 0.6, 0.9], BOSS_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
-    const [ax, az, ar] = S.pillars[0]; ent('box', M.steel, [ax, 0.6, az], [ar * 1.9, 1.2, ar * 1.2], BOSS_G); ent('box', M.steel, [ax, 1.35, az], [ar * 2.2, 0.35, ar * 0.9], BOSS_G);
-    S.kilnE = S.boss.kilns.map((k) => { const g = new pc.Entity(); g.setLocalPosition(k.x, 0, k.z); BOSS_G.addChild(g); ent('cylinder', M.pillar, [0, 1.2, 0], [2.2, 2.4, 2.2], g); const mouth = ent('box', M_KILN, [0, 0.9, 0], [1.0, 0.8, 1.0], g, false); return { k, mouth, on: true }; });
+    const [ax, az, ar] = S.pillars[0];
+    if (PR.PR_crypt_wall) propRing('PR_crypt_wall', BOSS_G, 30, R + 1.3, ((2 * Math.PI * (R + 1.3)) / 30) * 1.12);
+    else for (let i = 0; i < 34; i++) { const a = (i / 34) * Math.PI * 2; const b = ent('box', M.rim, [Math.cos(a) * (R + 0.6), 1, Math.sin(a) * (R + 0.6)], [2.9, 2 + (i % 2) * 0.6, 0.9], BOSS_G); b.setLocalEulerAngles(0, (-a * 180) / Math.PI + 90, 0); }
+    if (!prop('PR_kiln_anvil', BOSS_G, ax, az, 90, { w: ar * 2.4, long: true })) { ent('box', M.steel, [ax, 0.6, az], [ar * 1.9, 1.2, ar * 1.2], BOSS_G); ent('box', M.steel, [ax, 1.35, az], [ar * 2.2, 0.35, ar * 0.9], BOSS_G); }
+    // pece: obří pánev s uhlíky (rekvizita), žhnoucí kotouč v míse ukazuje, jestli pec hoří
+    const br = PR.PR_crypt_brazier;
+    S.kilnE = S.boss.kilns.map((k) => {
+      const g = new pc.Entity(); g.setLocalPosition(k.x, 0, k.z); BOSS_G.addChild(g);
+      if (br) { const w = 2.6; const top = br.size.y * (w / Math.max(br.size.x, br.size.z)); prop('PR_crypt_brazier', g, 0, 0, 0, { w }); return { k, mouth: ent('cylinder', M_KILN, [0, top * 0.82, 0], [w * 0.62, 0.06, w * 0.62], g, false), on: true }; }
+      ent('cylinder', M.pillar, [0, 1.2, 0], [2.2, 2.4, 2.2], g); const mouth = ent('box', M_KILN, [0, 0.9, 0], [1.0, 0.8, 1.0], g, false); return { k, mouth, on: true };
+    });
   }
   function syncBoss() {
     const b = S.boss; if (!b || !BOSS_G) return; const e = S.enemies.find((x) => x.id === b.id);
@@ -341,6 +384,7 @@
   // barvy podlahy podle oblasti (šedý box): pole popelavá, Tollgate kamenná, Woods uhelná, Kiln rozžhavená
   const ZONE_LOOK = { a1_ashfields: ['#2f2b28', '#4a4440'], a1_burnt_orchard: ['#2c2620', '#4d3b2c'], a1_tollgate: ['#2a2b2e', '#4f5259'], a1_charcoal_woods: ['#1f1d1c', '#3a3330'], a1_kiln: ['#33211a', '#5a2c18'], a1_chapel_crypt: ['#25242a', '#45434f'], a1_cinderhold: ['#2e2924', '#5b4a3a'], a1_gallows: ['#28261f', '#4a4536'] };
   let ZONE_G = null; const ZOBJ = new Map(); const ZDOOR = []; const ZVISIT = new Set();
+  const M_GLINT = mat('#e3b964', { unlit: true, opacity: 0.32, add: true }), M_GLINT_U = mat('#ec7a3a', { unlit: true, opacity: 0.4, add: true }), M_GATE_FOG = mat('#c8401a', { unlit: true, opacity: 0.45, add: true, twoSided: true });
   const M_WHISPER = mat('#b9c8ff', { unlit: true, opacity: 0.55 }), M_SIDE = mat('#9a7cff', { unlit: true }), M_UNIQUE = mat('#ec7a3a', { emissive: '#5a2410' });
   const M_GOLD = mat('#e3b964', { emissive: '#5a3f12' }), M_GOLD_OFF = mat('#4a4033'), M_LANTERN = mat('#ffcf7a', { unlit: true }), M_GATE = mat('#e05a2a', { unlit: true }), M_DOOR = mat('#5a3a22');
   const ACT1 = window.HSWorld ? window.HSWorld.ACT1 : [];
@@ -369,14 +413,15 @@
     for (const c of z.corridors) if (c.lock) { const sgm = c.segs[0]; const horiz = sgm.x1 - sgm.x0 > sgm.z1 - sgm.z0; const e = ent('box', M_DOOR, [(sgm.x0 + sgm.x1) / 2, 1.1, (sgm.z0 + sgm.z1) / 2], horiz ? [0.5, 2.2, sgm.z1 - sgm.z0] : [sgm.x1 - sgm.x0, 2.2, 0.5], ZONE_G); ZDOOR.push({ lock: c.lock, e }); }
     for (const o of S.objs) {
       const g = new pc.Entity(); g.setLocalPosition(o.x, 0, o.z); ZONE_G.addChild(g); const parts = {};
-      if (o.kind === 'lantern') { ent('cylinder', M.steel, [0, 1, 0], [0.2, 2, 0.2], g); parts.glow = ent('sphere', M_LANTERN, [0, 2.1, 0], [0.45, 0.45, 0.45], g, false); }
-      else if (o.kind === 'chest') { parts.box = ent('box', o.unique ? M_UNIQUE : M_GOLD, [0, 0.35, 0], [1.1, 0.7, 0.7], g); }
+      const turn = ((o.x * 53 + o.z * 29) % 360 + 360) % 360;
+      if (o.kind === 'lantern') { if (!prop('PR_crypt_lantern', g, 0, 0, turn, { h: 2.6 })) { ent('cylinder', M.steel, [0, 1, 0], [0.2, 2, 0.2], g); parts.glow = ent('sphere', M_LANTERN, [0, 2.1, 0], [0.45, 0.45, 0.45], g, false); } }
+      else if (o.kind === 'chest') { if (prop('PR_crypt_chest', g, 0, 0, turn, { w: 1.2, long: true })) { parts.box = ent('cylinder', o.unique ? M_GLINT_U : M_GLINT, [0, 0.015, 0], [1.5, 0.02, 1.5], g, false); parts.glint = true; } /* záře pod neotevřenou truhlou, po otevření zhasne */ else parts.box = ent('box', o.unique ? M_UNIQUE : M_GOLD, [0, 0.35, 0], [1.1, 0.7, 0.7], g); }
       else if (o.kind === 'whisper') { parts.orb = ent('sphere', M_WHISPER, [0, 1.3, 0], [0.5, 0.5, 0.5], g, false); }
-      else if (o.kind === 'deco') { ent('cylinder', mWall, [0, 1.6, 0], [2.4, 3.2, 2.4], g); ent('cylinder', M_DOOR, [0, 3.4, 0], [1.2, 0.6, 1.2], g); }
+      else if (o.kind === 'deco') { if (!prop('PR_crypt_pillar', g, 0, 0, turn, { w: 2.5 })) { ent('cylinder', mWall, [0, 1.6, 0], [2.4, 3.2, 2.4], g); ent('cylinder', M_DOOR, [0, 3.4, 0], [1.2, 0.6, 1.2], g); } }
       else if (o.kind === 'npc') npcVisual(o, g, parts);
-      else if (o.kind === 'side') { ent('box', mWall, [-1.1, 1.3, 0], [0.5, 2.6, 0.5], g); ent('box', mWall, [1.1, 1.3, 0], [0.5, 2.6, 0.5], g); ent('box', mWall, [0, 2.7, 0], [2.7, 0.4, 0.5], g); parts.glow = ent('box', S[o.need] ? M_SIDE : M_DOOR, [0, 1.2, 0], [1.7, 2.4, 0.08], g, false); }
+      else if (o.kind === 'side') { if (!prop('PR_crypt_arch', g, 0, 0, 0, { w: 3.4, long: true })) { ent('box', mWall, [-1.1, 1.3, 0], [0.5, 2.6, 0.5], g); ent('box', mWall, [1.1, 1.3, 0], [0.5, 2.6, 0.5], g); ent('box', mWall, [0, 2.7, 0], [2.7, 0.4, 0.5], g); } parts.glow = PR.PR_crypt_arch ? ent('box', S[o.need] ? M_SIDE : M_DOOR, [0, 0.95, 0], [1.0, 1.9, 0.08], g, false) : ent('box', S[o.need] ? M_SIDE : M_DOOR, [0, 1.2, 0], [1.7, 2.4, 0.08], g, false); }
       else if (o.kind === 'key') { parts.key = ent('box', M_GOLD, [0, 1, 0], [0.18, 0.5, 0.08], g, false); }
-      else if (o.kind === 'gate') { ent('box', mWall, [-1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [0, 3.3, 0], [3.8, 0.5, 0.6], g); parts.glow = ent('box', M_GATE, [0, 1.5, 0], [2.6, 3, 0.1], g, false); }
+      else if (o.kind === 'gate') { if (!prop('PR_crypt_arch', g, 0, 0, 0, { w: 4.4, long: true })) { ent('box', mWall, [-1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [1.6, 1.6, 0], [0.6, 3.2, 0.6], g); ent('box', mWall, [0, 3.3, 0], [3.8, 0.5, 0.6], g); } parts.glow = PR.PR_crypt_arch ? ent('box', M_GATE_FOG, [0, 1.15, 0], [1.25, 2.3, 0.06], g, false) : ent('box', M_GATE, [0, 1.5, 0], [2.6, 3, 0.1], g, false); }
       ZOBJ.set(o.id, { o, g, parts });
     }
   }
@@ -397,7 +442,7 @@
       if (o.kind === 'key') { if (o.done) g.enabled = false; else parts.key.setLocalEulerAngles(0, renderT * 90, 0); }
       if (o.kind === 'whisper') { if (o.done) g.enabled = false; else parts.orb.setLocalPosition(0, 1.3 + Math.sin(renderT * 2) * 0.15, 0); }
       if (o.kind === 'side' && S[o.need] && parts.glow.render.material !== M_SIDE) parts.glow.render.material = M_SIDE;
-      if (o.kind === 'chest' && o.done && parts.box.render.material !== M_GOLD_OFF) parts.box.render.material = M_GOLD_OFF;
+      if (o.kind === 'chest' && o.done) { if (parts.glint) parts.box.enabled = false; else if (parts.box.render.material !== M_GOLD_OFF) parts.box.render.material = M_GOLD_OFF; }
     }
     for (const d of ZDOOR) if (d.e.enabled && S.zoneKeys.has(d.lock)) d.e.enabled = false;
     const p = S.player; for (const r of S.zone.rooms) if (p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1) ZVISIT.add(r.id);
@@ -943,6 +988,7 @@
           // CH_ak_body ve středu (klipy, LOD, dav); postavy ze Scenaria (CH_ak_knight, EN_*, BO_*) v řadě vedle něj
           if (a.id === 'CH_ak_body') { e.setLocalPosition(0, 0, 0); e.setLocalScale(1.6, 1.6, 1.6); AS.char = e; AS.res = asset.resource; if (asset.resource.animations.length) setupAnim(e, asset.resource, 'idle'); }
           else if (/^(CH|EN|BO)_/.test(a.id)) { const k = man.assets.filter((x) => /^(CH|EN|BO)_/.test(x.id) && x.id !== 'CH_ak_body').indexOf(a); e.setLocalPosition((k % 2 ? -1 : 1) * 2.4 * (1 + Math.floor(k / 2)), 0, 0); e.setLocalScale(1.6, 1.6, 1.6); for (let l = 1; l < 3; l++) { const n = e.findByName(a.id + '_LOD' + l); if (n) n.enabled = false; } if (asset.resource.animations.length) setupAnim(e, asset.resource, 'idle'); }
+          else if (/^PR_/.test(a.id)) { const k = man.assets.filter((x) => /^PR_/.test(x.id)).indexOf(a); const u = (k - 3) * 1.9; e.setLocalPosition(3.9 + u * 0.707, 0, 3.9 - u * 0.707); e.setLocalScale(0.55, 0.55, 0.55); for (let l = 1; l < 3; l++) { const n = e.findByName(a.id + '_LOD' + l); if (n) n.enabled = false; } } // rekvizity v řadě před modulem
           // sockety jako malé koule (kontrola, že jsou na hranách modulu a ve středu dveří)
           for (const name of a.sockets) { const n = e.findByName(name); if (n) ent('sphere', sockMat, [0, 0.15, 0], [0.3, 0.3, 0.3], n, false); }
           panel();
@@ -1105,13 +1151,17 @@
     }
   }
 
-  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, openForge, closeForge, get forge() { return mode === 'forge'; }, get vo() { return { lines: (HS.D.vo || []).length, recorded: VO.files.size, playing: !!VO.cur }; }, get dialog() { return DLG ? { choice: !!DLG.choice, lines: DLG.lines.length } : null; }, dlgNext, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
+  window.HSGame = { app, get state() { return S; }, get mode() { return mode; }, get props() { return { ready: prPending === 0, ids: Object.keys(PR) }; }, start, menu, lastBench: SAVE.bench, assetRootZ: () => { const r = AS.char && AS.char.findByName('root'); return r ? r.getPosition().z : 0; }, latency: () => ({ on: LAT.on, n: LAT.samples.length, last: SAVE.latency }), hw: HW, get feel() { return SAVE.feel; }, openInv, closeInv, inv: (c) => { const ok = SIM.invCommand(S, c); handle(S.events.slice()); S.events.length = 0; if (mode === 'inv') renderInv(); return ok; }, get gear() { return S && S.gear; }, get char() { return S && S.char; }, get music() { return window.HSMusic ? HSMusic.status : null; }, get boss() { return S && S.boss; }, get zone() { return S && S.zone ? { id: S.zone.id, done: S.zoneDone, keys: [...S.zoneKeys], deaths: S.deaths, objs: S.objs.map((o) => ({ kind: o.kind, done: o.done })) } : null; }, startCampaign, get save() { return SAVE; }, openForge, closeForge, get forge() { return mode === 'forge'; }, get vo() { return { lines: (HS.D.vo || []).length, recorded: VO.files.size, playing: !!VO.cur }; }, get dialog() { return DLG ? { choice: !!DLG.choice, lines: DLG.lines.length } : null; }, dlgNext, get chars() { return { ready: !!PC, gray: CH.gray, enemies: [...EV.values()].filter((v) => v.c).length, clip: PC && PC.clip }; }, step: (n, auto, inp) => { for (let i = 0; i < (n || 1); i++) { SIM.step(S, auto ? SIM.autopilot(S) : inp || {}); handle(S.events.slice()); } return S; } };
   // rytíř pro arénu a benchmark (asset pipeline); do načtení zůstává šedý box
   if (!CH.gray) loadGlb('CH_ak_body.glb', (err, asset) => { if (err || !asset) { console.warn('CH_ak_body', err); return; } CH.res = asset.resource; charsReady(); });
   if (!CH.gray) loadGlb('CH_ak_knight.glb', (err, asset) => { if (err || !asset) console.warn('CH_ak_knight', err); CH.knight = asset ? asset.resource : null; charsReady(); });
   if (!CH.gray) for (const [type, id] of Object.entries(EN_MODEL)) {
     CH.pending++;
     loadGlb(id + '.glb', (err, asset) => { if (err || !asset) console.warn(id, err); CH.models[type] = asset ? asset.resource : null; CH.pending--; charsReady(); });
+  }
+  if (!CH.gray) for (const id of PR_IDS) {
+    prPending++;
+    loadGlb(id + '.glb', (err, asset) => { if (err || !asset) console.warn(id, err); else PR[id] = { res: asset.resource, size: prMeasure(id, asset.resource) }; if (--prPending === 0) dressArena(); });
   }
   app.start(); menu(); persist();
 })();

@@ -110,6 +110,10 @@ Convention: each completed iteration is at least one minor release.
   lowered from the A-pose, LODs, ember emission, WebP textures ≤ 1024 px; `EN_hound` stays a static
   mesh) and replaces only those manifest entries. Heights, LOD targets and budgets are in `SPECS`.
   Zone floors and walls use the tileable `assets/tex/T_crypt_*.webp` from the same style board.
+  Props `PR_<biome>_<kind>` (pillar, ruined wall, lantern, chest, brazier, gate arch, the boss anvil) take the same
+  `--char=` path without a rig, with 512 px textures; the game shows their LOD1, sized to the grey box
+  it replaces (collisions stay in the simulation), and keeps the grey box until they load. Concepts,
+  meshes and prompts are in `assets/credits.json`.
   The UI kit (`assets/ui/*.webp`: panel, tooltip-by-rarity, slot and button frames, HP/Cinders orbs,
   skill bar, menu background) is generated the same way on a transparent background, trimmed and
   drawn with CSS `border-image` (9-slice). Each file's Scenario asset id, prompt and slice are in

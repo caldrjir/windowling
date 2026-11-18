@@ -5,29 +5,50 @@
 			"id": "DM_crypt_rS_X_a",
 			"file": "DM_crypt_rS_X_a.glb",
 			"bytes": 20128,
-			"materials": ["M_crypt_stone", "M_crypt_trim"],
+			"materials": [
+				"M_crypt_stone",
+				"M_crypt_trim"
+			],
 			"parts": [
 				{
 					"name": "DM_crypt_rS_X_a",
 					"tris": 1148
 				}
 			],
-			"sockets": ["socket_door_N", "socket_door_S", "socket_door_W", "socket_door_E"],
+			"sockets": [
+				"socket_door_N",
+				"socket_door_S",
+				"socket_door_W",
+				"socket_door_E"
+			],
 			"meta": {
-				"cells": [5, 5],
+				"cells": [
+					5,
+					5
+				],
 				"cellSize": 2,
-				"size": [10, 4, 10],
+				"size": [
+					10,
+					4,
+					10
+				],
 				"trisBudget": 3000,
 				"source": "blender"
 			},
 			"rawBytes": 84440,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization"
+			]
 		},
 		{
 			"id": "CH_ak_body",
 			"file": "CH_ak_body.glb",
 			"bytes": 95628,
-			"materials": ["M_ak_steel", "M_ak_ember"],
+			"materials": [
+				"M_ak_steel",
+				"M_ak_ember"
+			],
 			"parts": [
 				{
 					"name": "CH_ak_body_LOD0",
@@ -42,10 +63,16 @@
 					"tris": 242
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [25000, 9000, 3000],
+				"trisBudget": [
+					25000,
+					9000,
+					3000
+				],
 				"source": "blender",
 				"rig": {
 					"name": "RIG_hero",
@@ -75,13 +102,18 @@
 				]
 			},
 			"rawBytes": 555312,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization"
+			]
 		},
 		{
 			"id": "CH_ak_knight",
 			"file": "CH_ak_knight.glb",
 			"bytes": 1575376,
-			"materials": ["M_ak_knight"],
+			"materials": [
+				"M_ak_knight"
+			],
 			"parts": [
 				{
 					"name": "CH_ak_knight_LOD0",
@@ -96,10 +128,16 @@
 					"tris": 2600
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [25000, 9000, 3000],
+				"trisBudget": [
+					25000,
+					9000,
+					3000
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -134,13 +172,19 @@
 				]
 			},
 			"rawBytes": 4506472,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		},
 		{
 			"id": "EN_thrall",
 			"file": "EN_thrall.glb",
 			"bytes": 1061824,
-			"materials": ["M_en_thrall"],
+			"materials": [
+				"M_en_thrall"
+			],
 			"parts": [
 				{
 					"name": "EN_thrall_LOD0",
@@ -155,10 +199,16 @@
 					"tris": 1300
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [10000, 4000, 1500],
+				"trisBudget": [
+					10000,
+					4000,
+					1500
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -193,13 +243,19 @@
 				]
 			},
 			"rawBytes": 2501376,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		},
 		{
 			"id": "EN_brute",
 			"file": "EN_brute.glb",
 			"bytes": 1130480,
-			"materials": ["M_en_brute"],
+			"materials": [
+				"M_en_brute"
+			],
 			"parts": [
 				{
 					"name": "EN_brute_LOD0",
@@ -214,10 +270,16 @@
 					"tris": 1300
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [10000, 4000, 1500],
+				"trisBudget": [
+					10000,
+					4000,
+					1500
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -252,13 +314,19 @@
 				]
 			},
 			"rawBytes": 2547684,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		},
 		{
 			"id": "EN_bowman",
 			"file": "EN_bowman.glb",
 			"bytes": 875236,
-			"materials": ["M_en_bowman"],
+			"materials": [
+				"M_en_bowman"
+			],
 			"parts": [
 				{
 					"name": "EN_bowman_LOD0",
@@ -273,10 +341,16 @@
 					"tris": 1300
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [10000, 4000, 1500],
+				"trisBudget": [
+					10000,
+					4000,
+					1500
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -311,13 +385,19 @@
 				]
 			},
 			"rawBytes": 2463088,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		},
 		{
 			"id": "EN_acolyte",
 			"file": "EN_acolyte.glb",
 			"bytes": 954592,
-			"materials": ["M_en_acolyte"],
+			"materials": [
+				"M_en_acolyte"
+			],
 			"parts": [
 				{
 					"name": "EN_acolyte_LOD0",
@@ -332,10 +412,16 @@
 					"tris": 1299
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [10000, 4000, 1500],
+				"trisBudget": [
+					10000,
+					4000,
+					1500
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -370,13 +456,19 @@
 				]
 			},
 			"rawBytes": 2353804,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		},
 		{
 			"id": "EN_hound",
 			"file": "EN_hound.glb",
 			"bytes": 1390188,
-			"materials": ["M_en_hound"],
+			"materials": [
+				"M_en_hound"
+			],
 			"parts": [
 				{
 					"name": "EN_hound_LOD0",
@@ -394,7 +486,11 @@
 			"sockets": [],
 			"meta": {
 				"height": 0.95,
-				"trisBudget": [10000, 4000, 1500],
+				"trisBudget": [
+					10000,
+					4000,
+					1500
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -403,13 +499,19 @@
 				}
 			},
 			"rawBytes": 2392808,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		},
 		{
 			"id": "BO_kiln",
 			"file": "BO_kiln.glb",
 			"bytes": 1993820,
-			"materials": ["M_bo_kiln"],
+			"materials": [
+				"M_bo_kiln"
+			],
 			"parts": [
 				{
 					"name": "BO_kiln_LOD0",
@@ -424,10 +526,16 @@
 					"tris": 4500
 				}
 			],
-			"sockets": ["socket_hand_R"],
+			"sockets": [
+				"socket_hand_R"
+			],
 			"meta": {
 				"height": 1.78,
-				"trisBudget": [45000, 15000, 5000],
+				"trisBudget": [
+					45000,
+					15000,
+					5000
+				],
 				"source": "scenario",
 				"origin": {
 					"concept": "GPT Image 2.5 Sunburst",
@@ -462,7 +570,312 @@
 				]
 			},
 			"rawBytes": 6338452,
-			"compression": ["EXT_meshopt_compression", "KHR_mesh_quantization", "EXT_texture_webp"]
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_crypt_pillar",
+			"file": "PR_crypt_pillar.glb",
+			"bytes": 508544,
+			"materials": [
+				"M_pr_crypt_pillar"
+			],
+			"parts": [
+				{
+					"name": "PR_crypt_pillar_LOD0",
+					"tris": 8078
+				},
+				{
+					"name": "PR_crypt_pillar_LOD1",
+					"tris": 2600
+				},
+				{
+					"name": "PR_crypt_pillar_LOD2",
+					"tris": 900
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 3.2,
+				"trisBudget": [
+					10000,
+					4000,
+					1500
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 1269140,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_crypt_wall",
+			"file": "PR_crypt_wall.glb",
+			"bytes": 541352,
+			"materials": [
+				"M_pr_crypt_wall"
+			],
+			"parts": [
+				{
+					"name": "PR_crypt_wall_LOD0",
+					"tris": 10156
+				},
+				{
+					"name": "PR_crypt_wall_LOD1",
+					"tris": 3000
+				},
+				{
+					"name": "PR_crypt_wall_LOD2",
+					"tris": 1000
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 2.2,
+				"trisBudget": [
+					12000,
+					5000,
+					2000
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 1468512,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_crypt_lantern",
+			"file": "PR_crypt_lantern.glb",
+			"bytes": 348228,
+			"materials": [
+				"M_pr_crypt_lantern"
+			],
+			"parts": [
+				{
+					"name": "PR_crypt_lantern_LOD0",
+					"tris": 4046
+				},
+				{
+					"name": "PR_crypt_lantern_LOD1",
+					"tris": 1400
+				},
+				{
+					"name": "PR_crypt_lantern_LOD2",
+					"tris": 500
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 2.6,
+				"trisBudget": [
+					6000,
+					2500,
+					1000
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 764992,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_crypt_chest",
+			"file": "PR_crypt_chest.glb",
+			"bytes": 379916,
+			"materials": [
+				"M_pr_crypt_chest"
+			],
+			"parts": [
+				{
+					"name": "PR_crypt_chest_LOD0",
+					"tris": 4886
+				},
+				{
+					"name": "PR_crypt_chest_LOD1",
+					"tris": 1600
+				},
+				{
+					"name": "PR_crypt_chest_LOD2",
+					"tris": 600
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 0.8,
+				"trisBudget": [
+					6000,
+					2500,
+					1000
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 850480,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_crypt_brazier",
+			"file": "PR_crypt_brazier.glb",
+			"bytes": 490924,
+			"materials": [
+				"M_pr_crypt_brazier"
+			],
+			"parts": [
+				{
+					"name": "PR_crypt_brazier_LOD0",
+					"tris": 6207
+				},
+				{
+					"name": "PR_crypt_brazier_LOD1",
+					"tris": 1999
+				},
+				{
+					"name": "PR_crypt_brazier_LOD2",
+					"tris": 700
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 1.2,
+				"trisBudget": [
+					8000,
+					3000,
+					1200
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 1083180,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_kiln_anvil",
+			"file": "PR_kiln_anvil.glb",
+			"bytes": 555144,
+			"materials": [
+				"M_pr_kiln_anvil"
+			],
+			"parts": [
+				{
+					"name": "PR_kiln_anvil_LOD0",
+					"tris": 10124
+				},
+				{
+					"name": "PR_kiln_anvil_LOD1",
+					"tris": 3200
+				},
+				{
+					"name": "PR_kiln_anvil_LOD2",
+					"tris": 1100
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 2.4,
+				"trisBudget": [
+					12000,
+					5000,
+					2000
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 1487052,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
+		},
+		{
+			"id": "PR_crypt_arch",
+			"file": "PR_crypt_arch.glb",
+			"bytes": 552656,
+			"materials": [
+				"M_pr_crypt_arch"
+			],
+			"parts": [
+				{
+					"name": "PR_crypt_arch_LOD0",
+					"tris": 10147
+				},
+				{
+					"name": "PR_crypt_arch_LOD1",
+					"tris": 3000
+				},
+				{
+					"name": "PR_crypt_arch_LOD2",
+					"tris": 1000
+				}
+			],
+			"sockets": [],
+			"meta": {
+				"height": 3.6,
+				"trisBudget": [
+					12000,
+					5000,
+					2000
+				],
+				"source": "scenario",
+				"origin": {
+					"concept": "GPT Image 2.5 Sunburst",
+					"mesh": "Meshy 7.1 image to 3D",
+					"via": "Scenario Pro, 2026-11-18 (D34)"
+				}
+			},
+			"rawBytes": 1502008,
+			"compression": [
+				"EXT_meshopt_compression",
+				"KHR_mesh_quantization",
+				"EXT_texture_webp"
+			]
 		}
 	]
 }

@@ -87,7 +87,7 @@ test('HOLLOW SUN: the asset pipeline test loads every GLB asset', async ({ page 
 		.poll(() => run<number>(page, 'return (HSGame.assets && HSGame.assets.loaded) || 0;'), {
 			timeout: 60_000,
 		})
-		.toBe(9);
+		.toBe(16);
 	const assets = await run<{ error: string | null; items: { id: string; ok: boolean }[] }>(
 		page,
 		'return HSGame.assets;',
@@ -103,7 +103,20 @@ test('HOLLOW SUN: the asset pipeline test loads every GLB asset', async ({ page 
 		'EN_acolyte',
 		'EN_hound',
 		'BO_kiln',
+		'PR_crypt_pillar',
+		'PR_crypt_wall',
+		'PR_crypt_lantern',
+		'PR_crypt_chest',
+		'PR_crypt_brazier',
+		'PR_kiln_anvil',
+		'PR_crypt_arch',
 	]);
+	// The props from Scenario dress the arena (walls, pillars, braziers) once they have loaded.
+	await expect
+		.poll(() => run<number>(page, 'return HSGame.props.ready ? HSGame.props.ids.length : 0;'), {
+			timeout: 30_000,
+		})
+		.toBe(7);
 
 	// Skinned character: the four clips play, the attack carries root motion forward (+Z).
 	const clips = await run<string[]>(page, 'return HSGame.assets.clips;');

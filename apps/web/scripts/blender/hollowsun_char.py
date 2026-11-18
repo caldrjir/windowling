@@ -9,6 +9,7 @@
 #      so the shared clips (AN_hero_*) play on it like on CH_ak_body
 #   5. ember emission map from the albedo's glowing cracks, vertex-colour AO, LOD1/LOD2 by Decimate
 #   Quadrupeds (EN_hound) have no rig yet: a static mesh with LODs that the game moves as a whole.
+#   Props (PR_<biome>_<kind>) take the same path without a rig.
 # Run headless (hollowsun-assets.mjs does this with --char=<ID>=<source.glb>):
 #   blender -b --factory-startup --python hollowsun_char.py -- <output folder> <ID> <source.glb>
 import os
@@ -33,10 +34,19 @@ SPECS = {
     "EN_acolyte": {"height": 1.78, "lods": (3600, 1300), "budget": [10000, 4000, 1500], "rig": True, "turn": 0},
     "EN_hound": {"height": 0.95, "lods": (3600, 1300), "budget": [10000, 4000, 1500], "rig": False, "turn": 0},
     "BO_kiln": {"height": 1.78, "lods": (12000, 4500), "budget": [45000, 15000, 5000], "rig": True, "turn": 0},
+    # props (2026-11-18): static, real-world height; the game scales them to the collision radius
+    "PR_crypt_pillar": {"height": 3.2, "lods": (2600, 900), "budget": [10000, 4000, 1500], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
+    "PR_crypt_wall": {"height": 2.2, "lods": (3000, 1000), "budget": [12000, 5000, 2000], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
+    "PR_crypt_lantern": {"height": 2.6, "lods": (1400, 500), "budget": [6000, 2500, 1000], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
+    "PR_crypt_chest": {"height": 0.8, "lods": (1600, 600), "budget": [6000, 2500, 1000], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
+    "PR_crypt_brazier": {"height": 1.2, "lods": (2000, 700), "budget": [8000, 3000, 1200], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
+    "PR_crypt_arch": {"height": 3.6, "lods": (3000, 1000), "budget": [12000, 5000, 2000], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
+    "PR_kiln_anvil": {"height": 2.4, "lods": (3200, 1100), "budget": [12000, 5000, 2000], "rig": False, "turn": 0, "date": "2026-11-18", "tex": 512},
 }
 ID = ARGS[1] if len(ARGS) > 1 else "CH_ak_knight"
 SRC = ARGS[2] if len(ARGS) > 2 else "D:/hollowsun-art/raw/3d/ak_knight_meshy.glb"
 SPEC = SPECS[ID]
+TEX = SPEC.get("tex", TEX)  # props are small on screen: 512 px maps
 HEIGHT = SPEC["height"]
 
 
@@ -176,7 +186,7 @@ def emission_from_albedo(mat):
         r, g, b = px[i], px[i + 1], px[i + 2]
         glow = max(0.0, min(1.0, (r - 0.45) * 3)) * max(0.0, min(1.0, (r - 1.6 * g) * 4)) * (1 if b < 0.35 else 0)
         out[i], out[i + 1], out[i + 2], out[i + 3] = r * glow, g * glow, b * glow, 1.0
-    img = bpy.data.images.new("T_ak_knight_emissive", w, h)
+    img = bpy.data.images.new("T_%s_emissive" % ID, w, h)
     img.pixels = out
     img.file_format = "PNG"
     img.pack()
@@ -243,7 +253,7 @@ def character():
         d.ratio = target / tri0
         lods.append(o)
     meta = {"height": HEIGHT, "trisBudget": SPEC["budget"], "source": "scenario",
-            "origin": {"concept": "GPT Image 2.5 Sunburst", "mesh": "Meshy 7.1 image to 3D", "via": "Scenario Pro, 2026-11-17 (D34)"}}
+            "origin": {"concept": "GPT Image 2.5 Sunburst", "mesh": "Meshy 7.1 image to 3D", "via": "Scenario Pro, %s (D34)" % SPEC.get("date", "2026-11-17")}}
     hand = None
     if arm:
         hand = bpy.data.objects.new("socket_hand_R", None)

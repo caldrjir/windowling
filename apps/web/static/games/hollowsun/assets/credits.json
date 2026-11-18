@@ -1,0 +1,17 @@
+{
+	"$comment": "Origin of the HOLLOW SUN props (decision D34): a concept from GPT Image 2.5 Sunburst on a transparent background, turned into a textured mesh by Meshy 7.1 image to 3D (remeshed, triangles, PBR), both on Scenario Pro (commercial licence) through the Scenario MCP, then processed by scripts/blender/hollowsun_char.py (SPECS). Every prompt ended with the shared style and asked for one isolated object in a three-quarter view; no names of artists, games or brands.",
+	"service": "Scenario",
+	"plan": "Scenario Pro (commercial licence)",
+	"date": "2026-11-18",
+	"concept": "model_openai-gpt-image-2-5-sunburst",
+	"mesh": "model_meshy-7-1-img23d",
+	"props": {
+		"PR_crypt_pillar": { "concept": "asset_jKiKm7dv7w7bJWE1s1ApTwes", "mesh": "asset_5PnRdEAcDo3EcF5c47LNWYaD", "polycount": 8000, "prompt": "A single broken gothic stone column, carved fluted shaft with an eclipse sun relief, cracked capital, rubble at its square base, soot stains and faint ember glow in the cracks" },
+		"PR_crypt_wall": { "concept": "asset_igTD3KTFpQJ2sxmHqvjTYoDs", "mesh": "asset_DR4KYQEH784ZW9xfGb8LvtfY", "polycount": 10000, "prompt": "A ruined section of an old stone wall with a jagged broken top, fallen blocks and rubble at its foot, faint ember glow in deep cracks" },
+		"PR_crypt_lantern": { "concept": "asset_oJjskwH5kRinnLZqSU1px5Gc", "mesh": "asset_Vp6QzN82CcwNbHrB7ZX8SedL", "polycount": 4000, "prompt": "A tall wrought iron lantern post on a small stone base with a hooked arm holding a caged lantern with a warm flame" },
+		"PR_crypt_chest": { "concept": "asset_LjX99QotwxeQZQUZqmG4fDZJ", "mesh": "asset_TccVfVQ4pVy9Z3qAxPCQZJpK", "polycount": 5000, "prompt": "A closed treasure chest of dark aged wood bound with blackened iron straps and bronze corner plates, a heavy lock with an eclipse sun emblem" },
+		"PR_crypt_brazier": { "concept": "asset_z8fuDTU99RcecLhTbCxGTwnW", "mesh": "asset_8UkftsPDrnDoL1anhd1XYhGo", "polycount": 6000, "prompt": "A standing iron brazier, a wide shallow bowl on three curved legs filled with glowing coals, bronze rim decorated with sun rays" },
+		"PR_crypt_arch": { "concept": "asset_BM59XNnwawt1AaBpxv9jCLPT", "mesh": "asset_4KihRbhiK2Zea2TTZ2zTb1SY", "polycount": 10000, "prompt": "A free-standing gothic stone archway gate, two thick square pillars joined by a pointed arch with a carved eclipse sun keystone, an empty opening, cracked stone with a faint ember glow" },
+		"PR_kiln_anvil": { "concept": "asset_ApbVbV2C1WEhQ1zDL1ysFUKB", "mesh": "asset_Q19UifGqDehJ5bAzjLhfc96J", "polycount": 10000, "prompt": "A gigantic blacksmith anvil of dark iron on a massive stepped stone plinth, glowing molten cracks, heavy chains wrapped around the plinth" }
+	}
+}
