@@ -77,7 +77,7 @@ const UI = (() => {
   const langSwitch = () => `<div class="lang">${['cs', 'en'].map(l => `<button class="${l === LANG ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`;
 
   // ── Kovárna: štítky částí a panel vylepšení ──────────────────────────────
-  let forgePart = null, setPv = 'autoPick';
+  let forgePart = null, setPv = null;
   const TIER_NAME = () => ({ 2: L('Mistrovská dílna', 'Master Workshop'), 3: L('Prázdnotová dílna', 'Void Workshop'), 4: L('Věčná dílna', 'Eternal Workshop'), 5: L('Mistrovské dílo', 'Masterpiece') });
   const TIER_CLS = { 2: 'master', 3: 'master void', 4: 'master eternal', 5: 'master piece' };
   const MK = ['I', 'II', 'III', 'IV', 'V'];
@@ -397,7 +397,7 @@ const UI = (() => {
       const grp = (ic, title, rows, cls = '') => `<section class="setg ${cls}"><h4>${icon(ic)} ${title}</h4>${rows}</section>`;
       el.innerHTML = `${topbar(L('KONFIGURACE', 'CONFIGURATION'), L('NASTAVENÍ', 'SETTINGS'))}
         <div class="set-wrap">
-          <div class="set-groups">
+          <div class="set-groups" data-scroll>
             ${grp('auto', L('Hratelnost', 'Gameplay'), `
           <div class="row" data-pv="autoPick" tabindex="-1"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu se hra nezastaví: vybere kartu nejvýš v pořadí priorit', 'Level-ups no longer pause: the card highest in your priority order is picked')}</small></label><button class="btn" data-go="prio">${icon('auto')} ${L('Priority', 'Priorities')}</button><button class="toggle ${s.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
           <div class="row" data-pv="autoChest" tabindex="-1"><label>${L('Truhly bez okna', 'Chests without a window')}<small>${L('Truhla se otevře sama a hra se nezastaví: co v ní bylo, se jen krátce ukáže nad lodí', 'A chest opens by itself and the game keeps going: its contents only flash above your ship')}</small></label><button class="toggle ${s.autoChest ? 'on' : ''}" data-tog="autoChest"></button></div>`)}
@@ -407,12 +407,12 @@ const UI = (() => {
           <div class="row" data-pv="quality" tabindex="-1"><label>${L('Kvalita vykreslování', 'Rendering quality')}<small>${L('Auto hlídá rozlišení podle obrazovky a při sekání ho sníží. Úsporná kreslí v 70 % rozlišení.', 'Auto keeps the resolution in budget for your screen and lowers it when the game stutters. Saver draws at 70% resolution.')}</small></label><button class="btn" data-act="quality">${{ auto: 'Auto', high: L('Plná', 'Full'), low: L('Úsporná', 'Saver') }[s.quality || 'auto']}</button></div>
           <div class="row" data-pv="fps" tabindex="-1"><label>${L('Počítadlo FPS', 'FPS counter')}<small>VOIDBORN v${GAME_VERSION}</small></label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>`)}
             ${grp('wave', L('Jazyk a zvuk', 'Language & sound'), `
-          <div class="row" data-pv="lang" tabindex="-1"><label>${L('Jazyk', 'Language')}<small>Čeština / English</small></label>${langSwitch()}</div>
-          <div class="row" data-pv="sfx" tabindex="-1"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
-          <div class="row" data-pv="music" tabindex="-1"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
-          ${window.GCMusic ? `<div class="row" data-pv="playlist" tabindex="-1"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}`)}
+          <div class="row"><label>${L('Jazyk', 'Language')}<small>Čeština / English</small></label>${langSwitch()}</div>
+          <div class="row"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
+          <div class="row"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
+          ${window.GCMusic ? `<div class="row"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}`)}
             ${grp('book', L('Výkon', 'Performance'), `
-          <div class="row" data-pv="perfLog" tabindex="-1"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>`)}
+          <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>`)}
             ${grp('gear', L('Ovládání', 'Controls'), `
           <div class="keys">
             <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>${L('Pohyb (nebo šipky / gamepad)', 'Move (or arrows / gamepad)')}</span>
@@ -423,15 +423,22 @@ const UI = (() => {
             <span>${L('Zbraně', 'Weapons')}</span><span>${L('Střílí automaticky. Ty jen přežij.', 'They fire automatically. You just survive.')}</span>
           </div>`, 'keys-g')}
             ${grp('skull', L('Data', 'Data'), `
-          <div class="row" data-pv="wipe" tabindex="-1"><label>${L('Smazat postup', 'Erase progress')}<small>${L('Nevratně vymaže všechny střepy, úspěchy a odemčení', 'Permanently erases all shards, achievements and unlocks')}</small></label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>`, 'danger')}
+          <div class="row"><label>${L('Smazat postup', 'Erase progress')}<small>${L('Nevratně vymaže všechny střepy, úspěchy a odemčení', 'Permanently erases all shards, achievements and unlocks')}</small></label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>`, 'danger')}
           </div>
           <aside class="set-pv" id="setPv">${SetPreview.html(setPv)}</aside>
         </div>`;
-      el.querySelectorAll('[data-pv]').forEach(r => {
-        const go = () => { if (setPv !== r.dataset.pv) { setPv = r.dataset.pv; $('#setPv').innerHTML = SetPreview.html(setPv); } el.querySelectorAll('[data-pv]').forEach(x => x.classList.toggle('pv', x === r)); };
-        r.addEventListener('pointerenter', go); r.addEventListener('focusin', go); r.addEventListener('click', go);
-        if (r.dataset.pv === setPv) r.classList.add('pv');
-      });
+      // Ukázka jen po najetí na nastavení, které jde vidět ve hře. Jiný řádek (zvuk, jazyk…) nebo odjetí
+      // ze seznamu ji schová; mezery mezi řádky a nadpisy skupin nechají tu poslední.
+      const groups = el.querySelector('.set-groups'), aside = el.querySelector('#setPv');
+      const pick = k => {
+        if (k !== setPv) { setPv = k; aside.innerHTML = SetPreview.html(k); aside.classList.toggle('empty', !k); }
+        groups.querySelectorAll('[data-pv]').forEach(x => x.classList.toggle('pv', x.dataset.pv === k));
+      };
+      const at = e => { const r = e.target.closest('.row, .keys'); if (r) pick(r.dataset.pv || null); };
+      groups.addEventListener('pointerover', at); groups.addEventListener('focusin', at); groups.addEventListener('click', at);
+      groups.addEventListener('pointerleave', () => pick(null));
+      aside.classList.toggle('empty', !setPv);
+      if (setPv) pick(setPv);
     },
   };
 
@@ -452,6 +459,7 @@ const UI = (() => {
     if (current === 'forge' && id !== 'forge') Forge3D.unmount();
     current = id;
     if (!id) return;
+    if (id === 'settings') setPv = null;
     const el = $('#s-' + id);
     actions = {};
     screens[id](el);
@@ -460,9 +468,10 @@ const UI = (() => {
   }
   function rerender() {
     if (!current) return;
-    const el = $('#s-' + current), st = el.scrollTop;
+    const el = $('#s-' + current), st = el.scrollTop, inner = [...el.querySelectorAll('[data-scroll]')].map(x => x.scrollTop);
     screens[current](el);
     el.scrollTop = st;
+    el.querySelectorAll('[data-scroll]').forEach((x, i) => { if (inner[i] != null) x.scrollTop = inner[i]; });
   }
 
   // ── Delegované události ───────────────────────────────────────────────────
