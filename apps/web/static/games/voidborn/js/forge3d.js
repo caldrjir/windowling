@@ -2,7 +2,7 @@
 // ── Kovárna: 3D model lodi ───────────────────────────────────────────────────
 // Nízkopolygonová loď z hranolů a válců promítnutá do 2D canvasu: malířův algoritmus (plochy od
 // nejvzdálenější), odvrácené plochy se nekreslí, ploché stínování podle světla. Každá plocha patří
-// jedné části lodi (PARTS); klepnutí najde nejbližší plochu pod prstem. Táhnutím se loď otáčí,
+// jedné části lodi (PARTS); klepnutí najde nejbližší plochu pod prstem. Táhnutím se loď otáčí (bližší bok jde s prstem),
 // po výběru části se kamera sama natočí tak, aby byla vidět. Model se staví znovu po nákupu:
 // víc vylepšení = jasněji svítící část, Duplikátor přidá hlaveň, výzbroj obarví rakety v gondolách.
 const Forge3D = (() => {
@@ -262,7 +262,7 @@ const Forge3D = (() => {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       drag.moved += Math.abs(dx) + Math.abs(dy);
       drag.x = e.clientX; drag.y = e.clientY;
-      if (drag.moved > 5) { yaw -= dx * 0.011; pitch = clamp(pitch + dy * 0.009, -1.15, 1.25); target = null; idle = 0; cv.classList.add('drag'); }
+      if (drag.moved > 5) { yaw += dx * 0.011; pitch = clamp(pitch + dy * 0.009, -1.15, 1.25); target = null; idle = 0; cv.classList.add('drag'); }
       return;
     }
     const [x, y] = pos(e), h = pick(x, y);
@@ -279,7 +279,7 @@ const Forge3D = (() => {
   function key(e) {
     if (!cv || !cv.isConnected || UI.current !== 'forge' || (UI.overlayOpen && UI.overlayOpen())) return;
     const k = e.code;
-    if (k === 'ArrowLeft') yaw += 0.18; else if (k === 'ArrowRight') yaw -= 0.18;
+    if (k === 'ArrowLeft') yaw -= 0.18; else if (k === 'ArrowRight') yaw += 0.18;
     else if (k === 'ArrowUp') pitch = clamp(pitch + 0.15, -1.15, 1.25); else if (k === 'ArrowDown') pitch = clamp(pitch - 0.15, -1.15, 1.25);
     else return;
     target = null; idle = 0;
