@@ -16,4 +16,5 @@
 // 1.4.0  27 nových druhů nepřátel s vlastními schopnostmi (foes.js) a bestiář v Kodexu; úspěchy odměňují
 //        podle obtížnosti a dávají trvalé bonusy (Síň slávy, doplatek za splněné); otáčení lodi v Kovárně
 //        obráceně, se setrvačností a bez samovolného natáčení; verze na úvodní obrazovce místo Nastavení
-const GAME_VERSION = '1.4.0';
+// 1.4.1  Priority automatického výběru přehledněji: ve sloupcích, se štítky kategorií, přetahování myší i prstem
+const GAME_VERSION = '1.4.1';
