@@ -234,7 +234,17 @@ from the wall clock (`floor(now / 5 min) % 4`), so all players share them. `Econ
 ranks every purchase by payback time (average income over the four seasons in closed form);
 the ⚡ best-buy button and the steward (bought for legends, which are then spent; the
 chronicle counts legends earned in total) both use it, and the steward also buys while the
-player is away (`Econ.offline` steps through the time in up to 240 slices). The save's `lb`
+player is away (`Econ.offline` steps through the time in up to 240 slices). Prices follow the
+number of purchases (`buys`, ×1.15 each), not of units: every mastery (`MILESTONES`, generated
+from `MS_GAPS`, the purchases between two masteries, growing to 100 so that income cannot outrun
+prices) doubles a trade's output and the units one purchase brings (twins: 1, 2, 4, 8…). Every
+trade lifts all trades below it (`Econ.help`/`Econ.syn`). Spirit (`elan`, max 100, refills
+with time, also while away) pays for the hourglass (15 minutes of current income) and the
+harvest rush (×5 spells); spells of one kind multiply. The family tree (`TREE`, bought with
+legends like the steward) adds income multipliers and helpers that buy the first trades when a
+purchase costs at most 10 % of the purse (`Econ.autoBuy`, also while away). `Econ.load` merges
+every save onto `fresh()`: an older save without `buys` gets `buysFor(0, owned)` per trade, and
+`fin()` keeps every amount finite (≤ 10^300), so no NaN or Infinity reaches the screen. The save's `lb`
 holds the leaderboard values: legends on `best:score` and `free:<category>:score` for fortune,
 best income and apprentices (as log10 × 1000), buildings, creatures, taps, generations and
 achievements (values are capped below the server's 10^10).

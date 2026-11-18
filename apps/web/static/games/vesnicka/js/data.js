@@ -14,21 +14,24 @@ const UNITS = LANG === 'en'
   ? ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'UDc', 'DDc', 'TDc', 'QaDc', 'QiDc', 'SxDc', 'SpDc', 'OcDc', 'NoDc', 'Vg']
   : ['', ' tis.', ' mil.', ' mld.', ' bil.', ' bld.', ' tril.', ' trld.', ' kvadril.', ' kvadrld.', ' kvintil.', ' kvintld.', ' sextil.', ' sextld.', ' septil.', ' septld.', ' oktil.', ' oktld.', ' nonil.', ' nonld.', ' decil.', ' decld.'];
 const SEP = LANG === 'en' ? '.' : ',';
-let SCI = false; // vědecký zápis (nastavení)
+let SCI = false; // vědecký zápis už od milionu (nastavení)
+const SCI_AT = 1e15; // od biliardy vždy vědecký zápis (1,50e15): dál by jména jednotek nikdo neznal
 function trunc(v, d) { const p = Math.pow(10, d); return (Math.floor(v * p + 1e-9) / p).toFixed(d).replace('.', SEP); }
-/** Groše: celá čísla do milionu, pak „1,23 mil.“ (3 platné číslice, nikdy nezaokrouhlí nahoru). */
+/** Groše: do tisíce celá čísla, pak „1,25 tis.“, „4,80 mil.“, „12,4 mld.“ (3 platné číslice, nikdy nezaokrouhlí nahoru), od 10^15 „1,50e15“. */
 function fmt(n, dec = 0) {
-  if (!isFinite(n)) return '∞';
+  if (typeof n !== 'number' || n !== n) return '0';
+  if (!isFinite(n)) return n < 0 ? '−∞' : '∞';
   if (n < 0) return '−' + fmt(-n, dec);
-  if (n < 1e6) {
+  if (n < 1000) {
     if (dec && n < 100 && n % 1) return trunc(n, n < 10 ? 2 : 1).replace(new RegExp(`\\${SEP}?0+$`), '');
-    return Math.floor(n + 1e-9).toLocaleString(LOCALE);
+    return String(Math.floor(n + 1e-9));
   }
-  const e = Math.floor(Math.log10(n) / 3 + 1e-12);
-  if (SCI || e >= UNITS.length) { const x = Math.floor(Math.log10(n)); return trunc(n / Math.pow(10, x), 2) + 'e' + x; }
-  const v = n / Math.pow(1000, e);
+  if (n >= SCI_AT || (SCI && n >= 1e6)) { const x = Math.floor(Math.log10(n) + 1e-12), m = n / Math.pow(10, x); return trunc(m >= 10 ? m / 10 : m, 2) + 'e' + (m >= 10 ? x + 1 : x); }
+  const e = Math.min(UNITS.length - 1, Math.floor(Math.log10(n) / 3 + 1e-12)), v = n / Math.pow(1000, e);
   return trunc(v, v < 10 ? 2 : v < 100 ? 1 : 0) + UNITS[e];
 }
+/** Počet kusů: do 10 000 přesně (s mezerami), pak jako groše. */
+const fmtN = n => (n < 1e4 ? Math.floor(Math.max(0, n) + 1e-9).toLocaleString(LOCALE) : fmt(n));
 function fmtDur(s) {
   s = Math.max(0, Math.floor(s));
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
@@ -52,7 +55,12 @@ const seasonAt = ms => Math.floor(ms / 1000 / SEASON_LEN) % 4;
 const seasonLeft = ms => SEASON_LEN - ((ms / 1000) % SEASON_LEN);
 
 // ── Řemesla (generátory). cost: první kus, prod: groše za sekundu za kus, season: kdy má sezónu ──
-const COST_GROWTH = 1.15;
+const COST_GROWTH = 1.15; // cena dalšího nákupu (ne kusu: za mistrovstvím přinese nákup víc kusů)
+// Kolik nákupů dělí mistrovství (poslední platí dál pořád): ×4 výnosu za 100 nákupů je stejné tempo jako dřív ×2 za 50.
+const MS_GAPS = [10, 15, 25, 40, 60, 80, 100];
+// Sousedská výpomoc: každé řemeslo, které máš, zvedne výnos všech řemesel pod sebou
+// (×1,2 hned s prvním kusem a +0,05 za každé jeho mistrovství). Nové řemeslo tak zrychlí celou ves.
+const SYN_FIRST = 0.2, SYN_MS = 0.05;
 const BUILDINGS = [
   { id: 'pole', cost: 12, prod: 0.25, season: 0, name: L('Políčko', 'Field'), desc: L('Brambory, zelí a mák. Tady začíná každá vesnice.', 'Potatoes, cabbage and poppies. Every village starts here.') },
   { id: 'kurnik', cost: 130, prod: 1.6, season: 1, name: L('Kurník', 'Hen house'), desc: L('Slepice snášejí, kohout budí celou ves.', 'The hens lay, the rooster wakes the whole village.') },
@@ -71,8 +79,34 @@ const BUILDINGS = [
 ];
 const B_INDEX = Object.fromEntries(BUILDINGS.map((b, i) => [b.id, i]));
 
-// Mistrovství: při tolika kusech jednoho řemesla se jeho výnos zdvojnásobí.
-const MILESTONES = [25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000];
+// Mistrovství: při tolika kusech jednoho řemesla se jeho výnos zdvojnásobí A každý další nákup přinese
+// dvakrát víc kusů (dvojčata: 1, 2, 4, 8, 16…). Ceny rostou s počtem nákupů (×1,15), ne kusů.
+// Rozestupy mistrovství rostou tak, aby mezi nimi bylo pořád víc nákupů (10, 15, 20, 30… až 100): s častějšími
+// mistrovstvími by výnos rostl rychleji než ceny a čísla by utekla do nekonečna.
+const MILESTONES = (() => {
+  const NICE = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8], out = [];
+  const niceUp = x => { const e = Math.pow(10, Math.floor(Math.log10(x) + 1e-9)); for (const m of NICE) if (m * e >= x - 1e-6) return m * e; return 10 * e; };
+  for (let k = 1, m = 0; m < 1e18; k++) { m = niceUp(m + MS_GAPS[Math.min(k, MS_GAPS.length) - 1] * Math.pow(2, k - 1)); out.push(m); }
+  return out;
+})();
+/** Kolik mistrovství má řemeslo s n kusy. */
+function msOf(n) { let lo = 0, hi = MILESTONES.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (n >= MILESTONES[mid]) lo = mid + 1; else hi = mid; } return lo; }
+/** Kolik kusů přinese q nákupů, když už jich je n (dvojčata se zvednou hned za mistrovstvím). */
+function unitsFor(n, q) {
+  let got = 0;
+  while (q > 0) {
+    const k = msOf(n + got), u = Math.pow(2, k), m = MILESTONES[k];
+    const step = m == null ? q : Math.min(q, Math.max(1, Math.ceil((m - n - got) / u)));
+    got += step * u; q -= step;
+  }
+  return got;
+}
+/** Kolik nákupů je potřeba, aby řemeslo s n kusy mělo aspoň target kusů. */
+function buysFor(n, target) {
+  let q = 0;
+  while (n < target && q < 1e5) { const k = msOf(n), u = Math.pow(2, k), m = Math.min(target, MILESTONES[k] == null ? target : MILESTONES[k]), s = Math.max(1, Math.ceil((m - n) / u)); q += s; n += s * u; }
+  return q;
+}
 
 // ── Cech: generátor generuje generátor ──
 // Každý stupeň vyučí ten pod sebou (CECH_RATE kusů za sekundu za kus), učni pracují v řemeslech
@@ -99,15 +133,16 @@ const CECH_GIFT = [5, 1]; // a přivede pět učňů a prvního tovaryše (zdarm
 const CECH_SEALS = [10, 25, 50, 75, 100, 150, 200];
 
 // ── Vylepšení ──
-// Řemesla: každé má 8 stupňů (×2), dostupné od daného počtu kusů.
-const TIER_REQ = [1, 10, 25, 50, 100, 150, 200, 300];
+// Řemesla: každé má 8 stupňů (×2), dostupné po tolika nákupech (TIER_BUYS); podmínka je počet kusů, který z nich vzejde.
+const TIER_BUYS = [1, 10, 25, 50, 100, 150, 200, 300];
+const TIER_REQ = TIER_BUYS.map(q => { const x = unitsFor(0, q); if (x < 100) return x; const e = Math.pow(10, Math.floor(Math.log10(x)) - 1); return Math.floor(x / e) * e; }); // zaokrouhleno dolů: 550, 1 300…
 const TIER_NAMES = [
   L('Nové nářadí', 'New tools'), L('Pilní tovaryši', 'Diligent journeymen'), L('Mistr řemesla', 'Master craftsman'), L('Cechovní výsada', 'Guild privilege'),
   L('Královský patent', 'Royal charter'), L('Zlaté ručičky', 'Golden hands'), L('Pohádková moc', 'Fairy-tale power'), L('Věhlas po celém kraji', 'Famed across the land'),
 ];
 const UPGRADES = [];
 BUILDINGS.forEach((b, bi) => TIER_REQ.forEach((req, ti) => UPGRADES.push({
-  id: `${b.id}${ti + 1}`, kind: 'b', b: bi, tier: ti, cost: b.cost * Math.pow(COST_GROWTH, req) * 6, req: { b: bi, n: req },
+  id: `${b.id}${ti + 1}`, kind: 'b', b: bi, tier: ti, cost: b.cost * Math.pow(COST_GROWTH, TIER_BUYS[ti]) * 6, req: { b: bi, n: req },
   name: TIER_NAMES[ti], sub: b.name, effect: L(`${b.name}: výnos ×2`, `${b.name}: output ×2`),
 })));
 // Ruce: klepání do vesnice.
@@ -175,23 +210,34 @@ U_INDEX.kaplicka.effect += L(' · roste s mistrovstvími', ' · grows with maste
 // ── Pohádkové bytosti (náhodné události) ──
 // w: váha, life: kolik sekund čekají na klepnutí; dur: trvání kouzla v sekundách.
 const CREATURES = [
-  { id: 'bludicka', w: 44, life: 12, name: L('Bludička', 'Will-o’-wisp'), text: L('zavedla tě k zakopanému pokladu', 'led you to a buried treasure') },
-  { id: 'vodnik', w: 24, life: 14, dur: 45, mul: 5, name: L('Vodník', 'Water goblin'), text: L('půjčil ti hrníček štěstí: výnos ×5', 'lent you his lucky pot: income ×5') },
-  { id: 'cert', w: 15, life: 11, dur: 20, mul: 25, name: L('Čert', 'Devil'), text: L('dal ti čertovskou sílu: klepnutí ×25', 'gave you devilish strength: taps ×25') },
-  { id: 'krakonos', w: 13, life: 14, dur: 30, name: L('Krakonoš', 'Krakonoš'), text: L('je štědrý: všechno o polovinu levnější', 'is generous: everything half price') },
-  { id: 'hospodaricek', w: 4, life: 10, name: L('Hospodáříček', 'House sprite'), text: L('ti přes noc postavil budovy zdarma', 'built you free buildings overnight') },
-  { id: 'vseved', w: 9, life: 13, dur: 30, mul: 10, name: L('Děd Vševěd', 'Grandpa Know-all'), text: L('prozradil cechu moudrost svých zlatých vlasů: cech vyučí ×10', 'shared the wisdom of his golden hairs with the guild: it trains ×10') },
+  { id: 'bludicka', w: 40, life: 16, name: L('Bludička', 'Will-o’-wisp'), text: L('zavedla tě k zakopanému pokladu', 'led you to a buried treasure') },
+  { id: 'vodnik', w: 22, life: 17, dur: 45, mul: 5, name: L('Vodník', 'Water goblin'), text: L('půjčil ti hrníček štěstí: výnos ×5', 'lent you his lucky pot: income ×5') },
+  { id: 'cert', w: 14, life: 15, dur: 20, mul: 25, name: L('Čert', 'Devil'), text: L('dal ti čertovskou sílu: klepnutí ×25', 'gave you devilish strength: taps ×25') },
+  { id: 'krakonos', w: 12, life: 17, dur: 30, name: L('Krakonoš', 'Krakonoš'), text: L('je štědrý: všechno o polovinu levnější', 'is generous: everything half price') },
+  { id: 'hospodaricek', w: 4, life: 15, name: L('Hospodáříček', 'House sprite'), text: L('ti přes noc postavil budovy zdarma', 'built you free buildings overnight') },
+  { id: 'vseved', w: 8, life: 17, dur: 30, mul: 10, name: L('Děd Vševěd', 'Grandpa Know-all'), text: L('prozradil cechu moudrost svých zlatých vlasů: cech vyučí ×10', 'shared the wisdom of his golden hairs with the guild: it trains ×10') },
+  // Padající hvězda: náhodné přání (shon ×7, síla ×50, poklad nebo elán). Kouzla se násobí, takže se vyplatí trefit kombo.
+  { id: 'hvezda', w: 26, life: 18, name: L('Padající hvězda', 'Shooting star'), text: L('splnila přání', 'granted a wish') },
 ];
 const C_INDEX = Object.fromEntries(CREATURES.map(c => [c.id, c]));
-const CREATURE_GAP = [70, 160]; // sekundy mezi bytostmi
+const CREATURE_GAP = [60, 120]; // sekundy mezi bytostmi
+// Přání padající hvězdy (w: váha). Kouzla stejného druhu se násobí: s vodníkem a žněmi to dělá ×175.
+const WISHES = [
+  { id: 'shon', w: 40, kind: 'rate', mul: 7, dur: 30, text: L('hvězdný shon: výnos ×7 na 30 s', 'star rush: income ×7 for 30 s') },
+  { id: 'sila', w: 25, kind: 'tap', mul: 50, dur: 15, text: L('hvězdná síla: klepnutí ×50 na 15 s', 'star strength: taps ×50 for 15 s') },
+  { id: 'poklad', w: 25, sec: 600, text: L('hvězdný poklad: 10 minut výnosu', 'star treasure: 10 minutes of income') },
+  { id: 'elan', w: 10, elan: 30, text: L('hvězdný elán: +30 elánu', 'star spirit: +30 spirit') },
+];
 // Vzácný host na návsi (ne bytost: nepočítá se do bytostí, má vlastní tajný úspěch).
 const NESRO = {
-  after: 15, chance: 0.025, life: 16, mul: 3, dur: 180, coins: 300,
+  after: 15, chance: 0.025, life: 18, mul: 3, dur: 180, coins: 300,
   name: 'Nesro', text: L('se zastavil na kus řeči a přinesl koláče: výnos ×3 na 3 minuty a k tomu', 'stopped by for a chat and brought kolache: income ×3 for 3 minutes, plus'),
 };
 
 // ── Pověsti (prestiž) a Kronika (trvalé výhody podle počtu pověstí) ──
-const LEGEND_BASE = 1e9; // pověsti celkem = ∛(vyděláno za všechna pokolení / LEGEND_BASE)
+// Pověsti celkem = ∛(vyděláno za všechna pokolení / LEGEND_BASE). Od mistrovství s dvojčaty vydělává vesnice
+// mnohem víc, proto 10^11 (dřív 10^9): první dny jsou rychlejší, po týdnu je tempo pověstí jako dřív.
+const LEGEND_BASE = 1e11;
 const LEGEND_BONUS = 0.05; // každá pověst +5 % výnosu
 const PERKS = [
   { n: 1, id: 'offline', v: 4, name: L('Rodová pověst', 'Family legend'), desc: L('Vesnice vydělává bez tebe o 4 hodiny déle.', 'The village earns 4 hours longer without you.') },
@@ -220,9 +266,42 @@ const PERKS = [
 const OFFLINE_BASE = 8; // hodin
 const STEWARD_COST = 3; // pověsti za šafáře
 
+// ── Elán: druhá surovina, za groše se koupit nedá. Pomalu se doplňuje (i bez tebe), nejvýš do 100. ──
+const ELAN_MAX = 100, ELAN_REGEN = 1 / 30; // za sekundu: plný za 50 minut
+const ELAN_OPEN = 5000; // ukáže se, až vesnice vydělá tolik grošů (nebo s první pověstí)
+const POWERS = {
+  // Přesýpací hodiny: hned přinesou 15 minut současného výnosu (i se všemi kouzly, co právě působí).
+  warp: { cost: 60, sec: 900, icon: '⏳', short: L('Hodiny', 'Hourglass'), name: L('Přesýpací hodiny', 'Hourglass'), desc: L('Hned 15 minut výnosu', '15 minutes of income now') },
+  // Žně: celá vesnice maká. Výnos i klepnutí ×5 na 20 sekund.
+  rush: { cost: 30, mul: 5, dur: 20, icon: '🌾', short: L('Žně', 'Rush'), name: L('Žně', 'Harvest rush'), desc: L('Výnos i klepnutí ×5 na 20 s', 'Income and taps ×5 for 20 s') },
+};
+
+// ── Rodokmen: trvalé větve za pověsti (utratí se jako u šafáře; kronika je dál počítá a pokolení je nesmaže) ──
+// col: sloupec ve stromu, req: co musí být koupeno dřív. kind: mul (výnosy), tap (klepnutí), elan (rychlejší elán),
+// freq (bytosti a hvězdy častěji), rush (žně déle), warp (levnější hodiny), auto (pomocník sám kupuje řemesla b).
+const TREE = [
+  { id: 'erb', col: 1, cost: 1, req: [], kind: 'mul', v: 1.5, icon: '🛡️', name: L('Rodový erb', 'Family crest'), desc: L('Všechny výnosy ×1,5', 'All income ×1.5') },
+  { id: 'puda', col: 0, cost: 25, req: ['erb'], kind: 'mul', v: 1.5, icon: '🌱', name: L('Úrodná půda', 'Fertile soil'), desc: L('Všechny výnosy ×1,5', 'All income ×1.5') },
+  { id: 'zlatezne', col: 0, cost: 5000, req: ['puda'], kind: 'mul', v: 2, icon: '🌾', name: L('Zlaté žně', 'Golden harvest'), desc: L('Všechny výnosy ×2', 'All income ×2') },
+  { id: 'rod', col: 0, cost: 1e7, req: ['zlatezne'], kind: 'mul', v: 2, icon: '👑', name: L('Požehnaný rod', 'A blessed line'), desc: L('Všechny výnosy ×2', 'All income ×2') },
+  { id: 'dedictvi', col: 0, cost: 1e10, req: ['rod'], kind: 'mul', v: 3, icon: '📖', name: L('Pohádkové dědictví', 'A fairy-tale heritage'), desc: L('Všechny výnosy ×3', 'All income ×3') },
+  { id: 'chasa', col: 1, cost: 2, req: ['erb'], kind: 'elan', v: 0.5, icon: '💫', name: L('Čilá chasa', 'Lively youngsters'), desc: L('Elán se doplňuje o 50 % rychleji', 'Spirit refills 50% faster') },
+  { id: 'ruce', col: 1, cost: 5, req: ['chasa'], kind: 'tap', v: 2, icon: '✋', name: L('Šikovné ruce', 'Skilled hands'), desc: L('Klepnutí ×2', 'Taps ×2') },
+  { id: 'hvezdar', col: 1, cost: 50, req: ['ruce'], kind: 'freq', v: 0.25, icon: '🔭', name: L('Hvězdář', 'Stargazer'), desc: L('Bytosti a hvězdy chodí o 25 % častěji', 'Creatures and stars come 25% more often') },
+  { id: 'dlouhezne', col: 1, cost: 500, req: ['hvezdar'], kind: 'rush', v: 10, icon: '⏱️', name: L('Dlouhé žně', 'Long harvest'), desc: L('Žně trvají o 10 s déle', 'Harvest rush lasts 10 s longer') },
+  { id: 'hodiny', col: 1, cost: 5000, req: ['dlouhezne'], kind: 'warp', v: 20, icon: '⌛', name: L('Kouzelné hodiny', 'Magic hourglass'), desc: L('Přesýpací hodiny za 40 elánu místo 60', 'The hourglass costs 40 spirit instead of 60') },
+  { id: 'pacholek', col: 2, cost: 1, req: ['erb'], kind: 'auto', b: [0, 1], icon: '🧑‍🌾', name: L('Pacholek', 'Farmhand'), desc: L('Sám kupuje Políčka a Kurníky', 'Buys Fields and Hen houses by himself') },
+  { id: 'devecka', col: 2, cost: 5, req: ['pacholek'], kind: 'auto', b: [2, 3], icon: '👩‍🌾', name: L('Děvečka', 'Maid'), desc: L('Sama kupuje Včelíny a Pekárny', 'Buys Apiaries and Bakeries by herself') },
+  { id: 'celedin', col: 2, cost: 25, req: ['devecka'], kind: 'auto', b: [4, 5], icon: '🧑‍🔧', name: L('Čeledín', 'Farm worker'), desc: L('Sám kupuje Kovárny a Mlýny', 'Buys Smithies and Watermills by himself') },
+  { id: 'spravce', col: 2, cost: 100, req: ['celedin'], kind: 'auto', b: [6, 7], icon: '🧔', name: L('Správce statku', 'Estate manager'), desc: L('Sám kupuje Pivovary a Sklárny', 'Buys Breweries and Glassworks by himself') },
+];
+const T_INDEX = Object.fromEntries(TREE.map(t => [t.id, t]));
+// Pomocníci kupují, jen když další nákup stojí nejvýš tolik z měšce: na dražší věci se dál šetří.
+const AUTO_SHARE = 0.1;
+
 // ── Úkoly dne (3 denně, stejné pro všechny) ──
 const DAILY = [
-  { kind: 'buy', n: 30, text: n => L(`Postav ${n} budov`, `Build ${n} buildings`) },
+  { kind: 'buy', n: 30, text: n => L(`Nakup ${n}× v Řemeslech`, `Make ${n} purchases in Trades`) },
   { kind: 'tap', n: 300, text: n => L(`Klepni ${n}× do vesnice`, `Tap the village ${n} times`) },
   { kind: 'catch', n: 3, text: n => L(`Chyť ${n} bytosti`, `Catch ${n} creatures`) },
   { kind: 'upg', n: 3, text: n => L(`Kup ${n} vylepšení`, `Buy ${n} upgrades`) },
@@ -266,6 +345,14 @@ CECH.forEach((t, i) => ach('cech_' + t.id, [L('První učeň', 'First apprentice
 [[1e3, L('Plná dílna', 'A full workshop')], [1e6, L('Milion učňů', 'A million apprentices')], [1e9, L('Učňovské město', 'A town of apprentices')], [1e15, L('Země řemesel', 'A land of crafts')], [1e24, L('Řemeslný zázrak', 'A crafty miracle')], [1e36, L('Nekonečná dílna', 'The endless workshop')], [1e48, L('Říše řemesel', 'An empire of crafts')], [1e64, L('Do skonání věků', 'Until the end of days')]]
   .forEach(([n, name]) => ach('ucni' + n.toExponential(0), name, L(`Měj ${fmt(n)} učňů`, `Have ${fmt(n)} apprentices`), S => S.stats.ucniMax >= n));
 ach('steward', L('Pan správce', 'Lord of the manor'), L('Najmi šafáře', 'Hire a steward'), S => S.steward);
+[[5, L('Dvojčata', 'Twins')], [10, L('Tisíc za jeden', 'A thousand for one')], [20, L('Milion za jeden', 'A million for one')], [30, L('Nákup jako z pohádky', 'A fairy-tale bargain')]]
+  .forEach(([k, name]) => ach('twin' + k, name, L(`Dostaň za jeden nákup ${fmtN(Math.pow(2, k))} kusů řemesla`, `Get ${fmtN(Math.pow(2, k))} of a trade from one purchase`), S => BUILDINGS.some(b => msOf(S.owned[b.id]) >= k)));
+ach('warp', L('Pán času', 'Lord of time'), L('Otoč přesýpací hodiny', 'Turn the hourglass'), S => S.stats.warps > 0);
+ach('rush', L('Žně!', 'Harvest time!'), L('Vyhlas žně', 'Call a harvest rush'), S => S.stats.rushes > 0);
+[[10, L('Šťastná chvíle', 'A lucky moment')], [100, L('Hvězdná hodinka', 'A starry hour')], [1000, L('Pohádkové štěstí', 'Fairy-tale luck')]]
+  .forEach(([n, name]) => ach('combo' + n, name, L(`Měj naráz kouzla s výnosem ×${fmtN(n)}`, `Stack spells up to income ×${fmtN(n)}`), S => S.stats.comboMax >= n));
+ach('tree1', L('Rodokmen', 'Family tree'), L('Kup první větev rodokmenu', 'Buy the first branch of the family tree'), S => Object.keys(S.tree).length > 0);
+ach('treeAll', L('Košatý rod', 'A mighty family tree'), L('Kup celý rodokmen', 'Buy the whole family tree'), S => TREE.every(t => S.tree[t.id]));
 ach('nesro', L('Kamarád Nesro', 'Nesro’s friend'), L('Potkej na návsi Nesra', 'Meet Nesro on the village green'), S => S.stats.nesro > 0, true);
 
 // ── Žebříčky: co se dá porovnávat s ostatními (log: velká čísla se posílají jako log10 × 1000) ──
@@ -286,6 +373,14 @@ const boardValue = (d, v) => (d.log ? fmt(Math.pow(10, v / 1000)) + (d.unit || '
 
 // ── Novinky (okénko vlevo nahoře; ukáže se samo, dokud hráč aktuální verzi neviděl) ──
 const NEWS = [
+  { v: 8, date: L('18. listopadu 2026', 'November 18, 2026'), items: [
+    ['⭐', L('<b>Mistrovství s dvojčaty.</b> S 10, 40, 150… kusy řemesla se jeho výnos zdvojnásobí <b>a každý další nákup přinese dvakrát víc kusů</b>: 1, 2, 4, 8, 16… Cena roste s počtem nákupů, ne kusů. Pod každým řemeslem vidíš, kolik zbývá do dalšího mistrovství.', '<b>Masteries with twins.</b> At 10, 40, 150… of a trade its output doubles <b>and every further purchase brings twice as many</b>: 1, 2, 4, 8, 16… Prices grow with purchases, not units. Under every trade you see how far the next mastery is.')],
+    ['🤝', L('<b>Sousedská výpomoc:</b> každé řemeslo zvedne výnos všech řemesel pod sebou. Nové řemeslo zrychlí celou ves. U každé položky je volba <b>1× · 10× · Max</b>.', '<b>Neighbourly help:</b> every trade lifts the output of all trades below it, so a new trade speeds up the whole village. Every item has a <b>1× · 10× · Max</b> choice.')],
+    ['💫', L('<b>Elán:</b> doplňuje se sám až do 100 a za groše se koupit nedá. Za něj otočíš <b>přesýpací hodiny</b> (hned 15 minut výnosu) nebo vyhlásíš <b>žně</b> (výnos i klepnutí ×5 na 20 s).', '<b>Spirit:</b> refills by itself up to 100 and cannot be bought. Spend it on the <b>hourglass</b> (15 minutes of income at once) or a <b>harvest rush</b> (income and taps ×5 for 20 s).')],
+    ['🌠', L('<b>Padající hvězda</b> plní náhodná přání (výnos ×7, klepnutí ×50, poklad, elán) a bytosti chodí každou minutu až dvě. Kouzla se násobí: trefit kombo se vyplatí.', 'A <b>shooting star</b> grants random wishes (income ×7, taps ×50, a treasure, spirit) and creatures come every minute or two. Spells multiply, so hitting a combo pays off.')],
+    ['🌳', L('<b>Rodokmen</b> v Kronice: za pověsti trvalé násobky výnosu, rychlejší elán a <b>pomocníci</b>, kteří sami kupují první řemesla. Vesnice vydělává mnohem víc, proto pověst teď chce víc grošů (každá dál přidá 5 %).', 'A <b>family tree</b> in the Chronicle: lasting income multipliers, faster spirit and <b>helpers</b> who buy the first trades by themselves, all for legends. The village earns far more, so a legend now takes more groschen (each still adds 5%).')],
+    ['✨', L('Rozhraní se rozbaluje postupně, čísla se zkracují (1,25 tis., 4,80 mil., od 10^15 jako 1,50e15) a nákupy, mistrovství i kouzla mají víc šťávy.', 'The interface unfolds step by step, numbers are shortened (1.25K, 4.80M, from 10^15 as 1.50e15) and purchases, masteries and spells have more juice.')],
+  ] },
   { v: 7, date: L('16. listopadu 2026', 'November 16, 2026'), items: [
     ['👥', L('<b>Cech: generátor generuje generátor.</b> S první kovárnou založí kovář v obci cech. Tovaryši vyučí učně, mistři tovaryše, cechmistři mistry… až po krále. Učni pracují v řemeslech a každý desetinásobek učňů zvedne výnos celé vesnice.', '<b>The Guild: generators make generators.</b> With your first smithy the smith founds a guild. Journeymen train apprentices, masters train journeymen, guild masters train masters… all the way up to the king. Apprentices work in your trades and every tenfold of them lifts the whole village’s income.')],
     ['🔏', L('Osm stupňů cechu, cechovní pečeti při 10, 25, 50… kusech, nová vylepšení a cechovní řády. Vyšší stupně se odemykají s pověstmi.', 'Eight guild ranks, guild seals at 10, 25, 50… bought, new upgrades and guild ordinances. Higher ranks unlock with legends.')],
