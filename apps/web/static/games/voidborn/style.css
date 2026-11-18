@@ -71,6 +71,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @keyframes glitch1 { 0%, 92%, 100% { clip-path: inset(0 0 100% 0); transform: none; } 93% { clip-path: inset(10% 0 60% 0); transform: translate(-6px, 0); } 95% { clip-path: inset(55% 0 20% 0); transform: translate(5px, 0); } 97% { clip-path: inset(30% 0 45% 0); transform: translate(-3px, 0); } }
 @keyframes glitch2 { 0%, 90%, 100% { clip-path: inset(0 0 100% 0); transform: none; } 91% { clip-path: inset(70% 0 5% 0); transform: translate(7px, 0); filter: hue-rotate(90deg); } 94% { clip-path: inset(5% 0 80% 0); transform: translate(-5px, 0); } }
 .tagline { margin-top: 18px; font-size: clamp(13px, 1.6vw, 17px); letter-spacing: .6em; color: var(--muted); text-transform: uppercase; padding-left: .6em; }
+.title-ver { position: absolute; right: calc(22px + env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom)); font-size: 12px; letter-spacing: .22em; color: var(--dim); font-variant-numeric: tabular-nums; }
 .press { margin-top: 70px; font-size: 15px; letter-spacing: .4em; text-transform: uppercase; color: var(--cyan); animation: blink 1.6s ease-in-out infinite; padding-left: .4em; }
 @keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; text-shadow: 0 0 16px var(--cyan); } }
 
@@ -309,6 +310,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ach.got .bar i { background: var(--gold); }
 .ach .rw { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
 .ach .rw b { color: var(--shard); }
+.ach .ach-perk { font-size: 12px; color: #ffe08a; display: flex; align-items: center; gap: 6px; }
+.ach .ach-perk .ico { color: var(--gold) !important; filter: none !important; font-size: 13px; }
+.ach:not(.got) .ach-perk { color: var(--muted); }
+.ach-fame { display: flex; gap: 18px; align-items: center; justify-content: space-between; margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(120deg, rgba(255,209,102,.1), var(--panel) 55%); border: 1px solid rgba(255,209,102,.3); }
+.ach-fame small { font-size: 11px; letter-spacing: .25em; color: var(--muted); }
+.ach-fame p { margin-top: 4px; color: #ffe08a; font-size: 14px; line-height: 1.5; }
+.ach-fame .af-left { text-align: right; flex: none; }
+.ach-fame .af-left b { display: block; font-family: var(--f-display); font-size: 22px; color: var(--shard); margin-top: 4px; }
 .tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
 .tab { padding: 10px 18px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; font-size: 13px; border-bottom: 2px solid transparent; color: var(--muted); transition: .15s; }
 .tab:hover { color: var(--text); }
@@ -317,6 +326,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .cx.unknown .ico { color: var(--dim) !important; filter: none !important; }
 .cx .recipe { font-size: 13px; color: var(--gold); border-top: 1px solid var(--line); padding-top: 10px; margin-top: auto; }
 .cx.unknown h4 { color: var(--dim); }
+.cx-sum { grid-column: 1 / -1; color: var(--muted); font-size: 14px; letter-spacing: .08em; }
+.cx-sum b { color: var(--cyan); }
+.cx p i { display: block; margin-top: 4px; font-style: normal; color: var(--muted); font-size: 12px; }
 .sum { color: var(--muted); font-size: 14px; letter-spacing: .1em; }
 
 /* ── Nastavení ─────────────────────────────────────────── */
