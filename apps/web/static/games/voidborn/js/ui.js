@@ -77,7 +77,7 @@ const UI = (() => {
   const langSwitch = () => `<div class="lang">${['cs', 'en'].map(l => `<button class="${l === LANG ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`;
 
   // ── Kovárna: štítky částí a panel vylepšení ──────────────────────────────
-  let forgePart = null;
+  let forgePart = null, setPv = 'autoPick';
   const TIER_NAME = () => ({ 2: L('Mistrovská dílna', 'Master Workshop'), 3: L('Prázdnotová dílna', 'Void Workshop'), 4: L('Věčná dílna', 'Eternal Workshop'), 5: L('Mistrovské dílo', 'Masterpiece') });
   const TIER_CLS = { 2: 'master', 3: 'master void', 4: 'master eternal', 5: 'master piece' };
   const MK = ['I', 'II', 'III', 'IV', 'V'];
@@ -100,11 +100,11 @@ const UI = (() => {
     const p = P_INDEX[id], pr = partProgress(SAVE, id), et = partEternal(SAVE, id);
     const items = FORGE.filter(f => f.part === id);
     const fin = items.filter(f => f.max !== Infinity), have = fin.reduce((a, f) => a + Math.min(f.max, SAVE.forge[f.id] || 0), 0), all = fin.reduce((a, f) => a + f.max, 0);
-    return `<div class="fp-head" style="--c:${p.color}">${icon(p.icon)}<div><small>${L('ČÁST LODI', 'SHIP PART')} · ${mkOf(pr)}</small><h3>${p.name}</h3><p>${p.desc}</p></div></div>
+    return `<div class="fp-top"><div class="fp-head" style="--c:${p.color}">${icon(p.icon)}<div><small>${L('ČÁST LODI', 'SHIP PART')} · ${mkOf(pr)}</small><h3>${p.name}</h3><p>${p.desc}</p></div></div>
       <div class="fp-bar" style="--c:${p.color}"><i style="width:${pct(pr)}%"></i></div>
       <div class="fp-meta">${L('Úrovně', 'Levels')} <b>${have} / ${all}</b>${et ? ` · ${L('Věčná dílna', 'Eternal Workshop')} <b>+${et}</b>` : ''}</div>
-      ${id === 'bay' ? loadoutNote() : ''}
-      <div class="fp-list">${items.map(forgeRow).join('')}</div>`;
+      ${id === 'bay' ? loadoutNote() : ''}</div>
+      <div class="fp-list" id="fpList">${items.map(forgeRow).join('')}</div>`;
   }
   // Zbrojnice: co je teď ve výzbroji (nastavuje se v Hangáru před startem).
   function loadoutNote() {
@@ -114,16 +114,64 @@ const UI = (() => {
     return `<div class="fp-note on">${icon('hardpoint')}<div>${hard ? `<b>${L('Na palubě', 'On board')} ${lo.pre.slice(0, hard).length}/${hard}:</b> ${lo.pre.slice(0, hard).map(nm).join(', ') || '—'}<br>` : ''}${bans ? `<b>${L('Vyřazené', 'Struck out')} ${lo.ban.slice(0, bans).length}/${bans}:</b> ${lo.ban.slice(0, bans).map(nm).join(', ') || '—'}` : ''}
       <button class="btn small" data-go="hangar">${icon('rocket')} ${L('Výzbroj v Hangáru', 'Loadout in the Hangar')}</button></div></div>`;
   }
-  /** Po nákupu nebo výběru části: překreslí štítky, panel a střepy, model lodi zůstane (jen se přestaví). */
-  function forgeRefresh() {
+  /** Po nákupu nebo výběru části: překreslí štítky, panel, statistiky a střepy, model lodi zůstane (jen se přestaví).
+   *  keep = stejná část (po nákupu): seznam vylepšení zůstane odrolovaný, kde byl. */
+  function forgeRefresh(keep = true) {
     const panel = $('#fpanel');
     if (!panel) return;
-    const sc = panel.scrollTop;
+    const list = $('#fpList'), sc = keep && list ? list.scrollTop : 0;
     $('.fparts').innerHTML = PARTS.map(partChip).join('');
     panel.innerHTML = partPanel(forgePart);
-    panel.scrollTop = sc;
+    $('#fpList').scrollTop = sc;
+    const st = $('#fstats'); if (st) st.innerHTML = forgeStats();
     const sh = $('#s-forge .topbar .chip.shard'); if (sh) sh.innerHTML = `${icon('shard')} ${fmtNum(SAVE.shards)}`;
     Forge3D.rebuild();
+  }
+  // Statistiky lodi na startu běhu (bez schopnosti pilota): základ lodi a kolik přidává Kovárna.
+  // [klíč, popisek, část lodi, hodnota, přírůstek z Kovárny (null = nic)]
+  const sgn = (v, d = 0) => (v > 0 ? '+' : v < 0 ? '−' : '') + fmtDec(Math.abs(Math.round(v * Math.pow(10, d)) / Math.pow(10, d)));
+  const pc = v => fmtDec(Math.round(v * 1000) / 10);
+  function forgeStatRows(c, b) {
+    const P = (x, y) => (Math.abs(x - y) > 1e-9 ? `${sgn((x - y) * 100, 1)} %` : null), N = (x, y, d = 0) => (Math.abs(x - y) > 1e-9 ? sgn(x - y, d) : null);
+    return [
+      [L('Útok', 'Offense'), [
+        ['might', L('Poškození', 'Damage'), 'guns', `${pc(c.might)} %`, P(c.might, b.might)],
+        ['crit', L('Krit. zásah', 'Crit chance'), 'guns', `${pc(c.crit)} %`, P(c.crit, b.crit)],
+        ['critMul', L('Krit. poškození', 'Crit damage'), 'guns', `×${fmtDec(c.critMul.toFixed(2))}`, N(c.critMul, b.critMul, 2)],
+        ['bossDmg', L('Proti bossům', 'Vs bosses'), 'guns', `${pc(c.bossDmg)} %`, P(c.bossDmg, b.bossDmg)],
+        ['amount', L('Projektily navíc', 'Extra projectiles'), 'guns', `+${c.amount}`, N(c.amount, b.amount)],
+        ['execute', L('Poprava pod', 'Execute below'), 'guns', `${pc(c.execute)} %`, P(c.execute, b.execute)],
+        ['cdMul', L('Nabíjení', 'Cooldown'), 'reactor', `${pc(c.cdMul)} %`, P(c.cdMul, b.cdMul)],
+        ['area', L('Oblast', 'Area'), 'reactor', `${pc(c.area)} %`, P(c.area, b.area)],
+        ['dur', L('Trvání', 'Duration'), 'reactor', `${pc(c.dur)} %`, P(c.dur, b.dur)],
+      ]],
+      [L('Obrana', 'Defense'), [
+        ['maxHp', L('Max. zdraví', 'Max HP'), 'hull', String(Math.round(c.maxHp)), N(c.maxHp, b.maxHp)],
+        ['regen', L('Regenerace', 'Regen'), 'hull', `${fmtDec(Math.round(c.regen * 100) / 100)} /s`, N(c.regen, b.regen, 2)],
+        ['armor', L('Přijaté zranění', 'Damage taken'), 'hull', `${pc(armorFactor(c.armor))} %`, P(armorFactor(c.armor), armorFactor(b.armor))],
+        ['revives', L('Oživení', 'Revives'), 'hull', String(c.revives), N(c.revives, b.revives)],
+        ['heartHeal', L('Léčení srdcem', 'Heart heal'), 'hull', String(c.heartHeal), N(c.heartHeal, b.heartHeal)],
+        ['speed', L('Rychlost', 'Speed'), 'engines', String(Math.round(c.speed)), P(c.speed / b.speed, 1)],
+        ['dashMax', L('Úskoky', 'Dashes'), 'engines', String(c.dashMax), N(c.dashMax, b.dashMax)],
+        ['dashCd', L('Dobití úskoku', 'Dash recharge'), 'engines', `${fmtDec(c.dashCd.toFixed(2))} s`, N(c.dashCd, b.dashCd, 2)],
+      ]],
+      [L('Sběr a běh', 'Pickup & run'), [
+        ['magnet', L('Dosah sběru', 'Pickup range'), 'wings', String(Math.round(c.magnet)), P(c.magnet / b.magnet, 1)],
+        ['growth', L('Zkušenosti', 'Experience'), 'wings', `${pc(c.growth)} %`, P(c.growth, b.growth)],
+        ['greed', L('Střepy', 'Shards'), 'wings', `${pc(c.greed)} %`, P(c.greed, b.greed)],
+        ['chestItems', L('Předměty v truhle', 'Chest items'), 'wings', `+${c.chestItems}`, N(c.chestItems, b.chestItems)],
+        ['luck', L('Štěstí', 'Luck'), 'cockpit', `${pc(c.luck)} %`, P(c.luck, b.luck)],
+        ['rerolls', L('Přehození', 'Rerolls'), 'cockpit', String(1 + c.rerolls), N(c.rerolls, b.rerolls)],
+        ['cards', L('Karet při postupu', 'Cards per level-up'), 'cockpit', String(3 + c.cards), N(c.cards, b.cards)],
+        ['wSlots', L('Místa zbraní / doplňků', 'Weapon / passive slots'), 'bay', `${c.wSlots} / ${c.pSlots}`, N(c.wSlots + c.pSlots, b.wSlots + b.pSlots)],
+        ['hard', L('Závěsníky / vyřazení', 'Hardpoints / strikes'), 'bay', `${c.hard} / ${c.bans}`, N(c.hard + c.bans, b.hard + b.bans)],
+      ]],
+    ];
+  }
+  function forgeStats() {
+    const none = { mods: {} }, b = calcStats(none, {}, {}, {}), c = calcStats(none, SAVE.forge, {}, {});
+    return `<div class="fs-head"><b>${L('STATISTIKY LODI', 'SHIP STATS')}</b><small>${L('Na startu běhu, bez schopnosti pilota · barevně: kolik přidává Kovárna', 'At the start of a run, without the pilot’s perk · in colour: what the Forge adds')}</small></div>
+      <div class="fs-groups">${forgeStatRows(c, b).map(([g, rows]) => `<div class="fs-g"><h5>${g}</h5>${rows.map(([k, label, part, v, d]) => `<div class="fs ${part === forgePart ? 'hl' : ''} ${d ? '' : 'zero'}" data-stat="${k}" style="--c:${P_INDEX[part].color}"><span title="${label}">${label}</span><b>${v}</b><em>${d || '·'}</em></div>`).join('')}</div>`).join('')}</div>`;
   }
 
   // ── Výzbroj (Hangár): zbraně na závěsnících a vyřazené zbraně ──────────────
@@ -261,16 +309,19 @@ const UI = (() => {
       el.innerHTML = `
         ${topbar(L('TRVALÁ VYLEPŠENÍ', 'PERMANENT UPGRADES'), L('KOVÁRNA', 'FORGE'), spent ? `<button class="btn ghost" data-act="refund">${icon('reroll')} ${L('Vrátit vše', 'Refund all')}</button>` : '')}
         <div class="forge">
-          <div class="fstage">
-            <canvas id="forgeCv" aria-label="${L('Model lodi: tažením otočíš, klepnutím vybereš část', 'Ship model: drag to rotate, tap to pick a part')}"></canvas>
-            <div class="fhint">${icon('reroll')} ${L('Táhni a loď se otočí · klepni na část lodi', 'Drag to rotate the ship · tap a part')}</div>
+          <div class="fleft">
+            <div class="fstage">
+              <canvas id="forgeCv" aria-label="${L('Model lodi: tažením otočíš, klepnutím vybereš část', 'Ship model: drag to rotate, tap to pick a part')}"></canvas>
+              <div class="fhint">${icon('reroll')} ${L('Táhni a loď se otočí · klepni na část lodi', 'Drag to rotate the ship · tap a part')}</div>
+            </div>
+            <div class="fstats" id="fstats">${forgeStats()}</div>
           </div>
           <div class="fside">
             <div class="fparts" role="tablist">${PARTS.map(p => partChip(p)).join('')}</div>
             <div class="fpanel" id="fpanel">${partPanel(forgePart)}</div>
           </div>
         </div>`;
-      Forge3D.mount($('#forgeCv'), { onSelect: id => { forgePart = id; Sound.play.select(); forgeRefresh(); } });
+      Forge3D.mount($('#forgeCv'), { onSelect: id => { const same = id === forgePart; forgePart = id; Sound.play.select(); forgeRefresh(same); } });
       Forge3D.select(forgePart, true);
     },
 
@@ -339,22 +390,30 @@ const UI = (() => {
         </div>`;
     },
 
+    // Nastavení po skupinách přes celou šířku; vpravo ukázka, jak nastavení pod myší vypadá zapnuté a vypnuté.
     settings(el) {
       const s = SAVE.settings, pl = PerfLog.lastLog();
       const perfLast = pl && pl.created ? `${new Date(pl.created).toLocaleString(LANG === 'cs' ? 'cs-CZ' : 'en-GB')}${pl.seconds ? ` · ${fmtTime(pl.seconds)}` : ''}` : '';
+      const grp = (ic, title, rows, cls = '') => `<section class="setg ${cls}"><h4>${icon(ic)} ${title}</h4>${rows}</section>`;
       el.innerHTML = `${topbar(L('KONFIGURACE', 'CONFIGURATION'), L('NASTAVENÍ', 'SETTINGS'))}
-        <div class="settings">
-          <div class="row"><label>${L('Jazyk', 'Language')}<small>Čeština / English</small></label>${langSwitch()}</div>
-          <div class="row"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
-          <div class="row"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
-          ${window.GCMusic ? `<div class="row"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}
-          <div class="row"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu se hra nezastaví: vybere kartu nejvýš v pořadí priorit', 'Level-ups no longer pause: the card highest in your priority order is picked')}</small></label><button class="btn" data-go="prio">${icon('auto')} ${L('Priority', 'Priorities')}</button><button class="toggle ${s.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
-          <div class="row"><label>${L('Truhly bez okna', 'Chests without a window')}<small>${L('Truhla se otevře sama a hra se nezastaví: co v ní bylo, se jen krátce ukáže nad lodí', 'A chest opens by itself and the game keeps going: its contents only flash above your ship')}</small></label><button class="toggle ${s.autoChest ? 'on' : ''}" data-tog="autoChest"></button></div>
-          <div class="row"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
-          <div class="row"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
-          <div class="row"><label>${L('Kvalita vykreslování', 'Rendering quality')}<small>${L('Auto hlídá rozlišení podle obrazovky a při sekání ho sníží. Úsporná kreslí v 70 % rozlišení.', 'Auto keeps the resolution in budget for your screen and lowers it when the game stutters. Saver draws at 70% resolution.')}</small></label><button class="btn" data-act="quality">${{ auto: 'Auto', high: L('Plná', 'Full'), low: L('Úsporná', 'Saver') }[s.quality || 'auto']}</button></div>
-          <div class="row"><label>${L('Počítadlo FPS', 'FPS counter')}<small>VOIDBORN v${GAME_VERSION}</small></label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>
-          <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>
+        <div class="set-wrap">
+          <div class="set-groups">
+            ${grp('auto', L('Hratelnost', 'Gameplay'), `
+          <div class="row" data-pv="autoPick" tabindex="-1"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu se hra nezastaví: vybere kartu nejvýš v pořadí priorit', 'Level-ups no longer pause: the card highest in your priority order is picked')}</small></label><button class="btn" data-go="prio">${icon('auto')} ${L('Priority', 'Priorities')}</button><button class="toggle ${s.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
+          <div class="row" data-pv="autoChest" tabindex="-1"><label>${L('Truhly bez okna', 'Chests without a window')}<small>${L('Truhla se otevře sama a hra se nezastaví: co v ní bylo, se jen krátce ukáže nad lodí', 'A chest opens by itself and the game keeps going: its contents only flash above your ship')}</small></label><button class="toggle ${s.autoChest ? 'on' : ''}" data-tog="autoChest"></button></div>`)}
+            ${grp('eye', L('Obraz', 'Display'), `
+          <div class="row" data-pv="shake" tabindex="-1"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
+          <div class="row" data-pv="dmgNums" tabindex="-1"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
+          <div class="row" data-pv="quality" tabindex="-1"><label>${L('Kvalita vykreslování', 'Rendering quality')}<small>${L('Auto hlídá rozlišení podle obrazovky a při sekání ho sníží. Úsporná kreslí v 70 % rozlišení.', 'Auto keeps the resolution in budget for your screen and lowers it when the game stutters. Saver draws at 70% resolution.')}</small></label><button class="btn" data-act="quality">${{ auto: 'Auto', high: L('Plná', 'Full'), low: L('Úsporná', 'Saver') }[s.quality || 'auto']}</button></div>
+          <div class="row" data-pv="fps" tabindex="-1"><label>${L('Počítadlo FPS', 'FPS counter')}<small>VOIDBORN v${GAME_VERSION}</small></label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>`)}
+            ${grp('wave', L('Jazyk a zvuk', 'Language & sound'), `
+          <div class="row" data-pv="lang" tabindex="-1"><label>${L('Jazyk', 'Language')}<small>Čeština / English</small></label>${langSwitch()}</div>
+          <div class="row" data-pv="sfx" tabindex="-1"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
+          <div class="row" data-pv="music" tabindex="-1"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
+          ${window.GCMusic ? `<div class="row" data-pv="playlist" tabindex="-1"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}`)}
+            ${grp('book', L('Výkon', 'Performance'), `
+          <div class="row" data-pv="perfLog" tabindex="-1"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>`)}
+            ${grp('gear', L('Ovládání', 'Controls'), `
           <div class="keys">
             <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>${L('Pohyb (nebo šipky / gamepad)', 'Move (or arrows / gamepad)')}</span>
             <span><kbd>${L('Mezerník', 'Space')}</kbd></span><span>${L('Úskok — krátká nezranitelnost', 'Dash — brief invulnerability')}</span>
@@ -362,9 +421,17 @@ const UI = (() => {
             <span><kbd>1</kbd>–<kbd>4</kbd></span><span>${L('Výběr karty při postupu', 'Pick a card on level-up')}</span>
             <span><kbd>R</kbd> / <kbd>X</kbd></span><span>${L('Přehodit / přeskočit karty', 'Reroll / skip cards')}</span>
             <span>${L('Zbraně', 'Weapons')}</span><span>${L('Střílí automaticky. Ty jen přežij.', 'They fire automatically. You just survive.')}</span>
+          </div>`, 'keys-g')}
+            ${grp('skull', L('Data', 'Data'), `
+          <div class="row" data-pv="wipe" tabindex="-1"><label>${L('Smazat postup', 'Erase progress')}<small>${L('Nevratně vymaže všechny střepy, úspěchy a odemčení', 'Permanently erases all shards, achievements and unlocks')}</small></label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>`, 'danger')}
           </div>
-          <div class="row"><label>${L('Smazat postup', 'Erase progress')}<small>${L('Nevratně vymaže všechny střepy, úspěchy a odemčení', 'Permanently erases all shards, achievements and unlocks')}</small></label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>
+          <aside class="set-pv" id="setPv">${SetPreview.html(setPv)}</aside>
         </div>`;
+      el.querySelectorAll('[data-pv]').forEach(r => {
+        const go = () => { if (setPv !== r.dataset.pv) { setPv = r.dataset.pv; $('#setPv').innerHTML = SetPreview.html(setPv); } el.querySelectorAll('[data-pv]').forEach(x => x.classList.toggle('pv', x === r)); };
+        r.addEventListener('pointerenter', go); r.addEventListener('focusin', go); r.addEventListener('click', go);
+        if (r.dataset.pv === setPv) r.classList.add('pv');
+      });
     },
   };
 
@@ -435,7 +502,7 @@ const UI = (() => {
         buy(ds.buy);
       } else if (ds.part) {
         if (forgePart === ds.part) return;
-        forgePart = ds.part; Forge3D.select(ds.part, true); Sound.play.select(); forgeRefresh();
+        forgePart = ds.part; Forge3D.select(ds.part, true); Sound.play.select(); forgeRefresh(false);
       } else if (ds.lmode) {
         loMode = ds.lmode; Sound.play.click(); rerender();
       } else if (ds.lw) {
@@ -496,8 +563,9 @@ const UI = (() => {
     checkAchievements(false);
     persist();
     if (current === 'forge' && $('#fpanel')) {
-      if (forgePart !== f.part) { forgePart = f.part; Forge3D.select(f.part, true); }
-      forgeRefresh();
+      const same = forgePart === f.part;
+      if (!same) { forgePart = f.part; Forge3D.select(f.part, true); }
+      forgeRefresh(same);
       // úspěch za nákup mohl přidat střepy: ty se ukážou v horní liště (forgeRefresh)
     } else rerender();
     const c = $('#fc-' + id); if (c) c.classList.add('bought');

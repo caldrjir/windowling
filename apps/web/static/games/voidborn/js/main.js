@@ -190,6 +190,7 @@ function loop(now) {
     attractAcc += dt;
     if (attractAcc >= 1 / 62 || Render.dirty) { Render.drawAttract(attractAcc); attractAcc = 0; Render.dirty = false; }
     if (UI.current === 'forge') Forge3D.frame(dt); // 3D model lodi v Kovárně
+    else if (UI.current === 'settings') SetPreview.frame(dt); // ukázka nastavení zapnuto / vypnuto
   } else {
     const t0 = PerfLog.t();
     updateGame(dt);

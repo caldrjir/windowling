@@ -8,4 +8,7 @@
 // 1.2.0  Kovárna jako 3D loď (části lodi, otáčení, výběr klepnutím), výzbroj do běhu (závěsníky,
 //        Zbrojní plán, Kalibrace), Věčný tah, truhly bez okna; Vějíř karet sloučen do Širokého výběru
 //        a Věčný fénix do Fénixe (starší uložení se převedou)
-const GAME_VERSION = '1.2.0';
+// 1.3.0  Kovárna: statistiky lodi pod modelem (základ + kolik přidává Kovárna), pevná hlavička panelu
+//        s rolujícím seznamem, tažení otáčí lodí po směru prstu; Nastavení po skupinách přes celou
+//        plochu s živou ukázkou zapnuto / vypnuto
+const GAME_VERSION = '1.3.0';
