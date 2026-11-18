@@ -140,6 +140,18 @@ const Sound = (() => {
     die() { tone({ type: 'sawtooth', f: 320, f2: 28, dur: 1.6, vol: 0.14, lp: 1100 }); noise({ f: 300, f2: 40, dur: 1.4, vol: 0.15, ft: 'lowpass' }); },
     revive() { [12, 7, 4, 0, 12, 19, 24].forEach((s, i) => tone({ type: 'triangle', f: semi(s), dur: 0.3, vol: 0.06, delay: i * 0.07 })); },
     start() { tone({ type: 'sawtooth', f: 110, f2: 880, dur: 0.8, vol: 0.06, lp: 2400 }); noise({ f: 300, f2: 6000, dur: 0.8, vol: 0.05 }); },
+    // legenda přiletěla: tajemný sestupný arpeggio s třpytem
+    legend() {
+      [19, 15, 12, 7, 3, 0].forEach((s, i) => tone({ type: 'sine', f: semi(s - 2), dur: 0.7, vol: 0.06, delay: i * 0.11, a: 0.03 }));
+      tone({ type: 'triangle', f: semi(-26), dur: 1.6, vol: 0.08, a: 0.2 });
+      noise({ f: 7000, dur: 1.2, vol: 0.025, ft: 'highpass' });
+    },
+    // úder Půlnočníka: zvon (základ, kvinta, rozladěná oktáva)
+    chime() {
+      tone({ type: 'sine', f: 392, dur: 1.6, vol: 0.1, a: 0.004 });
+      tone({ type: 'sine', f: 587, dur: 1.1, vol: 0.04, a: 0.004 });
+      tone({ type: 'sine', f: 790, dur: 0.8, vol: 0.035, a: 0.004 });
+    },
   };
 
   // ── Generativní synthwave ─────────────────────────────────────────────────

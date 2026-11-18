@@ -377,6 +377,14 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 .cx.unknown h4 { color: var(--dim); }
 .cx-sum { grid-column: 1 / -1; color: var(--muted); font-size: 14px; letter-spacing: .08em; }
 .cx-sum b { color: var(--cyan); }
+.cx-sum.lg { margin-top: 14px; color: #ffe9b0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cx-sum.lg b { color: #ffd166; }
+.cx-sum.lg .ico { width: 18px; height: 18px; color: #ffd166; filter: drop-shadow(0 0 6px #ffd166); }
+.cx-sum.lg small { flex-basis: 100%; color: var(--muted); font-size: 12px; letter-spacing: .02em; }
+.fcard.legend { border-color: rgba(255,209,102,.45); box-shadow: inset 0 0 24px -12px rgba(255,209,102,.6); }
+.fcard.legend.unknown h4 { color: #ffd166; }
+.fcard.legend h4.q { letter-spacing: .3em; }
+.fcard .hint, .ach .hint { color: #ffe9b0; }
 .cx p i { display: block; margin-top: 4px; font-style: normal; color: var(--muted); font-size: 12px; }
 .sum { color: var(--muted); font-size: 14px; letter-spacing: .1em; }
 
@@ -470,6 +478,8 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var
 .hc.sh.on { opacity: 1; border-color: #7df9ff; box-shadow: 0 0 10px -2px #7df9ff; }
 .hc.ar { --c: #a0a6ff; }
 .hc.rg { --c: #80ffdb; }
+.hc.lg { --c: #ffd166; border-color: rgba(255,209,102,.6); box-shadow: 0 0 10px -2px #ffd166; animation: lgPulse 1.6s ease-in-out infinite; }
+@keyframes lgPulse { 50% { box-shadow: 0 0 16px 0 rgba(255,209,102,.7); } }
 .slots { display: flex; gap: 6px; flex-wrap: wrap; max-width: 300px; }
 .slot { width: 42px; height: 42px; display: grid; place-items: center; background: rgba(8,4,24,.7); border: 1px solid rgba(255,255,255,.12); position: relative; color: var(--c); font-size: 22px;
   clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
@@ -501,6 +511,8 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var
 .bn-item.warn h3 { color: #ffb347; text-shadow: 0 0 30px rgba(255,140,40,.7); }
 .bn-item.boss h3 { color: var(--red); text-shadow: 0 0 40px rgba(255,40,70,.9); animation: shakeX .15s infinite; }
 .bn-item.gold h3 { color: var(--gold); text-shadow: 0 0 40px rgba(255,200,80,.9); }
+.bn-item.legend h3 { color: #ffd166; text-shadow: 0 0 36px rgba(255,209,102,.95), 0 0 10px rgba(255,255,255,.6); }
+.bn-item.legend p { color: #ffe9b0; }
 @keyframes bannerIn { 0% { opacity: 0; transform: scale(1.6); filter: blur(8px); } 12% { opacity: 1; transform: scale(1); filter: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
 @keyframes shakeX { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(2px); } }
 

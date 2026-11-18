@@ -142,6 +142,7 @@ function newRun(pilotId, si, od) {
     if (ids.length) applyChoice({ kind: 'passive', id: pick(ids), lvl: 1, isNew: true });
   }
   sectorStart();
+  Legends.reset();
   G.cam.x = 0; G.cam.y = 0;
   G.state = 'play';
   PerfLog.begin();
@@ -199,7 +200,7 @@ function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false, forceCrit = false
   if (e.dead || e.phased) return; // Fázovač je průsvitný: nic ho nezasáhne
   const crit = forceCrit || Math.random() < G.st.crit;
   if (crit) dmg *= G.st.critMul;
-  if (e.boss || e.elite) dmg *= G.st.bossDmg;
+  if (e.boss || e.elite || e.legend) dmg *= G.st.bossDmg;
   // obrana nových druhů: Clona (poloviční zranění), pancíř (odečte se z každé rány), štít zepředu
   let blocked = false;
   if (e.prot > G.time) dmg *= 0.5;
@@ -208,10 +209,10 @@ function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false, forceCrit = false
   if (e.d.cloak) e.revealT = G.time + 1.2;
   e.hp -= dmg;
   // Popravčí: běžný nepřítel pod prahem zdraví rovnou padne.
-  if (G.st.execute && !e.boss && !e.elite && e.hp > 0 && e.hp < e.maxHp * G.st.execute) e.hp = 0;
+  if (G.st.execute && !e.boss && !e.elite && !e.legend && e.hp > 0 && e.hp < e.maxHp * G.st.execute) e.hp = 0;
   e.flash = 0.09;
   G.dmgBy[src] = (G.dmgBy[src] || 0) + dmg;
-  if (!e.boss) {
+  if (!e.boss && !e.legend) {
     const kb = e.elite ? 0.15 : 1 / (e.d.mass || 1);
     e.kx += kx * kb; e.ky += ky * kb;
   }
@@ -231,6 +232,8 @@ function killEnemy(e) {
   burst(e.x, e.y, e.color, Math.min(26, 6 + e.r * 0.6), 160 + e.r * 6, 3 + e.r * 0.08);
   if (e.leech > G.time) G.p.hp = Math.min(G.st.maxHp, G.p.hp + e.leechAmt);
   if (e.boss) { bossKilled(e); return; }
+  if (e.legend) { Legends.killed(e); return; }
+  if (e.elite && G.byMeteor) Legends.meteorElite(); // elitu dorazil meteorit: možná přiletí Kometa
   Sound.play.kill();
   if (e.d.split && G.enemies.length < 480) {
     for (let i = 0; i < (e.d.splitN || 3); i++) {
@@ -400,7 +403,7 @@ function collect(pk) {
       for (const e of G.enemies) {
         if (e.dead) continue;
         if (Math.abs(e.x - p.x) < G.viewW / 2 + 40 && Math.abs(e.y - p.y) < G.viewH / 2 + 40) {
-          if (e.boss) hurtEnemy(e, e.maxHp * 0.04, 'bomb', 0, 0, true); else killEnemy(e);
+          if (e.boss || e.legend) hurtEnemy(e, e.maxHp * (e.boss ? 0.04 : 0.1), 'bomb', 0, 0, true); else killEnemy(e);
         }
       }
       G.effects.push({ k: 'ring', x: p.x, y: p.y, r: 10, maxR: G.viewR, spd: 2200, dmg: 0, knock: 0, life: 1, color: '#ffffff', visual: true, delay: 0 });
@@ -443,7 +446,7 @@ function playerDown() {
     p.hp = G.st.maxHp * (G.st.reviveFull ? 1 : 0.6); p.inv = G.st.reviveFull ? 5 : 3;
     Sound.play.revive(); G.flash = 1; addShake(20);
     for (const e of G.enemies) if (!e.dead && d2(e.x, e.y, p.x, p.y) < 420 * 420) {
-      if (e.boss) { const a = Math.atan2(e.y - p.y, e.x - p.x); e.x += Math.cos(a) * 200; e.y += Math.sin(a) * 200; }
+      if (e.boss || e.legend) { const a = Math.atan2(e.y - p.y, e.x - p.x); e.x += Math.cos(a) * 200; e.y += Math.sin(a) * 200; }
       else killEnemy(e);
     }
     G.ebullets.length = 0;
@@ -492,7 +495,7 @@ function updatePlayer(dt) {
         if (e.dead || p.dashHit.has(e.id) || d2(p.x, p.y, e.x, e.y) > (34 + e.r) * (34 + e.r)) continue;
         p.dashHit.add(e.id);
         const l = Math.hypot(p.dvx, p.dvy) || 1;
-        hurtEnemy(e, e.maxHp * (e.boss ? 0.015 : 0.15) * G.st.dashDmg, 'dash', p.dvx / l * 300, p.dvy / l * 300);
+        hurtEnemy(e, e.maxHp * (e.boss ? 0.015 : e.legend ? 0.05 : 0.15) * G.st.dashDmg, 'dash', p.dvx / l * 300, p.dvy / l * 300);
         burst(e.x, e.y, '#55f6ff', 6, 220, 2.5, 0.35);
       }
     }
@@ -551,6 +554,7 @@ function spawnEnemyAt(type, x, y, opt) {
     st: 0, stT: rand(0.5, 2), ang: 0, leech: 0, leechAmt: 0, orbT: 0, ringId: 0,
   };
   if (opt && opt.elite) { e.elite = true; e.r *= 1.75; e.hp *= 22; e.dmg *= 1.5; e.speed *= 0.85; e.xp *= 12; }
+  if (d.legend) { e.legend = true; e.life = d.life; } // legendy (legends.js): odletí za life sekund
   e.maxHp = e.hp;
   G.enemies.push(e);
   // Dvojčata chodí v páru: druhé (modré) vznikne hned vedle
@@ -710,7 +714,7 @@ function launchMeteor(a, off) {
 }
 function hazardKill(e, kx, ky) {
   if (e.boss) return;
-  if (e.elite) { hurtEnemy(e, e.maxHp * 0.25, 'hazard', kx, ky, true); return; }
+  if (e.elite || e.legend) { hurtEnemy(e, e.maxHp * (e.legend ? 0.1 : 0.25), 'hazard', kx, ky, true); return; }
   SAVE.stats.hazardKills = (SAVE.stats.hazardKills || 0) + 1;
   killEnemy(e);
 }
@@ -725,7 +729,7 @@ function updateMeteors(dt) {
     for (const e of _q) {
       if (e.dead || d2(m.x, m.y, e.x, e.y) > (m.r + e.r) * (m.r + e.r)) continue;
       if (e.boss) { if (!m.boss) { m.boss = true; hurtEnemy(e, e.maxHp * 0.04, 'hazard', 0, 0, true); } }
-      else if (!e.mHit || e.mHit !== m) { e.mHit = m; hazardKill(e, Math.cos(m.a) * 500, Math.sin(m.a) * 500); }
+      else if (!e.mHit || e.mHit !== m) { e.mHit = m; G.byMeteor = true; hazardKill(e, Math.cos(m.a) * 500, Math.sin(m.a) * 500); G.byMeteor = false; }
     }
     if (G.particles.length < MAX_PARTICLES) for (let i = 0; i < 2; i++) {
       const b = m.a + Math.PI + rand(-0.35, 0.35);
@@ -752,9 +756,9 @@ function updateWell(dt) {
     if (e.dead) continue;
     const ex = w.x - e.x, ey = w.y - e.y, ed = Math.hypot(ex, ey) || 1;
     if (ed > w.R) continue;
-    const pull = (e.boss ? 0.25 : 1) * (200 * Math.pow(1 - ed / w.R, 1.3) + 25);
+    const pull = (e.boss || e.legend ? 0.25 : 1) * (200 * Math.pow(1 - ed / w.R, 1.3) + 25);
     e.x += ex / ed * Math.min(pull * dt, ed); e.y += ey / ed * Math.min(pull * dt, ed);
-    if (!e.boss && ed < w.r + e.r * 0.4) hazardKill(e, 0, 0);
+    if (!e.boss && !e.legend && ed < w.r + e.r * 0.4) hazardKill(e, 0, 0);
   }
   if (G.particles.length < MAX_PARTICLES && Math.random() < 0.8) {
     const a = Math.random() * TAU, rr = w.r * rand(1.6, 3.2);
@@ -1255,7 +1259,9 @@ function updateGame(rawDt) {
   G.time += dt;
   let pt = PerfLog.t();
   updatePlayer(dt); pt = PerfLog.lap('u.player', pt);
-  director(dt); PerfLog.lap('u.director', pt);
+  director(dt);
+  if (G.state === 'play') Legends.tick(dt); // podmínky příchodu legend (legends.js)
+  PerfLog.lap('u.director', pt);
   stepWorld(dt, false);
   if (G.victoryT > 0) {
     G.victoryT -= rawDt;
@@ -1410,8 +1416,8 @@ function updateEnemies(dt, frozen) {
       hurtPlayer(e.dmg, e.x, e.y);
       if (d.ai === 'ram' && e.v) { p.vx += dx / dist * e.v * 1.4; p.vy += dy / dist * e.v * 1.4; e.v = e.speed; }
     }
-    // recyklace vzdálených nepřátel
-    if (dist > farR) {
+    // recyklace vzdálených nepřátel (legendy se nepřesouvají: přiletěly za hráčem a zase odletí)
+    if (dist > farR && !e.legend) {
       const sp2 = spawnPos(40); e.x = sp2.x; e.y = sp2.y; e.stream = undefined;
     }
   }

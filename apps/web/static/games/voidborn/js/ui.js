@@ -73,6 +73,19 @@ const ENEMY_NAMES = {
   leech: [L('Pijavice', 'Leech'), L('Přisaje se, saje zdraví a zpomaluje tě. Setřese ji úskok.', 'Latches on, drains your health and slows you. A dash shakes it off.')],
   scavenger: [L('Mrchožrout', 'Scavenger'), L('Sbírá tvoje krystaly zkušeností a roste z nich. Po smrti je vrátí i s úrokem.', 'Eats your experience crystals and grows. When it dies it gives them back with interest.')],
   twin: [L('Dvojčata', 'Twins'), L('Chodí v páru a drží se po stranách. Energetické lano mezi nimi pálí. Po smrti jednoho se druhé rozzuří.', 'Come in pairs and flank you. The energy tether between them burns. Kill one and the other goes wild.')],
+  // Legendy: [jméno, popis, nápověda k podmínce příchodu (kodex a úspěchy ji ukazují místo popisu)]
+  watcher: [L('Pozorovatel', 'Watcher'), L('Obří oko, které si drží odstup a dívá se. Otevřené je jen, když se nehýbeš: jen tehdy ho zbraně zraní.', 'A giant eye that keeps its distance and stares. It only opens while you hold still, and only then can your weapons hurt it.'),
+    L('Kdo se dlouho ani nehne, toho si někdo všimne.', 'Hold perfectly still for long enough and someone will notice.')],
+  hoarder: [L('Zlatník', 'Hoarder'), L('Krade krystaly zkušeností po celé obrazovce a utíká před tebou. Po zničení vrátí dvakrát tolik a sype střepy.', 'Steals experience crystals all over the screen and runs from you. Destroy it to get twice as many back and a pile of shards.'),
+    L('Krystaly, které nikdo nesbírá, přilákají jejich strážce.', 'Crystals nobody picks up attract their keeper.')],
+  midnight: [L('Půlnočník', 'Midnight Chime'), L('Přenáší se kolem tebe a s každým úderem vypustí hustší prstenec střel. Po dvanáctém úderu zmizí.', 'Teleports around you and each chime releases a denser ring of shots. After the twelfth chime it vanishes.'),
+    L('Přilétá jen tehdy, když hodiny odbíjejí půlnoc.', 'It only comes while the clock strikes midnight.')],
+  comet: [L('Kometa', 'Comet'), L('Zamíří, proletí přes celou obrazovku a nechá za sebou oheň. Nejlíp se trefí, když se zastaví a míří.', 'Takes aim, streaks across the whole screen and leaves fire behind. It is easiest to hit while it stops to aim.'),
+    L('Až padající kámen dorazí zlatého vůdce, nebe odpoví.', 'When a falling stone finishes off a golden leader, the sky answers.')],
+  mirror: [L('Zrcadlo', 'Mirror'), L('Tvůj odraz: pohybuje se přesně opačně než ty kolem bílé kotvy a střílí tvými střelami. Ke kotvě se dostanete oba zároveň.', 'Your reflection: it moves exactly opposite to you around a white anchor and fires your own shots. You both reach the anchor at once.'),
+    L('Bezchybný pilot jednou potká sám sebe.', 'A flawless pilot will one day meet themself.')],
+  ouroboros: [L('Uroboros', 'Ouroboros'), L('Had, který obtáčí tvou loď. Tělo pálí, zbraně zraní jen hlavu. Pod polovinou zdraví kruh utáhne.', 'A serpent coiling around your ship. Its body burns, weapons only hurt the head. Below half health it tightens the coil.'),
+    L('Had, který požírá vlastní ocas. Krouží a krouží, rychle a těsně…', 'The serpent that devours its own tail. Round and round, fast and tight…')],
 };
 
 const UI = (() => {
@@ -364,14 +377,15 @@ const UI = (() => {
       loadRarity();
       const R = rarity, byPlayers = !!R && R.total >= RARITY_MIN;
       const pct = a => (R && R.total ? (R.counts[a.id] || 0) / R.total * 100 : null);
-      const tierOf = a => { const p = pct(a); if (byPlayers) return p >= 60 ? 0 : p >= 35 ? 1 : p >= 15 ? 2 : p >= 5 ? 3 : 4; const r = a.reward; return r < 1000 ? 0 : r < 5000 ? 1 : r < 20000 ? 2 : r < 60000 ? 3 : 4; };
+      // legendy jsou legendární i podle obtížnosti: hlavní je najít je, ne jejich odměna
+      const tierOf = a => { const p = pct(a); if (byPlayers) return p >= 60 ? 0 : p >= 35 ? 1 : p >= 15 ? 2 : p >= 5 ? 3 : 4; if (a.legend || a.id === 'lgAll') return 4; const r = a.reward; return r < 1000 ? 0 : r < 5000 ? 1 : r < 20000 ? 2 : r < 60000 ? 3 : 4; };
       const fmtPct = p => (p === null ? '' : p > 0 && p < 1 ? L('<1 %', '<1%') : `${Math.round(p)}${L(' %', '%')}`);
       const card = a => {
         const got = !!SAVE.achievements[a.id], [v, m] = a.prog(SAVE, null), p = pct(a);
         const pl = a.pilot && PILOTS.find(x => x.id === a.pilot);
         const opens = [...(pl ? [pl.name] : []), ...[...BASE_WEAPONS.map(id => WEAPONS[id]), ...Object.values(PASSIVES)].filter(o => o.unlock === a.id).map(o => o.name)];
         return `<div class="fcard ach ${got ? 'got' : ''}" data-ach="${a.id}">
-            <div class="fi">${icon(a.icon)}<div><h4>${a.name}</h4><p>${a.desc}</p></div>${p !== null ? `<em class="ach-pct" title="${L('Kolik hráčů s účtem ho má', 'Share of signed-in players who have it')}">${fmtPct(p)}</em>` : ''}</div>
+            <div class="fi">${icon(a.icon)}<div><h4>${a.name}</h4><p>${a.legend && !got ? `${L('Legenda ???', 'Legend ???')}: <i class="hint">„${ENEMY_NAMES[a.legend][2]}“</i>` : a.desc}</p></div>${p !== null ? `<em class="ach-pct" title="${L('Kolik hráčů s účtem ho má', 'Share of signed-in players who have it')}">${fmtPct(p)}</em>` : ''}</div>
             <div class="bar"><i style="width:${Math.min(100, v / m * 100)}%"></i></div>
             <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${opens.length ? ` · ${L('odemyká', 'unlocks')} ${opens.join(', ')}` : ''}</span><b>+${fmtNum(a.reward)} ◆</b></div>
             ${a.perk ? `<div class="ach-perk">${icon('star')} ${L('Navždy', 'Forever')}: ${perkText(a.perk)}</div>` : ''}
@@ -423,12 +437,19 @@ const UI = (() => {
       else body = `<div class="cx-sum">${L('Bestiář', 'Bestiary')}: <b>${ENEMY_KINDS.filter(k => SAVE.bestiary[k]).length} / ${ENEMY_KINDS.length}</b> ${L('druhů zničeno', 'kinds destroyed')}</div>` + ENEMY_KINDS.map(k => {
         const d = ENEMIES[k], names = ENEMY_NAMES[k], n = SAVE.bestiary[k] || 0;
         return `<div class="fcard cx ${n ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi"><canvas width="64" height="64" data-enemy="${k}" style="width:40px;height:40px"></canvas><div><h4>${n ? names[0] : '???'}</h4><p>${n ? `${names[1]} <i>${L('Zničeno', 'Destroyed')}: ${fmtNum(n)}</i>` : L('Zatím nezničen. Potkáš ho v některém ze sektorů.', 'Not destroyed yet. You will meet it in one of the sectors.')}</p></div></div></div>`;
-      }).join('') + Object.values(BOSSES).map(b => `<div class="fcard cx" style="--c:${b.color}"><div class="fi">${icon('boss')}<div><h4>${b.name}</h4><p>${L('Boss sektoru. Vzorce útoků', 'Sector boss. Attack patterns')}: ${b.patterns.length}.</p></div></div></div>`).join('');
+      }).join('') + Object.values(BOSSES).map(b => `<div class="fcard cx" style="--c:${b.color}"><div class="fi">${icon('boss')}<div><h4>${b.name}</h4><p>${L('Boss sektoru. Vzorce útoků', 'Sector boss. Attack patterns')}: ${b.patterns.length}.</p></div></div></div>`).join('')
+        // Legendy: neobjevené jen jako ??? s nápovědou, spatřené se jménem, zničené s celým popisem
+        + `<div class="cx-sum lg">${icon('legend')} ${L('Legendy prázdnoty', 'Void legends')}: <b>${LEGENDS.filter(k => SAVE.bestiary[k]).length} / ${LEGENDS.length}</b> ${L('zničeno', 'destroyed')}<small>${L('Přiletí jen, když uděláš něco hodně zvláštního, a i pak jen občas. Za každou je úspěch.', 'They only appear when you do something very particular, and even then only sometimes. Each one has an achievement.')}</small></div>`
+        + LEGENDS.map(k => {
+          const d = ENEMIES[k], [name, desc, hint] = ENEMY_NAMES[k], n = SAVE.bestiary[k] || 0, seen = SAVE.legendSeen[k] || 0;
+          const txt = n ? `${desc} <i>${L('Zničeno', 'Destroyed')}: ${fmtNum(n)}</i>` : seen ? `${desc} <i>${L('Spatřena', 'Seen')}: ${fmtNum(seen)}× · ${L('zatím neporažena', 'not defeated yet')}</i>` : `<i class="hint">„${hint}“</i>`;
+          return `<div class="fcard cx legend ${n ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi"><canvas width="64" height="64" data-enemy="${k}" data-seen="${seen ? 1 : 0}" style="width:40px;height:40px"></canvas><div><h4 class="${seen || n ? '' : 'q'}">${seen || n ? name : '???'}</h4><p>${txt}</p></div></div></div>`;
+        }).join('');
       el.innerHTML = `${topbar(L('ARCHIV', 'ARCHIVE'), L('KODEX', 'CODEX'))}
         <div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === codexTab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
         <div class="grid-cards">${body}</div>`;
       el.querySelectorAll('canvas[data-enemy]').forEach(c => {
-        const k = c.dataset.enemy, d = ENEMIES[k], x = c.getContext('2d'), known = SAVE.bestiary[k] > 0;
+        const k = c.dataset.enemy, d = ENEMIES[k], x = c.getContext('2d'), known = SAVE.bestiary[k] > 0 || c.dataset.seen === '1';
         const img = Sprites.enemy(d.shape, d.r, known ? d.color : '#6b6f8f', false, false);
         if (!known) x.globalAlpha = 0.45;
         const s = 52 / (img.hw * 2) * Math.min(1.6, 26 / d.r);
@@ -503,6 +524,8 @@ const UI = (() => {
           <div class="row"><label>${L('Hitboxy', 'Hitboxes')}<small>${L('Kruhy zásahů nepřátel, jejich střel a lodi', 'Hit circles of enemies, their shots and your ship')}</small></label><button class="toggle ${s.dbgHit ? 'on' : ''}" data-tog="dbgHit"></button></div>
           <div class="row"><label>${L('Rychlost hry', 'Game speed')}<small>${L('Víc kroků simulace za snímek', 'More simulation steps per frame')}</small></label><button class="btn" data-act="dbgSpeed">${s.dbgSpeed || 1}×</button></div>
           <div class="row"><label>${L('Odemknout vše', 'Unlock everything')}<small>${L('Všechny sektory, Overdrive a piloti, jen dokud je zapnuto (postup se nemění)', 'All sectors, Overdrive and pilots while it is on (progress is not changed)')}</small></label><button class="toggle ${s.dbgUnlock ? 'on' : ''}" data-tog="dbgUnlock"></button></div>
+          <div class="row"><label>${L('Legendy: jistá šance', 'Legends: sure chance')}<small>${L('Legenda přiletí pokaždé, když splníš její podmínku', 'A legend appears every time you meet its condition')}</small></label><button class="toggle ${s.dbgLegend ? 'on' : ''}" data-tog="dbgLegend"></button></div>
+          <div class="row"><label>${L('Přivolat legendu', 'Summon a legend')}<small>${L('Zvolená legenda přiletí 12 s po startu každého běhu', 'The chosen legend arrives 12 s into every run')}</small></label><button class="btn" data-act="dbgLegendNext">${s.dbgLegendNext && ENEMY_NAMES[s.dbgLegendNext] ? ENEMY_NAMES[s.dbgLegendNext][0] : L('Žádná', 'None')}</button></div>
           <div class="row"><label>${L('Střepy', 'Shards')}<small>${L('Přidá střepy na nákupy v Kovárně', 'Adds shards for the Forge')}</small></label><button class="btn" data-act="dbgShards">+10 000 ◆</button></div>`, 'debug') : ''}
             ${grp('skull', L('Data', 'Data'), `
           <div class="row"><label>${L('Smazat postup', 'Erase progress')}<small>${L('Nevratně vymaže všechny střepy, úspěchy a odemčení', 'Permanently erases all shards, achievements and unlocks')}</small></label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>`, 'danger')}
@@ -641,6 +664,7 @@ const UI = (() => {
     // Debug (sekce jen při DEBUG)
     dbgSpeed() { if (!DEBUG) return; const o = [1, 2, 4], v = SAVE.settings.dbgSpeed || 1; SAVE.settings.dbgSpeed = o[(o.indexOf(v) + 1) % o.length]; persist(); Sound.play.click(); rerender(); },
     dbgShards() { if (!DEBUG) return; SAVE.shards += 10000; persist(); Sound.play.buy(); rerender(); },
+    dbgLegendNext() { if (!DEBUG) return; const o = ['', ...LEGENDS], v = SAVE.settings.dbgLegendNext || ''; SAVE.settings.dbgLegendNext = o[(o.indexOf(v) + 1) % o.length]; persist(); Sound.play.click(); rerender(); },
     quality() {
       const order = ['auto', 'high', 'low'], q = SAVE.settings.quality || 'auto';
       SAVE.settings.quality = order[(order.indexOf(q) + 1) % order.length];
@@ -1070,6 +1094,7 @@ const UI = (() => {
       const z = G.zone, lbl = { calm: L('Smrštění za', 'Shrinks in'), shrink: L('Smršťuje se', 'Shrinking'), hold: L('Rozšíří se za', 'Grows in'), grow: L('Rozšiřuje se', 'Growing') }[z.phase];
       chips.push(`<span class="hc zo ${z.out > 0 ? 'out' : ''}" title="${L('Bezpečná zóna', 'Safe zone')}">${icon('zone')}<b>${z.out > 0 ? L('MIMO ZÓNU', 'OUTSIDE') : `${lbl} ${Math.ceil(z.t)} s`}</b></span>`);
     }
+    if (Legends.alive) { const e = Legends.alive; chips.push(`<span class="hc lg" title="${L('Legenda: zbývá do odletu', 'Legend: time until it leaves')}">${icon('legend')}<b>${ENEMY_NAMES[e.type][0]} · ${Legends.leftText(e)}</b></span>`); }
     if (G.sector.mono && G.monoType) chips.push(`<span class="hc mo" title="${L('Monokultura: teď jen tento druh', 'Monoculture: only this kind for now')}">${icon('skull')}<b>${ENEMY_NAMES[G.monoType][0]}</b></span>`);
     set('hudChips', 'html', chips.join(''));
     if (G.boss) set('bossFill', 'w', Math.max(0, G.boss.hp / G.boss.maxHp * 100).toFixed(1) + '%');

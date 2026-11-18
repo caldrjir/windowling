@@ -51,6 +51,14 @@ const Sprites = (() => {
       case 'capsule': x.moveTo(r * 0.45, -r * 0.55); x.arc(r * 0.45, 0, r * 0.55, -Math.PI / 2, Math.PI / 2); x.lineTo(-r * 0.6, r * 0.55); x.arc(-r * 0.6, 0, r * 0.55, Math.PI / 2, Math.PI * 1.5); x.closePath(); break;
       case 'maw': x.moveTo(0, 0); x.arc(0, 0, r, 0.6, TAU - 0.6); x.closePath(); break;
       case 'trap': x.moveTo(r, -r * 0.42); x.lineTo(r, r * 0.42); x.lineTo(-r * 0.85, r); x.lineTo(-r * 0.85, -r); x.closePath(); break;
+      // legendy (1.5): tvary pro kodex a těla; oči, ručičky a víčka jsou zvlášť v legendPart
+      case 'eye': x.moveTo(r * 1.25, 0); x.quadraticCurveTo(0, r, -r * 1.25, 0); x.quadraticCurveTo(0, -r, r * 1.25, 0); x.closePath(); x.moveTo(r * 0.5, 0); x.arc(0, 0, r * 0.5, 0, TAU); break;
+      case 'gmaw': x.moveTo(0, 0); x.arc(0, 0, r, 0.55, TAU - 0.55); x.closePath(); x.moveTo(r * 0.12, -r * 0.3); x.lineTo(r * 0.4, 0); x.lineTo(r * 0.12, r * 0.3); x.lineTo(-r * 0.14, 0); x.closePath(); break;
+      case 'clock': x.arc(0, 0, r, 0, TAU); for (let i = 0; i < 12; i++) { const a = i * TAU / 12, r0 = i % 3 ? r * 0.8 : r * 0.64; x.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); x.lineTo(Math.cos(a) * r * 0.92, Math.sin(a) * r * 0.92); } break;
+      case 'comet': x.arc(r * 0.25, 0, r * 0.62, -Math.PI / 2, Math.PI / 2); x.lineTo(-r * 0.5, r * 0.45); x.lineTo(-r * 0.25, r * 0.2); x.lineTo(-r * 1.25, r * 0.32); x.lineTo(-r * 0.55, 0); x.lineTo(-r * 1.25, -r * 0.32); x.lineTo(-r * 0.25, -r * 0.2); x.lineTo(-r * 0.5, -r * 0.45); x.closePath(); break;
+      case 'mship': { const k = r / 16; x.moveTo(20 * k, 0); x.lineTo(-4 * k, 6 * k); x.lineTo(-13 * k, 16 * k); x.lineTo(-10 * k, 4 * k); x.lineTo(-14 * k, 0); x.lineTo(-10 * k, -4 * k); x.lineTo(-13 * k, -16 * k); x.lineTo(-4 * k, -6 * k); x.closePath(); break; }
+      case 'serpent': x.moveTo(r * 1.25, 0); x.lineTo(r * 0.5, r * 0.7); x.lineTo(-r * 0.7, r * 0.55); x.lineTo(-r, 0); x.lineTo(-r * 0.7, -r * 0.55); x.lineTo(r * 0.5, -r * 0.7); x.closePath(); x.moveTo(r * 0.6, -r * 0.3); x.arc(r * 0.48, -r * 0.3, r * 0.12, 0, TAU); x.moveTo(r * 0.6, r * 0.3); x.arc(r * 0.48, r * 0.3, r * 0.12, 0, TAU); break;
+      case 'scale': poly(6, Math.PI / 6); break;
       default: x.arc(0, 0, r, 0, TAU);
     }
   }
@@ -78,6 +86,32 @@ const Sprites = (() => {
       path(x, shape, r); x.fillStyle = white ? 'rgba(255,255,255,0.95)' : rgba(col, 0.16); x.fill();
       x.lineWidth = 2.6; x.strokeStyle = col; x.stroke();
       x.shadowBlur = 8; path(x, shape, r * 0.42); x.fillStyle = col; x.globalAlpha = white ? 1 : 0.85; x.fill();
+      return c;
+    });
+  }
+
+  // Části legend, které se kreslí přes tělo: bělmo, duhovka, zavřené víčko, ručička hodin.
+  function legendPart(part, r, color) {
+    return get(`lg|${part}|${r}|${color}`, () => {
+      const [c, x] = canvasFor(r * 1.4 + 16);
+      x.lineJoin = 'round'; x.lineCap = 'round';
+      x.shadowColor = color; x.shadowBlur = 14;
+      const lidY = t => 2 * (1 - t) * t * r * 0.5; // svislá výška víčka (kvadratická křivka)
+      if (part === 'eye') {
+        x.beginPath(); x.moveTo(r * 1.3, 0); x.quadraticCurveTo(0, r * 1.05, -r * 1.3, 0); x.quadraticCurveTo(0, -r * 1.05, r * 1.3, 0); x.closePath();
+        x.fillStyle = rgba(color, 0.2); x.fill(); x.lineWidth = 3; x.strokeStyle = color; x.stroke();
+      } else if (part === 'iris') {
+        x.beginPath(); x.arc(0, 0, r * 0.42, 0, TAU); x.fillStyle = rgba(color, 0.6); x.fill(); x.lineWidth = 2.4; x.strokeStyle = '#ffffff'; x.stroke();
+        x.shadowBlur = 4; x.beginPath(); x.arc(0, 0, r * 0.18, 0, TAU); x.fillStyle = '#05010f'; x.fill();
+        x.beginPath(); x.arc(-r * 0.12, -r * 0.15, r * 0.07, 0, TAU); x.fillStyle = '#ffffff'; x.fill();
+      } else if (part === 'lid') {
+        x.beginPath(); x.moveTo(-r * 1.3, 0); x.quadraticCurveTo(0, r * 0.5, r * 1.3, 0); x.lineWidth = 3.2; x.strokeStyle = color; x.stroke();
+        x.lineWidth = 2;
+        for (let i = 1; i <= 5; i++) { const t = i / 6, px = (t * 2 - 1) * r * 1.3, py = lidY(t); x.beginPath(); x.moveTo(px, py); x.lineTo(px * 1.08, py + r * 0.28); x.stroke(); }
+      } else if (part === 'hand') {
+        x.beginPath(); x.moveTo(-r * 0.15, 0); x.lineTo(r, 0); x.lineWidth = 3; x.strokeStyle = color; x.stroke();
+        x.beginPath(); x.arc(0, 0, 3.5, 0, TAU); x.fillStyle = '#ffffff'; x.fill();
+      }
       return c;
     });
   }
@@ -327,7 +361,7 @@ const Sprites = (() => {
     });
   }
 
-  return { enemy, boss, bossCore, ship, drawShip, glow, boom, blade, gem, shard, pickup, path, radial, hole, arcLine, dashRing, mine, drone, cone, beam, pointer, setScale, clear: () => cache.clear() };
+  return { enemy, legendPart, boss, bossCore, ship, drawShip, glow, boom, blade, gem, shard, pickup, path, radial, hole, arcLine, dashRing, mine, drone, cone, beam, pointer, setScale, clear: () => cache.clear() };
 })();
 
 // ── Renderer ────────────────────────────────────────────────────────────────
@@ -607,6 +641,7 @@ const Render = (() => {
         if (e.flash > 0) spr(Sprites.boss(e.d.shape, e.r, e.color, true), e.x, e.y, e.rot, s, Math.min(1, e.flash * 8));
         continue;
       }
+      if (e.legend) { drawLegend(e, e.d); continue; }
       const spawnIn = Math.min(1, e.t * 4), d = e.d, sc = e.r / d.r;
       // průhlednost: Stín je vidět jen zblízka (nebo chvíli po zásahu), Fázovač při průchodu
       let al = 1;
@@ -769,6 +804,7 @@ const Render = (() => {
     if (G.well) pointers.push([G.well.x, G.well.y, '#c58bff', 13]);
     if (G.zone && (G.zone.out > 0 || G.zone.phase === 'shrink')) pointers.push(G.zone.phase === 'shrink' ? [G.zone.tx, G.zone.ty, '#ffffff', 13] : [G.zone.x, G.zone.y, '#e08bff', 15]);
     for (const pk of G.pickups) if (pk.kind === 'chest') pointers.push([pk.x, pk.y, '#ffd166', 10]);
+    if (Legends.alive) pointers.push([Legends.alive.x, Legends.alive.y, '#ffd166', 16]);
     for (const [x, y, col, sz] of pointers) {
       const sx = (x - G.cam.x) * zoom + W / 2, sy = (y - G.cam.y) * zoom + H / 2;
       if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
@@ -864,6 +900,70 @@ const Render = (() => {
     if (d.ai === 'pulse' && e.stT < 0.45) spr(Sprites.enemy(d.shape, d.r, e.color, true, e.elite), e.x, e.y, e.rot, e.r / d.r, (1 - e.stT / 0.45) * 0.8);
     else if (d.ai === 'bulwark') spr(Sprites.arcLine('#ffffff', d.r + 7, 3, 1.75, 0.85), e.x, e.y, e.ang - 0.875, e.r / d.r);
     else if (d.ai === 'mine' && e.arm <= 0 && (G.time * 4 + e.id) % 1 < 0.5) spr(Sprites.glow(e.color, 6), e.x, e.y, 0, 1, 0.9);
+  }
+  // Legendy (legends.js): zlatý čárkovaný kruh, záře, tělo podle druhu a pod ním zdraví a čas do odletu.
+  function drawLegend(e, d) {
+    const sc = e.r / d.r, grow = Math.min(1, e.t * 2.5), white = e.flash > 0 ? Math.min(1, e.flash * 12) : 0;
+    ctx.globalCompositeOperation = 'lighter';
+    spr(Sprites.glow(e.color, Math.round(d.r * 0.7)), e.x, e.y, 0, sc, e.phased ? 0.15 : 0.35);
+    ctx.globalCompositeOperation = 'source-over';
+    spr(Sprites.dashRing('#ffd166', d.r + 18, 2, 6, 9, 0.75), e.x, e.y, G.time * 0.7, sc * grow);
+    const body = (shape, rot) => {
+      spr(Sprites.enemy(shape, d.r, e.color, false, false), e.x, e.y, rot, sc * grow);
+      if (white) spr(Sprites.enemy(shape, d.r, e.color, true, false), e.x, e.y, rot, sc, white);
+    };
+    switch (e.type) {
+      case 'watcher': {
+        // oko se zavírá svislým stažením bělma; zavřené ukáže jen víčko s řasami
+        const o = Math.max(0.06, e.open);
+        sprStretch(Sprites.legendPart('eye', d.r, e.color), e.x, e.y, 0, grow, grow * o);
+        if (e.open > 0.15) spr(Sprites.legendPart('iris', d.r, e.color), e.x + Math.cos(e.ang) * d.r * 0.38, e.y + Math.sin(e.ang) * d.r * 0.2 * o, 0, grow, Math.min(1, e.open * 1.5));
+        if (e.open < 0.6) spr(Sprites.legendPart('lid', d.r, e.color), e.x, e.y, 0, grow, 1 - e.open / 0.6);
+        if (white && !e.phased) sprStretch(Sprites.legendPart('eye', d.r, '#ffffff'), e.x, e.y, 0, 1, o, white);
+        break;
+      }
+      case 'midnight': {
+        if (e.st === 1) {
+          const q = 1 - e.stT / 0.75;
+          spr(Sprites.dashRing(e.color, 34, 2, 6, 6, 0.9), e.bx, e.by, G.time * 3, 0.6 + 0.6 * (1 - q), 0.5 + 0.4 * q);
+          spr(Sprites.enemy('clock', d.r, e.color, false, false), e.bx, e.by, 0, 1, 0.15 + 0.35 * q);
+        }
+        body('clock', 0);
+        spr(Sprites.legendPart('hand', Math.round(d.r * 0.6), '#ffffff'), e.x, e.y, -Math.PI / 2 + (e.chime || 0) / 12 * TAU, sc);
+        spr(Sprites.legendPart('hand', Math.round(d.r * 0.88), e.color), e.x, e.y, -Math.PI / 2 + G.time * 2.4, sc);
+        break;
+      }
+      case 'comet':
+        if (e.st === 0 && e.t > 0.3) {
+          // míří: varovná čára, kudy poletí
+          ctx.globalCompositeOperation = 'lighter';
+          sprLine(Sprites.beam(e.color, true), e.x, e.y, e.ang, 760, 5, 0.25 + 0.3 * ((e.stT * 8) % 1));
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        body('comet', e.rot);
+        break;
+      case 'mirror':
+        // kotva souměrnosti: střed mezi lodí a odrazem
+        spr(Sprites.dashRing('#ffffff', 16, 2, 4, 5, 0.6), e.cx, e.cy, -G.time * 2, 1, 0.7);
+        body('mship', e.rot);
+        break;
+      case 'ouroboros': {
+        const seg = Sprites.enemy('scale', 12, e.color, false, false);
+        for (let i = SERPENT_SEG; i >= 1; i--) {
+          const j = serpentIdx(e, i), k = serpentIdx(e, i - 1), x = e.tr[j * 2], y = e.tr[j * 2 + 1];
+          if (!inView(x, y, 24)) continue;
+          spr(seg, x, y, Math.atan2(e.tr[k * 2 + 1] - y, e.tr[k * 2] - x), serpentR(e, i) / 12 * grow);
+        }
+        body('serpent', e.rot);
+        break;
+      }
+      default: body(d.shape, e.rot);
+    }
+    world();
+    const w = Math.max(48, e.r * 2.4), y = e.y + e.r + 16;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(e.x - w / 2, y, w, 5);
+    ctx.fillStyle = '#ffd166'; ctx.fillRect(e.x - w / 2, y, w * Math.max(0, e.hp / e.maxHp), 5);
+    ctx.fillStyle = rgba(e.color, 0.85); ctx.fillRect(e.x - w / 2, y + 7, w * Legends.left(e), 2);
   }
   // Temnota: světlo jen kolem lodi; za ním z nepřátel svítí jen slabé oči.
   function drawDark(p) {

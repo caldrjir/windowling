@@ -10,4 +10,5 @@ const Debug = {
   get hit() { return DEBUG && !!SAVE.settings.dbgHit; }, // kruhy zásahů nepřátel, střel a lodi
   get speed() { return DEBUG ? SAVE.settings.dbgSpeed || 1 : 1; }, // rychlost hry (víc kroků simulace za snímek)
   get unlock() { return DEBUG && !!SAVE.settings.dbgUnlock; }, // všechny sektory, Overdrive a piloti (jen dokud je zapnuto)
+  get legend() { return DEBUG && !!SAVE.settings.dbgLegend; }, // legenda přiletí vždy, když hráč splní její podmínku
 };

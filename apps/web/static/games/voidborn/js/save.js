@@ -7,14 +7,15 @@ function defaultSave() {
   return {
     // bestiary: kolikrát hráč zničil který druh nepřítele (kodex, úspěch Bestiář)
     // achV: verze tabulky odměn za úspěchy (2 = od 1.4), achTopUp: doplatek, který se ještě neukázal
-    v: 1, achV: 2, achTopUp: 0, shards: 0, forge: {}, achievements: {}, evolutions: {}, seen: {}, sectors: {}, bestiary: {},
+    // legendSeen: kolikrát která legenda přiletěla (kodex ukáže jméno, i když unikla)
+    v: 1, achV: 2, achTopUp: 0, shards: 0, forge: {}, achievements: {}, evolutions: {}, seen: {}, sectors: {}, bestiary: {}, legendSeen: {},
     stats: {
       kills: 0, bossKills: 0, runs: 0, time: 0, shardsTotal: 0, dashes: 0, bestTime: 0, maxLevel: 0,
-      maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0,
+      maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0, legendKills: 0,
     },
     // autoChest: truhly se otevřou samy, bez okna (obsah se jen krátce ukáže nad lodí)
     settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, autoChest: false, prio: null, perfLog: false, quality: 'auto',
-      dbgGod: false, dbgHit: false, dbgSpeed: 1, dbgUnlock: false }, // dbg*: sekce Debug (debug.js)
+      dbgGod: false, dbgHit: false, dbgSpeed: 1, dbgUnlock: false, dbgLegend: false, dbgLegendNext: '' }, // dbg*: sekce Debug (debug.js)
     // Výzbroj ze Zbrojnice: pre = zbraně na závěsnících (běh s nimi začne), ban = vyřazené zbraně
     loadout: { pre: [], ban: [] },
     lastPilot: 'vex', lastSector: 0, lastOd: 0,

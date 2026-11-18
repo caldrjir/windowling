@@ -782,6 +782,106 @@ test('VOIDBORN 1.4: new kinds of enemies, the bestiary and achievements that pay
 	expect(errors).toEqual([]);
 });
 
+test('VOIDBORN 1.5: void legends come only after their secret condition and pay an achievement', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	const res = (await page.evaluate(`(() => {
+		const out = {};
+		const step = s => { for (let i = 0; i < s * 60; i++) { updateGame(1 / 60); if (G.state === 'levelup') pickChoice(0); if (G.state === 'chest') closeChest(); } };
+		const got = () => (Legends.alive ? Legends.alive.type : null);
+		// sure chance (Debug), so only the condition decides; no other spawns or bosses
+		const run = setup => {
+			SAVE.settings.dbgGod = true; SAVE.settings.dbgLegend = true; SAVE.settings.dbgLegendNext = '';
+			UI.hideOverlay(); Game.start('vex', 0, 0);
+			G.nextBossT = 1e9; G.nextEvent = 1e9; G.nextElite = 1e9; G.spawnAcc = -1e9;
+			Input.move = () => ({ x: 0, y: 0 });
+			setup();
+		};
+		// Watcher: 30 s without moving (from 1:30); moving starts the count again
+		run(() => { G.time = 100; }); step(29); out.watcher29 = got(); step(2); out.watcher = got();
+		run(() => { G.time = 100; }); step(20); Input.move = () => ({ x: 1, y: 0 }); step(0.5); Input.move = () => ({ x: 0, y: 0 }); step(15); out.watcherMoved = got();
+		// Hoarder: 30 s without picking up a crystal while 15+ of them lie around
+		run(() => { G.time = 130; G.lastGemT = G.time - 29; for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; G.pickups.push(mkPickup('gem', G.p.x + Math.cos(a) * 700, G.p.y + Math.sin(a) * 700, 1)); } });
+		step(0.5); out.hoarderEarly = got(); step(1); out.hoarder = got();
+		// Midnight Chime: only while the player's clock shows 0:xx
+		const hours = Date.prototype.getHours;
+		run(() => { G.time = 70; Date.prototype.getHours = () => 13; Legends.state.mid = 0.05; }); step(0.2); out.midnightAfternoon = got();
+		run(() => { G.time = 70; Date.prototype.getHours = () => 0; Legends.state.mid = 0.05; }); step(0.2); out.midnight = got();
+		Date.prototype.getHours = hours;
+		// Comet: a meteor (not a weapon) finishes off an elite
+		run(() => { G.time = 200; }); killEnemy(spawnEnemyAt('drone', G.p.x + 500, G.p.y, { elite: true })); out.cometByWeapon = got();
+		run(() => { G.time = 200; }); { const el = spawnEnemyAt('drone', G.p.x + 500, G.p.y, { elite: true }); el.hp = el.maxHp * 0.2; G.byMeteor = true; hazardKill(el, 0, 0); G.byMeteor = false; } out.comet = got();
+		// Mirror: 4 minutes without a hit
+		run(() => { G.time = 300; G.noHit = 239.5; G.p.inv = 1e9; }); step(0.3); out.mirrorEarly = got(); step(0.5); out.mirror = got();
+		step(2); out.mirrorShots = G.ebullets.length > 0;
+		// Ouroboros: five tight loops in one direction within 12 s; wide circles are not enough
+		run(() => { G.time = 200; Input.move = () => ({ x: Math.cos(G.time * Math.PI / 8), y: Math.sin(G.time * Math.PI / 8) }); }); step(30); out.ouroborosWide = got();
+		run(() => { G.time = 200; Input.move = () => ({ x: Math.cos(G.time * Math.PI), y: Math.sin(G.time * Math.PI) }); }); step(12.5); out.ouroboros = got();
+		// one legend at a time, each once per run, a minute of calm after it leaves
+		Legends.state.done.watcher = false; Legends.state.still = 40; step(0.1); out.second = got();
+		Legends.alive.life = 0.01; step(0.1); out.escaped = got(); out.gap = Math.round(Legends.state.gap);
+		// a bomb only hurts a legend; killing it fills the bestiary, pays shards and the achievement
+		SAVE.achievements = {}; SAVE.legendSeen = {}; delete SAVE.bestiary.watcher;
+		run(() => { G.time = 300; G.st.crit = 0; });
+		const h = Legends.spawn('hoarder'); h.x = G.p.x + 100; h.y = G.p.y;
+		collect(mkPickup('bomb', G.p.x, G.p.y)); out.bombed = [!h.dead, Math.round(h.hp / h.maxHp * 100)];
+		h.dead = true; SAVE.legendSeen = {};
+		const w = Legends.spawn('watcher');
+		const s0 = G.pickups.filter(p => p.kind === 'shard').reduce((t, p) => t + p.val, 0);
+		killEnemy(w); checkAchievements(true);
+		out.loot = G.pickups.filter(p => p.kind === 'shard').reduce((t, p) => t + p.val, 0) > s0;
+		out.killed = [SAVE.bestiary.watcher, !!SAVE.achievements.lgWatcher, Legends.alive === null];
+		out.kinds = [ENEMY_KINDS.length, LEGENDS.length, ENEMY_KINDS.some(k => LEGENDS.includes(k))];
+		SAVE.settings.dbgLegend = false; SAVE.settings.dbgGod = false;
+		endRun('quit'); UI.hideOverlay();
+		return out;
+	})()`)) as Record<string, unknown>;
+	expect(res).toEqual({
+		watcher29: null,
+		watcher: 'watcher',
+		watcherMoved: null,
+		hoarderEarly: null,
+		hoarder: 'hoarder',
+		midnightAfternoon: null,
+		midnight: 'midnight',
+		cometByWeapon: null,
+		comet: 'comet',
+		mirrorEarly: null,
+		mirror: 'mirror',
+		mirrorShots: true,
+		ouroborosWide: null,
+		ouroboros: 'ouroboros',
+		second: 'ouroboros',
+		escaped: null,
+		gap: 60,
+		bombed: [true, 90],
+		loot: true,
+		killed: [1, true, true],
+		kinds: [36, 6, false],
+	});
+	// Codex: the destroyed legend has its description, the others only a hint.
+	await page.evaluate(`UI.show('codex')`);
+	await page.locator('[data-tab="enemies"]').click();
+	await expect(page.locator('.fcard.legend')).toHaveCount(6);
+	await expect(page.locator('.fcard.legend').first()).toContainText('Pozorovatel');
+	await expect(page.locator('.fcard.legend.unknown .hint')).toHaveCount(5);
+	await expect(page.locator('.cx-sum.lg')).toContainText('1 / 6');
+	// Achievements: legendary even by difficulty; locked ones show the hint instead of the name.
+	await page.evaluate(`UI.show('ach')`);
+	await expect(page.locator('.ach-tier[data-tier="legend"] [data-ach="lgWatcher"]')).toContainText(
+		'Pozorovatel',
+	);
+	await expect(
+		page.locator('.ach-tier[data-tier="legend"] [data-ach="lgHoarder"] .hint'),
+	).toBeVisible();
+	await expect(page.locator('[data-ach="lgHoarder"]')).not.toContainText('Zlatník');
+	expect(errors).toEqual([]);
+});
+
 test('VOIDBORN shows its version and the rendering quality can be lowered', async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));

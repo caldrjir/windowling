@@ -142,6 +142,10 @@ if (LANG === 'en') (() => {
     piecesAll: ['Gallery of Masters', 'Buy every Masterpiece.'], eternal10: ['Eternal Smith', 'Buy 10 levels in the Eternal Workshop.'],
     eternal50: ['Infinity', 'Buy 50 levels in the Eternal Workshop.'],
     beast18: ['Species Hunter', 'Destroy 18 different kinds of enemies.'], bestiary: ['Bestiary', 'Destroy at least one enemy of every kind.'],
+    lgWatcher: ['Unblinking', 'Destroy the Watcher legend.'], lgHoarder: ['Gold Rush', 'Destroy the Hoarder legend.'],
+    lgMidnight: ['Twelve Chimes', 'Destroy the Midnight Chime legend.'], lgComet: ['Falling Star', 'Destroy the Comet legend.'],
+    lgMirror: ['Face to Face', 'Destroy the Mirror legend.'], lgOuroboros: ['Eternal Circle', 'Destroy the Ouroboros legend.'],
+    lgAll: ['Legend Hunter', 'Destroy all six void legends.'],
     runs10: ['Veteran', 'Play 10 runs.'], runs50: ['Legend', 'Play 50 runs.'], dash500: ['Acrobat', 'Dash 500 times.'], pilots: ['Full Squadron', 'Unlock all pilots.'],
   };
   for (const a of ACHIEVEMENTS) { a.name = A[a.id][0]; a.desc = A[a.id][1]; }
