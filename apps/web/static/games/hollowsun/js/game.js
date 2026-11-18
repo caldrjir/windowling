@@ -677,7 +677,7 @@
     }
     return h;
   }
-  function showTip(e, html) { const tip = document.getElementById('tip'); tip.innerHTML = html; tip.hidden = false; const w = 300; const x = Math.min(innerWidth - w - 12, e.clientX + 16); const y = Math.min(innerHeight - tip.offsetHeight - 12, e.clientY + 12); tip.style.left = x + 'px'; tip.style.top = Math.max(8, y) + 'px'; }
+  function showTip(e, html) { const tip = document.getElementById('tip'); tip.innerHTML = html; const rm = /<h3 class="r-(\w+)"/.exec(html); tip.dataset.rar = rm ? rm[1] : 'common'; tip.hidden = false; const w = 320; const x = Math.min(innerWidth - w - 12, e.clientX + 16); const y = Math.min(innerHeight - tip.offsetHeight - 12, e.clientY + 12); tip.style.left = x + 'px'; tip.style.top = Math.max(8, y) + 'px'; }
   function hideTip() { document.getElementById('tip').hidden = true; }
   function cellHtml(item, kind, key, slotLabel) {
     if (!item) return `<div class="cell" data-k="${kind}" data-i="${key}">${slotLabel ? `<span class="sl">${slotLabel}</span>` : ''}<span class="muted">${slotLabel ? '' : ''}</span></div>`;
@@ -751,8 +751,8 @@
   let fpsOn = false;
   function hud() {
     const p = S.player;
-    document.getElementById('b-hp').style.width = ((p.hp / p.hpMax) * 100).toFixed(1) + '%'; document.getElementById('t-hp').textContent = Math.ceil(p.hp) + ' / ' + p.hpMax;
-    document.getElementById('b-res').style.width = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' Cinders';
+    document.getElementById('b-hp').style.height = ((p.hp / p.hpMax) * 100).toFixed(1) + '%'; document.getElementById('t-hp').textContent = Math.ceil(p.hp) + ' / ' + p.hpMax;
+    document.getElementById('b-res').style.height = ((p.res / p.resMax) * 100).toFixed(1) + '%'; document.getElementById('t-res').textContent = Math.floor(p.res) + ' / ' + p.resMax;
     document.getElementById('wave').textContent = mode === 'bench' || S.mode === 'bench' ? 'Benchmark' : S.mode === 'boss' ? 'Heart of the Kiln' : S.zone ? `${zoneName(S.zone.id)} · ${t('zoneLv')} ${S.zone.lv[0]}–${S.zone.lv[1]}` : t('wave') + ' ' + S.wave;
     document.getElementById('kills').textContent = t('kills') + ' ' + S.kills;
     document.getElementById('gold').textContent = S.loot ? `${S.gold} ${t('goldN')}` : '';

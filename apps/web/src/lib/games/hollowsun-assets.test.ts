@@ -440,3 +440,30 @@ describe.each(manifest.assets)('asset $id', (asset) => {
 		}
 	});
 });
+
+// UI kit (D34): every image the stylesheet uses exists, is a WebP of at most 1920 px and has its origin recorded.
+describe('UI kit', () => {
+	const css = readFileSync(dir + '../style.css', 'utf8');
+	const used = [
+		...new Set([...css.matchAll(/url\(assets\/ui\/([a-z_]+)\.webp\)/g)].map((m) => m[1] ?? '')),
+	];
+	const credits = JSON.parse(readFileSync(dir + 'ui/credits.json', 'utf8')) as {
+		model: string;
+		date: string;
+		assets: Record<string, { scenario: string; prompt: string }>;
+	};
+	it('uses images from the kit', () => {
+		expect(used.length).toBeGreaterThan(10);
+		expect(credits.model).toMatch(/^model_/);
+		expect(credits.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	});
+	it.each(used)('%s is a recorded WebP of at most 1920 px', (id) => {
+		const buf = readFileSync(`${dir}ui/${id}.webp`);
+		const [w, h] = webpSize(new DataView(buf.buffer, buf.byteOffset, buf.byteLength));
+		expect(Math.max(w, h)).toBeLessThanOrEqual(1920);
+		expect(buf.byteLength).toBeLessThan(400_000);
+		const c = credits.assets[id];
+		expect(c?.scenario).toMatch(/^asset_/);
+		expect(c?.prompt.length).toBeGreaterThan(10);
+	});
+});

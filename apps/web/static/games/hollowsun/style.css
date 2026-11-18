@@ -18,12 +18,6 @@ canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block
 #topbar { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 22px; font: 600 15px/1 var(--f-mono); color: var(--fg); text-shadow: 0 1px 2px #000; }
 #topbar #wave { font-family: var(--f-display); font-size: 22px; color: var(--gold); }
 #fps { color: #9fd0ff; }
-#orbs { position: absolute; left: 24px; bottom: 26px; display: grid; gap: 8px; width: 260px; }
-.bar { position: relative; height: 18px; background: #1a1f2c; border: 1px solid #5a4630; overflow: hidden; }
-.bar i { position: absolute; inset: 0 auto 0 0; display: block; }
-.bar.hp i { background: linear-gradient(#d9454f, #8e1f27); }
-.bar.res i { background: linear-gradient(#ffb15c, #c4561c); }
-.bar span { position: relative; z-index: 1; font: 600 11px/18px var(--f-mono); padding-left: 8px; text-shadow: 0 1px 1px #000; }
 #skills { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 10px; }
 .sk { position: relative; width: 64px; height: 64px; border: 1px solid #5a4630; background: #141823e6; display: grid; place-items: center; text-align: center; }
 .sk b { font: 600 11px/1.15 var(--f-body); padding: 0 4px; }
@@ -146,3 +140,62 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 #inv .cur .em { color: #ff8a3a; } #inv .cur .du { color: #cfd6e6; } #inv .cur .su { color: #ffe08a; }
 #inv .forge-tip { border: 1px solid #2a3142; padding: 10px 12px; background: #0a0c11; display: grid; gap: 4px; font-size: 12px; }
 .dmg.hurt.fire { color: #ff8a3a; } /* P1: ohnivé poškození hráče */
+
+/* P1: UI kit (D34) – rámečky, tlačítka, koule a sloty ze Scenaria, assets/ui/*.webp. border-image řeže obrázky
+   jako 9-slice: první čísla jsou okraje ve zdrojových pixelech, za lomítkem jejich šířka na obrazovce. */
+.panel, #inv .box { position: relative; border: 0; border-style: solid; border-width: 29px 24px; border-image: url(assets/ui/ui_panel.webp) 58 46 / 29px 24px / 4px 3px round; background: #222 padding-box; padding: 30px 34px; box-shadow: none; filter: drop-shadow(0 24px 60px #000c); }
+.panel > h1:first-child, .panel > span:first-child + h1 { margin-top: 18px; }
+.panel h1, .panel h2, #inv h2 { text-shadow: 0 2px 0 #000, 0 0 18px #ec7a3a44; }
+.panel h1::after, .panel h2::after { content: ""; display: block; height: 26px; margin: 8px -10px 0; background: url(assets/ui/ui_divider.webp) center / contain no-repeat; opacity: .9; }
+.panel:has(h1)::before { content: ""; position: absolute; left: 50%; top: -58px; width: min(420px, 90%); height: 102px; transform: translateX(-50%); background: url(assets/ui/ui_panel_header.webp) center / contain no-repeat; pointer-events: none; }
+.btn { border: 0; border-style: solid; border-width: 8px 24px; border-image: url(assets/ui/ui_button.webp) 24 72 fill / 8px 24px round stretch; background: none; padding: 9px 14px; text-shadow: 0 1px 0 #000, 0 0 8px #0008; transition: filter .12s; }
+.btn:hover, .btn:focus-visible { border-image-source: url(assets/ui/ui_button_hover.webp); background: none; color: #f6d88e; }
+.btn.dim { color: #b7ae9c; border-color: transparent; background: none; filter: saturate(.6) brightness(.85); }
+.btn.dim:hover, .btn.dim:focus-visible { filter: none; color: var(--gold); }
+.btn.on, .panel .btn.on { border-image-source: url(assets/ui/ui_button_hover.webp); background: none; filter: none; }
+.btn:disabled, .btn:disabled:hover { border-image-source: url(assets/ui/ui_button.webp); filter: grayscale(1) brightness(.6); color: var(--muted); }
+#screen:has(.panel h1) { background: linear-gradient(90deg, #07080cee 0%, #07080c99 34%, #07080c22 62%, #07080c66 100%), url(assets/ui/bg_menu.webp) center / cover; justify-items: start; padding-left: max(16px, 6vw); }
+/* tooltip podle vzácnosti předmětu */
+#tip { border: 0; border-style: solid; border-width: 12px; border-image: url(assets/ui/ui_tooltip_common.webp) 24 / 12px round; background: #1e1e1e padding-box; padding: 10px 12px; width: 320px; box-shadow: none; filter: drop-shadow(0 10px 30px #000); }
+#tip[data-rar="magic"] { border-width: 14px; border-image: url(assets/ui/ui_tooltip_magic.webp) 27 / 14px round; background-color: #171717; }
+#tip[data-rar="rare"] { border-width: 20px 18px; border-image: url(assets/ui/ui_tooltip_rare.webp) 42 37 / 20px 18px round; background-color: #1a1a1a; }
+#tip[data-rar="unique"] { border-width: 19px 15px; border-image: url(assets/ui/ui_tooltip_unique.webp) 40 30 / 19px 15px round; background-color: #1a1a1a; }
+#dialog, #whisper, #toast { border: 0; border-style: solid; border-width: 12px; border-image: url(assets/ui/ui_tooltip_common.webp) 24 / 12px round; background: #1e1e1e padding-box; filter: drop-shadow(0 8px 24px #000); }
+#whisper { border-width: 14px; border-image: url(assets/ui/ui_tooltip_magic.webp) 27 / 14px round; background-color: #171717; }
+/* inventář: kamenné sloty, vybavení na větších deskách, vzácnost jako vnitřní záře */
+#inv .cell { border: 0; border-style: solid; border-width: 7px; border-image: url(assets/ui/ui_slot.webp) 16 fill / 7px stretch; background: none; }
+#inv .eq .cell { border-width: 10px; border-image: url(assets/ui/ui_slot_paperdoll.webp) 26 fill / 10px stretch; }
+#inv .cell.has { background: none; }
+#inv .cell.has.r-common { box-shadow: inset 0 0 10px #c9c2b222; } #inv .cell.has.r-magic { box-shadow: inset 0 0 14px #6f9ff066; } #inv .cell.has.r-rare { box-shadow: inset 0 0 14px #ecc65a66; } #inv .cell.has.r-unique { box-shadow: inset 0 0 16px #ec7a3a88; }
+#inv .cell:hover { outline: 0; filter: brightness(1.25); }
+#inv .cell.sel { outline: 0; filter: brightness(1.3) drop-shadow(0 0 6px #e3b964); }
+#inv .forge-ops .op, #inv .forge-tip { border: 0; border-style: solid; border-width: 10px; border-image: url(assets/ui/ui_tooltip_common.webp) 24 / 10px round; background: #1e1e1e padding-box; }
+/* HUD: koule Health a Cinders po stranách kované lišty se skilly */
+#hudbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; align-items: flex-end; }
+#skills { position: relative; left: auto; bottom: auto; transform: none; display: flex; gap: 6px; margin: 0 -18px 4px; padding: 8px 6px 10px; border-style: solid; border-width: 0 74px; border-image: url(assets/ui/ui_hudbase.webp) 0 250 fill / 0 74px stretch; }
+.sk { width: 62px; height: 62px; border: 0; background: url(assets/ui/ui_skill.webp) center / 100% 100% no-repeat; }
+.sk b { text-shadow: 0 1px 0 #000, 0 0 6px #000; max-width: 52px; }
+.sk .cd { inset: auto 7px 7px 7px; }
+.sk.no { filter: drop-shadow(0 0 6px #c23b43) brightness(1.2); }
+.sk.on { box-shadow: none; filter: drop-shadow(0 0 8px #e3b964); }
+.orb { position: relative; z-index: 1; width: 132px; height: 132px; flex: none; }
+.orb .glass { position: absolute; inset: 14px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 60%, #1a1410, #050407 75%); box-shadow: inset 0 0 18px #000; }
+.orb .glass i { position: absolute; left: 0; right: 0; bottom: 0; display: block; height: 100%; background: center bottom / 104px 104px no-repeat; transition: height .12s linear; }
+.orb.hp .glass i { background-image: url(assets/ui/ui_orb_hp.webp); }
+.orb.res .glass i { background-image: url(assets/ui/ui_orb_cinders.webp); }
+.orb::before { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: url(assets/ui/ui_orb_gloss.webp) center / 100% 100%; z-index: 1; opacity: .8; }
+.orb::after { content: ""; position: absolute; inset: 0; background: url(assets/ui/ui_orb_frame.webp) center / 100% 100% no-repeat; z-index: 2; filter: drop-shadow(0 4px 8px #000); }
+.orb span { position: absolute; left: 0; right: 0; bottom: 44%; z-index: 3; text-align: center; font: 600 12px/1 var(--f-mono); color: #f2efe6; text-shadow: 0 1px 2px #000, 0 0 6px #000; }
+#xpbar { bottom: 104px; border-color: #5a4630; box-shadow: 0 0 0 1px #000, 0 2px 6px #000; }
+#minimap { border: 3px solid #3a2e1e; outline: 1px solid #b98a4e88; box-shadow: 0 6px 20px #000; }
+#screen:has(.panel h1) { padding-block: 64px 12px; overflow-y: auto; }
+#screen:has(.panel h1) .panel { gap: 10px; padding: 22px 30px; }
+#screen:has(.panel h1) .panel h1 { font-size: 40px; }
+#screen:has(.panel h1) .keys { font-size: 12.5px; gap: 2px 14px; }
+#screen:has(.panel h1) .btn { font-size: 16px; padding: 6px 12px; }
+.panel:has(h1)::before { top: -50px; height: 92px; }
+.invbtn { border: 0; border-style: solid; border-width: 5px 14px; border-image: url(assets/ui/ui_button.webp) 24 72 fill / 5px 14px stretch; background: none; padding: 3px 4px; }
+.invbtn:hover { border-image-source: url(assets/ui/ui_button_hover.webp); }
+.passives button { font: 600 12px/1 var(--f-mono); color: var(--gold); background: #0d0f15; border: 1px solid var(--bronze); width: 22px; height: 20px; cursor: pointer; }
+.passives button:disabled { opacity: .3; cursor: default; }
+#inv .eq .cell.has { padding-top: 12px; }

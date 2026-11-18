@@ -110,6 +110,10 @@ Convention: each completed iteration is at least one minor release.
   lowered from the A-pose, LODs, ember emission, WebP textures ≤ 1024 px; `EN_hound` stays a static
   mesh) and replaces only those manifest entries. Heights, LOD targets and budgets are in `SPECS`.
   Zone floors and walls use the tileable `assets/tex/T_crypt_*.webp` from the same style board.
+  The UI kit (`assets/ui/*.webp`: panel, tooltip-by-rarity, slot and button frames, HP/Cinders orbs,
+  skill bar, menu background) is generated the same way on a transparent background, trimmed and
+  drawn with CSS `border-image` (9-slice). Each file's Scenario asset id, prompt and slice are in
+  `assets/ui/credits.json`; `hollowsun-assets.test.ts` fails if the stylesheet uses an unrecorded image.
 - HOLLOW SUN balance: `pnpm --filter @windowling/web hollowsun:playthrough [seed] [step,step]` plays
   the whole Act I campaign headless (about 2–4 minutes) and prints time, level, deaths, hits to kill
   and hits survived per step. Run it after changing zones, enemies, loot or XP.
