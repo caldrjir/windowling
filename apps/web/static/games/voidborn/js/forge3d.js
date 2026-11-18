@@ -84,8 +84,19 @@ const Forge3D = (() => {
     cyl('engines', [[-4.15, 0.4], [-3.6, 0.5]], 0, 0.05, 8, { emitA: true });
     // Příď s děly
     loft('guns', [{ x: 2.4, pts: oct(0.85, 0.65, 0.05) }, { x: 4.4, pts: oct(0.55, 0.42, -0.02) }, { x: 6.2, pts: oct(0.12, 0.1, -0.05) }], { caps: [false, true] });
-    for (const y of [-0.62, 0.62]) { cyl('guns', [[3.0, 0.13], [6.6, 0.13]], y, -0.38, 6); cyl('guns', [[6.6, 0.19], [6.95, 0.17]], y, -0.38, 6, { emitB: true }); }
-    if (S.forge.amount) { cyl('guns', [[4.4, 0.1], [7.3, 0.1]], 0, -0.52, 6); cyl('guns', [[7.3, 0.15], [7.55, 0.13]], 0, -0.52, 6, { emitB: true }); }
+    // Kryty děl: vyrůstají ze spodku trupu, kopírují zužující se příď a přecházejí v hlavně (žádná hlaveň
+    // nezačíná ve vzduchu); na konci krytu límec, ze kterého hlaveň vychází.
+    const gunPod = (y, secs) => loft('guns', secs.map(([x, cz, ry, rz]) => ({ x, pts: ring(8, ry, rz, y, cz, Math.PI / 8) })), { caps: [false, true] });
+    for (const y of [-0.62, 0.62]) {
+      gunPod(y, [[1.5, -0.3, 0.34, 0.3], [2.7, -0.34, 0.3, 0.27], [3.9, -0.37, 0.2, 0.19], [4.5, -0.38, 0.15, 0.15]]);
+      cyl('guns', [[4.4, 0.11], [6.6, 0.11]], y, -0.38, 8);
+      cyl('guns', [[6.6, 0.17], [6.95, 0.15]], y, -0.38, 8, { emitB: true });
+    }
+    if (S.forge.amount) {
+      gunPod(0, [[3.0, -0.42, 0.22, 0.2], [4.0, -0.48, 0.18, 0.17], [4.7, -0.52, 0.14, 0.14]]);
+      cyl('guns', [[4.6, 0.1], [7.3, 0.1]], 0, -0.52, 8);
+      cyl('guns', [[7.3, 0.15], [7.55, 0.13]], 0, -0.52, 8, { emitB: true });
+    }
     // Kokpit (prosklený hřbet)
     // kabina sedí na hřbetě: spodek kopíruje výšku trupu a přídě v daném místě (o kousek zapuštěný)
     const canopy = (sc, base) => [[-0.42 * sc, base], [-0.32 * sc, base + 0.34 * sc], [0, base + 0.48 * sc], [0.32 * sc, base + 0.34 * sc], [0.42 * sc, base]];

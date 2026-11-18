@@ -356,9 +356,33 @@ const UI = (() => {
       Forge3D.select(forgePart, true, false, false);
     },
 
+    // Úspěchy po vzácnosti. Kolik procent hráčů úspěch má, se počítá z uložení hráčů s účtem
+    // (/api/rarity). Dokud je jich málo, řadí se úspěchy do vzácnosti podle odměny (obtížnosti).
     ach(el) {
       const n = Object.keys(SAVE.achievements).length, perks = achPerks(SAVE.achievements);
       const left = ACHIEVEMENTS.filter(a => !SAVE.achievements[a.id]).reduce((t, a) => t + a.reward, 0);
+      loadRarity();
+      const R = rarity, byPlayers = !!R && R.total >= RARITY_MIN;
+      const pct = a => (R && R.total ? (R.counts[a.id] || 0) / R.total * 100 : null);
+      const tierOf = a => { const p = pct(a); if (byPlayers) return p >= 60 ? 0 : p >= 35 ? 1 : p >= 15 ? 2 : p >= 5 ? 3 : 4; const r = a.reward; return r < 1000 ? 0 : r < 5000 ? 1 : r < 20000 ? 2 : r < 60000 ? 3 : 4; };
+      const fmtPct = p => (p === null ? '' : p > 0 && p < 1 ? L('<1 %', '<1%') : `${Math.round(p)}${L(' %', '%')}`);
+      const card = a => {
+        const got = !!SAVE.achievements[a.id], [v, m] = a.prog(SAVE, null), p = pct(a);
+        const pl = a.pilot && PILOTS.find(x => x.id === a.pilot);
+        const opens = [...(pl ? [pl.name] : []), ...[...BASE_WEAPONS.map(id => WEAPONS[id]), ...Object.values(PASSIVES)].filter(o => o.unlock === a.id).map(o => o.name)];
+        return `<div class="fcard ach ${got ? 'got' : ''}" data-ach="${a.id}">
+            <div class="fi">${icon(a.icon)}<div><h4>${a.name}</h4><p>${a.desc}</p></div>${p !== null ? `<em class="ach-pct" title="${L('Kolik hráčů s účtem ho má', 'Share of signed-in players who have it')}">${fmtPct(p)}</em>` : ''}</div>
+            <div class="bar"><i style="width:${Math.min(100, v / m * 100)}%"></i></div>
+            <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${opens.length ? ` · ${L('odemyká', 'unlocks')} ${opens.join(', ')}` : ''}</span><b>+${fmtNum(a.reward)} ◆</b></div>
+            ${a.perk ? `<div class="ach-perk">${icon('star')} ${L('Navždy', 'Forever')}: ${perkText(a.perk)}</div>` : ''}
+          </div>`;
+      };
+      const tiers = ACH_TIERS.map(() => []);
+      for (const a of ACHIEVEMENTS) tiers[tierOf(a)].push(a);
+      const how = byPlayers
+        ? L(`Vzácnost podle toho, kolik z ${R.total} hráčů s účtem úspěch má.`, `Rarity by how many of ${R.total} signed-in players have it.`)
+        : R ? L(`Hráčů s účtem je zatím málo (${R.total}), proto vzácnost podle obtížnosti. Procenta ukazují, kolik z nich úspěch má.`, `Few signed-in players so far (${R.total}), so rarity follows difficulty. The percentages show how many of them have it.`)
+          : L('Vzácnost podle obtížnosti. Kolik procent hráčů úspěch má, se ukáže s připojením k síti.', 'Rarity by difficulty. The share of players who have each one shows up when online.');
       el.innerHTML = `
         ${topbar(L('SÍŇ SLÁVY', 'HALL OF FAME'), L('ÚSPĚCHY', 'ACHIEVEMENTS'), `<span class="sum">${n} / ${ACHIEVEMENTS.length}</span>`)}
         <div class="ach-fame">
@@ -366,17 +390,10 @@ const UI = (() => {
             <p>${Object.keys(perks).length ? perkText(perks) : L('Zatím žádné. Každý úspěch kromě střepů přidá i trvalý bonus.', 'None yet. Besides shards, every achievement adds a permanent bonus.')}</p></div>
           <div class="af-left"><small>${L('ZBÝVÁ ZÍSKAT', 'STILL TO EARN')}</small><b>${icon('shard')} ${fmtNum(left)}</b></div>
         </div>
-        <div class="grid-cards">${ACHIEVEMENTS.map(a => {
-          const got = !!SAVE.achievements[a.id], [v, m] = a.prog(SAVE, null);
-          const pl = a.pilot && PILOTS.find(p => p.id === a.pilot);
-          const opens = [...(pl ? [pl.name] : []), ...[...BASE_WEAPONS.map(id => WEAPONS[id]), ...Object.values(PASSIVES)].filter(o => o.unlock === a.id).map(o => o.name)];
-          return `<div class="fcard ach ${got ? 'got' : ''}">
-            <div class="fi">${icon(a.icon)}<div><h4>${a.name}</h4><p>${a.desc}</p></div></div>
-            <div class="bar"><i style="width:${Math.min(100, v / m * 100)}%"></i></div>
-            <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${opens.length ? ` · ${L('odemyká', 'unlocks')} ${opens.join(', ')}` : ''}</span><b>+${fmtNum(a.reward)} ◆</b></div>
-            ${a.perk ? `<div class="ach-perk">${icon('star')} ${L('Navždy', 'Forever')}: ${perkText(a.perk)}</div>` : ''}
-          </div>`;
-        }).join('')}</div>`;
+        <p class="ach-how">${how}</p>
+        ${tiers.map((list, t) => list.length ? `<section class="ach-tier" style="--t:${ACH_TIERS[t][1]}" data-tier="${ACH_TIERS[t][0]}">
+          <h3><i></i>${ACH_TIERS[t][2]}<small>${list.filter(a => SAVE.achievements[a.id]).length} / ${list.length}</small></h3>
+          <div class="grid-cards">${list.map(card).join('')}</div></section>` : '').join('')}`;
     },
 
     codex(el) {
@@ -470,8 +487,6 @@ const UI = (() => {
           <div class="row"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
           <div class="row"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
           ${window.GCMusic ? `<div class="row"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}`)}
-            ${grp('book', L('Výkon', 'Performance'), `
-          <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>`)}
             ${grp('gear', L('Ovládání', 'Controls'), `
           <div class="keys">
             <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>${L('Pohyb (nebo šipky / gamepad)', 'Move (or arrows / gamepad)')}</span>
@@ -483,6 +498,7 @@ const UI = (() => {
           </div>`, 'keys-g')}
             ${DEBUG ? grp('calib', L('Debug', 'Debug'), `
           <p class="dbg-note">${L('Nástroje pro ladění. Při vydání se sekce schová (DEBUG_MENU v debug.js).', 'Tools for testing. Hidden for a release (DEBUG_MENU in debug.js).')}</p>
+          <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>
           <div class="row"><label>${L('Nesmrtelnost', 'God mode')}<small>${L('Smrtelný zásah jen doplní zdraví', 'A fatal hit only refills your health')}</small></label><button class="toggle ${s.dbgGod ? 'on' : ''}" data-tog="dbgGod"></button></div>
           <div class="row"><label>${L('Hitboxy', 'Hitboxes')}<small>${L('Kruhy zásahů nepřátel, jejich střel a lodi', 'Hit circles of enemies, their shots and your ship')}</small></label><button class="toggle ${s.dbgHit ? 'on' : ''}" data-tog="dbgHit"></button></div>
           <div class="row"><label>${L('Rychlost hry', 'Game speed')}<small>${L('Víc kroků simulace za snímek', 'More simulation steps per frame')}</small></label><button class="btn" data-act="dbgSpeed">${s.dbgSpeed || 1}×</button></div>
@@ -507,6 +523,20 @@ const UI = (() => {
       if (setPv) pick(setPv);
     },
   };
+
+  // ── Vzácnost úspěchů (kolik hráčů s účtem je má) ──
+  const ACH_TIERS = [['common', '#c9c8ea', L('Běžné', 'Common')], ['uncommon', '#5dffa8', L('Neobvyklé', 'Uncommon')], ['rare', '#55c8ff', L('Vzácné', 'Rare')], ['epic', '#c58bff', L('Epické', 'Epic')], ['legend', '#ffb347', L('Legendární', 'Legendary')]];
+  const RARITY_MIN = 10; // od kolika hráčů s účtem se vzácnost řídí jejich procenty
+  let rarity = null, rarityAt = 0;
+  function loadRarity() {
+    if (Date.now() - rarityAt < 300e3) return;
+    rarityAt = Date.now();
+    fetch('/api/rarity?game=voidborn', { credentials: 'same-origin' }).then(r => (r.ok ? r.json() : null)).then(d => {
+      if (!d || typeof d.total !== 'number') return;
+      rarity = { total: d.total, counts: d.counts || {} };
+      if (current === 'ach') rerender();
+    }).catch(() => { /* bez sítě: vzácnost podle obtížnosti */ });
+  }
 
   const SECTOR_RULE = s => (s.meteors && s.well && s.dark ? L('Všechny anomálie', 'Every anomaly') : s.rush ? L('Přehlídka bossů', 'Boss parade') : s.zone ? L('Smršťující se zóna', 'Shrinking zone')
     : s.meteors ? L('Meteority', 'Meteors') : s.mono ? L('Jediný druh', 'One kind only') : s.well ? L('Černá díra', 'Black hole') : s.dark ? L('Tma', 'Darkness') : '');

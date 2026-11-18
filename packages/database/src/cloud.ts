@@ -92,3 +92,31 @@ export async function setNickname(
 		return false;
 	}
 }
+
+export interface KeyCounts {
+	/** Saves of the key with valid JSON (players who played the game while signed in). */
+	total: number;
+	/** How many of them hold each property of the object `field` (e.g. each achievement). */
+	counts: Record<string, number>;
+}
+
+/**
+ * Counts, over every player's save of one key, the properties of a JSON object inside it:
+ * `keyCounts(db, 'voidborn.save.v1', 'achievements')` says how many players have each
+ * achievement. Values that are not valid JSON are skipped instead of failing the query.
+ */
+export async function keyCounts(db: Database, key: string, field: string): Promise<KeyCounts> {
+	const rows = await db.execute<{ total: number; counts: Record<string, number> | null }>(sql`
+		with s as materialized (
+			select ${gameSave.data}::jsonb -> ${field} as o from ${gameSave}
+			where ${gameSave.key} = ${key} and ${gameSave.data} is not null
+				and pg_input_is_valid(${gameSave.data}, 'jsonb')
+		), c as (
+			select k, count(*)::int as n
+			from s, jsonb_object_keys(case when jsonb_typeof(s.o) = 'object' then s.o else '{}'::jsonb end) as k
+			group by k
+		)
+		select (select count(*)::int from s) as total, (select jsonb_object_agg(k, n) from c) as counts`);
+	const row = rows[0];
+	return { total: Number(row?.total ?? 0), counts: row?.counts ?? {} };
+}

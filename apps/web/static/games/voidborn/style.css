@@ -352,6 +352,16 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 .ach .ach-perk { font-size: 12px; color: #ffe08a; display: flex; align-items: center; gap: 6px; }
 .ach .ach-perk .ico { color: var(--gold) !important; filter: none !important; font-size: 13px; }
 .ach:not(.got) .ach-perk { color: var(--muted); }
+.ach-how { margin: -6px 0 14px; color: var(--muted); font-size: 13px; }
+.ach-tier { margin-bottom: 22px; }
+.ach-tier h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-family: var(--f-display); font-size: 15px; letter-spacing: .2em; text-transform: uppercase; color: var(--t); }
+.ach-tier h3 i { width: 10px; height: 10px; transform: rotate(45deg); background: var(--t); box-shadow: 0 0 12px var(--t); }
+.ach-tier h3 small { margin-left: auto; font-family: inherit; font-size: 12px; letter-spacing: .12em; color: var(--muted); }
+.ach-tier h3::after { content: ''; order: 2; flex: 1; height: 1px; background: linear-gradient(90deg, color-mix(in srgb, var(--t) 50%, transparent), transparent); }
+.ach-tier h3 small { order: 3; margin-left: 0; }
+.ach-tier .fcard.ach { border-top: 2px solid color-mix(in srgb, var(--t) 70%, transparent); }
+.ach .fi { position: relative; }
+.ach-pct { margin-left: auto; align-self: flex-start; flex: none; font-style: normal; font-size: 12px; font-weight: 700; color: var(--t, var(--muted)); padding: 2px 7px; border: 1px solid color-mix(in srgb, var(--t, #888) 45%, transparent); white-space: nowrap; }
 .ach-fame { display: flex; gap: 18px; align-items: center; justify-content: space-between; margin-bottom: 18px; padding: 14px 18px; background: linear-gradient(120deg, rgba(255,209,102,.1), var(--panel) 55%); border: 1px solid rgba(255,209,102,.3); }
 .ach-fame small { font-size: 11px; letter-spacing: .25em; color: var(--muted); }
 .ach-fame p { margin-top: 4px; color: #ffe08a; font-size: 14px; line-height: 1.5; }
