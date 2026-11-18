@@ -622,7 +622,7 @@
         const r = d.item.rar; const root = new pc.Entity(); root.setLocalPosition(d.x, 0, d.z); app.root.addChild(root);
         const box = ent('box', RMAT[r], [0, 0.12, 0], [0.42, 0.14, 0.24], root, false); box.setLocalEulerAngles(0, (d.id * 47) % 180, 0);
         if (r !== 'common') ent('cylinder', BEAM[r], [0, 1.4, 0], [0.07, 2.8, 0.07], root, false);
-        const el = document.createElement('div'); const ds = HS.describe(d.item); el.className = 'drop r-' + r; el.textContent = ds.name;
+        const el = document.createElement('div'); const ds = HS.describe(d.item); el.className = 'drop r-' + r; el.innerHTML = icon(d.item.base, 'dic'); el.append(ds.name);
         el.addEventListener('mousedown', (e) => { e.stopPropagation(); if (mode !== 'play') return; pend.pickup = d.id; fresh = true; });
         dropsLayer.appendChild(el); v = { root, el, x: d.x, z: d.z }; DV.set(d.id, v);
       }
@@ -663,10 +663,12 @@
   }
   const pctS = (v) => (v * 100).toFixed(1).replace('.', ',') + ' %';
   const STAT_ROWS = [['stHp', 'hp', (v) => Math.round(v)], ['stArmor', 'dr', pctS], ['stEva', 'evade', pctS], ['stFire', 'fireRes', (v) => v + ' %'], ['stDps', 'dps', (v) => v.toFixed(1).replace('.', ',')], ['stAs', 'aps', (v) => v.toFixed(2).replace('.', ',')], ['stMs', 'ms', (v) => Math.round(v * 100) + ' %']];
+  // Ikony ze Scenaria (assets/icons/ic_<id>.webp): typ předmětu, skill, pasivka; unikát má ikonu svého typu.
+  const icon = (id, cls) => `<img class="${cls || 'ic'}" src="assets/icons/ic_${id}.webp" alt="" draggable="false">`;
   function tipHtml(item, equippedSlot) {
     const d = HS.describe(item); const why = equippedSlot ? null : SIM.canEquip(S, item);
     const slotN = (HS.D.loot.slots.find((x) => x.id === d.slot) || {}).n || d.slot;
-    let h = `<h3 class="r-${d.rar}">${d.name}</h3><span class="base">${t('rar')[d.rar] || d.rar} · ${d.base} · ${slotN}${d.hand ? ' · ' + d.hand.toUpperCase() : ''} · T${d.tier + 1}</span>`;
+    let h = `${icon(item.base, 'tic')}<h3 class="r-${d.rar}">${d.name}</h3><span class="base">${t('rar')[d.rar] || d.rar} · ${d.base} · ${slotN}${d.hand ? ' · ' + d.hand.toUpperCase() : ''} · T${d.tier + 1}</span>`;
     for (const l of d.lines) h += `<span class="${l[0]}">${l[1]}</span>`;
     const req = Object.entries(d.req).map(([k, v]) => { const have = k === 'level' ? S.L : S.ch.A[k] || 0; return `<span class="${have < v ? 'bad' : ''}">${k === 'level' ? t('lvl') : k.toUpperCase()} ${v}</span>`; }).join(' · ');
     h += `<span class="req">${t('reqs')}: ${req}</span>`;
@@ -682,7 +684,7 @@
   function cellHtml(item, kind, key, slotLabel) {
     if (!item) return `<div class="cell" data-k="${kind}" data-i="${key}">${slotLabel ? `<span class="sl">${slotLabel}</span>` : ''}<span class="muted">${slotLabel ? '' : ''}</span></div>`;
     const d = HS.describe(item); const no = kind === 'inv' && SIM.canEquip(S, item) ? ' no' : '';
-    return `<div class="cell has r-${d.rar}${no}" data-k="${kind}" data-i="${key}">${slotLabel ? `<span class="sl">${slotLabel}</span>` : ''}<span>${(d.cat || d.base).slice(0, 7)}<br>T${d.tier + 1}</span></div>`;
+    return `<div class="cell has r-${d.rar}${no}" data-k="${kind}" data-i="${key}">${icon(item.base)}${slotLabel ? `<span class="sl">${slotLabel}</span>` : ''}<span class="tier">T${d.tier + 1}</span></div>`;
   }
   function renderInv() {
     const el = document.getElementById('inv'); const g = S.gear; const sm = charSummary(S.ch);
@@ -708,7 +710,7 @@
   // pasivní dovednosti Ash Knighta (Bible): rank / max, od levelu, popis; body D04, respec D13
   function passivesHtml() {
     const c = S.char; const spent = SIM.passiveSpent(c); const left = HS.F.passivePoints(S.L) - spent; const cost = HS.F.respecPoint(S.L) * spent;
-    return `<div class="passives"><span class="muted">${t('passivesT')} · ${t('passPts')}: <b>${left}</b></span><span></span><span></span>${HS.D.passives.map((p) => { const r = c.passives[p.id] || 0; const ok = left > 0 && r < p.mx && p.req <= S.L; return `<span class="${p.req > S.L ? 'locked' : ''}">${p.n}${p.req > S.L ? ` (${t('reqL')} ${p.req})` : ''}</span><b>${r}/${p.mx}</b><button data-passive="${p.id}" ${ok ? '' : 'disabled'} aria-label="+1 ${p.n}">+</button><span class="pd">${p.d}</span>`; }).join('')}</div>${spent ? `<button class="btn dim" id="b-respec" style="margin-top:6px;font-size:13px;padding:6px 10px" ${S.gold < cost ? 'disabled' : ''}>${t('respecT')} · ${cost ? cost + ' ' + t('goldN') : t('respecFree')}</button>` : ''}`;
+    return `<div class="passives"><span class="muted">${t('passivesT')} · ${t('passPts')}: <b>${left}</b></span><span></span><span></span>${HS.D.passives.map((p) => { const r = c.passives[p.id] || 0; const ok = left > 0 && r < p.mx && p.req <= S.L; return `<span class="${p.req > S.L ? 'locked' : ''}">${icon(p.id, 'pic')}${p.n}${p.req > S.L ? ` (${t('reqL')} ${p.req})` : ''}</span><b>${r}/${p.mx}</b><button data-passive="${p.id}" ${ok ? '' : 'disabled'} aria-label="+1 ${p.n}">+</button><span class="pd">${p.d}</span>`; }).join('')}</div>${spent ? `<button class="btn dim" id="b-respec" style="margin-top:6px;font-size:13px;padding:6px 10px" ${S.gold < cost ? 'disabled' : ''}>${t('respecT')} · ${cost ? cost + ' ' + t('goldN') : t('respecFree')}</button>` : ''}`;
   }
   /* ---------- kovárna Brannoc: G.CRAFT (Salvage, Reforge, Imbue, Temper, Unravel) ---------- */
   let FORGE = null; // vybraný předmět { kind: 'eq' | 'inv', key }
@@ -746,7 +748,7 @@
   /* ---------- HUD ---------- */
   const SK = [['ak_cleave', 'LMB', 'cleave'], ['ak_slam', 'RMB', 'slam'], ['ak_charge', 'Q', 'charge'], ['ak_brand', 'E', 'brand'], ['ak_bulwark', 'R', 'bulwark'], ['ak_warcry', 'T', 'warcry'], ['dodge', '␣', 'dodge']];
   const skillsEl = document.getElementById('skills');
-  skillsEl.innerHTML = SK.map(([id, key, nm]) => `<div class="sk" id="sk-${id}"><span class="key">${key}</span><b>${t(nm)}</b><span class="cost"></span><div class="cd"></div></div>`).join('');
+  skillsEl.innerHTML = SK.map(([id, key, nm]) => `<div class="sk" id="sk-${id}" aria-label="${t(nm)}">${icon(id)}<span class="key">${key}</span><b>${t(nm)}</b><span class="cost"></span><div class="cd"></div></div>`).join('');
   function flashSkill(id, txt) { const el = document.getElementById('sk-' + id); if (!el) return; el.classList.add('no'); setTimeout(() => el.classList.remove('no'), 250); num(S.player.x, S.player.z, txt || t('nores'), 'info', 2.6); }
   let fpsOn = false;
   function hud() {
@@ -762,7 +764,7 @@
       const el = document.getElementById('sk-' + id); if (!el) continue;
       if (id === 'dodge') { el.querySelector('.cd').style.height = ((p.dodgeCd / SIM.DODGE.cd) * 100).toFixed(0) + '%'; continue; }
       const sl = S.skills[id]; const h = sl.hit.en_thrall; const cdMax = h.cd || 0;
-      el.classList.toggle('locked', !sl.on); el.dataset.req = 'L' + sl.sk.req; el.title = sl.on ? '' : t('locked') + ' ' + sl.sk.req;
+      el.classList.toggle('locked', !sl.on); el.dataset.req = 'L' + sl.sk.req; el.title = sl.on ? el.getAttribute('aria-label') : t('locked') + ' ' + sl.sk.req;
       el.classList.toggle('on', id === 'ak_bulwark' && p.bulwark > 0);
       el.querySelector('.cd').style.height = cdMax ? ((sl.cd / cdMax) * 100).toFixed(0) + '%' : '0%';
       el.querySelector('.cost').textContent = h.cost > 0 ? h.cost : '+' + -h.cost;

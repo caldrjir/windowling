@@ -114,6 +114,9 @@ Convention: each completed iteration is at least one minor release.
   skill bar, menu background) is generated the same way on a transparent background, trimmed and
   drawn with CSS `border-image` (9-slice). Each file's Scenario asset id, prompt and slice are in
   `assets/ui/credits.json`; `hollowsun-assets.test.ts` fails if the stylesheet uses an unrecorded image.
+  Icons (`assets/icons/ic_<id>.webp`, 128 px) cover every item base, skill, dodge, passive and currency;
+  they were generated nine at a time as 3×3 sheets and cut apart (sheets and briefs in
+  `assets/icons/credits.json`). A new base, skill or passive in `data.js` fails the test until it has one.
 - HOLLOW SUN balance: `pnpm --filter @windowling/web hollowsun:playthrough [seed] [step,step]` plays
   the whole Act I campaign headless (about 2–4 minutes) and prints time, level, deaths, hits to kill
   and hits survived per step. Run it after changing zones, enemies, loot or XP.

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { MeshoptDecoder } from 'meshoptimizer';
 import { describe, expect, it } from 'vitest';
 
@@ -465,5 +466,34 @@ describe('UI kit', () => {
 		const c = credits.assets[id];
 		expect(c?.scenario).toMatch(/^asset_/);
 		expect(c?.prompt.length).toBeGreaterThan(10);
+	});
+});
+
+// Icons (D34): every item base, skill (with dodge) and passive in data.js has a recorded 128 px WebP icon.
+describe('icons', () => {
+	const ctx: { window?: unknown; HS_DATA?: unknown } = {};
+	ctx.window = ctx;
+	runInNewContext(readFileSync(dir + '../js/data.js', 'utf8'), ctx);
+	const data = ctx.HS_DATA as {
+		loot: { bases: { id: string }[] };
+		skills: { id: string }[];
+		passives: { id: string }[];
+	};
+	const credits = JSON.parse(readFileSync(dir + 'icons/credits.json', 'utf8')) as {
+		icons: Record<string, { sheet: string; prompt: string }>;
+		sheets: Record<string, { scenario: string }>;
+	};
+	const ids = [
+		...data.loot.bases.map((b) => b.id),
+		...data.skills.map((s) => s.id),
+		'dodge',
+		...data.passives.map((p) => p.id),
+	];
+	it.each(ids)('ic_%s is a recorded 128 px WebP', (id) => {
+		const buf = readFileSync(`${dir}icons/ic_${id}.webp`);
+		expect(webpSize(new DataView(buf.buffer, buf.byteOffset, buf.byteLength))).toEqual([128, 128]);
+		const c = credits.icons[`ic_${id}`];
+		expect(c?.prompt.length).toBeGreaterThan(10);
+		expect(credits.sheets[c?.sheet ?? '']?.scenario).toMatch(/^asset_/);
 	});
 });

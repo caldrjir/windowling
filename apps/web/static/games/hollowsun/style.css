@@ -199,3 +199,20 @@ table.res td.n { text-align: right; font-family: var(--f-mono); }
 .passives button { font: 600 12px/1 var(--f-mono); color: var(--gold); background: #0d0f15; border: 1px solid var(--bronze); width: 22px; height: 20px; cursor: pointer; }
 .passives button:disabled { opacity: .3; cursor: default; }
 #inv .eq .cell.has { padding-top: 12px; }
+/* P1: ikony ze Scenaria (assets/icons) */
+#inv .cell img.ic { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); object-fit: contain; filter: drop-shadow(0 2px 3px #000); pointer-events: none; }
+#inv .eq .cell img.ic { inset: 4px 0 0; width: 100%; height: calc(100% - 4px); }
+#inv .cell .sl { z-index: 1; text-shadow: 0 1px 2px #000; }
+#inv .cell .tier { position: absolute; right: 3px; bottom: 2px; z-index: 1; font: 600 9px/1 var(--f-mono); color: var(--muted); text-shadow: 0 1px 2px #000; }
+#inv .eq .cell.has { padding-top: 0; }
+#tip { position: fixed; } #tip h3, #tip > .base:nth-of-type(1) { padding-right: 58px; } #tip img.tic { position: absolute; top: 2px; right: 0; width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 4px #000); }
+.sk { background: none; }
+.sk img.ic { position: absolute; inset: 9px; width: 44px; height: 44px; object-fit: cover; border-radius: 2px; }
+.sk::after { content: ""; position: absolute; inset: 0; background: url(assets/ui/ui_skill.webp) center / 100% 100% no-repeat; pointer-events: none; }
+.sk .key, .sk .cost { z-index: 2; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+.sk .cd { z-index: 1; }
+.sk b { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; font-size: 0; }
+.sk.locked img.ic { filter: grayscale(1) brightness(.5); }
+.sk.locked b::after { font-size: 11px; color: #e7e2d6; text-shadow: 0 1px 2px #000; margin: 0; }
+.passives img.pic { width: 22px; height: 22px; vertical-align: -6px; margin-right: 6px; border: 1px solid #5a4630; }
+.drop img.dic { width: 18px; height: 18px; vertical-align: -5px; margin-right: 4px; object-fit: contain; }
