@@ -46,6 +46,33 @@ const ENEMY_NAMES = {
   exploder: [L('Rozbuška', 'Detonator'), L('Přiblíží se, rozbliká a vybuchne.', 'Closes in, starts blinking, and explodes.')],
   tank: [L('Monolit', 'Monolith'), L('Obří pevnost z pozdějších vln.', 'A giant fortress from later waves.')],
   wisp: [L('Přízrak', 'Wisp'), L('Extrémně rychlý, ale slabý.', 'Extremely fast, but weak.')],
+  orbiter: [L('Kroužič', 'Circler'), L('Obletuje tě v kruhu, který se pomalu stahuje. Přímé střely ho míjí.', 'Circles you in a slowly tightening ring. Straight shots tend to miss it.')],
+  weaver: [L('Klikatec', 'Weaver'), L('Letí ke tobě v kličkách, aby uhýbal střelám.', 'Zigzags towards you to dodge your shots.')],
+  blinker: [L('Přeskokan', 'Blinker'), L('Ztuhne, u tebe se objeví jeho přízrak a pak se tam přenese. Uhni z místa.', 'Freezes, its ghost appears next to you, then it teleports there. Move away.')],
+  ram: [L('Beran', 'Ram'), L('Otáčí se pomalu, ale v přímce zrychlí na dvojnásobek tvé rychlosti. Uhni mu do strany.', 'Turns slowly but builds up to twice your speed in a straight line. Sidestep it.')],
+  scorcher: [L('Žhavec', 'Scorcher'), L('Prolétá kolem tebe a nechává za sebou hořící stopu.', 'Streaks past you and leaves a burning trail.')],
+  shade: [L('Stín', 'Shade'), L('Je skoro neviditelný; ukáže se až zblízka nebo po zásahu.', 'Nearly invisible: it only shows up close or after it is hit.')],
+  berserker: [L('Zuřivec', 'Berserker'), L('Pod polovinou zdraví se rozzuří: je skoro dvakrát rychlejší a bije silněji.', 'Below half health it goes berserk: almost twice as fast and hits harder.')],
+  marksman: [L('Ostrostřelec', 'Marksman'), L('Z dálky zamíří laserem a vypálí rychlou střelu. Když laser zesílí, je zamčený: uhni.', 'Aims a laser from afar, then fires a fast shot. When the laser brightens it is locked: dodge.')],
+  scatter: [L('Brokovník', 'Scatterer'), L('Zblízka pálí vějíř pěti střel.', 'Fires a fan of five shots at close range.')],
+  pulsar: [L('Pulzar', 'Pulsar'), L('Rozzáří se a vystřelí prstenec střel do všech stran.', 'Lights up, then fires a ring of shots in every direction.')],
+  mortar: [L('Minomet', 'Mortar'), L('Z dálky hází granáty tam, kam letíš. Červený kruh ukazuje dopad.', 'Lobs shells where you are heading. The red circle marks the impact.')],
+  rocketeer: [L('Raketník', 'Rocketeer'), L('Odpaluje navigované rakety. Dají se sestřelit, nebo jim utéct, než vyhoří.', 'Launches homing rockets. Shoot them down or outrun them until they burn out.')],
+  medic: [L('Ošetřovatel', 'Medic'), L('Drží se vzadu a léčí zraněné spojence kolem sebe. Zabij ho první.', 'Hangs back and heals wounded allies around it. Kill it first.')],
+  aegis: [L('Clona', 'Aegis'), L('Spojenci v jejím kruhu dostávají jen poloviční zranění.', 'Allies inside its circle take only half damage.')],
+  commander: [L('Velitel', 'Commander'), L('Spojenci v jeho kruhu jsou o 40 % rychlejší.', 'Allies inside its circle are 40% faster.')],
+  plated: [L('Pancéřník', 'Plated'), L('Z každé rány si odečte kus zranění. Slabé rychlé zbraně ho skoro neškrábnou.', 'Shrugs off part of every hit. Weak rapid weapons barely scratch it.')],
+  phaser: [L('Fázovač', 'Phaser'), L('Na chvíli zprůsvitní: střely jím projdou, ale ani on tě nezraní.', 'Turns see-through now and then: shots pass through it, but it cannot hurt you either.')],
+  bulwark: [L('Štítník', 'Bulwark'), L('Štít vpředu pohltí 80 % zranění. Otáčí se pomalu: obleť ho.', 'Its front shield absorbs 80% of the damage. It turns slowly: fly around it.')],
+  carrier: [L('Nosič', 'Carrier'), L('Pomalá matka, která každých pár sekund vypustí trojici larev.', 'A slow mothership that releases three larvae every few seconds.')],
+  shrapnel: [L('Šrapnel', 'Shrapnel'), L('Po zničení se rozletí na střely do všech stran.', 'Bursts into shots in every direction when destroyed.')],
+  hydra: [L('Hydra', 'Hydra'), L('Po zničení se rozdělí na dvě menší, a ty znovu.', 'Splits into two smaller ones when destroyed, and those split again.')],
+  minelayer: [L('Minér', 'Minelayer'), L('Krouží kolem tebe a klade miny. Miny jdou zničit dřív, než se k nim přiblížíš.', 'Circles you laying mines. You can destroy the mines before you get close.')],
+  frost: [L('Mrazivec', 'Frostling'), L('V jeho mrazivé auře zpomalíš o třetinu.', 'Inside its frost aura you slow down by a third.')],
+  gravitar: [L('Gravitar', 'Gravitar'), L('Přitahuje tě k sobě. Úskok se z jeho tahu vytrhne.', 'Pulls you towards itself. A dash breaks free.')],
+  leech: [L('Pijavice', 'Leech'), L('Přisaje se, saje zdraví a zpomaluje tě. Setřese ji úskok.', 'Latches on, drains your health and slows you. A dash shakes it off.')],
+  scavenger: [L('Mrchožrout', 'Scavenger'), L('Sbírá tvoje krystaly zkušeností a roste z nich. Po smrti je vrátí i s úrokem.', 'Eats your experience crystals and grows. When it dies it gives them back with interest.')],
+  twin: [L('Dvojčata', 'Twins'), L('Chodí v páru a drží se po stranách. Energetické lano mezi nimi pálí. Po smrti jednoho se druhé rozzuří.', 'Come in pairs and flank you. The energy tether between them burns. Kill one and the other goes wild.')],
 };
 
 const UI = (() => {
@@ -213,11 +240,15 @@ const UI = (() => {
   // ── Obrazovky ─────────────────────────────────────────────────────────────
   const screens = {
     title(el) {
-      el.innerHTML = `<div><div class="logo" data-text="VOIDBORN">VOIDBORN</div><div class="tagline">${L('Přežij prázdnotu', 'Survive the void')}</div><div class="press">${L('Stiskni libovolnou klávesu', 'Press any key')}</div></div>`;
+      el.innerHTML = `<div><div class="logo" data-text="VOIDBORN">VOIDBORN</div><div class="tagline">${L('Přežij prázdnotu', 'Survive the void')}</div><div class="press">${L('Stiskni libovolnou klávesu', 'Press any key')}</div></div><div class="title-ver">v${GAME_VERSION}</div>`;
     },
 
     menu(el) {
       const S = SAVE.stats;
+      if (SAVE.achTopUp > 0) {
+        const v = SAVE.achTopUp; SAVE.achTopUp = 0; persist();
+        setTimeout(() => toast(L('Síň slávy', 'Hall of Fame'), L(`Úspěchy teď odměňují mnohem víc a dávají trvalé bonusy. Doplatek za ty splněné: +${fmtNum(v)} ◆`, `Achievements now pay much more and give permanent bonuses. Top-up for those already earned: +${fmtNum(v)} ◆`), 'trophy'), 700);
+      }
       const cleared = SECTORS.filter(s => SAVE.sectors[s.id] && SAVE.sectors[s.id].cleared).length;
       const achN = Object.keys(SAVE.achievements).length;
       const canBuy = canBuyAny(SAVE);
@@ -322,13 +353,19 @@ const UI = (() => {
           </div>
         </div>`;
       Forge3D.mount($('#forgeCv'), { onSelect: id => { const same = id === forgePart; forgePart = id; Sound.play.select(); forgeRefresh(same); } });
-      Forge3D.select(forgePart, true);
+      Forge3D.select(forgePart, true, false, false);
     },
 
     ach(el) {
-      const n = Object.keys(SAVE.achievements).length;
+      const n = Object.keys(SAVE.achievements).length, perks = achPerks(SAVE.achievements);
+      const left = ACHIEVEMENTS.filter(a => !SAVE.achievements[a.id]).reduce((t, a) => t + a.reward, 0);
       el.innerHTML = `
         ${topbar(L('SÍŇ SLÁVY', 'HALL OF FAME'), L('ÚSPĚCHY', 'ACHIEVEMENTS'), `<span class="sum">${n} / ${ACHIEVEMENTS.length}</span>`)}
+        <div class="ach-fame">
+          <div><small>${L('TRVALÉ BONUSY DO KAŽDÉHO BĚHU', 'PERMANENT BONUSES FOR EVERY RUN')}</small>
+            <p>${Object.keys(perks).length ? perkText(perks) : L('Zatím žádné. Každý úspěch kromě střepů přidá i trvalý bonus.', 'None yet. Besides shards, every achievement adds a permanent bonus.')}</p></div>
+          <div class="af-left"><small>${L('ZBÝVÁ ZÍSKAT', 'STILL TO EARN')}</small><b>${icon('shard')} ${fmtNum(left)}</b></div>
+        </div>
         <div class="grid-cards">${ACHIEVEMENTS.map(a => {
           const got = !!SAVE.achievements[a.id], [v, m] = a.prog(SAVE, null);
           const pl = a.pilot && PILOTS.find(p => p.id === a.pilot);
@@ -336,7 +373,8 @@ const UI = (() => {
           return `<div class="fcard ach ${got ? 'got' : ''}">
             <div class="fi">${icon(a.icon)}<div><h4>${a.name}</h4><p>${a.desc}</p></div></div>
             <div class="bar"><i style="width:${Math.min(100, v / m * 100)}%"></i></div>
-            <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${opens.length ? ` · ${L('odemyká', 'unlocks')} ${opens.join(', ')}` : ''}</span><b>+${a.reward} ◆</b></div>
+            <div class="rw"><span>${got ? L('Splněno', 'Completed') : `${fmtNum(Math.min(v, m))} / ${fmtNum(m)}`}${opens.length ? ` · ${L('odemyká', 'unlocks')} ${opens.join(', ')}` : ''}</span><b>+${fmtNum(a.reward)} ◆</b></div>
+            ${a.perk ? `<div class="ach-perk">${icon('star')} ${L('Navždy', 'Forever')}: ${perkText(a.perk)}</div>` : ''}
           </div>`;
         }).join('')}</div>`;
     },
@@ -365,15 +403,17 @@ const UI = (() => {
         return `<div class="fcard cx ${got ? '' : 'unknown'}" style="--c:${e.color}"><div class="fi">${icon(e.icon)}<div><h4>${got ? e.name : '???'}</h4><p>${got ? e.desc : L('Neobjevená evoluce.', 'Undiscovered evolution.')}</p></div></div>
           <div class="recipe">${SAVE.seen[id] ? b.name : '???'} (${L('úr.', 'lv.')} 8) + ${got ? PASSIVES[b.evoWith].name : '???'}${got ? `<br><small>${L('Startovní zbraň pilota se vyvine i bez doplňku.', 'A pilot’s starting weapon evolves even without the passive.')}</small>` : ''}</div></div>`;
       }).join('');
-      else body = Object.entries(ENEMIES).filter(([k]) => k !== 'mini').map(([k, d]) => {
-        const names = ENEMY_NAMES[k];
-        return `<div class="fcard cx" style="--c:${d.color}"><div class="fi"><canvas width="64" height="64" data-enemy="${k}" style="width:40px;height:40px"></canvas><div><h4>${names[0]}</h4><p>${names[1]}</p></div></div></div>`;
+      else body = `<div class="cx-sum">${L('Bestiář', 'Bestiary')}: <b>${ENEMY_KINDS.filter(k => SAVE.bestiary[k]).length} / ${ENEMY_KINDS.length}</b> ${L('druhů zničeno', 'kinds destroyed')}</div>` + ENEMY_KINDS.map(k => {
+        const d = ENEMIES[k], names = ENEMY_NAMES[k], n = SAVE.bestiary[k] || 0;
+        return `<div class="fcard cx ${n ? '' : 'unknown'}" style="--c:${d.color}"><div class="fi"><canvas width="64" height="64" data-enemy="${k}" style="width:40px;height:40px"></canvas><div><h4>${n ? names[0] : '???'}</h4><p>${n ? `${names[1]} <i>${L('Zničeno', 'Destroyed')}: ${fmtNum(n)}</i>` : L('Zatím nezničen. Potkáš ho v některém ze sektorů.', 'Not destroyed yet. You will meet it in one of the sectors.')}</p></div></div></div>`;
       }).join('') + Object.values(BOSSES).map(b => `<div class="fcard cx" style="--c:${b.color}"><div class="fi">${icon('boss')}<div><h4>${b.name}</h4><p>${L('Boss sektoru. Vzorce útoků', 'Sector boss. Attack patterns')}: ${b.patterns.length}.</p></div></div></div>`).join('');
       el.innerHTML = `${topbar(L('ARCHIV', 'ARCHIVE'), L('KODEX', 'CODEX'))}
         <div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === codexTab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
         <div class="grid-cards">${body}</div>`;
       el.querySelectorAll('canvas[data-enemy]').forEach(c => {
-        const d = ENEMIES[c.dataset.enemy], x = c.getContext('2d'), img = Sprites.enemy(d.shape, d.r, d.color, false, false);
+        const k = c.dataset.enemy, d = ENEMIES[k], x = c.getContext('2d'), known = SAVE.bestiary[k] > 0;
+        const img = Sprites.enemy(d.shape, d.r, known ? d.color : '#6b6f8f', false, false);
+        if (!known) x.globalAlpha = 0.45;
         const s = 52 / (img.hw * 2) * Math.min(1.6, 26 / d.r);
         x.translate(32, 32); x.scale(s, s); x.drawImage(img, -img.hw, -img.hw, img.hw * 2, img.hw * 2);
       });
@@ -405,7 +445,7 @@ const UI = (() => {
           <div class="row" data-pv="shake" tabindex="-1"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
           <div class="row" data-pv="dmgNums" tabindex="-1"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
           <div class="row" data-pv="quality" tabindex="-1"><label>${L('Kvalita vykreslování', 'Rendering quality')}<small>${L('Auto hlídá rozlišení podle obrazovky a při sekání ho sníží. Úsporná kreslí v 70 % rozlišení.', 'Auto keeps the resolution in budget for your screen and lowers it when the game stutters. Saver draws at 70% resolution.')}</small></label><button class="btn" data-act="quality">${{ auto: 'Auto', high: L('Plná', 'Full'), low: L('Úsporná', 'Saver') }[s.quality || 'auto']}</button></div>
-          <div class="row" data-pv="fps" tabindex="-1"><label>${L('Počítadlo FPS', 'FPS counter')}<small>VOIDBORN v${GAME_VERSION}</small></label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>`)}
+          <div class="row" data-pv="fps" tabindex="-1"><label>${L('Počítadlo FPS', 'FPS counter')}<small>${L('Snímky za sekundu a počet nepřátel v rohu obrazovky', 'Frames per second and the enemy count in the corner')}</small></label><button class="toggle ${s.fps ? 'on' : ''}" data-tog="fps"></button></div>`)}
             ${grp('wave', L('Jazyk a zvuk', 'Language & sound'), `
           <div class="row"><label>${L('Jazyk', 'Language')}<small>Čeština / English</small></label>${langSwitch()}</div>
           <div class="row"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>

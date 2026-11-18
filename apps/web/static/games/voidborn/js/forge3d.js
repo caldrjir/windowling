@@ -2,8 +2,9 @@
 // ── Kovárna: 3D model lodi ───────────────────────────────────────────────────
 // Nízkopolygonová loď z hranolů a válců promítnutá do 2D canvasu: malířův algoritmus (plochy od
 // nejvzdálenější), odvrácené plochy se nekreslí, ploché stínování podle světla. Každá plocha patří
-// jedné části lodi (PARTS); klepnutí najde nejbližší plochu pod prstem. Táhnutím se loď otáčí (bližší bok jde s prstem),
-// po výběru části se kamera sama natočí tak, aby byla vidět. Model se staví znovu po nákupu:
+// jedné části lodi (PARTS); klepnutí najde nejbližší plochu pod prstem. Táhnutím doprava kamera obletí loď
+// doprava (loď se otočí proti prstu), po puštění rotace plynule dobíhá. Kamera se sama natočí jen po výběru
+// části v seznamu; klepnutí do modelu ani nečinnost s lodí nehnou (po prvním doteku se už sama netočí). Model se staví znovu po nákupu:
 // víc vylepšení = jasněji svítící část, Duplikátor přidá hlaveň, výzbroj obarví rakety v gondolách.
 const Forge3D = (() => {
   // Osy lodi: x dopředu (příď), y doprava, z nahoru.
@@ -109,7 +110,7 @@ const Forge3D = (() => {
 
   // ── Kamera a vykreslení ──
   let cv = null, ctx = null, W = 0, H = 0, dpr = 1;
-  let yaw = -0.75, pitch = 0.38, zoom = 1, target = null, idle = 0, t = 0;
+  let yaw = -0.75, pitch = 0.38, zoom = 1, target = null, idle = 0, t = 0, spin = 0, touched = false, over = false;
   let selected = null, hovered = null, drawn = [], onSelect = null, glowFx = 0;
   const DIST = 22, LIGHT = (() => { const v = [-0.45, 0.75, 0.55], l = Math.hypot(...v); return v.map(c => c / l); })();
   const METAL = [22, 26, 58];
@@ -252,9 +253,12 @@ const Forge3D = (() => {
   // ── Vstup ──
   let drag = null;
   const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  // Rychlost otáčení podle šířky plátna: tah přes celou šířku ≈ 300°, na telefonu i na monitoru stejně.
+  const turn = () => 5.2 / Math.max(320, W);
   function down(e) {
     if (e.button > 0) return;
-    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0 };
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0, at: performance.now() };
+    spin = 0; touched = true;
     try { cv.setPointerCapture(e.pointerId); } catch (x) { /* */ }
   }
   function move(e) {
@@ -262,27 +266,36 @@ const Forge3D = (() => {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       drag.moved += Math.abs(dx) + Math.abs(dy);
       drag.x = e.clientX; drag.y = e.clientY;
-      if (drag.moved > 5) { yaw += dx * 0.011; pitch = clamp(pitch + dy * 0.009, -1.15, 1.25); target = null; idle = 0; cv.classList.add('drag'); }
+      if (drag.moved > 5) {
+        const now = performance.now(), dtm = Math.max(1, now - drag.at) / 1000, dyaw = -dx * turn();
+        yaw += dyaw; pitch = clamp(pitch + dy * turn() * 0.8, -1.15, 1.25); target = null; idle = 0; cv.classList.add('drag');
+        // setrvačnost: vyhlazená rychlost posledních pohybů, po puštění dobíhá
+        spin = clamp(spin * 0.6 + (dyaw / dtm) * 0.4, -7, 7);
+      }
+      drag.at = performance.now();
       return;
     }
+    over = true;
     const [x, y] = pos(e), h = pick(x, y);
     if (h !== hovered) { hovered = h; cv.style.cursor = h ? 'pointer' : 'grab'; }
   }
   function up(e) {
     if (!drag || e.pointerId !== drag.id) return;
     const moved = drag.moved;
+    // držel prst na místě, než pustil: žádné dobíhání
+    if (performance.now() - drag.at > 90) spin = 0;
     drag = null; cv.classList.remove('drag');
-    if (moved <= 5) { const [x, y] = pos(e), p = pick(x, y); if (p) select(p, true, true); }
+    if (moved <= 5) { spin = 0; const [x, y] = pos(e), p = pick(x, y); if (p) select(p, false, true); }
   }
-  function leave() { if (!drag) hovered = null; }
+  function leave() { over = false; if (!drag) hovered = null; }
   function wheel(e) { e.preventDefault(); zoom = clamp(zoom * (e.deltaY > 0 ? 0.92 : 1.08), 0.75, 1.6); idle = 0; }
   function key(e) {
     if (!cv || !cv.isConnected || UI.current !== 'forge' || (UI.overlayOpen && UI.overlayOpen())) return;
     const k = e.code;
-    if (k === 'ArrowLeft') yaw -= 0.18; else if (k === 'ArrowRight') yaw += 0.18;
+    if (k === 'ArrowLeft') yaw += 0.18; else if (k === 'ArrowRight') yaw -= 0.18;
     else if (k === 'ArrowUp') pitch = clamp(pitch + 0.15, -1.15, 1.25); else if (k === 'ArrowDown') pitch = clamp(pitch - 0.15, -1.15, 1.25);
     else return;
-    target = null; idle = 0;
+    target = null; idle = 0; spin = 0; touched = true;
     e.preventDefault();
   }
   window.addEventListener('keydown', key);
@@ -297,14 +310,17 @@ const Forge3D = (() => {
     cv.addEventListener('pointerup', up);
     cv.addEventListener('pointercancel', () => { drag = null; });
     cv.addEventListener('pointerleave', leave);
+    cv.addEventListener('pointerenter', () => { over = true; });
+    touched = false; spin = 0;
     cv.addEventListener('wheel', wheel, { passive: false });
     cv.style.cursor = 'grab';
     build();
     draw();
   }
   function unmount() { cv = null; ctx = null; drawn = []; }
-  /** Vybere část; animate = kamera se k ní natočí, fromClick = klepnutí do modelu (ohlásí se UI). */
-  function select(id, animate = true, fromClick = false) {
+  /** Vybere část; animate = kamera se k ní natočí, fromClick = klepnutí do modelu (ohlásí se UI),
+   *  user = vybral ji hráč (pak se loď už sama netočí; při otevření Kovárny false). */
+  function select(id, animate = true, fromClick = false, user = true) {
     if (!P_INDEX[id]) return;
     selected = id;
     if (animate) {
@@ -313,7 +329,7 @@ const Forge3D = (() => {
       let dy = ((ty - yaw) % TAU + TAU * 1.5) % TAU - TAU / 2;
       target = [yaw + dy, tp];
     }
-    idle = 0; glowFx = 1;
+    idle = 0; glowFx = 1; if (user) touched = true; if (animate) spin = 0;
     if (fromClick && onSelect) onSelect(id);
   }
   function frame(dt) {
@@ -323,7 +339,9 @@ const Forge3D = (() => {
       const k = 1 - Math.exp(-dt * 6);
       yaw += (target[0] - yaw) * k; pitch += (target[1] - pitch) * k;
       if (Math.abs(target[0] - yaw) < 0.002 && Math.abs(target[1] - pitch) < 0.002) target = null;
-    } else if (idle > 5 && !drag) yaw -= dt * 0.12; // po chvíli bez dotyku se loď pomalu otáčí
+    } else if (!drag && Math.abs(spin) > 0.02) {
+      yaw += spin * dt; spin *= Math.exp(-dt * 4.5);
+    } else if (!touched && !over && idle > 3) yaw -= dt * 0.12; // ukázka, dokud se jí hráč nedotkne
     glowFx = Math.max(0, glowFx - dt);
     draw();
   }

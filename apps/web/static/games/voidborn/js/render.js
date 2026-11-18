@@ -23,6 +23,34 @@ const Sprites = (() => {
       case 'hex': poly(6, 0); break;
       case 'oct': poly(8, Math.PI / 8); break;
       case 'star': for (let i = 0; i < 16; i++) { const a = i * TAU / 16, rr = i % 2 ? r * 0.5 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      // tvary nepřátel z 1.4 (všechny míří doprava, kreslí se jednou do spritu)
+      case 'ring': x.arc(0, 0, r, 0, TAU); x.moveTo(r * 0.55, 0); x.arc(0, 0, r * 0.55, 0, TAU, true); break;
+      case 'chevron': x.moveTo(r, 0); x.lineTo(-r * 0.45, r); x.lineTo(-r * 0.95, r * 0.6); x.lineTo(-r * 0.05, 0); x.lineTo(-r * 0.95, -r * 0.6); x.lineTo(-r * 0.45, -r); x.closePath(); break;
+      case 'bolt': x.moveTo(r * 0.35, -r); x.lineTo(-r * 0.55, r * 0.1); x.lineTo(-r * 0.02, r * 0.1); x.lineTo(-r * 0.35, r); x.lineTo(r * 0.6, -r * 0.15); x.lineTo(r * 0.05, -r * 0.15); x.closePath(); break;
+      case 'kite': x.moveTo(r * 1.25, 0); x.lineTo(-r * 0.1, r * 0.62); x.lineTo(-r * 0.85, 0); x.lineTo(-r * 0.1, -r * 0.62); x.closePath(); break;
+      case 'drop': x.moveTo(r * 1.15, 0); x.arc(-r * 0.15, 0, r * 0.68, -Math.PI * 0.42, Math.PI * 0.42, true); x.closePath(); break;
+      case 'crescent': x.arc(0, 0, r, Math.PI * 0.3, Math.PI * 1.7); x.arc(r * 0.45, 0, r * 0.72, Math.PI * 1.45, Math.PI * 0.55, true); x.closePath(); break;
+      case 'star6': for (let i = 0; i < 12; i++) { const a = i * TAU / 12, rr = i % 2 ? r * 0.55 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      case 'star5': for (let i = 0; i < 10; i++) { const a = i * TAU / 10 - Math.PI / 2, rr = i % 2 ? r * 0.45 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } x.closePath(); break;
+      case 'spikeball': for (let i = 0; i < 20; i++) { const a = i * TAU / 20, rr = i % 2 ? r * 0.6 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      case 'snow': for (let i = 0; i < 12; i++) { const a = i * TAU / 12, rr = i % 2 ? r * 0.3 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      case 'spike4': for (let i = 0; i < 8; i++) { const a = i * TAU / 8, rr = i % 2 ? r * 0.36 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      case 'gear': for (let i = 0; i < 32; i++) { const a = i * TAU / 32, rr = (i >> 1) % 2 ? r * 0.74 : r; i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      case 'lens': x.moveTo(r * 1.1, 0); x.quadraticCurveTo(0, r * 1.05, -r * 1.1, 0); x.quadraticCurveTo(0, -r * 1.05, r * 1.1, 0); x.closePath(); break;
+      case 'trefoil': for (let i = 0; i < 3; i++) { const a = i * TAU / 3, cx = Math.cos(a) * r * 0.45, cy = Math.sin(a) * r * 0.45; x.moveTo(cx + r * 0.55, cy); x.arc(cx, cy, r * 0.55, 0, TAU); } break;
+      case 'clover': for (let i = 0; i < 4; i++) { const a = i * TAU / 4 + Math.PI / 4, cx = Math.cos(a) * r * 0.42, cy = Math.sin(a) * r * 0.42; x.moveTo(cx + r * 0.5, cy); x.arc(cx, cy, r * 0.5, 0, TAU); } break;
+      case 'hourglass': x.moveTo(-r * 0.85, -r); x.lineTo(r * 0.85, -r); x.lineTo(r * 0.12, 0); x.lineTo(r * 0.85, r); x.lineTo(-r * 0.85, r); x.lineTo(-r * 0.12, 0); x.closePath(); break;
+      case 'pent': poly(5, -Math.PI / 2); break;
+      case 'hept': poly(7, -Math.PI / 2); break;
+      case 'cross': { const t = r * 0.36; x.moveTo(t, -r); x.lineTo(t, -t); x.lineTo(r, -t); x.lineTo(r, t); x.lineTo(t, t); x.lineTo(t, r); x.lineTo(-t, r); x.lineTo(-t, t); x.lineTo(-r, t); x.lineTo(-r, -t); x.lineTo(-t, -t); x.lineTo(-t, -r); x.closePath(); break; }
+      case 'squircle': for (let i = 0; i < 24; i++) { const a = i * TAU / 24, c = Math.cos(a), s = Math.sin(a); const px = Math.sign(c) * Math.pow(Math.abs(c), 0.5) * r * 0.95, py = Math.sign(s) * Math.pow(Math.abs(s), 0.5) * r * 0.95; i ? x.lineTo(px, py) : x.moveTo(px, py); } x.closePath(); break;
+      case 'blob': for (let i = 0; i < 20; i++) { const a = i * TAU / 20, rr = r * (0.86 + 0.14 * Math.sin(a * 5) + 0.06 * Math.cos(a * 3)); i ? x.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : x.moveTo(rr, 0); } x.closePath(); break;
+      case 'shield': x.moveTo(-r * 0.55, -r); x.arc(-r * 0.55, 0, r, -Math.PI / 2, Math.PI / 2); x.lineTo(-r * 0.75, r * 0.7); x.lineTo(-r * 0.75, -r * 0.7); x.closePath(); break;
+      case 'saucer': x.ellipse(0, 0, r, r * 0.58, 0, 0, TAU); x.moveTo(r * 0.45, -r * 0.2); x.ellipse(0, -r * 0.2, r * 0.45, r * 0.38, 0, 0, TAU); break;
+      case 'pinwheel': for (let i = 0; i < 4; i++) { const a = i * TAU / 4; x[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r); x.lineTo(Math.cos(a + 1.05) * r * 0.32, Math.sin(a + 1.05) * r * 0.32); } x.closePath(); break;
+      case 'capsule': x.moveTo(r * 0.45, -r * 0.55); x.arc(r * 0.45, 0, r * 0.55, -Math.PI / 2, Math.PI / 2); x.lineTo(-r * 0.6, r * 0.55); x.arc(-r * 0.6, 0, r * 0.55, Math.PI / 2, Math.PI * 1.5); x.closePath(); break;
+      case 'maw': x.moveTo(0, 0); x.arc(0, 0, r, 0.6, TAU - 0.6); x.closePath(); break;
+      case 'trap': x.moveTo(r, -r * 0.42); x.lineTo(r, r * 0.42); x.lineTo(-r * 0.85, r); x.lineTo(-r * 0.85, -r); x.closePath(); break;
       default: x.arc(0, 0, r, 0, TAU);
     }
   }
@@ -496,6 +524,25 @@ const Render = (() => {
         ctx.beginPath(); ctx.moveTo(hx + 50, hy - 100); ctx.lineTo(hx, hy); ctx.stroke();
         spr(Sprites.glow('#ffffff', 10), hx, hy, 0, 0.6 + q * 0.6, 0.9);
         ctx.globalCompositeOperation = 'source-over';
+      } else if (f.k === 'efire') {
+        // hořící stopa Žhavce (nepřátelská: bez prolínání, ať je odlišná od plamenů hráče)
+        if (!inView(f.x, f.y, f.r)) continue;
+        const a = Math.min(1, f.life / f.max * 1.8);
+        spr(Sprites.boom(f.color), f.x, f.y, 0, f.r * (0.8 + 0.2 * a) / 64 * 1.3, 0.75 * a);
+      } else if (f.k === 'eburst') {
+        if (!inView(f.x, f.y, 40)) continue;
+        const q = clamp(f.t / f.delay, 0, 1);
+        spr(Sprites.dashRing(f.color, 32, 2.5, 5, 5, 0.9), f.x, f.y, f.t * 8, 1.4 - q * 0.9, 0.5 + 0.5 * q);
+      } else if (f.k === 'eshell') {
+        // granát Minometu: kruh dopadu se plní, granát letí obloukem
+        if (!inView(f.x, f.y, f.r + 400)) continue;
+        const q = clamp(f.t / f.delay, 0, 1);
+        spr(Sprites.dashRing('#ff4d5e', 64, 2.5, 8, 6), f.x, f.y, f.t * 2, f.r / 64, 0.45 + 0.5 * q);
+        spr(Sprites.radial('shell', [[0, 'rgba(255,77,94,0.32)'], [0.85, 'rgba(255,77,94,0.18)'], [1, 'rgba(255,77,94,0)']], 64), f.x, f.y, 0, f.r * q / 64, 1);
+        const hx = lerp(f.sx, f.x, q), hy = lerp(f.sy, f.y, q) - Math.sin(q * Math.PI) * 220;
+        ctx.globalCompositeOperation = 'lighter';
+        spr(Sprites.glow(f.color, 8), hx, hy, 0, 1, 0.95);
+        ctx.globalCompositeOperation = 'source-over';
       } else if (f.k === 'flame') {
         if (!inView(f.x, f.y, f.r)) continue;
         const a = Math.min(1, f.life / f.max * 1.6), rr = f.r * (0.75 + 0.25 * a);
@@ -560,9 +607,15 @@ const Render = (() => {
         if (e.flash > 0) spr(Sprites.boss(e.d.shape, e.r, e.color, true), e.x, e.y, e.rot, s, Math.min(1, e.flash * 8));
         continue;
       }
-      const spawnIn = Math.min(1, e.t * 4);
-      spr(Sprites.enemy(e.d.shape, e.d.r, e.color, false, e.elite), e.x, e.y, e.rot, (e.elite ? 1.75 : 1) * spawnIn);
-      if (e.flash > 0) spr(Sprites.enemy(e.d.shape, e.d.r, e.color, true, e.elite), e.x, e.y, e.rot, (e.elite ? 1.75 : 1), Math.min(1, e.flash * 12));
+      const spawnIn = Math.min(1, e.t * 4), d = e.d, sc = e.r / d.r;
+      // průhlednost: Stín je vidět jen zblízka (nebo chvíli po zásahu), Fázovač při průchodu
+      let al = 1;
+      if (d.cloak && !(e.revealT > G.time)) al = clamp((300 - Math.hypot(e.x - p.x, e.y - p.y)) / 140, 0.07, 1);
+      else if (e.phased) al = 0.22;
+      if (d.ai) drawFoeUnder(e, d);
+      spr(Sprites.enemy(d.shape, d.r, e.color, false, e.elite), e.x, e.y, e.rot, sc * spawnIn, al);
+      if (e.flash > 0) spr(Sprites.enemy(d.shape, d.r, e.color, true, e.elite), e.x, e.y, e.rot, sc, Math.min(1, e.flash * 12) * al);
+      if (d.ai) drawFoeOver(e, d);
       if (e.d.dash && e.st === 1) {
         world();
         ctx.strokeStyle = rgba(e.color, 0.35); ctx.lineWidth = e.r;
@@ -762,6 +815,44 @@ const Render = (() => {
     ctx.strokeStyle = 'rgba(255,79,216,0.55)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, TAU); ctx.stroke();
   }
+  // ── Nepřátelé z 1.4: varování a aury (všechno předkreslené sprity) ──
+  function drawFoeUnder(e, d) {
+    switch (d.ai) {
+      case 'aegis': case 'command': case 'frost': case 'grav':
+        spr(Sprites.dashRing(e.color, d.aura, 1.6, 10, 9, 0.5), e.x, e.y, G.time * (d.ai === 'grav' ? -0.6 : 0.25), 1, 0.6);
+        if (d.ai === 'grav') {
+          const arc = Sprites.arcLine(e.color, 100, 3, 2.2, 0.55);
+          for (let i = 0; i < 3; i++) spr(arc, e.x, e.y, -G.time * (2.2 + i * 0.6) + i * 2.1, d.aura * (0.25 + i * 0.14) / 100, 0.7);
+        }
+        break;
+      case 'twin':
+        if (e.side > 0 && e.mate && !e.mate.dead) {
+          const m = e.mate, len = Math.hypot(m.x - e.x, m.y - e.y);
+          if (len < TETHER) { ctx.globalCompositeOperation = 'lighter'; sprLine(Sprites.beam('#ff7ad9', false), e.x, e.y, Math.atan2(m.y - e.y, m.x - e.x), len, 9, 0.85); ctx.globalCompositeOperation = 'source-over'; }
+        }
+        break;
+      case 'snipe':
+        if (e.st === 1) {
+          const locked = e.stT < 0.3;
+          ctx.globalCompositeOperation = 'lighter';
+          sprLine(Sprites.beam(e.color, true), e.x, e.y, e.ang, 980, locked ? 7 : 3, locked ? 0.95 : 0.35 + 0.3 * ((e.stT * 12) % 1));
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        break;
+      case 'blink':
+        if (e.st === 1) {
+          const q = 1 - e.stT / 0.8;
+          spr(Sprites.dashRing(e.color, 32, 2, 6, 6, 0.9), e.bx, e.by, G.time * 3, 0.6 + 0.6 * (1 - q), 0.5 + 0.4 * q);
+          spr(Sprites.enemy(d.shape, d.r, e.color, false, false), e.bx, e.by, e.rot, 1, 0.2 + 0.35 * q);
+        }
+        break;
+    }
+  }
+  function drawFoeOver(e, d) {
+    if (d.ai === 'pulse' && e.stT < 0.45) spr(Sprites.enemy(d.shape, d.r, e.color, true, e.elite), e.x, e.y, e.rot, e.r / d.r, (1 - e.stT / 0.45) * 0.8);
+    else if (d.ai === 'bulwark') spr(Sprites.arcLine('#ffffff', d.r + 7, 3, 1.75, 0.85), e.x, e.y, e.ang - 0.875, e.r / d.r);
+    else if (d.ai === 'mine' && e.arm <= 0 && (G.time * 4 + e.id) % 1 < 0.5) spr(Sprites.glow(e.color, 6), e.x, e.y, 0, 1, 0.9);
+  }
   // Temnota: světlo jen kolem lodi; za ním z nepřátel svítí jen slabé oči.
   function drawDark(p) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -791,7 +882,7 @@ const Render = (() => {
     attract.t += dt;
     const t = attract.t;
     if (!attract.items.length) {
-      const types = Object.keys(ENEMIES);
+      const types = ENEMY_KINDS;
       for (let i = 0; i < 46; i++) attract.items.push({ type: pick(types), r: rand(260, 900), a: rand(0, TAU), s: rand(0.04, 0.12) * (Math.random() < 0.5 ? 1 : -1), rot: rand(0, TAU), z: rand(0.6, 1.2) });
     }
     const cx = Math.cos(t * 0.05) * 300, cy = t * 22;

@@ -13,4 +13,7 @@
 //        plochu s živou ukázkou zapnuto / vypnuto
 // 1.3.1  Nastavení: ukázka vpravo se vždy vejde na obrazovku (posouvá se jen seznam), ukazuje se až po
 //        najetí myší a jen u nastavení, která jdou ve hře vidět (ne u zvuku, jazyka, záznamu a dat)
-const GAME_VERSION = '1.3.1';
+// 1.4.0  27 nových druhů nepřátel s vlastními schopnostmi (foes.js) a bestiář v Kodexu; úspěchy odměňují
+//        podle obtížnosti a dávají trvalé bonusy (Síň slávy, doplatek za splněné); otáčení lodi v Kovárně
+//        obráceně, se setrvačností a bez samovolného natáčení; verze na úvodní obrazovce místo Nastavení
+const GAME_VERSION = '1.4.0';

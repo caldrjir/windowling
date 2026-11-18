@@ -591,8 +591,8 @@ test('VOIDBORN Forge: a 3D ship by parts, the loadout in the hangar and chests w
 	await page.mouse.down();
 	await page.mouse.move(box.x + box.width / 2 + 160, box.y + box.height / 2 + 30, { steps: 8 });
 	await page.mouse.up();
-	// The nearer side follows the pointer: dragging right turns the bow away (yaw grows).
-	expect(((await page.evaluate('Forge3D.view[0]')) as number) - yaw).toBeGreaterThan(1);
+	// Dragging right takes the camera round to the right (yaw falls) and the turn coasts out after release.
+	expect(yaw - ((await page.evaluate('Forge3D.view[0]')) as number)).toBeGreaterThan(1);
 	// Under the model: the ship's stats at the start of a run and what the Forge adds.
 	await expect(page.locator('#fstats [data-stat="might"]')).toContainText('110 %');
 	await expect(page.locator('#fstats [data-stat="might"] em')).toHaveText('+10 %');
@@ -700,16 +700,85 @@ test('VOIDBORN performance log is off by default and downloads after a run', asy
 	expect(errors).toEqual([]);
 });
 
+test('VOIDBORN 1.4: new kinds of enemies, the bestiary and achievements that pay', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'one run is enough for the game logic');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	// A save from before 1.4: Sector I cleared (old reward 100) and 5 minutes survived (old 30).
+	await page.addInitScript(() => {
+		if (sessionStorage.getItem('seeded')) return;
+		sessionStorage.setItem('seeded', '1');
+		localStorage.setItem(
+			'voidborn.save.v1',
+			JSON.stringify({
+				shards: 0,
+				achievements: { clear1: 1, t5: 1 },
+				sectors: { s1: { cleared: true, odUnlocked: 1, best: 900 } },
+			}),
+		);
+	});
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	// Earned achievements are topped up to the new rewards once (1500 − 100 + 300 − 30) and
+	// add their permanent bonuses (+3 % shards, +5 health) to every run.
+	expect(await page.evaluate('[SAVE.shards, SAVE.achV]')).toEqual([1670, 2]);
+	await expect(page.locator('#toasts')).toContainText(/\+1\s670/);
+	await page.locator('[data-go="ach"]').click();
+	await expect(page.locator('.ach-fame')).toContainText('+3 % střepů');
+	await expect(page.locator('.ach-fame')).toContainText('+5 zdraví');
+	await page.locator('.screen.active .back').click();
+	const res = (await page.evaluate(`(() => {
+		UI.hideOverlay(); Game.start('vex', 0, 0);
+		const st = [G.st.maxHp, Math.round(G.st.greed * 100)];
+		UI.showLevelUp = () => {}; UI.showChest = () => {}; UI.banner = () => {};
+		playerDown = () => { G.p.hp = G.st.maxHp; };
+		G.nextBossT = 1e9; G.nextElite = 1e9; G.nextEvent = 1e9; G.time = 240;
+		// every new kind spawns and acts for a while without errors
+		const kinds = ENEMY_KINDS.filter(k => ENEMIES[k].ai || ENEMIES[k].plate || ENEMIES[k].burstN || ENEMIES[k].cloak || ENEMIES[k].split === 'hydra2' || (ENEMIES[k].ranged && ENEMIES[k].ranged.n));
+		for (const k of kinds) { const a = Math.random() * TAU; spawnEnemyAt(k, G.p.x + Math.cos(a) * 320, G.p.y + Math.sin(a) * 320); }
+		for (let i = 0; i < 600; i++) { updateGame(1 / 60); if (G.state === 'levelup') pickChoice(0); if (G.state === 'chest') closeChest(); }
+		// the bulwark's front shield and the phaser (no crits, nobody's aegis around)
+		G.enemies.length = 0; G.st.crit = 0;
+		const bw = spawnEnemyAt('bulwark', G.p.x, G.p.y - 300); bw.ang = Math.PI / 2;
+		const h0 = bw.hp; hurtEnemy(bw, 10, 't', 0, -50); const front = h0 - bw.hp;
+		const h1 = bw.hp; hurtEnemy(bw, 10, 't', 0, 50); const back = h1 - bw.hp;
+		const ph = spawnEnemyAt('phaser', G.p.x, G.p.y + 300); ph.phased = true; const p0 = ph.hp; hurtEnemy(ph, 10, 't');
+		// a hydra splits twice and the kill goes into the bestiary
+		const hy = spawnEnemyAt('hydra', G.p.x + 300, G.p.y); killEnemy(hy);
+		const heads = G.enemies.filter(e => !e.dead && e.type === 'hydra2').length;
+		const tw = spawnEnemyAt('twin', G.p.x - 300, G.p.y);
+		return { st, kinds: kinds.length, total: ENEMY_KINDS.length, front: Math.round(front), back: Math.round(back), phased: p0 - ph.hp, heads, hydra: SAVE.bestiary.hydra, pair: !!tw.mate && tw.mate.mate === tw };
+	})()`)) as Record<string, unknown>;
+	expect(res).toMatchObject({
+		st: [105, 103],
+		front: 2,
+		back: 10,
+		phased: 0,
+		heads: 2,
+		hydra: 1,
+		pair: true,
+	});
+	expect(res.kinds as number).toBeGreaterThanOrEqual(25);
+	expect(res.total as number).toBeGreaterThanOrEqual(30);
+	expect(errors).toEqual([]);
+});
+
 test('VOIDBORN shows its version and the rendering quality can be lowered', async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
 	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
 	// The game's state is top-level `const`/functions of the page (not on window).
 	const version = await page.evaluate<string>('GAME_VERSION');
 	expect(version).toMatch(/^\d+\.\d+\.\d+$/);
+	// The version sits on the title screen (and in the corner during a run), not in Settings.
+	await expect(page.locator('#s-title .title-ver')).toBeVisible();
+	await expect(page.locator('#s-title .title-ver')).toHaveText(`v${version}`);
+	await page.mouse.click(100, 100);
 	await page.locator('[data-go="settings"]').click();
-	await expect(page.locator('.screen.active')).toContainText(`v${version}`);
+	await expect(page.locator('#s-settings')).not.toContainText(`v${version}`);
 	// The preview stays empty until the pointer is on a setting you can see in the game.
 	await page.mouse.move(5, 5);
 	await expect(page.locator('#setPv canvas')).toHaveCount(0);

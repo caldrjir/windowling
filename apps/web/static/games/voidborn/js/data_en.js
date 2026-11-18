@@ -141,6 +141,7 @@ if (LANG === 'en') (() => {
     oc6: ['Past the Overcharge Limit', 'Overcharge an evolved weapon to ★6.'], piece1: ['Masterpiece', 'Buy your first Masterpiece in the Forge.'],
     piecesAll: ['Gallery of Masters', 'Buy every Masterpiece.'], eternal10: ['Eternal Smith', 'Buy 10 levels in the Eternal Workshop.'],
     eternal50: ['Infinity', 'Buy 50 levels in the Eternal Workshop.'],
+    beast18: ['Species Hunter', 'Destroy 18 different kinds of enemies.'], bestiary: ['Bestiary', 'Destroy at least one enemy of every kind.'],
     runs10: ['Veteran', 'Play 10 runs.'], runs50: ['Legend', 'Play 50 runs.'], dash500: ['Acrobat', 'Dash 500 times.'], pilots: ['Full Squadron', 'Unlock all pilots.'],
   };
   for (const a of ACHIEVEMENTS) { a.name = A[a.id][0]; a.desc = A[a.id][1]; }

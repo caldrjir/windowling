@@ -5,7 +5,9 @@ const HUB_KEY = 'gamecenter.stats.voidborn';
 
 function defaultSave() {
   return {
-    v: 1, shards: 0, forge: {}, achievements: {}, evolutions: {}, seen: {}, sectors: {},
+    // bestiary: kolikrát hráč zničil který druh nepřítele (kodex, úspěch Bestiář)
+    // achV: verze tabulky odměn za úspěchy (2 = od 1.4), achTopUp: doplatek, který se ještě neukázal
+    v: 1, achV: 2, achTopUp: 0, shards: 0, forge: {}, achievements: {}, evolutions: {}, seen: {}, sectors: {}, bestiary: {},
     stats: {
       kills: 0, bossKills: 0, runs: 0, time: 0, shardsTotal: 0, dashes: 0, bestTime: 0, maxLevel: 0,
       maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0,
@@ -27,6 +29,12 @@ function loadSave() {
     for (const k of Object.keys(s)) {
       if (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) d[k] = Object.assign(d[k], s[k]);
       else d[k] = s[k];
+    }
+    // 1.4: úspěchy odměňují mnohem víc; za ty splněné dřív se jednou doplatí rozdíl
+    if (!(s.achV >= 2)) {
+      let top = 0;
+      for (const a of ACHIEVEMENTS) if (d.achievements[a.id] && ACH_OLD[a.id] !== undefined) top += Math.max(0, a.reward - ACH_OLD[a.id]);
+      d.shards += top; d.achTopUp = top; d.achV = 2;
     }
   } catch (e) { /* poškozený save – začneme znovu */ }
   if (!d.forge || typeof d.forge !== 'object') d.forge = {};

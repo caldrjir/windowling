@@ -361,20 +361,62 @@ const ENEMIES = {
   exploder: { shape: 'star', color: '#fff3e0', r: 15, hp: 20, speed: 112, dmg: 22, xp: 2, explode: 85 },
   tank: { shape: 'oct', color: '#4dc3ff', r: 30, hp: 230, speed: 44, dmg: 22, xp: 10, mass: 8 },
   wisp: { shape: 'circle', color: '#b0fff6', r: 8, hp: 5, speed: 205, dmg: 4, xp: 1, mass: 0.3 },
+  // ── Druhy z verze 1.4 (chování v foes.js) ──
+  // pohyb
+  orbiter: { shape: 'ring', color: '#7cf3ff', r: 13, hp: 16, speed: 122, dmg: 8, xp: 2, ai: 'orbit' },
+  weaver: { shape: 'chevron', color: '#ffb3f0', r: 12, hp: 13, speed: 116, dmg: 8, xp: 1, ai: 'weave', face: 1 },
+  blinker: { shape: 'bolt', color: '#c58bff', r: 14, hp: 22, speed: 64, dmg: 12, xp: 3, ai: 'blink' },
+  ram: { shape: 'kite', color: '#ff7a45', r: 20, hp: 74, speed: 48, top: 270, dmg: 19, xp: 5, mass: 4, ai: 'ram', faceA: 1 },
+  scorcher: { shape: 'drop', color: '#ff5a1f', r: 13, hp: 24, speed: 150, dmg: 9, xp: 2, ai: 'trail', face: 1, fire: 7 },
+  shade: { shape: 'crescent', color: '#9aa3ff', r: 14, hp: 20, speed: 108, dmg: 12, xp: 2, cloak: 1, spin: 0.4 },
+  berserker: { shape: 'star6', color: '#ff3b6b', r: 16, hp: 48, speed: 78, dmg: 13, xp: 3, ai: 'rage', spin: 1.6 },
+  // střelci
+  marksman: { shape: 'lens', color: '#ff2a6d', r: 14, hp: 18, speed: 70, dmg: 8, xp: 3, ai: 'snipe', faceP: 1, shot: 17, noHorde: 1 },
+  scatter: { shape: 'trefoil', color: '#ffb347', r: 15, hp: 26, speed: 76, dmg: 8, xp: 2, ranged: { cd: 3.1, range: 310, spd: 250, dmg: 7, n: 5, spread: 0.24 } },
+  pulsar: { shape: 'gear', color: '#ffe66d', r: 17, hp: 40, speed: 46, dmg: 10, xp: 4, ai: 'pulse', spin: 0.6, burst: 10, bulletDmg: 8, noHorde: 1 },
+  mortar: { shape: 'hourglass', color: '#ff9f1c', r: 16, hp: 34, speed: 55, dmg: 10, xp: 4, ai: 'mortar', spin: 0.5, shell: 20, noHorde: 1 },
+  rocketeer: { shape: 'pent', color: '#b8f2e6', r: 16, hp: 30, speed: 66, dmg: 10, xp: 4, ai: 'launch', spin: 0.7, noHorde: 1 },
+  rocket: { shape: 'kite', color: '#ff5d5d', r: 7, hp: 4, speed: 175, dmg: 15, xp: 0, ai: 'homing', faceA: 1, sub: 1, parent: 'rocketeer', noDrop: 1, mass: 0.4 },
+  // podpora
+  medic: { shape: 'cross', color: '#7dff7a', r: 15, hp: 30, speed: 76, dmg: 8, xp: 4, ai: 'medic', spin: 0.5, noHorde: 1 },
+  aegis: { shape: 'hept', color: '#5ad1ff', r: 17, hp: 38, speed: 68, dmg: 10, xp: 4, ai: 'aegis', spin: 0.5, aura: 170, noHorde: 1 },
+  commander: { shape: 'star5', color: '#ffd23f', r: 17, hp: 44, speed: 70, dmg: 11, xp: 5, ai: 'command', spin: 0.6, aura: 210, noHorde: 1 },
+  // odolní
+  plated: { shape: 'squircle', color: '#c0c6d8', r: 18, hp: 56, speed: 58, dmg: 14, xp: 4, mass: 2.5, plate: 3 },
+  phaser: { shape: 'blob', color: '#d6a2e8', r: 14, hp: 24, speed: 96, dmg: 11, xp: 3, ai: 'phase', spin: 1 },
+  bulwark: { shape: 'shield', color: '#8ecae6', r: 18, hp: 50, speed: 62, dmg: 14, xp: 4, mass: 3, ai: 'bulwark', faceA: 1 },
+  // rozpad a potomci
+  carrier: { shape: 'saucer', color: '#e07a5f', r: 24, hp: 92, speed: 40, dmg: 14, xp: 6, mass: 5, ai: 'carrier', spin: 0.35, noHorde: 1 },
+  larva: { shape: 'dart', color: '#f2cc8f', r: 6, hp: 4, speed: 168, dmg: 4, xp: 0.4, mass: 0.3, sub: 1, parent: 'carrier' },
+  shrapnel: { shape: 'spikeball', color: '#f4a261', r: 15, hp: 28, speed: 84, dmg: 10, xp: 3, spin: 1.4, burstN: 8 },
+  hydra: { shape: 'clover', color: '#2ec4b6', r: 19, hp: 44, speed: 70, dmg: 11, xp: 2, split: 'hydra2', splitN: 2, spin: 0.7 },
+  hydra2: { shape: 'clover', color: '#2ec4b6', r: 14, hp: 20, speed: 92, dmg: 8, xp: 1.5, split: 'hydra3', splitN: 2, spin: 1, sub: 1, parent: 'hydra' },
+  hydra3: { shape: 'clover', color: '#2ec4b6', r: 9, hp: 9, speed: 118, dmg: 6, xp: 1, mass: 0.6, spin: 1.4, sub: 1, parent: 'hydra' },
+  minelayer: { shape: 'spike4', color: '#ffb703', r: 15, hp: 34, speed: 88, dmg: 10, xp: 4, ai: 'layer', spin: 1.2, mineDmg: 18, noHorde: 1 },
+  emine: { shape: 'star', color: '#ff006e', r: 8, hp: 3, speed: 0, dmg: 0, xp: 0, ai: 'mine', spin: 2, sub: 1, parent: 'minelayer', noDrop: 1, mass: 99 },
+  // ovládání
+  frost: { shape: 'snow', color: '#a9def9', r: 15, hp: 30, speed: 84, dmg: 8, xp: 3, ai: 'frost', spin: 0.8, aura: 160 },
+  gravitar: { shape: 'pinwheel', color: '#9b5de5', r: 18, hp: 64, speed: 44, dmg: 12, xp: 5, mass: 6, ai: 'grav', spin: 2.2, aura: 330, noHorde: 1 },
+  leech: { shape: 'capsule', color: '#80ed99', r: 11, hp: 18, speed: 150, dmg: 4, xp: 2, mass: 0.5, ai: 'leech', face: 1 },
+  scavenger: { shape: 'maw', color: '#d4a373', r: 15, hp: 40, speed: 100, dmg: 9, xp: 2, ai: 'scav', faceA: 1 },
+  twin: { shape: 'trap', color: '#f15bb5', r: 14, hp: 30, speed: 92, dmg: 10, xp: 3, ai: 'twin', faceA: 1, tether: 12, noHorde: 1 },
 };
+// Potomci a projektily (rakety, miny, larvy, hydry) se do bestiáře počítají rodiči.
+const ENEMY_KINDS = Object.keys(ENEMIES).filter(k => !ENEMIES[k].sub && k !== 'mini');
+const enemyKind = k => (k === 'mini' ? 'splitter' : ENEMIES[k].parent || k);
 
 // Skladba vln: [od minuty, váhy typů]
 const WAVES = [
   [0, { drone: 10 }],
   [1, { drone: 8, swarmer: 4 }],
-  [2, { drone: 6, swarmer: 5, splitter: 2 }],
-  [3, { drone: 5, swarmer: 4, brute: 2, shooter: 2 }],
-  [4.5, { swarmer: 6, brute: 2, shooter: 3, dasher: 2, drone: 3 }],
-  [6, { drone: 4, splitter: 4, dasher: 3, exploder: 2, brute: 2 }],
-  [8, { swarmer: 6, shooter: 3, exploder: 3, tank: 1, wisp: 4 }],
-  [10, { wisp: 6, brute: 3, dasher: 4, splitter: 3, tank: 1 }],
-  [12, { exploder: 4, shooter: 4, tank: 2, wisp: 6, dasher: 3, brute: 2 }],
-  [13.5, { drone: 3, swarmer: 4, brute: 3, shooter: 4, splitter: 3, dasher: 4, exploder: 4, tank: 2, wisp: 5 }],
+  [2, { drone: 6, swarmer: 5, splitter: 2, weaver: 1 }],
+  [3, { drone: 5, swarmer: 4, brute: 2, shooter: 2, weaver: 2 }],
+  [4.5, { swarmer: 6, brute: 2, shooter: 3, dasher: 2, drone: 3, weaver: 1 }],
+  [6, { drone: 4, splitter: 4, dasher: 3, exploder: 2, brute: 2, weaver: 2 }],
+  [8, { swarmer: 6, shooter: 3, exploder: 3, tank: 1, wisp: 4, orbiter: 1, hydra: 1 }],
+  [10, { wisp: 6, brute: 3, dasher: 4, splitter: 3, tank: 1, hydra: 2, orbiter: 2 }],
+  [12, { exploder: 4, shooter: 4, tank: 2, wisp: 6, dasher: 3, brute: 2, hydra: 2, weaver: 2 }],
+  [13.5, { drone: 3, swarmer: 4, brute: 3, shooter: 4, splitter: 3, dasher: 4, exploder: 4, tank: 2, wisp: 5, hydra: 2, orbiter: 2 }],
 ];
 
 const BOSSES = {
@@ -388,35 +430,36 @@ const BOSSES = {
 // ── Sektory ─────────────────────────────────────────────────────────────────
 const SECTORS = [
   { id: 's1', name: 'Neonová mlhovina', roman: 'I', bg: ['#0d0526', '#05010f'], neb: ['#7a2cff', '#ff2fb4', '#2a6bff'], grid: '#8b5cff', accent: '#ff4fd8',
-    hp: 1, dmg: 1, spawn: 1, shards: 1, bosses: ['warden', 'hive', 'monarch'], favor: {}, desc: 'Kde to všechno začalo. Prázdnota tu teprve otevírá oči.' },
+    hp: 1, dmg: 1, spawn: 1, shards: 1, bosses: ['warden', 'hive', 'monarch'], roster: {}, favor: {}, desc: 'Kde to všechno začalo. Prázdnota tu teprve otevírá oči.' },
   { id: 's2', name: 'Rudý pás', roman: 'II', bg: ['#200608', '#080102'], neb: ['#ff2a3a', '#ff7a1a', '#7a0b2c'], grid: '#ff4d4d', accent: '#ff9a3c',
-    hp: 1.7, dmg: 1.25, spawn: 1.12, shards: 1.6, bosses: ['reaper', 'colossus', 'monarch'], favor: { dasher: 3, exploder: 2 }, desc: 'Roztavené trosky starých flotil. Nepřátelé útočí bez varování.' },
+    hp: 1.7, dmg: 1.25, spawn: 1.12, shards: 1.6, bosses: ['reaper', 'colossus', 'monarch'], roster: { berserker: [2, 2], ram: [3, 2], scatter: [4, 2], scorcher: [5, 2], shrapnel: [6, 2], blinker: [7, 2] }, favor: { dasher: 3, exploder: 2 }, desc: 'Roztavené trosky starých flotil. Nepřátelé útočí bez varování.' },
   { id: 's3', name: 'Smaragdová prázdnota', roman: 'III', bg: ['#03160f', '#010604'], neb: ['#00e38c', '#00b3ff', '#0b5c3c'], grid: '#2bffa8', accent: '#4dff9a',
-    hp: 2.6, dmg: 1.5, spawn: 1.22, shards: 2.4, bosses: ['hive', 'warden', 'monarch'], favor: { splitter: 4, wisp: 3 }, desc: 'Živá hmota, která se dělí a množí. Rychlost je vším.' },
+    hp: 2.6, dmg: 1.5, spawn: 1.22, shards: 2.4, bosses: ['hive', 'warden', 'monarch'], roster: { hydra: [2, 3], scavenger: [3, 2], leech: [4, 2], carrier: [5, 2], medic: [7, 1] }, favor: { splitter: 4, wisp: 3 }, desc: 'Živá hmota, která se dělí a množí. Rychlost je vším.' },
   { id: 's4', name: 'Zlatý horizont', roman: 'IV', bg: ['#1c1203', '#070401'], neb: ['#ffb300', '#ff6a00', '#5c3b00'], grid: '#ffc94d', accent: '#ffe14d',
-    hp: 3.8, dmg: 1.8, spawn: 1.32, shards: 3.4, bosses: ['colossus', 'reaper', 'monarch'], favor: { shooter: 4, tank: 2 }, desc: 'Okraj horizontu událostí. Střely létají ze všech stran.' },
+    hp: 3.8, dmg: 1.8, spawn: 1.32, shards: 3.4, bosses: ['colossus', 'reaper', 'monarch'], roster: { scatter: [2, 3], marksman: [3, 2], bulwark: [4, 2], pulsar: [5, 2], mortar: [6, 2], rocketeer: [8, 1] }, favor: { shooter: 4, tank: 2 }, desc: 'Okraj horizontu událostí. Střely létají ze všech stran.' },
   { id: 's5', name: 'Srdce prázdnoty', roman: 'V', bg: ['#0a0a14', '#000000'], neb: ['#ffffff', '#9d7bff', '#2e1a66'], grid: '#d4c4ff', accent: '#ffffff',
-    hp: 5.4, dmg: 2.2, spawn: 1.45, shards: 4.8, bosses: ['reaper', 'colossus', 'monarch'], favor: { exploder: 3, tank: 3, wisp: 4 }, desc: 'Konec všeho. Nikdo se odsud nevrátil.' },
+    hp: 5.4, dmg: 2.2, spawn: 1.45, shards: 4.8, bosses: ['reaper', 'colossus', 'monarch'], roster: { shade: [2, 2], phaser: [3, 2], frost: [4, 2], gravitar: [5, 1], twin: [6, 1], commander: [7, 1], aegis: [8, 1] }, favor: { exploder: 3, tank: 3, wisp: 4 }, desc: 'Konec všeho. Nikdo se odsud nevrátil.' },
   // Anomálie: sektory s vlastním pravidlem, odemknou se dobytím sektoru req.
   { id: 's6', name: 'Meteorický roj', roman: 'VI', req: 's2', meteors: true, bg: ['#160c05', '#050201'], neb: ['#ff7a1a', '#ffcf6b', '#6b3a1a'], grid: '#ffb36b', accent: '#ffb36b',
-    hp: 2.2, dmg: 1.35, spawn: 1.1, shards: 2.6, bosses: ['colossus', 'reaper', 'monarch'], favor: { brute: 2, tank: 1 }, desc: 'Pásem trosek prolétají meteority. Varovná čára ukáže, kudy poletí: uhni, nebo jím rozdrť hordu.' },
+    hp: 2.2, dmg: 1.35, spawn: 1.1, shards: 2.6, bosses: ['colossus', 'reaper', 'monarch'], roster: { plated: [2, 2], ram: [3, 2], bulwark: [4, 2], minelayer: [5, 2], mortar: [6, 1] }, favor: { brute: 2, tank: 1 }, desc: 'Pásem trosek prolétají meteority. Varovná čára ukáže, kudy poletí: uhni, nebo jím rozdrť hordu.' },
   { id: 's7', name: 'Monokultura', roman: 'VII', req: 's3', mono: true, bg: ['#04161a', '#010506'], neb: ['#00ffd5', '#7cffcb', '#0b4c5c'], grid: '#4dffe1', accent: '#7cffcb',
-    hp: 3.0, dmg: 1.55, spawn: 1.25, shards: 3.2, bosses: ['hive', 'warden', 'monarch'], favor: {}, desc: 'Jediný druh nepřítele, zato v obrovském počtu. Každé dvě a půl minuty se prázdnota přepne na jiný.' },
+    hp: 3.0, dmg: 1.55, spawn: 1.25, shards: 3.2, bosses: ['hive', 'warden', 'monarch'], roster: {}, favor: {}, desc: 'Jediný druh nepřítele, zato v obrovském počtu. Každé dvě a půl minuty se prázdnota přepne na jiný.' },
   { id: 's8', name: 'Horizont událostí', roman: 'VIII', req: 's4', well: true, bg: ['#0c0618', '#000000'], neb: ['#7b3cff', '#ff4fd8', '#1a0b3c'], grid: '#a07bff', accent: '#c58bff',
-    hp: 4.4, dmg: 1.9, spawn: 1.3, shards: 4.2, bosses: ['reaper', 'colossus', 'monarch'], favor: { wisp: 3, swarmer: 2 }, desc: 'Bloudící černá díra tě táhne k sobě a plíží se za tebou. Nepřátele, které pohltí, rozdrtí.' },
+    hp: 4.4, dmg: 1.9, spawn: 1.3, shards: 4.2, bosses: ['reaper', 'colossus', 'monarch'], roster: { orbiter: [2, 3], gravitar: [3, 2], blinker: [4, 2], frost: [5, 2], phaser: [6, 2] }, favor: { wisp: 3, swarmer: 2 }, desc: 'Bloudící černá díra tě táhne k sobě a plíží se za tebou. Nepřátele, které pohltí, rozdrtí.' },
   { id: 's9', name: 'Temnota', roman: 'IX', req: 's5', dark: true, bg: ['#050508', '#000000'], neb: ['#3a3a6c', '#6c3a6c', '#1a1a2e'], grid: '#6b6b9b', accent: '#b0b8ff',
-    hp: 6.2, dmg: 2.4, spawn: 1.45, shards: 6, bosses: ['warden', 'colossus', 'monarch'], favor: { wisp: 4, dasher: 2, exploder: 2 }, desc: 'Světlo sahá jen kousek kolem lodi. Co je za ním, poznáš až po zásahu.' },
+    hp: 6.2, dmg: 2.4, spawn: 1.45, shards: 6, bosses: ['warden', 'colossus', 'monarch'], roster: { shade: [2, 3], leech: [3, 2], marksman: [4, 2], shrapnel: [4, 2], blinker: [5, 2] }, favor: { wisp: 4, dasher: 2, exploder: 2 }, desc: 'Světlo sahá jen kousek kolem lodi. Co je za ním, poznáš až po zásahu.' },
   // Hlubiny: sektory pro konec hry, otevírají se jeden po druhém od Sektoru IX.
   { id: 's10', name: 'Aréna titánů', roman: 'X', req: 's9', deep: true, rush: true, bossTimes: [150, 300, 450, 600, 750, 900], bg: ['#1a0610', '#060103'], neb: ['#ff2f6d', '#ffb13c', '#5c0b2c'], grid: '#ff6b9b', accent: '#ff6b9b',
-    hp: 7.2, dmg: 2.7, spawn: 1.35, shards: 8, bosses: ['warden', 'hive', 'colossus', 'reaper', 'colossus', 'monarch'], favor: { brute: 2, tank: 2 }, desc: 'Bossové přilétají každé dvě a půl minuty a elity chodí dvakrát častěji. Přežij celou přehlídku.' },
+    hp: 7.2, dmg: 2.7, spawn: 1.35, shards: 8, bosses: ['warden', 'hive', 'colossus', 'reaper', 'colossus', 'monarch'], roster: { plated: [2, 2], commander: [3, 2], aegis: [3, 2], medic: [4, 2], berserker: [4, 2], bulwark: [5, 2] }, favor: { brute: 2, tank: 2 }, desc: 'Bossové přilétají každé dvě a půl minuty a elity chodí dvakrát častěji. Přežij celou přehlídku.' },
   { id: 's11', name: 'Kolaps', roman: 'XI', req: 's10', deep: true, zone: true, bg: ['#120318', '#040006'], neb: ['#b14dff', '#ff4fd8', '#2a0b4c'], grid: '#d27bff', accent: '#e08bff',
-    hp: 8.6, dmg: 3.0, spawn: 1.5, shards: 10, bosses: ['reaper', 'warden', 'monarch'], favor: { swarmer: 3, wisp: 3, dasher: 2 }, desc: 'Bezpečná zóna se pravidelně smršťuje a stěhuje jinam. Mimo ni tě prázdnota rozkládá.' },
+    hp: 8.6, dmg: 3.0, spawn: 1.5, shards: 10, bosses: ['reaper', 'warden', 'monarch'], roster: { scorcher: [2, 2], weaver: [2, 2], frost: [3, 2], minelayer: [3, 2], gravitar: [4, 2], mortar: [6, 1] }, favor: { swarmer: 3, wisp: 3, dasher: 2 }, desc: 'Bezpečná zóna se pravidelně smršťuje a stěhuje jinam. Mimo ni tě prázdnota rozkládá.' },
   { id: 's12', name: 'Konec všeho', roman: 'XII', req: 's11', deep: true, meteors: true, well: true, dark: true, bg: ['#0a0a0a', '#000000'], neb: ['#ff4d5e', '#7b3cff', '#1a0b1a'], grid: '#ff7a8a', accent: '#ff4d5e',
-    hp: 10.5, dmg: 3.4, spawn: 1.6, shards: 13, bosses: ['colossus', 'reaper', 'monarch'], favor: { exploder: 3, tank: 3, wisp: 3 }, desc: 'Meteority, černá díra i tma najednou. Dál už žádná cesta nevede.' },
+    hp: 10.5, dmg: 3.4, spawn: 1.6, shards: 13, bosses: ['colossus', 'reaper', 'monarch'], roster: { twin: [3, 2], phaser: [3, 2], scavenger: [3, 2], hydra: [3, 2], pulsar: [4, 2], shrapnel: [4, 2], rocketeer: [5, 2], marksman: [5, 1] }, favor: { exploder: 3, tank: 3, wisp: 3 }, desc: 'Meteority, černá díra i tma najednou. Dál už žádná cesta nevede.' },
 ];
 const BASE_SECTORS = 5;
 // Monokultura: druhy, které se střídají, a jak hustě chodí (velcí méně, drobní víc).
-const MONO_TYPES = { swarmer: 2.2, drone: 1.6, wisp: 2.4, dasher: 1.0, splitter: 0.9, exploder: 1.1, brute: 0.6, shooter: 0.9 };
+const MONO_TYPES = { swarmer: 2.2, drone: 1.6, wisp: 2.4, dasher: 1.0, splitter: 0.9, exploder: 1.1, brute: 0.6, shooter: 0.9,
+  weaver: 1.6, orbiter: 1.2, scorcher: 0.9, leech: 1.3, hydra: 0.7, berserker: 0.8, shade: 1.2, blinker: 0.8, phaser: 1.0, ram: 0.5 };
 const MONO_PERIOD = 150;
 const MAX_OD = 10;
 const BOSS_TIMES = [300, 600, 900];
@@ -567,62 +610,91 @@ function migrateForge(S) {
 }
 
 // ── Úspěchy ─────────────────────────────────────────────────────────────────
+// Odměna = střepy podle toho, jak těžký cíl je (a kolik se v té fázi hry vydělá za běh), plus trvalý
+// bonus (perk) do všech běhů: zabíjení → poškození, sektory → střepy, evoluce → zkušenosti, čas → zdraví…
+// Bonusy se sčítají v calcStats. Splněné úspěchy z doby před 1.4 dostaly jednorázově doplatek (ACH_OLD).
 // check(S, R): S = uložená data, R = aktuální běh (nebo null)
+const ACH_OLD = { k100: 20, k1000: 50, k10000: 150, k50000: 400, k250000: 1200, t5: 30, t10: 60, t25: 600, t30: 1000, boss1: 50, boss25: 400, clean: 250, clear1: 100, clear2: 200, clear3: 350, clear4: 500, clear5: 900, clear6: 400, clear7: 600, clear8: 800, clear9: 1200, clear10: 2000, clear11: 3000, clear12: 5000, sectorsAll: 2500, evo1: 80, evo4: 220, evo8: 700, evoAll: 1200, evo14: 3000, oc4: 300, oc6: 2500, lvl30: 60, lvl60: 250, lvl100: 600, od1: 120, od5: 450, od10: 1500, forge1: 25, master: 150, forgeAll: 600, masterAll: 2500, voidAll: 4000, piece1: 1000, piecesAll: 20000, eternal10: 2000, eternal50: 10000, rich: 250, arsenal: 100, untouch: 150, massacre: 200, runs10: 50, runs50: 300, dash500: 60, meteorKills: 250, pilots: 500 };
 const ACHIEVEMENTS = [
-  { id: 'k100', name: 'První krev', desc: 'Znič 100 nepřátel.', reward: 20, icon: 'skull', prog: S => [S.stats.kills, 100] },
-  { id: 'k1000', name: 'Čistička', desc: 'Znič 1 000 nepřátel.', reward: 50, icon: 'skull', prog: S => [S.stats.kills, 1000], pilot: 'nyx' },
-  { id: 'k10000', name: 'Vyhlazovatel', desc: 'Znič 10 000 nepřátel.', reward: 150, icon: 'skull', prog: S => [S.stats.kills, 10000] },
-  { id: 'k50000', name: 'Pohroma', desc: 'Znič 50 000 nepřátel.', reward: 400, icon: 'skull', prog: S => [S.stats.kills, 50000] },
-  { id: 'k250000', name: 'Konec civilizací', desc: 'Znič 250 000 nepřátel.', reward: 1200, icon: 'skull', prog: S => [S.stats.kills, 250000] },
-  { id: 't5', name: 'Přeživší', desc: 'Přežij 5 minut v jednom běhu.', reward: 30, icon: 'clock', prog: S => [S.stats.bestTime, 300], pilot: 'orion' },
-  { id: 't10', name: 'Houževnatý', desc: 'Přežij 10 minut v jednom běhu.', reward: 60, icon: 'clock', prog: S => [S.stats.bestTime, 600] },
-  { id: 't25', name: 'Věčný', desc: 'Přežij 25 minut v jednom běhu (nekonečný režim).', reward: 600, icon: 'clock', prog: S => [S.stats.bestTime, 1500] },
-  { id: 'boss1', name: 'Zabiják titánů', desc: 'Poraz bosse.', reward: 50, icon: 'boss', prog: S => [S.stats.bossKills, 1], pilot: 'titan' },
-  { id: 'boss25', name: 'Lovec monarchů', desc: 'Poraz 25 bossů.', reward: 400, icon: 'boss', prog: S => [S.stats.bossKills, 25] },
-  { id: 'clear1', name: 'Mlhovina vyčištěna', desc: 'Dokonči Sektor I.', reward: 100, icon: 'trophy', prog: S => [+!!(S.sectors.s1 && S.sectors.s1.cleared), 1], pilot: 'lumen' },
-  { id: 'clear2', name: 'Pás prolomen', desc: 'Dokonči Sektor II.', reward: 200, icon: 'trophy', prog: S => [+!!(S.sectors.s2 && S.sectors.s2.cleared), 1] },
-  { id: 'clear3', name: 'Smaragdový lovec', desc: 'Dokonči Sektor III.', reward: 350, icon: 'trophy', prog: S => [+!!(S.sectors.s3 && S.sectors.s3.cleared), 1], pilot: 'zero' },
-  { id: 'clear4', name: 'Za horizontem', desc: 'Dokonči Sektor IV.', reward: 500, icon: 'trophy', prog: S => [+!!(S.sectors.s4 && S.sectors.s4.cleared), 1] },
-  { id: 'clear5', name: 'Srdce zastaveno', desc: 'Dokonči Sektor V.', reward: 900, icon: 'trophy', prog: S => [+!!(S.sectors.s5 && S.sectors.s5.cleared), 1], pilot: 'omega' },
-  { id: 'evo1', name: 'Metamorfóza', desc: 'Vyvij jakoukoli zbraň.', reward: 80, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 1], pilot: 'echo' },
-  { id: 'evo4', name: 'Alchymista', desc: 'Objev 4 různé evoluce.', reward: 220, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 4] },
-  { id: 'evo8', name: 'Architekt zkázy', desc: 'Objev 8 různých evolucí.', reward: 700, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 8] },
-  { id: 'evoAll', name: 'Pán prázdnoty', desc: 'Objev 11 různých evolucí.', reward: 1200, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 11] },
-  { id: 'oc4', name: 'Přetížení', desc: 'Přetiž evoluční zbraň na ★4.', reward: 300, icon: 'overcharge', prog: S => [S.stats.maxOc || 0, OC_MAX] },
-  { id: 't30', name: 'Nesmrtelný', desc: 'Přežij 30 minut v jednom běhu (nekonečný režim).', reward: 1000, icon: 'clock', prog: S => [S.stats.bestTime, 1800] },
-  { id: 'lvl100', name: 'Mutant', desc: 'Dosáhni úrovně 100 v jednom běhu.', reward: 600, icon: 'mutation', prog: S => [S.stats.maxLevel, 100] },
-  { id: 'masterAll', name: 'Velmistr', desc: 'Kup celou Mistrovskou dílnu.', reward: 2500, icon: 'forge', prog: S => [forgeLevels(S, 2), forgeMaxLevels(2)] },
-  { id: 'master', name: 'Mistrovská dílna', desc: 'Kup první vylepšení v Mistrovské dílně.', reward: 150, icon: 'forge', prog: S => [forgeLevels(S, 2), 1] },
-  { id: 'lvl30', name: 'Nabitý', desc: 'Dosáhni úrovně 30 v jednom běhu.', reward: 60, icon: 'growth', prog: S => [S.stats.maxLevel, 30] },
-  { id: 'lvl60', name: 'Přetížený', desc: 'Dosáhni úrovně 60 v jednom běhu.', reward: 250, icon: 'growth', prog: S => [S.stats.maxLevel, 60] },
-  { id: 'od1', name: 'Overdrive', desc: 'Dokonči libovolný sektor na Overdrive 1.', reward: 120, icon: 'haste', prog: S => [S.stats.maxOdClear, 1] },
-  { id: 'od5', name: 'Rudá zóna', desc: 'Dokonči libovolný sektor na Overdrive 5.', reward: 450, icon: 'haste', prog: S => [S.stats.maxOdClear, 5] },
-  { id: 'od10', name: 'Za hranicí', desc: 'Dokonči libovolný sektor na Overdrive 10.', reward: 1500, icon: 'haste', prog: S => [S.stats.maxOdClear, 10] },
-  { id: 'rich', name: 'Sběratel', desc: 'Nasbírej celkem 5 000 střepů.', reward: 250, icon: 'shard', prog: S => [S.stats.shardsTotal, 5000] },
-  { id: 'forge1', name: 'Kovář', desc: 'Kup první vylepšení v Kovárně.', reward: 25, icon: 'forge', prog: S => [forgeSum(S), 1] },
-  { id: 'forgeAll', name: 'Mistr kovář', desc: 'Kup 50 úrovní vylepšení v Kovárně.', reward: 600, icon: 'forge', prog: S => [forgeSum(S), 50] },
-  { id: 'arsenal', name: 'Arzenál', desc: 'Měj v jednom běhu 6 zbraní najednou.', reward: 100, icon: 'pulse', prog: (S, R) => [R ? Math.max(S.stats.maxWeapons, R.weapons.length) : S.stats.maxWeapons, 6] },
-  { id: 'untouch', name: 'Nedotknutelný', desc: 'Vydrž 3 minuty v kuse bez zásahu.', reward: 150, icon: 'armor', prog: S => [S.stats.bestNoHit, 180] },
-  { id: 'massacre', name: 'Masakr', desc: 'Znič 250 nepřátel během 10 sekund.', reward: 200, icon: 'bomb', prog: S => [S.stats.bestBurst, 250] },
-  { id: 'clean', name: 'Bez škrábnutí', desc: 'Poraz bosse, aniž by tě během souboje zasáhl.', reward: 250, icon: 'boss', prog: S => [S.stats.cleanBoss, 1] },
-  { id: 'runs10', name: 'Veterán', desc: 'Odehraj 10 běhů.', reward: 50, icon: 'rocket', prog: S => [S.stats.runs, 10] },
-  { id: 'runs50', name: 'Legenda', desc: 'Odehraj 50 běhů.', reward: 300, icon: 'rocket', prog: S => [S.stats.runs, 50] },
-  { id: 'dash500', name: 'Akrobat', desc: 'Použij úskok 500krát.', reward: 60, icon: 'dash', prog: S => [S.stats.dashes, 500] },
-  { id: 'clear6', name: 'Skrz kamennou bouři', desc: 'Dokonči Sektor VI.', reward: 400, icon: 'meteor', prog: S => [+!!(S.sectors.s6 && S.sectors.s6.cleared), 1] },
-  { id: 'clear7', name: 'Jeden druh nestačí', desc: 'Dokonči Sektor VII.', reward: 600, icon: 'trophy', prog: S => [+!!(S.sectors.s7 && S.sectors.s7.cleared), 1] },
-  { id: 'clear8', name: 'Únik z horizontu', desc: 'Dokonči Sektor VIII.', reward: 800, icon: 'vortex', prog: S => [+!!(S.sectors.s8 && S.sectors.s8.cleared), 1] },
-  { id: 'clear9', name: 'Světlo v temnotě', desc: 'Dokonči Sektor IX.', reward: 1200, icon: 'eye', prog: S => [+!!(S.sectors.s9 && S.sectors.s9.cleared), 1] },
-  { id: 'sectorsAll', name: 'Pán všech sektorů', desc: 'Dokonči všech 12 sektorů.', reward: 2500, icon: 'trophy', prog: S => [SECTORS.filter(s => S.sectors[s.id] && S.sectors[s.id].cleared).length, SECTORS.length] },
-  { id: 'meteorKills', name: 'Kamenná lavina', desc: 'Nech meteority a černou díru zničit 300 nepřátel.', reward: 250, icon: 'meteor', prog: S => [S.stats.hazardKills || 0, 300] },
-  { id: 'voidAll', name: 'Kovář prázdnoty', desc: 'Kup celou Prázdnotovou dílnu.', reward: 4000, icon: 'forge', prog: S => [forgeLevels(S, 3), forgeMaxLevels(3)] },
-  { id: 'pilots', name: 'Celá letka', desc: 'Odemkni všechny piloty.', reward: 500, icon: 'rocket', prog: S => [PILOTS.filter(p => !p.unlock || S.achievements[p.unlock]).length, PILOTS.length] },
-  { id: 'clear10', name: 'Přehlídka skončila', desc: 'Dokonči Sektor X.', reward: 2000, icon: 'boss', prog: S => [+!!(S.sectors.s10 && S.sectors.s10.cleared), 1] },
-  { id: 'clear11', name: 'Uprostřed kolapsu', desc: 'Dokonči Sektor XI.', reward: 3000, icon: 'zone', prog: S => [+!!(S.sectors.s11 && S.sectors.s11.cleared), 1] },
-  { id: 'clear12', name: 'Po konci všeho', desc: 'Dokonči Sektor XII.', reward: 5000, icon: 'skull', prog: S => [+!!(S.sectors.s12 && S.sectors.s12.cleared), 1] },
-  { id: 'evo14', name: 'Úplná metamorfóza', desc: 'Objev všech 14 evolucí.', reward: 3000, icon: 'star', prog: S => [EVOLUTIONS.filter(id => S.evolutions[id]).length, EVOLUTIONS.length] },
-  { id: 'oc6', name: 'Za hranicí přetížení', desc: 'Přetiž evoluční zbraň na ★6.', reward: 2500, icon: 'overcharge', prog: S => [S.stats.maxOc || 0, OC_MAX + 2] },
-  { id: 'piece1', name: 'Mistrovské dílo', desc: 'Kup první Mistrovské dílo v Kovárně.', reward: 1000, icon: 'crown', prog: S => [forgeLevels(S, 5), 1] },
-  { id: 'piecesAll', name: 'Galerie mistrů', desc: 'Kup všechna Mistrovská díla.', reward: 20000, icon: 'crown', prog: S => [forgeLevels(S, 5), forgeMaxLevels(5)] },
-  { id: 'eternal10', name: 'Věčný kovář', desc: 'Kup 10 úrovní ve Věčné dílně.', reward: 2000, icon: 'infinity', prog: S => [forgeLevels(S, 4), 10] },
-  { id: 'eternal50', name: 'Nekonečno', desc: 'Kup 50 úrovní ve Věčné dílně.', reward: 10000, icon: 'infinity', prog: S => [forgeLevels(S, 4), 50] },
+  { id: 'k100', name: 'První krev', desc: 'Znič 100 nepřátel.', reward: 200, perk: { might: 0.01 }, icon: 'skull', prog: S => [S.stats.kills, 100] },
+  { id: 'k1000', name: 'Čistička', desc: 'Znič 1 000 nepřátel.', reward: 500, perk: { might: 0.02 }, icon: 'skull', prog: S => [S.stats.kills, 1000], pilot: 'nyx' },
+  { id: 'k10000', name: 'Vyhlazovatel', desc: 'Znič 10 000 nepřátel.', reward: 1500, perk: { might: 0.03 }, icon: 'skull', prog: S => [S.stats.kills, 10000] },
+  { id: 'k50000', name: 'Pohroma', desc: 'Znič 50 000 nepřátel.', reward: 8000, perk: { might: 0.04 }, icon: 'skull', prog: S => [S.stats.kills, 50000] },
+  { id: 'k250000', name: 'Konec civilizací', desc: 'Znič 250 000 nepřátel.', reward: 60000, perk: { might: 0.05 }, icon: 'skull', prog: S => [S.stats.kills, 250000] },
+  { id: 't5', name: 'Přeživší', desc: 'Přežij 5 minut v jednom běhu.', reward: 300, perk: { maxHp: 5 }, icon: 'clock', prog: S => [S.stats.bestTime, 300], pilot: 'orion' },
+  { id: 't10', name: 'Houževnatý', desc: 'Přežij 10 minut v jednom běhu.', reward: 1000, perk: { maxHp: 10 }, icon: 'clock', prog: S => [S.stats.bestTime, 600] },
+  { id: 't25', name: 'Věčný', desc: 'Přežij 25 minut v jednom běhu (nekonečný režim).', reward: 30000, perk: { maxHp: 15 }, icon: 'clock', prog: S => [S.stats.bestTime, 1500] },
+  { id: 'boss1', name: 'Zabiják titánů', desc: 'Poraz bosse.', reward: 600, perk: { bossDmg: 0.05 }, icon: 'boss', prog: S => [S.stats.bossKills, 1], pilot: 'titan' },
+  { id: 'boss25', name: 'Lovec monarchů', desc: 'Poraz 25 bossů.', reward: 12000, perk: { bossDmg: 0.10 }, icon: 'boss', prog: S => [S.stats.bossKills, 25] },
+  { id: 'clear1', name: 'Mlhovina vyčištěna', desc: 'Dokonči Sektor I.', reward: 1500, perk: { greed: 0.03 }, icon: 'trophy', prog: S => [+!!(S.sectors.s1 && S.sectors.s1.cleared), 1], pilot: 'lumen' },
+  { id: 'clear2', name: 'Pás prolomen', desc: 'Dokonči Sektor II.', reward: 4000, perk: { greed: 0.03 }, icon: 'trophy', prog: S => [+!!(S.sectors.s2 && S.sectors.s2.cleared), 1] },
+  { id: 'clear3', name: 'Smaragdový lovec', desc: 'Dokonči Sektor III.', reward: 8000, perk: { greed: 0.03 }, icon: 'trophy', prog: S => [+!!(S.sectors.s3 && S.sectors.s3.cleared), 1], pilot: 'zero' },
+  { id: 'clear4', name: 'Za horizontem', desc: 'Dokonči Sektor IV.', reward: 14000, perk: { greed: 0.03 }, icon: 'trophy', prog: S => [+!!(S.sectors.s4 && S.sectors.s4.cleared), 1] },
+  { id: 'clear5', name: 'Srdce zastaveno', desc: 'Dokonči Sektor V.', reward: 25000, perk: { greed: 0.05 }, icon: 'trophy', prog: S => [+!!(S.sectors.s5 && S.sectors.s5.cleared), 1], pilot: 'omega' },
+  { id: 'evo1', name: 'Metamorfóza', desc: 'Vyvij jakoukoli zbraň.', reward: 1000, perk: { growth: 0.03 }, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 1], pilot: 'echo' },
+  { id: 'evo4', name: 'Alchymista', desc: 'Objev 4 různé evoluce.', reward: 5000, perk: { growth: 0.04 }, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 4] },
+  { id: 'evo8', name: 'Architekt zkázy', desc: 'Objev 8 různých evolucí.', reward: 15000, perk: { growth: 0.05 }, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 8] },
+  { id: 'evoAll', name: 'Pán prázdnoty', desc: 'Objev 11 různých evolucí.', reward: 35000, perk: { growth: 0.06 }, icon: 'star', prog: S => [Object.keys(S.evolutions).length, 11] },
+  { id: 'oc4', name: 'Přetížení', desc: 'Přetiž evoluční zbraň na ★4.', reward: 12000, perk: { cdMul: -0.03 }, icon: 'overcharge', prog: S => [S.stats.maxOc || 0, OC_MAX] },
+  { id: 't30', name: 'Nesmrtelný', desc: 'Přežij 30 minut v jednom běhu (nekonečný režim).', reward: 60000, perk: { maxHp: 20, regen: 0.2 }, icon: 'clock', prog: S => [S.stats.bestTime, 1800] },
+  { id: 'lvl100', name: 'Mutant', desc: 'Dosáhni úrovně 100 v jednom běhu.', reward: 25000, perk: { luck: 0.07 }, icon: 'mutation', prog: S => [S.stats.maxLevel, 100] },
+  { id: 'masterAll', name: 'Velmistr', desc: 'Kup celou Mistrovskou dílnu.', reward: 25000, perk: { rerolls: 1 }, icon: 'forge', prog: S => [forgeLevels(S, 2), forgeMaxLevels(2)] },
+  { id: 'master', name: 'Mistrovská dílna', desc: 'Kup první vylepšení v Mistrovské dílně.', reward: 2000, icon: 'forge', prog: S => [forgeLevels(S, 2), 1] },
+  { id: 'lvl30', name: 'Nabitý', desc: 'Dosáhni úrovně 30 v jednom běhu.', reward: 800, perk: { luck: 0.03 }, icon: 'growth', prog: S => [S.stats.maxLevel, 30] },
+  { id: 'lvl60', name: 'Přetížený', desc: 'Dosáhni úrovně 60 v jednom běhu.', reward: 6000, perk: { luck: 0.05 }, icon: 'growth', prog: S => [S.stats.maxLevel, 60] },
+  { id: 'od1', name: 'Overdrive', desc: 'Dokonči libovolný sektor na Overdrive 1.', reward: 5000, perk: { regen: 0.2 }, icon: 'haste', prog: S => [S.stats.maxOdClear, 1] },
+  { id: 'od5', name: 'Rudá zóna', desc: 'Dokonči libovolný sektor na Overdrive 5.', reward: 30000, perk: { armor: 1 }, icon: 'haste', prog: S => [S.stats.maxOdClear, 5] },
+  { id: 'od10', name: 'Za hranicí', desc: 'Dokonči libovolný sektor na Overdrive 10.', reward: 120000, perk: { revives: 1 }, icon: 'haste', prog: S => [S.stats.maxOdClear, 10] },
+  { id: 'rich', name: 'Sběratel', desc: 'Nasbírej celkem 5 000 střepů.', reward: 500, perk: { magnet: 0.05 }, icon: 'shard', prog: S => [S.stats.shardsTotal, 5000] },
+  { id: 'forge1', name: 'Kovář', desc: 'Kup první vylepšení v Kovárně.', reward: 100, icon: 'forge', prog: S => [forgeSum(S), 1] },
+  { id: 'forgeAll', name: 'Mistr kovář', desc: 'Kup 50 úrovní vylepšení v Kovárně.', reward: 6000, icon: 'forge', prog: S => [forgeSum(S), 50] },
+  { id: 'arsenal', name: 'Arzenál', desc: 'Měj v jednom běhu 6 zbraní najednou.', reward: 2000, perk: { rerolls: 1 }, icon: 'pulse', prog: (S, R) => [R ? Math.max(S.stats.maxWeapons, R.weapons.length) : S.stats.maxWeapons, 6] },
+  { id: 'untouch', name: 'Nedotknutelný', desc: 'Vydrž 3 minuty v kuse bez zásahu.', reward: 8000, perk: { speed: 0.03 }, icon: 'armor', prog: S => [S.stats.bestNoHit, 180] },
+  { id: 'massacre', name: 'Masakr', desc: 'Znič 250 nepřátel během 10 sekund.', reward: 6000, perk: { area: 0.05 }, icon: 'bomb', prog: S => [S.stats.bestBurst, 250] },
+  { id: 'clean', name: 'Bez škrábnutí', desc: 'Poraz bosse, aniž by tě během souboje zasáhl.', reward: 10000, perk: { bossDmg: 0.10 }, icon: 'boss', prog: S => [S.stats.cleanBoss, 1] },
+  { id: 'runs10', name: 'Veterán', desc: 'Odehraj 10 běhů.', reward: 1000, perk: { skips: 1 }, icon: 'rocket', prog: S => [S.stats.runs, 10] },
+  { id: 'runs50', name: 'Legenda', desc: 'Odehraj 50 běhů.', reward: 10000, perk: { rerolls: 1 }, icon: 'rocket', prog: S => [S.stats.runs, 50] },
+  { id: 'dash500', name: 'Akrobat', desc: 'Použij úskok 500krát.', reward: 2000, perk: { dashCd: 0.05 }, icon: 'dash', prog: S => [S.stats.dashes, 500] },
+  { id: 'clear6', name: 'Skrz kamennou bouři', desc: 'Dokonči Sektor VI.', reward: 18000, perk: { greed: 0.03 }, icon: 'meteor', prog: S => [+!!(S.sectors.s6 && S.sectors.s6.cleared), 1] },
+  { id: 'clear7', name: 'Jeden druh nestačí', desc: 'Dokonči Sektor VII.', reward: 24000, perk: { greed: 0.03 }, icon: 'trophy', prog: S => [+!!(S.sectors.s7 && S.sectors.s7.cleared), 1] },
+  { id: 'clear8', name: 'Únik z horizontu', desc: 'Dokonči Sektor VIII.', reward: 32000, perk: { greed: 0.04 }, icon: 'vortex', prog: S => [+!!(S.sectors.s8 && S.sectors.s8.cleared), 1] },
+  { id: 'clear9', name: 'Světlo v temnotě', desc: 'Dokonči Sektor IX.', reward: 45000, perk: { greed: 0.04 }, icon: 'eye', prog: S => [+!!(S.sectors.s9 && S.sectors.s9.cleared), 1] },
+  { id: 'sectorsAll', name: 'Pán všech sektorů', desc: 'Dokonči všech 12 sektorů.', reward: 250000, perk: { greed: 0.10 }, icon: 'trophy', prog: S => [SECTORS.filter(s => S.sectors[s.id] && S.sectors[s.id].cleared).length, SECTORS.length] },
+  { id: 'meteorKills', name: 'Kamenná lavina', desc: 'Nech meteority a černou díru zničit 300 nepřátel.', reward: 8000, perk: { magnet: 0.10 }, icon: 'meteor', prog: S => [S.stats.hazardKills || 0, 300] },
+  { id: 'voidAll', name: 'Kovář prázdnoty', desc: 'Kup celou Prázdnotovou dílnu.', reward: 60000, perk: { skips: 1 }, icon: 'forge', prog: S => [forgeLevels(S, 3), forgeMaxLevels(3)] },
+  { id: 'pilots', name: 'Celá letka', desc: 'Odemkni všechny piloty.', reward: 25000, perk: { growth: 0.05 }, icon: 'rocket', prog: S => [PILOTS.filter(p => !p.unlock || S.achievements[p.unlock]).length, PILOTS.length] },
+  { id: 'clear10', name: 'Přehlídka skončila', desc: 'Dokonči Sektor X.', reward: 70000, perk: { greed: 0.05 }, icon: 'boss', prog: S => [+!!(S.sectors.s10 && S.sectors.s10.cleared), 1] },
+  { id: 'clear11', name: 'Uprostřed kolapsu', desc: 'Dokonči Sektor XI.', reward: 100000, perk: { greed: 0.05 }, icon: 'zone', prog: S => [+!!(S.sectors.s11 && S.sectors.s11.cleared), 1] },
+  { id: 'clear12', name: 'Po konci všeho', desc: 'Dokonči Sektor XII.', reward: 150000, perk: { greed: 0.06 }, icon: 'skull', prog: S => [+!!(S.sectors.s12 && S.sectors.s12.cleared), 1] },
+  { id: 'evo14', name: 'Úplná metamorfóza', desc: 'Objev všech 14 evolucí.', reward: 70000, perk: { growth: 0.07 }, icon: 'star', prog: S => [EVOLUTIONS.filter(id => S.evolutions[id]).length, EVOLUTIONS.length] },
+  { id: 'oc6', name: 'Za hranicí přetížení', desc: 'Přetiž evoluční zbraň na ★6.', reward: 60000, perk: { cdMul: -0.04 }, icon: 'overcharge', prog: S => [S.stats.maxOc || 0, OC_MAX + 2] },
+  { id: 'piece1', name: 'Mistrovské dílo', desc: 'Kup první Mistrovské dílo v Kovárně.', reward: 20000, icon: 'crown', prog: S => [forgeLevels(S, 5), 1] },
+  { id: 'piecesAll', name: 'Galerie mistrů', desc: 'Kup všechna Mistrovská díla.', reward: 200000, perk: { might: 0.05 }, icon: 'crown', prog: S => [forgeLevels(S, 5), forgeMaxLevels(5)] },
+  { id: 'eternal10', name: 'Věčný kovář', desc: 'Kup 10 úrovní ve Věčné dílně.', reward: 25000, icon: 'infinity', prog: S => [forgeLevels(S, 4), 10] },
+  { id: 'eternal50', name: 'Nekonečno', desc: 'Kup 50 úrovní ve Věčné dílně.', reward: 120000, perk: { greed: 0.05 }, icon: 'infinity', prog: S => [forgeLevels(S, 4), 50] },
+  { id: 'beast18', name: 'Lovec druhů', desc: 'Znič 18 různých druhů nepřátel.', reward: 6000, perk: { might: 0.03 }, icon: 'skull', prog: S => [ENEMY_KINDS.filter(k => S.bestiary[k]).length, 18] },
+  { id: 'bestiary', name: 'Bestiář', desc: 'Znič aspoň jednoho nepřítele od každého druhu.', reward: 40000, perk: { might: 0.05 }, icon: 'book', prog: S => [ENEMY_KINDS.filter(k => S.bestiary[k]).length, ENEMY_KINDS.length] },
 ];
+// Trvalé bonusy úspěchů: popis („+3 % poškození“) a součet všech splněných (Síň slávy).
+const PERK_LABEL = {
+  might: [L('poškození', 'damage'), 1], greed: [L('střepů', 'shards'), 1], growth: [L('zkušeností', 'experience'), 1],
+  bossDmg: [L('poškození bossům a elitám', 'damage to bosses and elites'), 1], luck: [L('štěstí', 'luck'), 1],
+  area: [L('oblasti', 'area'), 1], magnet: [L('dosahu sběru', 'pickup range'), 1], speed: [L('rychlosti', 'speed'), 1],
+  cdMul: [L('nabíjení', 'cooldown'), 1], dashCd: [L('rychlejší dobití úskoku', 'faster dash recharge'), 1],
+  maxHp: [L('zdraví', 'health'), 0], regen: [L('regenerace /s', 'regeneration /s'), 0], armor: [L('pancíř', 'armor'), 0],
+  revives: [L('oživení', 'revive'), 0], rerolls: [L('přehození', 'reroll'), 0], skips: [L('přeskočení', 'skip'), 0],
+};
+const perkDec = v => (LANG === 'cs' ? String(v).replace('.', ',') : String(v));
+function perkText(perk) {
+  return Object.entries(perk).map(([k, v]) => {
+    const [name, pct] = PERK_LABEL[k];
+    const n = pct ? `${v > 0 ? '+' : '−'}${perkDec(Math.round(Math.abs(v) * 1000) / 10)}${L(' %', '%')}` : `+${perkDec(v)}`;
+    return `${n} ${name}`;
+  }).join(', ');
+}
+function achPerks(ach) {
+  const sum = {};
+  for (const a of ACHIEVEMENTS) if (ach[a.id] && a.perk) for (const k in a.perk) sum[k] = Math.round(((sum[k] || 0) + a.perk[k]) * 1000) / 1000;
+  return sum;
+}
+

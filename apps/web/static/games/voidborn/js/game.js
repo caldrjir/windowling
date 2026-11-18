@@ -28,7 +28,7 @@ const shardMul = () => G.sector.shards * (1 + G.od * 0.2) * G.st.greed * Math.ma
 // 10 % základu, je to čitelné a nic se nerozjede. Zkrácení nabíjení se naopak násobí z aktuální
 // hodnoty (−8 % z toho, co zbývá): sčítané slevy by se zrychlovaly a narazily na dno. Pancíř je
 // také procento z aktuálního zranění (armorFactor), takže drží hodnotu proti sílícím nepřátelům.
-function calcStats(pilot, forge, passives, mut) {
+function calcStats(pilot, forge, passives, mut, ach = SAVE.achievements) {
   const b = {
     maxHp: 0, regen: 0, armor: 0, speed: 0, might: 0, area: 0, dur: 0, projSpd: 0, amount: 0, magnet: 0, luck: 0, growth: 0,
     greed: 0, crit: 0, critDmg: 0, revives: 0, rerolls: 0, skips: 0, dashMax: 0, shield: 0, startLvl: 0, cards: 0, wSlots: 0,
@@ -47,6 +47,8 @@ function calcStats(pilot, forge, passives, mut) {
   for (const f of FORGE) { const l = forge[f.id] || 0; if (l) add(f.mod, l); }
   for (const id in passives) add(PASSIVES[id].mod, passives[id]);
   for (const id in mut) add(MUTATIONS[id].mod, mut[id]);
+  // trvalé bonusy splněných úspěchů (Síň slávy)
+  for (const a of ACHIEVEMENTS) if (a.perk && ach[a.id]) add(a.perk);
   return {
     maxHp: Math.max(20, 100 + b.maxHp), regen: b.regen, armor: b.armor, speed: 205 * (1 + b.speed), might: 1 + b.might,
     area: 1 + b.area, cdMul: Math.max(0.2, cd), dur: 1 + b.dur, projSpd: 1 + b.projSpd, amount: b.amount,
@@ -110,7 +112,7 @@ function newRun(pilotId, si, od) {
     weapons: [], passives: {}, mut: {}, st: null, boss: null, bossIdx: 0, warned: -1, nextBossT: (SECTORS[si].bossTimes || BOSS_TIMES)[0],
     nextElite: 75, nextEvent: 50, spawnAcc: 0, uid: 0, dmgBy: {}, pendingLevels: 0, timeScale: 1,
     shake: 0, flash: 0, hurtFlash: 0, killTimes: [], noHit: 0, bossClean: true, newAch: [], endless: false,
-    victory: false, gemCount: 0, gemCombo: 0, lastGemT: -9, dyingT: 0, hitsTaken: 0, evolvedRun: [],
+    victory: false, pSlow: 0, pSlowN: 0, fireN: 0, shellN: 0, mineN: 0, mineCount: 0, gemCount: 0, gemCombo: 0, lastGemT: -9, dyingT: 0, hitsTaken: 0, evolvedRun: [],
     clearBonus: 0, choices: null, statTick: 0, ended: false, victoryT: 0, firstClear: false,
     startWeapon: null, banned: new Set(), preloaded: [], mergeT: 0, gravT: 40, nextMeteor: 7, monoType: null, nextMono: MONO_PERIOD, well: null, wellHurt: 0,
   });
@@ -162,7 +164,7 @@ function runLoadout(st, startId) {
 function nearestEnemy(x, y, maxD) {
   let best = null, bd = maxD * maxD;
   for (const e of G.enemies) {
-    if (e.dead) continue;
+    if (e.dead || e.phased) continue;
     const d = d2(x, y, e.x, e.y);
     if (d < bd) { bd = d; best = e; }
   }
@@ -194,10 +196,16 @@ function addShake(v) { if (SAVE.settings.shake) G.shake = Math.min(18, G.shake +
 
 // ── Poškození nepřátel ──────────────────────────────────────────────────────
 function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false, forceCrit = false) {
-  if (e.dead) return;
+  if (e.dead || e.phased) return; // Fázovač je průsvitný: nic ho nezasáhne
   const crit = forceCrit || Math.random() < G.st.crit;
   if (crit) dmg *= G.st.critMul;
   if (e.boss || e.elite) dmg *= G.st.bossDmg;
+  // obrana nových druhů: Clona (poloviční zranění), pancíř (odečte se z každé rány), štít zepředu
+  let blocked = false;
+  if (e.prot > G.time) dmg *= 0.5;
+  if (e.d.plate) { const pl = e.d.plate * Math.sqrt(hpMul()); if (dmg - pl < dmg * 0.35) { dmg *= 0.35; blocked = true; } else dmg -= pl; }
+  if (e.d.ai === 'bulwark' && (kx || ky) && (kx * Math.cos(e.ang) + ky * Math.sin(e.ang)) / Math.hypot(kx, ky) < -0.45) { dmg *= 0.2; blocked = true; }
+  if (e.d.cloak) e.revealT = G.time + 1.2;
   e.hp -= dmg;
   // Popravčí: běžný nepřítel pod prahem zdraví rovnou padne.
   if (G.st.execute && !e.boss && !e.elite && e.hp > 0 && e.hp < e.maxHp * G.st.execute) e.hp = 0;
@@ -207,7 +215,7 @@ function hurtEnemy(e, dmg, src, kx = 0, ky = 0, quiet = false, forceCrit = false
     const kb = e.elite ? 0.15 : 1 / (e.d.mass || 1);
     e.kx += kx * kb; e.ky += ky * kb;
   }
-  if (SAVE.settings.dmgNums && (!quiet || crit)) addText(e.x, e.y - e.r, Math.round(dmg), crit ? '#ffe14d' : '#ffffff', crit ? 19 : 13);
+  if (SAVE.settings.dmgNums && (!quiet || crit)) addText(e.x, e.y - e.r, Math.round(dmg), blocked ? '#8a93b8' : crit ? '#ffe14d' : '#ffffff', crit ? 19 : 13);
   if (!quiet) Sound.play.hit();
   if (e.hp <= 0) killEnemy(e);
 }
@@ -217,17 +225,23 @@ function killEnemy(e) {
   e.dead = true;
   G.kills++;
   SAVE.stats.kills++;
+  // bestiář: zabití každého druhu (potomci a projektily se nepočítají)
+  if (!e.boss && !e.d.sub && e.type !== 'mini') SAVE.bestiary[e.type] = (SAVE.bestiary[e.type] || 0) + 1;
   G.killTimes.push(G.time);
   burst(e.x, e.y, e.color, Math.min(26, 6 + e.r * 0.6), 160 + e.r * 6, 3 + e.r * 0.08);
   if (e.leech > G.time) G.p.hp = Math.min(G.st.maxHp, G.p.hp + e.leechAmt);
   if (e.boss) { bossKilled(e); return; }
   Sound.play.kill();
   if (e.d.split && G.enemies.length < 480) {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < (e.d.splitN || 3); i++) {
       const m = spawnEnemyAt(e.d.split, e.x + rand(-12, 12), e.y + rand(-12, 12));
       const a = Math.random() * TAU; m.kx = Math.cos(a) * 240; m.ky = Math.sin(a) * 240;
     }
   }
+  // Šrapnel se rozletí na střely, Mrchožrout vrátí snědené krystaly i s úrokem.
+  if (e.d.burstN) G.effects.push({ k: 'eburst', x: e.x, y: e.y, t: 0, delay: 0.4, life: 1, n: e.d.burstN, a: e.rot, dmg: 7 * dmgMul(), color: e.color });
+  if (e.ate) dropGem(e.x, e.y, e.ate * 1.3);
+  if (e.d.noDrop) return;
   const xpScale = 1 + minutes() * 0.06;
   dropGem(e.x, e.y, e.xp * xpScale);
   const L = G.st.luck;
@@ -458,6 +472,8 @@ function updatePlayer(dt) {
     p.dashCharges--;
     p.dashHit = G.st.dashDmg ? new Set() : null;
     SAVE.stats.dashes++;
+    // úskok setřese přisáté pijavice
+    for (const e of G.enemies) if (e.att) { e.att = false; e.noAtt = G.time + 1.6; e.kx = Math.cos(e.attA) * 520; e.ky = Math.sin(e.attA) * 520; }
     Sound.play.dash();
   }
   if (p.dashCharges < G.st.dashMax) {
@@ -482,7 +498,7 @@ function updatePlayer(dt) {
     p.vx = p.dvx * 0.25; p.vy = p.dvy * 0.25;
     if (G.particles.length < MAX_PARTICLES) G.particles.push({ x: p.x, y: p.y, vx: 0, vy: 0, life: 0.3, max: 0.3, size: 0, color: G.pilot.color, drag: 0, ghost: p.face });
   } else {
-    const sp = G.st.speed, k = 1 - Math.exp(-dt * 12);
+    const sp = G.st.speed * (1 - (G.pSlow || 0)), k = 1 - Math.exp(-dt * 12);
     p.vx += (inp.x * sp - p.vx) * k; p.vy += (inp.y * sp - p.vy) * k;
     p.x += p.vx * dt; p.y += p.vy * dt;
   }
@@ -515,6 +531,9 @@ function currentPool() {
   for (const w of WAVES) if (m >= w[0]) base = w[1];
   const pool = Object.assign({}, base);
   if (m >= 2) for (const k in G.sector.favor) pool[k] = (pool[k] || 0) + G.sector.favor[k];
+  // vlastní druhy sektoru: [od minuty, váha]
+  const ro = G.sector.roster || {};
+  for (const k in ro) if (m >= ro[k][0]) pool[k] = (pool[k] || 0) + ro[k][1];
   return pool;
 }
 function pickType(pool) {
@@ -533,6 +552,12 @@ function spawnEnemyAt(type, x, y, opt) {
   if (opt && opt.elite) { e.elite = true; e.r *= 1.75; e.hp *= 22; e.dmg *= 1.5; e.speed *= 0.85; e.xp *= 12; }
   e.maxHp = e.hp;
   G.enemies.push(e);
+  // Dvojčata chodí v páru: druhé (modré) vznikne hned vedle
+  if (d.ai === 'twin' && !(opt && opt.mate)) {
+    const m = spawnEnemyAt(type, x + rand(-80, 80), y + rand(-80, 80), { mate: e });
+    e.mate = m; m.mate = e; e.side = 1; m.side = -1; m.color = '#00bbf9';
+    e.pairA = m.pairA = Math.random() * TAU;
+  }
   return e;
 }
 
@@ -595,7 +620,10 @@ function spawnEvent(pool) {
     for (let i = 0; i < n; i++) { const a = i / n * TAU; spawnEnemyAt(type, p.x + Math.cos(a) * R, p.y + Math.sin(a) * R); }
     UI.banner(L('OBKLÍČENÍ', 'SURROUNDED'), L('Prorazte kruh!', 'Break the circle!'), 'warn');
   } else if (kind === 'horde') {
-    const sp = spawnPos(120), n = Math.floor(18 + m * 3), type = pickType(pool);
+    let type = pickType(pool);
+    for (let i = 0; i < 4 && ENEMIES[type].noHorde; i++) type = pickType(pool);
+    if (ENEMIES[type].noHorde) type = 'drone';
+    const sp = spawnPos(120), n = Math.floor(18 + m * 3);
     for (let i = 0; i < n; i++) spawnEnemyAt(type, sp.x + rand(-90, 90), sp.y + rand(-90, 90));
     UI.banner(L('HORDA', 'HORDE'), L('Velká skupina na radaru', 'Large group on radar'), 'warn');
   } else {
@@ -1173,7 +1201,7 @@ function checkAchievements(inRun) {
       SAVE.shards += a.reward;
       if (inRun) G.newAch.push(a);
       Sound.play.achieve();
-      UI.toast(a.name, `${a.desc} · +${a.reward} ◆`, a.icon);
+      UI.toast(a.name, `${a.desc} · +${fmtNum(a.reward)} ◆${a.perk ? ` · ${L('navždy', 'forever')} ${perkText(a.perk)}` : ''}`, a.icon);
       if (a.pilot) { const pl = PILOTS.find(p => p.id === a.pilot); setTimeout(() => UI.toast(L('Nový pilot: ', 'New pilot: ') + pl.name, pl.role + L(' je připraven(a) k letu', ' is ready to fly'), 'rocket', pl.color), 900); }
       // zbraně a doplňky pro pokročilé, které tento úspěch odemyká
       const opened = [...BASE_WEAPONS.map(id => WEAPONS[id]), ...Object.values(PASSIVES)].filter(o => o.unlock === a.id);
@@ -1290,6 +1318,7 @@ function dropDead(arr) {
 function updateEnemies(dt, frozen) {
   const p = G.p;
   const farR = G.viewR * 1.6;
+  G.pSlowN = 0; G.mineN = G.mineCount || 0; G.mineCount = 0;
   for (let i = 0; i < G.enemies.length; i++) {
     const e = G.enemies[i];
     if (e.dead) continue;
@@ -1306,7 +1335,9 @@ function updateEnemies(dt, frozen) {
     let mx = dx / dist, my = dy / dist;
     let sp = e.speed;
     if (e.slowT > 0) { e.slowT -= dt; sp *= 1 - e.slow; }
+    if (e.haste > G.time) sp *= 1.4; // Velitel
     const d = e.d;
+    let noHit = false;
     if (e.stream !== undefined) {
       mx = Math.cos(e.stream); my = Math.sin(e.stream);
       if (e.t > 9) e.stream = undefined;
@@ -1315,7 +1346,8 @@ function updateEnemies(dt, frozen) {
       e.stT -= dt;
       if (e.stT <= 0 && dist < d.ranged.range && !frozen) {
         e.stT = d.ranged.cd * rand(0.8, 1.2);
-        fireE(e.x, e.y, Math.atan2(dy, dx), d.ranged.spd, d.ranged.dmg * dmgMul(), e.color, 6);
+        const n = d.ranged.n || 1, a0 = Math.atan2(dy, dx);
+        for (let k = 0; k < n; k++) fireE(e.x, e.y, a0 + (k - (n - 1) / 2) * (d.ranged.spread || 0), d.ranged.spd, d.ranged.dmg * dmgMul(), e.color, 6);
         Sound.play.eshoot();
       }
     } else if (d.dash) {
@@ -1346,6 +1378,12 @@ function updateEnemies(dt, frozen) {
           continue;
         }
       }
+    } else if (d.ai) {
+      M.mx = mx; M.my = my; M.sp = sp; M.lock = false; M.noHit = false;
+      FOE_AI[d.ai](e, d, dt, dist, dx, dy, frozen);
+      if (e.dead) continue;
+      if (M.lock) { if (!e.att) e.rot += dt * (d.spin || 0.8); continue; }
+      mx = M.mx; my = M.my; sp = M.sp; noHit = M.noHit;
     }
     // separace
     let sx = 0, sy = 0;
@@ -1362,15 +1400,21 @@ function updateEnemies(dt, frozen) {
     e.vx = mx * sp + sx * 90; e.vy = my * sp + sy * 90;
     e.x += (e.vx + e.kx) * dt; e.y += (e.vy + e.ky) * dt;
     const kd = Math.exp(-dt * 7); e.kx *= kd; e.ky *= kd;
-    if (d.shape === 'tri' || d.shape === 'dart' || d.shape === 'arrow') e.rot = Math.atan2(e.vy, e.vx);
-    else e.rot += dt * (d.shape === 'star' ? 3 : 0.8);
-    // kontakt s hráčem
-    if (!frozen && dist < e.r + p.r) hurtPlayer(e.dmg, e.x, e.y);
+    if (d.faceA && e.ang !== undefined) e.rot = e.ang;
+    else if (d.faceP) e.rot = e.st === 1 ? e.ang : Math.atan2(dy, dx);
+    else if (d.face || d.shape === 'tri' || d.shape === 'dart' || d.shape === 'arrow') e.rot = Math.atan2(e.vy, e.vx);
+    else e.rot += dt * (e.rage ? 6 : d.spin || (d.shape === 'star' ? 3 : 0.8));
+    // kontakt s hráčem (Beran navíc odhodí)
+    if (!frozen && !noHit && dist < e.r + p.r) {
+      hurtPlayer(e.dmg, e.x, e.y);
+      if (d.ai === 'ram' && e.v) { p.vx += dx / dist * e.v * 1.4; p.vy += dy / dist * e.v * 1.4; e.v = e.speed; }
+    }
     // recyklace vzdálených nepřátel
     if (dist > farR) {
       const sp2 = spawnPos(40); e.x = sp2.x; e.y = sp2.y; e.stream = undefined;
     }
   }
+  G.pSlow = Math.min(0.6, G.pSlowN);
 }
 
 function updateBullets(dt) {
@@ -1392,7 +1436,7 @@ function updateBullets(dt) {
     G.grid.query(b.x, b.y, b.r + G.maxR, _q);
     for (let i = 0; i < _q.length; i++) {
       const e = _q[i];
-      if (e.dead) continue;
+      if (e.dead || e.phased) continue;
       if (b.hits && b.hits.includes(e.id)) continue;
       const rr = b.r + e.r;
       if (d2(b.x, b.y, e.x, e.y) < rr * rr) {
@@ -1425,8 +1469,33 @@ function updateEBullets(dt, frozen) {
 
 function updateEffects(dt) {
   const p = G.p;
+  let fires = 0, shells = 0;
   for (const f of G.effects) {
     switch (f.k) {
+      case 'efire': {
+        // hořící stopa Žhavce: pálí hráče, který do ní vletí
+        fires++; f.life -= dt;
+        if (G.state === 'play' && d2(f.x, f.y, p.x, p.y) < (f.r + p.r * 0.6) * (f.r + p.r * 0.6)) hurtPlayer(f.dmg);
+        break;
+      }
+      case 'eburst': {
+        // Šrapnel: po krátkém varování se rozletí na střely
+        f.t += dt;
+        if (f.t >= f.delay) { f.life = 0; for (let i = 0; i < f.n; i++) fireE(f.x, f.y, i / f.n * TAU + f.a, 190, f.dmg, f.color, 6); Sound.play.eshoot(); }
+        break;
+      }
+      case 'eshell': {
+        // granát Minometu: po zpoždění dopadne do vyznačeného kruhu
+        shells++; f.t += dt;
+        if (f.t >= f.delay) {
+          f.life = 0;
+          G.effects.push({ k: 'boom', x: f.x, y: f.y, r: f.r, life: 0.4, max: 0.4, color: f.color });
+          burst(f.x, f.y, f.color, 16, f.r * 4, 3, 0.5);
+          Sound.play.explode(); addShake(3);
+          if (G.state === 'play' && d2(f.x, f.y, p.x, p.y) < (f.r + p.r) * (f.r + p.r)) hurtPlayer(f.dmg, f.x, f.y);
+        }
+        break;
+      }
       case 'ring': {
         if (f.delay > 0) { f.delay -= dt; f.x = p.x; f.y = p.y; break; }
         f.r += f.spd * dt;
@@ -1500,6 +1569,7 @@ function updateEffects(dt) {
       default: f.life -= dt;
     }
   }
+  G.fireN = fires; G.shellN = shells;
 }
 
 function shardText() {
