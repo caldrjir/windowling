@@ -293,9 +293,9 @@ test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop'
 	await page.goto('/games/voidborn/index.html');
 	await page.mouse.click(100, 100);
 	await page.locator('[data-go="forge"]').click();
-	await expect(page.locator('.master-head:not(.void):not(.eternal):not(.piece)')).not.toHaveClass(
-		/locked/,
-	);
+	// The Forge is a ship: the cockpit holds the Master Workshop's extra card (open after Sector II).
+	await page.locator('[data-part="cockpit"]').click();
+	await expect(page.locator('#fc-cards')).not.toHaveClass(/locked/);
 	await page.locator('[data-buy="cards"]').click();
 	expect(await page.evaluate('SAVE.forge.cards')).toBe(1);
 	await page.locator('.back').click();
@@ -372,7 +372,8 @@ test('VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the
 	await page.locator('.screen.active .back').click();
 
 	await page.locator('[data-go="forge"]').click();
-	await expect(page.locator('.master-head.void')).not.toHaveClass(/locked/);
+	await page.locator('[data-part="cockpit"]').click();
+	await expect(page.locator('#fc-deepmut')).not.toHaveClass(/locked/); // the Void Workshop is open
 	await page.locator('[data-buy="deepmut"]').click();
 	expect(await page.evaluate('SAVE.forge.deepmut')).toBe(1);
 	await page.locator('.screen.active .back').click();
@@ -461,8 +462,8 @@ test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the
 	await page.goto('/games/voidborn/index.html');
 	await page.mouse.click(100, 100);
 	await page.locator('[data-go="forge"]').click();
-	await expect(page.locator('.master-head.eternal')).not.toHaveClass(/locked/);
-	await expect(page.locator('.master-head.piece')).not.toHaveClass(/locked/);
+	await page.locator('[data-part="guns"]').click();
+	await expect(page.locator('#fc-e_might')).not.toHaveClass(/locked/);
 	// An Eternal Workshop upgrade has no cap and every level costs more.
 	await page.locator('[data-buy="e_might"]').click();
 	await page.locator('[data-buy="e_might"]').click();
@@ -470,8 +471,13 @@ test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the
 	expect(
 		await page.evaluate(`[SAVE.forge.e_might, forgeCost(FORGE.find(f => f.id === 'e_might'), 2)]`),
 	).toEqual([2, 9400]);
-	for (const id of ['bp_sentry', 'bp_voidray', 'bp_cluster', 'voidborn', 'echo'])
+	// Masterpieces: blueprints and Voidborn in the weapon bay, Echo in the cockpit.
+	await page.locator('[data-part="bay"]').click();
+	await expect(page.locator('#fc-bp_sentry')).not.toHaveClass(/locked/);
+	for (const id of ['bp_sentry', 'bp_voidray', 'bp_cluster', 'voidborn'])
 		await page.locator(`[data-buy="${id}"]`).click();
+	await page.locator('[data-part="cockpit"]').click();
+	await page.locator('[data-buy="echo"]').click();
 	expect(await page.evaluate('unlocked(WEAPONS.sentry) && unlocked(WEAPONS.cluster)')).toBe(true);
 	await page.locator('.screen.active .back').click();
 
@@ -530,6 +536,107 @@ test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the
 			})
 			.toBe(true);
 	}
+	expect(errors).toEqual([]);
+});
+
+test('VOIDBORN Forge: a 3D ship by parts, the loadout in the hangar and chests without a window', async ({
+	page,
+	isMobile,
+}) => {
+	test.skip(isMobile, 'the touch test plays on the phone');
+	const errors: string[] = [];
+	page.on('pageerror', (error) => errors.push(error.message));
+	// An older save: Fan of Cards and Eternal Phoenix (since merged), Sectors I–V cleared.
+	await page.addInitScript(() => {
+		if (sessionStorage.getItem('seeded')) return;
+		sessionStorage.setItem('seeded', '1');
+		const sectors: Record<string, object> = {};
+		for (let i = 1; i <= 5; i++) sectors[`s${i}`] = { cleared: true, odUnlocked: 1, best: 900 };
+		localStorage.setItem(
+			'voidborn.save.v1',
+			JSON.stringify({
+				shards: 100000,
+				forge: { cards: 1, fan: 1, revival: 2, phoenix: 1, might: 2, gone: 3 },
+				achievements: { clear1: 1, clear2: 1, evo1: 1, evo4: 1, boss1: 1 },
+				sectors,
+			}),
+		);
+	});
+	await page.goto('/games/voidborn/index.html');
+	await page.mouse.click(100, 100);
+	// Merged upgrades carry over, removed ones are gone.
+	expect(await page.evaluate('JSON.stringify(SAVE.forge)')).toBe(
+		JSON.stringify({ cards: 2, revival: 3, might: 2 }),
+	);
+	await page.locator('[data-go="forge"]').click();
+	const cv = page.locator('#forgeCv');
+	await expect(cv).toBeVisible();
+	await expect(page.locator('.fpart')).toHaveCount(7);
+	// A part chip turns the camera to the part and lists its upgrades.
+	await page.locator('[data-part="engines"]').click();
+	await expect(page.locator('.fpanel h3')).toHaveText('Motory');
+	await expect(page.locator('#fc-e_thrust')).toBeVisible();
+	await page.waitForTimeout(800);
+	// Tapping the model picks the part under the pointer.
+	const box = await cv.boundingBox();
+	if (!box) throw new Error('no forge canvas');
+	const at = (await page.evaluate('Forge3D.screenOf("wings")')) as { x: number; y: number };
+	const under = await page.evaluate(`Forge3D.pickAt(${at.x}, ${at.y})`);
+	await page.mouse.click(box.x + at.x, box.y + at.y);
+	expect(await page.evaluate('Forge3D.selected')).toBe(under);
+	await expect(page.locator('.fpart.sel')).toHaveAttribute('data-part', String(under));
+	// Dragging rotates the ship.
+	const yaw = (await page.evaluate('Forge3D.view[0]')) as number;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.width / 2 + 160, box.y + box.height / 2 + 30, { steps: 8 });
+	await page.mouse.up();
+	expect(Math.abs(((await page.evaluate('Forge3D.view[0]')) as number) - yaw)).toBeGreaterThan(1);
+
+	// The weapon bay: an Arms Plan (two strikes) and a hardpoint; Calibration raises its level.
+	await page.locator('[data-part="bay"]').click();
+	for (const id of ['bans', 'bans', 'hard', 'prelvl'])
+		await page.locator(`[data-buy="${id}"]`).click();
+	expect(await page.evaluate('[SAVE.forge.bans, SAVE.forge.hard, SAVE.forge.prelvl]')).toEqual([
+		2, 1, 1,
+	]);
+	await expect(page.locator('.fp-note')).toContainText('Na palubě 0/1');
+	// The loadout is set in the hangar: Bouncing Disc on board, Shockwave and Void Mines struck out.
+	await page.locator('.fp-note [data-go="hangar"]').click();
+	await expect(page.locator('.loadout')).toBeVisible();
+	await page.locator('[data-lw="disc"]').click();
+	await page.locator('[data-lmode="ban"]').click();
+	await page.locator('[data-lw="nova"]').click();
+	await page.locator('[data-lw="mines"]').click();
+	await page.locator('[data-lw="arc"]').click(); // only two strikes bought
+	expect(await page.evaluate('JSON.stringify(SAVE.loadout)')).toBe(
+		JSON.stringify({ pre: ['disc'], ban: ['nova', 'mines'] }),
+	);
+	await expect(page.locator('[data-lw="pulse"]')).toBeDisabled(); // the pilot's own weapon
+	await page.locator('#startBtn').click();
+	const run = (await page.evaluate(`(() => ({
+		weapons: G.weapons.map(w => w.id + ':' + w.level),
+		offered: upgradePool().filter(c => c.kind === 'weapon' && c.isNew).map(c => c.id),
+	}))()`)) as { weapons: string[]; offered: string[] };
+	expect(run.weapons).toEqual(['pulse:1', 'disc:2']);
+	expect(run.offered).not.toContain('nova');
+	expect(run.offered).not.toContain('mines');
+	expect(run.offered).toContain('arc');
+
+	// Chests without a window: the run goes on and the contents are applied.
+	const before = (await page.evaluate('G.shards')) as number;
+	await page.evaluate('SAVE.settings.autoChest = true; openChest(true);');
+	expect(await page.evaluate('G.state')).toBe('play');
+	await expect(page.locator('#overlay')).toBeHidden();
+	expect((await page.evaluate('G.shards')) as number).toBeGreaterThan(before);
+	// … and the switch is in the pause menu too.
+	await page.evaluate('Game.togglePause()');
+	await page.locator('[data-act="autochest"]').click();
+	expect(await page.evaluate('SAVE.settings.autoChest')).toBe(false);
+	await page.evaluate('Game.togglePause(); openChest(false);');
+	expect(await page.evaluate('G.state')).toBe('chest');
+	await page.locator('#overlay [data-act="ok"]').click();
+	expect(await page.evaluate('G.state')).toBe('play');
 	expect(errors).toEqual([]);
 });
 

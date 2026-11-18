@@ -34,7 +34,7 @@ function calcStats(pilot, forge, passives, mut) {
     greed: 0, crit: 0, critDmg: 0, revives: 0, rerolls: 0, skips: 0, dashMax: 0, shield: 0, startLvl: 0, cards: 0, wSlots: 0,
     pSlots: 0, chestItems: 0, reviveFull: 0, evoLvl: 0, dashDmg: 0,
     dashCd: 0, heartHeal: 0, bounty: 0, kit: 0, bossDmg: 0, execute: 0, ocStart: 0, mutMax: 0, gravWave: 0, voidWill: 0,
-    ocMax: 0, echo: 0, startEvo: 0,
+    ocMax: 0, echo: 0, startEvo: 0, hard: 0, bans: 0, preLvl: 0,
   };
   let cd = 1;
   const add = (m, mult = 1) => {
@@ -57,6 +57,7 @@ function calcStats(pilot, forge, passives, mut) {
     dashCd: 2.6 * Math.max(0.4, 1 - b.dashCd), heartHeal: 30 + b.heartHeal, bounty: 1 + b.bounty, kit: b.kit, bossDmg: 1 + b.bossDmg,
     execute: Math.min(0.3, b.execute), ocStart: Math.min(OC_MAX + b.ocMax, b.ocStart), mutMax: MUT_MAX + b.mutMax, gravWave: b.gravWave > 0, voidWill: Math.min(0.75, b.voidWill),
     ocMax: OC_MAX + b.ocMax, echo: Math.min(0.5, b.echo), startEvo: b.startEvo > 0,
+    hard: Math.min(2, b.hard), bans: Math.min(6, b.bans), preLvl: Math.min(2, b.preLvl),
   };
 }
 
@@ -111,7 +112,7 @@ function newRun(pilotId, si, od) {
     shake: 0, flash: 0, hurtFlash: 0, killTimes: [], noHit: 0, bossClean: true, newAch: [], endless: false,
     victory: false, gemCount: 0, gemCombo: 0, lastGemT: -9, dyingT: 0, hitsTaken: 0, evolvedRun: [],
     clearBonus: 0, choices: null, statTick: 0, ended: false, victoryT: 0, firstClear: false,
-    startWeapon: null, mergeT: 0, gravT: 40, nextMeteor: 7, monoType: null, nextMono: MONO_PERIOD, well: null, wellHurt: 0,
+    startWeapon: null, banned: new Set(), preloaded: [], mergeT: 0, gravT: 40, nextMeteor: 7, monoType: null, nextMono: MONO_PERIOD, well: null, wellHurt: 0,
   });
   G.p = { x: 0, y: 0, vx: 0, vy: 0, r: 12, face: -Math.PI / 2, hp: 100, inv: 2, dashT: 0, dvx: 0, dvy: 0, dashCharges: 1, dashRe: 0, tilt: 0, shieldOn: false, shieldT: 0, dashHit: null };
   computeStats();
@@ -120,14 +121,19 @@ function newRun(pilotId, si, od) {
   G.revives = G.st.revives;
   G.rerolls = 1 + G.st.rerolls;
   G.skips = 1 + G.st.skips;
+  // Výzbroj ze Zbrojnice: zbraně na závěsnících a vyřazené zbraně (jen koupené počty, odemčené zbraně).
+  const lo = runLoadout(G.st, pilot.weapon === 'random' ? null : pilot.weapon);
   // Startovní zbraň pilota se vyvine vždy, i bez doplňku-katalyzátoru (upgradePool).
-  G.startWeapon = pilot.weapon === 'random' ? pick(BASE_WEAPONS.filter(id => unlocked(WEAPONS[id]))) : pilot.weapon;
+  G.startWeapon = pilot.weapon === 'random' ? pick(BASE_WEAPONS.filter(id => unlocked(WEAPONS[id]) && !lo.pre.includes(id) && !lo.ban.includes(id))) : pilot.weapon;
   // Mistrovské dílo „Zrozen z prázdnoty“: startovní zbraň začíná rovnou vyvinutá.
   const evoId = WEAPONS[G.startWeapon].evo;
   if (G.st.startEvo && evoId) {
     addWeapon(evoId, 1);
     const w = getWeapon(evoId); w.oc = G.st.ocStart; computeWeapon(w);
   } else addWeapon(G.startWeapon, 1 + G.st.startLvl);
+  G.banned = new Set(lo.ban.filter(id => id !== G.startWeapon));
+  G.preloaded = lo.pre.filter(id => id !== G.startWeapon);
+  for (const id of G.preloaded) if (G.weapons.length < G.st.wSlots) addWeapon(id, 1 + G.st.preLvl);
   // Výbava z Kovárny: náhodný doplněk na první úrovni.
   if (G.st.kit) {
     const ids = Object.keys(PASSIVES).filter(id => unlocked(PASSIVES[id]) && !PASSIVES[id].rare);
@@ -139,6 +145,17 @@ function newRun(pilotId, si, od) {
   PerfLog.begin();
   G.perfLogged = PerfLog.on;
   SAVE.lastPilot = pilot.id; SAVE.lastSector = si; SAVE.lastOd = od;
+}
+
+/**
+ * Výzbroj pro běh z uložené volby: nejvýš tolik zbraní na palubě, kolik je koupených závěsníků,
+ * a nejvýš tolik vyřazených, kolik úrovní má Zbrojní plán. Jen odemčené základní zbraně, ne startovní.
+ */
+function runLoadout(st, startId) {
+  const lo = SAVE.loadout || {}, ok = id => BASE_WEAPONS.includes(id) && unlocked(WEAPONS[id]) && id !== startId;
+  const pre = [...new Set(lo.pre || [])].filter(ok).slice(0, st.hard);
+  const ban = [...new Set(lo.ban || [])].filter(id => ok(id) && !pre.includes(id)).slice(0, st.bans);
+  return { pre, ban };
 }
 
 // ── Pomocné dotazy ──────────────────────────────────────────────────────────
@@ -894,8 +911,8 @@ function openChest(big) {
   const rewards = [];
   const evos = upgradePool().filter(c => c.kind === 'evo');
   if (evos.length) { applyChoice(evos[0]); rewards.push(evos[0]); }
-  const L = G.st.luck;
-  let count = (big ? 3 : (Math.random() < 0.06 * L ? 5 : Math.random() < 0.25 * L ? 3 : 1)) + G.st.chestItems;
+  const luck = G.st.luck;
+  let count = (big ? 3 : (Math.random() < 0.06 * luck ? 5 : Math.random() < 0.25 * luck ? 3 : 1)) + G.st.chestItems;
   if (evos.length) count = Math.max(0, count - 1);
   for (let i = 0; i < count; i++) {
     const pool = upgradePool().filter(c => c.kind !== 'evo');
@@ -917,6 +934,14 @@ function openChest(big) {
   }
   const sh = Math.round(randi(8, 18) * shardMul() * (big ? 3 : 1) * G.st.bounty);
   G.shards += sh;
+  // Nastavení „Truhly bez okna“: obsah se jen krátce ukáže nad lodí a hraje se dál.
+  if (SAVE.settings.autoChest) {
+    Sound.play.chest();
+    UI.autoPicked(rewards);
+    addText(G.p.x, G.p.y - 22, `${L('Zásobník', 'Cache')} +${sh} ◆`, '#e08bff', 15, 1.6);
+    UI.refreshLoadout();
+    return;
+  }
   G.state = 'chest';
   Sound.play.chest();
   Sound.muffle(true);
@@ -951,7 +976,7 @@ function upgradePool() {
     // evoluční zbraň se dál přetěžuje (★1–★4)
     if (d.evolved && (w.oc || 0) < G.st.ocMax) pool.push({ kind: 'oc', id: w.id, lvl: (w.oc || 0) + 1, w: 1.15 });
   }
-  if (G.weapons.length < G.st.wSlots) for (const id of BASE_WEAPONS) if (!ownsFamily(id) && unlocked(WEAPONS[id])) pool.push({ kind: 'weapon', id, lvl: 1, isNew: true, w: 0.85 });
+  if (G.weapons.length < G.st.wSlots) for (const id of BASE_WEAPONS) if (!ownsFamily(id) && unlocked(WEAPONS[id]) && !G.banned.has(id)) pool.push({ kind: 'weapon', id, lvl: 1, isNew: true, w: 0.85 });
   const owned = Object.keys(G.passives);
   for (const id of owned) if (G.passives[id] < PASSIVES[id].max) pool.push({ kind: 'passive', id, lvl: G.passives[id] + 1, w: 1 });
   if (owned.length < G.st.pSlots) for (const id in PASSIVES) if (!G.passives[id] && unlocked(PASSIVES[id])) pool.push({ kind: 'passive', id, lvl: 1, isNew: true, w: PASSIVES[id].rare ? 0.3 : 0.75 });

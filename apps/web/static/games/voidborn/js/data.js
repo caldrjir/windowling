@@ -52,6 +52,9 @@ const ICONS = {
   critamp: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M7.5 12h9"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>',
   overcharge: '<path d="M13 2L4.5 13.5H11L9.5 22 19 9.5h-6.5z"/><path d="M19.5 2.5l.8 1.7 1.7.8-1.7.8-.8 1.7-.8-1.7-1.7-.8 1.7-.8z"/>',
   mutation: '<path d="M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/><path d="M8.5 6.5h7M8.5 17.5h7M10 12h4"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  hardpoint: '<path d="M3 5h18"/><path d="M8 5v4M16 5v4"/><rect x="6" y="9" width="12" height="5" rx="2.5"/><path d="M18 11.5h3M9 14l-1 5M15 14l1 5"/>',
+  calib: '<circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><path d="M9.5 12l1.8 1.8L15 10"/>',
   slots: '<rect x="2.5" y="7" width="7.5" height="10" rx="1.5"/><rect x="14" y="7" width="7.5" height="10" rx="1.5"/><path d="M17.75 10v4M15.75 12h4"/>',
   cards: '<rect x="2.5" y="5.5" width="7.5" height="12.5" rx="1.5"/><rect x="8.25" y="3.5" width="7.5" height="12.5" rx="1.5"/><rect x="14" y="6" width="7.5" height="12.5" rx="1.5"/>',
   headstart: '<path d="M4.5 21V3.5M4.5 4h11l-2.2 3.5 2.2 3.5h-11"/><path d="M15.5 21l4-4-4-4"/>',
@@ -435,65 +438,88 @@ const PILOTS = [
 ];
 
 // ── Kovárna (trvalá vylepšení) ──────────────────────────────────────────────
-// tier 2 = Mistrovská dílna: silnější a dražší vylepšení pro pokročilé, otevře se po dobytí Sektoru II.
-const FORGE = [
-  { id: 'might', name: 'Síla', icon: 'might', desc: '+5 % poškození', max: 5, cost: 60, mod: { might: 0.05 } },
-  { id: 'vitality', name: 'Vitalita', icon: 'vitality', desc: '+10 max. zdraví', max: 5, cost: 45, mod: { maxHp: 10 } },
-  { id: 'armor', name: 'Pancíř', icon: 'armor', desc: '+1 pancíř (−7 % zranění)', max: 3, cost: 120, mod: { armor: 1 } },
-  { id: 'recovery', name: 'Regenerace', icon: 'regen', desc: '+0,1 zdraví/s', max: 5, cost: 70, mod: { regen: 0.1 } },
-  { id: 'haste', name: 'Přetaktování', icon: 'haste', desc: '−3 % nabíjení', max: 4, cost: 110, mod: { cdMul: -0.03 } },
-  { id: 'area', name: 'Dosah', icon: 'area', desc: '+5 % oblast účinku', max: 4, cost: 90, mod: { area: 0.05 } },
-  { id: 'speed', name: 'Trysky', icon: 'speed', desc: '+5 % rychlost', max: 4, cost: 55, mod: { speed: 0.05 } },
-  { id: 'duration', name: 'Stabilizace', icon: 'duration', desc: '+5 % trvání a rychlost střel', max: 4, cost: 80, mod: { dur: 0.05, projSpd: 0.05 } },
-  { id: 'magnet', name: 'Magnet', icon: 'magnet', desc: '+15 % dosah sběru', max: 4, cost: 45, mod: { magnet: 0.15 } },
-  { id: 'growth', name: 'Růst', icon: 'growth', desc: '+4 % zkušenosti', max: 5, cost: 90, mod: { growth: 0.04 } },
-  { id: 'greed', name: 'Chamtivost', icon: 'greed', desc: '+10 % střepů', max: 5, cost: 100, mod: { greed: 0.10 } },
-  { id: 'luck', name: 'Štěstí', icon: 'luck', desc: '+6 % štěstí', max: 5, cost: 80, mod: { luck: 0.06 } },
-  { id: 'crit', name: 'Precizita', icon: 'crit', desc: '+2 % kritický zásah', max: 5, cost: 90, mod: { crit: 0.02 } },
-  { id: 'reroll', name: 'Přehození', icon: 'reroll', desc: '+1 přehození za běh', max: 5, cost: 70, mod: { rerolls: 1 } },
-  { id: 'skip', name: 'Přeskočení', icon: 'skip', desc: '+1 přeskočení za běh', max: 3, cost: 60, mod: { skips: 1 } },
-  { id: 'dash', name: 'Impuls', icon: 'dash', desc: '+1 náboj úskoku', max: 2, cost: 380, mod: { dashMax: 1 } },
-  { id: 'revival', name: 'Fénix', icon: 'revival', desc: '+1 oživení za běh', max: 2, cost: 750, mod: { revives: 1 } },
-  { id: 'amount', name: 'Duplikátor', icon: 'amount', desc: '+1 projektil všech zbraní', max: 1, cost: 2400, mod: { amount: 1 } },
-  { id: 'dashcd', name: 'Rychlé dobíjení', icon: 'dashcd', desc: '−12 % doba dobití úskoku', max: 3, cost: 70, mod: { dashCd: 0.12 } },
-  { id: 'medkit', name: 'Lékárnička', icon: 'heal', desc: 'Srdce léčí o 10 víc', max: 3, cost: 50, mod: { heartHeal: 10 } },
-  { id: 'bounty', name: 'Lovec elit', icon: 'chest', desc: '+25 % střepů z elit, bossů a truhel', max: 4, cost: 65, mod: { bounty: 0.25 } },
-  { id: 'kit', name: 'Výbava', icon: 'cards', desc: 'Každý běh začíná s náhodným doplňkem', max: 1, cost: 450, mod: { kit: 1 } },
-  { id: 'headstart', tier: 2, name: 'Náskok', icon: 'headstart', desc: 'Startovní zbraň začíná o úroveň výš', max: 3, cost: 900, mod: { startLvl: 1 } },
-  { id: 'critamp', tier: 2, name: 'Kritický zesilovač', icon: 'critamp', desc: '+15 % kritické poškození', max: 5, cost: 400, mod: { critDmg: 0.15 } },
-  { id: 'dashblast', tier: 2, name: 'Rázový úskok', icon: 'dashblast', desc: 'Úskok zraní nepřátele v cestě za 15 % jejich zdraví (bossy za 1,5 %)', max: 3, cost: 700, mod: { dashDmg: 1 } },
-  { id: 'loot', tier: 2, name: 'Bohatá kořist', icon: 'chest', desc: '+1 předmět v každé truhle', max: 2, cost: 1500, mod: { chestItems: 1 } },
-  { id: 'secondwind', tier: 2, name: 'Druhý dech', icon: 'wind', desc: 'Oživení obnoví celé zdraví a dá 5 s nezranitelnosti', max: 1, cost: 2500, mod: { reviveFull: 1 } },
-  { id: 'evomaster', tier: 2, name: 'Mistr evoluce', icon: 'star', desc: 'Zbraně se vyvinou už na úrovni 7', max: 1, cost: 3500, mod: { evoLvl: 1 } },
-  { id: 'cards', tier: 2, name: 'Široký výběr', icon: 'cards', desc: 'Při postupu vždy o kartu víc', max: 1, cost: 4500, mod: { cards: 1 } },
-  { id: 'pslot', tier: 2, name: 'Doplňkový slot', icon: 'slots', desc: '+1 místo pro doplněk (7 místo 6)', max: 1, cost: 5000, mod: { pSlots: 1 } },
-  { id: 'wslot', tier: 2, name: 'Arzenál', icon: 'slots', desc: '+1 místo pro zbraň (7 místo 6)', max: 1, cost: 6000, mod: { wSlots: 1 } },
-  { id: 'bossbane', tier: 2, name: 'Lovec obrů', icon: 'bossbane', desc: '+10 % poškození bossům a elitám', max: 5, cost: 450, mod: { bossDmg: 0.10 } },
-  { id: 'execute', tier: 2, name: 'Popravčí', icon: 'execute', desc: 'Běžní nepřátelé pod 5 % zdraví (za úroveň) rovnou zemřou', max: 3, cost: 900, mod: { execute: 0.05 } },
-  { id: 'ocstart', tier: 2, name: 'Rozjetá evoluce', icon: 'overcharge', desc: 'Vyvinutá zbraň začíná o ★ výš', max: 2, cost: 2200, mod: { ocStart: 1 } },
-  // tier 3 = Prázdnotová dílna: konec hry, otevře se po dobytí Sektoru V.
-  { id: 'deepmut', tier: 3, name: 'Hluboká mutace', icon: 'mutation', desc: 'Strop každé mutace +5', max: 2, cost: 4000, mod: { mutMax: 5 } },
-  { id: 'gravwave', tier: 3, name: 'Gravitační vlna', icon: 'magnet', desc: 'Každých 40 s přitáhne všechny krystaly a střepy na mapě', max: 1, cost: 3000, mod: { gravWave: 1 } },
-  { id: 'voidwill', tier: 3, name: 'Vůle prázdnoty', icon: 'clock', desc: 'V nekonečnu sílí nepřátelé o 25 % pomaleji', max: 2, cost: 5000, mod: { voidWill: 0.25 } },
-  { id: 'fan', tier: 3, name: 'Vějíř karet', icon: 'cards', desc: 'Při postupu ještě o kartu víc', max: 1, cost: 9000, mod: { cards: 1 } },
-  // tier 4 = Věčná dílna: vylepšení bez stropu; každá úroveň je o grow× dražší než předchozí.
-  { id: 'e_might', tier: 4, name: 'Věčná síla', icon: 'might', desc: '+5 % poškození', max: Infinity, cost: 6000, grow: 1.25, mod: { might: 0.05 } },
-  { id: 'e_vigor', tier: 4, name: 'Věčná odolnost', icon: 'vitality', desc: '+20 max. zdraví, +0,15 zdraví/s', max: Infinity, cost: 5000, grow: 1.25, mod: { maxHp: 20, regen: 0.15 } },
-  { id: 'e_haste', tier: 4, name: 'Věčný takt', icon: 'haste', desc: '−2 % nabíjení', max: Infinity, cost: 8000, grow: 1.28, mod: { cdMul: -0.02 } },
-  { id: 'e_area', tier: 4, name: 'Věčný dosah', icon: 'area', desc: '+4 % oblast účinku a trvání', max: Infinity, cost: 6000, grow: 1.25, mod: { area: 0.04, dur: 0.04 } },
-  { id: 'e_crit', tier: 4, name: 'Věčná přesnost', icon: 'crit', desc: '+1 % kritický zásah, +6 % kritické poškození', max: Infinity, cost: 7000, grow: 1.25, mod: { crit: 0.01, critDmg: 0.06 } },
-  { id: 'e_growth', tier: 4, name: 'Věčné poznání', icon: 'growth', desc: '+5 % zkušeností, +3 % štěstí', max: Infinity, cost: 5000, grow: 1.25, mod: { growth: 0.05, luck: 0.03 } },
-  { id: 'e_greed', tier: 4, name: 'Věčná žeň', icon: 'greed', desc: '+6 % střepů', max: Infinity, cost: 10000, grow: 1.32, mod: { greed: 0.06 } },
-  // tier 5 = Mistrovská díla: velké cíle za desítky tisíc střepů (nové zbraně, víc míst, vyvinutý start).
-  { id: 'bp_sentry', tier: 5, name: 'Plán: Strážní drony', icon: 'sentry', desc: 'Odemkne novou zbraň Strážní drony (vyvine se s Energetickým štítem)', max: 1, cost: 12000, mod: {} },
-  { id: 'bp_voidray', tier: 5, name: 'Plán: Paprsek prázdnoty', icon: 'voidray', desc: 'Odemkne novou zbraň Paprsek prázdnoty (vyvine se s Kritickým zesilovačem)', max: 1, cost: 20000, mod: {} },
-  { id: 'bp_cluster', tier: 5, name: 'Plán: Kaskáda', icon: 'cluster', desc: 'Odemkne novou zbraň Kaskáda (vyvine se s Gyroskopem)', max: 1, cost: 30000, mod: {} },
-  { id: 'phoenix', tier: 5, name: 'Věčný fénix', icon: 'revival', desc: '+1 oživení za běh', max: 2, cost: 18000, mod: { revives: 1 } },
-  { id: 'ocmax', tier: 5, name: 'Překročení meze', icon: 'overcharge', desc: 'Evoluce se dají přetížit o ★ výš (★5 a ★6)', max: 2, cost: 25000, mod: { ocMax: 1 } },
-  { id: 'echo', tier: 5, name: 'Ozvěna', icon: 'echo', desc: '25 % šance, že postup dá navíc i druhou nejlepší kartu', max: 2, cost: 30000, mod: { echo: 0.25 } },
-  { id: 'bigslots', tier: 5, name: 'Velký arzenál', icon: 'slots', desc: '+1 místo pro zbraň a +1 místo pro doplněk', max: 1, cost: 60000, mod: { wSlots: 1, pSlots: 1 } },
-  { id: 'voidborn', tier: 5, name: 'Zrozen z prázdnoty', icon: 'crown', desc: 'Startovní zbraň začíná rovnou vyvinutá', max: 1, cost: 100000, mod: { startEvo: 1 } },
+// Kovárna je 3D model lodi (forge3d.js): každé vylepšení patří jedné části lodi (part).
+// view = [otočení, náklon] kamery, ze kterého je část nejlépe vidět (otočení −π/2 = zepředu, 0 = zleva, π/2 = zezadu).
+const PARTS = [
+  { id: 'guns', name: 'Děla', icon: 'might', color: '#ff6b6b', view: [-1.1, 0.25], desc: 'Hlavně na přídi: poškození, kritické zásahy a lov elit.' },
+  { id: 'cockpit', name: 'Kokpit', icon: 'cards', color: '#d4a8ff', view: [-0.85, 0.72], desc: 'Navigační počítač: štěstí, přehození, víc karet a mutace.' },
+  { id: 'reactor', name: 'Reaktor', icon: 'haste', color: '#ffd166', view: [0.6, 0.9], desc: 'Srdce lodi: nabíjení, dosah, trvání a evoluce zbraní.' },
+  { id: 'hull', name: 'Trup', icon: 'armor', color: '#a0a6ff', view: [-0.15, 0.2], desc: 'Pancéřování a podpora života: zdraví, pancíř, regenerace, oživení.' },
+  { id: 'wings', name: 'Sběrná křídla', icon: 'magnet', color: '#06d6a0', view: [-0.6, 1.1], desc: 'Magnetické plachty: dosah sběru, zkušenosti, střepy a kořist.' },
+  { id: 'engines', name: 'Motory', icon: 'speed', color: '#4cc9f0', view: [1.0, 0.25], desc: 'Trysky na zádi: rychlost a úskoky.' },
+  { id: 'bay', name: 'Zbrojnice', icon: 'slots', color: '#ffbe0b', view: [-0.8, -0.55], desc: 'Závěsníky a sklad: místa pro zbraně, výzbroj do běhu a plány nových zbraní.' },
 ];
+const P_INDEX = Object.fromEntries(PARTS.map(p => [p.id, p]));
+// tier: 0 = základ, 2 = Mistrovská (otevře dobytí Sektoru II), 3 = Prázdnotová, 4 = Věčná (bez stropu,
+// každá úroveň o grow× dražší), 5 = Mistrovské dílo (3–5 otevře dobytí Sektoru V).
+// tiers / costs: vylepšení, jehož úrovně patří do různých dílen (každá úroveň má svou dílnu a cenu).
+const FORGE = [
+  // Děla
+  { id: 'might', part: 'guns', name: 'Síla', icon: 'might', desc: '+5 % poškození', max: 5, cost: 60, mod: { might: 0.05 } },
+  { id: 'crit', part: 'guns', name: 'Precizita', icon: 'crit', desc: '+2 % kritický zásah', max: 5, cost: 90, mod: { crit: 0.02 } },
+  { id: 'amount', part: 'guns', name: 'Duplikátor', icon: 'amount', desc: '+1 projektil všech zbraní', max: 1, cost: 2400, mod: { amount: 1 } },
+  { id: 'critamp', part: 'guns', tier: 2, name: 'Kritický zesilovač', icon: 'critamp', desc: '+15 % kritické poškození', max: 5, cost: 400, mod: { critDmg: 0.15 } },
+  { id: 'bossbane', part: 'guns', tier: 2, name: 'Lovec obrů', icon: 'bossbane', desc: '+10 % poškození bossům a elitám', max: 5, cost: 450, mod: { bossDmg: 0.10 } },
+  { id: 'execute', part: 'guns', tier: 2, name: 'Popravčí', icon: 'execute', desc: 'Běžní nepřátelé pod 5 % zdraví (za úroveň) rovnou zemřou', max: 3, cost: 900, mod: { execute: 0.05 } },
+  { id: 'e_might', part: 'guns', tier: 4, name: 'Věčná síla', icon: 'might', desc: '+5 % poškození', max: Infinity, cost: 6000, grow: 1.25, mod: { might: 0.05 } },
+  { id: 'e_crit', part: 'guns', tier: 4, name: 'Věčná přesnost', icon: 'crit', desc: '+1 % kritický zásah, +6 % kritické poškození', max: Infinity, cost: 7000, grow: 1.25, mod: { crit: 0.01, critDmg: 0.06 } },
+  // Kokpit
+  { id: 'luck', part: 'cockpit', name: 'Štěstí', icon: 'luck', desc: '+6 % štěstí', max: 5, cost: 80, mod: { luck: 0.06 } },
+  { id: 'reroll', part: 'cockpit', name: 'Přehození', icon: 'reroll', desc: '+1 přehození za běh', max: 5, cost: 70, mod: { rerolls: 1 } },
+  { id: 'skip', part: 'cockpit', name: 'Přeskočení', icon: 'skip', desc: '+1 přeskočení za běh', max: 3, cost: 60, mod: { skips: 1 } },
+  { id: 'cards', part: 'cockpit', tiers: [2, 3], costs: [4500, 9000], name: 'Široký výběr', icon: 'cards', desc: 'Při postupu vždy o kartu víc', max: 2, mod: { cards: 1 } },
+  { id: 'deepmut', part: 'cockpit', tier: 3, name: 'Hluboká mutace', icon: 'mutation', desc: 'Strop každé mutace +5', max: 2, cost: 4000, mod: { mutMax: 5 } },
+  { id: 'voidwill', part: 'cockpit', tier: 3, name: 'Vůle prázdnoty', icon: 'clock', desc: 'V nekonečnu sílí nepřátelé o 25 % pomaleji', max: 2, cost: 5000, mod: { voidWill: 0.25 } },
+  { id: 'echo', part: 'cockpit', tier: 5, name: 'Ozvěna', icon: 'echo', desc: '25 % šance, že postup dá navíc i druhou nejlepší kartu', max: 2, cost: 30000, mod: { echo: 0.25 } },
+  // Reaktor
+  { id: 'haste', part: 'reactor', name: 'Přetaktování', icon: 'haste', desc: '−3 % nabíjení', max: 4, cost: 110, mod: { cdMul: -0.03 } },
+  { id: 'area', part: 'reactor', name: 'Dosah', icon: 'area', desc: '+5 % oblast účinku', max: 4, cost: 90, mod: { area: 0.05 } },
+  { id: 'duration', part: 'reactor', name: 'Stabilizace', icon: 'duration', desc: '+5 % trvání a rychlost střel', max: 4, cost: 80, mod: { dur: 0.05, projSpd: 0.05 } },
+  { id: 'evomaster', part: 'reactor', tier: 2, name: 'Mistr evoluce', icon: 'star', desc: 'Zbraně se vyvinou už na úrovni 7', max: 1, cost: 3500, mod: { evoLvl: 1 } },
+  { id: 'ocstart', part: 'reactor', tier: 2, name: 'Rozjetá evoluce', icon: 'overcharge', desc: 'Vyvinutá zbraň začíná o ★ výš', max: 2, cost: 2200, mod: { ocStart: 1 } },
+  { id: 'ocmax', part: 'reactor', tier: 5, name: 'Překročení meze', icon: 'overcharge', desc: 'Evoluce se dají přetížit o ★ výš (★5 a ★6)', max: 2, cost: 25000, mod: { ocMax: 1 } },
+  { id: 'e_haste', part: 'reactor', tier: 4, name: 'Věčný takt', icon: 'haste', desc: '−2 % nabíjení', max: Infinity, cost: 8000, grow: 1.28, mod: { cdMul: -0.02 } },
+  { id: 'e_area', part: 'reactor', tier: 4, name: 'Věčný dosah', icon: 'area', desc: '+4 % oblast účinku a trvání', max: Infinity, cost: 6000, grow: 1.25, mod: { area: 0.04, dur: 0.04 } },
+  // Trup
+  { id: 'vitality', part: 'hull', name: 'Vitalita', icon: 'vitality', desc: '+10 max. zdraví', max: 5, cost: 45, mod: { maxHp: 10 } },
+  { id: 'armor', part: 'hull', name: 'Pancíř', icon: 'armor', desc: '+1 pancíř (−7 % zranění)', max: 3, cost: 120, mod: { armor: 1 } },
+  { id: 'recovery', part: 'hull', name: 'Regenerace', icon: 'regen', desc: '+0,1 zdraví/s', max: 5, cost: 70, mod: { regen: 0.1 } },
+  { id: 'medkit', part: 'hull', name: 'Lékárnička', icon: 'heal', desc: 'Srdce léčí o 10 víc', max: 3, cost: 50, mod: { heartHeal: 10 } },
+  // Fénix: dvě úrovně v základu, další dvě (dřív Věčný fénix) jsou Mistrovská díla.
+  { id: 'revival', part: 'hull', tiers: [0, 0, 5, 5], costs: [750, 2275, 18000, 54575], name: 'Fénix', icon: 'revival', desc: '+1 oživení za běh', max: 4, mod: { revives: 1 } },
+  { id: 'secondwind', part: 'hull', tier: 2, name: 'Druhý dech', icon: 'wind', desc: 'Oživení obnoví celé zdraví a dá 5 s nezranitelnosti', max: 1, cost: 2500, mod: { reviveFull: 1 } },
+  { id: 'e_vigor', part: 'hull', tier: 4, name: 'Věčná odolnost', icon: 'vitality', desc: '+20 max. zdraví, +0,15 zdraví/s', max: Infinity, cost: 5000, grow: 1.25, mod: { maxHp: 20, regen: 0.15 } },
+  // Sběrná křídla
+  { id: 'magnet', part: 'wings', name: 'Magnet', icon: 'magnet', desc: '+15 % dosah sběru', max: 4, cost: 45, mod: { magnet: 0.15 } },
+  { id: 'growth', part: 'wings', name: 'Růst', icon: 'growth', desc: '+4 % zkušenosti', max: 5, cost: 90, mod: { growth: 0.04 } },
+  { id: 'greed', part: 'wings', name: 'Chamtivost', icon: 'greed', desc: '+10 % střepů', max: 5, cost: 100, mod: { greed: 0.10 } },
+  { id: 'bounty', part: 'wings', name: 'Lovec elit', icon: 'chest', desc: '+25 % střepů z elit, bossů a truhel', max: 4, cost: 65, mod: { bounty: 0.25 } },
+  { id: 'loot', part: 'wings', tier: 2, name: 'Bohatá kořist', icon: 'chest', desc: '+1 předmět v každé truhle', max: 2, cost: 1500, mod: { chestItems: 1 } },
+  { id: 'gravwave', part: 'wings', tier: 3, name: 'Gravitační vlna', icon: 'magnet', desc: 'Každých 40 s přitáhne všechny krystaly a střepy na mapě', max: 1, cost: 3000, mod: { gravWave: 1 } },
+  { id: 'e_growth', part: 'wings', tier: 4, name: 'Věčné poznání', icon: 'growth', desc: '+5 % zkušeností, +3 % štěstí', max: Infinity, cost: 5000, grow: 1.25, mod: { growth: 0.05, luck: 0.03 } },
+  { id: 'e_greed', part: 'wings', tier: 4, name: 'Věčná žeň', icon: 'greed', desc: '+6 % střepů', max: Infinity, cost: 10000, grow: 1.32, mod: { greed: 0.06 } },
+  // Motory
+  { id: 'speed', part: 'engines', name: 'Trysky', icon: 'speed', desc: '+5 % rychlost', max: 4, cost: 55, mod: { speed: 0.05 } },
+  { id: 'dashcd', part: 'engines', name: 'Rychlé dobíjení', icon: 'dashcd', desc: '−12 % doba dobití úskoku', max: 3, cost: 70, mod: { dashCd: 0.12 } },
+  { id: 'dash', part: 'engines', name: 'Impuls', icon: 'dash', desc: '+1 náboj úskoku', max: 2, cost: 380, mod: { dashMax: 1 } },
+  { id: 'dashblast', part: 'engines', tier: 2, name: 'Rázový úskok', icon: 'dashblast', desc: 'Úskok zraní nepřátele v cestě za 15 % jejich zdraví (bossy za 1,5 %)', max: 3, cost: 700, mod: { dashDmg: 1 } },
+  { id: 'e_thrust', part: 'engines', tier: 4, name: 'Věčný tah', icon: 'speed', desc: '+3 % rychlost, −3 % doba dobití úskoku', max: Infinity, cost: 4000, grow: 1.25, mod: { speed: 0.03, dashCd: 0.03 } },
+  // Zbrojnice
+  { id: 'kit', part: 'bay', name: 'Výbava', icon: 'cards', desc: 'Každý běh začíná s náhodným doplňkem', max: 1, cost: 450, mod: { kit: 1 } },
+  { id: 'headstart', part: 'bay', tier: 2, name: 'Náskok', icon: 'headstart', desc: 'Startovní zbraň začíná o úroveň výš', max: 3, cost: 900, mod: { startLvl: 1 } },
+  // Výzbroj: kterými zbraněmi běh začne a které se v něm vůbec neobjeví (nastavuje se v Hangáru).
+  { id: 'bans', part: 'bay', tier: 2, costs: [800, 1600, 3000, 5000, 8000, 12000], name: 'Zbrojní plán', icon: 'ban', desc: 'Vyřaď 1 zbraň (za úroveň): v běhu se vůbec neobjeví a ostatní přijdou častěji', max: 6, mod: { bans: 1 } },
+  { id: 'hard', part: 'bay', tiers: [2, 3], costs: [5000, 25000], name: 'Závěsník', icon: 'hardpoint', desc: 'Běh začne s jednou zbraní navíc podle tvé volby (za úroveň)', max: 2, mod: { hard: 1 } },
+  { id: 'prelvl', part: 'bay', tier: 3, costs: [8000, 20000], name: 'Kalibrace', icon: 'calib', desc: 'Zbraně ze závěsníků začínají o úroveň výš', max: 2, mod: { preLvl: 1 } },
+  { id: 'wslot', part: 'bay', tier: 2, name: 'Arzenál', icon: 'slots', desc: '+1 místo pro zbraň (7 místo 6)', max: 1, cost: 6000, mod: { wSlots: 1 } },
+  { id: 'pslot', part: 'bay', tier: 2, name: 'Doplňkový slot', icon: 'slots', desc: '+1 místo pro doplněk (7 místo 6)', max: 1, cost: 5000, mod: { pSlots: 1 } },
+  { id: 'bigslots', part: 'bay', tier: 5, name: 'Velký arzenál', icon: 'slots', desc: '+1 místo pro zbraň a +1 místo pro doplněk', max: 1, cost: 60000, mod: { wSlots: 1, pSlots: 1 } },
+  { id: 'bp_sentry', part: 'bay', tier: 5, name: 'Plán: Strážní drony', icon: 'sentry', desc: 'Odemkne novou zbraň Strážní drony (vyvine se s Energetickým štítem)', max: 1, cost: 12000, mod: {} },
+  { id: 'bp_voidray', part: 'bay', tier: 5, name: 'Plán: Paprsek prázdnoty', icon: 'voidray', desc: 'Odemkne novou zbraň Paprsek prázdnoty (vyvine se s Kritickým zesilovačem)', max: 1, cost: 20000, mod: {} },
+  { id: 'bp_cluster', part: 'bay', tier: 5, name: 'Plán: Kaskáda', icon: 'cluster', desc: 'Odemkne novou zbraň Kaskáda (vyvine se s Gyroskopem)', max: 1, cost: 30000, mod: {} },
+  { id: 'voidborn', part: 'bay', tier: 5, name: 'Zrozen z prázdnoty', icon: 'crown', desc: 'Startovní zbraň začíná rovnou vyvinutá', max: 1, cost: 100000, mod: { startEvo: 1 } },
+];
+const F_INDEX = Object.fromEntries(FORGE.map(f => [f.id, f]));
 // ── Automatický výběr karet ─────────────────────────────────────────────────
 // Při zapnutém automatickém výběru vyhraje karta, která je v pořadí nejvýš. Karta může patřit pod víc
 // položek (startovní zbraň je i svou zbraní, katalyzátor evoluce i svým doplňkem): platí ta vyšší.
@@ -508,12 +534,37 @@ function prioList(saved) {
   PRIO_DEFAULT.forEach((k, i) => { if (!out.includes(k)) out.splice(Math.min(out.length, i), 0, k); });
   return out;
 }
-const forgeCost = (f, lvl) => (f.grow ? Math.round(f.cost * Math.pow(f.grow, lvl) / 50) * 50 : Math.round(f.cost * Math.pow(lvl + 1, 1.6) / 5) * 5);
+const forgeCost = (f, lvl) => (f.costs ? f.costs[Math.min(lvl, f.costs.length - 1)] : f.grow ? Math.round(f.cost * Math.pow(f.grow, lvl) / 50) * 50 : Math.round(f.cost * Math.pow(lvl + 1, 1.6) / 5) * 5);
 const masterOpen = () => !!(SAVE.sectors.s2 && SAVE.sectors.s2.cleared);
 const voidOpen = () => !!(SAVE.sectors.s5 && SAVE.sectors.s5.cleared);
-const forgeOpen = f => (f.tier === 2 ? masterOpen() : f.tier >= 3 ? voidOpen() : true);
-const forgeLevels = (S, tier) => FORGE.filter(f => f.tier === tier).reduce((a, f) => a + Math.min(f.max, S.forge[f.id] || 0), 0);
-const forgeMaxLevels = tier => FORGE.filter(f => f.tier === tier).reduce((a, f) => a + f.max, 0);
+/** Do které dílny patří úroveň lvl (počítáno od 0) vylepšení f. */
+const lvlTier = (f, lvl) => (f.tiers ? f.tiers[Math.min(lvl, f.tiers.length - 1)] : f.tier || 0);
+const tierOpen = t => (t === 2 ? masterOpen() : t >= 3 ? voidOpen() : true);
+/** Dá se koupit další úroveň (její dílna je otevřená)? */
+const forgeOpen = (f, lvl = SAVE.forge[f.id] || 0) => tierOpen(lvlTier(f, lvl));
+const forgeLvl = (S, f) => Math.min(f.max, S.forge[f.id] || 0);
+/** Kolik koupených úrovní patří do dílny tier (a kolik jich tam celkem je; Věčná dílna nemá strop). */
+const forgeLevels = (S, tier) => FORGE.reduce((a, f) => { let n = 0; for (let l = 0; l < forgeLvl(S, f); l++) if (lvlTier(f, l) === tier) n++; return a + n; }, 0);
+const forgeMaxLevels = tier => FORGE.filter(f => f.max !== Infinity).reduce((a, f) => { let n = 0; for (let l = 0; l < f.max; l++) if (lvlTier(f, l) === tier) n++; return a + n; }, 0);
+const forgeSum = S => FORGE.reduce((a, f) => a + forgeLvl(S, f), 0);
+/** Úrovně koupené v části lodi a kolik jich má (bez Věčné dílny) – z toho svítí část na modelu. */
+function partProgress(S, part) {
+  let n = 0, m = 0;
+  for (const f of FORGE) if (f.part === part && f.max !== Infinity) { n += forgeLvl(S, f); m += f.max; }
+  return m ? n / m : 0;
+}
+/** Úrovně z Věčné dílny v části lodi (motor jen přidává, nemá strop). */
+const partEternal = (S, part) => FORGE.filter(f => f.part === part && f.max === Infinity).reduce((a, f) => a + (S.forge[f.id] || 0), 0);
+/** Dá se v části lodi teď něco koupit? */
+const partCanBuy = (S, part) => FORGE.some(f => f.part === part && (S.forge[f.id] || 0) < f.max && forgeOpen(f) && S.shards >= forgeCost(f, S.forge[f.id] || 0));
+const canBuyAny = S => FORGE.some(f => (S.forge[f.id] || 0) < f.max && forgeOpen(f) && S.shards >= forgeCost(f, S.forge[f.id] || 0));
+/** Starší uložení: sloučená vylepšení (Vějíř karet → Široký výběr, Věčný fénix → Fénix) a odstraněná. */
+function migrateForge(S) {
+  const F = S.forge || (S.forge = {});
+  if (F.fan) { F.cards = Math.min(2, (F.cards || 0) + F.fan); delete F.fan; }
+  if (F.phoenix) { F.revival = Math.min(4, (F.revival || 0) + F.phoenix); delete F.phoenix; }
+  for (const id of Object.keys(F)) if (!F_INDEX[id] || !(F[id] > 0)) delete F[id];
+}
 
 // ── Úspěchy ─────────────────────────────────────────────────────────────────
 // check(S, R): S = uložená data, R = aktuální běh (nebo null)
@@ -540,16 +591,16 @@ const ACHIEVEMENTS = [
   { id: 'oc4', name: 'Přetížení', desc: 'Přetiž evoluční zbraň na ★4.', reward: 300, icon: 'overcharge', prog: S => [S.stats.maxOc || 0, OC_MAX] },
   { id: 't30', name: 'Nesmrtelný', desc: 'Přežij 30 minut v jednom běhu (nekonečný režim).', reward: 1000, icon: 'clock', prog: S => [S.stats.bestTime, 1800] },
   { id: 'lvl100', name: 'Mutant', desc: 'Dosáhni úrovně 100 v jednom běhu.', reward: 600, icon: 'mutation', prog: S => [S.stats.maxLevel, 100] },
-  { id: 'masterAll', name: 'Velmistr', desc: 'Kup celou Mistrovskou dílnu.', reward: 2500, icon: 'forge', prog: S => [FORGE.filter(f => f.tier === 2).reduce((a, f) => a + Math.min(f.max, S.forge[f.id] || 0), 0), FORGE.filter(f => f.tier === 2).reduce((a, f) => a + f.max, 0)] },
-  { id: 'master', name: 'Mistrovská dílna', desc: 'Kup první vylepšení v Mistrovské dílně.', reward: 150, icon: 'forge', prog: S => [FORGE.filter(f => f.tier === 2).reduce((a, f) => a + (S.forge[f.id] || 0), 0), 1] },
+  { id: 'masterAll', name: 'Velmistr', desc: 'Kup celou Mistrovskou dílnu.', reward: 2500, icon: 'forge', prog: S => [forgeLevels(S, 2), forgeMaxLevels(2)] },
+  { id: 'master', name: 'Mistrovská dílna', desc: 'Kup první vylepšení v Mistrovské dílně.', reward: 150, icon: 'forge', prog: S => [forgeLevels(S, 2), 1] },
   { id: 'lvl30', name: 'Nabitý', desc: 'Dosáhni úrovně 30 v jednom běhu.', reward: 60, icon: 'growth', prog: S => [S.stats.maxLevel, 30] },
   { id: 'lvl60', name: 'Přetížený', desc: 'Dosáhni úrovně 60 v jednom běhu.', reward: 250, icon: 'growth', prog: S => [S.stats.maxLevel, 60] },
   { id: 'od1', name: 'Overdrive', desc: 'Dokonči libovolný sektor na Overdrive 1.', reward: 120, icon: 'haste', prog: S => [S.stats.maxOdClear, 1] },
   { id: 'od5', name: 'Rudá zóna', desc: 'Dokonči libovolný sektor na Overdrive 5.', reward: 450, icon: 'haste', prog: S => [S.stats.maxOdClear, 5] },
   { id: 'od10', name: 'Za hranicí', desc: 'Dokonči libovolný sektor na Overdrive 10.', reward: 1500, icon: 'haste', prog: S => [S.stats.maxOdClear, 10] },
   { id: 'rich', name: 'Sběratel', desc: 'Nasbírej celkem 5 000 střepů.', reward: 250, icon: 'shard', prog: S => [S.stats.shardsTotal, 5000] },
-  { id: 'forge1', name: 'Kovář', desc: 'Kup první vylepšení v Kovárně.', reward: 25, icon: 'forge', prog: S => [Object.values(S.forge).reduce((a, b) => a + b, 0), 1] },
-  { id: 'forgeAll', name: 'Mistr kovář', desc: 'Kup 50 úrovní vylepšení v Kovárně.', reward: 600, icon: 'forge', prog: S => [Object.values(S.forge).reduce((a, b) => a + b, 0), 50] },
+  { id: 'forge1', name: 'Kovář', desc: 'Kup první vylepšení v Kovárně.', reward: 25, icon: 'forge', prog: S => [forgeSum(S), 1] },
+  { id: 'forgeAll', name: 'Mistr kovář', desc: 'Kup 50 úrovní vylepšení v Kovárně.', reward: 600, icon: 'forge', prog: S => [forgeSum(S), 50] },
   { id: 'arsenal', name: 'Arzenál', desc: 'Měj v jednom běhu 6 zbraní najednou.', reward: 100, icon: 'pulse', prog: (S, R) => [R ? Math.max(S.stats.maxWeapons, R.weapons.length) : S.stats.maxWeapons, 6] },
   { id: 'untouch', name: 'Nedotknutelný', desc: 'Vydrž 3 minuty v kuse bez zásahu.', reward: 150, icon: 'armor', prog: S => [S.stats.bestNoHit, 180] },
   { id: 'massacre', name: 'Masakr', desc: 'Znič 250 nepřátel během 10 sekund.', reward: 200, icon: 'bomb', prog: S => [S.stats.bestBurst, 250] },
@@ -563,7 +614,7 @@ const ACHIEVEMENTS = [
   { id: 'clear9', name: 'Světlo v temnotě', desc: 'Dokonči Sektor IX.', reward: 1200, icon: 'eye', prog: S => [+!!(S.sectors.s9 && S.sectors.s9.cleared), 1] },
   { id: 'sectorsAll', name: 'Pán všech sektorů', desc: 'Dokonči všech 12 sektorů.', reward: 2500, icon: 'trophy', prog: S => [SECTORS.filter(s => S.sectors[s.id] && S.sectors[s.id].cleared).length, SECTORS.length] },
   { id: 'meteorKills', name: 'Kamenná lavina', desc: 'Nech meteority a černou díru zničit 300 nepřátel.', reward: 250, icon: 'meteor', prog: S => [S.stats.hazardKills || 0, 300] },
-  { id: 'voidAll', name: 'Kovář prázdnoty', desc: 'Kup celou Prázdnotovou dílnu.', reward: 4000, icon: 'forge', prog: S => [FORGE.filter(f => f.tier === 3).reduce((a, f) => a + Math.min(f.max, S.forge[f.id] || 0), 0), FORGE.filter(f => f.tier === 3).reduce((a, f) => a + f.max, 0)] },
+  { id: 'voidAll', name: 'Kovář prázdnoty', desc: 'Kup celou Prázdnotovou dílnu.', reward: 4000, icon: 'forge', prog: S => [forgeLevels(S, 3), forgeMaxLevels(3)] },
   { id: 'pilots', name: 'Celá letka', desc: 'Odemkni všechny piloty.', reward: 500, icon: 'rocket', prog: S => [PILOTS.filter(p => !p.unlock || S.achievements[p.unlock]).length, PILOTS.length] },
   { id: 'clear10', name: 'Přehlídka skončila', desc: 'Dokonči Sektor X.', reward: 2000, icon: 'boss', prog: S => [+!!(S.sectors.s10 && S.sectors.s10.cleared), 1] },
   { id: 'clear11', name: 'Uprostřed kolapsu', desc: 'Dokonči Sektor XI.', reward: 3000, icon: 'zone', prog: S => [+!!(S.sectors.s11 && S.sectors.s11.cleared), 1] },
