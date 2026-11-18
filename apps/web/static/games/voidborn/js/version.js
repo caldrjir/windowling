@@ -19,4 +19,6 @@
 // 1.4.1  Priority automatického výběru přehledněji: ve sloupcích, se štítky kategorií, přetahování myší i prstem
 // 1.4.2  Kovárna: otáčení zase jako předmět v ruce (bližší bok jde s prstem), správné překrývání dílů z každého
 //        úhlu (BSP strom), díly lícují (gondoly pod křídly, kabina na přídi, lišty na trupu); sekce Debug v Nastavení
-const GAME_VERSION = '1.4.2';
+// 1.4.3  Úspěchy rozdělené podle vzácnosti s procentem hráčů, kteří je mají (/api/rarity); kryty děl na přídi
+//        plynule přecházejí v hlavně; záznam výkonu přesunut do sekce Debug
+const GAME_VERSION = '1.4.3';

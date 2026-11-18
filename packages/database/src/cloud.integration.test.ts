@@ -1,7 +1,14 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { getTestDatabaseUrl } from '../test/test-database.ts';
 import { createDatabase } from './client.ts';
-import { getNickname, listSaves, MAX_SAVE_VALUE, putSaves, setNickname } from './cloud.ts';
+import {
+	getNickname,
+	keyCounts,
+	listSaves,
+	MAX_SAVE_VALUE,
+	putSaves,
+	setNickname,
+} from './cloud.ts';
 import { gameSave, playerProfile, user } from './schema/index.ts';
 
 const url = getTestDatabaseUrl();
@@ -29,6 +36,26 @@ describe.skipIf(!url)('cloud saves and nicknames', () => {
 		await db().delete(playerProfile);
 		await db().delete(user);
 		await conn?.close();
+	});
+
+	it('counts how many players have each property of a saved object', async () => {
+		await db().insert(user).values({ id: 'u3', name: 'Cid', email: 'cid@example.com' });
+		await putSaves(db(), 'u1', [
+			{ key: 'voidborn.save.v1', data: '{"achievements":{"k100":1,"clear1":2}}', t: 1 },
+		]);
+		await putSaves(db(), 'u2', [
+			{ key: 'voidborn.save.v1', data: '{"achievements":{"k100":1}}', t: 1 },
+		]);
+		// a save that is not valid JSON is skipped
+		await putSaves(db(), 'u3', [{ key: 'voidborn.save.v1', data: '{"achievements":', t: 1 }]);
+		expect(await keyCounts(db(), 'voidborn.save.v1', 'achievements')).toEqual({
+			total: 2,
+			counts: { k100: 2, clear1: 1 },
+		});
+		expect(await keyCounts(db(), 'nobody.save.v1', 'achievements')).toEqual({
+			total: 0,
+			counts: {},
+		});
 	});
 
 	it('keeps the newest write per key and per player', async () => {

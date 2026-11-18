@@ -662,7 +662,8 @@ test('VOIDBORN performance log is off by default and downloads after a run', asy
 	test.skip(isMobile, 'one run is enough for the game logic');
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/games/voidborn/index.html');
+	// The log lives in the Debug section of Settings (?debug=1 keeps it on after a release).
+	await page.goto('/games/voidborn/index.html?debug=1');
 	await page.mouse.click(100, 100);
 	// Off by default: a run records nothing and the end screen offers no log.
 	// The game's state is top-level `const`/functions of the page (not on window).
@@ -740,6 +741,10 @@ test('VOIDBORN 1.4: new kinds of enemies, the bestiary and achievements that pay
 	await page.locator('[data-go="ach"]').click();
 	await expect(page.locator('.ach-fame')).toContainText('+3 % střepů');
 	await expect(page.locator('.ach-fame')).toContainText('+5 zdraví');
+	// Grouped by rarity (by difficulty while few signed-in players have the game).
+	await expect(page.locator('.ach-tier')).toHaveCount(5);
+	await expect(page.locator('.ach-tier[data-tier="common"] [data-ach="k100"]')).toBeVisible();
+	await expect(page.locator('.ach-tier[data-tier="legend"] [data-ach="sectorsAll"]')).toBeVisible();
 	await page.locator('.screen.active .back').click();
 	const res = (await page.evaluate(`(() => {
 		UI.hideOverlay(); Game.start('vex', 0, 0);
@@ -798,7 +803,7 @@ test('VOIDBORN shows its version and the rendering quality can be lowered', asyn
 	await page.locator('[data-act="quality"]').click();
 	expect(await page.evaluate(`[SAVE.settings.quality, Render.scale]`)).toEqual(['low', 0.7]);
 	// Settings are grouped; picking a row shows what it looks like on and off.
-	await expect(page.locator('.setg')).toHaveCount((await page.evaluate<boolean>('DEBUG')) ? 7 : 6);
+	await expect(page.locator('.setg')).toHaveCount((await page.evaluate<boolean>('DEBUG')) ? 6 : 5);
 	await page.locator('[data-pv="dmgNums"] label').click();
 	await expect(page.locator('#setPv')).toContainText('Čísla poškození');
 	await expect(page.locator('#setPv canvas')).toHaveCount(2);
@@ -865,6 +870,15 @@ test('the service worker only cleans up caches', async ({ request }) => {
 	const sw = await request.get('/service-worker.js');
 	expect(sw.ok()).toBe(true);
 	expect(await sw.text()).toContain('unregister');
+});
+
+test('achievement rarity counts come from the cloud saves', async ({ request }) => {
+	const res = await request.get('/api/rarity?game=voidborn');
+	expect(res.ok()).toBe(true);
+	const body = (await res.json()) as { total: number; counts: Record<string, number> };
+	expect(typeof body.total).toBe('number');
+	expect(typeof body.counts).toBe('object');
+	expect((await request.get('/api/rarity?game=nope')).status()).toBe(400);
 });
 
 test('health endpoint reports the database', async ({ request }) => {

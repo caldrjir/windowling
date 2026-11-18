@@ -69,7 +69,7 @@ const PerfLog = (() => {
   /** Začátek běhu: jen když je záznam zapnutý v nastavení. */
   function begin() {
     if (log) end('restart');
-    if (!SAVE.settings.perfLog) return;
+    if (!SAVE.settings.perfLog || !DEBUG) return; // záznam výkonu je v sekci Debug
     const now = performance.now(), cv = document.getElementById('cv');
     const settings = Object.assign({}, SAVE.settings); delete settings.prio;
     log = {

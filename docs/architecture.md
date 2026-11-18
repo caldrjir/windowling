@@ -334,6 +334,10 @@ Signed-in players keep their progress in their account; anonymous play is unchan
   asking player's place and the count. `GET /api/scores?game&player=<nickname>` returns all
   boards of one player in a game (Vesnička compares two players with it). Shown in every puzzle (Žebříčky, and from the result of a
   daily or level) and in the center for the selected game (record board or play time).
+- `GET /api/rarity?game=voidborn` is public and cached for 5 minutes: how many signed-in players
+  have each achievement, counted in SQL from their cloud saves (`keyCounts`: the properties of
+  `achievements` in `voidborn.save.v1`; saves that are not valid JSON are skipped). VOIDBORN groups
+  its achievements by rarity from it (by difficulty while fewer than 10 players have the game).
 
 ## Future: multiplayer
 
