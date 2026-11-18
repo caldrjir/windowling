@@ -710,6 +710,9 @@ test('VOIDBORN shows its version and the rendering quality can be lowered', asyn
 	expect(version).toMatch(/^\d+\.\d+\.\d+$/);
 	await page.locator('[data-go="settings"]').click();
 	await expect(page.locator('.screen.active')).toContainText(`v${version}`);
+	// The preview stays empty until the pointer is on a setting you can see in the game.
+	await page.mouse.move(5, 5);
+	await expect(page.locator('#setPv canvas')).toHaveCount(0);
 	// Auto -> Full -> Saver: the canvas is drawn at 70 % of the resolution.
 	await page.locator('[data-act="quality"]').click();
 	await page.locator('[data-act="quality"]').click();
@@ -719,6 +722,9 @@ test('VOIDBORN shows its version and the rendering quality can be lowered', asyn
 	await page.locator('[data-pv="dmgNums"] label').click();
 	await expect(page.locator('#setPv')).toContainText('Čísla poškození');
 	await expect(page.locator('#setPv canvas')).toHaveCount(2);
+	// Sound has nothing to show: the preview goes away.
+	await page.locator('.row:has([data-vol="sfx"]) label').click();
+	await expect(page.locator('#setPv canvas')).toHaveCount(0);
 	await page.locator('.screen.active .back').click();
 	await page.locator('[data-go="hangar"]').click();
 	await page.locator('#startBtn').click();

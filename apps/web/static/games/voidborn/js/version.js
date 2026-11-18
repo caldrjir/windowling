@@ -11,4 +11,6 @@
 // 1.3.0  Kovárna: statistiky lodi pod modelem (základ + kolik přidává Kovárna), pevná hlavička panelu
 //        s rolujícím seznamem, tažení otáčí lodí po směru prstu; Nastavení po skupinách přes celou
 //        plochu s živou ukázkou zapnuto / vypnuto
-const GAME_VERSION = '1.3.0';
+// 1.3.1  Nastavení: ukázka vpravo se vždy vejde na obrazovku (posouvá se jen seznam), ukazuje se až po
+//        najetí myší a jen u nastavení, která jdou ve hře vidět (ne u zvuku, jazyka, záznamu a dat)
+const GAME_VERSION = '1.3.1';
