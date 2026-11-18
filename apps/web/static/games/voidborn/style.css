@@ -384,6 +384,9 @@ body.dragging, body.dragging * { cursor: grabbing !important; }
 .setg.keys-g .keys { margin: 0; }
 .setg.danger { border-color: rgba(255,77,94,.28); }
 .setg.danger h4 { color: #ff9aa4; }
+.setg.debug { border-color: rgba(255,170,0,.35); background: repeating-linear-gradient(135deg, rgba(255,170,0,.05) 0 12px, transparent 12px 24px), rgba(14,8,34,.45); }
+.setg.debug h4 { color: #ffb347; }
+.dbg-note { margin: -4px 2px 2px; font-size: 12px; color: var(--muted); }
 .set-pv { position: sticky; top: 0; display: flex; flex-direction: column; gap: 14px; padding: 18px; background: var(--panel); border: 1px solid var(--line-2);
   container-type: inline-size; overflow: hidden; clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
 .set-pv.empty { justify-content: center; background: rgba(14,8,34,.3); border: 1px dashed var(--line); }

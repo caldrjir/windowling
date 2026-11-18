@@ -13,7 +13,8 @@ function defaultSave() {
       maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0,
     },
     // autoChest: truhly se otevřou samy, bez okna (obsah se jen krátce ukáže nad lodí)
-    settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, autoChest: false, prio: null, perfLog: false, quality: 'auto' },
+    settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, autoChest: false, prio: null, perfLog: false, quality: 'auto',
+      dbgGod: false, dbgHit: false, dbgSpeed: 1, dbgUnlock: false }, // dbg*: sekce Debug (debug.js)
     // Výzbroj ze Zbrojnice: pre = zbraně na závěsnících (běh s nimi začne), ban = vyřazené zbraně
     loadout: { pre: [], ban: [] },
     lastPilot: 'vex', lastSector: 0, lastOd: 0,
@@ -72,11 +73,11 @@ function resetSave() {
   persist();
 }
 
-const pilotUnlocked = p => !p.unlock || !!SAVE.achievements[p.unlock];
+const pilotUnlocked = p => Debug.unlock || !p.unlock || !!SAVE.achievements[p.unlock];
 const sectorCleared = id => !!(SAVE.sectors[id] && SAVE.sectors[id].cleared);
 // Hlavní sektory jdou po sobě, anomálie (VI–IX) otevře dobytí sektoru req.
 const sectorReq = i => (SECTORS[i].req || (i > 0 ? SECTORS[i - 1].id : null));
-const sectorUnlocked = i => !sectorReq(i) || sectorCleared(sectorReq(i));
+const sectorUnlocked = i => Debug.unlock || !sectorReq(i) || sectorCleared(sectorReq(i));
 /** Sektory, které dobytí sektoru sid nově zpřístupní. */
 const unlockedBy = sid => SECTORS.filter((s, i) => sectorReq(i) === sid);
-const sectorMaxOd = i => { const s = SAVE.sectors[SECTORS[i].id]; return s ? Math.min(MAX_OD, s.odUnlocked || 0) : 0; };
+const sectorMaxOd = i => { if (Debug.unlock) return MAX_OD; const s = SAVE.sectors[SECTORS[i].id]; return s ? Math.min(MAX_OD, s.odUnlocked || 0) : 0; };

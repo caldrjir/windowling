@@ -481,6 +481,13 @@ const UI = (() => {
             <span><kbd>R</kbd> / <kbd>X</kbd></span><span>${L('Přehodit / přeskočit karty', 'Reroll / skip cards')}</span>
             <span>${L('Zbraně', 'Weapons')}</span><span>${L('Střílí automaticky. Ty jen přežij.', 'They fire automatically. You just survive.')}</span>
           </div>`, 'keys-g')}
+            ${DEBUG ? grp('calib', L('Debug', 'Debug'), `
+          <p class="dbg-note">${L('Nástroje pro ladění. Při vydání se sekce schová (DEBUG_MENU v debug.js).', 'Tools for testing. Hidden for a release (DEBUG_MENU in debug.js).')}</p>
+          <div class="row"><label>${L('Nesmrtelnost', 'God mode')}<small>${L('Smrtelný zásah jen doplní zdraví', 'A fatal hit only refills your health')}</small></label><button class="toggle ${s.dbgGod ? 'on' : ''}" data-tog="dbgGod"></button></div>
+          <div class="row"><label>${L('Hitboxy', 'Hitboxes')}<small>${L('Kruhy zásahů nepřátel, jejich střel a lodi', 'Hit circles of enemies, their shots and your ship')}</small></label><button class="toggle ${s.dbgHit ? 'on' : ''}" data-tog="dbgHit"></button></div>
+          <div class="row"><label>${L('Rychlost hry', 'Game speed')}<small>${L('Víc kroků simulace za snímek', 'More simulation steps per frame')}</small></label><button class="btn" data-act="dbgSpeed">${s.dbgSpeed || 1}×</button></div>
+          <div class="row"><label>${L('Odemknout vše', 'Unlock everything')}<small>${L('Všechny sektory, Overdrive a piloti, jen dokud je zapnuto (postup se nemění)', 'All sectors, Overdrive and pilots while it is on (progress is not changed)')}</small></label><button class="toggle ${s.dbgUnlock ? 'on' : ''}" data-tog="dbgUnlock"></button></div>
+          <div class="row"><label>${L('Střepy', 'Shards')}<small>${L('Přidá střepy na nákupy v Kovárně', 'Adds shards for the Forge')}</small></label><button class="btn" data-act="dbgShards">+10 000 ◆</button></div>`, 'debug') : ''}
             ${grp('skull', L('Data', 'Data'), `
           <div class="row"><label>${L('Smazat postup', 'Erase progress')}<small>${L('Nevratně vymaže všechny střepy, úspěchy a odemčení', 'Permanently erases all shards, achievements and unlocks')}</small></label><button class="btn danger" data-act="wipe">${L('Smazat', 'Erase')}</button></div>`, 'danger')}
           </div>
@@ -601,6 +608,9 @@ const UI = (() => {
 
   const globalActs = {
     perflog() { PerfLog.download(); Sound.play.click(); },
+    // Debug (sekce jen při DEBUG)
+    dbgSpeed() { if (!DEBUG) return; const o = [1, 2, 4], v = SAVE.settings.dbgSpeed || 1; SAVE.settings.dbgSpeed = o[(o.indexOf(v) + 1) % o.length]; persist(); Sound.play.click(); rerender(); },
+    dbgShards() { if (!DEBUG) return; SAVE.shards += 10000; persist(); Sound.play.buy(); rerender(); },
     quality() {
       const order = ['auto', 'high', 'low'], q = SAVE.settings.quality || 'auto';
       SAVE.settings.quality = order[(order.indexOf(q) + 1) % order.length];

@@ -629,6 +629,18 @@ const Render = (() => {
       }
     }
 
+    // Debug: kruhy zásahů (nepřátelé červeně, střely žlutě, loď a dosah sběru tyrkysově)
+    if (Debug.hit) {
+      world(); ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255,60,80,0.9)'; ctx.beginPath();
+      for (const e of G.enemies) if (!e.dead && inView(e.x, e.y, e.r)) { ctx.moveTo(e.x + e.r, e.y); ctx.arc(e.x, e.y, e.r, 0, TAU); }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,220,60,0.9)'; ctx.beginPath();
+      for (const b of G.ebullets) if (inView(b.x, b.y, b.r)) { const r = b.r * 0.8; ctx.moveTo(b.x + r, b.y); ctx.arc(b.x, b.y, r, 0, TAU); }
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(85,246,255,0.95)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = 'rgba(85,246,255,0.35)'; ctx.beginPath(); ctx.arc(p.x, p.y, G.st.magnet, 0, TAU); ctx.stroke();
+    }
     pt = PerfLog.lap('d.enemies', pt);
     // zbraně s vlastním vykreslením
     for (const w of G.weapons) { const b = WB[w.id]; if (b && b.draw) { const wt = PerfLog.t(); b.draw(w, ctx); PerfLog.lapW(w.id, 1, wt); } }

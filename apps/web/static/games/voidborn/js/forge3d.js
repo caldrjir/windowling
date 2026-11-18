@@ -1,17 +1,18 @@
 'use strict';
 // ── Kovárna: 3D model lodi ───────────────────────────────────────────────────
-// Nízkopolygonová loď z hranolů a válců promítnutá do 2D canvasu: malířův algoritmus (plochy od
-// nejvzdálenější), odvrácené plochy se nekreslí, ploché stínování podle světla. Každá plocha patří
-// jedné části lodi (PARTS); klepnutí najde nejbližší plochu pod prstem. Táhnutím doprava kamera obletí loď
-// doprava (loď se otočí proti prstu), po puštění rotace plynule dobíhá. Kamera se sama natočí jen po výběru
-// části v seznamu; klepnutí do modelu ani nečinnost s lodí nehnou (po prvním doteku se už sama netočí). Model se staví znovu po nákupu:
+// Nízkopolygonová loď z hranolů a válců promítnutá do 2D canvasu. Pořadí kreslení dává BSP strom
+// (postaví se jednou po stavbě modelu; plochy, které protínají rovinu jiné, se rozříznou), takže se díly
+// správně překrývají z každého úhlu; odvrácené plochy se nekreslí, stínování je ploché. Každá plocha patří
+// jedné části lodi (PARTS); klepnutí najde nejbližší plochu pod prstem. Táhnutím se loď otáčí jako
+// předmět v ruce (bližší bok jde s prstem), po puštění rotace plynule dobíhá. Kamera se sama natočí jen
+// po výběru části v seznamu; klepnutí do modelu ani nečinnost s lodí nehnou. Model se staví znovu po nákupu:
 // víc vylepšení = jasněji svítící část, Duplikátor přidá hlaveň, výzbroj obarví rakety v gondolách.
 const Forge3D = (() => {
   // Osy lodi: x dopředu (příď), y doprava, z nahoru.
   let faces = [];
   const ANCHOR = {
-    guns: [6.2, 0, -0.35], cockpit: [2.1, 0, 1.3], reactor: [-1.5, 0, 1.55], hull: [-0.6, -1.25, 0.25],
-    wings: [-1.9, 3.4, 0.1], engines: [-4.7, 1.55, 0], bay: [-0.3, 2.6, -0.6],
+    guns: [6.2, 0, -0.35], cockpit: [2.1, 0, 1.15], reactor: [-1.5, 0, 1.55], hull: [-0.6, -1.25, 0.25],
+    wings: [-1.9, 3.4, 0.1], engines: [-4.7, 1.55, 0], bay: [-1.7, 2.6, -0.5],
   };
 
   // ── Stavba primitiv ──
@@ -86,12 +87,13 @@ const Forge3D = (() => {
     for (const y of [-0.62, 0.62]) { cyl('guns', [[3.0, 0.13], [6.6, 0.13]], y, -0.38, 6); cyl('guns', [[6.6, 0.19], [6.95, 0.17]], y, -0.38, 6, { emitB: true }); }
     if (S.forge.amount) { cyl('guns', [[4.4, 0.1], [7.3, 0.1]], 0, -0.52, 6); cyl('guns', [[7.3, 0.15], [7.55, 0.13]], 0, -0.52, 6, { emitB: true }); }
     // Kokpit (prosklený hřbet)
-    const canopy = (sc, dz) => [[-0.42 * sc, 0.8], [-0.32 * sc, 0.8 + 0.34 * sc + dz], [0, 0.8 + 0.48 * sc + dz], [0.32 * sc, 0.8 + 0.34 * sc + dz], [0.42 * sc, 0.8]];
-    loft('cockpit', [{ x: 0.9, pts: canopy(0.7, 0) }, { x: 1.7, pts: canopy(1, 0) }, { x: 2.9, pts: canopy(0.62, -0.05) }, { x: 3.6, pts: canopy(0.18, -0.08) }], { glass: true });
+    // kabina sedí na hřbetě: spodek kopíruje výšku trupu a přídě v daném místě (o kousek zapuštěný)
+    const canopy = (sc, base) => [[-0.42 * sc, base], [-0.32 * sc, base + 0.34 * sc], [0, base + 0.48 * sc], [0.32 * sc, base + 0.34 * sc], [0.42 * sc, base]];
+    loft('cockpit', [{ x: 0.9, pts: canopy(0.7, 0.85) }, { x: 1.7, pts: canopy(1, 0.74) }, { x: 2.9, pts: canopy(0.62, 0.58) }, { x: 3.6, pts: canopy(0.18, 0.47) }], { glass: true });
     // Reaktor: šestiboká komora na hřbetě a svítící jádro
-    hex('reactor', -1.55, 0, 0.78, 0.82, 1.32);
+    hex('reactor', -1.55, 0, 0.78, 0.7, 1.32);
     hex('reactor', -1.55, 0, 0.46, 1.32, 1.52, { emit: true });
-    for (const y of [-0.95, 0.95]) prism('reactor', [[-2.6, y - 0.08], [-0.6, y - 0.08], [-0.9, y + 0.08], [-2.4, y + 0.08]], 0.85, 1.05);
+    for (const y of [-0.92, 0.92]) prism('reactor', [[-2.6, y - 0.08], [-0.6, y - 0.08], [-0.9, y + 0.08], [-2.4, y + 0.08]], 0.5, 0.82); // lišty zapuštěné do trupu
     // Sběrná křídla a magnetické cívky na koncích
     for (const sg of [1, -1]) {
       prism('wings', [[0.6, sg * 1.0], [-2.2, sg * 4.6], [-3.25, sg * 4.6], [-3.0, sg * 1.0]], -0.09, 0.11);
@@ -102,10 +104,82 @@ const Forge3D = (() => {
     // Zbrojnice: gondoly pod křídly (špička v barvě zbraně na závěsníku) a pumovnice pod trupem
     [1, -1].forEach((sg, k) => {
       const wid = k < hard ? lo[k] : null, tint = wid && WEAPONS[wid] ? WEAPONS[wid].color : null;
-      prism('bay', [[-0.6, sg * 2.55], [0.2, sg * 2.55], [0.0, sg * 2.65], [-0.5, sg * 2.65]], -0.3, -0.08);
-      cyl('bay', [[-1.7, 0.2], [-1.4, 0.27], [0.6, 0.27], [1.15, 0.12]], sg * 2.6, -0.48, 6, { emitB: !!tint, tint });
+      // závěsník pod křídlem (křídlo je v y = 2,6 mezi x −3,1 a −0,64) a gondola na něm
+      prism('bay', [[-2.3, sg * 2.55], [-1.1, sg * 2.55], [-1.25, sg * 2.65], [-2.2, sg * 2.65]], -0.3, -0.05);
+      cyl('bay', [[-3.0, 0.2], [-2.7, 0.27], [-0.9, 0.27], [-0.35, 0.12]], sg * 2.6, -0.48, 6, { emitB: !!tint, tint });
     });
     prism('bay', [[-1.9, -0.55], [1.0, -0.55], [1.0, 0.55], [-1.9, 0.55]], -1.0, -0.62);
+    bsp = bspBuild(faces.map(f => Object.assign(f, { pl: plane(f.pts), edges: f.pts.map(() => true) })));
+  }
+
+  // ── BSP strom: správné pořadí ploch z každého úhlu ──
+  // Řazení podle průměrné hloubky plochy se u velkých a protínajících se ploch plete (z jednoho úhlu je
+  // křídlo přes gondolu, z jiného naopak). BSP: každý uzel je rovina jedné plochy, ostatní plochy jsou
+  // před ní, za ní, nebo se rozříznou. Průchod od pozorovatele dává přesné pořadí od nejvzdálenější.
+  // Hrany vzniklé řezem nejsou hrany modelu: edges[i] = false, nekreslí se neonově.
+  const EPS = 1e-3;
+  let bsp = null;
+  function plane(pts) {
+    const n = normal(pts), l = Math.hypot(n[0], n[1], n[2]) || 1, c = center(pts);
+    return [n[0] / l, n[1] / l, n[2] / l, (n[0] * c[0] + n[1] * c[1] + n[2] * c[2]) / l];
+  }
+  const side = (P, p) => P[0] * p[0] + P[1] * p[1] + P[2] * p[2] - P[3];
+  // 0 = v rovině, 1 = před, -1 = za, 2 = protíná (pak out = [přední, zadní])
+  function classify(f, P, out) {
+    let pos = 0, neg = 0;
+    const ds = f.pts.map(p => { const d = side(P, p); if (d > EPS) pos++; else if (d < -EPS) neg++; return d; });
+    if (!pos && !neg) return 0;
+    if (!neg) return 1;
+    if (!pos) return -1;
+    const F = [], Fe = [], B = [], Be = [], n = f.pts.length;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, a = f.pts[i], b = f.pts[j], da = ds[i], db = ds[j], e = f.edges[i];
+      const sa = da > EPS ? 1 : da < -EPS ? -1 : 0, sb = db > EPS ? 1 : db < -EPS ? -1 : 0;
+      let I = null;
+      if ((sa > 0 && sb < 0) || (sa < 0 && sb > 0)) { const t = da / (da - db); I = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+      // přední část (d ≥ 0)
+      if (sa >= 0) {
+        if (sb >= 0) { F.push(a); Fe.push(e); } else if (sa > 0) { F.push(a, I); Fe.push(e, false); } else { F.push(a); Fe.push(false); }
+      } else if (sb > 0) { F.push(I); Fe.push(e); }
+      // zadní část (d ≤ 0)
+      if (sa <= 0) {
+        if (sb <= 0) { B.push(a); Be.push(e); } else if (sa < 0) { B.push(a, I); Be.push(e, false); } else { B.push(a); Be.push(false); }
+      } else if (sb < 0) { B.push(I); Be.push(e); }
+    }
+    out[0] = F.length >= 3 ? Object.assign({}, f, { pts: F, edges: Fe, cut: true }) : null;
+    out[1] = B.length >= 3 ? Object.assign({}, f, { pts: B, edges: Be, cut: true }) : null;
+    return 2;
+  }
+  function bspBuild(list) {
+    if (!list.length) return null;
+    // dělicí rovina: z několika kandidátů ta, která rozřízne nejmíň ploch
+    let best = 0, bestScore = Infinity;
+    const step = Math.max(1, Math.floor(list.length / 10)), tmp = [null, null];
+    for (let c = 0; c < list.length; c += step) {
+      const P = list[c].pl; let splits = 0, fr = 0, bk = 0;
+      for (const f of list) { const k = f === list[c] ? 0 : classify(f, P, tmp); if (k === 2) splits++; else if (k === 1) fr++; else if (k === -1) bk++; }
+      const score = splits * 8 + Math.abs(fr - bk);
+      if (score < bestScore) { bestScore = score; best = c; }
+    }
+    const P = list[best].pl, node = { P, polys: [list[best]], front: null, back: null }, F = [], B = [], out = [null, null];
+    for (const f of list) {
+      if (f === list[best]) continue;
+      const k = classify(f, P, out);
+      if (k === 0) node.polys.push(f);
+      else if (k === 1) F.push(f);
+      else if (k === -1) B.push(f);
+      else { if (out[0]) F.push(out[0]); if (out[1]) B.push(out[1]); }
+    }
+    node.front = bspBuild(F); node.back = bspBuild(B);
+    return node;
+  }
+  // od nejvzdálenější: nejdřív strana roviny odvrácená od oka
+  function walk(node, E, out) {
+    if (!node) return;
+    const near = side(node.P, E) >= 0 ? node.front : node.back, far = near === node.front ? node.back : node.front;
+    walk(far, E, out);
+    for (const f of node.polys) out.push(f);
+    walk(near, E, out);
   }
 
   // ── Kamera a vykreslení ──
@@ -143,21 +217,14 @@ const Forge3D = (() => {
     for (const p of PARTS) { prog[p.id] = partProgress(SAVE, p.id); PCOL[p.id] = PCOL[p.id] || rgb(p.color); }
     // podlaha: mřížka pod lodí, ať je vidět natočení
     drawGrid(cy, sy, cp, sp, scale);
-    const list = [];
-    for (const f of faces) {
-      const v = f.pts.map(p => view(p, cy, sy, cp, sp));
-      const a = v[0], b = v[1], c = v[2];
-      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], wx = c[0] - a[0], wy = c[1] - a[1], wz = c[2] - a[2];
-      let nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx;
-      // Newell pro víc než tři body (rovnoměrnější normála)
-      if (v.length > 3) { const nn = normal(v); nx = nn[0]; ny = nn[1]; nz = nn[2]; }
-      // odvrácená plocha: normála nemíří ke kameře (kamera v [0, 0, DIST])
-      if (nx * -a[0] + ny * -a[1] + nz * (DIST - a[2]) <= 0) continue;
-      const l = Math.hypot(nx, ny, nz) || 1;
-      let depth = 0; for (const q of v) depth += q[2];
-      list.push({ f, v, depth: depth / v.length, lit: Math.max(0, (nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) / l) });
+    // oko v souřadnicích modelu (inverze pohledu: kamera je v pohledu v [0, 0, DIST])
+    const E = [-DIST * cp * sy, -DIST * cp * cy, DIST * sp], order = [], list = [];
+    walk(bsp, E, order);
+    for (const f of order) {
+      if (side(f.pl, E) <= 0) continue; // odvrácená plocha
+      const v = f.pts.map(p => view(p, cy, sy, cp, sp)), nv = view(f.pl, cy, sy, cp, sp), dl = nv[0] * LIGHT[0] + nv[1] * LIGHT[1] + nv[2] * LIGHT[2];
+      list.push({ f, v, lit: Math.max(0, dl), fill: Math.max(0, -dl) });
     }
-    list.sort((p, q) => p.depth - q.depth);
     drawn = [];
     const pulse = 0.5 + 0.5 * Math.sin(t * 4);
     for (const it of list) {
@@ -165,7 +232,8 @@ const Forge3D = (() => {
       const sel = f.part === selected, hov = f.part === hovered;
       const pts = it.v.map(q => project(q, scale));
       drawn.push({ part: f.part, pts });
-      const light = 0.32 + 0.78 * it.lit;
+      // hlavní světlo + slabé protisvětlo, ať odvrácené plochy (spodek) nejsou černé
+      const light = 0.42 + 0.7 * it.lit + 0.24 * it.fill;
       let col;
       if (f.emit) { const e = 0.55 + 0.35 * pr + (sel ? 0.15 * pulse : 0); col = pc.map(c => Math.min(255, c * e + 255 * 0.25 * e)); }
       else {
@@ -176,12 +244,21 @@ const Forge3D = (() => {
       ctx.moveTo(pts[0][0], pts[0][1]);
       for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
       ctx.closePath();
-      ctx.fillStyle = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${f.glass ? 0.88 : 1})`;
+      const fill = `rgba(${col[0] | 0},${col[1] | 0},${col[2] | 0},${f.glass ? 0.88 : 1})`;
+      ctx.fillStyle = fill;
       ctx.fill();
       const ea = f.emit ? 0.9 : sel ? 0.75 + 0.25 * pulse : 0.22 + 0.45 * pr + (hov ? 0.25 : 0);
-      ctx.strokeStyle = `rgba(${pc[0]},${pc[1]},${pc[2]},${Math.min(1, ea)})`;
-      ctx.lineWidth = sel ? 1.6 : 1;
-      ctx.stroke();
+      if (!f.cut) {
+        ctx.strokeStyle = `rgba(${pc[0]},${pc[1]},${pc[2]},${Math.min(1, ea)})`;
+        ctx.lineWidth = sel ? 1.6 : 1;
+        ctx.stroke();
+      } else {
+        // rozříznutá plocha: šev po řezu zakrýt barvou plochy, neonově jen skutečné hrany modelu
+        if (!f.glass) { ctx.strokeStyle = fill; ctx.lineWidth = 1.2; ctx.beginPath(); for (let i = 0; i < pts.length; i++) if (!f.edges[i]) { const b = pts[(i + 1) % pts.length]; ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(b[0], b[1]); } ctx.stroke(); }
+        ctx.strokeStyle = `rgba(${pc[0]},${pc[1]},${pc[2]},${Math.min(1, ea)})`;
+        ctx.lineWidth = sel ? 1.6 : 1;
+        ctx.beginPath(); for (let i = 0; i < pts.length; i++) if (f.edges[i]) { const b = pts[(i + 1) % pts.length]; ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(b[0], b[1]); } ctx.stroke();
+      }
     }
     drawGlows(cy, sy, cp, sp, scale, prog);
     drawMarkers(cy, sy, cp, sp, scale);
@@ -267,7 +344,7 @@ const Forge3D = (() => {
       drag.moved += Math.abs(dx) + Math.abs(dy);
       drag.x = e.clientX; drag.y = e.clientY;
       if (drag.moved > 5) {
-        const now = performance.now(), dtm = Math.max(1, now - drag.at) / 1000, dyaw = -dx * turn();
+        const now = performance.now(), dtm = Math.max(1, now - drag.at) / 1000, dyaw = dx * turn(); // bližší bok jde s prstem
         yaw += dyaw; pitch = clamp(pitch + dy * turn() * 0.8, -1.15, 1.25); target = null; idle = 0; cv.classList.add('drag');
         // setrvačnost: vyhlazená rychlost posledních pohybů, po puštění dobíhá
         spin = clamp(spin * 0.6 + (dyaw / dtm) * 0.4, -7, 7);
@@ -292,7 +369,7 @@ const Forge3D = (() => {
   function key(e) {
     if (!cv || !cv.isConnected || UI.current !== 'forge' || (UI.overlayOpen && UI.overlayOpen())) return;
     const k = e.code;
-    if (k === 'ArrowLeft') yaw += 0.18; else if (k === 'ArrowRight') yaw -= 0.18;
+    if (k === 'ArrowLeft') yaw -= 0.18; else if (k === 'ArrowRight') yaw += 0.18;
     else if (k === 'ArrowUp') pitch = clamp(pitch + 0.15, -1.15, 1.25); else if (k === 'ArrowDown') pitch = clamp(pitch - 0.15, -1.15, 1.25);
     else return;
     target = null; idle = 0; spin = 0; touched = true;
@@ -347,7 +424,7 @@ const Forge3D = (() => {
   }
   return {
     mount, unmount, select, frame, rebuild() { if (cv) { build(); draw(); } },
-    get selected() { return selected; }, get view() { return [yaw, pitch]; },
+    look(y, p) { yaw = y; pitch = p; target = null; spin = 0; touched = true; }, get selected() { return selected; }, get stats() { let n = 0; const c = x => { if (x) { n += x.polys.length; c(x.front); c(x.back); } }; c(bsp); return { faces: faces.length, bsp: n }; }, get view() { return [yaw, pitch]; },
     // pro testy: kam na obrazovce (v px canvasu) padá značka části
     screenOf(id) { const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), s = project(view(ANCHOR[id], cy, sy, cp, sp), Math.min(W, H * 1.55) / 17 * zoom); return { x: s[0], y: s[1] }; },
     pickAt: (x, y) => pick(x, y),
