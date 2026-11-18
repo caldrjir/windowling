@@ -68,12 +68,99 @@ const UI = (() => {
       crit: v => L(`+${fmtP(v)} % krit.`, `+${fmtP(v)}% crit`), critDmg: v => L(`+${fmtP(v)} % krit. poškození`, `+${fmtP(v)}% crit damage`),
       growth: v => L(`+${fmtP(v)} % zkušeností`, `+${fmtP(v)}% XP`), luck: v => L(`+${fmtP(v)} % štěstí`, `+${fmtP(v)}% luck`),
       greed: v => L(`+${fmtP(v)} % střepů`, `+${fmtP(v)}% shards`),
+      speed: v => L(`+${fmtP(v)} % rychlost`, `+${fmtP(v)}% speed`), dashCd: v => L(`−${fmtP(v)} % dobití úskoku`, `−${fmtP(v)}% dash recharge`),
     };
     return Object.entries(f.mod).map(([k, v]) => (k === 'cdMul' ? L(`−${fmtP(1 - Math.pow(1 + v, l))} % nabíjení`, `−${fmtP(1 - Math.pow(1 + v, l))}% cooldown`) : T[k] ? T[k](v * l) : '')).filter(Boolean).join(', ');
   }
   const pips = (n, max, cls = '') => `<div class="pips ${cls}">${Array.from({ length: max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>`;
   const topbar = (small, title, extra = '', back = 'menu') => `<div class="topbar"><button class="back" data-go="${back}" title="${L('Zpět', 'Back')} (Esc)">←</button><h2><small>${small}</small>${title}</h2><div class="spacer"></div>${extra}<div class="chip shard">${icon('shard')} ${fmtNum(SAVE.shards)}</div></div>`;
   const langSwitch = () => `<div class="lang">${['cs', 'en'].map(l => `<button class="${l === LANG ? 'on' : ''}" data-lang="${l}">${l.toUpperCase()}</button>`).join('')}</div>`;
+
+  // ── Kovárna: štítky částí a panel vylepšení ──────────────────────────────
+  let forgePart = null;
+  const TIER_NAME = () => ({ 2: L('Mistrovská dílna', 'Master Workshop'), 3: L('Prázdnotová dílna', 'Void Workshop'), 4: L('Věčná dílna', 'Eternal Workshop'), 5: L('Mistrovské dílo', 'Masterpiece') });
+  const TIER_CLS = { 2: 'master', 3: 'master void', 4: 'master eternal', 5: 'master piece' };
+  const MK = ['I', 'II', 'III', 'IV', 'V'];
+  const mkOf = pr => (pr >= 1 ? 'MAX' : 'Mk ' + MK[Math.min(4, Math.floor(pr * 5))]);
+  function partChip(p) {
+    const pr = partProgress(SAVE, p.id), can = partCanBuy(SAVE, p.id);
+    return `<button class="fpart ${p.id === forgePart ? 'sel' : ''} ${can ? 'can' : ''}" data-part="${p.id}" role="tab" aria-selected="${p.id === forgePart}" style="--c:${p.color}">${icon(p.icon)}<span>${p.name}</span><b>${mkOf(pr)}</b>${can ? '<i class="dot"></i>' : ''}</button>`;
+  }
+  function forgeRow(f) {
+    const l = SAVE.forge[f.id] || 0, maxed = l >= f.max, t = lvlTier(f, Math.min(l, f.max - 1)), open = maxed || forgeOpen(f), cost = maxed ? 0 : forgeCost(f, l);
+    const lock = t === 2 ? L('Otevře dobytí Sektoru II', 'Opens once you clear Sector II') : L('Otevře dobytí Sektoru V', 'Opens once you clear Sector V');
+    return `<div class="fcard frow ${maxed ? 'maxed' : ''} ${TIER_CLS[t] || ''} ${open ? '' : 'locked'}" id="fc-${f.id}">
+      <div class="fi">${icon(f.icon)}<div><h4>${f.name}${t ? ` <em class="ftier">${TIER_NAME()[t]}</em>` : ''}</h4><p>${f.desc}</p></div></div>
+      <div class="frow-b">${f.max === Infinity ? `<div class="lvl-inf">${L('Úroveň', 'Level')} <b>${l}</b>${l ? ` · ${L('celkem', 'total')} ${forgeTotal(f, l)}` : ''}</div>` : pips(l, f.max)}
+      <button class="btn buy ${maxed ? 'ghost' : ''}" data-buy="${f.id}" ${!open || maxed || SAVE.shards < cost ? 'disabled' : ''} title="${open ? '' : lock}">${!open ? `${icon('lock')} ${fmtNum(cost)}` : maxed ? L('Maximum', 'Maxed') : `${icon('shard')} ${fmtNum(cost)}`}</button></div>
+      ${open ? '' : `<small class="flock">${icon('lock')} ${lock}</small>`}
+    </div>`;
+  }
+  function partPanel(id) {
+    const p = P_INDEX[id], pr = partProgress(SAVE, id), et = partEternal(SAVE, id);
+    const items = FORGE.filter(f => f.part === id);
+    const fin = items.filter(f => f.max !== Infinity), have = fin.reduce((a, f) => a + Math.min(f.max, SAVE.forge[f.id] || 0), 0), all = fin.reduce((a, f) => a + f.max, 0);
+    return `<div class="fp-head" style="--c:${p.color}">${icon(p.icon)}<div><small>${L('ČÁST LODI', 'SHIP PART')} · ${mkOf(pr)}</small><h3>${p.name}</h3><p>${p.desc}</p></div></div>
+      <div class="fp-bar" style="--c:${p.color}"><i style="width:${pct(pr)}%"></i></div>
+      <div class="fp-meta">${L('Úrovně', 'Levels')} <b>${have} / ${all}</b>${et ? ` · ${L('Věčná dílna', 'Eternal Workshop')} <b>+${et}</b>` : ''}</div>
+      ${id === 'bay' ? loadoutNote() : ''}
+      <div class="fp-list">${items.map(forgeRow).join('')}</div>`;
+  }
+  // Zbrojnice: co je teď ve výzbroji (nastavuje se v Hangáru před startem).
+  function loadoutNote() {
+    const hard = Math.min(2, SAVE.forge.hard || 0), bans = Math.min(6, SAVE.forge.bans || 0);
+    if (!hard && !bans) return `<div class="fp-note">${icon('hardpoint')} ${L('Závěsníky a Zbrojní plán ti dovolí vybrat, se kterými zbraněmi běh začne a které se v něm vůbec neobjeví. Nastavíš je v Hangáru.', 'Hardpoints and the Arms Plan let you choose which weapons a run starts with and which never show up in it. Set them in the Hangar.')}</div>`;
+    const lo = SAVE.loadout, nm = id => WEAPONS[id].name;
+    return `<div class="fp-note on">${icon('hardpoint')}<div>${hard ? `<b>${L('Na palubě', 'On board')} ${lo.pre.slice(0, hard).length}/${hard}:</b> ${lo.pre.slice(0, hard).map(nm).join(', ') || '—'}<br>` : ''}${bans ? `<b>${L('Vyřazené', 'Struck out')} ${lo.ban.slice(0, bans).length}/${bans}:</b> ${lo.ban.slice(0, bans).map(nm).join(', ') || '—'}` : ''}
+      <button class="btn small" data-go="hangar">${icon('rocket')} ${L('Výzbroj v Hangáru', 'Loadout in the Hangar')}</button></div></div>`;
+  }
+  /** Po nákupu nebo výběru části: překreslí štítky, panel a střepy, model lodi zůstane (jen se přestaví). */
+  function forgeRefresh() {
+    const panel = $('#fpanel');
+    if (!panel) return;
+    const sc = panel.scrollTop;
+    $('.fparts').innerHTML = PARTS.map(partChip).join('');
+    panel.innerHTML = partPanel(forgePart);
+    panel.scrollTop = sc;
+    const sh = $('#s-forge .topbar .chip.shard'); if (sh) sh.innerHTML = `${icon('shard')} ${fmtNum(SAVE.shards)}`;
+    Forge3D.rebuild();
+  }
+
+  // ── Výzbroj (Hangár): zbraně na závěsnících a vyřazené zbraně ──────────────
+  let loMode = 'pre';
+  function loadoutSection(pl) {
+    const hard = Math.min(2, SAVE.forge.hard || 0), bans = Math.min(6, SAVE.forge.bans || 0);
+    if (!hard && !bans) return '';
+    if (!hard) loMode = 'ban'; else if (!bans) loMode = 'pre';
+    const lo = SAVE.loadout, start = pl.weapon === 'random' ? null : pl.weapon, lvl = 1 + Math.min(2, SAVE.forge.prelvl || 0);
+    const pre = lo.pre.filter(id => id !== start).slice(0, hard), ban = lo.ban.filter(id => id !== start && !pre.includes(id)).slice(0, bans);
+    const tile = id => {
+      const d = WEAPONS[id], open = unlocked(d);
+      if (!open) return `<button class="lw locked" disabled style="--c:${d.color}">${icon('lock')}<span>???</span></button>`;
+      const st = id === start ? 'start' : pre.includes(id) ? 'pre' : ban.includes(id) ? 'ban' : '';
+      const badge = st === 'start' ? L('Startovní', 'Starting') : st === 'pre' ? `▲ ${L('Úr.', 'Lv')} ${lvl}` : st === 'ban' ? `✕ ${L('Vyřazená', 'Struck')}` : '';
+      return `<button class="lw ${st}" data-lw="${id}" ${st === 'start' ? 'disabled' : ''} style="--c:${d.color}" title="${d.desc}">${icon(d.icon)}<span>${d.name}</span>${badge ? `<b>${badge}</b>` : ''}</button>`;
+    };
+    return `<div class="loadout">
+      <div class="lo-head">${icon('hardpoint')}<div><h3>${L('VÝZBROJ', 'LOADOUT')}</h3><p>${L('Zbraně na závěsnících máš od startu, vyřazené se v běhu vůbec neobjeví (ostatní pak chodí častěji). Úrovně dál získáváš postupem.', 'Weapons on hardpoints are yours from the start; struck-out ones never show up in the run (so the rest come more often). Levels still come from levelling up.')}</p></div>
+        <div class="lo-modes">${hard ? `<button class="${loMode === 'pre' ? 'on' : ''}" data-lmode="pre">▲ ${L('Na palubu', 'On board')} <b>${pre.length}/${hard}</b></button>` : ''}${bans ? `<button class="${loMode === 'ban' ? 'on' : ''}" data-lmode="ban">✕ ${L('Vyřadit', 'Strike out')} <b>${ban.length}/${bans}</b></button>` : ''}</div></div>
+      <div class="lo-grid">${BASE_WEAPONS.map(tile).join('')}</div>
+    </div>`;
+  }
+  function toggleLoadout(id) {
+    const lo = SAVE.loadout, hard = Math.min(2, SAVE.forge.hard || 0), bans = Math.min(6, SAVE.forge.bans || 0);
+    const pl = PILOTS.find(p => p.id === hs.pilot), start = pl && pl.weapon !== 'random' ? pl.weapon : null;
+    if (!WEAPONS[id] || !unlocked(WEAPONS[id]) || id === start) { Sound.play.error(); return; }
+    const del = (arr, x) => { const i = arr.indexOf(x); if (i >= 0) arr.splice(i, 1); return i >= 0; };
+    // jen platné položky (pilotova zbraň se nepočítá), ať se dá vybrat i po změně pilota
+    lo.pre = lo.pre.filter(x => x !== start).slice(0, hard);
+    lo.ban = lo.ban.filter(x => x !== start && !lo.pre.includes(x)).slice(0, bans);
+    const list = loMode === 'pre' ? lo.pre : lo.ban, cap = loMode === 'pre' ? hard : bans;
+    if (del(list, id)) Sound.play.click();
+    else if (list.length >= cap) { Sound.play.error(); return; }
+    else { del(loMode === 'pre' ? lo.ban : lo.pre, id); list.push(id); Sound.play.select(); }
+    persist(); rerender();
+  }
 
   // ── Obrazovky ─────────────────────────────────────────────────────────────
   const screens = {
@@ -85,7 +172,7 @@ const UI = (() => {
       const S = SAVE.stats;
       const cleared = SECTORS.filter(s => SAVE.sectors[s.id] && SAVE.sectors[s.id].cleared).length;
       const achN = Object.keys(SAVE.achievements).length;
-      const canBuy = FORGE.some(f => forgeOpen(f) && (SAVE.forge[f.id] || 0) < f.max && SAVE.shards >= forgeCost(f, SAVE.forge[f.id] || 0));
+      const canBuy = canBuyAny(SAVE);
       const prog = (achN / ACHIEVEMENTS.length + cleared / SECTORS.length) / 2;
       el.innerHTML = `
         <div class="menu-left">
@@ -114,7 +201,7 @@ const UI = (() => {
           <div class="progress" title="${L('Celkový postup', 'Overall progress')}"><i style="width:${pct(prog)}%"></i></div>
           <div class="tip"><span class="tl">TIP</span>${pick(TIPS)}</div>
         </aside>
-        <div class="version">VOIDBORN · v1.2 · ${L('WASD + MEZERNÍK', 'WASD + SPACE')}</div>
+        <div class="version">VOIDBORN · v${GAME_VERSION} · ${L('WASD + MEZERNÍK', 'WASD + SPACE')}</div>
         <div class="corner-lang">${langSwitch()}</div>`;
     },
 
@@ -146,6 +233,7 @@ const UI = (() => {
             <div class="perk">${icon('star')}<div><small>${L('Schopnost', 'Perk')}</small>${pl.perk}</div></div>
           </div>
         </div>
+        ${loadoutSection(pl)}
         <div class="sectors">${SECTORS.slice(0, BASE_SECTORS).map((s, i) => sectorCard(s, i)).join('')}</div>
         <div class="anom-head">${icon('meteor')}<div><h3>${L('ANOMÁLIE', 'ANOMALIES')}</h3><p>${L('Sektory s vlastním pravidlem. Každý otevře dobytí jednoho z hlavních sektorů.', 'Sectors with a rule of their own. Each one opens once you clear one of the main sectors.')}</p></div></div>
         <div class="sectors anom">${SECTORS.map((s, i) => [s, i]).filter(([s, i]) => i >= BASE_SECTORS && !s.deep).map(([s, i]) => sectorCard(s, i)).join('')}</div>
@@ -165,30 +253,25 @@ const UI = (() => {
       Sprites.drawShip(x, pl.color);
     },
 
+    // Kovárna: 3D model lodi (forge3d.js). Klepnutím na část lodi (nebo na její štítek) se vedle
+    // ukážou její vylepšení; loď se dá tažením otáčet.
     forge(el) {
-      const vopen = voidOpen();
       const spent = FORGE.reduce((s, f) => { let c = 0; for (let l = 0; l < (SAVE.forge[f.id] || 0); l++) c += forgeCost(f, l); return s + c; }, 0);
-      const open = masterOpen();
-      const card = (f, locked) => {
-        const l = SAVE.forge[f.id] || 0, maxed = l >= f.max, cost = maxed ? 0 : forgeCost(f, l);
-        const cls = { 2: 'master', 3: 'master void', 4: 'master eternal', 5: 'master piece' }[f.tier] || '';
-        return `<div class="fcard ${maxed ? 'maxed' : ''} ${cls} ${locked ? 'locked' : ''}" id="fc-${f.id}">
-          <div class="fi">${icon(f.icon)}<div><h4>${f.name}</h4><p>${f.desc}</p></div></div>
-          ${f.max === Infinity ? `<div class="lvl-inf">${L('Úroveň', 'Level')} <b>${l}</b>${l ? ` · ${L('celkem', 'total')} ${forgeTotal(f, l)}` : ''}</div>` : pips(l, f.max)}
-          <button class="btn buy ${maxed ? 'ghost' : ''}" data-buy="${f.id}" ${locked || maxed || SAVE.shards < cost ? 'disabled' : ''}>${locked ? `${icon('lock')} ${fmtNum(cost)}` : maxed ? L('Maximum', 'Maxed') : `${icon('shard')} ${fmtNum(cost)}`}</button>
-        </div>`;
-      };
+      if (!forgePart || !P_INDEX[forgePart]) forgePart = (PARTS.find(p => partCanBuy(SAVE, p.id)) || PARTS[0]).id;
       el.innerHTML = `
         ${topbar(L('TRVALÁ VYLEPŠENÍ', 'PERMANENT UPGRADES'), L('KOVÁRNA', 'FORGE'), spent ? `<button class="btn ghost" data-act="refund">${icon('reroll')} ${L('Vrátit vše', 'Refund all')}</button>` : '')}
-        <div class="grid-cards">${FORGE.filter(f => !f.tier).map(f => card(f, false)).join('')}</div>
-        <div class="master-head ${open ? '' : 'locked'}">${icon(open ? 'forge' : 'lock')}<div><h3>${L('MISTROVSKÁ DÍLNA', 'MASTER WORKSHOP')}</h3><p>${open ? L('Silnější a dražší vylepšení pro zkušené piloty.', 'Stronger, pricier upgrades for seasoned pilots.') : L('Otevře se po dobytí Sektoru II.', 'Opens once you clear Sector II.')}</p></div></div>
-        <div class="grid-cards">${FORGE.filter(f => f.tier === 2).map(f => card(f, !open)).join('')}</div>
-        <div class="master-head void ${vopen ? '' : 'locked'}">${icon(vopen ? 'vortex' : 'lock')}<div><h3>${L('PRÁZDNOTOVÁ DÍLNA', 'VOID WORKSHOP')}</h3><p>${vopen ? L('Vylepšení pro konec hry a nekonečný režim.', 'Upgrades for the end game and endless mode.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
-        <div class="grid-cards">${FORGE.filter(f => f.tier === 3).map(f => card(f, !vopen)).join('')}</div>
-        <div class="master-head eternal ${vopen ? '' : 'locked'}">${icon(vopen ? 'infinity' : 'lock')}<div><h3>${L('VĚČNÁ DÍLNA', 'ETERNAL WORKSHOP')}</h3><p>${vopen ? L('Vylepšení bez stropu. Každá další úroveň stojí víc, síla roste dál.', 'Upgrades with no cap. Every further level costs more, and the power keeps growing.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
-        <div class="grid-cards">${FORGE.filter(f => f.tier === 4).map(f => card(f, !vopen)).join('')}</div>
-        <div class="master-head piece ${vopen ? '' : 'locked'}">${icon(vopen ? 'crown' : 'lock')}<div><h3>${L('MISTROVSKÁ DÍLA', 'MASTERPIECES')}</h3><p>${vopen ? L('Velké cíle za desítky tisíc střepů: nové zbraně, víc míst, ★5 a ★6 a vyvinutá startovní zbraň.', 'Big goals for tens of thousands of shards: new weapons, more slots, ★5 and ★6 and an evolved starting weapon.') : L('Otevře se po dobytí Sektoru V.', 'Opens once you clear Sector V.')}</p></div></div>
-        <div class="grid-cards">${FORGE.filter(f => f.tier === 5).map(f => card(f, !vopen)).join('')}</div>`;
+        <div class="forge">
+          <div class="fstage">
+            <canvas id="forgeCv" aria-label="${L('Model lodi: tažením otočíš, klepnutím vybereš část', 'Ship model: drag to rotate, tap to pick a part')}"></canvas>
+            <div class="fhint">${icon('reroll')} ${L('Táhni a loď se otočí · klepni na část lodi', 'Drag to rotate the ship · tap a part')}</div>
+          </div>
+          <div class="fside">
+            <div class="fparts" role="tablist">${PARTS.map(p => partChip(p)).join('')}</div>
+            <div class="fpanel" id="fpanel">${partPanel(forgePart)}</div>
+          </div>
+        </div>`;
+      Forge3D.mount($('#forgeCv'), { onSelect: id => { forgePart = id; Sound.play.select(); forgeRefresh(); } });
+      Forge3D.select(forgePart, true);
     },
 
     ach(el) {
@@ -266,6 +349,7 @@ const UI = (() => {
           <div class="row"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
           ${window.GCMusic ? `<div class="row"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}
           <div class="row"><label>${L('Automatický výběr karet', 'Auto-pick cards')}<small>${L('Při postupu se hra nezastaví: vybere kartu nejvýš v pořadí priorit', 'Level-ups no longer pause: the card highest in your priority order is picked')}</small></label><button class="btn" data-go="prio">${icon('auto')} ${L('Priority', 'Priorities')}</button><button class="toggle ${s.autoPick ? 'on' : ''}" data-tog="autoPick"></button></div>
+          <div class="row"><label>${L('Truhly bez okna', 'Chests without a window')}<small>${L('Truhla se otevře sama a hra se nezastaví: co v ní bylo, se jen krátce ukáže nad lodí', 'A chest opens by itself and the game keeps going: its contents only flash above your ship')}</small></label><button class="toggle ${s.autoChest ? 'on' : ''}" data-tog="autoChest"></button></div>
           <div class="row"><label>${L('Otřesy obrazovky', 'Screen shake')}<small>${L('Při explozích a zásazích', 'On explosions and hits')}</small></label><button class="toggle ${s.shake ? 'on' : ''}" data-tog="shake"></button></div>
           <div class="row"><label>${L('Čísla poškození', 'Damage numbers')}<small>${L('Plovoucí čísla nad nepřáteli', 'Floating numbers above enemies')}</small></label><button class="toggle ${s.dmgNums ? 'on' : ''}" data-tog="dmgNums"></button></div>
           <div class="row"><label>${L('Kvalita vykreslování', 'Rendering quality')}<small>${L('Auto hlídá rozlišení podle obrazovky a při sekání ho sníží. Úsporná kreslí v 70 % rozlišení.', 'Auto keeps the resolution in budget for your screen and lowers it when the game stutters. Saver draws at 70% resolution.')}</small></label><button class="btn" data-act="quality">${{ auto: 'Auto', high: L('Plná', 'Full'), low: L('Úsporná', 'Saver') }[s.quality || 'auto']}</button></div>
@@ -298,6 +382,7 @@ const UI = (() => {
 
   function show(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    if (current === 'forge' && id !== 'forge') Forge3D.unmount();
     current = id;
     if (!id) return;
     const el = $('#s-' + id);
@@ -322,7 +407,7 @@ const UI = (() => {
       if (!b) lastHover = null;
     });
     document.addEventListener('click', e => {
-      const t = e.target.closest('[data-go],[data-pilot],[data-sector],[data-od],[data-buy],[data-tab],[data-tog],[data-act],[data-pick],[data-lang],[data-prio],#startBtn,#pauseBtn');
+      const t = e.target.closest('[data-go],[data-pilot],[data-sector],[data-od],[data-buy],[data-tab],[data-tog],[data-act],[data-pick],[data-lang],[data-prio],[data-part],[data-lw],[data-lmode],#startBtn,#pauseBtn');
       if (!t) return;
       if (t.blur) t.blur();
       const ds = t.dataset;
@@ -348,6 +433,13 @@ const UI = (() => {
         Game.togglePause();
       } else if (ds.buy) {
         buy(ds.buy);
+      } else if (ds.part) {
+        if (forgePart === ds.part) return;
+        forgePart = ds.part; Forge3D.select(ds.part, true); Sound.play.select(); forgeRefresh();
+      } else if (ds.lmode) {
+        loMode = ds.lmode; Sound.play.click(); rerender();
+      } else if (ds.lw) {
+        toggleLoadout(ds.lw);
       } else if (ds.prio) {
         movePrio(ds.prio);
       } else if (ds.tab) {
@@ -403,7 +495,11 @@ const UI = (() => {
     Sound.play.buy();
     checkAchievements(false);
     persist();
-    rerender();
+    if (current === 'forge' && $('#fpanel')) {
+      if (forgePart !== f.part) { forgePart = f.part; Forge3D.select(f.part, true); }
+      forgeRefresh();
+      // úspěch za nákup mohl přidat střepy: ty se ukážou v horní liště (forgeRefresh)
+    } else rerender();
     const c = $('#fc-' + id); if (c) c.classList.add('bought');
   }
 
@@ -593,6 +689,7 @@ const UI = (() => {
           </div>
           <h4>${L('Karty', 'Cards')}</h4>
           <div class="kv"><span>${L('Automatický výběr podle priorit', 'Auto-pick by priority')}</span><button class="toggle ${SAVE.settings.autoPick ? 'on' : ''}" data-act="auto"></button></div>
+          <div class="kv"><span>${L('Truhly bez okna', 'Chests without a window')}</span><button class="toggle ${SAVE.settings.autoChest ? 'on' : ''}" data-act="autochest"></button></div>
           <h4>${L('Zvuk', 'Audio')}</h4>
           <div class="kv"><span>${L('Efekty', 'Effects')}</span><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.sfx}" data-vol="sfx"><span>${L('Hudba', 'Music')}</span><input type="range" min="0" max="1" step="0.05" value="${SAVE.settings.music}" data-vol="music"></div>
         </div>
@@ -603,6 +700,7 @@ const UI = (() => {
       </div></div>`, {
       resume: () => Game.togglePause(),
       auto: () => { SAVE.settings.autoPick = !SAVE.settings.autoPick; persist(); Sound.play.click(); showPause(); },
+      autochest: () => { SAVE.settings.autoChest = !SAVE.settings.autoChest; persist(); Sound.play.click(); showPause(); },
       quit: () => confirm(L('Opustit misi?', 'Abandon the mission?'), L('Nasbírané střepy si ponecháš, ale běh skončí.', 'You keep the shards you collected, but the run ends.'), () => { hideOverlay(); endRun('quit'); }),
       __restore: () => showPause(),
     });

@@ -93,18 +93,30 @@ if (LANG === 'en') (() => {
     kit: ['Loadout', 'Every run starts with a random passive'], bossbane: ['Giant Slayer', '+10% damage to bosses and elites'],
     execute: ['Executioner', 'Regular enemies below 5% health (per level) die at once'], ocstart: ['Head-start Evolution', 'An evolved weapon starts one ★ higher'],
     deepmut: ['Deep Mutation', 'Every mutation cap +5'], gravwave: ['Gravity Wave', 'Every 40 s pulls in all crystals and shards on the map'],
-    voidwill: ['Will of the Void', 'In endless mode enemies grow 25% slower'], fan: ['Fan of Cards', 'One more card on every level-up'],
+    voidwill: ['Will of the Void', 'In endless mode enemies grow 25% slower'], e_thrust: ['Eternal Thrust', '+3% speed, −3% dash recharge time'],
     e_might: ['Eternal Might', '+5% damage'], e_vigor: ['Eternal Vigor', '+20 max HP, +0.15 HP/s'], e_haste: ['Eternal Tempo', '−2% cooldown'],
     e_area: ['Eternal Reach', '+4% area of effect and duration'], e_crit: ['Eternal Precision', '+1% crit chance, +6% crit damage'],
     e_growth: ['Eternal Insight', '+5% experience, +3% luck'], e_greed: ['Eternal Harvest', '+6% shards'],
     bp_sentry: ['Blueprint: Sentry Drones', 'Unlocks the new weapon Sentry Drones (evolves with Energy Shield)'],
     bp_voidray: ['Blueprint: Void Ray', 'Unlocks the new weapon Void Ray (evolves with Crit Amplifier)'],
     bp_cluster: ['Blueprint: Cascade', 'Unlocks the new weapon Cascade (evolves with Gyroscope)'],
-    phoenix: ['Eternal Phoenix', '+1 revive per run'], ocmax: ['Beyond the Limit', 'Evolutions can be overcharged one ★ higher (★5 and ★6)'],
+    bans: ['Arms Plan', 'Strike 1 weapon (per level): it never shows up in a run and the others come more often'],
+    hard: ['Hardpoint', 'A run starts with one extra weapon of your choice (per level)'], prelvl: ['Calibration', 'Weapons on hardpoints start one level higher'],
+    ocmax: ['Beyond the Limit', 'Evolutions can be overcharged one ★ higher (★5 and ★6)'],
     echo: ['Echo', '25% chance a level-up also grants the second-best card'], bigslots: ['Grand Arsenal', '+1 weapon slot and +1 passive slot'],
     voidborn: ['Voidborn', 'Your starting weapon begins already evolved'],
   };
   for (const f of FORGE) { f.name = F[f.id][0]; f.desc = F[f.id][1]; }
+  const PT = {
+    guns: ['Guns', 'The barrels on the bow: damage, critical hits and elite hunting.'],
+    cockpit: ['Cockpit', 'The navigation computer: luck, rerolls, more cards and mutations.'],
+    reactor: ['Reactor', 'The heart of the ship: cooldown, reach, duration and weapon evolutions.'],
+    hull: ['Hull', 'Plating and life support: health, armor, regeneration, revives.'],
+    wings: ['Collector Wings', 'Magnetic sails: pickup range, experience, shards and loot.'],
+    engines: ['Engines', 'Thrusters at the stern: speed and dashes.'],
+    bay: ['Weapon Bay', 'Hardpoints and storage: weapon slots, your run loadout and blueprints of new weapons.'],
+  };
+  for (const p of PARTS) { p.name = PT[p.id][0]; p.desc = PT[p.id][1]; }
   const A = {
     k100: ['First Blood', 'Destroy 100 enemies.'], k1000: ['Cleaner', 'Destroy 1,000 enemies.'], k10000: ['Exterminator', 'Destroy 10,000 enemies.'],
     k50000: ['Calamity', 'Destroy 50,000 enemies.'], k250000: ['End of Civilizations', 'Destroy 250,000 enemies.'],
