@@ -437,6 +437,7 @@ function hurtPlayer(dmg, srcX, srcY) {
 
 function playerDown() {
   const p = G.p;
+  if (Debug.god) { p.hp = G.st.maxHp; p.inv = 1; return; } // Debug: nesmrtelnost
   if (G.revives > 0) {
     G.revives--;
     p.hp = G.st.maxHp * (G.st.reviveFull ? 1 : 0.6); p.inv = G.st.reviveFull ? 5 : 3;

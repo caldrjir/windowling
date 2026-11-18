@@ -17,4 +17,6 @@
 //        podle obtížnosti a dávají trvalé bonusy (Síň slávy, doplatek za splněné); otáčení lodi v Kovárně
 //        obráceně, se setrvačností a bez samovolného natáčení; verze na úvodní obrazovce místo Nastavení
 // 1.4.1  Priority automatického výběru přehledněji: ve sloupcích, se štítky kategorií, přetahování myší i prstem
-const GAME_VERSION = '1.4.1';
+// 1.4.2  Kovárna: otáčení zase jako předmět v ruce (bližší bok jde s prstem), správné překrývání dílů z každého
+//        úhlu (BSP strom), díly lícují (gondoly pod křídly, kabina na přídi, lišty na trupu); sekce Debug v Nastavení
+const GAME_VERSION = '1.4.2';

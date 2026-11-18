@@ -602,8 +602,8 @@ test('VOIDBORN Forge: a 3D ship by parts, the loadout in the hangar and chests w
 	await page.mouse.down();
 	await page.mouse.move(box.x + box.width / 2 + 160, box.y + box.height / 2 + 30, { steps: 8 });
 	await page.mouse.up();
-	// Dragging right takes the camera round to the right (yaw falls) and the turn coasts out after release.
-	expect(yaw - ((await page.evaluate('Forge3D.view[0]')) as number)).toBeGreaterThan(1);
+	// The nearer side follows the pointer (dragging right turns yaw up) and the turn coasts out after release.
+	expect(((await page.evaluate('Forge3D.view[0]')) as number) - yaw).toBeGreaterThan(1);
 	// Under the model: the ship's stats at the start of a run and what the Forge adds.
 	await expect(page.locator('#fstats [data-stat="might"]')).toContainText('110 %');
 	await expect(page.locator('#fstats [data-stat="might"] em')).toHaveText('+10 %');
@@ -798,13 +798,28 @@ test('VOIDBORN shows its version and the rendering quality can be lowered', asyn
 	await page.locator('[data-act="quality"]').click();
 	expect(await page.evaluate(`[SAVE.settings.quality, Render.scale]`)).toEqual(['low', 0.7]);
 	// Settings are grouped; picking a row shows what it looks like on and off.
-	await expect(page.locator('.setg')).toHaveCount(6);
+	await expect(page.locator('.setg')).toHaveCount((await page.evaluate<boolean>('DEBUG')) ? 7 : 6);
 	await page.locator('[data-pv="dmgNums"] label').click();
 	await expect(page.locator('#setPv')).toContainText('Čísla poškození');
 	await expect(page.locator('#setPv canvas')).toHaveCount(2);
 	// Sound has nothing to show: the preview goes away.
 	await page.locator('.row:has([data-vol="sfx"]) label').click();
 	await expect(page.locator('#setPv canvas')).toHaveCount(0);
+	// Debug tools (hidden for a release): shards, game speed and god mode.
+	if (await page.evaluate<boolean>('DEBUG')) {
+		const before = await page.evaluate<number>('SAVE.shards');
+		await page.locator('[data-act="dbgShards"]').click();
+		await page.locator('[data-act="dbgSpeed"]').click();
+		await page.locator('[data-tog="dbgGod"]').click();
+		expect(await page.evaluate('[SAVE.shards, Debug.speed, Debug.god]')).toEqual([
+			before + 10000,
+			2,
+			true,
+		]);
+		await page.locator('[data-act="dbgSpeed"]').click();
+		await page.locator('[data-act="dbgSpeed"]').click();
+		expect(await page.evaluate('Debug.speed')).toBe(1);
+	}
 	await page.locator('.screen.active .back').click();
 	await page.locator('[data-go="hangar"]').click();
 	await page.locator('#startBtn').click();

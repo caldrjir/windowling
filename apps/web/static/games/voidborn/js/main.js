@@ -193,7 +193,7 @@ function loop(now) {
     else if (UI.current === 'settings') SetPreview.frame(dt); // ukázka nastavení zapnuto / vypnuto
   } else {
     const t0 = PerfLog.t();
-    updateGame(dt);
+    for (let i = 0, n = Debug.speed; i < n; i++) updateGame(dt); // Debug: rychlost hry
     const t1 = PerfLog.t();
     if (!STILL.has(G.state) || Render.dirty) { Render.drawGame(); Render.dirty = false; }
     const t2 = PerfLog.t();
