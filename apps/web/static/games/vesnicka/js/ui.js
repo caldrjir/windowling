@@ -5,12 +5,15 @@ const UI = (() => {
   /** Kulaté číslo bez zbytečných nul („10 mil.“ místo „10,0 mil.“). */
   const fmtNice = n => fmt(n).replace(new RegExp(`(\\${SEP}\\d*?)0+(?=\\D|$)`), '$1').replace(new RegExp(`\\${SEP}(?=\\D|$)`), '');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  let S = null, H = null, tab = 'build', amount = 1, structKey = '', board = 'best:score';
+  let S = null, H = null, tab = 'build', structKey = '', board = 'best:score';
+  // Kolik nákupů naráz u každé položky (1×, 10×, Max): klíč 'b3' = řemeslo 3, 'c1' = stupeň cechu 1.
+  const rowAmt = {};
+  const amtOf = key => rowAmt[key] || 1;
   const U_ICON = { cr_rad: '📃', cr_zkouska: '🎓', cr_pokladnice: '💰', cr_korouhev: '🎏', cr_zemsky: '🗺️', kaplicka: '⛪', skola: '🏫', posta: '📯', silnice: '🛣️', zeleznice: '🚂', elektrina: '💡', rozhlas: '📢', pohadky: '📖', bylinkarka: '🌿', lucerna: '🏮', pranostiky: '🌦️', fletna: '🎶', kalendar: '📅', ponocny: '🌙', vecernice: '⭐' };
-  const C_ICON = { bludicka: '✨', vodnik: '🐸', cert: '😈', krakonos: '⛰️', hospodaricek: '🧙', vseved: '🧓', nesro: '🎒' };
+  const C_ICON = { bludicka: '✨', vodnik: '🐸', cert: '😈', krakonos: '⛰️', hospodaricek: '🧙', vseved: '🧓', hvezda: '🌠', nesro: '🎒' };
   const cName = id => (id === 'nesro' ? NESRO.name : (C_INDEX[id] || {}).name || '');
-  const BUFF_ICON = { vodnik: '🫖', cert: '🔥', krakonos: '⛰️', blessing: '🌟', nesro: '🥧', vseved: '📖' };
-  const BUFF_NAME = { vodnik: L('Vodníkův hrníček', 'Goblin’s pot'), cert: L('Čertovská síla', 'Devilish strength'), krakonos: L('Krakonošova štědrost', 'Krakonoš’s gift'), blessing: L('Požehnání', 'Blessing'), nesro: L('Nesrovy koláče', 'Nesro’s kolache'), vseved: L('Vševědova moudrost: cech vyučí ×10', 'Know-all’s wisdom: the guild trains ×10') };
+  const BUFF_ICON = { vodnik: '🫖', cert: '🔥', krakonos: '⛰️', blessing: '🌟', nesro: '🥧', vseved: '📖', zne: '🌾', zne_tap: '✋', hvezda_shon: '🌠', hvezda_sila: '💥' };
+  const BUFF_NAME = { vodnik: L('Vodníkův hrníček', 'Goblin’s pot'), cert: L('Čertovská síla', 'Devilish strength'), krakonos: L('Krakonošova štědrost', 'Krakonoš’s gift'), blessing: L('Požehnání', 'Blessing'), nesro: L('Nesrovy koláče', 'Nesro’s kolache'), vseved: L('Vševědova moudrost: cech vyučí ×10', 'Know-all’s wisdom: the guild trains ×10'), zne: L('Žně: výnos ×5', 'Harvest rush: income ×5'), zne_tap: L('Žně: klepnutí ×5', 'Harvest rush: taps ×5'), hvezda_shon: L('Hvězdný shon: výnos ×7', 'Star rush: income ×7'), hvezda_sila: L('Hvězdná síla: klepnutí ×50', 'Star strength: taps ×50') };
   const clockAt = sec => new Date(Date.now() + sec * 1000).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
   const coinSvg = '<svg class="coin" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f2c14e" stroke="#a8771e" stroke-width="1.6"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#c9952e" stroke-width="1.2"/><path d="M9.5 9.5h5M12 9.5v6" stroke="#a8771e" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
@@ -22,7 +25,12 @@ const UI = (() => {
     const sn = seasonAt(Date.now());
     $('#season').innerHTML = `<span>${SEASONS[sn].icon}</span><span class="sn">${SEASONS[sn].name}</span><b>${fmtClock(seasonLeft(Date.now()))}</b>`;
     const cm = Econ.cMul(S);
-    $('#buffs').innerHTML = (Econ.cechOpen(S) && cm > 1.0005 ? `<span class="buff b-cech" title="${esc(L('Cech: učni zvedají výnos vesnice', 'Guild: apprentices lift the village’s income'))}"><i>👥</i>×${fmt(cm, 1)}</span>` : '') + (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : '×' + b.mul}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
+    // Kombo: kouzla výnosu se násobí; od dvou naráz se ukáže, kolik dělají dohromady.
+    const rb = S.buffs.filter(b => b.kind === 'rate'), combo = Econ.buff(S, 'rate');
+    const comboHtml = rb.length >= 2 ? `<span class="buff b-combo" title="${esc(L('Kouzla výnosu se násobí', 'Income spells multiply'))}"><i>🔥</i>${L('KOMBO', 'COMBO')} ×${fmt(combo)}</span>` : '';
+    const html = comboHtml + (Econ.cechOpen(S) && cm > 1.0005 ? `<span class="buff b-cech" title="${esc(L('Cech: učni zvedají výnos vesnice', 'Guild: apprentices lift the village’s income'))}"><i>👥</i>×${fmt(cm, 1)}</span>` : '') + (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}${b.kind === 'tap' ? ' b-tap' : ''}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : (b.kind === 'tap' && BUFF_ICON[b.id] !== '✋' ? '✋' : '') + '×' + fmt(b.mul)}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
+    const bx = $('#buffs'); if (bx._h !== html) { bx.innerHTML = html; bx._h = html; }
+    powers();
     const side = Scene.creatureSide();
     const cr = Scene.creature;
     for (const [id, s] of [['#edgeL', -1], ['#edgeR', 1]]) {
@@ -32,13 +40,29 @@ const UI = (() => {
     }
     quick();
     const nd = $('#newsBtn .dot'); if (nd) nd.hidden = (S.seen.news || 0) >= NEWS_VERSION;
-    if (tabsKey !== String(Econ.cechOpen(S))) tabs();
+    if (tabsKey !== visibleTabs().join(',')) tabs();
     // odznáčky na záložkách
     const upgN = Econ.upgAvailable(S).filter(u => Econ.upgCost(S, u) <= S.coins).length;
     badge('upg', upgN);
     const d = Econ.daily(S), claim = d.tasks.filter(t => !t.claimed && Econ.dailyProgress(S, t) >= t.n).length;
     badge('tasks', claim);
     badge('legend', Econ.pending(S) > 0 ? '+' + fmt(Econ.pending(S)) : 0);
+  }
+  // ── Elán a jeho kouzla (vlevo dole na návsi) ──
+  function powers() {
+    const box = $('#powers'), open = Econ.elanOpen(S);
+    if (box.hidden === open) box.hidden = !open;
+    $('#sceneBox').classList.toggle('has-powers', open);
+    if (!open) return;
+    const e = S.elan, rush = S.buffs.find(b => b.id === 'zne');
+    const full = e >= ELAN_MAX - 1e-6, next = full ? 0 : (1 - (e % 1)) / Econ.elanRegen(S);
+    const btn = id => {
+      const p = POWERS[id], c = Econ.powerCost(S, id), on = id === 'rush' && rush;
+      const can = !on && e >= c - 1e-9;
+      return `<button class="pw pw-${id}${can ? ' ready' : ''}${on ? ' on' : ''}" data-power="${id}" ${can ? '' : 'disabled'} title="${esc(p.name + ': ' + p.desc)}"><i>${p.icon}</i><span><b>${p.short}</b><small>${on ? fmtClock(rush.t) : `${c} 💫`}</small></span>${on ? `<s style="width:${Math.max(0, Math.min(100, (rush.t / rush.max) * 100))}%"></s>` : ''}</button>`;
+    };
+    const html = `<div class="elan" title="${esc(L(`Elán: doplňuje se sám (+1 za ${Math.round(1 / Econ.elanRegen(S))} s), nejvýš ${ELAN_MAX}. Za groše se koupit nedá.`, `Spirit: refills by itself (+1 every ${Math.round(1 / Econ.elanRegen(S))} s) up to ${ELAN_MAX}. Groschen cannot buy it.`))}"><i style="width:${(e / ELAN_MAX) * 100}%"></i><span>💫 <b>${Math.floor(e)}</b>/${ELAN_MAX}</span><em>${full ? L('plný', 'full') : '+1 ' + fmtClock(next)}</em></div><div class="pws">${btn('warp')}${btn('rush')}</div>`;
+    if (box._h !== html) { box.innerHTML = html; box._h = html; }
   }
   // Rychlý nákup: to, co se nejrychleji zaplatí (stejná volba jako u šafáře).
   let best = null;
@@ -61,11 +85,30 @@ const UI = (() => {
     ['tasks', '✅', L('Úkoly', 'Tasks')], ['more', '☰', L('Více', 'More')],
   ];
   let tabsKey = '';
-  function tabs() {
-    tabsKey = String(Econ.cechOpen(S));
-    if (tab === 'cech' && !Econ.cechOpen(S)) tab = 'build';
-    $('#tabs').innerHTML = TABS.filter(([id]) => id !== 'cech' || Econ.cechOpen(S)).map(([id, ic, name]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}"><i>${ic}</i><span>${name}</span><b class="bd" hidden></b></button>`).join('');
+  /**
+   * Rozhraní se rozbaluje postupně: na začátku jen Řemesla a Více, další záložky přibudou,
+   * až mají smysl (vylepšení po prvních nákupech, úkoly později, kronika před první pověstí).
+   */
+  function tabOpen(id) {
+    const vet = Econ.legendsTotal(S) > 0 || S.gen > 1;
+    if (id === 'cech') return Econ.cechOpen(S);
+    if (id === 'upg') return vet || S.stats.buys >= 3 || Object.keys(S.upg).length > 0;
+    if (id === 'tasks') return vet || S.stats.buys >= 15 || S.stats.playTime > 900;
+    if (id === 'legend') return vet || S.earnedAll >= LEGEND_BASE / 10 || Econ.pending(S) > 0;
+    return true;
   }
+  const visibleTabs = () => TABS.filter(([id]) => tabOpen(id)).map(([id]) => id);
+  function tabs() {
+    const vis = visibleTabs();
+    tabsKey = vis.join(',');
+    if (!vis.includes(tab)) tab = 'build';
+    // nově odemčená záložka: oznámení (jen jednou; při prvním načtení se jen zapamatuje)
+    const fresh = vis.filter(id => !S.seen['tab_' + id]);
+    for (const id of fresh) S.seen['tab_' + id] = 1;
+    if (inited && fresh.length) for (const id of fresh) { const t = TABS.find(x => x[0] === id); if (id !== 'cech' && H.unlocked) H.unlocked(t[1], t[2]); }
+    $('#tabs').innerHTML = TABS.filter(([id]) => vis.includes(id)).map(([id, ic, name]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}"${fresh.includes(id) && inited ? ' class="new"' : ''}><i>${ic}</i><span>${name}</span><b class="bd" hidden></b></button>`).join('');
+  }
+  let inited = false;
   function setTab(id) {
     tab = id;
     for (const b of document.querySelectorAll('#tabs [data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === id));
@@ -89,58 +132,82 @@ const UI = (() => {
     const last = BUILDINGS.reduce((a, b, i) => (S.owned[b.id] ? i : a), -1);
     return BUILDINGS.slice(0, Math.min(BUILDINGS.length, last + 2));
   }
-  const buildKey = () => `b${visibleBuildings().length}:${seasonAt(Date.now())}`;
+  /** Volba 1× · 10× · Max u položky (ukáže se po prvních nákupech, ať je začátek jednoduchý). */
+  const amtOpen = () => S.stats.buys >= 5 || Econ.legendsTotal(S) > 0;
+  const amtHtml = key => (amtOpen() ? `<div class="amt" role="group" aria-label="${L('Kolik nákupů naráz', 'How many purchases at once')}">${[1, 10, 'max'].map(a => `<button data-ra="${a}" data-rk="${key}" aria-pressed="${amtOf(key) === a}">${a === 'max' ? 'Max' : a + '×'}</button>`).join('')}</div>` : '');
+  const buildKey = () => `b${visibleBuildings().length}:${seasonAt(Date.now())}:${amtOpen()}:${BUILDINGS.map(b => (S.owned[b.id] ? 1 : 0)).join('')}`;
   function renderBuild(body) {
     const vis = visibleBuildings(), sn = seasonAt(Date.now());
     structKey = buildKey();
     const stew = S.steward
       ? `<div class="steward"><span class="st-n">🤵 <b>${L('Šafář', 'Steward')}</b></span><label class="sw"><input type="checkbox" id="autoBuy" ${S.settings.auto ? 'checked' : ''}><i></i>${L('Nakupuje sám', 'Buys on his own')}</label><button class="btn small" id="smartBuy">${L('Nakoupit chytře', 'Buy smart')}</button></div>`
       : Econ.legendsTotal(S) > 0 ? `<p class="hint-card">🤵 ${L(`Šafáře, který nakupuje za tebe, najmeš v Kronice za ${STEWARD_COST} pověsti.`, `Hire a steward who buys for you in the Chronicle for ${STEWARD_COST} legends.`)}</p>` : '';
-    body.innerHTML = `${stew}<div class="amounts" role="group" aria-label="${L('Kolik kupovat', 'How many to buy')}">${[1, 10, 100, 'max'].map(a => `<button data-amt="${a}" aria-pressed="${amount === a}">${a === 'max' ? 'MAX' : '×' + a}</button>`).join('')}</div>
+    const nOwned = BUILDINGS.filter(b => S.owned[b.id]).length;
+    const twinHint = S.stats.buys >= 4 && S.stats.milestones < 3 ? `<p class="hint-card">⭐ ${L(`<b>Mistrovství:</b> s ${MILESTONES[0]}, ${MILESTONES[1]}, ${MILESTONES[2]}… kusy se výnos řemesla zdvojnásobí <b>a každý další nákup přinese dvakrát víc kusů</b> (1, 2, 4, 8…).`, `<b>Mastery:</b> at ${MILESTONES[0]}, ${MILESTONES[1]}, ${MILESTONES[2]}… of a trade its output doubles <b>and every further purchase brings twice as many</b> (1, 2, 4, 8…).`)}</p>` : '';
+    const synHint = nOwned >= 2 && nOwned <= 3 ? `<p class="hint-card">🤝 ${L(`<b>Sousedská výpomoc:</b> každé řemeslo zvedne výnos všech řemesel pod sebou (×${trunc(1 + SYN_FIRST, 2)}, s každým jeho mistrovstvím víc). Nové řemeslo zrychlí celou ves.`, `<b>Neighbourly help:</b> every trade lifts the output of all trades below it (×${trunc(1 + SYN_FIRST, 2)}, more with each of its masteries). A new trade speeds up the whole village.`)}</p>` : '';
+    body.innerHTML = `${stew}${twinHint}${synHint}
       <div class="rows">${vis.map(b => { const i = B_INDEX[b.id], locked = !S.owned[b.id];
         return `<div class="row${locked ? ' locked' : ''}" data-b="${i}">
           <canvas class="ico" data-lv="-1" aria-hidden="true"></canvas>
           <div class="info"><div class="nm"><b>${b.name}</b><span class="cnt"></span>${b.season === sn ? `<span class="tag">${SEASONS[sn].icon} ${L('sezóna', 'in season')}</span>` : ''}<span class="mx"></span></div>
           <div class="sub">${locked ? `<span class="desc">${b.desc}</span>` : `<span class="prod"></span>`}</div>
-          ${locked ? '' : '<div class="ms"><i></i><span></span></div>'}</div>
-          <div class="btns"><button class="buy" data-buy="${i}"><small></small><b></b></button>${locked ? '' : `<button class="to" data-to="${i}" hidden></button>`}</div></div>`; }).join('')}</div>
+          ${locked ? '' : '<div class="syn"></div><div class="ms"><i></i><span></span></div>'}</div>
+          <div class="btns">${locked ? '' : amtHtml('b' + i)}<button class="buy" data-buy="${i}"><small></small><b></b></button>${locked ? '' : `<button class="to" data-to="${i}" hidden></button>`}</div></div>`; }).join('')}</div>
       ${vis.length < BUILDINGS.length ? `<p class="more-hint">${L(`Další řemesla: ${BUILDINGS.length - vis.length}`, `More trades to discover: ${BUILDINGS.length - vis.length}`)}</p>` : ''}`;
   }
+  /** Kolik nákupů znamená volba u položky (Max: kolik se vejde, aspoň 1). */
+  const qOf = (key, max) => { const a = amtOf(key); return a === 'max' ? Math.max(1, max) : a; };
   function refreshBuild() {
-    const sn = seasonAt(Date.now()), r = Econ.rate(S) || 1;
+    const sn = seasonAt(Date.now()), r = Econ.rate(S) || 1, mb = Econ.milestoneBase(S);
     for (const row of document.querySelectorAll('#body .row[data-b]')) {
       const i = +row.dataset.b, b = BUILDINGS[i], n = S.owned[b.id];
       const cv = row.querySelector('canvas.ico'), lv = Scene.LV(n);
       if (+cv.dataset.lv !== lv) { cv.dataset.lv = lv; Scene.icon(cv, b.id, lv, 52); }
-      row.querySelector('.cnt').textContent = n ? n : '';
+      set(row.querySelector('.cnt'), n ? fmtN(n) : '');
+      const u = Econ.perBuy(S, i);
       const pr = row.querySelector('.prod');
-      if (pr) { const br = Econ.bRate(S, i, sn), sh = (br / r) * 100, pc = sh > 0 && sh < 1 ? '<1' : Math.round(sh); pr.textContent = L(`+${fmt(br, 1)} za s · ${pc} %`, `+${fmt(br, 1)} /s · ${pc}%`); }
+      if (pr) { const br = Econ.bRate(S, i, sn), sh = (br / r) * 100, pc = sh > 0 && sh < 1 ? '<1' : Math.round(sh); set(pr, L(`+${fmt(br, 1)} za s · ${pc} %`, `+${fmt(br, 1)} /s · ${pc}%`) + (u > 1 ? L(` · nákup +${fmtN(u)} ks`, ` · +${fmtN(u)} per buy`) : '')); }
+      const sy = row.querySelector('.syn');
+      if (sy) {
+        const h = Econ.help(S, i), up = Econ.syn(S, i), parts = [];
+        if (i > 0 && n) parts.push(`🤝 ${L('nižším', 'to lower')} ×${fmt(h, 2)}`);
+        if (up > 1.0005) parts.push(`⬆️ ${L('od vyšších', 'from higher')} ×${fmt(up, up < 10 ? 2 : 1)}`);
+        set(sy, parts.join(' · '));
+      }
       const ms = row.querySelector('.ms');
-      if (ms) { const nx = Econ.nextMilestone(n), prev = [0, ...MILESTONES].filter(m => m <= n).pop(); ms.querySelector('i').style.width = nx ? `${((n - prev) / (nx - prev)) * 100}%` : '100%'; ms.querySelector('span').textContent = nx ? L(`${n}/${nx} → výnos ×${Econ.milestoneBase(S)}`, `${n}/${nx} → output ×${Econ.milestoneBase(S)}`) : L('Mistr všech mistrů', 'Master of masters'); }
-      const btn = row.querySelector('.buy');
-      let k = amount === 'max' ? Math.max(1, Econ.maxAfford(S, i)) : amount;
-      const cost = Econ.costOf(S, i, k), can = cost <= S.coins;
+      if (ms) {
+        const nx = Econ.nextMilestone(n), k = Econ.milestonesOf(n), prev = k ? MILESTONES[k - 1] : 0;
+        ms.querySelector('i').style.width = nx ? `${Math.max(0, Math.min(100, ((n - prev) / (nx - prev)) * 100))}%` : '100%';
+        set(ms.querySelector('span'), nx ? `${fmtN(n)}/${fmtN(nx)} → ${L(`×${mb} výnos i ×2 kusů`, `×${mb} output, ×2 units`)}` : L('Mistr všech mistrů', 'Master of masters'));
+        ms.title = nx ? L(`Do mistrovství: výnos ×${mb} a každý další nákup přinese dvakrát víc kusů`, `To mastery: output ×${mb} and every further purchase brings twice as many`) : '';
+      }
+      const btn = row.querySelector('.buy'), mx = Econ.maxAfford(S, i);
+      const q = locked(row) ? 1 : qOf('b' + i, mx), units = unitsFor(n, q);
+      const cost = Econ.costOf(S, i, q), can = cost <= S.coins;
       btn.disabled = !can;
-      btn.querySelector('small').textContent = L(`Postavit ×${k}`, `Build ×${k}`);
-      btn.querySelector('b').innerHTML = coinSvg + fmt(cost);
+      set(btn.querySelector('small'), L(`Postavit +${fmtN(units)}`, `Build +${fmtN(units)}`));
+      setH(btn.querySelector('b'), coinSvg + fmt(cost));
+      btn.title = L(`${q}× nákup → +${fmtN(units)} ks`, `${q} purchase${q > 1 ? 's' : ''} → +${fmtN(units)}`);
       btn.classList.toggle('sale', Econ.buff(S, 'cost') < 1);
-      const mx = Econ.maxAfford(S, i);
-      row.querySelector('.mx').textContent = mx ? L(`max +${mx}`, `max +${mx}`) : '';
-      // kolik chybí do dalšího mistrovství nebo vylepšení
+      set(row.querySelector('.mx'), mx ? `max ${mx}×` : '');
+      // kolik nákupů chybí do dalšího mistrovství nebo vylepšení
       const to = row.querySelector('.to');
       if (to) {
         const tg = target(i);
         to.hidden = !tg;
         if (tg) {
-          const need = tg.at - n, c = Econ.costOf(S, i, need);
+          const need = buysFor(n, tg.at), c = Econ.costOf(S, i, need);
           to.dataset.n = need;
           to.disabled = c > S.coins;
-          to.innerHTML = `${tg.icon} +${need} → ${tg.at} · ${coinSvg}${fmt(c)}`;
+          setH(to, `${tg.icon} ${need}× → ${fmtN(tg.at)} · ${coinSvg}${fmt(c)}`);
           to.title = tg.title;
         }
       }
     }
   }
+  const locked = row => row.classList.contains('locked');
+  const set = (el, t) => { if (el && el.textContent !== t) el.textContent = t; };
+  const setH = (el, h) => { if (el && el._h !== h) { el.innerHTML = h; el._h = h; } };
   /** Nejbližší cíl řemesla: další mistrovství nebo stupeň vylepšení, který ještě nemáš. */
   function target(i) {
     const b = BUILDINGS[i], n = S.owned[b.id];
@@ -148,13 +215,13 @@ const UI = (() => {
     const tr = tier >= 0 ? TIER_REQ[tier] : null;
     if (ms == null && tr == null) return null;
     if (tr != null && (ms == null || tr < ms)) return { at: tr, icon: '🔨', title: L(`Do vylepšení ${TIER_NAMES[tier]}`, `To the upgrade ${TIER_NAMES[tier]}`) };
-    return { at: ms, icon: '⭐', title: L(`Do mistrovství: výnos ×${Econ.milestoneBase(S)}`, `To mastery: output ×${Econ.milestoneBase(S)}`) };
+    return { at: ms, icon: '⭐', title: L(`Do mistrovství: výnos ×${Econ.milestoneBase(S)} a každý nákup ×2 kusů`, `To mastery: output ×${Econ.milestoneBase(S)} and twice the units per purchase`) };
   }
 
   // ── Cech ──
   /** Stupně, které jsou vidět: všechny, co máš, a první, který ještě nemáš. */
   function visibleCech() { const out = []; for (let i = 0; i < CECH.length; i++) { out.push(i); if (!(S.cech.a[i] >= 1)) break; } return out; }
-  const cechKey = () => `c${visibleCech().map(i => `${i}${Econ.cechTierOpen(S, i) ? 'o' : ''}${S.cech.a[i] >= 1 ? 'h' : ''}`).join(',')}:${seasonAt(Date.now()) === 3}`;
+  const cechKey = () => `c${visibleCech().map(i => `${i}${Econ.cechTierOpen(S, i) ? 'o' : ''}${S.cech.a[i] >= 1 ? 'h' : ''}`).join(',')}:${seasonAt(Date.now()) === 3}:${amtOpen()}`;
   function cechLock(i) {
     const t = CECH[i];
     if (Econ.legendsTotal(S) < t.leg) return `🔒 ${L(`Odemkne se s ${fmtNice(t.leg)} pověstmi (máš ${fmt(Econ.legendsTotal(S))}).`, `Unlocks with ${fmtNice(t.leg)} legends (you have ${fmt(Econ.legendsTotal(S))}).`)}`;
@@ -165,14 +232,13 @@ const UI = (() => {
     structKey = cechKey();
     body.innerHTML = `<div class="cech-head"><span class="ch-i">👥</span><div class="ch-t"><small id="cSub"></small><b id="cMul"></b><span id="cNext"></span></div></div>
       <p class="hint-card cech-hint">${L('<b>Generátor generuje generátor:</b> každý stupeň cechu vyučí ten pod sebou, tovaryši učně, mistři tovaryše… Učni pracují v řemeslech a každý desetinásobek učňů (10, 100, 1 000…) zvedne výnos vesnice.', '<b>Generators make generators:</b> every guild rank trains the one below, journeymen train apprentices, masters train journeymen… Apprentices work in your trades and every tenfold of them (10, 100, 1,000…) lifts the village’s income.')} ${winter ? `❄️ <b>${L(`Je zima: cech vyučí ×${Econ.cSeason(S, 3)}.`, `It is winter: the guild trains ×${Econ.cSeason(S, 3)}.`)}</b>` : `❄️ ${L(`V zimě cech vyučí ×${Econ.cSeason(S, 3)}.`, `In winter the guild trains ×${Econ.cSeason(S, 3)}.`)}`}</p>
-      <div class="amounts" role="group" aria-label="${L('Kolik kupovat', 'How many to buy')}">${[1, 10, 100, 'max'].map(a => `<button data-amt="${a}" aria-pressed="${amount === a}">${a === 'max' ? 'MAX' : '×' + a}</button>`).join('')}</div>
       <div class="rows">${vis.map(i => { const t = CECH[i], open = Econ.cechTierOpen(S, i), has = S.cech.a[i] >= 1;
         return `<div class="row crow${has ? '' : ' locked'}" data-c="${i}">
           <span class="cico" aria-hidden="true">${t.icon}</span>
           <div class="info"><div class="nm"><b>${t.name}</b><span class="cnt"></span><span class="mx"></span></div>
           <div class="sub">${has ? '<span class="prod"></span>' : `<span class="desc">${open ? t.desc : cechLock(i)}</span>`}</div>
           ${has ? '<div class="ms"><i></i><span></span></div>' : ''}</div>
-          <div class="btns">${open ? `<button class="buy" data-cbuy="${i}"><small></small><b></b></button>` : ''}</div></div>`; }).join('')}</div>
+          <div class="btns">${open ? `${amtHtml('c' + i)}<button class="buy" data-cbuy="${i}"><small></small><b></b></button>` : ''}</div></div>`; }).join('')}</div>
       ${vis.length < CECH.length ? `<p class="more-hint">${L(`Další stupně cechu: ${CECH.length - vis.length}`, `More guild ranks to discover: ${CECH.length - vis.length}`)}</p>` : ''}`;
   }
   function refreshCech() {
@@ -203,13 +269,12 @@ const UI = (() => {
       }
       const btn = row.querySelector('.buy');
       if (btn) {
-        const k = amount === 'max' ? Math.max(1, Econ.cechMax(S, i)) : amount, cost = Econ.cechCost(S, i, k);
+        const mx = Econ.cechMax(S, i), k = qOf('c' + i, mx), cost = Econ.cechCost(S, i, k);
         btn.disabled = cost > S.coins;
-        btn.querySelector('small').textContent = `${t.act} ×${k}`;
-        btn.querySelector('b').innerHTML = coinSvg + fmt(cost);
+        set(btn.querySelector('small'), `${t.act} +${fmtN(k)}`);
+        setH(btn.querySelector('b'), coinSvg + fmt(cost));
         btn.classList.toggle('sale', Econ.buff(S, 'cost') < 1);
-        const mx = Econ.cechMax(S, i);
-        row.querySelector('.mx').textContent = mx ? `max +${mx}` : '';
+        set(row.querySelector('.mx'), mx ? `max +${fmtN(mx)}` : '');
       }
     }
   }
@@ -257,8 +322,9 @@ const UI = (() => {
   }
 
   // ── Kronika (pověsti) ──
-  let lb = null, lbAt = 0;
+  let lb = null, lbAt = 0, treeKey = '';
   function renderLegend(body) {
+    treeKey = Object.keys(S.tree).join();
     const p = Econ.pending(S), next = Econ.nextLegendAt(S), base = LEGEND_BASE * Math.pow(Math.max(Econ.legendsFor(S.earnedAll), Econ.legendsTotal(S)), 3), tot = Econ.legendsTotal(S);
     structKey = 'l';
     const pct = Math.max(0, Math.min(100, ((S.earnedAll - base) / Math.max(1, next - base)) * 100));
@@ -280,6 +346,7 @@ const UI = (() => {
         <small class="muted">${L(`Další pověst při ${fmt(next)} grošů vydělaných celkem`, `Next legend at ${fmt(next)} groschen earned in total`)}</small>
         <button class="btn gold wide" id="prestige" ${p > 0 ? '' : 'disabled'}>${L('Předat vesnici', 'Pass it on')}</button>
       </div>
+      ${treeHtml()}
       <h3>${L('Kronika rodu', 'Family chronicle')}</h3>
       <div class="perks">${PERKS.map(pk => `<div class="perk${tot >= pk.n ? ' on' : ''}"><span class="pn">${fmtNice(pk.n)}</span><div><b>${pk.name}</b><small>${pk.desc}</small></div><i>${tot >= pk.n ? '✔' : '🔒'}</i></div>`).join('')}</div>
       <h3>${L('Žebříčky', 'Leaderboards')}</h3>
@@ -287,6 +354,21 @@ const UI = (() => {
       <div class="chips boards" role="tablist">${BOARDS.map(d => `<button class="chip" data-board="${d.key}" aria-selected="${d.key === board}">${d.icon} ${d.name}</button>`).join('')}</div>
       <div id="lb" class="lb"><p class="muted">${L('Načítám…', 'Loading…')}</p></div>`;
     loadLb();
+  }
+  // ── Rodokmen: trvalé větve za pověsti ──
+  const COLS = [L('Úroda', 'Harvest'), L('Elán a kouzla', 'Spirit and magic'), L('Pomocníci', 'Helpers')];
+  function treeNode(t) {
+    const own = !!S.tree[t.id], open = Econ.treeOpen(S, t), can = !own && open && S.legends >= t.cost;
+    return `<div class="tnode${own ? ' own' : open ? '' : ' lock'}${can ? ' can' : ''}"><span class="ti">${t.icon}</span><div><b>${t.name}</b><small>${t.desc}</small></div>${own ? '<i>✔</i>' : `<button class="btn small gold" data-tree="${t.id}" ${can ? '' : 'disabled'}>${fmtNice(t.cost)} 📜</button>`}</div>`;
+  }
+  function treeHtml() {
+    const root = TREE[0], helpers = Econ.autoList(S);
+    return `<h3>${L('Rodokmen', 'Family tree')}</h3>
+      <p class="muted">${L(`Trvalé větve za pověsti: zůstanou všem dalším pokolením. Pověsti se utratí (jejich +${Math.round(LEGEND_BONUS * 100)} % zmizí), kronika je dál počítá.`, `Lasting branches bought with legends: they stay for every generation. The legends are spent (their +${Math.round(LEGEND_BONUS * 100)}% goes), the chronicle still counts them.`)}</p>
+      <div class="tree"><div class="troot">${treeNode(root)}</div>
+        <div class="tcols">${COLS.map((name, c) => `<div class="tcol"><h4>${name}</h4>${TREE.filter(t => t !== root && t.col === c).map(treeNode).join('')}</div>`).join('')}</div></div>
+      ${helpers.length ? `<div class="abox"><b>${L('Pomocníci kupují sami', 'Helpers buy on their own')}</b><small>${L(`Koupí řemeslo, když další nákup stojí nejvýš ${Math.round(AUTO_SHARE * 100)} % měšce. Na dražší věci se dál šetří.`, `They buy a trade when the next purchase costs at most ${Math.round(AUTO_SHARE * 100)}% of your purse. You keep saving for pricier things.`)}</small>
+        <div class="abs">${helpers.map(i => `<label class="sw"><input type="checkbox" data-ab="${BUILDINGS[i].id}" ${Econ.autoOn(S, i) ? 'checked' : ''}><i></i>${BUILDINGS[i].name}</label>`).join('')}</div></div>` : ''}`;
   }
   /** Moje hodnota na desce (stejně zakódovaná jako v žebříčku). */
   function myBoard(key) { return key === 'total:played' ? Math.floor(S.stats.playTime) : Econ.boards(S)[key] || 0; }
@@ -367,8 +449,10 @@ const UI = (() => {
     const rows = [
       [L('Čas ve hře', 'Time played'), fmtDur(st.playTime)], [L('Pokolení', 'Generation'), S.gen], [L('Vyděláno celkem', 'Earned in total'), fmt(S.earnedAll)],
       [L('Vyděláno v tomto pokolení', 'Earned this generation'), fmt(S.earnedGen)], [L('Nejvyšší výnos', 'Best income'), fmt(st.bestRate, 1) + L(' za s', ' /s')],
-      [L('Postaveno budov', 'Buildings built'), fmt(st.bought)], [L('Nejvíc budov naráz', 'Most buildings at once'), fmt(st.maxBuildings)], ...(S.steward ? [[L('Šafář nakoupil', 'Steward purchases'), fmt(st.stewardBuys)]] : []), [L('Koupeno vylepšení', 'Upgrades bought'), fmt(st.upgrades)], [L('Klepnutí', 'Taps'), fmt(S.taps)],
+      [L('Postaveno budov', 'Buildings built'), fmtN(st.bought)], [L('Nákupů v Řemeslech', 'Purchases in Trades'), fmtN(st.buys)], [L('Nejvíc budov naráz', 'Most buildings at once'), fmtN(st.maxBuildings)], [L('Mistrovství', 'Masteries'), fmtN(st.milestones)], ...(S.steward ? [[L('Šafář nakoupil', 'Steward purchases'), fmt(st.stewardBuys)]] : []), [L('Koupeno vylepšení', 'Upgrades bought'), fmt(st.upgrades)], [L('Klepnutí', 'Taps'), fmt(S.taps)],
       ...(Econ.cechOpen(S) ? [[`👥 ${L('Násobek od učňů', 'Apprentice multiplier')}`, '×' + fmt(Econ.cMul(S), 2)], [`🧹 ${L('Nejvíc učňů', 'Most apprentices')}`, fmt(st.ucniMax)], [L('Do cechu koupeno', 'Bought for the guild'), fmt(st.cechBought)], [L('Cechovní pečeti', 'Guild seals'), fmt(st.cechSeals)]] : []),
+      ...(Econ.elanOpen(S) ? [[`💫 ${L('Elán', 'Spirit')}`, `${Math.floor(S.elan)} / ${ELAN_MAX}`], [`${POWERS.warp.icon} ${POWERS.warp.name}`, fmtN(st.warps)], [`${POWERS.rush.icon} ${POWERS.rush.name}`, fmtN(st.rushes)]] : []),
+      [`🔥 ${L('Největší kombo kouzel', 'Biggest spell combo')}`, '×' + fmt(st.comboMax)], ...(st.autoBuys ? [[`🧑‍🌾 ${L('Pomocníci nakoupili', 'Helper purchases')}`, fmtN(st.autoBuys)]] : []),
       ...CREATURES.map(c => [`${C_ICON[c.id]} ${c.name}`, fmt(S.caught[c.id] || 0)]), [L('Utekly ti', 'Got away'), fmt(st.missed)],
       [L('Bez tebe vesnice vydělává', 'Earns without you for'), fmtDur(Econ.offlineCap(S))],
     ];
@@ -399,11 +483,13 @@ const UI = (() => {
   function help() {
     return `<ul class="help">${[
       L('<b>Klepej do vesnice</b> a vydělávej groše. Za groše stav <b>řemesla</b>: každé vydělává samo, i když hru zavřeš (až 8 hodin, víc přidá Ponocný a pověsti).', '<b>Tap the village</b> to earn groschen. Spend them on <b>trades</b>: each one earns on its own, even while the game is closed (up to 8 hours, more with the Night watchman and legends).'),
-      L('Při <b>25, 50, 100…</b> kusech jednoho řemesla získáš <b>mistrovství</b>: výnos řemesla se zdvojnásobí.', 'At <b>25, 50, 100…</b> of one trade you reach a <b>mastery</b>: that trade’s output doubles.'),
+      L(`Při <b>${MILESTONES.slice(0, 4).map(fmtN).join(', ')}…</b> kusech jednoho řemesla získáš <b>mistrovství</b>: výnos řemesla se zdvojnásobí a <b>každý další nákup přinese dvakrát víc kusů</b> (1, 2, 4, 8…). Cena roste s počtem nákupů, ne kusů. Volbou <b>1× · 10× · Max</b> u řemesla koupíš víc nákupů naráz.`, `At <b>${MILESTONES.slice(0, 4).map(fmtN).join(', ')}…</b> of one trade you reach a <b>mastery</b>: that trade’s output doubles and <b>every further purchase brings twice as many</b> (1, 2, 4, 8…). The price grows with purchases, not units. Pick <b>1× · 10× · Max</b> next to a trade to buy several purchases at once.`),
+      L(`<b>Sousedská výpomoc:</b> každé řemeslo zvedne výnos všech řemesel pod sebou, s prvním kusem ×${trunc(1 + SYN_FIRST, 2)} a s každým jeho mistrovstvím o ${trunc(SYN_MS, 2)} víc.`, `<b>Neighbourly help:</b> every trade lifts the output of all trades below it, ×${trunc(1 + SYN_FIRST, 2)} with its first unit and ${trunc(SYN_MS, 2)} more with each of its masteries.`),
+      L(`<b>Elán</b> 💫 se doplňuje sám (i když nehraješ), nejvýš do ${ELAN_MAX}, a za groše se koupit nedá. Za ${POWERS.warp.cost} otočíš <b>přesýpací hodiny</b> (hned 15 minut výnosu), za ${POWERS.rush.cost} vyhlásíš <b>žně</b> (výnos i klepnutí ×5 na 20 s).`, `<b>Spirit</b> 💫 refills by itself (even while you are away) up to ${ELAN_MAX} and cannot be bought. For ${POWERS.warp.cost} turn the <b>hourglass</b> (15 minutes of income at once), for ${POWERS.rush.cost} call a <b>harvest rush</b> (income and taps ×5 for 20 s).`),
       L('<b>Roční období</b> se střídají každých 5 minut a jsou stejná pro všechny. Řemesla v sezóně vydělávají dvojnásob.', '<b>Seasons</b> change every 5 minutes and are the same for everyone. Trades in season earn double.'),
-      L('Občas se ve vsi zjeví <b>pohádková bytost</b>. Klepni na ni, než zmizí: bludička najde poklad, vodník půjčí hrníček štěstí, čert dá sílu do klepání, Krakonoš zlevní stavby a hospodáříček postaví budovy zdarma.', 'Now and then a <b>fairy-tale creature</b> appears. Tap it before it vanishes: the will-o’-wisp finds treasure, the water goblin lends his lucky pot, the devil powers your taps, Krakonoš cuts prices and the house sprite builds for free.'),
+      L('Každou minutu až dvě se ve vsi zjeví <b>pohádková bytost</b> nebo <b>padající hvězda</b>. Klepni na ni, než zmizí: bludička najde poklad, vodník půjčí hrníček štěstí, čert dá sílu do klepání, Krakonoš zlevní stavby, hospodáříček postaví budovy zdarma a hvězda splní náhodné přání. <b>Kouzla se násobí:</b> vodník ×5, hvězda ×7 a žně ×5 dají dohromady ×175.', 'Every minute or two a <b>fairy-tale creature</b> or a <b>shooting star</b> appears. Tap it before it vanishes: the will-o’-wisp finds treasure, the water goblin lends his lucky pot, the devil powers your taps, Krakonoš cuts prices, the house sprite builds for free and the star grants a random wish. <b>Spells multiply:</b> the goblin’s ×5, a star’s ×7 and a harvest rush ×5 make ×175 together.'),
       L('S první <b>Kovárnou</b> se otevře <b>Cech</b>: generátor generuje generátor. Každý stupeň vyučí ten pod sebou (král vydává listiny, … mistři vychovají tovaryše, tovaryši učně) a <b>učni zvedají výnos celé vesnice</b>: každý desetinásobek učňů o 6 % a víc. Cech roste sám i bez tebe, v zimě dvakrát rychleji. Při 10, 25, 50… koupených kusech dostane stupeň <b>cechovní pečeť</b>.', 'With your first <b>Smithy</b> the <b>Guild</b> opens: generators make generators. Every rank trains the one below (kings issue charters, … masters raise journeymen, journeymen train apprentices) and <b>apprentices lift the whole village’s income</b>: every tenfold of them by 6% and more. The guild grows on its own, even without you, twice as fast in winter. At 10, 25, 50… bought, a rank earns a <b>guild seal</b>.'),
-      L('Až vyděláš hodně, <b>předej vesnici dalšímu pokolení</b> v Kronice. Začneš znovu, ale každá pověst zrychlí všechno o 5 % a odemyká trvalé výhody.', 'Once you have earned a lot, <b>pass the village on</b> in the Chronicle. You start over, but every legend speeds everything up by 5% and unlocks lasting perks.'),
+      L('Až vyděláš hodně, <b>předej vesnici dalšímu pokolení</b> v Kronice. Začneš znovu, ale každá pověst zrychlí všechno o 5 % a odemyká trvalé výhody. Pověsti můžeš utratit v <b>rodokmenu</b>: násobky výnosu, rychlejší elán a <b>pomocníci</b>, kteří sami kupují první řemesla.', 'Once you have earned a lot, <b>pass the village on</b> in the Chronicle. You start over, but every legend speeds everything up by 5% and unlocks lasting perks. Spend legends in the <b>family tree</b>: income multipliers, faster spirit and <b>helpers</b> who buy the first trades by themselves.'),
       L('Po přihlášení v herním centru se vesnice ukládá do účtu a pokračuje na jiném zařízení.', 'Sign in at the game center and the village is saved to your account and continues on other devices.'),
     ].map(x => `<li>${x}</li>`).join('')}</ul>`;
   }
@@ -414,7 +500,7 @@ const UI = (() => {
     else if (tab === 'cech') refreshCech();
     else if (tab === 'upg') refreshUpg();
     else if (tab === 'tasks') refreshTasks();
-    else if (tab === 'legend') { const el = $('#legN'); if (el && el.textContent !== fmt(S.legends)) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; const hb = $('#hire'); if (hb) hb.disabled = S.legends < STEWARD_COST; }
+    else if (tab === 'legend') { const el = $('#legN'); if (el && (el.textContent !== fmt(S.legends) || treeKey !== Object.keys(S.tree).join())) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; const hb = $('#hire'); if (hb) hb.disabled = S.legends < STEWARD_COST; }
   }
 
   // ── Oznámení ──
@@ -424,6 +510,18 @@ const UI = (() => {
     while (box.children.length > (innerWidth < 700 ? 2 : 3)) box.firstChild.remove();
     setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, kind === 'big' ? 4200 : 3000);
   }
+  /** Plovoucí „+16“ u tlačítka v panelu (šťáva k nákupu). */
+  function pop(el, text, cls = '') {
+    if (!el || !el.getBoundingClientRect) return;
+    const r = el.getBoundingClientRect(), p = document.createElement('div');
+    p.className = 'pop ' + cls; p.textContent = text;
+    p.style.left = `${r.left + r.width / 2}px`; p.style.top = `${r.top}px`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  }
+  /** Řádek řemesla nebo cechu krátce zazáří (mistrovství, pečeť). */
+  function flash(sel) { const el = document.querySelector(sel); if (!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
   // ── Okna ──
   function modal(html, buttons) {
     const m = $('#modal');
@@ -443,20 +541,21 @@ const UI = (() => {
       const b = e.target.closest('[data-buy], [data-cbuy]');
       if (!b || b.disabled) return;
       stopHold();
-      const go = () => (b.dataset.cbuy != null ? handlers.cbuy(+b.dataset.cbuy, amount, true) : handlers.buy(+b.dataset.buy, amount, true));
+      const go = () => (b.dataset.cbuy != null ? handlers.cbuy(+b.dataset.cbuy, amtOf('c' + b.dataset.cbuy), true, b) : handlers.buy(+b.dataset.buy, amtOf('b' + b.dataset.buy), true, b));
       hold = setTimeout(() => { hold = setInterval(() => { if (!go()) stopHold(); }, 110); }, 450);
     });
     for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) body.addEventListener(ev, stopHold);
     body.addEventListener('click', e => {
       const t = e.target;
-      const b = t.closest('[data-buy]'); if (b) { handlers.buy(+b.dataset.buy, amount); return; }
-      const cb = t.closest('[data-cbuy]'); if (cb) { handlers.cbuy(+cb.dataset.cbuy, amount); return; }
-      const to = t.closest('[data-to]'); if (to) { handlers.buy(+to.dataset.to, +to.dataset.n); return; }
+      const b = t.closest('[data-buy]'); if (b) { handlers.buy(+b.dataset.buy, amtOf('b' + b.dataset.buy), false, b); return; }
+      const cb = t.closest('[data-cbuy]'); if (cb) { handlers.cbuy(+cb.dataset.cbuy, amtOf('c' + cb.dataset.cbuy), false, cb); return; }
+      const to = t.closest('[data-to]'); if (to) { handlers.buy(+to.dataset.to, +to.dataset.n, false, to); return; }
+      const ra = t.closest('[data-ra]'); if (ra) { const k = ra.dataset.rk; rowAmt[k] = ra.dataset.ra === 'max' ? 'max' : +ra.dataset.ra; for (const x of ra.parentNode.querySelectorAll('[data-ra]')) x.setAttribute('aria-pressed', String(x === ra)); Sound.play.tap(); refresh(); return; }
+      const tr = t.closest('[data-tree]'); if (tr) { handlers.tree(tr.dataset.tree); return; }
       if (t.closest('#smartBuy')) { handlers.smart(); return; }
       if (t.closest('#hire')) { handlers.hire(); return; }
       const bd = t.closest('[data-board]'); if (bd) { board = bd.dataset.board; for (const x of body.querySelectorAll('[data-board]')) x.setAttribute('aria-selected', String(x === bd)); $('#lb').innerHTML = `<p class="muted">${L('Načítám…', 'Loading…')}</p>`; loadLb(); return; }
       const pl = t.closest('#lb tr[data-nick]'); if (pl) { compare(pl.dataset.nick); return; }
-      const a = t.closest('[data-amt]'); if (a) { amount = a.dataset.amt === 'max' ? 'max' : +a.dataset.amt; for (const x of body.querySelectorAll('[data-amt]')) x.setAttribute('aria-pressed', String(x === a)); refresh(); return; }
       const u = t.closest('[data-ubuy]'); if (u) { handlers.upg(u.dataset.ubuy); return; }
       if (t.closest('#buyAll')) { handlers.buyAll(); return; }
       if (t.closest('#prestige')) { handlers.prestige(); return; }
@@ -470,6 +569,7 @@ const UI = (() => {
       if (e.target.id === 'setSci') handlers.setting('sci', e.target.checked);
       if (e.target.id === 'setQuick') handlers.setting('quick', e.target.checked);
       if (e.target.id === 'autoBuy') handlers.setting('auto', e.target.checked);
+      if (e.target.dataset && e.target.dataset.ab) handlers.ab(e.target.dataset.ab, e.target.checked);
     });
     body.addEventListener('input', e => {
       const k = e.target.dataset && e.target.dataset.vol;
@@ -481,6 +581,7 @@ const UI = (() => {
     body.addEventListener('keydown', e => { const pl = e.target.closest && e.target.closest('#lb tr[data-nick]'); if (pl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); compare(pl.dataset.nick); } });
     for (const id of ['#edgeL', '#edgeR']) $(id).addEventListener('click', () => Scene.focusCreature());
     $('#quick').addEventListener('click', () => { if (best) handlers.quick(best); });
+    $('#powers').addEventListener('click', e => { const b = e.target.closest('[data-power]'); if (b && !b.disabled) handlers.power(b.dataset.power, b); });
     $('#newsBtn').addEventListener('click', () => toggleNews());
     $('#news').addEventListener('click', e => { if (e.target.closest('[data-close]')) toggleNews(false); });
     $('#soundBtn').addEventListener('click', () => handlers.setting('mute', !silent()));
@@ -501,11 +602,11 @@ const UI = (() => {
 
   function init(state, handlers) {
     S = state; H = handlers;
-    tabs(); bind(handlers); soundIcon();
+    tabs(); inited = true; bind(handlers); soundIcon();
     document.documentElement.lang = LANG;
     $('.back').setAttribute('aria-label', L('Zpět do herního centra', 'Back to the game center'));
     $('#newsBtn .nl').textContent = L('Novinky', 'What’s new');
     render();
   }
-  return { init, render, refresh, toast, modal, closeModal, setTab, soundIcon, tabs, coinSvg, C_ICON, cName, clockAt, help, toggleNews, compare, get tab() { return tab; }, set state(v) { S = v; } };
+  return { init, render, refresh, toast, modal, closeModal, setTab, soundIcon, tabs, coinSvg, C_ICON, cName, clockAt, help, toggleNews, compare, pop, flash, get tab() { return tab; }, set state(v) { S = v; } };
 })();

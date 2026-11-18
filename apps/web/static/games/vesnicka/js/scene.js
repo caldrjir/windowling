@@ -923,7 +923,7 @@ const Scene = (() => {
       const pad = Math.min(90, (view[1] - view[0]) * 0.15);
       for (let i = 0; i < 12; i++) {
         x = view[0] + pad + Math.random() * Math.max(10, view[1] - view[0] - pad * 2);
-        y = id === 'bludicka' ? 300 + Math.random() * 120 : id === 'cert' ? roadY(x) + 30 + Math.random() * 40 : roadY(x) + 4 + Math.random() * 60;
+        y = id === 'bludicka' ? 300 + Math.random() * 120 : id === 'hvezda' ? 200 + Math.random() * 60 : id === 'cert' ? roadY(x) + 30 + Math.random() * 40 : roadY(x) + 4 + Math.random() * 60;
         if (freeSpot({ id, x, y, p })) break;
       }
     }
@@ -1015,6 +1015,17 @@ const Scene = (() => {
       ell(c, -13, -21, 7, 4, '#a8784a', OL); for (let i = 0; i < 3; i++) circ(c, -17 + i * 4, -24, 2.2, '#e3a75a', OL);
     },
     // Děd Vševěd: stařeček se zlatými vlasy a vousem, s holí a zářící knihou moudrosti.
+    // Padající hvězda: zlatá hvězdička s třpytivým ohonem, pomalu se točí a vznáší nad vsí.
+    hvezda(c, age) {
+      const bob = Math.sin(age * 2.2) * 4, spin = age * 0.8, tw = 1 + Math.sin(age * 7) * 0.08;
+      c.translate(0, -34 + bob);
+      for (let i = 7; i >= 1; i--) circ(c, -i * 6.5, -i * 3.6 + Math.sin(age * 5 + i) * 1.2, 5.5 - i * 0.6, `rgba(255,${226 - i * 8},${150 - i * 10},${0.55 - i * 0.06})`);
+      for (let i = 0; i < 3; i++) { const a = age * 3 + i * 2.1; circ(c, Math.cos(a) * 18, Math.sin(a * 1.3) * 12, 1.4, 'rgba(255,250,220,.95)'); }
+      const pts = [];
+      for (let k = 0; k < 10; k++) { const r = (k % 2 ? 6 : 15) * tw, a = spin + (k * Math.PI) / 5 - Math.PI / 2; pts.push(Math.cos(a) * r, Math.sin(a) * r); }
+      poly(c, pts, '#ffd84a', '#b8860b', 1.6);
+      circ(c, 0, 0, 4.2, '#fff6c8');
+    },
     vseved(c, age) {
       const sway = Math.sin(age * 1.6) * 1.5, glow = 0.6 + 0.4 * Math.sin(age * 4);
       line(c, 15, 2, 13 + sway, -58, '#7a5a3c', 3); circ(c, 13 + sway, -60, 3, '#a8784a', OL);
@@ -1050,7 +1061,7 @@ const Scene = (() => {
   /** Kam na obrazovce klepnout na bytost (CSS px od levého horního rohu plátna) při kameře cx. */
   function screenOf(cr, cx) {
     const k = scale * CR_SIZE * (cr.p < 1 ? 1.3 : 1);
-    return { x: (cr.x - cx * cr.p) * scale, y: cr.y * scale - (cr.id === 'bludicka' ? 20 : cr.id === 'krakonos' ? 50 : 26) * k };
+    return { x: (cr.x - cx * cr.p) * scale, y: cr.y * scale - (cr.id === 'bludicka' ? 20 : cr.id === 'krakonos' ? 50 : cr.id === 'hvezda' ? 34 : 26) * k };
   }
   function creatureScreen() { return creature ? screenOf(creature, cam) : null; }
   // Bytost nesmí stát pod tlačítkem nad scénou (nejlepší koupě na telefonu zakrývá břeh rybníka):

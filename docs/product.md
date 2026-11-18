@@ -34,13 +34,19 @@ against a live opponent, and races of up to 8 players on the same puzzle in ever
 
 **Vesnička** sits on the Relax shelf without the puzzle kit: an idle game in a Czech fairy-tale
 village. Tapping and 14 trades (field to astronomical clock) earn groschen, also while the game
-is closed (8 hours, more with upgrades and legends); masteries, upgrades, seasons that change
-every 5 minutes for everyone, creatures from Czech tales as random events (will-o'-wisp, water
-goblin, devil, Krakonoš, house sprite, Grandpa Know-all), a guild opened by the first smithy
+is closed (8 hours, more with upgrades and legends); masteries (each doubles a trade's output
+and the units every purchase brings: 1, 2, 4, 8…, with a progress bar to the next one),
+1× · 10× · Max next to every item, neighbourly help (every trade lifts all trades below it),
+upgrades, seasons that change every 5 minutes for everyone, creatures from Czech tales and
+shooting stars as random events every one or two minutes (will-o'-wisp, water goblin, devil,
+Krakonoš, house sprite, Grandpa Know-all; a star grants a random wish) whose spells multiply into
+combos, spirit (refills by itself up to 100, cannot be bought) for the hourglass (15 minutes of
+income at once) and the harvest rush (×5 for 20 s), a guild opened by the first smithy
 where generators make generators (8 ranks from apprentice to king, each training the one below;
 every tenfold of apprentices lifts all income, more in winter), daily tasks, achievements, and prestige: passing the
 village to the next generation turns earnings into legends (+5 % each) that unlock a family
-chronicle of lasting perks. Day and night follow the player's clock. A ⚡ best-buy button buys
+chronicle of lasting perks and buy branches of a family tree (income multipliers, faster spirit,
+helpers that buy the first trades by themselves). The interface unfolds as the village grows. Day and night follow the player's clock. A ⚡ best-buy button buys
 whatever pays for itself fastest, a "to the next upgrade" button per trade fills the gap to the
 next mastery or tier, and a steward hired for 3 legends buys for the player, also while away.
 The welcome back says how much of the time away the village earned and when to return; daily

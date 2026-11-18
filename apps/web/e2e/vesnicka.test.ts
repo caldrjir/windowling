@@ -30,23 +30,25 @@ test('VESNIČKA: tap, build, catch a creature, pass the village on and earn whil
 	await page.locator('.row[data-b="0"] .buy').click();
 	expect(await run<number>(page, 'return Game.S.owned.pole;')).toBe(1);
 	await expect(page.locator('.row[data-b="0"] .cnt')).toHaveText('1');
-	// Daily tasks say when the next ones arrive.
-	await page.locator('[data-tab="tasks"]').click();
-	await expect(page.locator('#dailyNext')).toContainText('Nové úkoly za');
-	await page.locator('[data-tab="build"]').click();
-	// "To the next upgrade": exactly what is missing to the next tier or mastery.
+	// "To the next upgrade": exactly the purchases missing to the next tier or mastery.
 	await run(page, 'Game.S.coins = 1e5;');
 	const to = page.locator('.row[data-b="0"] .to');
-	await expect(to).toContainText('+9 → 10');
-	await expect(page.locator('.row[data-b="0"] .mx')).toContainText('max +');
+	await expect(to).toContainText('9× → 10');
+	await expect(page.locator('.row[data-b="0"] .mx')).toContainText('max ');
 	await to.click();
 	expect(await run<number>(page, 'return Game.S.owned.pole;')).toBe(10);
 	// The best buy on the green buys what pays for itself fastest.
-	const bought = () => run<number>(page, 'return Game.S.stats.bought + Game.S.stats.upgrades;');
+	const bought = () => run<number>(page, 'return Game.S.stats.buys + Game.S.stats.upgrades;');
 	const before = await bought();
 	await expect(page.locator('#quick')).toBeVisible();
 	await page.locator('#quick').click();
 	expect(await bought()).toBe(before + 1);
+	// Daily tasks unfold after the first purchases and say when the next ones arrive.
+	await expect(page.locator('[data-tab="tasks"]')).toHaveCount(0);
+	await run(page, 'Game.S.stats.buys = 15;');
+	await page.locator('[data-tab="tasks"]').click();
+	await expect(page.locator('#dailyNext')).toContainText('Nové úkoly za');
+	await page.locator('[data-tab="build"]').click();
 	// The village fits the screen (phones too).
 	expect(
 		await run<boolean>(page, 'return document.documentElement.scrollWidth <= innerWidth;'),
@@ -72,7 +74,7 @@ test('VESNIČKA: tap, build, catch a creature, pass the village on and earn whil
 	expect(await run<number>(page, 'return Object.keys(Game.S.upg).length;')).toBeGreaterThan(3);
 
 	// Passing the village on: legends instead of buildings, the chronicle remembers.
-	await run(page, 'Game.S.earnedAll = 3e10;');
+	await run(page, 'Game.S.earnedAll = 2.7e12;'); // ∛(2,7e12 / 10^11) = 3
 	await page.locator('[data-tab="legend"]').click();
 	await page.locator('#prestige').click();
 	await page.locator('.sheet .btn.gold').click();
@@ -121,7 +123,7 @@ test('VESNIČKA: tap, build, catch a creature, pass the village on and earn whil
 	);
 	expect(lb).toMatchObject({ 'best:score': 3, 'free:pokoleni:score': 1 });
 	expect(lb['free:budovy:score']).toBeGreaterThan(10);
-	expect(lb['free:jmeni:score']).toBeGreaterThan(10_000); // log10(3e10) × 1000
+	expect(lb['free:jmeni:score']).toBeGreaterThan(12_000); // log10(2,7e12) × 1000
 
 	// A day away: the village earned up to its limit and the steward kept buying; the news
 	// of the latest version shows up once.
@@ -190,14 +192,13 @@ test('VESNIČKA guild: the smith founds it, ranks train the ranks below and it g
 	);
 	expect(grown.after).toBeGreaterThan(grown.before + 100);
 	expect(grown.mul[1]).toBeGreaterThan(grown.mul[0]);
-	// Ten bought earn a guild seal.
-	await run(page, 'Game.S.coins = 1e12;');
-	await page.locator('[data-amt="10"]').click();
+	// Ten bought earn a guild seal (1× · 10× · Max next to every item).
+	await run(page, 'Game.S.coins = 1e12; Game.S.stats.buys = 10;');
+	await page.locator('.crow[data-c="0"] [data-ra="10"]').click();
 	await page.locator('[data-cbuy="0"]').click();
 	await expect(page.locator('#toasts')).toContainText('Cechovní pečeť');
 	expect(await run(page, 'return [Game.S.cech.b[0], Game.S.stats.cechSeals];')).toEqual([11, 1]);
 	// The next rank shows up once you have the one below; higher ones need legends.
-	await page.locator('[data-amt="1"]').click();
 	await page.locator('[data-cbuy="2"]').click();
 	await expect(page.locator('.crow[data-c="3"]')).toContainText('Odemkne se s 5 pověstmi');
 	expect(
@@ -242,7 +243,7 @@ test('VESNIČKA guild: the smith founds it, ranks train the ranks below and it g
 	await expect(back.locator('[data-tab="cech"]')).toBeVisible();
 
 	// A new generation starts the guild again; the guild stays founded.
-	await run(back, 'Game.S.earnedAll = 3e10;');
+	await run(back, 'Game.S.earnedAll = 2.7e12;');
 	await back.locator('[data-tab="legend"]').click();
 	await back.locator('#prestige').click();
 	await back.locator('.sheet .btn.gold').click();
@@ -307,16 +308,222 @@ test('VESNIČKA: the chapel grows into a church with the masteries', async ({ pa
 			`for (const b of BUILDINGS) Game.S.owned[b.id] = 0; Game.S.owned.pole = ${pole}; Game.S.upg.kaplicka = 1; return Scene.churchLevel();`,
 		);
 	expect(await level(0)).toBe(1); // a stone chapel
-	expect(await level(100)).toBe(2); // 25, 50 and 100 fields: three masteries, a tower
-	expect(await level(450)).toBe(3); // ten masteries, the spire
+	expect(await level(150)).toBe(2); // 10, 40 and 150 fields: three masteries, a tower
+	expect(await level(120_000)).toBe(3); // ten masteries, the spire
 	await run(page, 'Scene.panTo(600, false);');
 	expect(
 		await run<number>(
 			page,
-			'for (const b of BUILDINGS.slice(0, 4)) Game.S.owned[b.id] = 1000; return Scene.churchLevel();',
+			'for (const b of BUILDINGS.slice(0, 4)) Game.S.owned[b.id] = 1e6; return Scene.churchLevel();',
 		),
-	).toBe(5);
+	).toBe(5); // 4 × 13 masteries
 	await page.waitForTimeout(300); // a few frames of the whole church on screen
+	expect(errors).toEqual([]);
+});
+
+test('VESNIČKA: twin masteries, 1× · 10× · Max, spirit, stars, the family tree and helpers', async ({
+	page,
+}) => {
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	await page.goto(URL);
+	await page.locator('.sheet .btn').click();
+	// The interface starts simple and unfolds: trades and more only, no spirit yet.
+	await expect(page.locator('#tabs [data-tab]')).toHaveCount(2);
+	await expect(page.locator('#powers')).toBeHidden();
+
+	// The first mastery at 10 fields: output ×2 and every purchase now brings two fields.
+	await run(page, 'Game.S.coins = 1e4;');
+	await page.locator('.row[data-b="0"] .buy').click();
+	await page.locator('.row[data-b="0"] .to').click();
+	expect(
+		await run(page, 'return [Game.S.owned.pole, Game.S.buys.pole, Econ.perBuy(Game.S, 0)];'),
+	).toEqual([10, 10, 2]);
+	await expect(page.locator('#toasts')).toContainText('Mistrovství');
+	await expect(page.locator('#toasts')).toContainText('přinese 2 ks');
+	await expect(page.locator('.row[data-b="0"] .buy small')).toHaveText('Postavit +2');
+	await expect(page.locator('.row[data-b="0"] .ms span')).toContainText('10/40');
+	await expect(page.locator('[data-tab="upg"]')).toBeVisible(); // unlocked after the first purchases
+	// 1× · 10× · Max: ten purchases at once (price by purchases, not by units).
+	await run(page, 'Game.S.coins = 1e6;');
+	await page.locator('.row[data-b="0"] [data-ra="10"]').click();
+	await expect(page.locator('.row[data-b="0"] .buy small')).toHaveText('Postavit +20');
+	await page.locator('.row[data-b="0"] .buy').click();
+	expect(await run(page, 'return [Game.S.owned.pole, Game.S.buys.pole];')).toEqual([30, 20]);
+	await page.locator('.row[data-b="0"] [data-ra="max"]').click();
+	const mx = await run<number>(page, 'return Econ.maxAfford(Game.S, 0);');
+	await page.locator('.row[data-b="0"] .buy').click();
+	expect(await run<number>(page, 'return Game.S.buys.pole;')).toBe(20 + mx);
+	// Neighbourly help: a hen house lifts the fields below it.
+	const before = await run<number>(page, 'return Econ.bRate(Game.S, 0, 0, false);');
+	await page.locator('.row[data-b="1"] .buy').click();
+	expect(await run<number>(page, 'return Econ.bRate(Game.S, 0, 0, false);')).toBeGreaterThan(
+		before * 1.15,
+	);
+	await expect(page.locator('.row[data-b="0"] .syn')).toContainText('od vyšších ×1,2');
+
+	// Spirit opens once the village earns a bit: a harvest rush and the hourglass.
+	await run(page, 'Game.S.earnedAll = 1e4;');
+	await expect(page.locator('#powers')).toBeVisible();
+	await expect(page.locator('#toasts')).toContainText('Elán');
+	await page.locator('[data-power="rush"]').click();
+	expect(
+		await run(page, "return Game.S.buffs.filter((b) => b.id.startsWith('zne')).map((b) => b.mul);"),
+	).toEqual([5, 5]);
+	await expect(page.locator('[data-power="rush"]')).toBeDisabled(); // running: a countdown
+	const coins = await run<number>(page, 'return Game.S.coins;');
+	await page.locator('[data-power="warp"]').click();
+	expect(await run<number>(page, 'return Game.S.coins;')).toBeGreaterThan(coins);
+	expect(
+		await run(page, 'return [Game.S.stats.warps, Game.S.stats.rushes, Math.round(Game.S.elan)];'),
+	).toEqual([1, 1, 10]);
+	await expect(page.locator('[data-power="warp"]')).toBeDisabled(); // 10 spirit left
+
+	// A shooting star grants a wish; income spells multiply into a combo.
+	await run(
+		page,
+		"Scene.clearCreature(); Scene.spawnCreature('hvezda', 60); Scene.focusCreature();",
+	);
+	await page.waitForTimeout(800);
+	const at = await run<{ x: number; y: number }>(page, 'return Scene.creatureScreen();');
+	await page.locator('#cv').click({ position: { x: Math.round(at.x), y: Math.round(at.y) } });
+	expect(await run<number>(page, 'return Game.S.stats.stars;')).toBe(1);
+	await run(
+		page,
+		"Game.S.buffs = []; Econ.addBuff(Game.S, 'vodnik', 'rate', 5, 30); Econ.addBuff(Game.S, 'hvezda_shon', 'rate', 7, 30); Econ.noteCombo(Game.S);",
+	);
+	await expect(page.locator('#buffs .b-combo')).toContainText('KOMBO ×35');
+	expect(await run<number>(page, 'return Game.S.stats.comboMax;')).toBeGreaterThanOrEqual(35);
+
+	// The family tree: legends buy lasting branches; a farmhand buys fields and hen houses.
+	await run(page, 'Game.S.legends = 30; Game.S.earnedAll = 1e12;');
+	await page.locator('[data-tab="legend"]').click();
+	await page.locator('[data-tree="erb"]').click();
+	await page.locator('[data-tree="pacholek"]').click();
+	expect(
+		await run(
+			page,
+			'return [Object.keys(Game.S.tree), Game.S.legends, Econ.legendsTotal(Game.S)];',
+		),
+	).toEqual([['erb', 'pacholek'], 28, 30]);
+	await expect(page.locator('[data-tree="puda"]')).toBeEnabled();
+	const auto = await run<number>(page, 'return Game.S.stats.autoBuys;');
+	const buys = await run<number>(page, 'return Game.S.buys.pole + Game.S.buys.kurnik;');
+	await run(page, 'Game.S.coins = 1e12;');
+	await expect.poll(() => run<number>(page, 'return Game.S.stats.autoBuys;')).toBeGreaterThan(auto);
+	expect(await run<number>(page, 'return Game.S.buys.pole + Game.S.buys.kurnik;')).toBeGreaterThan(
+		buys,
+	);
+	await page.locator('label:has([data-ab="pole"])').click();
+	expect(await run(page, 'return Game.S.settings.ab.pole;')).toBe(false);
+
+	// Clean numbers: 1,25 tis. … then scientific from 10^15; never NaN.
+	expect(
+		await run(
+			page,
+			'return [fmt(1250), fmt(4.8e6), fmt(1.24e10), fmt(1.5e15), fmt(NaN), fmt(Infinity)];',
+		),
+	).toEqual(['1,25 tis.', '4,80 mil.', '12,4 mld.', '1,50e15', '0', '∞']);
+	expect(
+		await run<boolean>(page, 'return document.documentElement.scrollWidth <= innerWidth;'),
+	).toBe(true);
+	expect(errors).toEqual([]);
+});
+
+test('VESNIČKA: an old save loads with the new systems (no NaN)', async ({ page }) => {
+	const errors: string[] = [];
+	page.on('pageerror', (e) => errors.push(e.message));
+	// A save from before the overhaul: no purchases, no spirit, no tree, no helper settings.
+	const old = {
+		v: 1,
+		coins: 5e9,
+		earnedGen: 1e10,
+		earnedAll: 3e10,
+		legends: 3,
+		spent: 0,
+		steward: false,
+		gen: 2,
+		taps: 900,
+		owned: { pole: 300, kurnik: 120, vcelin: 60, pekarna: 25, kovarna: 3 },
+		upg: { pole1: 1, pole2: 1, kurnik1: 1 },
+		caught: { bludicka: 4 },
+		buffs: [{ id: 'vodnik', kind: 'rate', mul: 5, t: 20, max: 45 }],
+		ach: {},
+		daily: {
+			day: '2026-11-17',
+			tasks: [{ kind: 'buy', n: 30, claimed: false }],
+			start: { bought: 400, taps: 800, caught: 3, upg: 2, earned: 1e9, milestones: 5 },
+			seasons: {},
+			bonus: false,
+		},
+		cech: { a: [10, 1, 0, 0, 0, 0, 0, 0], b: [0, 0, 0, 0, 0, 0, 0, 0] },
+		stats: {
+			playTime: 5000,
+			bought: 508,
+			upgrades: 3,
+			milestones: 9,
+			seasons: { 0: 1 },
+			night: 0,
+			awayMax: 0,
+			dailyAll: 0,
+			bestRate: 1e6,
+			started: 0,
+			genStart: 0,
+			missed: 1,
+			maxBuildings: 508,
+			stewardBuys: 0,
+			nesro: 0,
+			cechOpen: 1,
+			ucniMax: 10,
+			cechBought: 0,
+			cechSeals: 0,
+		},
+		settings: {
+			sound: true,
+			sci: false,
+			quick: true,
+			auto: true,
+			music: false,
+			musicVol: 55,
+			sfxVol: 100,
+			mute: false,
+		},
+		seen: { news: 7, tap: 1, creature: 1 },
+		t: Date.now() - 60_000,
+	};
+	await page.addInitScript((v) => {
+		// today's tasks, so that the purchase task stays (a new day would draw new ones)
+		const d = new Date(),
+			o = JSON.parse(v);
+		o.daily.day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+		localStorage.setItem('vesnicka.save.v1', JSON.stringify(o));
+	}, JSON.stringify(old));
+	await page.goto(URL);
+	const state = await run<{
+		buys: number;
+		owned: number;
+		elan: number;
+		rate: number;
+		coins: string;
+		tree: number;
+		ab: object;
+	}>(
+		page,
+		'const S = Game.S; return { buys: S.buys.pole, owned: S.owned.pole, elan: S.elan, rate: Econ.rate(S), coins: document.querySelector("#coins").textContent, tree: Object.keys(S.tree).length, ab: S.settings.ab };',
+	);
+	expect(state.owned).toBe(300);
+	expect(state.buys).toBe(await run<number>(page, 'return buysFor(0, 300);'));
+	expect(state.buys).toBeLessThan(300); // cheaper than before: the price follows purchases
+	expect(state.elan).toBe(100);
+	expect(Number.isFinite(state.rate) && state.rate > 0).toBe(true);
+	expect(state.coins).not.toMatch(/NaN|undefined/);
+	expect(state.tree).toBe(0);
+	expect(state.ab).toEqual({});
+	// Today's purchase task counts purchases from now on (not the old buildings count).
+	expect(await run<number>(page, 'return Econ.dailyProgress(Game.S, Game.S.daily.tasks[0]);')).toBe(
+		0,
+	);
+	await expect(page.locator('#body')).not.toContainText('NaN');
 	expect(errors).toEqual([]);
 });
 

@@ -8,7 +8,7 @@ const Game = (() => {
   };
   let S = Econ.load(store.get(SAVE_KEY));
   const isNew = !store.get(SAVE_KEY);
-  let last = performance.now(), saveT = 0, achT = 0, uiT = 0, stewT = 0, wasCreature = null;
+  let last = performance.now(), saveT = 0, achT = 0, uiT = 0, stewT = 0, autoT = 0, wasCreature = null;
   const tapTimes = [];
   /** Jak rychle hráč teď klepe (klepnutí za sekundu za posledních 10 s). */
   function tps() { const t = performance.now() - 10000; while (tapTimes.length && tapTimes[0] < t) tapTimes.shift(); return tapTimes.length / 10; }
@@ -45,6 +45,8 @@ const Game = (() => {
         <p class="effp">${L(`Využito <b>${pct} %</b> času · zhruba ${fmt(perHour)} grošů za hodinu`, `<b>${pct}%</b> of the time used · about ${fmt(perHour)} groschen an hour`)}</p></div>
       ${o.cechOpened ? `<p>⚒️ <b>${L('Kovář mezitím založil v obci cech!', 'Meanwhile the smith founded a guild in the village!')}</b> ${L('Podívej se do nové záložky Cech.', 'Have a look at the new Guild tab.')}</p>` : ''}
       ${o.ucni >= 1 ? `<p>👥 ${L(`Cech mezitím vyučil <b>${fmt(o.ucni)}</b> učňů: výnos teď ×${fmt(Econ.cMul(S), 2)}.`, `Meanwhile the guild trained <b>${fmt(o.ucni)}</b> apprentices: income now ×${fmt(Econ.cMul(S), 2)}.`)}</p>` : ''}
+      ${o.auto ? `<p>🧑‍🌾 ${L(`Pomocníci mezitím nakoupili <b>${fmtN(o.auto)}×</b> (+${fmtN(o.autoUnits)} budov).`, `Meanwhile your helpers made <b>${fmtN(o.auto)}</b> purchases (+${fmtN(o.autoUnits)} buildings).`)}</p>` : ''}
+      ${Econ.elanOpen(S) && o.elan >= 1 ? `<p>💫 ${L(`Elán se doplnil o ${Math.floor(o.elan)} na <b>${Math.floor(S.elan)}/${ELAN_MAX}</b>: otoč přesýpací hodiny nebo vyhlas žně.`, `Spirit refilled by ${Math.floor(o.elan)} to <b>${Math.floor(S.elan)}/${ELAN_MAX}</b>: turn the hourglass or call a harvest rush.`)}</p>` : ''}
       ${o.buys ? `<p>🤵 ${L(`Šafář mezitím koupil <b>${o.buildings}</b> budov, <b>${o.upgrades}</b> vylepšení a <b>${o.cech}</b> do cechu.`, `Meanwhile the steward bought <b>${o.buildings}</b> buildings, <b>${o.upgrades}</b> upgrades and <b>${o.cech}</b> for the guild.`)}</p>` : ''}
       <p class="muted">${o.capped
         ? L(`Bez tebe vesnička vydělává nejvýš ${fmtDur(o.cap)}, pak zahálí. Příště se vrať do ${fmtDur(o.cap)} (když odejdeš teď, tak nejpozději v ${UI.clockAt(o.cap)}). Déle vydrží s Ponocným a s kronikou.`, `Without you the village earns for at most ${fmtDur(o.cap)}, then it idles. Next time come back within ${fmtDur(o.cap)} (if you leave now, by ${UI.clockAt(o.cap)}). The Night watchman and the chronicle make it last longer.`)
@@ -60,8 +62,8 @@ const Game = (() => {
   function onTap(sx, sy) {
     Sound.unlock(); Hudba.unlock();
     tapTimes.push(performance.now());
-    const v = Econ.tap(S);
-    Scene.floatText(sx, sy - 6, '+' + fmt(v, 1), Econ.buff(S, 'tap') > 1 ? '#ff9a7a' : '#fff3b0');
+    const v = Econ.tap(S), tb = Econ.buff(S, 'tap');
+    Scene.floatText(sx, sy - 6, '+' + fmt(v, 1), tb > 1 ? '#ff9a7a' : '#fff3b0', tb >= 25);
     if (Math.random() < 0.5) Scene.coin(sx, sy);
     Sound.play.tap();
     if (!S.seen.tap && S.taps >= 3) { S.seen.tap = 1; document.getElementById('hint').hidden = true; }
@@ -69,18 +71,20 @@ const Game = (() => {
     pulse();
   }
   let pulseT = 0;
-  function pulse() { const el = document.querySelector('.coins'); el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); clearTimeout(pulseT); pulseT = setTimeout(() => el.classList.remove('pulse'), 300); }
-  function buy(i, amount, quiet) {
+  function pulse(big) { const el = document.querySelector('.coins'), c = big ? 'pulse-big' : 'pulse'; el.classList.remove('pulse', 'pulse-big'); void el.offsetWidth; el.classList.add(c); clearTimeout(pulseT); pulseT = setTimeout(() => el.classList.remove(c), big ? 700 : 300); }
+  function buy(i, amount, quiet, el) {
     const ev = Econ.buy(S, i, amount);
     if (!ev) { if (!quiet) Sound.play.no(); return false; }
+    UI.pop(el, '+' + fmtN(ev.n), ev.milestones.length ? 'gold' : '');
     afterBuilt(i, ev, quiet);
     afterChange();
     return true;
   }
   // Rychlý nákup a šafář: koupí to, co se nejrychleji zaplatí.
-  function cbuy(i, amount, quiet) {
+  function cbuy(i, amount, quiet, el) {
     const ev = Econ.cechBuy(S, i, amount);
     if (!ev) { if (!quiet) Sound.play.no(); return false; }
+    UI.pop(el, '+' + fmtN(ev.n), ev.seals.length ? 'gold' : '');
     afterCech(i, ev, quiet);
     afterChange();
     return true;
@@ -89,6 +93,7 @@ const Game = (() => {
     const t = CECH[i];
     if (ev.first) { Sound.play.first(); UI.toast(`${t.icon} <b>${t.name}</b> · ${t.desc}`, 'big'); }
     else if (!quiet) Sound.play.buy(); else Sound.play.tap();
+    if (ev.seals.length) UI.flash(`.crow[data-c="${i}"]`);
     for (const m of ev.seals) { Sound.play.milestone(); UI.toast(`🔏 <b>${L('Cechovní pečeť', 'Guild seal')}: ${t.name} ${m}×</b> · ${i ? L(`${t.verb} ×2`, `${t.verb} ×2`) : L('učni +5 %', 'apprentices +5%')}`, 'gold'); }
   }
   function cechOpened() {
@@ -114,7 +119,7 @@ const Game = (() => {
   }
   function stewardNews(r) {
     for (const i of r.firsts) { const b = BUILDINGS[i]; Sound.play.first(); UI.toast(`<b>${b.name}</b> · ${b.desc}`, 'big'); }
-    for (const [i, m] of r.milestones.slice(-2)) UI.toast(`⭐ <b>${L('Mistrovství', 'Mastery')}: ${BUILDINGS[i].name} ${m}×</b>`, 'gold');
+    for (const [i, m] of r.milestones.slice(-2)) { UI.flash(`.row[data-b="${i}"]`); UI.toast(`⭐ <b>${L('Mistrovství', 'Mastery')}: ${BUILDINGS[i].name} ${fmtN(m)}!</b> ${L(`Nákup teď přinese ${fmtN(Econ.perBuy(S, i))} ks`, `A purchase now brings ${fmtN(Econ.perBuy(S, i))}`)}`, 'gold'); }
     for (const i of r.cfirsts) { const t = CECH[i]; Sound.play.first(); UI.toast(`${t.icon} <b>${t.name}</b> · ${t.desc}`, 'big'); }
     for (const [i, m] of r.seals.slice(-1)) UI.toast(`🔏 <b>${L('Cechovní pečeť', 'Guild seal')}: ${CECH[i].name} ${m}×</b>`, 'gold');
   }
@@ -127,6 +132,63 @@ const Game = (() => {
     const r = Econ.stewardBuy(S, tps(), 30);
     if (r.n) { stewAgg += r.n; stewardNews(r); Sound.play.tap(); afterChange(); }
     if (stewAgg && stewAggT > 20) { UI.toast(`🤵 ${L(`Šafář nakoupil ${stewAgg}×`, `The steward bought ${stewAgg} things`)}`); stewAgg = 0; stewAggT = 0; }
+  }
+  // Pomocníci z rodokmenu: kupují svá řemesla každou sekundu (jen do desetiny měšce).
+  let autoAgg = 0, autoAggT = 0;
+  function autoTick(dt) {
+    autoT += dt; autoAggT += dt;
+    if (autoT < 1) return;
+    autoT = 0;
+    if (!Econ.autoList(S).length) return;
+    const r = Econ.autoBuy(S);
+    if (r.n) {
+      autoAgg += r.n;
+      for (const [i, ev] of r.events.slice(-2)) {
+        if (ev.first) { UI.toast(`<b>${BUILDINGS[i].name}</b> · ${BUILDINGS[i].desc}`, 'big'); continue; }
+        UI.flash(`.row[data-b="${i}"]`);
+        UI.toast(`⭐ <b>${L('Mistrovství', 'Mastery')}: ${BUILDINGS[i].name} ${fmtN(ev.milestones[ev.milestones.length - 1])}!</b> ${L(`Nákup teď přinese ${fmtN(Econ.perBuy(S, i))} ks`, `A purchase now brings ${fmtN(Econ.perBuy(S, i))}`)}`, 'gold');
+        Sound.play.milestone();
+      }
+      afterChange();
+    }
+    if (autoAgg && autoAggT > 30) { UI.toast(`🧑‍🌾 ${L(`Pomocníci nakoupili ${fmtN(autoAgg)}×`, `Helpers made ${fmtN(autoAgg)} purchases`)}`); autoAgg = 0; autoAggT = 0; }
+  }
+  /** Kouzla za elán: přesýpací hodiny (hned 15 minut výnosu) a žně (×5 na 20 s). */
+  function power(id, el) {
+    Sound.unlock(); Hudba.unlock();
+    const r = Econ.power(S, id);
+    if (!r) { Sound.play.no(); return; }
+    const cv = document.getElementById('cv'), rc = cv.getBoundingClientRect(), box = document.getElementById('sceneBox');
+    box.classList.remove('fx-warp', 'fx-rush'); void box.offsetWidth; box.classList.add(id === 'warp' ? 'fx-warp' : 'fx-rush');
+    setTimeout(() => box.classList.remove('fx-warp', 'fx-rush'), 1200);
+    if (id === 'warp') {
+      Sound.play.claim(); Sound.play.bell();
+      Scene.floatText(rc.width / 2, rc.height * 0.42, '⏳ +' + fmt(r.got), '#fff3b0', true);
+      for (let i = 0; i < 26; i++) Scene.coin(rc.width / 2 + (Math.random() - 0.5) * 120, rc.height * 0.45);
+      UI.toast(`${POWERS.warp.icon} <b>${POWERS.warp.name}!</b> ${L(`15 minut výnosu naráz: +${fmt(r.got)}`, `15 minutes of income at once: +${fmt(r.got)}`)}`, 'gold');
+      pulse(true);
+    } else {
+      Sound.play.devil();
+      Scene.burst(rc.width / 2, rc.height * 0.5, '#ffd36a', 30);
+      UI.toast(`${POWERS.rush.icon} <b>${L('Žně!', 'Harvest rush!')}</b> ${L(`Výnos i klepnutí ×${POWERS.rush.mul} na ${r.dur} s. Teď klepej!`, `Income and taps ×${POWERS.rush.mul} for ${r.dur} s. Tap away!`)}`, 'gold');
+    }
+    afterChange(); save();
+  }
+  function tree(id) {
+    if (!Econ.treeBuy(S, id)) { Sound.play.no(); return; }
+    const t = T_INDEX[id];
+    Sound.play.legend();
+    UI.toast(`${t.icon} <b>${t.name}</b> · ${t.desc}`, 'gold');
+    if (t.kind === 'auto') for (const i of t.b) S.settings.ab[BUILDINGS[i].id] = true;
+    afterChange(); UI.render(); save();
+  }
+  function ab(id, on) { S.settings.ab[id] = !!on; save(); }
+  function unlocked(icon, name) { Sound.play.bell(); UI.toast(`🔓 ${L('Nové', 'New')}: <b>${icon} ${name}</b>`, 'big'); }
+  function elanCheck() {
+    if (S.seen.elan || !Econ.elanOpen(S)) return;
+    S.seen.elan = 1;
+    Sound.play.bell();
+    UI.toast(`💫 <b>${L('Elán!', 'Spirit!')}</b> ${L(`Vesnice se rozjela. Elán se doplňuje sám a za něj otočíš přesýpací hodiny (hned 15 minut výnosu) nebo vyhlásíš žně (×5 na 20 s). Najdeš ho vlevo dole.`, `The village is in full swing. Spirit refills by itself: spend it on the hourglass (15 minutes of income at once) or a harvest rush (×5 for 20 s). Bottom left.`)}`, 'big');
   }
   function hire() {
     UI.modal(`<div class="welcome"><div class="wico">🤵</div><h2>${L('Najmout šafáře?', 'Hire a steward?')}</h2>
@@ -145,7 +207,13 @@ const Game = (() => {
       Scene.panTo(Scene.SLOT[b.id][0]);
       UI.toast(`<b>${b.name}</b> · ${b.desc}`, 'big');
     } else if (!quiet) Sound.play.buy(); else Sound.play.tap();
-    for (const m of ev.milestones) { Sound.play.milestone(); UI.toast(`⭐ <b>${L('Mistrovství', 'Mastery')}: ${b.name} ${m}×</b> · ${L(`výnos ×${Econ.milestoneBase(S)}`, `output ×${Econ.milestoneBase(S)}`)}`, 'gold'); }
+    if (ev.milestones.length) {
+      Sound.play.milestone();
+      UI.flash(`.row[data-b="${i}"]`);
+      const k = ev.milestones.length, mb = Math.pow(Econ.milestoneBase(S), k), u = Econ.perBuy(S, i);
+      UI.toast(`⭐ <b>${L('Mistrovství', 'Mastery')}${k > 1 ? ` ×${k}` : ''}: ${b.name} ${fmtN(ev.milestones[k - 1])}!</b> ${L(`Výnos ×${fmtN(mb)}, každý nákup teď přinese <b>${fmtN(u)}</b> ks`, `Output ×${fmtN(mb)}, every purchase now brings <b>${fmtN(u)}</b>`)}`, 'gold ms');
+      if (!quiet || k > 1) { const cv = document.getElementById('cv'), r = cv.getBoundingClientRect(); Scene.burst(r.width / 2, r.height * 0.45, '#ffe27a', 22); }
+    }
   }
   function upg(id) {
     if (!Econ.buyUpg(S, id)) { Sound.play.no(); return; }
@@ -215,7 +283,10 @@ const Game = (() => {
     if (id === 'cert') Sound.play.devil(); else Sound.play.catch();
     if (id === 'nesro') Sound.play.bell();
     let msg = `${UI.C_ICON[id]} <b>${r.name}</b> ${r.text}`;
-    if (r.coins) { msg += `: +${fmt(r.coins)}`; Scene.floatText(sx, sy - 20, '+' + fmt(r.coins), '#bff4ff', true); for (let i = 0; i < 14; i++) Scene.coin(sx, sy); }
+    if (r.coins) { msg += `: +${fmt(r.coins)}`; Scene.floatText(sx, sy - 20, '+' + fmt(r.coins), '#bff4ff', true); for (let i = 0; i < 14; i++) Scene.coin(sx, sy); pulse(true); }
+    else if (id === 'hvezda') Scene.floatText(sx, sy - 20, r.wish === 'elan' ? '+💫' : r.wish === 'sila' ? '✋×50' : '×7', '#fff3b0', true);
+    const combo = Econ.buff(S, 'rate');
+    if (S.buffs.filter(b => b.kind === 'rate').length >= 2) msg += ` · 🔥 <b>${L('KOMBO', 'COMBO')} ×${fmt(combo)}</b>`;
     if (r.buildings) msg += `: +${fmt(r.buildings)}`;
     UI.toast(msg, 'big');
     afterChange();
@@ -240,14 +311,19 @@ const Game = (() => {
         wasCreature = Scene.creature; wasCreature.expire = nowT / 1000 + c.life;
         Sound.play.appear();
         if (ev.creature === 'nesro') UI.toast(L('🎒 Po návsi se prochází někdo s velkým batohem…', '🎒 Someone with a big backpack is strolling across the green…'), 'big');
-        else if (!S.seen.creature) { S.seen.creature = 1; UI.toast(L(`${UI.C_ICON[ev.creature]} Ve vsi se zjevil${ev.creature === 'bludicka' ? 'a' : ''} <b>${c.name}</b>! Rychle na ${ev.creature === 'bludicka' ? 'ni' : 'něj'} klepni.`, `${UI.C_ICON[ev.creature]} A <b>${c.name}</b> appeared! Quick, tap it.`), 'big'); }
+        else if (!S.seen.creature || (ev.creature === 'hvezda' && !S.seen.star)) {
+          S.seen.creature = 1; if (ev.creature === 'hvezda') S.seen.star = 1;
+          const fem = ev.creature === 'bludicka' || ev.creature === 'hvezda';
+          UI.toast(L(`${UI.C_ICON[ev.creature]} Ve vsi se ${ev.creature === 'hvezda' ? 'snesla' : `zjevil${fem ? 'a' : ''}`} <b>${c.name}</b>! Rychle na ${fem ? 'ni' : 'něj'} klepni.`, `${UI.C_ICON[ev.creature]} A <b>${c.name}</b> appeared! Quick, tap it.`), 'big');
+        }
       }
     }
     stewardTick(dt);
+    autoTick(dt);
     Scene.frame(dt, S);
     uiT += dt; achT += dt; saveT += dt;
     if (uiT > 0.2) { uiT = 0; UI.refresh(); creatureTick(); }
-    if (achT > 1) { achT = 0; checkAch(); Hudba.tick(); }
+    if (achT > 1) { achT = 0; checkAch(); elanCheck(); Hudba.tick(); }
     if (saveT > 5) { saveT = 0; save(); }
     requestAnimationFrame(frame);
   }
@@ -266,7 +342,7 @@ const Game = (() => {
     applySettings();
     Scene.init(document.getElementById('cv'));
     Scene.on.tap = onTap; Scene.on.creature = onCreature;
-    UI.init(S, { buy, cbuy, upg, buyAll, prestige, claim, setting, volume, reset, quick: quickBuy, smart, hire, tps, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
+    UI.init(S, { buy, cbuy, upg, buyAll, prestige, claim, setting, volume, reset, quick: quickBuy, smart, hire, tps, power, tree, ab, unlocked, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
     Econ.daily(S);
     if (isNew) { S.seen.news = NEWS_VERSION; intro(); }
     else {
@@ -284,5 +360,5 @@ const Game = (() => {
     requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  return { get S() { return S; }, save, buy, cbuy, upg, onTap, onCreature, prestige, claim, quickBuy, smart, hire };
+  return { get S() { return S; }, save, buy, cbuy, upg, onTap, onCreature, prestige, claim, quickBuy, smart, hire, power, tree };
 })();
