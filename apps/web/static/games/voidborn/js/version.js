@@ -21,4 +21,7 @@
 //        úhlu (BSP strom), díly lícují (gondoly pod křídly, kabina na přídi, lišty na trupu); sekce Debug v Nastavení
 // 1.4.3  Úspěchy rozdělené podle vzácnosti s procentem hráčů, kteří je mají (/api/rarity); kryty děl na přídi
 //        plynule přecházejí v hlavně; záznam výkonu přesunut do sekce Debug
-const GAME_VERSION = '1.4.3';
+// 1.5.0  Legendy prázdnoty: šest vzácných nepřátel (Pozorovatel, Zlatník, Půlnočník, Kometa, Zrcadlo, Uroboros),
+//        každý přiletí jen po splnění tajné podmínky a s malou šancí; úspěch za každého a za všechny, nápovědy
+//        v Kodexu; Debug: jistá šance a přivolání legendy
+const GAME_VERSION = '1.5.0';

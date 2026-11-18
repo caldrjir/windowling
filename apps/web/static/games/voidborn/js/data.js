@@ -73,6 +73,8 @@ const ICONS = {
   crown: '<path d="M3 8.5l4.5 4L12 5.5l4.5 7 4.5-4-1.8 10H4.8z"/><circle cx="12" cy="14.5" r="1.6"/><path d="M5 21h14"/>',
   echo: '<path d="M4 13a8 8 0 0116 0"/><path d="M7 13a5 5 0 0110 0"/><circle cx="12" cy="13" r="1.8"/><path d="M12 15v6"/>',
   zone: '<circle cx="12" cy="12" r="9.5" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/>',
+  legend: '<path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16l-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/><circle cx="12" cy="11.5" r="1.6"/>',
+  mirror: '<path d="M12 3v18" stroke-dasharray="2 2"/><path d="M9.5 6L3 12l6.5 6V6zM14.5 6L21 12l-6.5 6V6z"/>',
 };
 function icon(id, cls = '') {
   return `<svg class="ico ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[id] || ICONS.star}</svg>`;
@@ -400,9 +402,19 @@ const ENEMIES = {
   leech: { shape: 'capsule', color: '#80ed99', r: 11, hp: 18, speed: 150, dmg: 4, xp: 2, mass: 0.5, ai: 'leech', face: 1 },
   scavenger: { shape: 'maw', color: '#d4a373', r: 15, hp: 40, speed: 100, dmg: 9, xp: 2, ai: 'scav', faceA: 1 },
   twin: { shape: 'trap', color: '#f15bb5', r: 14, hp: 30, speed: 92, dmg: 10, xp: 3, ai: 'twin', faceA: 1, tether: 12, noHorde: 1 },
+  // ── Legendy prázdnoty (1.5, chování a podmínky v legends.js) ──
+  // Nechodí s vlnami: každá přiletí jen po splnění tajné podmínky, i pak jen s malou šancí, a za
+  // life sekund zase odletí. Nepočítají se do Bestiáře, mají vlastní úspěchy.
+  watcher: { shape: 'eye', color: '#9dfcff', r: 30, hp: 420, speed: 110, dmg: 0, xp: 60, ai: 'lgWatch', legend: 1, life: 32, mass: 99 },
+  hoarder: { shape: 'gmaw', color: '#ffd23f', r: 19, hp: 380, speed: 215, dmg: 6, xp: 40, ai: 'lgHoard', legend: 1, life: 36, mass: 2, faceA: 1 },
+  midnight: { shape: 'clock', color: '#dfe6ff', r: 26, hp: 460, speed: 0, dmg: 14, xp: 60, ai: 'lgMidnight', legend: 1, life: 40, mass: 99, bulletDmg: 9 },
+  comet: { shape: 'comet', color: '#ff9b3d', r: 22, hp: 420, speed: 600, dmg: 26, xp: 60, ai: 'lgComet', legend: 1, life: 40, mass: 99, fire: 9 },
+  mirror: { shape: 'mship', color: '#f4f0ff', r: 18, hp: 480, speed: 0, dmg: 20, xp: 70, ai: 'lgMirror', legend: 1, life: 42, mass: 99, bulletDmg: 10 },
+  ouroboros: { shape: 'serpent', color: '#7dff6a', r: 24, hp: 700, speed: 250, dmg: 18, xp: 70, ai: 'lgSerpent', legend: 1, life: 42, mass: 99 },
 };
 // Potomci a projektily (rakety, miny, larvy, hydry) se do bestiáře počítají rodiči.
-const ENEMY_KINDS = Object.keys(ENEMIES).filter(k => !ENEMIES[k].sub && k !== 'mini');
+const ENEMY_KINDS = Object.keys(ENEMIES).filter(k => !ENEMIES[k].sub && !ENEMIES[k].legend && k !== 'mini');
+const LEGENDS = Object.keys(ENEMIES).filter(k => ENEMIES[k].legend);
 const enemyKind = k => (k === 'mini' ? 'splitter' : ENEMIES[k].parent || k);
 
 // Skladba vln: [od minuty, váhy typů]
@@ -674,6 +686,14 @@ const ACHIEVEMENTS = [
   { id: 'eternal50', name: 'Nekonečno', desc: 'Kup 50 úrovní ve Věčné dílně.', reward: 120000, perk: { greed: 0.05 }, icon: 'infinity', prog: S => [forgeLevels(S, 4), 50] },
   { id: 'beast18', name: 'Lovec druhů', desc: 'Znič 18 různých druhů nepřátel.', reward: 6000, perk: { might: 0.03 }, icon: 'skull', prog: S => [ENEMY_KINDS.filter(k => S.bestiary[k]).length, 18] },
   { id: 'bestiary', name: 'Bestiář', desc: 'Znič aspoň jednoho nepřítele od každého druhu.', reward: 40000, perk: { might: 0.05 }, icon: 'book', prog: S => [ENEMY_KINDS.filter(k => S.bestiary[k]).length, ENEMY_KINDS.length] },
+  // Legendy prázdnoty: dokud hráč legendu neznič, ukazuje se místo popisu jen nápověda (ui.js).
+  { id: 'lgWatcher', legend: 'watcher', name: 'Upřený pohled', desc: 'Znič legendu Pozorovatel.', reward: 15000, perk: { luck: 0.04 }, icon: 'duration', prog: S => [+!!S.bestiary.watcher, 1] },
+  { id: 'lgHoarder', legend: 'hoarder', name: 'Zlatá horečka', desc: 'Znič legendu Zlatník.', reward: 20000, perk: { greed: 0.05 }, icon: 'shard', prog: S => [+!!S.bestiary.hoarder, 1] },
+  { id: 'lgMidnight', legend: 'midnight', name: 'Dvanáct úderů', desc: 'Znič legendu Půlnočník.', reward: 20000, perk: { cdMul: -0.03 }, icon: 'clock', prog: S => [+!!S.bestiary.midnight, 1] },
+  { id: 'lgComet', legend: 'comet', name: 'Padající hvězda', desc: 'Znič legendu Kometa.', reward: 25000, perk: { area: 0.05 }, icon: 'meteor', prog: S => [+!!S.bestiary.comet, 1] },
+  { id: 'lgMirror', legend: 'mirror', name: 'Tváří v tvář', desc: 'Znič legendu Zrcadlo.', reward: 30000, perk: { dashCd: 0.05 }, icon: 'mirror', prog: S => [+!!S.bestiary.mirror, 1] },
+  { id: 'lgOuroboros', legend: 'ouroboros', name: 'Věčný kruh', desc: 'Znič legendu Uroboros.', reward: 25000, perk: { maxHp: 10 }, icon: 'infinity', prog: S => [+!!S.bestiary.ouroboros, 1] },
+  { id: 'lgAll', name: 'Lovec legend', desc: 'Znič všech šest legend prázdnoty.', reward: 150000, perk: { might: 0.05, luck: 0.05 }, icon: 'legend', prog: S => [LEGENDS.filter(k => S.bestiary[k]).length, LEGENDS.length] },
 ];
 // Trvalé bonusy úspěchů: popis („+3 % poškození“) a součet všech splněných (Síň slávy).
 const PERK_LABEL = {
