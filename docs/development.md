@@ -26,9 +26,8 @@ All local configuration lives in the root `.env`: `pnpm dev`, the database tools
    `feat(web): add game tile`, `fix(auth): keep session after sign-in`.
 4. `pnpm check` before pushing (same as CI's quality job). Run `pnpm test:e2e` for UI/auth/server changes.
 5. Open a PR to `master`, title in Conventional Commit form, body `Closes #<issue>`.
-   CI runs on the PR (once per push). After the merge, `master` runs only the quality job
-   (lint, tests, build) before the deploy: E2E already passed on the PR. Pushing a branch
-   without a PR does not start it.
+   CI runs on the PR (once per push); `master` does not repeat it after the merge, it deploys
+   straight away. Pushing a branch without a PR does not start CI.
 6. CI green → **squash merge**. `master` deploys to production automatically.
 
 ```
@@ -39,8 +38,14 @@ Issue ─► feature branch ─► PR ─► CI ─► (preview) ─► squash m
 
 In a public repository Actions on GitHub's standard runners are free. In a private one the
 minutes come out of the account's monthly allowance, each job rounded up to a whole minute.
-To keep that low, E2E runs only on pull requests (`master` repeats just the quality job before
-the deploy) and the Neon preview database only for PRs that touch `packages/database`.
+To keep that low:
+
+- CI runs only on pull requests; a push to `master` (the merged PR) only deploys.
+- E2E runs only what the PR can affect (`apps/web/scripts/e2e-scope.mjs`): a PR that only
+  changes games under `apps/web/static/games/<id>/` (and their tests) runs those games' tagged
+  tests and all untagged ones in one shard; anything else runs everything in four.
+- The Neon preview database runs only for PRs that touch `packages/database`.
+- Dependabot does not rebase its PRs by itself (comment `@dependabot rebase` before merging).
 
 ### Recommended GitHub settings (one-time, repo admin)
 
@@ -80,9 +85,12 @@ Convention: each completed iteration is at least one minor release.
 - DB tests use `TEST_DATABASE_URL`, migrate it automatically, and are skipped locally if it is
   unset (never in CI).
 - E2E builds the app and runs it with `wrangler dev` (the real Workers runtime), on
-  `http://127.0.0.1:8787`. CI splits it into four parallel shards (`--shard=N/4`, two workers each),
-  each with its own Postgres and Worker, on pull requests only; the `E2E (Playwright on workerd)`
-  check passes when all of them pass. Browser: `PLAYWRIGHT_CHANNEL=chrome|msedge` uses the installed Chrome /
+  `http://127.0.0.1:8787`. CI runs it on pull requests in up to four parallel shards
+  (`--shard=N/M`, two workers each), each with its own Postgres and Worker; the
+  `E2E (Playwright on workerd)` check passes when all of them pass. A game's tests carry its tag
+  (`test('…', { tag: '@<id>' }, …)`, the directory name under `static/games`) so that a PR changing
+  only that game runs just them and the untagged tests; tests of the hub and shared code stay
+  untagged. `E2E_SKIP_TAGS=sudoku,kakuro` leaves tagged tests out locally too. Browser: `PLAYWRIGHT_CHANNEL=chrome|msedge` uses the installed Chrome /
   Edge (no download; CI uses the runner's Chrome), `PLAYWRIGHT_CHROMIUM_EXECUTABLE` any Chromium
   binary, otherwise Playwright's own (`playwright install --only-shell chromium`).
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without
@@ -90,11 +98,11 @@ Convention: each completed iteration is at least one minor release.
 
 ## Environments
 
-| Env        | URL                                 | Database                            | Deploy                  |
-| ---------- | ----------------------------------- | ----------------------------------- | ----------------------- |
-| local      | `http://localhost:5173`             | Docker Postgres                     | `pnpm dev`              |
-| preview    | (planned) per-PR Worker version URL | Neon branch `preview/pr-<n>` (auto) | GitHub Actions          |
-| production | `https://windowling.com`            | Neon via Hyperdrive                 | on green CI on `master` |
+| Env        | URL                                 | Database                            | Deploy                    |
+| ---------- | ----------------------------------- | ----------------------------------- | ------------------------- |
+| local      | `http://localhost:5173`             | Docker Postgres                     | `pnpm dev`                |
+| preview    | (planned) per-PR Worker version URL | Neon branch `preview/pr-<n>` (auto) | GitHub Actions            |
+| production | `https://windowling.com`            | Neon via Hyperdrive                 | on every push to `master` |
 
 ## Preview databases (Neon branches)
 
@@ -140,7 +148,7 @@ every deploy (`wrangler deploy --secrets-file`), so nobody needs to run `wrangle
    **caching disabled**. In production the Worker connects through it; `WORKER_DATABASE_URL`
    is only a fallback when the binding is absent.
 
-After that, every green CI run on `master` migrates and deploys, then smoke-tests `/api/health`.
+After that, every push to `master` (a merged PR, CI green) migrates and deploys, then smoke-tests `/api/health`.
 Manual deploy: `pnpm build && pnpm --filter @windowling/web deploy`.
 
 ## Site password

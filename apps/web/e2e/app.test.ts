@@ -39,7 +39,7 @@ test('switches language and keeps it for the games', async ({ page }) => {
 	await expect(page.locator('.lib-head h2').first()).toHaveText('Hlavní hry');
 });
 
-test('launches VOIDBORN and comes back to the center', async ({ page }) => {
+test('launches VOIDBORN and comes back to the center', { tag: '@voidborn' }, async ({ page }) => {
 	const errors: string[] = [];
 	page.on('pageerror', (error) => errors.push(error.message));
 	await page.goto('/');
@@ -59,143 +59,159 @@ for (const [game, canvas] of [
 	['voidborn', 'cv'],
 	['starspire', 'fx'],
 ] as const) {
-	test(`right-click in ${game} does not open the browser menu`, async ({ page }) => {
-		await page.goto(`/games/${game}/index.html`);
-		await expect(page.locator('#s-title')).not.toBeEmpty();
-		const prevented = await page.evaluate(
-			(id) =>
-				!document
-					.getElementById(id)
-					?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
-			canvas,
-		);
-		expect(prevented).toBe(true);
-	});
+	test(
+		`right-click in ${game} does not open the browser menu`,
+		{ tag: `@${game}` },
+		async ({ page }) => {
+			await page.goto(`/games/${game}/index.html`);
+			await expect(page.locator('#s-title')).not.toBeEmpty();
+			const prevented = await page.evaluate(
+				(id) =>
+					!document
+						.getElementById(id)
+						?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+				canvas,
+			);
+			expect(prevented).toBe(true);
+		},
+	);
 }
 
-test('launches STARSPIRE from the center and plays a card', async ({ page, isMobile }) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/');
-	// First tap selects the card on the shelf, the second one launches it.
-	const card = page.getByTestId('shelf').locator('.gcard').nth(1);
-	await card.click();
-	await expect(page.locator('.hero-title')).toHaveText('STARSPIRE');
-	await card.click();
-	await page.waitForURL('**/games/starspire/**');
-	await expect(page).toHaveTitle('STARSPIRE');
+test(
+	'launches STARSPIRE from the center and plays a card',
+	{ tag: '@starspire' },
+	async ({ page, isMobile }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.goto('/');
+		// First tap selects the card on the shelf, the second one launches it.
+		const card = page.getByTestId('shelf').locator('.gcard').nth(1);
+		await card.click();
+		await expect(page.locator('.hero-title')).toHaveText('STARSPIRE');
+		await card.click();
+		await page.waitForURL('**/games/starspire/**');
+		await expect(page).toHaveTitle('STARSPIRE');
 
-	const tap = (selector: string) =>
-		isMobile
-			? page.locator(selector).first().tap({ force: true })
-			: page.locator(selector).first().click({ force: true });
-	await page.locator('#s-title').click();
-	await tap('[data-go="heroes"]');
-	await tap('[data-act="startRun"]');
-	await tap('.node.avail');
-	await expect(page.locator('#hand .card')).toHaveCount(5);
-	await expect(page.locator('#endTurn')).toBeInViewport();
-	// Tap a card, then the enemy: the card is played and costs energy.
-	await tap('#hand .card');
-	await tap('.enemy:not(.dead)');
-	await expect(page.locator('#hand .card')).toHaveCount(4);
-	expect(errors).toEqual([]);
-});
+		const tap = (selector: string) =>
+			isMobile
+				? page.locator(selector).first().tap({ force: true })
+				: page.locator(selector).first().click({ force: true });
+		await page.locator('#s-title').click();
+		await tap('[data-go="heroes"]');
+		await tap('[data-act="startRun"]');
+		await tap('.node.avail');
+		await expect(page.locator('#hand .card')).toHaveCount(5);
+		await expect(page.locator('#endTurn')).toBeInViewport();
+		// Tap a card, then the enemy: the card is played and costs energy.
+		await tap('#hand .card');
+		await tap('.enemy:not(.dead)');
+		await expect(page.locator('#hand .card')).toHaveCount(4);
+		expect(errors).toEqual([]);
+	},
+);
 
-test('STARSPIRE: Star Atlas, the Act IV summit and the Endless Spire', async ({
-	page,
-	isMobile,
-}) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	const tap = (selector: string) =>
-		isMobile
-			? page.locator(selector).first().tap({ force: true })
-			: page.locator(selector).first().click({ force: true });
-	await page.goto('/games/starspire/index.html');
-	await page.evaluate('SAVE.dust = 100; persist()');
-	await page.locator('#s-title').click();
+test(
+	'STARSPIRE: Star Atlas, the Act IV summit and the Endless Spire',
+	{ tag: '@starspire' },
+	async ({ page, isMobile }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		const tap = (selector: string) =>
+			isMobile
+				? page.locator(selector).first().tap({ force: true })
+				: page.locator(selector).first().click({ force: true });
+		await page.goto('/games/starspire/index.html');
+		await page.evaluate('SAVE.dust = 100; persist()');
+		await page.locator('#s-title').click();
 
-	// Stardust buys permanent upgrades.
-	await tap('[data-go="atlas"]');
-	await tap('[data-perk="vit"]');
-	await expect(page.locator('.dust-bank b')).toHaveText('60');
-	await tap('[data-go="menu"]');
-	await tap('[data-go="heroes"]');
-	await tap('[data-act="startRun"]');
-	expect(await page.evaluate('R.maxHp')).toBe(85);
+		// Stardust buys permanent upgrades.
+		await tap('[data-go="atlas"]');
+		await tap('[data-perk="vit"]');
+		await expect(page.locator('.dust-bank b')).toHaveText('60');
+		await tap('[data-go="menu"]');
+		await tap('[data-go="heroes"]');
+		await tap('[data-act="startRun"]');
+		expect(await page.evaluate('R.maxHp')).toBe(85);
 
-	// Straight to the boss of the fourth act.
-	await page.evaluate(
-		'R.act = 3; R.map = Run.genMap(3); R.row = 11; R.col = 0; Run.save(); UI.go("menu")',
-	);
-	await tap('[data-act="continue"]');
-	await expect(page.locator('.map-head p')).toContainText('4 / 4');
-	await tap('.node.boss');
-	await expect(page.locator('.enemy')).toHaveCount(1);
-	await page.evaluate(
-		'B.enemies[0].block = 0; Battle.hitEnemy(B.enemies[0], 99999); Battle.finish()',
-	);
-	await tap('[data-act="rwDone"]');
-	if (await page.locator('[data-act="skipBossRelic"]').count())
-		await tap('[data-act="skipBossRelic"]');
+		// Straight to the boss of the fourth act.
+		await page.evaluate(
+			'R.act = 3; R.map = Run.genMap(3); R.row = 11; R.col = 0; Run.save(); UI.go("menu")',
+		);
+		await tap('[data-act="continue"]');
+		await expect(page.locator('.map-head p')).toContainText('4 / 4');
+		await tap('.node.boss');
+		await expect(page.locator('.enemy')).toHaveCount(1);
+		await page.evaluate(
+			'B.enemies[0].block = 0; Battle.hitEnemy(B.enemies[0], 99999); Battle.finish()',
+		);
+		await tap('[data-act="rwDone"]');
+		if (await page.locator('[data-act="skipBossRelic"]').count())
+			await tap('[data-act="skipBossRelic"]');
 
-	// The summit counts as a victory; the climb goes on into the Endless Spire.
-	await expect(page.locator('.summit')).toBeVisible();
-	expect(await page.evaluate('SAVE.stats.victories')).toBe(1);
-	await tap('[data-act="summitGo"]');
-	await tap('[data-omen]');
-	expect(await page.evaluate('[R.loop, R.act, R.omens.length]')).toEqual([1, 0, 1]);
-	await expect(page.locator('.tb-floor')).toContainText('52');
+		// The summit counts as a victory; the climb goes on into the Endless Spire.
+		await expect(page.locator('.summit')).toBeVisible();
+		expect(await page.evaluate('SAVE.stats.victories')).toBe(1);
+		await tap('[data-act="summitGo"]');
+		await tap('[data-omen]');
+		expect(await page.evaluate('[R.loop, R.act, R.omens.length]')).toEqual([1, 0, 1]);
+		await expect(page.locator('.tb-floor')).toContainText('52');
 
-	await tap('[data-act="pause"]');
-	await tap('[data-act="abandon"]');
-	await expect(page.locator('.dust-gain')).toContainText('+');
-	expect(await page.evaluate('SAVE.dust')).toBeGreaterThan(60);
-	expect(errors).toEqual([]);
-});
+		await tap('[data-act="pause"]');
+		await tap('[data-act="abandon"]');
+		await expect(page.locator('.dust-gain')).toContainText('+');
+		expect(await page.evaluate('SAVE.dust')).toBeGreaterThan(60);
+		expect(errors).toEqual([]);
+	},
+);
 
-test('STARSPIRE Saga: one deck through the levels, retry after a fall', async ({
-	page,
-	isMobile,
-}) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	const tap = (selector: string) =>
-		isMobile
-			? page.locator(selector).first().tap({ force: true })
-			: page.locator(selector).first().click({ force: true });
-	await page.goto('/games/starspire/index.html');
-	await page.locator('#s-title').click();
-	await tap('[data-go="heroes"]');
-	await tap('[data-mode="saga"]');
-	await tap('[data-act="startRun"]');
-	await expect(page.locator('.map-head p')).toContainText('1');
+test(
+	'STARSPIRE Saga: one deck through the levels, retry after a fall',
+	{ tag: '@starspire' },
+	async ({ page, isMobile }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		const tap = (selector: string) =>
+			isMobile
+				? page.locator(selector).first().tap({ force: true })
+				: page.locator(selector).first().click({ force: true });
+		await page.goto('/games/starspire/index.html');
+		await page.locator('#s-title').click();
+		await tap('[data-go="heroes"]');
+		await tap('[data-mode="saga"]');
+		await tap('[data-act="startRun"]');
+		await expect(page.locator('.map-head p')).toContainText('1');
 
-	// Win the level with a bigger deck: the next level keeps it, on Eclipse 1.
-	await page.evaluate(
-		'Run.addCard("bash", true); Run.checkpoint(); R.act = 3; R.map = Run.genMap(3); R.row = 11; R.col = 0; Run.save(); UI.go("menu")',
-	);
-	await tap('[data-act="continueSaga"]');
-	await tap('.node.boss');
-	await expect(page.locator('.enemy')).toHaveCount(1);
-	await page.evaluate(
-		'B.enemies[0].block = 0; Battle.hitEnemy(B.enemies[0], 99999); Battle.finish()',
-	);
-	await tap('[data-act="rwDone"]');
-	if (await page.locator('[data-act="skipBossRelic"]').count())
-		await tap('[data-act="skipBossRelic"]');
-	await tap('[data-act="sagaGo"]');
-	expect(await page.evaluate('[R.level, R.eclipse, R.act, R.deck.length]')).toEqual([1, 1, 0, 11]);
+		// Win the level with a bigger deck: the next level keeps it, on Eclipse 1.
+		await page.evaluate(
+			'Run.addCard("bash", true); Run.checkpoint(); R.act = 3; R.map = Run.genMap(3); R.row = 11; R.col = 0; Run.save(); UI.go("menu")',
+		);
+		await tap('[data-act="continueSaga"]');
+		await tap('.node.boss');
+		await expect(page.locator('.enemy')).toHaveCount(1);
+		await page.evaluate(
+			'B.enemies[0].block = 0; Battle.hitEnemy(B.enemies[0], 99999); Battle.finish()',
+		);
+		await tap('[data-act="rwDone"]');
+		if (await page.locator('[data-act="skipBossRelic"]').count())
+			await tap('[data-act="skipBossRelic"]');
+		await tap('[data-act="sagaGo"]');
+		expect(await page.evaluate('[R.level, R.eclipse, R.act, R.deck.length]')).toEqual([
+			1, 1, 0, 11,
+		]);
 
-	// A fall is not the end: the level starts again with the same deck.
-	await tap('.node.avail');
-	await expect(page.locator('.enemy').first()).toBeVisible();
-	await page.evaluate('Battle.hurtPlayer(9999, false); Battle.finish()');
-	await tap('[data-act="sagaRetry"]');
-	expect(await page.evaluate('[R.level, R.hp === R.maxHp, R.deck.length]')).toEqual([1, true, 11]);
-	expect(errors).toEqual([]);
-});
+		// A fall is not the end: the level starts again with the same deck.
+		await tap('.node.avail');
+		await expect(page.locator('.enemy').first()).toBeVisible();
+		await page.evaluate('Battle.hurtPlayer(9999, false); Battle.finish()');
+		await tap('[data-act="sagaRetry"]');
+		expect(await page.evaluate('[R.level, R.hp === R.maxHp, R.deck.length]')).toEqual([
+			1,
+			true,
+			11,
+		]);
+		expect(errors).toEqual([]);
+	},
+);
 
 test('background music: a default playlist per game, your own playlist, or none', async ({
 	page,
@@ -241,71 +257,75 @@ test('background music: a default playlist per game, your own playlist, or none'
 	expect(errors).toEqual([]);
 });
 
-test('VOIDBORN can be played by touch', async ({ page, context, isMobile }) => {
-	test.skip(!isMobile, 'touch controls are for phones');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/games/voidborn/index.html');
-	await page.touchscreen.tap(100, 100);
-	await page.locator('[data-go="hangar"]').tap();
-	await page.locator('#startBtn').tap();
-	await expect(page.locator('#dashBtn')).toBeVisible();
+test(
+	'VOIDBORN can be played by touch',
+	{ tag: '@voidborn' },
+	async ({ page, context, isMobile }) => {
+		test.skip(!isMobile, 'touch controls are for phones');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.goto('/games/voidborn/index.html');
+		await page.touchscreen.tap(100, 100);
+		await page.locator('[data-go="hangar"]').tap();
+		await page.locator('#startBtn').tap();
+		await expect(page.locator('#dashBtn')).toBeVisible();
 
-	// Drag a floating stick to the right: the ship follows.
-	const cdp = await context.newCDPSession(page);
-	const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x = 0, y = 0) =>
-		cdp.send('Input.dispatchTouchEvent', {
-			type,
-			touchPoints: type === 'touchEnd' ? [] : [{ x, y }],
+		// Drag a floating stick to the right: the ship follows.
+		const cdp = await context.newCDPSession(page);
+		const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x = 0, y = 0) =>
+			cdp.send('Input.dispatchTouchEvent', {
+				type,
+				touchPoints: type === 'touchEnd' ? [] : [{ x, y }],
+			});
+		await touch('touchStart', 120, 500);
+		for (let i = 1; i <= 8; i++) await touch('touchMove', 120 + i * 8, 500);
+		await expect
+			// The game's state is a top-level `const G` (not on window).
+			.poll(() => page.evaluate<number>('G.p.x'))
+			.toBeGreaterThan(50);
+		await touch('touchEnd');
+		expect(errors).toEqual([]);
+	},
+);
+
+test(
+	'VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop',
+	{ tag: '@voidborn' },
+	async ({ page, isMobile }) => {
+		test.skip(isMobile, 'one run is enough for the game logic');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		// A veteran: Sector II cleared, the achievements that unlock the advanced weapons and passives.
+		await page.addInitScript(() => {
+			localStorage.setItem(
+				'voidborn.save.v1',
+				JSON.stringify({
+					shards: 20000,
+					forge: { revival: 1 },
+					achievements: { clear1: 1, clear2: 1, evo1: 1, evo4: 1, boss1: 1 },
+					sectors: {
+						s1: { cleared: true, odUnlocked: 1, best: 900 },
+						s2: { cleared: true, odUnlocked: 1, best: 900 },
+					},
+				}),
+			);
 		});
-	await touch('touchStart', 120, 500);
-	for (let i = 1; i <= 8; i++) await touch('touchMove', 120 + i * 8, 500);
-	await expect
-		// The game's state is a top-level `const G` (not on window).
-		.poll(() => page.evaluate<number>('G.p.x'))
-		.toBeGreaterThan(50);
-	await touch('touchEnd');
-	expect(errors).toEqual([]);
-});
+		await page.goto('/games/voidborn/index.html');
+		await page.mouse.click(100, 100);
+		await page.locator('[data-go="forge"]').click();
+		// The Forge is a ship: the cockpit holds the Master Workshop's extra card (open after Sector II).
+		await page.locator('[data-part="cockpit"]').click();
+		await expect(page.locator('#fc-cards')).not.toHaveClass(/locked/);
+		await page.locator('[data-buy="cards"]').click();
+		expect(await page.evaluate('SAVE.forge.cards')).toBe(1);
+		await page.locator('.back').click();
+		await page.locator('[data-go="hangar"]').click();
+		await page.locator('#startBtn').click();
+		// The revive left is visible in the run.
+		await expect(page.locator('#hudChips .hc.rv')).toContainText('1');
 
-test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop', async ({
-	page,
-	isMobile,
-}) => {
-	test.skip(isMobile, 'one run is enough for the game logic');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// A veteran: Sector II cleared, the achievements that unlock the advanced weapons and passives.
-	await page.addInitScript(() => {
-		localStorage.setItem(
-			'voidborn.save.v1',
-			JSON.stringify({
-				shards: 20000,
-				forge: { revival: 1 },
-				achievements: { clear1: 1, clear2: 1, evo1: 1, evo4: 1, boss1: 1 },
-				sectors: {
-					s1: { cleared: true, odUnlocked: 1, best: 900 },
-					s2: { cleared: true, odUnlocked: 1, best: 900 },
-				},
-			}),
-		);
-	});
-	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
-	await page.locator('[data-go="forge"]').click();
-	// The Forge is a ship: the cockpit holds the Master Workshop's extra card (open after Sector II).
-	await page.locator('[data-part="cockpit"]').click();
-	await expect(page.locator('#fc-cards')).not.toHaveClass(/locked/);
-	await page.locator('[data-buy="cards"]').click();
-	expect(await page.evaluate('SAVE.forge.cards')).toBe(1);
-	await page.locator('.back').click();
-	await page.locator('[data-go="hangar"]').click();
-	await page.locator('#startBtn').click();
-	// The revive left is visible in the run.
-	await expect(page.locator('#hudChips .hc.rv')).toContainText('1');
-
-	// The game's state is top-level `const`/functions of the page (not on window).
-	const run = (await page.evaluate(`(() => {
+		// The game's state is top-level `const`/functions of the page (not on window).
+		const run = (await page.evaluate(`(() => {
 		G.weapons = [];
 		addWeapon('disc', 8); addWeapon('plasma', 8); addWeapon('meteor', 8);
 		for (const id of ['luck', 'speed', 'critamp']) applyChoice({ kind: 'passive', id });
@@ -321,16 +341,16 @@ test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop'
 			stabilizer: calcStats(PILOTS[0], { duration: 4 }, {}, {}).projSpd,
 		};
 	})()`)) as Record<string, unknown>;
-	expect(run).toMatchObject({
-		evos: ['comet', 'quantum', 'starfall'],
-		weapons: ['quantum:1', 'comet:0', 'starfall:0'],
-		armor10: 484,
-		stabilizer: 1.2,
-	});
-	expect(run.cards).toBeGreaterThanOrEqual(4);
-	await page.waitForTimeout(1500);
-	// Nothing left to upgrade: level-ups offer mutations, which raise the stats without a limit.
-	const mut = (await page.evaluate(`(() => {
+		expect(run).toMatchObject({
+			evos: ['comet', 'quantum', 'starfall'],
+			weapons: ['quantum:1', 'comet:0', 'starfall:0'],
+			armor10: 484,
+			stabilizer: 1.2,
+		});
+		expect(run.cards).toBeGreaterThanOrEqual(4);
+		await page.waitForTimeout(1500);
+		// Nothing left to upgrade: level-ups offer mutations, which raise the stats without a limit.
+		const mut = (await page.evaluate(`(() => {
 		G.weapons.forEach(w => { w.oc = OC_MAX; });
 		for (const id in G.passives) G.passives[id] = PASSIVES[id].max;
 		computeStats();
@@ -340,68 +360,69 @@ test('VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop'
 		applyChoice({ kind: 'mut', id: 'might', lvl: 1 });
 		return { kinds, gain: Math.round((G.st.might - before) * 100) };
 	})()`)) as { kinds: string[]; gain: number };
-	expect(mut.kinds).toContain('mut');
-	expect(mut.gain).toBe(4);
-	expect(errors).toEqual([]);
-});
+		expect(mut.kinds).toContain('mut');
+		expect(mut.gain).toBe(4);
+		expect(errors).toEqual([]);
+	},
+);
 
-test('VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the anomaly sectors', async ({
-	page,
-	isMobile,
-}) => {
-	test.skip(isMobile, 'one run is enough for the game logic');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// All five main sectors cleared: the Void Workshop and the four anomaly sectors are open.
-	await page.addInitScript(() => {
-		if (sessionStorage.getItem('seeded')) return;
-		sessionStorage.setItem('seeded', '1');
-		const sectors: Record<string, object> = {};
-		for (const id of ['s1', 's2', 's3', 's4', 's5'])
-			sectors[id] = { cleared: true, odUnlocked: 1, best: 900 };
-		localStorage.setItem(
-			'voidborn.save.v1',
-			JSON.stringify({ shards: 50000, achievements: { clear1: 1, clear2: 1 }, sectors }),
-		);
-	});
-	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
-	await page.locator('[data-go="hangar"]').click();
-	await expect(page.locator('.sectors.anom .sector')).toHaveCount(4);
-	await expect(page.locator('.sectors.anom .sector.locked')).toHaveCount(0);
-	await page.locator('.screen.active .back').click();
+test(
+	'VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the anomaly sectors',
+	{ tag: '@voidborn' },
+	async ({ page, isMobile }) => {
+		test.skip(isMobile, 'one run is enough for the game logic');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		// All five main sectors cleared: the Void Workshop and the four anomaly sectors are open.
+		await page.addInitScript(() => {
+			if (sessionStorage.getItem('seeded')) return;
+			sessionStorage.setItem('seeded', '1');
+			const sectors: Record<string, object> = {};
+			for (const id of ['s1', 's2', 's3', 's4', 's5'])
+				sectors[id] = { cleared: true, odUnlocked: 1, best: 900 };
+			localStorage.setItem(
+				'voidborn.save.v1',
+				JSON.stringify({ shards: 50000, achievements: { clear1: 1, clear2: 1 }, sectors }),
+			);
+		});
+		await page.goto('/games/voidborn/index.html');
+		await page.mouse.click(100, 100);
+		await page.locator('[data-go="hangar"]').click();
+		await expect(page.locator('.sectors.anom .sector')).toHaveCount(4);
+		await expect(page.locator('.sectors.anom .sector.locked')).toHaveCount(0);
+		await page.locator('.screen.active .back').click();
 
-	await page.locator('[data-go="forge"]').click();
-	await page.locator('[data-part="cockpit"]').click();
-	await expect(page.locator('#fc-deepmut')).not.toHaveClass(/locked/); // the Void Workshop is open
-	await page.locator('[data-buy="deepmut"]').click();
-	expect(await page.evaluate('SAVE.forge.deepmut')).toBe(1);
-	await page.locator('.screen.active .back').click();
+		await page.locator('[data-go="forge"]').click();
+		await page.locator('[data-part="cockpit"]').click();
+		await expect(page.locator('#fc-deepmut')).not.toHaveClass(/locked/); // the Void Workshop is open
+		await page.locator('[data-buy="deepmut"]').click();
+		expect(await page.evaluate('SAVE.forge.deepmut')).toBe(1);
+		await page.locator('.screen.active .back').click();
 
-	// Auto-pick on, the first weapon moved one place up in the priorities.
-	await page.locator('[data-go="settings"]').click();
-	await page.locator('[data-tog="autoPick"]').click();
-	await page.locator('[data-go="prio"]').click();
-	const sixth = await page.evaluate<string>('SAVE.settings.prio?.[5] ?? PRIO_DEFAULT[5]');
-	await page.locator('[data-prio="up:5"]').click();
-	expect(await page.evaluate('[SAVE.settings.autoPick, SAVE.settings.prio[4]]')).toEqual([
-		true,
-		sixth,
-	]);
-	// Entries can be dragged too: the first one dropped below the third.
-	const first = await page.evaluate<string>('SAVE.settings.prio[0]');
-	const from = await page.locator('#prioList > li').nth(0).boundingBox();
-	const to = await page.locator('#prioList > li').nth(2).boundingBox();
-	if (!from || !to) throw new Error('no priority entries');
-	await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-	await page.mouse.down();
-	await page.mouse.move(to.x + to.width / 2, to.y + to.height * 0.8, { steps: 10 });
-	await page.mouse.up();
-	expect(await page.evaluate(`SAVE.settings.prio.indexOf(${JSON.stringify(first)})`)).toBe(2);
-	await expect(page.locator('#prioList > li').nth(2)).toHaveAttribute('data-k', first);
+		// Auto-pick on, the first weapon moved one place up in the priorities.
+		await page.locator('[data-go="settings"]').click();
+		await page.locator('[data-tog="autoPick"]').click();
+		await page.locator('[data-go="prio"]').click();
+		const sixth = await page.evaluate<string>('SAVE.settings.prio?.[5] ?? PRIO_DEFAULT[5]');
+		await page.locator('[data-prio="up:5"]').click();
+		expect(await page.evaluate('[SAVE.settings.autoPick, SAVE.settings.prio[4]]')).toEqual([
+			true,
+			sixth,
+		]);
+		// Entries can be dragged too: the first one dropped below the third.
+		const first = await page.evaluate<string>('SAVE.settings.prio[0]');
+		const from = await page.locator('#prioList > li').nth(0).boundingBox();
+		const to = await page.locator('#prioList > li').nth(2).boundingBox();
+		if (!from || !to) throw new Error('no priority entries');
+		await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+		await page.mouse.down();
+		await page.mouse.move(to.x + to.width / 2, to.y + to.height * 0.8, { steps: 10 });
+		await page.mouse.up();
+		expect(await page.evaluate(`SAVE.settings.prio.indexOf(${JSON.stringify(first)})`)).toBe(2);
+		await expect(page.locator('#prioList > li').nth(2)).toHaveAttribute('data-k', first);
 
-	// The game's state is top-level `const`/functions of the page (not on window).
-	const run = (await page.evaluate(`(() => {
+		// The game's state is top-level `const`/functions of the page (not on window).
+		const run = (await page.evaluate(`(() => {
 		UI.hideOverlay(); Game.start('vex', 0, 0);
 		G.pickups.length = 0;
 		for (let i = 0; i < 40; i++) { const g = mkPickup('gem', 400 + (i % 5) * 8, 300 + Math.floor(i / 5) * 8, 1); g.age = 1; G.pickups.push(g); }
@@ -415,91 +436,94 @@ test('VOIDBORN: merged pickups, auto-pick by priority, the Void Workshop and the
 		const evo = upgradePool().filter(c => c.kind === 'evo').map(c => c.id);
 		return { sum, merged, auto, evo, start: G.startWeapon, mutMax: G.st.mutMax };
 	})()`)) as {
-		sum: number;
-		merged: { count: number; sum: number };
-		auto: { state: string; level: number };
-		evo: string[];
-		start: string;
-		mutMax: number;
-	};
-	// Pickups close together merge into fewer ones of the same total value.
-	expect(run.merged.sum).toBe(run.sum);
-	expect(run.merged.count).toBeLessThan(10);
-	// Five level-ups at once are picked without stopping the run.
-	expect(run.auto.state).toBe('play');
-	// The pilot's starting weapon evolves even without its catalyst passive.
-	expect(run.start).toBe('pulse');
-	expect(run.evo).toEqual(['hyperpulse']);
-	expect(run.mutMax).toBeGreaterThan(10);
+			sum: number;
+			merged: { count: number; sum: number };
+			auto: { state: string; level: number };
+			evo: string[];
+			start: string;
+			mutMax: number;
+		};
+		// Pickups close together merge into fewer ones of the same total value.
+		expect(run.merged.sum).toBe(run.sum);
+		expect(run.merged.count).toBeLessThan(10);
+		// Five level-ups at once are picked without stopping the run.
+		expect(run.auto.state).toBe('play');
+		// The pilot's starting weapon evolves even without its catalyst passive.
+		expect(run.start).toBe('pulse');
+		expect(run.evo).toEqual(['hyperpulse']);
+		expect(run.mutMax).toBeGreaterThan(10);
 
-	// Each anomaly sector runs with its own rule.
-	for (const [index, check] of [
-		[5, 'G.sector.meteors && G.meteors.length > 0'],
-		[
-			6,
-			`Object.keys(currentPool()).join() === G.monoType && G.enemies.some(e => e.type === G.monoType)`,
-		],
-		[7, 'G.sector.well && !!G.well'],
-		[8, 'G.sector.dark && G.time > 1'],
-	] as const) {
-		await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0); G.nextMeteor = 0;`);
-		await expect
-			.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
-				message: `sector ${index + 1}`,
-			})
-			.toBe(true);
-	}
-	expect(errors).toEqual([]);
-});
+		// Each anomaly sector runs with its own rule.
+		for (const [index, check] of [
+			[5, 'G.sector.meteors && G.meteors.length > 0'],
+			[
+				6,
+				`Object.keys(currentPool()).join() === G.monoType && G.enemies.some(e => e.type === G.monoType)`,
+			],
+			[7, 'G.sector.well && !!G.well'],
+			[8, 'G.sector.dark && G.time > 1'],
+		] as const) {
+			await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0); G.nextMeteor = 0;`);
+			await expect
+				.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
+					message: `sector ${index + 1}`,
+				})
+				.toBe(true);
+		}
+		expect(errors).toEqual([]);
+	},
+);
 
-test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the deep sectors', async ({
-	page,
-	isMobile,
-}) => {
-	test.skip(isMobile, 'one run is enough for the game logic');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// Sectors I–IX cleared and plenty of shards.
-	await page.addInitScript(() => {
-		if (sessionStorage.getItem('seeded')) return;
-		sessionStorage.setItem('seeded', '1');
-		const sectors: Record<string, object> = {};
-		for (let i = 1; i <= 9; i++) sectors[`s${i}`] = { cleared: true, odUnlocked: 1, best: 900 };
-		localStorage.setItem(
-			'voidborn.save.v1',
-			JSON.stringify({ shards: 500000, achievements: { clear1: 1 }, sectors }),
-		);
-	});
-	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
-	await page.locator('[data-go="forge"]').click();
-	await page.locator('[data-part="guns"]').click();
-	await expect(page.locator('#fc-e_might')).not.toHaveClass(/locked/);
-	// An Eternal Workshop upgrade has no cap and every level costs more.
-	await page.locator('[data-buy="e_might"]').click();
-	await page.locator('[data-buy="e_might"]').click();
-	await expect(page.locator('#fc-e_might .lvl-inf')).toContainText('2');
-	expect(
-		await page.evaluate(`[SAVE.forge.e_might, forgeCost(FORGE.find(f => f.id === 'e_might'), 2)]`),
-	).toEqual([2, 9400]);
-	// Masterpieces: blueprints and Voidborn in the weapon bay, Echo in the cockpit.
-	await page.locator('[data-part="bay"]').click();
-	await expect(page.locator('#fc-bp_sentry')).not.toHaveClass(/locked/);
-	for (const id of ['bp_sentry', 'bp_voidray', 'bp_cluster', 'voidborn'])
-		await page.locator(`[data-buy="${id}"]`).click();
-	await page.locator('[data-part="cockpit"]').click();
-	await page.locator('[data-buy="echo"]').click();
-	expect(await page.evaluate('unlocked(WEAPONS.sentry) && unlocked(WEAPONS.cluster)')).toBe(true);
-	await page.locator('.screen.active .back').click();
+test(
+	'VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the deep sectors',
+	{ tag: '@voidborn' },
+	async ({ page, isMobile }) => {
+		test.skip(isMobile, 'one run is enough for the game logic');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		// Sectors I–IX cleared and plenty of shards.
+		await page.addInitScript(() => {
+			if (sessionStorage.getItem('seeded')) return;
+			sessionStorage.setItem('seeded', '1');
+			const sectors: Record<string, object> = {};
+			for (let i = 1; i <= 9; i++) sectors[`s${i}`] = { cleared: true, odUnlocked: 1, best: 900 };
+			localStorage.setItem(
+				'voidborn.save.v1',
+				JSON.stringify({ shards: 500000, achievements: { clear1: 1 }, sectors }),
+			);
+		});
+		await page.goto('/games/voidborn/index.html');
+		await page.mouse.click(100, 100);
+		await page.locator('[data-go="forge"]').click();
+		await page.locator('[data-part="guns"]').click();
+		await expect(page.locator('#fc-e_might')).not.toHaveClass(/locked/);
+		// An Eternal Workshop upgrade has no cap and every level costs more.
+		await page.locator('[data-buy="e_might"]').click();
+		await page.locator('[data-buy="e_might"]').click();
+		await expect(page.locator('#fc-e_might .lvl-inf')).toContainText('2');
+		expect(
+			await page.evaluate(
+				`[SAVE.forge.e_might, forgeCost(FORGE.find(f => f.id === 'e_might'), 2)]`,
+			),
+		).toEqual([2, 9400]);
+		// Masterpieces: blueprints and Voidborn in the weapon bay, Echo in the cockpit.
+		await page.locator('[data-part="bay"]').click();
+		await expect(page.locator('#fc-bp_sentry')).not.toHaveClass(/locked/);
+		for (const id of ['bp_sentry', 'bp_voidray', 'bp_cluster', 'voidborn'])
+			await page.locator(`[data-buy="${id}"]`).click();
+		await page.locator('[data-part="cockpit"]').click();
+		await page.locator('[data-buy="echo"]').click();
+		expect(await page.evaluate('unlocked(WEAPONS.sentry) && unlocked(WEAPONS.cluster)')).toBe(true);
+		await page.locator('.screen.active .back').click();
 
-	// The deep sectors open one after another from Sector IX.
-	await page.locator('[data-go="hangar"]').click();
-	await expect(page.locator('.sectors.deep .sector')).toHaveCount(3);
-	await expect(page.locator('.sectors.deep .sector.locked')).toHaveCount(2);
-	await page.locator('.screen.active .back').click();
+		// The deep sectors open one after another from Sector IX.
+		await page.locator('[data-go="hangar"]').click();
+		await expect(page.locator('.sectors.deep .sector')).toHaveCount(3);
+		await expect(page.locator('.sectors.deep .sector.locked')).toHaveCount(2);
+		await page.locator('.screen.active .back').click();
 
-	// The game's state is top-level `const`/functions of the page (not on window).
-	const run = (await page.evaluate(`(() => {
+		// The game's state is top-level `const`/functions of the page (not on window).
+		const run = (await page.evaluate(`(() => {
 		UI.hideOverlay(); Game.start('vex', 0, 0);
 		const start = G.weapons.map(w => w.id), might = G.st.might;
 		// a crystal that drops next to one already lying there joins it
@@ -517,236 +541,241 @@ test('VOIDBORN end game: the Eternal Workshop, Masterpieces, new weapons and the
 		G.dmgBy = {};
 		return { start, might, drop, echoed };
 	})()`)) as {
-		start: string[];
-		might: number;
-		drop: { count: number; sum: number };
-		echoed: boolean;
-	};
-	// Voidborn: the starting weapon begins evolved; Eternal Might adds 5 % per level.
-	expect(run.start).toEqual(['hyperpulse']);
-	expect(run.might).toBeCloseTo(1.1);
-	expect(run.drop).toEqual({ count: 1, sum: 20 });
-	expect(run.echoed).toBe(true);
-	// All three new weapons deal damage.
-	await expect
-		.poll(() =>
-			page.evaluate(`['sentry', 'voidray', 'cluster'].every(id => (G.dmgBy[id] || 0) > 0)`),
-		)
-		.toBe(true);
-
-	// Each deep sector runs with its own rule.
-	for (const [index, check] of [
-		[9, 'G.sector.rush && G.nextBossT === 150'],
-		[10, `!!G.zone && (G.p.x = G.zone.x + G.zone.r + 400, G.p.hp < G.st.maxHp)`],
-		[11, 'G.sector.meteors && G.sector.dark && !!G.well'],
-	] as const) {
-		await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0);`);
+			start: string[];
+			might: number;
+			drop: { count: number; sum: number };
+			echoed: boolean;
+		};
+		// Voidborn: the starting weapon begins evolved; Eternal Might adds 5 % per level.
+		expect(run.start).toEqual(['hyperpulse']);
+		expect(run.might).toBeCloseTo(1.1);
+		expect(run.drop).toEqual({ count: 1, sum: 20 });
+		expect(run.echoed).toBe(true);
+		// All three new weapons deal damage.
 		await expect
-			.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
-				message: `sector ${index + 1}`,
-			})
+			.poll(() =>
+				page.evaluate(`['sentry', 'voidray', 'cluster'].every(id => (G.dmgBy[id] || 0) > 0)`),
+			)
 			.toBe(true);
-	}
-	expect(errors).toEqual([]);
-});
 
-test('VOIDBORN Forge: a 3D ship by parts, the loadout in the hangar and chests without a window', async ({
-	page,
-	isMobile,
-}) => {
-	test.skip(isMobile, 'the touch test plays on the phone');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// An older save: Fan of Cards and Eternal Phoenix (since merged), Sectors I–V cleared.
-	await page.addInitScript(() => {
-		if (sessionStorage.getItem('seeded')) return;
-		sessionStorage.setItem('seeded', '1');
-		const sectors: Record<string, object> = {};
-		for (let i = 1; i <= 5; i++) sectors[`s${i}`] = { cleared: true, odUnlocked: 1, best: 900 };
-		localStorage.setItem(
-			'voidborn.save.v1',
-			JSON.stringify({
-				shards: 100000,
-				forge: { cards: 1, fan: 1, revival: 2, phoenix: 1, might: 2, gone: 3 },
-				achievements: { clear1: 1, clear2: 1, evo1: 1, evo4: 1, boss1: 1 },
-				sectors,
-			}),
+		// Each deep sector runs with its own rule.
+		for (const [index, check] of [
+			[9, 'G.sector.rush && G.nextBossT === 150'],
+			[10, `!!G.zone && (G.p.x = G.zone.x + G.zone.r + 400, G.p.hp < G.st.maxHp)`],
+			[11, 'G.sector.meteors && G.sector.dark && !!G.well'],
+		] as const) {
+			await page.evaluate(`UI.hideOverlay(); Game.start('vex', ${index}, 0);`);
+			await expect
+				.poll(() => page.evaluate(`!!(${check}) && G.state === 'play'`), {
+					message: `sector ${index + 1}`,
+				})
+				.toBe(true);
+		}
+		expect(errors).toEqual([]);
+	},
+);
+
+test(
+	'VOIDBORN Forge: a 3D ship by parts, the loadout in the hangar and chests without a window',
+	{ tag: '@voidborn' },
+	async ({ page, isMobile }) => {
+		test.skip(isMobile, 'the touch test plays on the phone');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		// An older save: Fan of Cards and Eternal Phoenix (since merged), Sectors I–V cleared.
+		await page.addInitScript(() => {
+			if (sessionStorage.getItem('seeded')) return;
+			sessionStorage.setItem('seeded', '1');
+			const sectors: Record<string, object> = {};
+			for (let i = 1; i <= 5; i++) sectors[`s${i}`] = { cleared: true, odUnlocked: 1, best: 900 };
+			localStorage.setItem(
+				'voidborn.save.v1',
+				JSON.stringify({
+					shards: 100000,
+					forge: { cards: 1, fan: 1, revival: 2, phoenix: 1, might: 2, gone: 3 },
+					achievements: { clear1: 1, clear2: 1, evo1: 1, evo4: 1, boss1: 1 },
+					sectors,
+				}),
+			);
+		});
+		await page.goto('/games/voidborn/index.html');
+		await page.mouse.click(100, 100);
+		// Merged upgrades carry over, removed ones are gone.
+		expect(await page.evaluate('JSON.stringify(SAVE.forge)')).toBe(
+			JSON.stringify({ cards: 2, revival: 3, might: 2 }),
 		);
-	});
-	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
-	// Merged upgrades carry over, removed ones are gone.
-	expect(await page.evaluate('JSON.stringify(SAVE.forge)')).toBe(
-		JSON.stringify({ cards: 2, revival: 3, might: 2 }),
-	);
-	await page.locator('[data-go="forge"]').click();
-	const cv = page.locator('#forgeCv');
-	await expect(cv).toBeVisible();
-	await expect(page.locator('.fpart')).toHaveCount(7);
-	// A part chip turns the camera to the part and lists its upgrades.
-	await page.locator('[data-part="engines"]').click();
-	await expect(page.locator('.fpanel h3')).toHaveText('Motory');
-	await expect(page.locator('#fc-e_thrust')).toBeVisible();
-	await page.waitForTimeout(800);
-	// Tapping the model picks the part under the pointer.
-	const box = await cv.boundingBox();
-	if (!box) throw new Error('no forge canvas');
-	const at = (await page.evaluate('Forge3D.screenOf("wings")')) as { x: number; y: number };
-	const under = await page.evaluate(`Forge3D.pickAt(${at.x}, ${at.y})`);
-	await page.mouse.click(box.x + at.x, box.y + at.y);
-	expect(await page.evaluate('Forge3D.selected')).toBe(under);
-	await expect(page.locator('.fpart.sel')).toHaveAttribute('data-part', String(under));
-	// Dragging rotates the ship.
-	const yaw = (await page.evaluate('Forge3D.view[0]')) as number;
-	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-	await page.mouse.down();
-	await page.mouse.move(box.x + box.width / 2 + 160, box.y + box.height / 2 + 30, { steps: 8 });
-	await page.mouse.up();
-	// The nearer side follows the pointer (dragging right turns yaw up) and the turn coasts out after release.
-	expect(((await page.evaluate('Forge3D.view[0]')) as number) - yaw).toBeGreaterThan(1);
-	// Under the model: the ship's stats at the start of a run and what the Forge adds.
-	await expect(page.locator('#fstats [data-stat="might"]')).toContainText('110 %');
-	await expect(page.locator('#fstats [data-stat="might"] em')).toHaveText('+10 %');
+		await page.locator('[data-go="forge"]').click();
+		const cv = page.locator('#forgeCv');
+		await expect(cv).toBeVisible();
+		await expect(page.locator('.fpart')).toHaveCount(7);
+		// A part chip turns the camera to the part and lists its upgrades.
+		await page.locator('[data-part="engines"]').click();
+		await expect(page.locator('.fpanel h3')).toHaveText('Motory');
+		await expect(page.locator('#fc-e_thrust')).toBeVisible();
+		await page.waitForTimeout(800);
+		// Tapping the model picks the part under the pointer.
+		const box = await cv.boundingBox();
+		if (!box) throw new Error('no forge canvas');
+		const at = (await page.evaluate('Forge3D.screenOf("wings")')) as { x: number; y: number };
+		const under = await page.evaluate(`Forge3D.pickAt(${at.x}, ${at.y})`);
+		await page.mouse.click(box.x + at.x, box.y + at.y);
+		expect(await page.evaluate('Forge3D.selected')).toBe(under);
+		await expect(page.locator('.fpart.sel')).toHaveAttribute('data-part', String(under));
+		// Dragging rotates the ship.
+		const yaw = (await page.evaluate('Forge3D.view[0]')) as number;
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.mouse.move(box.x + box.width / 2 + 160, box.y + box.height / 2 + 30, { steps: 8 });
+		await page.mouse.up();
+		// The nearer side follows the pointer (dragging right turns yaw up) and the turn coasts out after release.
+		expect(((await page.evaluate('Forge3D.view[0]')) as number) - yaw).toBeGreaterThan(1);
+		// Under the model: the ship's stats at the start of a run and what the Forge adds.
+		await expect(page.locator('#fstats [data-stat="might"]')).toContainText('110 %');
+		await expect(page.locator('#fstats [data-stat="might"] em')).toHaveText('+10 %');
 
-	// The weapon bay: an Arms Plan (two strikes) and a hardpoint; Calibration raises its level.
-	await page.locator('[data-part="bay"]').click();
-	for (const id of ['bans', 'bans', 'hard', 'prelvl'])
-		await page.locator(`[data-buy="${id}"]`).click();
-	expect(await page.evaluate('[SAVE.forge.bans, SAVE.forge.hard, SAVE.forge.prelvl]')).toEqual([
-		2, 1, 1,
-	]);
-	await expect(page.locator('.fp-note')).toContainText('Na palubě 0/1');
-	// The loadout is set in the hangar: Bouncing Disc on board, Shockwave and Void Mines struck out.
-	await page.locator('.fp-note [data-go="hangar"]').click();
-	await expect(page.locator('.loadout')).toBeVisible();
-	await page.locator('[data-lw="disc"]').click();
-	await page.locator('[data-lmode="ban"]').click();
-	await page.locator('[data-lw="nova"]').click();
-	await page.locator('[data-lw="mines"]').click();
-	await page.locator('[data-lw="arc"]').click(); // only two strikes bought
-	expect(await page.evaluate('JSON.stringify(SAVE.loadout)')).toBe(
-		JSON.stringify({ pre: ['disc'], ban: ['nova', 'mines'] }),
-	);
-	await expect(page.locator('[data-lw="pulse"]')).toBeDisabled(); // the pilot's own weapon
-	await page.locator('#startBtn').click();
-	const run = (await page.evaluate(`(() => ({
+		// The weapon bay: an Arms Plan (two strikes) and a hardpoint; Calibration raises its level.
+		await page.locator('[data-part="bay"]').click();
+		for (const id of ['bans', 'bans', 'hard', 'prelvl'])
+			await page.locator(`[data-buy="${id}"]`).click();
+		expect(await page.evaluate('[SAVE.forge.bans, SAVE.forge.hard, SAVE.forge.prelvl]')).toEqual([
+			2, 1, 1,
+		]);
+		await expect(page.locator('.fp-note')).toContainText('Na palubě 0/1');
+		// The loadout is set in the hangar: Bouncing Disc on board, Shockwave and Void Mines struck out.
+		await page.locator('.fp-note [data-go="hangar"]').click();
+		await expect(page.locator('.loadout')).toBeVisible();
+		await page.locator('[data-lw="disc"]').click();
+		await page.locator('[data-lmode="ban"]').click();
+		await page.locator('[data-lw="nova"]').click();
+		await page.locator('[data-lw="mines"]').click();
+		await page.locator('[data-lw="arc"]').click(); // only two strikes bought
+		expect(await page.evaluate('JSON.stringify(SAVE.loadout)')).toBe(
+			JSON.stringify({ pre: ['disc'], ban: ['nova', 'mines'] }),
+		);
+		await expect(page.locator('[data-lw="pulse"]')).toBeDisabled(); // the pilot's own weapon
+		await page.locator('#startBtn').click();
+		const run = (await page.evaluate(`(() => ({
 		weapons: G.weapons.map(w => w.id + ':' + w.level),
 		offered: upgradePool().filter(c => c.kind === 'weapon' && c.isNew).map(c => c.id),
 	}))()`)) as { weapons: string[]; offered: string[] };
-	expect(run.weapons).toEqual(['pulse:1', 'disc:2']);
-	expect(run.offered).not.toContain('nova');
-	expect(run.offered).not.toContain('mines');
-	expect(run.offered).toContain('arc');
+		expect(run.weapons).toEqual(['pulse:1', 'disc:2']);
+		expect(run.offered).not.toContain('nova');
+		expect(run.offered).not.toContain('mines');
+		expect(run.offered).toContain('arc');
 
-	// Chests without a window: the run goes on and the contents are applied.
-	const before = (await page.evaluate('G.shards')) as number;
-	await page.evaluate('SAVE.settings.autoChest = true; openChest(true);');
-	expect(await page.evaluate('G.state')).toBe('play');
-	await expect(page.locator('#overlay')).toBeHidden();
-	expect((await page.evaluate('G.shards')) as number).toBeGreaterThan(before);
-	// … and the switch is in the pause menu too.
-	await page.evaluate('Game.togglePause()');
-	await page.locator('[data-act="autochest"]').click();
-	expect(await page.evaluate('SAVE.settings.autoChest')).toBe(false);
-	await page.evaluate('Game.togglePause(); openChest(false);');
-	expect(await page.evaluate('G.state')).toBe('chest');
-	await page.locator('#overlay [data-act="ok"]').click();
-	expect(await page.evaluate('G.state')).toBe('play');
-	expect(errors).toEqual([]);
-});
+		// Chests without a window: the run goes on and the contents are applied.
+		const before = (await page.evaluate('G.shards')) as number;
+		await page.evaluate('SAVE.settings.autoChest = true; openChest(true);');
+		expect(await page.evaluate('G.state')).toBe('play');
+		await expect(page.locator('#overlay')).toBeHidden();
+		expect((await page.evaluate('G.shards')) as number).toBeGreaterThan(before);
+		// … and the switch is in the pause menu too.
+		await page.evaluate('Game.togglePause()');
+		await page.locator('[data-act="autochest"]').click();
+		expect(await page.evaluate('SAVE.settings.autoChest')).toBe(false);
+		await page.evaluate('Game.togglePause(); openChest(false);');
+		expect(await page.evaluate('G.state')).toBe('chest');
+		await page.locator('#overlay [data-act="ok"]').click();
+		expect(await page.evaluate('G.state')).toBe('play');
+		expect(errors).toEqual([]);
+	},
+);
 
-test('VOIDBORN performance log is off by default and downloads after a run', async ({
-	page,
-	isMobile,
-}) => {
-	test.skip(isMobile, 'one run is enough for the game logic');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// The log lives in the Debug section of Settings (?debug=1 keeps it on after a release).
-	await page.goto('/games/voidborn/index.html?debug=1');
-	await page.mouse.click(100, 100);
-	// Off by default: a run records nothing and the end screen offers no log.
-	// The game's state is top-level `const`/functions of the page (not on window).
-	expect(
-		await page.evaluate(
-			`(() => { Game.start('vex', 0, 0); const on = PerfLog.on; endRun('quit'); return [SAVE.settings.perfLog, on]; })()`,
-		),
-	).toEqual([false, false]);
-	await expect(page.locator('.perf-dl')).toHaveCount(0);
-	await page.evaluate(`Game.toMenu('menu')`);
+test(
+	'VOIDBORN performance log is off by default and downloads after a run',
+	{ tag: '@voidborn' },
+	async ({ page, isMobile }) => {
+		test.skip(isMobile, 'one run is enough for the game logic');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		// The log lives in the Debug section of Settings (?debug=1 keeps it on after a release).
+		await page.goto('/games/voidborn/index.html?debug=1');
+		await page.mouse.click(100, 100);
+		// Off by default: a run records nothing and the end screen offers no log.
+		// The game's state is top-level `const`/functions of the page (not on window).
+		expect(
+			await page.evaluate(
+				`(() => { Game.start('vex', 0, 0); const on = PerfLog.on; endRun('quit'); return [SAVE.settings.perfLog, on]; })()`,
+			),
+		).toEqual([false, false]);
+		await expect(page.locator('.perf-dl')).toHaveCount(0);
+		await page.evaluate(`Game.toMenu('menu')`);
 
-	await page.locator('[data-go="settings"]').click();
-	await page.locator('[data-tog="perfLog"]').click();
-	expect(await page.evaluate('SAVE.settings.perfLog')).toBe(true);
-	await page.locator('.screen.active .back').click();
-	await page.locator('[data-go="hangar"]').click();
-	await page.locator('#startBtn').click();
-	await expect(page.locator('#hudChips .hc.rec')).toBeVisible();
-	// At least two one-second rows.
-	await expect.poll(() => page.evaluate('PerfLog.on && G.time > 2.5')).toBe(true);
-	await page.evaluate(`endRun('quit')`);
-	const [download] = await Promise.all([
-		page.waitForEvent('download'),
-		page.locator('.perf-dl [data-act="perflog"]').click(),
-	]);
-	expect(download.suggestedFilename()).toMatch(/^voidborn-log-\d{8}-\d{6}\.json$/);
-	const log = (await page.evaluate(`(() => {
+		await page.locator('[data-go="settings"]').click();
+		await page.locator('[data-tog="perfLog"]').click();
+		expect(await page.evaluate('SAVE.settings.perfLog')).toBe(true);
+		await page.locator('.screen.active .back').click();
+		await page.locator('[data-go="hangar"]').click();
+		await page.locator('#startBtn').click();
+		await expect(page.locator('#hudChips .hc.rec')).toBeVisible();
+		// At least two one-second rows.
+		await expect.poll(() => page.evaluate('PerfLog.on && G.time > 2.5')).toBe(true);
+		await page.evaluate(`endRun('quit')`);
+		const [download] = await Promise.all([
+			page.waitForEvent('download'),
+			page.locator('.perf-dl [data-act="perflog"]').click(),
+		]);
+		expect(download.suggestedFilename()).toMatch(/^voidborn-log-\d{8}-\d{6}\.json$/);
+		const log = (await page.evaluate(`(() => {
 		const l = JSON.parse(PerfLog.lastLog().json);
 		return { cols: l.columns.length, rows: l.rows.length, width: l.rows[0].length, frames: l.summary.frames,
 			reason: l.result.reason, events: l.events.map(e => e[2]), stored: !!localStorage.getItem('voidborn.perflog') };
 	})()`)) as {
-		cols: number;
-		rows: number;
-		width: number;
-		frames: number;
-		reason: string;
-		events: string[];
-		stored: boolean;
-	};
-	expect(log.rows).toBeGreaterThanOrEqual(2);
-	expect(log.width).toBe(log.cols);
-	expect(log.frames).toBeGreaterThan(30);
-	expect(log.reason).toBe('quit');
-	expect(log.events).toEqual(expect.arrayContaining(['start', 'end']));
-	expect(log.stored).toBe(true);
-	expect(errors).toEqual([]);
-});
+			cols: number;
+			rows: number;
+			width: number;
+			frames: number;
+			reason: string;
+			events: string[];
+			stored: boolean;
+		};
+		expect(log.rows).toBeGreaterThanOrEqual(2);
+		expect(log.width).toBe(log.cols);
+		expect(log.frames).toBeGreaterThan(30);
+		expect(log.reason).toBe('quit');
+		expect(log.events).toEqual(expect.arrayContaining(['start', 'end']));
+		expect(log.stored).toBe(true);
+		expect(errors).toEqual([]);
+	},
+);
 
-test('VOIDBORN 1.4: new kinds of enemies, the bestiary and achievements that pay', async ({
-	page,
-	isMobile,
-}) => {
-	test.skip(isMobile, 'one run is enough for the game logic');
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	// A save from before 1.4: Sector I cleared (old reward 100) and 5 minutes survived (old 30).
-	await page.addInitScript(() => {
-		if (sessionStorage.getItem('seeded')) return;
-		sessionStorage.setItem('seeded', '1');
-		localStorage.setItem(
-			'voidborn.save.v1',
-			JSON.stringify({
-				shards: 0,
-				achievements: { clear1: 1, t5: 1 },
-				sectors: { s1: { cleared: true, odUnlocked: 1, best: 900 } },
-			}),
-		);
-	});
-	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
-	// Earned achievements are topped up to the new rewards once (1500 − 100 + 300 − 30) and
-	// add their permanent bonuses (+3 % shards, +5 health) to every run.
-	expect(await page.evaluate('[SAVE.shards, SAVE.achV]')).toEqual([1670, 2]);
-	await expect(page.locator('#toasts')).toContainText(/\+1\s670/);
-	await page.locator('[data-go="ach"]').click();
-	await expect(page.locator('.ach-fame')).toContainText('+3 % střepů');
-	await expect(page.locator('.ach-fame')).toContainText('+5 zdraví');
-	// Grouped by rarity (by difficulty while few signed-in players have the game).
-	await expect(page.locator('.ach-tier')).toHaveCount(5);
-	await expect(page.locator('.ach-tier[data-tier="common"] [data-ach="k100"]')).toBeVisible();
-	await expect(page.locator('.ach-tier[data-tier="legend"] [data-ach="sectorsAll"]')).toBeVisible();
-	await page.locator('.screen.active .back').click();
-	const res = (await page.evaluate(`(() => {
+test(
+	'VOIDBORN 1.4: new kinds of enemies, the bestiary and achievements that pay',
+	{ tag: '@voidborn' },
+	async ({ page, isMobile }) => {
+		test.skip(isMobile, 'one run is enough for the game logic');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		// A save from before 1.4: Sector I cleared (old reward 100) and 5 minutes survived (old 30).
+		await page.addInitScript(() => {
+			if (sessionStorage.getItem('seeded')) return;
+			sessionStorage.setItem('seeded', '1');
+			localStorage.setItem(
+				'voidborn.save.v1',
+				JSON.stringify({
+					shards: 0,
+					achievements: { clear1: 1, t5: 1 },
+					sectors: { s1: { cleared: true, odUnlocked: 1, best: 900 } },
+				}),
+			);
+		});
+		await page.goto('/games/voidborn/index.html');
+		await page.mouse.click(100, 100);
+		// Earned achievements are topped up to the new rewards once (1500 − 100 + 300 − 30) and
+		// add their permanent bonuses (+3 % shards, +5 health) to every run.
+		expect(await page.evaluate('[SAVE.shards, SAVE.achV]')).toEqual([1670, 2]);
+		await expect(page.locator('#toasts')).toContainText(/\+1\s670/);
+		await page.locator('[data-go="ach"]').click();
+		await expect(page.locator('.ach-fame')).toContainText('+3 % střepů');
+		await expect(page.locator('.ach-fame')).toContainText('+5 zdraví');
+		// Grouped by rarity (by difficulty while few signed-in players have the game).
+		await expect(page.locator('.ach-tier')).toHaveCount(5);
+		await expect(page.locator('.ach-tier[data-tier="common"] [data-ach="k100"]')).toBeVisible();
+		await expect(
+			page.locator('.ach-tier[data-tier="legend"] [data-ach="sectorsAll"]'),
+		).toBeVisible();
+		await page.locator('.screen.active .back').click();
+		const res = (await page.evaluate(`(() => {
 		UI.hideOverlay(); Game.start('vex', 0, 0);
 		const st = [G.st.maxHp, Math.round(G.st.greed * 100)];
 		UI.showLevelUp = () => {}; UI.showChest = () => {}; UI.banner = () => {};
@@ -768,28 +797,30 @@ test('VOIDBORN 1.4: new kinds of enemies, the bestiary and achievements that pay
 		const tw = spawnEnemyAt('twin', G.p.x - 300, G.p.y);
 		return { st, kinds: kinds.length, total: ENEMY_KINDS.length, front: Math.round(front), back: Math.round(back), phased: p0 - ph.hp, heads, hydra: SAVE.bestiary.hydra, pair: !!tw.mate && tw.mate.mate === tw };
 	})()`)) as Record<string, unknown>;
-	expect(res).toMatchObject({
-		st: [105, 103],
-		front: 2,
-		back: 10,
-		phased: 0,
-		heads: 2,
-		hydra: 1,
-		pair: true,
-	});
-	expect(res.kinds as number).toBeGreaterThanOrEqual(25);
-	expect(res.total as number).toBeGreaterThanOrEqual(30);
-	expect(errors).toEqual([]);
-});
+		expect(res).toMatchObject({
+			st: [105, 103],
+			front: 2,
+			back: 10,
+			phased: 0,
+			heads: 2,
+			hydra: 1,
+			pair: true,
+		});
+		expect(res.kinds as number).toBeGreaterThanOrEqual(25);
+		expect(res.total as number).toBeGreaterThanOrEqual(30);
+		expect(errors).toEqual([]);
+	},
+);
 
-test('VOIDBORN 1.5: void legends come only after their secret condition and pay an achievement', async ({
-	page,
-}) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/games/voidborn/index.html');
-	await page.mouse.click(100, 100);
-	const res = (await page.evaluate(`(() => {
+test(
+	'VOIDBORN 1.5: void legends come only after their secret condition and pay an achievement',
+	{ tag: '@voidborn' },
+	async ({ page }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.goto('/games/voidborn/index.html');
+		await page.mouse.click(100, 100);
+		const res = (await page.evaluate(`(() => {
 		const out = {};
 		const step = s => { for (let i = 0; i < s * 60; i++) { updateGame(1 / 60); if (G.state === 'levelup') pickChoice(0); if (G.state === 'chest') closeChest(); } };
 		const got = () => (Legends.alive ? Legends.alive.type : null);
@@ -840,97 +871,104 @@ test('VOIDBORN 1.5: void legends come only after their secret condition and pay 
 		endRun('quit'); UI.hideOverlay();
 		return out;
 	})()`)) as Record<string, unknown>;
-	expect(res).toEqual({
-		watcher29: null,
-		watcher: 'watcher',
-		watcherMoved: null,
-		hoarderEarly: null,
-		hoarder: 'hoarder',
-		midnightAfternoon: null,
-		midnight: 'midnight',
-		cometByWeapon: null,
-		comet: 'comet',
-		mirrorEarly: null,
-		mirror: 'mirror',
-		mirrorShots: true,
-		ouroborosWide: null,
-		ouroboros: 'ouroboros',
-		second: 'ouroboros',
-		escaped: null,
-		gap: 60,
-		bombed: [true, 90],
-		loot: true,
-		killed: [1, true, true],
-		kinds: [36, 6, false],
-	});
-	// Codex: the destroyed legend has its description, the others only a hint.
-	await page.evaluate(`UI.show('codex')`);
-	await page.locator('[data-tab="enemies"]').click();
-	await expect(page.locator('.fcard.legend')).toHaveCount(6);
-	await expect(page.locator('.fcard.legend').first()).toContainText('Pozorovatel');
-	await expect(page.locator('.fcard.legend.unknown .hint')).toHaveCount(5);
-	await expect(page.locator('.cx-sum.lg')).toContainText('1 / 6');
-	// Achievements: legendary even by difficulty; locked ones show the hint instead of the name.
-	await page.evaluate(`UI.show('ach')`);
-	await expect(page.locator('.ach-tier[data-tier="legend"] [data-ach="lgWatcher"]')).toContainText(
-		'Pozorovatel',
-	);
-	await expect(
-		page.locator('.ach-tier[data-tier="legend"] [data-ach="lgHoarder"] .hint'),
-	).toBeVisible();
-	await expect(page.locator('[data-ach="lgHoarder"]')).not.toContainText('Zlatník');
-	expect(errors).toEqual([]);
-});
+		expect(res).toEqual({
+			watcher29: null,
+			watcher: 'watcher',
+			watcherMoved: null,
+			hoarderEarly: null,
+			hoarder: 'hoarder',
+			midnightAfternoon: null,
+			midnight: 'midnight',
+			cometByWeapon: null,
+			comet: 'comet',
+			mirrorEarly: null,
+			mirror: 'mirror',
+			mirrorShots: true,
+			ouroborosWide: null,
+			ouroboros: 'ouroboros',
+			second: 'ouroboros',
+			escaped: null,
+			gap: 60,
+			bombed: [true, 90],
+			loot: true,
+			killed: [1, true, true],
+			kinds: [36, 6, false],
+		});
+		// Codex: the destroyed legend has its description, the others only a hint.
+		await page.evaluate(`UI.show('codex')`);
+		await page.locator('[data-tab="enemies"]').click();
+		await expect(page.locator('.fcard.legend')).toHaveCount(6);
+		await expect(page.locator('.fcard.legend').first()).toContainText('Pozorovatel');
+		await expect(page.locator('.fcard.legend.unknown .hint')).toHaveCount(5);
+		await expect(page.locator('.cx-sum.lg')).toContainText('1 / 6');
+		// Achievements: legendary even by difficulty; locked ones show the hint instead of the name.
+		await page.evaluate(`UI.show('ach')`);
+		await expect(
+			page.locator('.ach-tier[data-tier="legend"] [data-ach="lgWatcher"]'),
+		).toContainText('Pozorovatel');
+		await expect(
+			page.locator('.ach-tier[data-tier="legend"] [data-ach="lgHoarder"] .hint'),
+		).toBeVisible();
+		await expect(page.locator('[data-ach="lgHoarder"]')).not.toContainText('Zlatník');
+		expect(errors).toEqual([]);
+	},
+);
 
-test('VOIDBORN shows its version and the rendering quality can be lowered', async ({ page }) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/games/voidborn/index.html');
-	// The game's state is top-level `const`/functions of the page (not on window).
-	const version = await page.evaluate<string>('GAME_VERSION');
-	expect(version).toMatch(/^\d+\.\d+\.\d+$/);
-	// The version sits on the title screen (and in the corner during a run), not in Settings.
-	await expect(page.locator('#s-title .title-ver')).toBeVisible();
-	await expect(page.locator('#s-title .title-ver')).toHaveText(`v${version}`);
-	await page.mouse.click(100, 100);
-	await page.locator('[data-go="settings"]').click();
-	await expect(page.locator('#s-settings')).not.toContainText(`v${version}`);
-	// The preview stays empty until the pointer is on a setting you can see in the game.
-	await page.mouse.move(5, 5);
-	await expect(page.locator('#setPv canvas')).toHaveCount(0);
-	// Auto -> Full -> Saver: the canvas is drawn at 70 % of the resolution.
-	await page.locator('[data-act="quality"]').click();
-	await page.locator('[data-act="quality"]').click();
-	expect(await page.evaluate(`[SAVE.settings.quality, Render.scale]`)).toEqual(['low', 0.7]);
-	// Settings are grouped; picking a row shows what it looks like on and off.
-	await expect(page.locator('.setg')).toHaveCount((await page.evaluate<boolean>('DEBUG')) ? 6 : 5);
-	await page.locator('[data-pv="dmgNums"] label').click();
-	await expect(page.locator('#setPv')).toContainText('Čísla poškození');
-	await expect(page.locator('#setPv canvas')).toHaveCount(2);
-	// Sound has nothing to show: the preview goes away.
-	await page.locator('.row:has([data-vol="sfx"]) label').click();
-	await expect(page.locator('#setPv canvas')).toHaveCount(0);
-	// Debug tools (hidden for a release): shards, game speed and god mode.
-	if (await page.evaluate<boolean>('DEBUG')) {
-		const before = await page.evaluate<number>('SAVE.shards');
-		await page.locator('[data-act="dbgShards"]').click();
-		await page.locator('[data-act="dbgSpeed"]').click();
-		await page.locator('[data-tog="dbgGod"]').click();
-		expect(await page.evaluate('[SAVE.shards, Debug.speed, Debug.god]')).toEqual([
-			before + 10000,
-			2,
-			true,
-		]);
-		await page.locator('[data-act="dbgSpeed"]').click();
-		await page.locator('[data-act="dbgSpeed"]').click();
-		expect(await page.evaluate('Debug.speed')).toBe(1);
-	}
-	await page.locator('.screen.active .back').click();
-	await page.locator('[data-go="hangar"]').click();
-	await page.locator('#startBtn').click();
-	await expect(page.locator('#fps')).toContainText(`v${version}`);
-	expect(errors).toEqual([]);
-});
+test(
+	'VOIDBORN shows its version and the rendering quality can be lowered',
+	{ tag: '@voidborn' },
+	async ({ page }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.goto('/games/voidborn/index.html');
+		// The game's state is top-level `const`/functions of the page (not on window).
+		const version = await page.evaluate<string>('GAME_VERSION');
+		expect(version).toMatch(/^\d+\.\d+\.\d+$/);
+		// The version sits on the title screen (and in the corner during a run), not in Settings.
+		await expect(page.locator('#s-title .title-ver')).toBeVisible();
+		await expect(page.locator('#s-title .title-ver')).toHaveText(`v${version}`);
+		await page.mouse.click(100, 100);
+		await page.locator('[data-go="settings"]').click();
+		await expect(page.locator('#s-settings')).not.toContainText(`v${version}`);
+		// The preview stays empty until the pointer is on a setting you can see in the game.
+		await page.mouse.move(5, 5);
+		await expect(page.locator('#setPv canvas')).toHaveCount(0);
+		// Auto -> Full -> Saver: the canvas is drawn at 70 % of the resolution.
+		await page.locator('[data-act="quality"]').click();
+		await page.locator('[data-act="quality"]').click();
+		expect(await page.evaluate(`[SAVE.settings.quality, Render.scale]`)).toEqual(['low', 0.7]);
+		// Settings are grouped; picking a row shows what it looks like on and off.
+		await expect(page.locator('.setg')).toHaveCount(
+			(await page.evaluate<boolean>('DEBUG')) ? 6 : 5,
+		);
+		await page.locator('[data-pv="dmgNums"] label').click();
+		await expect(page.locator('#setPv')).toContainText('Čísla poškození');
+		await expect(page.locator('#setPv canvas')).toHaveCount(2);
+		// Sound has nothing to show: the preview goes away.
+		await page.locator('.row:has([data-vol="sfx"]) label').click();
+		await expect(page.locator('#setPv canvas')).toHaveCount(0);
+		// Debug tools (hidden for a release): shards, game speed and god mode.
+		if (await page.evaluate<boolean>('DEBUG')) {
+			const before = await page.evaluate<number>('SAVE.shards');
+			await page.locator('[data-act="dbgShards"]').click();
+			await page.locator('[data-act="dbgSpeed"]').click();
+			await page.locator('[data-tog="dbgGod"]').click();
+			expect(await page.evaluate('[SAVE.shards, Debug.speed, Debug.god]')).toEqual([
+				before + 10000,
+				2,
+				true,
+			]);
+			await page.locator('[data-act="dbgSpeed"]').click();
+			await page.locator('[data-act="dbgSpeed"]').click();
+			expect(await page.evaluate('Debug.speed')).toBe(1);
+		}
+		await page.locator('.screen.active .back').click();
+		await page.locator('[data-go="hangar"]').click();
+		await page.locator('#startBtn').click();
+		await expect(page.locator('#fps')).toContainText(`v${version}`);
+		expect(errors).toEqual([]);
+	},
+);
 
 test('shows the stats a game saved in this browser', async ({ page }) => {
 	await page.goto('/');
@@ -1057,43 +1095,43 @@ test('the center shows who is playing a game right now', async ({ context, page,
 	expect(bad.status()).toBe(400);
 });
 
-test('DRIFTWOOD runs on computers and is blocked on phones', async ({
-	page,
-	request,
-	isMobile,
-}) => {
-	const errors: string[] = [];
-	page.on('pageerror', (error) => errors.push(error.message));
-	await page.goto('/');
-	const card = page.getByTestId('shelf').locator('.gcard').nth(2);
-	await card.click();
-	await expect(page.locator('.hero-title')).toHaveText('DRIFTWOOD');
-	await expect(card.locator('.gc-badges span').first()).toHaveText('PC');
-
-	if (isMobile) {
-		await expect(page.getByTestId('play')).toBeDisabled();
-		await expect(page.getByTestId('play')).toHaveText('JEN NA POČÍTAČI');
-		// A second tap on the card does not launch it either, and a direct link goes back.
+test(
+	'DRIFTWOOD runs on computers and is blocked on phones',
+	{ tag: '@driftwood' },
+	async ({ page, request, isMobile }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.goto('/');
+		const card = page.getByTestId('shelf').locator('.gcard').nth(2);
 		await card.click();
-		await expect(page).toHaveURL(/\/$/);
-		await page.goto('/games/driftwood/index.html');
-		await page.waitForURL((url) => url.pathname === '/');
-		await expect(page).toHaveTitle('Windowling Game Center');
-	} else {
-		// The 3D game itself is not rendered here: headless Chrome on GPU-less CI runners
-		// crashes in WebGL. The hub must launch it, and the game must be served.
-		const game = await request.get('/games/driftwood/index.html');
-		expect(game.ok()).toBe(true);
-		expect(await game.text()).toContain('<title>DRIFTWOOD</title>');
-		await page.route('**/games/driftwood/**', (route) =>
-			route.fulfill({ contentType: 'text/html', body: '<title>DRIFTWOOD</title>' }),
-		);
-		await page.getByTestId('play').click();
-		await page.waitForURL('**/games/driftwood/**');
-		await expect(page).toHaveTitle('DRIFTWOOD');
-	}
-	expect(errors).toEqual([]);
-});
+		await expect(page.locator('.hero-title')).toHaveText('DRIFTWOOD');
+		await expect(card.locator('.gc-badges span').first()).toHaveText('PC');
+
+		if (isMobile) {
+			await expect(page.getByTestId('play')).toBeDisabled();
+			await expect(page.getByTestId('play')).toHaveText('JEN NA POČÍTAČI');
+			// A second tap on the card does not launch it either, and a direct link goes back.
+			await card.click();
+			await expect(page).toHaveURL(/\/$/);
+			await page.goto('/games/driftwood/index.html');
+			await page.waitForURL((url) => url.pathname === '/');
+			await expect(page).toHaveTitle('Windowling Game Center');
+		} else {
+			// The 3D game itself is not rendered here: headless Chrome on GPU-less CI runners
+			// crashes in WebGL. The hub must launch it, and the game must be served.
+			const game = await request.get('/games/driftwood/index.html');
+			expect(game.ok()).toBe(true);
+			expect(await game.text()).toContain('<title>DRIFTWOOD</title>');
+			await page.route('**/games/driftwood/**', (route) =>
+				route.fulfill({ contentType: 'text/html', body: '<title>DRIFTWOOD</title>' }),
+			);
+			await page.getByTestId('play').click();
+			await page.waitForURL('**/games/driftwood/**');
+			await expect(page).toHaveTitle('DRIFTWOOD');
+		}
+		expect(errors).toEqual([]);
+	},
+);
 
 test('/favicon.ico points browsers at the SVG icon', async ({ request }) => {
 	const res = await request.get('/favicon.ico', { maxRedirects: 0 });

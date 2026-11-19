@@ -11,6 +11,11 @@ permissions:
 
 jobs:
   conventional-title:
+    # Dependabot rewrites its PR descriptions often and its titles are always conventional, so
+    # its body-only edits skip the check (everyone else's edits run it).
+    if: >-
+      github.event.action != 'edited' || github.event.changes.title != null ||
+      github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: amannn/action-semantic-pull-request@v6

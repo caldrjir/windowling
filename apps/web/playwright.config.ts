@@ -45,8 +45,13 @@ const launchOptions = {
 	executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
 };
 
+// CI runs only the tests a PR can affect (scripts/e2e-scope.mjs): E2E_SKIP_TAGS lists the games whose
+// tests (`{ tag: '@<game>' }`) are left out. Untagged tests (the hub, sign-in, sync...) always run.
+const skipTags = (process.env.E2E_SKIP_TAGS ?? '').split(',').filter(Boolean);
+
 export default defineConfig({
 	testDir: './e2e',
+	grepInvert: skipTags.length ? new RegExp(`@(?:${skipTags.join('|')})(?![\\w-])`) : undefined,
 	fullyParallel: true,
 	forbidOnly: Boolean(process.env.CI),
 	retries: process.env.CI ? 1 : 0,

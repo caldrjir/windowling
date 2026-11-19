@@ -6,6 +6,9 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # No automatic rebases: each one re-ran the whole CI on PRs that just wait. Comment
+    # `@dependabot rebase` on a PR to bring it up to date before merging.
+    rebase-strategy: disabled
     labels: [dependencies]
     commit-message:
       prefix: chore
@@ -17,6 +20,7 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    rebase-strategy: disabled
     labels: [dependencies]
     commit-message:
       prefix: ci
