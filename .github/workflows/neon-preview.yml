@@ -1,13 +1,16 @@
 name: Neon preview database
 
-# Every PR gets its own Neon branch (copy-on-write fork of production), migrated
-# with this PR's migrations. Closing the PR deletes it. Branches also expire after
-# 14 days so the free-tier branch limit (10) is never exhausted by stale PRs.
+# Every PR that touches the database package gets its own Neon branch (copy-on-write fork
+# of production), migrated with this PR's migrations, and a schema diff comment. Closing the
+# PR deletes it. Branches also expire after 14 days so the free-tier branch limit (10) is
+# never exhausted by stale PRs. Other PRs have no schema to check and skip it.
 #
 # Requires: secret NEON_API_KEY and variable NEON_PROJECT_ID (set by the Neon GitHub integration).
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
+    paths:
+      - packages/database/**
 
 concurrency:
   group: neon-preview-${{ github.event.number }}
