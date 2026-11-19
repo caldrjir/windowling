@@ -35,89 +35,99 @@ const send = (page: Page, m: unknown) =>
 const received = (page: Page, t: string) =>
 	page.evaluate((t) => (window as unknown as { __mp: Msg[] }).__mp.filter((m) => m.t === t), t);
 
-test('two players share a DRIFTWOOD world', async ({ browser, request }, info) => {
-	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
-	const created = await request.post('/api/driftwood/rooms', {
-		data: { seed: 4242, mode: 'normal', nick: 'Ann', name: 'Ostrov Ann' },
-	});
-	expect(created.status()).toBe(201);
-	const { code } = (await created.json()) as { code: string };
-	expect(code).toMatch(/^[A-Z2-9]{6}$/);
-	const world = await (await request.get(`/api/driftwood/rooms/${code}`)).json();
-	expect(world).toMatchObject({ code, seed: 4242, mode: 'normal', name: 'Ostrov Ann', players: 0 });
+test(
+	'two players share a DRIFTWOOD world',
+	{ tag: '@driftwood' },
+	async ({ browser, request }, info) => {
+		test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
+		const created = await request.post('/api/driftwood/rooms', {
+			data: { seed: 4242, mode: 'normal', nick: 'Ann', name: 'Ostrov Ann' },
+		});
+		expect(created.status()).toBe(201);
+		const { code } = (await created.json()) as { code: string };
+		expect(code).toMatch(/^[A-Z2-9]{6}$/);
+		const world = await (await request.get(`/api/driftwood/rooms/${code}`)).json();
+		expect(world).toMatchObject({
+			code,
+			seed: 4242,
+			mode: 'normal',
+			name: 'Ostrov Ann',
+			players: 0,
+		});
 
-	const ctx = browser.contexts()[0] ?? (await browser.newContext());
-	const ann = await ctx.newPage();
-	const bob = await ctx.newPage();
-	await ann.goto('/');
-	await bob.goto('/');
+		const ctx = browser.contexts()[0] ?? (await browser.newContext());
+		const ann = await ctx.newPage();
+		const bob = await ctx.newPage();
+		await ann.goto('/');
+		await bob.goto('/');
 
-	await connect(ann, code, 'Ann');
-	await expect.poll(async () => (await received(ann, 'welcome')).length).toBe(1);
-	const [annWelcome] = await received(ann, 'welcome');
-	expect(annWelcome).toMatchObject({ host: true, meta: { seed: 4242 }, players: [] });
+		await connect(ann, code, 'Ann');
+		await expect.poll(async () => (await received(ann, 'welcome')).length).toBe(1);
+		const [annWelcome] = await received(ann, 'welcome');
+		expect(annWelcome).toMatchObject({ host: true, meta: { seed: 4242 }, players: [] });
 
-	// Ann harvests a tree and builds a campfire before Bob arrives.
-	await send(ann, { t: 'node', k: 'tree', i: 7, r: 300 });
-	await send(ann, { t: 'build', type: 'campfire', x: 2, z: 3, rot: 0 });
-	await send(ann, { t: 's', x: 10, y: 1, z: 20, yaw: 0, pitch: 0, m: true });
-	// ...and drops an axe and some wood on the ground.
-	await send(ann, { t: 'drop', item: { id: 'stoneAxe', n: 1, dur: 40 }, x: 4, z: 5 });
-	await send(ann, { t: 'drop', item: { id: 'wood', n: 6 }, x: 4.5, z: 5 });
-	await expect.poll(async () => (await received(ann, 'drop')).length).toBe(2);
+		// Ann harvests a tree and builds a campfire before Bob arrives.
+		await send(ann, { t: 'node', k: 'tree', i: 7, r: 300 });
+		await send(ann, { t: 'build', type: 'campfire', x: 2, z: 3, rot: 0 });
+		await send(ann, { t: 's', x: 10, y: 1, z: 20, yaw: 0, pitch: 0, m: true });
+		// ...and drops an axe and some wood on the ground.
+		await send(ann, { t: 'drop', item: { id: 'stoneAxe', n: 1, dur: 40 }, x: 4, z: 5 });
+		await send(ann, { t: 'drop', item: { id: 'wood', n: 6 }, x: 4.5, z: 5 });
+		await expect.poll(async () => (await received(ann, 'drop')).length).toBe(2);
 
-	await connect(bob, code, 'Bob');
-	await expect.poll(async () => (await received(bob, 'welcome')).length).toBe(1);
-	const [bobWelcome] = await received(bob, 'welcome');
-	expect(bobWelcome).toMatchObject({
-		host: false,
-		structures: [{ type: 'campfire', x: 2, z: 3, rot: 0 }],
-		players: [{ nick: 'Ann', state: { x: 10, z: 20, m: true } }],
-	});
-	expect((bobWelcome?.nodes as [string, number][])[0]?.[0]).toBe('tree:7');
-	const drops = bobWelcome?.drops as { id: string; item: { id: string } }[];
-	expect(drops.map((d) => d.item)).toEqual([
-		{ id: 'stoneAxe', n: 1, dur: 40 },
-		{ id: 'wood', n: 6 },
-	]);
+		await connect(bob, code, 'Bob');
+		await expect.poll(async () => (await received(bob, 'welcome')).length).toBe(1);
+		const [bobWelcome] = await received(bob, 'welcome');
+		expect(bobWelcome).toMatchObject({
+			host: false,
+			structures: [{ type: 'campfire', x: 2, z: 3, rot: 0 }],
+			players: [{ nick: 'Ann', state: { x: 10, z: 20, m: true } }],
+		});
+		expect((bobWelcome?.nodes as [string, number][])[0]?.[0]).toBe('tree:7');
+		const drops = bobWelcome?.drops as { id: string; item: { id: string } }[];
+		expect(drops.map((d) => d.item)).toEqual([
+			{ id: 'stoneAxe', n: 1, dur: 40 },
+			{ id: 'wood', n: 6 },
+		]);
 
-	// Bob picks the axe up; Ann sees it gone and can no longer take it.
-	const axe = drops[0]?.id;
-	await send(bob, { t: 'take', id: axe });
-	await expect
-		.poll(async () => (await received(bob, 'took'))[0])
-		.toMatchObject({ d: { id: axe, item: { id: 'stoneAxe', dur: 40 } } });
-	await expect.poll(async () => (await received(ann, 'gone')).map((m) => m.id)).toContain(axe);
-	await send(ann, { t: 'take', id: axe });
-	await expect.poll(async () => (await received(ann, 'took')).length).toBe(0);
-	await expect
-		.poll(async () => (await received(ann, 'gone')).filter((m) => m.id === axe).length)
-		.toBe(2);
+		// Bob picks the axe up; Ann sees it gone and can no longer take it.
+		const axe = drops[0]?.id;
+		await send(bob, { t: 'take', id: axe });
+		await expect
+			.poll(async () => (await received(bob, 'took'))[0])
+			.toMatchObject({ d: { id: axe, item: { id: 'stoneAxe', dur: 40 } } });
+		await expect.poll(async () => (await received(ann, 'gone')).map((m) => m.id)).toContain(axe);
+		await send(ann, { t: 'take', id: axe });
+		await expect.poll(async () => (await received(ann, 'took')).length).toBe(0);
+		await expect
+			.poll(async () => (await received(ann, 'gone')).filter((m) => m.id === axe).length)
+			.toBe(2);
 
-	// Ann sees Bob join, then his moves and his chat.
-	await expect.poll(async () => (await received(ann, 'join')).length).toBe(1);
-	await send(bob, { t: 's', x: 11, y: 1, z: 21, yaw: 1, pitch: 0 });
-	await expect.poll(async () => (await received(ann, 's')).length).toBeGreaterThan(0);
-	await send(bob, { t: 'chat', text: 'Ahoj Ann!' });
-	await expect
-		.poll(async () => (await received(ann, 'chat')).map((m) => m.text))
-		.toContain('Ahoj Ann!');
+		// Ann sees Bob join, then his moves and his chat.
+		await expect.poll(async () => (await received(ann, 'join')).length).toBe(1);
+		await send(bob, { t: 's', x: 11, y: 1, z: 21, yaw: 1, pitch: 0 });
+		await expect.poll(async () => (await received(ann, 's')).length).toBeGreaterThan(0);
+		await send(bob, { t: 'chat', text: 'Ahoj Ann!' });
+		await expect
+			.poll(async () => (await received(ann, 'chat')).map((m) => m.text))
+			.toContain('Ahoj Ann!');
 
-	// The lobby lists the world while people play in it.
-	const lobby = (await (await request.get('/api/driftwood/rooms')).json()) as {
-		rooms: { code: string; players: string[] }[];
-	};
-	expect(lobby.rooms.find((r) => r.code === code)?.players.sort()).toEqual(['Ann', 'Bob']);
+		// The lobby lists the world while people play in it.
+		const lobby = (await (await request.get('/api/driftwood/rooms')).json()) as {
+			rooms: { code: string; players: string[] }[];
+		};
+		expect(lobby.rooms.find((r) => r.code === code)?.players.sort()).toEqual(['Ann', 'Bob']);
 
-	// Ann leaves: Bob is told and becomes the host.
-	await ann.close();
-	await expect
-		.poll(async () => (await received(bob, 'leave'))[0])
-		.toMatchObject({ host: (bobWelcome as Msg).you });
-	await bob.close();
-});
+		// Ann leaves: Bob is told and becomes the host.
+		await ann.close();
+		await expect
+			.poll(async () => (await received(bob, 'leave'))[0])
+			.toMatchObject({ host: (bobWelcome as Msg).you });
+		await bob.close();
+	},
+);
 
-test('DRIFTWOOD worlds reject bad requests', async ({ request }, info) => {
+test('DRIFTWOOD worlds reject bad requests', { tag: '@driftwood' }, async ({ request }, info) => {
 	test.skip(info.project.name !== 'desktop-chromium', 'one run is enough for the server');
 	expect(
 		(await request.post('/api/driftwood/rooms', { data: { seed: -5, mode: 'x' } })).status(),

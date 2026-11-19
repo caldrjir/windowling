@@ -1,12 +1,15 @@
 name: CI
 
-# Pull requests run everything (pull_request). On master (push) only the quality job runs again
-# before Deploy: E2E already passed on the PR, and repeating it after every merge doubled the
-# Actions minutes and delayed the deploy. Pushing to a feature branch alone does not start CI -
-# open a PR, or run it by hand (workflow_dispatch runs everything, E2E included).
+# CI runs on pull requests (once per push) and by hand (workflow_dispatch, everything). Master
+# does not repeat it after the merge: the PR already passed, and Deploy builds and deploys every
+# push to master by itself.
+#
+# Minutes: every job is billed rounded up to a whole minute and pays its own setup (Postgres,
+# install, build, Worker), so a PR normally runs ONE job: lint, types, unit + DB tests, the build
+# and the E2E tests of the games it changes (apps/web/scripts/e2e-scope.mjs). Only a PR that
+# touches shared code (the hub, shared game files, the puzzle kit, the Worker, packages, config)
+# runs the whole E2E suite, in four parallel shards after that job.
 on:
-  push:
-    branches: [master]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -31,26 +34,36 @@ jobs:
   quality:
     name: Lint · Typecheck · Test · Build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    outputs:
+      full: ${{ steps.scope.outputs.full }}
     services:
       postgres:
         image: postgres:18-alpine
         env:
           POSTGRES_USER: windowling
           POSTGRES_PASSWORD: windowling
-          POSTGRES_DB: windowling_test
+          POSTGRES_DB: windowling
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U windowling"
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
+      # The PR's merge commit and its first parent (the base branch): their diff is the PR.
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - name: E2E scope
+        id: scope
+        run: node apps/web/scripts/e2e-scope.mjs ${{ github.event_name == 'pull_request' && 'HEAD^1 HEAD' || '--full' }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Test database
+        run: docker exec ${{ job.services.postgres.id }} createdb -U windowling windowling_test
       - name: Lint
         run: pnpm lint
       - name: Format
@@ -71,12 +84,30 @@ jobs:
         run: pnpm build
       - name: Worker bundle dry run
         run: pnpm --filter @windowling/web exec wrangler deploy --dry-run --outdir dist-worker
+      # Google Chrome is preinstalled on GitHub's Ubuntu runners: no browser download.
+      - name: E2E of the changed games
+        if: steps.scope.outputs.full != 'true' && steps.scope.outputs.tags != ''
+        env:
+          PLAYWRIGHT_CHANNEL: chrome
+          E2E_TAGS: ${{ steps.scope.outputs.tags }}
+          E2E_PREBUILT: '1'
+        run: |
+          pnpm db:migrate
+          pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
 
-  # Four shards in parallel, each with its own Postgres and Worker (~3 min instead of ~10).
-  # Pull requests only (see the top of the file).
+  # The whole suite, only when the PR touches shared code: four shards in parallel, each with its
+  # own Postgres and Worker (~3 min instead of ~10).
   e2e-shard:
     name: E2E shard ${{ matrix.shard }}/4
-    if: github.event_name != 'push'
+    needs: quality
+    if: needs.quality.outputs.full == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -104,7 +135,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Apply migrations
         run: pnpm db:migrate
-      # Google Chrome is preinstalled on GitHub's Ubuntu runners: no browser download.
       - name: Run E2E
         env:
           PLAYWRIGHT_CHANNEL: chrome
@@ -116,11 +146,12 @@ jobs:
           path: apps/web/playwright-report
           retention-days: 7
 
-  # One check under the old name, so branch protection keeps requiring a single E2E result.
+  # The required E2E check. A job skipped by its `if` counts as passed, so a PR that only changes
+  # games (its E2E ran inside the quality job) spends no minute here.
   e2e:
     name: E2E (Playwright on workerd)
-    needs: e2e-shard
-    if: always() && github.event_name != 'push'
+    needs: [quality, e2e-shard]
+    if: always() && needs.quality.outputs.full == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: All shards passed

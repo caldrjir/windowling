@@ -1,13 +1,12 @@
 name: Deploy
 
-# Production deploy after CI has passed on master.
+# Production deploy of every push to master. Pushes to master are merged PRs, whose CI (lint,
+# tests, build, E2E) already passed, so master does not run CI again; this job builds anyway.
 # Inert until the repository has the CLOUDFLARE_API_TOKEN secret (see docs/development.md).
 # All production secrets live in the GitHub `production` environment; this workflow
 # uploads them to the Worker together with each new version (single source of truth).
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [master]
   # Manual re-deploy of the current master (e.g. after rotating a secret).
   workflow_dispatch:
@@ -22,9 +21,7 @@ permissions:
 jobs:
   production:
     name: Migrate & deploy to windowling.com
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -38,8 +35,6 @@ jobs:
         run: echo "::notice::CLOUDFLARE_API_TOKEN is not set - skipping deploy."
       - uses: actions/checkout@v5
         if: env.HAS_CLOUDFLARE == 'true'
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: pnpm/action-setup@v4
         if: env.HAS_CLOUDFLARE == 'true'
       - uses: actions/setup-node@v5
