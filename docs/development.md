@@ -26,13 +26,21 @@ All local configuration lives in the root `.env`: `pnpm dev`, the database tools
    `feat(web): add game tile`, `fix(auth): keep session after sign-in`.
 4. `pnpm check` before pushing (same as CI's quality job). Run `pnpm test:e2e` for UI/auth/server changes.
 5. Open a PR to `master`, title in Conventional Commit form, body `Closes #<issue>`.
-   CI runs on the PR (once per push) and again on `master` after the merge; pushing a branch
+   CI runs on the PR (once per push). After the merge, `master` runs only the quality job
+   (lint, tests, build) before the deploy: E2E already passed on the PR. Pushing a branch
    without a PR does not start it.
 6. CI green → **squash merge**. `master` deploys to production automatically.
 
 ```
 Issue ─► feature branch ─► PR ─► CI ─► (preview) ─► squash merge ─► production
 ```
+
+### GitHub Actions minutes
+
+In a public repository Actions on GitHub's standard runners are free. In a private one the
+minutes come out of the account's monthly allowance, each job rounded up to a whole minute.
+To keep that low, E2E runs only on pull requests (`master` repeats just the quality job before
+the deploy) and the Neon preview database only for PRs that touch `packages/database`.
 
 ### Recommended GitHub settings (one-time, repo admin)
 
@@ -72,8 +80,9 @@ Convention: each completed iteration is at least one minor release.
 - DB tests use `TEST_DATABASE_URL`, migrate it automatically, and are skipped locally if it is
   unset (never in CI).
 - E2E builds the app and runs it with `wrangler dev` (the real Workers runtime), on
-  `http://127.0.0.1:8787`. CI splits it into four parallel shards (`--shard=N/4`), each with its own
-  Postgres and Worker; the `E2E (Playwright on workerd)` check passes when all of them pass. Browser: `PLAYWRIGHT_CHANNEL=chrome|msedge` uses the installed Chrome /
+  `http://127.0.0.1:8787`. CI splits it into four parallel shards (`--shard=N/4`, two workers each),
+  each with its own Postgres and Worker, on pull requests only; the `E2E (Playwright on workerd)`
+  check passes when all of them pass. Browser: `PLAYWRIGHT_CHANNEL=chrome|msedge` uses the installed Chrome /
   Edge (no download; CI uses the runner's Chrome), `PLAYWRIGHT_CHROMIUM_EXECUTABLE` any Chromium
   binary, otherwise Playwright's own (`playwright install --only-shell chromium`).
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without

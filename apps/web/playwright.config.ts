@@ -50,6 +50,9 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: Boolean(process.env.CI),
 	retries: process.env.CI ? 1 : 0,
+	// Two workers per CI shard. Playwright's default is half the CPU cores, which is two on a
+	// public repo's runner but only one on a private repo's two-core runner (twice the minutes).
+	workers: process.env.CI ? 2 : undefined,
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 	globalSetup: './e2e/global-setup.ts',
 	use: {

@@ -1,7 +1,9 @@
 name: CI
 
-# Pull requests run once (pull_request); master runs again on push because Deploy waits for
-# that run. Pushing to a feature branch alone does not start CI - open a PR (or run it by hand).
+# Pull requests run everything (pull_request). On master (push) only the quality job runs again
+# before Deploy: E2E already passed on the PR, and repeating it after every merge doubled the
+# Actions minutes and delayed the deploy. Pushing to a feature branch alone does not start CI -
+# open a PR, or run it by hand (workflow_dispatch runs everything, E2E included).
 on:
   push:
     branches: [master]
@@ -71,8 +73,10 @@ jobs:
         run: pnpm --filter @windowling/web exec wrangler deploy --dry-run --outdir dist-worker
 
   # Four shards in parallel, each with its own Postgres and Worker (~3 min instead of ~10).
+  # Pull requests only (see the top of the file).
   e2e-shard:
     name: E2E shard ${{ matrix.shard }}/4
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -116,7 +120,7 @@ jobs:
   e2e:
     name: E2E (Playwright on workerd)
     needs: e2e-shard
-    if: always()
+    if: always() && github.event_name != 'push'
     runs-on: ubuntu-latest
     steps:
       - name: All shards passed
