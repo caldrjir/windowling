@@ -2,9 +2,13 @@ name: Release
 
 # release-please reads Conventional Commits on master, keeps a release PR with
 # the next SemVer version + CHANGELOG, and tags the release when it is merged.
+# Once a week and by hand, not on every push to master: each run is a billed minute, and the
+# release PR only needs to be current when a release is cut. To release: run it by hand, merge
+# the release PR, run it by hand again (that run tags the release).
 on:
-  push:
-    branches: [master]
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: write

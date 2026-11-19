@@ -1,24 +1,23 @@
 #!/usr/bin/env node
 // Which E2E tests a pull request can affect (CI, .github/workflows/ci.yml, job "E2E scope").
 //
-// A game's tests carry its tag (`test('…', { tag: '@voidborn' }, …)`); untagged tests (the hub,
-// sign-in, sync, the APIs…) always run. When a PR only changes games under
-// apps/web/static/games/<id>/ (plus their tests and docs), CI runs those games' tests and the
-// untagged ones in one shard; anything else (shared game files, the puzzle kit, the hub, the
-// Worker, packages, config) runs everything in four.
+// A game's tests carry its tag (`test('…', { tag: '@voidborn' }, …)`); tests of the hub and shared
+// code (sign-in, sync, the APIs…) are untagged. When a PR only changes games under
+// apps/web/static/games/<id>/ (plus their tests and docs), CI runs just those games' tests: a game
+// is a static page of its own, so it cannot break the hub or another game. Anything else (shared
+// game files, the puzzle kit, the hub, the Worker, packages, config) runs the whole suite.
 //
 //   node apps/web/scripts/e2e-scope.mjs <base> <head>   compare two commits
 //   node apps/web/scripts/e2e-scope.mjs --full           everything (manual runs)
 //
-// Writes skip=<tags>, total=<shards> and shards=<JSON list> to $GITHUB_OUTPUT (when set) and a
-// short summary to stdout and $GITHUB_STEP_SUMMARY. Playwright reads the tags from E2E_SKIP_TAGS.
+// Writes full=<true|false> and tags=<games> to $GITHUB_OUTPUT (when set) and a short summary to
+// stdout and $GITHUB_STEP_SUMMARY. Playwright runs only the tags in E2E_TAGS (playwright.config.ts).
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const e2eDir = path.join(root, 'apps/web/e2e');
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
 
 const GAMES = readdirSync(path.join(root, 'apps/web/static/games'), { withFileTypes: true })
@@ -98,26 +97,22 @@ function scope(base, head) {
 }
 
 const args = process.argv.slice(2);
-const result =
+let result =
 	args[0] === '--full' || args.length < 2 ? { full: 'manual run' } : scope(args[0], args[1]);
-const allTags = new Set(GAMES);
-for (const f of readdirSync(e2eDir).filter((x) => x.endsWith('.test.ts')))
-	for (const b of blocksOf(readFileSync(path.join(e2eDir, f), 'utf8')))
-		for (const t of b.tags ?? []) allTags.add(t);
-
-const games = result.games ? [...result.games].sort() : [];
-const skip = result.full ? [] : [...allTags].filter((t) => !result.games.has(t)).sort();
-// One shard for a few games; more when a PR touches many of them at once.
-const total = result.full ? 4 : games.length > 6 ? 4 : games.length > 2 ? 2 : 1;
+// Many games at once: the whole suite in parallel shards is faster than one long job.
+if (result.games && result.games.size > 6) result = { full: `${result.games.size} games` };
+const tags = result.games ? [...result.games].sort() : [];
 const summary = result.full
-	? `E2E: everything (${result.full})`
-	: `E2E: ${games.length ? games.join(', ') : 'no game'} + untagged tests, ${total} shard${total > 1 ? 's' : ''}`;
+	? `E2E: everything, four shards (${result.full})`
+	: tags.length
+		? `E2E: only ${tags.join(', ')}`
+		: 'E2E: nothing to run (no game or shared code changed)';
 
 console.log(summary);
 if (process.env.GITHUB_OUTPUT)
 	appendFileSync(
 		process.env.GITHUB_OUTPUT,
-		`skip=${skip.join(',')}\ntotal=${total}\nshards=${JSON.stringify(Array.from({ length: total }, (_, i) => i + 1))}\n`,
+		`full=${Boolean(result.full)}\ntags=${tags.join(',')}\n`,
 	);
 if (process.env.GITHUB_STEP_SUMMARY)
 	appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);

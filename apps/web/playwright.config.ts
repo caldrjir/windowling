@@ -45,13 +45,14 @@ const launchOptions = {
 	executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
 };
 
-// CI runs only the tests a PR can affect (scripts/e2e-scope.mjs): E2E_SKIP_TAGS lists the games whose
-// tests (`{ tag: '@<game>' }`) are left out. Untagged tests (the hub, sign-in, sync...) always run.
-const skipTags = (process.env.E2E_SKIP_TAGS ?? '').split(',').filter(Boolean);
+// CI runs only the tests a PR can affect (scripts/e2e-scope.mjs): E2E_TAGS=voidborn,sudoku runs just
+// the tests tagged `{ tag: '@voidborn' }` or `'@sudoku'`. Unset: everything. E2E_PREBUILT=1 skips the
+// build when the same job has just built the app.
+const onlyTags = (process.env.E2E_TAGS ?? '').split(',').filter(Boolean);
 
 export default defineConfig({
 	testDir: './e2e',
-	grepInvert: skipTags.length ? new RegExp(`@(?:${skipTags.join('|')})(?![\\w-])`) : undefined,
+	grep: onlyTags.length ? new RegExp(`@(?:${onlyTags.join('|')})(?![\\w-])`) : undefined,
 	fullyParallel: true,
 	forbidOnly: Boolean(process.env.CI),
 	retries: process.env.CI ? 1 : 0,
@@ -82,7 +83,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm build && pnpm exec wrangler dev --port ${PORT} --ip 127.0.0.1 --local-upstream 127.0.0.1:${PORT} ${varFlags}`,
+		command: `${process.env.E2E_PREBUILT ? '' : 'pnpm build && '}pnpm exec wrangler dev --port ${PORT} --ip 127.0.0.1 --local-upstream 127.0.0.1:${PORT} ${varFlags}`,
 		url: `${BASE_URL}/api/health`,
 		reuseExistingServer: !process.env.CI,
 		// The Worker reaches Postgres through the Hyperdrive binding; point its local stand-in

@@ -73,7 +73,7 @@ docker/                        Local infrastructure (Postgres init scripts)
 3. Make it playable on phones (touch input, small screens) - or, for mouse + keyboard games,
    set `desktopOnly: true` and load `js/desktop-only.js`-style redirect (see DRIFTWOOD) - and extend `apps/web/e2e/app.test.ts`
    so it launches without page errors (desktop and mobile projects). Tag the game's tests with
-   `{ tag: '@<id>' }`: CI then runs only them (and the untagged hub tests) for a PR that changes just the game.
+   `{ tag: '@<id>' }`: CI then runs only them for a PR that changes just the game.
 4. If it loads anything external, update the CSP in `apps/web/svelte.config.js`.
 
 A **puzzle game** loads `../puzzle-kit/kit.js` + `kit.css` and calls `Kit.game({ id, title, diffs,
