@@ -1,0 +1,93 @@
+{
+	"$comment": "HOLLOW SUN voices (Game Design Bible: AU_vo_*). The lines come from data.js (D.vo, exported from G.DIALOGS and G.WHISPERS with the English G.DIALOGS_EN / G.WHISPERS_EN). Each role gets a designed voice (ElevenLabs Voice Design: a new, fictional voice from the prompt, no clone of a real person – D32); one voice serves both languages (multilingual model). Record each role's voice name and, per language under recorded, the plan and generation date, then save the downloads as <id>.mp3 in D:/hollowsun-audio/vo/<lang> and run pnpm --filter @windowling/web hollowsun:vo -- --lang=en (or cs).",
+	"service": "ElevenLabs",
+	"recorded": {
+		"en": {
+			"plan": "ElevenLabs Starter (commercial licence)",
+			"date": "2026-11-16"
+		},
+		"cs": {
+			"plan": null,
+			"date": null
+		}
+	},
+	"voices": [
+		{
+			"role": "np_ysolde",
+			"n": "Ysolde",
+			"prompt": "A young woman in her late twenties with a soft, intimate, close-mic voice, as if speaking quietly inside the listener's head. Calm and warm, slightly wry, with a faint dreamy, otherworldly quality. Neutral English accent. Slow, measured pace with gentle pauses. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Ysolde",
+			"model": null
+		},
+		{
+			"role": "np_teodor",
+			"n": "Teodor Lisk",
+			"prompt": "An elderly man in his seventies with a warm, measured, scholarly voice. Gentle authority and quiet kindness, with a hint of hidden sorrow and secrets he will not tell. Neutral English accent, slightly worn. Unhurried pace, precise diction, soft emphasis. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Teodor",
+			"model": null
+		},
+		{
+			"role": "np_oduin",
+			"n": "Maršál Oduin Hask",
+			"prompt": "A middle-aged man in his fifties with a deep, commanding military voice. Pragmatic, dry and firm, used to being obeyed, with a touch of weary humour. Slightly gravelly. Neutral English accent. Steady, deliberate pace with clipped endings. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Oduin",
+			"model": null
+		},
+		{
+			"role": "np_brannoc",
+			"n": "Kovářka Brannoc",
+			"prompt": "A woman in her forties with a strong, blunt, low and warm voice. A working-class blacksmith: proud, stubborn and determined, a little rough around the edges, speaks plainly. Neutral English accent. Firm, even pace. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Brannoc",
+			"model": null
+		},
+		{
+			"role": "np_aldric",
+			"n": "Bratr Aldric",
+			"prompt": "An older man in his sixties with a huge, deep, resonant voice, cracked and hoarse as if scorched by forge heat. A broken, anguished smith half possessed by the fire, torn between grief and menace. Neutral English accent. Slow, heavy pace with strained breaths and long pauses. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Aldric",
+			"model": null
+		},
+		{
+			"role": "v:Hrobník z Cinderholdu",
+			"n": "Hrobník z Cinderholdu",
+			"prompt": "An old man in his sixties with a rough, rural, working voice. A simple gravedigger, frightened and breathless, words tumbling out in a hurry. Plain, earthy English accent. Fast, uneven pace. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Hrobník",
+			"model": null
+		},
+		{
+			"role": "v:Strážný Compactu",
+			"n": "Strážný Compactu",
+			"prompt": "A man in his thirties with a harsh, hoarse soldier's voice. Can bark a suspicious order at a gate or speak tired and bitter like a deserter. Plain English accent. Clipped, direct delivery. Dry studio recording without reverb or echo. Perfect audio quality. (One voice shared by the Compact Guard and the Ironbound Deserter: the plan allows 10 voices for 11 roles.)",
+			"voice": "HS Voják",
+			"model": null
+		},
+		{
+			"role": "v:Posel Covenantu",
+			"n": "Posel Covenantu",
+			"prompt": "A woman in her thirties with a polished, formal voice. A cool, courteous envoy of a religious order, every word chosen carefully, quietly superior. Refined English accent. Calm, even pace. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Posel",
+			"model": null
+		},
+		{
+			"role": "v:Kněz Choir of Solace",
+			"n": "Kněz Choir of Solace",
+			"prompt": "A man in his fifties with a soothing, honeyed preacher's voice. Sweet and gentle on the surface but quietly unsettling, like a sermon that hides something cold. Neutral English accent. Slow, rhythmic sermon cadence. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Kněz",
+			"model": null
+		},
+		{
+			"role": "v:Sadařka",
+			"n": "Sadařka",
+			"prompt": "An older woman in her sixties with a quiet, soft rural voice. An orchard keeper telling a story she cannot forget, haunted and wistful, almost a whisper. Plain English accent. Slow pace with long pauses. Dry studio recording without reverb or echo. Perfect audio quality.",
+			"voice": "HS Sadařka",
+			"model": null
+		},
+		{
+			"role": "v:Dezertér Ironbound",
+			"n": "Dezertér Ironbound",
+			"prompt": "A man in his thirties with a harsh, hoarse soldier's voice. Can bark a suspicious order at a gate or speak tired and bitter like a deserter. Plain English accent. Clipped, direct delivery. Dry studio recording without reverb or echo. Perfect audio quality. (One voice shared by the Compact Guard and the Ironbound Deserter: the plan allows 10 voices for 11 roles.)",
+			"voice": "HS Voják",
+			"model": null
+		}
+	]
+}

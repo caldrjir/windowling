@@ -7,7 +7,7 @@ Read `docs/product.md` and `docs/architecture.md` before larger changes.
 
 **Windowling Game Center** (<https://windowling.com>) is a web game hub: a library of browser
 games with a shared shell, language switch, per-game stats and Google sign-in. The library
-holds two shelves: action games (**VOIDBORN**, **STARSPIRE**, **DRIFTWOOD** with multiplayer worlds) and
+holds two shelves: action games (**VOIDBORN**, **STARSPIRE**, **DRIFTWOOD** with multiplayer worlds, **HOLLOW SUN** – an isometric ARPG on PlayCanvas, Act I of its Game Design Bible) and
 **Puzzles** (Sudoku, Nonograms, Kakuro, Pulsar falling blocks, Fúze/2048, Miny,
 Omalovánky colour by number, Mahjong, Skládačka jigsaw, Šachy chess, Piškvorky gomoku, Sokoban, Clickomania, Rybky à la Fish Fillets, Mlsoun maze chase à la Pac-Man, Had snake, Skokan à la Doodle Jump, Vlak à la the Czech classic Vlak (train), Bombarďák à la Bomberman, Dáma (Czech draughts, online for two), Lodě battleship (online for two), Člověče, nezlob se (online for two), Osadníci settlers à la Catan (online for two), Tanky two-player artillery, Červíci worms war) built on a shared puzzle kit, plus Vesnička, an idle village game of its own (no kit). A second header tab, Game wikis, lists guide pages for games we play with friends (Gray Zone Warfare). Later games will store progress in Postgres.
 
