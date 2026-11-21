@@ -809,7 +809,8 @@ const Render = (() => {
       const sx = (x - G.cam.x) * zoom + W / 2, sy = (y - G.cam.y) * zoom + H / 2;
       if (sx > 0 && sx < W && sy > 0 && sy < H) continue;
       const a = Math.atan2(sy - H / 2, sx - W / 2);
-      const m = 34, tx = clamp(sx, m, W - m), ty = clamp(sy, m + 50, H - m);
+      // šipky drží mimo výřezy displeje (notch, kulaté rohy, indikátor domů)
+      const m = 34, I = Platform.insets, tx = clamp(sx, m + I.l, W - m - I.r), ty = clamp(sy, m + 50 + I.t, H - m - I.b);
       const img = Sprites.pointer(col, sz), c = Math.cos(a) * dpr, sn = Math.sin(a) * dpr;
       ctx.setTransform(c, sn, -sn, c, tx * dpr, ty * dpr);
       ctx.drawImage(img, -img.hw, -img.hw, img.hw * 2, img.hw * 2);

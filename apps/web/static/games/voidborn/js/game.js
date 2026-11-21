@@ -429,6 +429,7 @@ function hurtPlayer(dmg, srcX, srcY) {
   const d = Math.max(1, dmg * armorFactor(G.st.armor));
   p.hp -= d; p.inv = 0.5;
   G.hurtFlash = 1; G.noHit = 0; G.hitsTaken++;
+  Platform.vibrate(30);
   if (G.boss) G.bossClean = false;
   addShake(9);
   Sound.play.hurt();
@@ -457,6 +458,7 @@ function playerDown() {
   }
   p.hp = 0;
   G.state = 'dying'; G.dyingT = 2.2;
+  Platform.vibrate([90, 60, 220]);
   PerfLog.ev('death');
   Sound.play.die();
   Sound.music('menu');
@@ -476,6 +478,7 @@ function updatePlayer(dt) {
     p.dashCharges--;
     p.dashHit = G.st.dashDmg ? new Set() : null;
     SAVE.stats.dashes++;
+    Platform.vibrate(12);
     // úskok setřese přisáté pijavice
     for (const e of G.enemies) if (e.att) { e.att = false; e.noAtt = G.time + 1.6; e.kx = Math.cos(e.attA) * 520; e.ky = Math.sin(e.attA) * 520; }
     Sound.play.dash();
@@ -789,6 +792,7 @@ function spawnBoss(key, idx) {
   G.boss = e;
   G.bossClean = true;
   PerfLog.ev('boss', key);
+  Platform.vibrate([70, 50, 70]);
   UI.bossBar(d.name, 1);
   Sound.music('boss');
   addShake(10);
@@ -909,6 +913,7 @@ function bossKilled(e) {
   UI.bossBar(null);
   SAVE.stats.bossKills++;
   if (G.bossClean) SAVE.stats.cleanBoss = 1;
+  Platform.vibrate([60, 40, 140]);
   Sound.play.bossdie();
   G.timeScale = 0.15; G.flash = 1; addShake(26);
   burst(e.x, e.y, e.color, 120, 700, 5, 1.6);
@@ -941,6 +946,7 @@ function markVictory() {
 // ── Truhly ──────────────────────────────────────────────────────────────────
 function openChest(big) {
   PerfLog.ev('chest', big ? 'big' : 'small');
+  Platform.vibrate(25);
   const rewards = [];
   const evos = upgradePool().filter(c => c.kind === 'evo');
   if (evos.length) { applyChoice(evos[0]); rewards.push(evos[0]); }
@@ -1149,6 +1155,7 @@ function autoLevelUp() {
 function openLevelUp() {
   if (SAVE.settings.autoPick) { autoLevelUp(); return; }
   G.state = 'levelup';
+  Platform.vibrate([18, 50, 18]);
   PerfLog.ev('levelup', { n: G.pendingLevels, lvl: G.level, manual: true });
   G.choices = genChoices();
   Sound.play.levelup();
@@ -1228,6 +1235,7 @@ function trackStats() {
 function endRun(reason) {
   if (G.ended) return;
   G.ended = true;
+  Platform.keepAwake(false);
   trackStats();
   const earned = Math.round(G.shards + G.clearBonus);
   SAVE.shards += earned;

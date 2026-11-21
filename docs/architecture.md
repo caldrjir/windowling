@@ -58,7 +58,9 @@ Shipped as static assets, untouched by the build. The contract with the hub is b
 
 Games must work on phones too: VOIDBORN reads touch input (a floating stick anywhere on the
 play field + a dash button, in `js/main.js` `Input`) next to keyboard and gamepad; its logic,
-balance and save format are unchanged.
+balance and save format are unchanged. It is also being prepared for the app stores: safe areas,
+the Back button, haptics and the PWA manifest live in `js/platform.js` (see
+[voidborn-mobile.md](voidborn-mobile.md)).
 
 ### Site gate - `apps/web/src/worker`
 

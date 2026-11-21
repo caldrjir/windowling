@@ -289,6 +289,85 @@ test(
 );
 
 test(
+	'VOIDBORN on a phone: Back steps back, safe areas, sticky buttons, quiet toasts and haptics',
+	{ tag: '@voidborn' },
+	async ({ page, request, isMobile }) => {
+		test.skip(!isMobile, 'phone behaviour');
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.addInitScript(() => {
+			const w = window as unknown as { vib: unknown[] };
+			w.vib = [];
+			navigator.vibrate = (p: VibratePattern) => {
+				w.vib.push(p);
+				return true;
+			};
+		});
+		await page.goto('/games/voidborn/index.html');
+		await expect(page.locator('#s-title .press')).toHaveText('Klepni kamkoli');
+		// The tap that leaves the title does not also press the menu button under the finger.
+		const hub = await page.evaluate<number[]>(`(() => { UI.show('menu');
+			const r = document.querySelector('[data-go="hub"]').getBoundingClientRect();
+			UI.show('title'); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+		await page.touchscreen.tap(hub[0], hub[1]);
+		await expect.poll(() => page.evaluate('UI.current')).toBe('menu');
+		expect(page.url()).toContain('/games/voidborn/');
+		// Nothing is wider than the phone; the hangar's Launch bar stays on screen while scrolling.
+		const wide = `[...document.querySelectorAll('.screen.active, .screen.active *')].some(e => e.getBoundingClientRect().right > innerWidth + 1 && getComputedStyle(e).position !== 'fixed' && !e.closest('.ship-view'))`;
+		expect(await page.evaluate(wide)).toBe(false);
+		await page.locator('[data-go="hangar"]').tap();
+		await expect(page.locator('#startBtn')).toBeInViewport();
+		expect(await page.evaluate(wide)).toBe(false);
+		// Android Back (or the browser's back) returns to the menu instead of leaving the game.
+		await page.goBack();
+		await expect.poll(() => page.evaluate('UI.current')).toBe('menu');
+		expect(page.url()).toContain('/games/voidborn/');
+
+		await page.locator('[data-go="hangar"]').tap();
+		await page.locator('#startBtn').tap();
+		await expect(page.locator('#dashBtn')).toBeVisible();
+		// Toasts go to the top, away from the dash button and the thumbs.
+		await page.evaluate(`UI.toast('Test', 'jen nadpis')`);
+		const toast = await page.locator('#toasts .toast').last().boundingBox();
+		const dash = await page.locator('#dashBtn').boundingBox();
+		const vh = page.viewportSize()?.height ?? 0;
+		expect(
+			toast && dash && toast.y + toast.height < vh / 2 && toast.y + toast.height < dash.y,
+		).toBe(true);
+		// The dash button shows its recharge; hits buzz the phone (and stop when switched off).
+		const ring = await page.evaluate<
+			string[]
+		>(`(() => { G.p.dashCharges = 0; G.p.dashRe = G.st.dashCd / 2;
+			UI.hudUpdate(60, true); const b = document.getElementById('dashBtn');
+			return [b.className, b.style.getPropertyValue('--re')]; })()`);
+		expect(ring).toEqual(['empty', '0.50']);
+		await page.evaluate(`G.p.inv = 0; hurtPlayer(1)`);
+		expect(await page.evaluate('vib.length')).toBeGreaterThan(0);
+		// Display cutouts (simulated in Debug): the HUD moves out of the notch.
+		await page.evaluate(`SAVE.settings.dbgNotch = true; Platform.apply()`);
+		expect(await page.evaluate('Platform.insets.t')).toBe(47);
+		await expect
+			.poll(() =>
+				page.evaluate(`document.querySelector('.hud-center').getBoundingClientRect().top`),
+			)
+			.toBeGreaterThanOrEqual(47);
+		// Back during a run pauses it, Back on the pause screen resumes.
+		await page.goBack();
+		await expect.poll(() => page.evaluate('G.state')).toBe('paused');
+		await expect(page.locator('#overlay .ov-actions')).toBeInViewport();
+		await page.goBack();
+		await expect.poll(() => page.evaluate('G.state')).toBe('play');
+		expect(page.url()).toContain('/games/voidborn/');
+		// The game can be installed (PWA, a store wrapper): manifest and icons.
+		const manifest = await (await request.get('/games/voidborn/manifest.webmanifest')).json();
+		expect(manifest).toMatchObject({ name: 'VOIDBORN', display: 'fullscreen' });
+		for (const icon of manifest.icons as { src: string }[])
+			expect((await request.get(`/games/voidborn/${icon.src}`)).status()).toBe(200);
+		expect(errors).toEqual([]);
+	},
+);
+
+test(
 	'VOIDBORN: advanced weapons, overcharge, mutations and the Master Workshop',
 	{ tag: '@voidborn' },
 	async ({ page, isMobile }) => {
