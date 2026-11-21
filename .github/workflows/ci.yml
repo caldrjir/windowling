@@ -50,14 +50,14 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       # The PR's merge commit and its first parent (the base branch): their diff is the PR.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
       - name: E2E scope
         id: scope
         run: node apps/web/scripts/e2e-scope.mjs ${{ github.event_name == 'pull_request' && 'HEAD^1 HEAD' || '--full' }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -94,7 +94,7 @@ jobs:
         run: |
           pnpm db:migrate
           pnpm test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -126,9 +126,9 @@ jobs:
           --health-cmd "pg_isready -U windowling"
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -139,7 +139,7 @@ jobs:
         env:
           PLAYWRIGHT_CHANNEL: chrome
         run: pnpm test:e2e --shard=${{ matrix.shard }}/4
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report-${{ matrix.shard }}
