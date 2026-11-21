@@ -57,6 +57,7 @@ const Legends = (() => {
     SAVE.legendSeen[k] = (SAVE.legendSeen[k] || 0) + 1;
     UI.banner(`★ ${ENEMY_NAMES[k][0]}`, `${L('Legenda prázdnoty', 'Void legend')} · ${LEGEND_LINE[k]}`, 'legend');
     Sound.play.legend();
+    Platform.vibrate([30, 70, 30, 70, 30]);
     G.flash = Math.max(G.flash, 0.35);
     PerfLog.ev('legend', k);
     return e;

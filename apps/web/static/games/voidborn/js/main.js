@@ -28,7 +28,7 @@ const Input = (() => {
   window.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse') return;
     document.body.classList.add('touch');
-    if (G.state !== 'play' || stick || e.target.closest('button, #overlay')) return;
+    if (G.state !== 'play' || stick || (e.target.closest && e.target.closest('button, #overlay'))) return;
     stick = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 };
     stickEl.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
     knobEl.style.transform = '';
@@ -88,6 +88,8 @@ const Input = (() => {
 const Game = {
   start(pilotId, si, od) {
     Render.resetQuality(); emaMs = 16; slowT = 0;
+    Platform.keepAwake(true);
+    Platform.arm(); // Zpět během mise pozastaví hru (handleBack)
     Sound.init();
     UI.hideOverlay();
     UI.show(null);
@@ -106,13 +108,16 @@ const Game = {
   togglePause() {
     if (G.state === 'play') {
       G.state = 'paused'; Sound.muffle(true); UI.showPause(); PerfLog.ev('pause');
+      Platform.keepAwake(false);
     } else if (G.state === 'paused') {
       G.state = 'play'; Sound.muffle(false); UI.hideOverlay(); Input.clear(); PerfLog.ev('resume');
+      Platform.keepAwake(true);
     }
   },
   toMenu(screen) {
     PerfLog.end('menu');
     G.state = 'menu';
+    Platform.keepAwake(false);
     UI.hideOverlay();
     UI.hudShow(false);
     UI.bossBar(null);
@@ -160,6 +165,19 @@ function onKey(e) {
   }
 }
 
+// Zpět (Android, gesto, šipka v prohlížeči): totéž co Esc, jen v misi i v pauze nejdřív zavře okno.
+// Dokud hra není zpátky v hlavním menu, Zpět se znovu „nabije“ (platform.js).
+function handleBack() {
+  const st = G.state;
+  if (st === 'play') Game.togglePause();
+  else if (st === 'paused') { if (document.querySelector('#overlay .confirm')) UI.act('no'); else Game.togglePause(); }
+  else if (st === 'chest') closeChest();
+  else if (st === 'over') Game.toMenu('menu');
+  else if (st === 'menu') onKey({ code: 'Escape' });
+  const root = G.state === 'menu' && (UI.current === 'menu' || UI.current === 'title') && !UI.overlayOpen();
+  if (!root) Platform.arm();
+}
+
 function enterMenu() {
   Sound.init();
   Sound.setVolume('sfx', SAVE.settings.sfx);
@@ -176,9 +194,15 @@ let plU = 0, plD = 0, plH = 0, plS = 0;
 // Stavy, kdy hra stojí (pauza, výběr karet, truhla, výsledky): obraz se nemění, takže se nepřekresluje
 // (jinak by prohlížeč 240× za vteřinu znovu kreslil scénu i rozmazané pozadí překryvu).
 const STILL = new Set(['paused', 'levelup', 'chest', 'victory', 'over']);
-let attractAcc = 0, emaMs = 16, slowT = 0;
+let attractAcc = 0, emaMs = 16, slowT = 0, nextT = 0;
+// Šetření baterie na telefonu: nejvýš 60 snímků za sekundu i na 90–120Hz displejích (nastavení).
+const FRAME_MS = 1000 / 60;
 function loop(now) {
   requestAnimationFrame(loop);
+  if (Platform.touch && SAVE.settings.fpsCap) {
+    if (now < nextT - 1) return;
+    nextT = Math.max(nextT + FRAME_MS, now);
+  }
   const rawMs = now - lastT;
   if (PerfLog.on) PerfLog.frame(rawMs, plU, plD, plH, plS);
   const dt = Math.min(0.05, rawMs / 1000);
@@ -214,14 +238,17 @@ function loop(now) {
 }
 
 function boot() {
+  Platform.apply();
+  Platform.setBack(handleBack);
   Render.init(document.getElementById('cv'));
-  window.addEventListener('resize', () => Render.resize());
+  window.addEventListener('resize', () => { Platform.readInsets(); Render.resize(); });
   UI.init();
   Sound.setVolume('sfx', SAVE.settings.sfx);
   Sound.setVolume('music', SAVE.settings.music);
   Render.setAttractSector(SECTORS[clamp(SAVE.lastSector || 0, 0, SECTORS.length - 1)]);
   UI.show('title');
-  document.getElementById('s-title').addEventListener('pointerdown', enterMenu);
+  // click, ne pointerdown: dotykový „click“ po zvednutí prstu by jinak trefil tlačítko menu pod prstem (na iPadu Game Center)
+  document.getElementById('s-title').addEventListener('click', enterMenu);
   document.addEventListener('visibilitychange', () => { PerfLog.ev(document.hidden ? 'hidden' : 'visible'); if (document.hidden && G.state === 'play') Game.togglePause(); });
   window.addEventListener('blur', () => { if (G.state === 'play') Game.togglePause(); });
   window.addEventListener('beforeunload', () => {

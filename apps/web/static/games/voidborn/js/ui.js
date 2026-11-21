@@ -253,7 +253,7 @@ const UI = (() => {
   // ── Obrazovky ─────────────────────────────────────────────────────────────
   const screens = {
     title(el) {
-      el.innerHTML = `<div><div class="logo" data-text="VOIDBORN">VOIDBORN</div><div class="tagline">${L('Přežij prázdnotu', 'Survive the void')}</div><div class="press">${L('Stiskni libovolnou klávesu', 'Press any key')}</div></div><div class="title-ver">v${GAME_VERSION}</div>`;
+      el.innerHTML = `<div><div class="logo" data-text="VOIDBORN">VOIDBORN</div><div class="tagline">${L('Přežij prázdnotu', 'Survive the void')}</div><div class="press">${Platform.touch ? L('Klepni kamkoli', 'Tap anywhere') : L('Stiskni libovolnou klávesu', 'Press any key')}</div></div><div class="title-ver">v${GAME_VERSION}</div>`;
     },
 
     menu(el) {
@@ -332,7 +332,7 @@ const UI = (() => {
         <div class="anom-head deep">${icon('skull')}<div><h3>${L('HLUBINY', 'THE DEEP')}</h3><p>${L('Sektory pro konec hry. Otevírají se jeden po druhém od dobytí Sektoru IX.', 'Sectors for the end game. They open one after another once you clear Sector IX.')}</p></div></div>
         <div class="sectors deep">${SECTORS.map((s, i) => [s, i]).filter(([s]) => s.deep).map(([s, i]) => sectorCard(s, i)).join('')}</div>
         <div class="launch">
-          <div class="sdesc"><b>${L('Sektor', 'Sector')} ${sec.roman} · ${sec.name}</b>${sec.desc}<br>${L('Nejlepší čas', 'Best time')}: ${fmtTime(rec ? rec.best || 0 : 0)} · ${L('Cíl: přežij 15:00 a poraz Monarchu', 'Goal: survive 15:00 and defeat the Monarch')}</div>
+          <div class="sdesc"><b>${L('Sektor', 'Sector')} ${sec.roman} · ${sec.name}</b><span class="sd-more">${sec.desc}<br>${L('Nejlepší čas', 'Best time')}: ${fmtTime(rec ? rec.best || 0 : 0)} · ${L('Cíl: přežij 15:00 a poraz Monarchu', 'Goal: survive 15:00 and defeat the Monarch')}</span></div>
           <div class="od">
             <button data-od="-1" ${hs.od <= 0 ? 'disabled' : ''}>−</button>
             <div class="odv"><b>OVERDRIVE ${hs.od}</b><small>${hs.od ? L(`+${hs.od * 25} % odolnost · +${hs.od * 20} % střepů`, `+${hs.od * 25}% toughness · +${hs.od * 20}% shards`) : maxOd ? L('Zvyš obtížnost', 'Raise the difficulty') : L('Dokonči sektor k odemčení', 'Clear the sector to unlock')}</small></div>
@@ -508,7 +508,16 @@ const UI = (() => {
           <div class="row"><label>${L('Efekty', 'Effects')}<small>${L('Hlasitost zvukových efektů', 'Sound effects volume')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.sfx}" data-vol="sfx"></div>
           <div class="row"><label>${L('Hudba', 'Music')}<small>${L('Generativní synthwave', 'Generative synthwave')}</small></label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-vol="music"></div>
           ${window.GCMusic ? `<div class="row"><label>${L('Vlastní playlist', 'Your playlist')}<small>${L('YouTube, SoundCloud, Spotify, nebo bez hudby', 'YouTube, SoundCloud, Spotify, or no music')}</small></label><button class="btn" data-gcmusic>${L('Nastavit hudbu', 'Music settings')}</button></div>` : ''}`)}
-            ${grp('gear', L('Ovládání', 'Controls'), `
+            ${grp('gear', L('Ovládání', 'Controls'), Platform.touch ? `
+          <div class="keys touch-keys">
+            <span>${L('Joystick', 'Joystick')}</span><span>${L('Polož prst kamkoli na plochu a táhni', 'Put a finger anywhere and drag')}</span>
+            <span>DASH</span><span>${L('Úskok — krátká nezranitelnost', 'Dash — brief invulnerability')}</span>
+            <span>II</span><span>${L('Pauza (nebo Zpět na Androidu)', 'Pause (or Back on Android)')}</span>
+            <span>${L('Zbraně', 'Weapons')}</span><span>${L('Střílí automaticky. Ty jen přežij.', 'They fire automatically. You just survive.')}</span>
+          </div>
+          ${Platform.canVibrate ? `<div class="row"><label>${L('Vibrace', 'Vibration')}<small>${L('Krátké zachvění při zásahu, úskoku, postupu a bossech', 'A short buzz on hits, dashes, level-ups and bosses')}</small></label><button class="toggle ${s.haptics ? 'on' : ''}" data-tog="haptics"></button></div>` : ''}
+          <div class="row"><label>${L('Úskok vlevo', 'Dash on the left')}<small>${L('Tlačítko úskoku v levém dolním rohu (pro leváky)', 'The dash button in the bottom left corner (left-handed)')}</small></label><button class="toggle ${s.dashLeft ? 'on' : ''}" data-tog="dashLeft"></button></div>
+          <div class="row"><label>${L('Šetřit baterii', 'Save battery')}<small>${L('Nejvýš 60 snímků za sekundu i na rychlých displejích', 'At most 60 frames per second, even on fast displays')}</small></label><button class="toggle ${s.fpsCap ? 'on' : ''}" data-tog="fpsCap"></button></div>` : `
           <div class="keys">
             <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>${L('Pohyb (nebo šipky / gamepad)', 'Move (or arrows / gamepad)')}</span>
             <span><kbd>${L('Mezerník', 'Space')}</kbd></span><span>${L('Úskok — krátká nezranitelnost', 'Dash — brief invulnerability')}</span>
@@ -521,6 +530,7 @@ const UI = (() => {
           <p class="dbg-note">${L('Nástroje pro ladění. Při vydání se sekce schová (DEBUG_MENU v debug.js).', 'Tools for testing. Hidden for a release (DEBUG_MENU in debug.js).')}</p>
           <div class="row"><label>${L('Záznam výkonu', 'Performance log')}<small>${L('Když se hra seká: během běhu zaznamenává FPS, délky snímků a počty objektů. Po skončení běhu si log stáhneš a pošleš vývojáři.', 'If the game stutters: records FPS, frame times and object counts during a run. Download the log after the run and send it to the developer.')}${perfLast ? `<br>${L('Poslední log', 'Last log')}: ${perfLast}` : ''}</small></label>${PerfLog.lastLog() ? `<button class="btn" data-act="perflog">${icon('book')} ${L('Stáhnout log', 'Download log')}</button>` : ''}<button class="toggle ${s.perfLog ? 'on' : ''}" data-tog="perfLog"></button></div>
           <div class="row"><label>${L('Nesmrtelnost', 'God mode')}<small>${L('Smrtelný zásah jen doplní zdraví', 'A fatal hit only refills your health')}</small></label><button class="toggle ${s.dbgGod ? 'on' : ''}" data-tog="dbgGod"></button></div>
+          <div class="row"><label>${L('Výřez displeje', 'Display cutout')}<small>${L('Simuluje notch a indikátor domů jako na iPhonu (na výšku i na šířku)', 'Simulates an iPhone notch and home indicator (portrait and landscape)')}</small></label><button class="toggle ${s.dbgNotch ? 'on' : ''}" data-tog="dbgNotch"></button></div>
           <div class="row"><label>${L('Hitboxy', 'Hitboxes')}<small>${L('Kruhy zásahů nepřátel, jejich střel a lodi', 'Hit circles of enemies, their shots and your ship')}</small></label><button class="toggle ${s.dbgHit ? 'on' : ''}" data-tog="dbgHit"></button></div>
           <div class="row"><label>${L('Rychlost hry', 'Game speed')}<small>${L('Víc kroků simulace za snímek', 'More simulation steps per frame')}</small></label><button class="btn" data-act="dbgSpeed">${s.dbgSpeed || 1}×</button></div>
           <div class="row"><label>${L('Odemknout vše', 'Unlock everything')}<small>${L('Všechny sektory, Overdrive a piloti, jen dokud je zapnuto (postup se nemění)', 'All sectors, Overdrive and pilots while it is on (progress is not changed)')}</small></label><button class="toggle ${s.dbgUnlock ? 'on' : ''}" data-tog="dbgUnlock"></button></div>
@@ -578,6 +588,8 @@ const UI = (() => {
     if (current === 'forge' && id !== 'forge') Forge3D.unmount();
     current = id;
     if (!id) return;
+    // Zpět (Android, gesto, prohlížeč) z podobrazovky vede do menu, z menu ven ze hry (platform.js)
+    if (id === 'menu' || id === 'title') Platform.disarm(); else Platform.arm();
     if (id === 'settings') setPv = null;
     const el = $('#s-' + id);
     actions = {};
@@ -601,7 +613,12 @@ const UI = (() => {
       if (b && b !== lastHover && !b.disabled) { lastHover = b; Sound.play.hover(); }
       if (!b) lastHover = null;
     });
+    // Okno, které se otevřelo pod drženým prstem (karty postupu, truhla), nesmí vzít „click“ po jeho
+    // zvednutí: platí jen klepnutí, které začalo až po otevření okna.
+    let downAt = 0;
+    document.addEventListener('pointerdown', () => { downAt = performance.now(); }, true);
     document.addEventListener('click', e => {
+      if (overlayOpen() && e.target.closest('#overlay') && downAt < openedAt && e.detail > 0) return;
       const t = e.target.closest('[data-go],[data-pilot],[data-sector],[data-od],[data-buy],[data-tab],[data-tog],[data-act],[data-pick],[data-lang],[data-prio],[data-part],[data-lw],[data-lmode],#startBtn,#pauseBtn');
       if (!t) return;
       if (t.blur) t.blur();
@@ -640,7 +657,7 @@ const UI = (() => {
       } else if (ds.tab) {
         codexTab = ds.tab; Sound.play.click(); rerender();
       } else if (ds.tog) {
-        SAVE.settings[ds.tog] = !SAVE.settings[ds.tog]; persist(); Sound.play.click(); rerender();
+        SAVE.settings[ds.tog] = !SAVE.settings[ds.tog]; persist(); Sound.play.click(); Platform.apply(); rerender();
       } else if (ds.pick !== undefined) {
         if (performance.now() - openedAt < 300) return;
         pickChoice(+ds.pick);
@@ -1049,6 +1066,7 @@ const UI = (() => {
   // ── HUD ───────────────────────────────────────────────────────────────────
   function hudShow(on) {
     $('#hud').hidden = !on;
+    document.body.classList.toggle('run', on); // na telefonu: oznámení se posunou pod HUD
     for (const k in hc) delete hc[k];
   }
   function set(id, prop, val) {
@@ -1060,6 +1078,7 @@ const UI = (() => {
     else if (prop === 'html') el.innerHTML = val;
     else if (prop === 'w') el.style.width = val;
     else if (prop === 'cls') el.className = val;
+    else if (prop === 're') el.style.setProperty('--re', val);
   }
   // HUD stačí obnovovat 30× za vteřinu: každá změna DOM znamená přepočet stylů, rozvržení a vykreslení
   // (na 240Hz monitoru jinak 240×). Čísla se mění jen jako text, ikony zůstávají.
@@ -1081,6 +1100,9 @@ const UI = (() => {
     set('killN', 'text', fmtNum(G.kills));
     set('shardN', 'text', fmtNum(G.shards));
     const re = Math.round(p.dashRe / s.dashCd * 20);
+    // tlačítko úskoku (dotyk): kruh se plní, jak se úskok dobíjí; bez nabití je ztlumené
+    set('dashBtn', 're', p.dashCharges > 0 ? '1' : (p.dashRe / s.dashCd).toFixed(2));
+    set('dashBtn', 'cls', p.dashCharges > 0 ? '' : 'empty');
     set('dashPips', 'html', Array.from({ length: s.dashMax }, (_, i) => i < p.dashCharges ? '<i class="on"></i>' : i === p.dashCharges ? `<i><b style="width:${re * 5}%"></b></i>` : '<i></i>').join(''));
     // co dřív v běhu vidět nebylo: zbývající oživení, štít, pancíř a regenerace
     const chips = [];
@@ -1112,6 +1134,7 @@ const UI = (() => {
   }
   function bossBar(name) {
     const bb = $('#bossBar');
+    document.body.classList.toggle('boss', !!name); // na výšku telefonu: HUD sjede pod pruh bosse
     if (!name) { bb.hidden = true; return; }
     $('#bossName').textContent = name;
     $('#bossFill').style.width = '100%';
@@ -1128,7 +1151,11 @@ const UI = (() => {
     t.className = 'toast';
     if (color) t.style.setProperty('--c', color);
     t.innerHTML = `${icon(ic)}<div><small>${color ? L('ODEMČENO', 'UNLOCKED') : L('ÚSPĚCH', 'ACHIEVEMENT')}</small><b>${title}</b><span>${sub}</span></div>`;
-    $('#toasts').appendChild(t);
+    const box = $('#toasts');
+    box.appendChild(t);
+    // na malém displeji nanejvýš dvě oznámení naráz, ať nezakryjí hru (starší zmizí dřív)
+    const max = innerWidth < 700 || innerHeight < 520 ? 2 : 5;
+    while (box.children.length > max) box.firstElementChild.remove();
     setTimeout(() => t.remove(), 4500);
   }
 

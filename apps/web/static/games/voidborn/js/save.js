@@ -14,8 +14,10 @@ function defaultSave() {
       maxOdClear: 0, maxWeapons: 0, bestNoHit: 0, bestBurst: 0, cleanBoss: 0, victories: 0, maxOc: 0, hazardKills: 0, legendKills: 0,
     },
     // autoChest: truhly se otevřou samy, bez okna (obsah se jen krátce ukáže nad lodí)
+    // haptics: vibrace, dashLeft: tlačítko úskoku vlevo (leváci), fpsCap: na telefonu nejvýš 60 snímků/s
     settings: { sfx: 0.7, music: 0.45, shake: true, dmgNums: true, fps: false, autoPick: false, autoChest: false, prio: null, perfLog: false, quality: 'auto',
-      dbgGod: false, dbgHit: false, dbgSpeed: 1, dbgUnlock: false, dbgLegend: false, dbgLegendNext: '' }, // dbg*: sekce Debug (debug.js)
+      haptics: true, dashLeft: false, fpsCap: true,
+      dbgGod: false, dbgHit: false, dbgSpeed: 1, dbgUnlock: false, dbgLegend: false, dbgLegendNext: '', dbgNotch: false }, // dbg*: sekce Debug (debug.js)
     // Výzbroj ze Zbrojnice: pre = zbraně na závěsnících (běh s nimi začne), ban = vyřazené zbraně
     loadout: { pre: [], ban: [] },
     lastPilot: 'vex', lastSector: 0, lastOd: 0,

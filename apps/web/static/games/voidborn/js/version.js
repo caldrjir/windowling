@@ -24,4 +24,10 @@
 // 1.5.0  Legendy prázdnoty: šest vzácných nepřátel (Pozorovatel, Zlatník, Půlnočník, Kometa, Zrcadlo, Uroboros),
 //        každý přiletí jen po splnění tajné podmínky a s malou šancí; úspěch za každého a za všechny, nápovědy
 //        v Kodexu; Debug: jistá šance a přivolání legendy
-const GAME_VERSION = '1.5.0';
+// 1.6.0  Telefon a aplikace z obchodu: výřezy displeje (notch, indikátor domů; v Debugu simulace), Zpět na
+//        Androidu krok zpět ve hře, vibrace, obrazovka během běhu nezhasne, 60 snímků na rychlých displejích
+//        (Šetřit baterii), oznámení nahoře a v běhu jen nadpis, pruh bosse a HUD bez překryvů na výšku
+//        i na šířku, Vzlétnout a tlačítka oken vždy na displeji, kruh dobíjení úskoku, úskok vlevo,
+//        nápověda dotykového ovládání, manifest a ikony; oprava: klepnutí na úvodní obrazovku už
+//        nestiskne tlačítko menu pod prstem (na iPadu odcházelo do Game Center)
+const GAME_VERSION = '1.6.0';
