@@ -21,14 +21,14 @@ const UI = (() => {
   function hud() {
     $('#coins').textContent = fmt(S.coins);
     const r = Econ.rate(S);
-    $('#rate').textContent = L(`+${fmt(r, 1)} za s`, `+${fmt(r, 1)} /s`);
+    $('#rate').textContent = Econ.over(S) ? L('⏸️ Hra stojí', '⏸️ Paused') : L(`+${fmt(r, 1)} za s`, `+${fmt(r, 1)} /s`);
     const sn = seasonAt(Date.now());
     $('#season').innerHTML = `<span>${SEASONS[sn].icon}</span><span class="sn">${SEASONS[sn].name}</span><b>${fmtClock(seasonLeft(Date.now()))}</b>`;
     const cm = Econ.cMul(S);
     // Kombo: kouzla výnosu se násobí; od dvou naráz se ukáže, kolik dělají dohromady.
     const rb = S.buffs.filter(b => b.kind === 'rate'), combo = Econ.buff(S, 'rate');
     const comboHtml = rb.length >= 2 ? `<span class="buff b-combo" title="${esc(L('Kouzla výnosu se násobí', 'Income spells multiply'))}"><i>🔥</i>${L('KOMBO', 'COMBO')} ×${fmt(combo)}</span>` : '';
-    const html = comboHtml + (Econ.cechOpen(S) && cm > 1.0005 ? `<span class="buff b-cech" title="${esc(L('Cech: učni zvedají výnos vesnice', 'Guild: apprentices lift the village’s income'))}"><i>👥</i>×${fmt(cm, 1)}</span>` : '') + (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}${b.kind === 'tap' ? ' b-tap' : ''}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : (b.kind === 'tap' && BUFF_ICON[b.id] !== '✋' ? '✋' : '') + '×' + fmt(b.mul)}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
+    const html = Econ.over(S) ? '' : comboHtml + (Econ.cechOpen(S) && cm > 1.0005 ? `<span class="buff b-cech" title="${esc(L('Cech: učni zvedají výnos vesnice', 'Guild: apprentices lift the village’s income'))}"><i>👥</i>×${fmt(cm, 1)}</span>` : '') + (S.steward && S.settings.auto ? `<span class="buff b-steward" title="${esc(L('Šafář nakupuje za tebe', 'The steward buys for you'))}"><i>🤵</i>${L('Šafář', 'Steward')}</span>` : '') + S.buffs.map(b => `<span class="buff b-${b.id}${b.kind === 'tap' ? ' b-tap' : ''}" title="${esc(BUFF_NAME[b.id] || '')}"><i>${BUFF_ICON[b.id] || '✨'}</i>${b.kind === 'cost' ? '−50 %' : (b.kind === 'tap' && BUFF_ICON[b.id] !== '✋' ? '✋' : '') + '×' + fmt(b.mul)}<b>${fmtClock(b.t)}</b><s style="width:${Math.max(0, Math.min(100, (b.t / b.max) * 100))}%"></s></span>`).join('');
     const bx = $('#buffs'); if (bx._h !== html) { bx.innerHTML = html; bx._h = html; }
     powers();
     const side = Scene.creatureSide();
@@ -41,7 +41,8 @@ const UI = (() => {
     quick();
     const nd = $('#newsBtn .dot'); if (nd) nd.hidden = (S.seen.news || 0) >= NEWS_VERSION;
     if (tabsKey !== visibleTabs().join(',')) tabs();
-    // odznáčky na záložkách
+    // odznáčky na záložkách (po výhře se nic nekupuje ani nevyzvedává)
+    if (Econ.over(S)) { badge('upg', 0); badge('tasks', 0); badge('legend', 0); return; }
     const upgN = Econ.upgAvailable(S).filter(u => Econ.upgCost(S, u) <= S.coins).length;
     badge('upg', upgN);
     const d = Econ.daily(S), claim = d.tasks.filter(t => !t.claimed && Econ.dailyProgress(S, t) >= t.n).length;
@@ -50,7 +51,7 @@ const UI = (() => {
   }
   // ── Elán a jeho kouzla (vlevo dole na návsi) ──
   function powers() {
-    const box = $('#powers'), open = Econ.elanOpen(S);
+    const box = $('#powers'), open = Econ.elanOpen(S) && !Econ.over(S);
     if (box.hidden === open) box.hidden = !open;
     $('#sceneBox').classList.toggle('has-powers', open);
     if (!open) return;
@@ -68,7 +69,7 @@ const UI = (() => {
   let best = null;
   function quick() {
     const q = $('#quick');
-    q.hidden = !S.settings.quick || !Econ.total(S) && S.coins < BUILDINGS[0].cost;
+    q.hidden = Econ.over(S) || !S.settings.quick || !Econ.total(S) && S.coins < BUILDINGS[0].cost;
     if (q.hidden) return;
     best = Econ.bestBuy(S, H.tps());
     if (!best) { q.hidden = true; return; }
@@ -338,14 +339,14 @@ const UI = (() => {
         <div><b>${L('Šafář', 'Steward')}</b><small>${S.steward ? L('Slouží ti napořád: nakupuje nejvýhodněji, i když nejsi u hry. Zapneš ho v Řemeslech.', 'At your service for good: he buys the best deals, even while you are away. Switch him on in Trades.') : L(`Nakupuje za tebe nejvýhodnější řemesla a vylepšení, i když nejsi u hry. Najmeš ho jednou provždy za ${STEWARD_COST} pověsti: ty se utratí (bonus +${Math.round(LEGEND_BONUS * 100)} % za každou zmizí), výhody kroniky zůstávají.`, `He buys the best trades and upgrades for you, even while you are away. Hire him for good for ${STEWARD_COST} legends: they are spent (their +${Math.round(LEGEND_BONUS * 100)}% each goes), chronicle perks stay.`)}</small></div>
         ${S.steward ? '<i>✔</i>' : `<button class="btn gold" id="hire" ${S.legends >= STEWARD_COST ? '' : 'disabled'}>${L(`Najmout · ${STEWARD_COST} 📜`, `Hire · ${STEWARD_COST} 📜`)}</button>`}
       </div>
-      <div class="prestige">
+      ${Econ.over(S) ? `<div class="won-card"><b>🏆 ${L('Vyhráno!', 'You won!')}</b><p>${L(`Vesnička prošla ${S.gen} pokoleními a je hotová. Další předání už nebude: hra stojí a vesnička je k prohlížení.`, `The village has seen ${S.gen} generations and it is complete. There is no next handover: the game is paused and the village is there to look at.`)}</p></div>` : `<div class="prestige">
         <h3>${L('Předat vesnici dalšímu pokolení', 'Pass the village to the next generation')}</h3>
         <p>${L('O vsi se budou vyprávět pověsti. Začneš znovu od políčka, ale s pověstmi poroste všechno rychleji. Úspěchy a statistiky zůstávají.', 'Legends will be told of your village. You start again from a single field, but with legends everything grows faster. Achievements and stats stay.')}</p>
         <div class="gain">${p > 0 ? L(`Získáš <b>+${fmt(p)}</b> ${p === 1 ? 'pověst' : p < 5 ? 'pověsti' : 'pověstí'} (výnos ×${trunc(((1 + (S.legends + p) * LEGEND_BONUS) / (1 + S.legends * LEGEND_BONUS)), 2)})`, `You gain <b>+${fmt(p)}</b> legend${p === 1 ? '' : 's'} (income ×${trunc(((1 + (S.legends + p) * LEGEND_BONUS) / (1 + S.legends * LEGEND_BONUS)), 2)})`) : L('Zatím by ses pověsti nedočkal.', 'Not enough for a legend yet.')}</div>
         <div class="bar"><i style="width:${pct}%"></i></div>
         <small class="muted">${L(`Další pověst při ${fmt(next)} grošů vydělaných celkem`, `Next legend at ${fmt(next)} groschen earned in total`)}</small>
         <button class="btn gold wide" id="prestige" ${p > 0 ? '' : 'disabled'}>${L('Předat vesnici', 'Pass it on')}</button>
-      </div>
+      </div>`}
       ${treeHtml()}
       <h3>${L('Kronika rodu', 'Family chronicle')}</h3>
       <div class="perks">${PERKS.map(pk => `<div class="perk${tot >= pk.n ? ' on' : ''}"><span class="pn">${fmtNice(pk.n)}</span><div><b>${pk.name}</b><small>${pk.desc}</small></div><i>${tot >= pk.n ? '✔' : '🔒'}</i></div>`).join('')}</div>
@@ -411,19 +412,21 @@ const UI = (() => {
   // ── Úkoly a úspěchy ──
   function renderTasks(body) {
     const d = Econ.daily(S);
-    structKey = 't' + d.day;
-    body.innerHTML = `<h3>${L('Úkoly dne', 'Today’s tasks')}</h3><p class="muted">${L('Každý den nové, stejné pro všechny. Splň všechny tři a vesnici přijde požehnání: výnos ×2 na 15 minut.', 'New every day, the same for everyone. Complete all three and the village is blessed: income ×2 for 15 minutes.')}</p>
+    structKey = tasksKey(d);
+    body.innerHTML = `${Econ.over(S) ? `<div class="won-card"><b>🏆 ${L('Vyhráno!', 'You won!')}</b><p>${L('Hra stojí, úkoly dne už nejsou potřeba. Všechny úspěchy jsou splněné.', 'The game is paused, no more daily tasks. Every achievement is done.')}</p></div>` : `<h3>${L('Úkoly dne', 'Today’s tasks')}</h3><p class="muted">${L('Každý den nové, stejné pro všechny. Splň všechny tři a vesnici přijde požehnání: výnos ×2 na 15 minut.', 'New every day, the same for everyone. Complete all three and the village is blessed: income ×2 for 15 minutes.')}</p>
       <p class="next" id="dailyNext"></p>
-      <div class="tasks">${d.tasks.map((tk, i) => `<div class="task" data-t="${i}"><div class="info"><b>${taskText(tk)}</b><div class="bar"><i></i></div><small></small></div><button class="btn" data-claim="${i}"></button></div>`).join('')}</div>
+      <div class="tasks">${d.tasks.map((tk, i) => `<div class="task" data-t="${i}"><div class="info"><b>${taskText(tk)}</b><div class="bar"><i></i></div><small></small></div><button class="btn" data-claim="${i}"></button></div>`).join('')}</div>`}
       <h3>${L(`Úspěchy · ${Econ.achCount(S)} / ${ACHIEVEMENTS.length}`, `Achievements · ${Econ.achCount(S)} / ${ACHIEVEMENTS.length}`)}</h3>
       <p class="muted">${L(`Každý úspěch přidá +${Math.round(ACH_BONUS * 100)} % ke všem výnosům.`, `Each achievement adds +${Math.round(ACH_BONUS * 100)}% to all income.`)}</p>
       <div class="achs">${ACHIEVEMENTS.map(a => { const on = !!S.ach[a.id], secret = a.hidden && !on;
         return `<div class="ach${on ? ' on' : ''}${secret ? ' secret' : ''}" title="${esc(secret ? L('Tajný úspěch', 'Secret achievement') : a.desc)}"><i>${on ? '🏅' : secret ? '❔' : '🔒'}</i><b>${secret ? '???' : a.name}</b><small>${secret ? L('Tajný úspěch', 'Secret achievement') : a.desc}</small></div>`; }).join('')}</div>`;
   }
   function taskText(tk) { const q = DAILY.find(x => x.kind === tk.kind); return q.text(tk.kind === 'earn' ? fmt(tk.n) + L(' grošů', ' groschen') : tk.n); }
+  const tasksKey = d => 't' + d.day + (Econ.over(S) ? 'w' + Econ.achCount(S) : '');
   function refreshTasks() {
     const d = Econ.daily(S);
-    if ('t' + d.day !== structKey) return renderTasks($('#body'));
+    if (tasksKey(d) !== structKey) return renderTasks($('#body'));
+    if (Econ.over(S)) return;
     for (const el of document.querySelectorAll('#body .task')) {
       const tk = d.tasks[+el.dataset.t], p = Econ.dailyProgress(S, tk);
       el.querySelector('.bar i').style.width = `${(p / tk.n) * 100}%`;
@@ -447,6 +450,7 @@ const UI = (() => {
     structKey = 'm';
     const st = S.stats;
     const rows = [
+      ...(S.won ? [[`🏆 ${L('Vyhráno', 'Won')}`, new Date(S.won).toLocaleDateString(LOCALE)]] : []),
       [L('Čas ve hře', 'Time played'), fmtDur(st.playTime)], [L('Pokolení', 'Generation'), S.gen], [L('Vyděláno celkem', 'Earned in total'), fmt(S.earnedAll)],
       [L('Vyděláno v tomto pokolení', 'Earned this generation'), fmt(S.earnedGen)], [L('Nejvyšší výnos', 'Best income'), fmt(st.bestRate, 1) + L(' za s', ' /s')],
       [L('Postaveno budov', 'Buildings built'), fmtN(st.bought)], [L('Nákupů v Řemeslech', 'Purchases in Trades'), fmtN(st.buys)], [L('Nejvíc budov naráz', 'Most buildings at once'), fmtN(st.maxBuildings)], [L('Mistrovství', 'Masteries'), fmtN(st.milestones)], ...(S.steward ? [[L('Šafář nakoupil', 'Steward purchases'), fmt(st.stewardBuys)]] : []), [L('Koupeno vylepšení', 'Upgrades bought'), fmt(st.upgrades)], [L('Klepnutí', 'Taps'), fmt(S.taps)],
@@ -454,12 +458,12 @@ const UI = (() => {
       ...(Econ.elanOpen(S) ? [[`💫 ${L('Elán', 'Spirit')}`, `${Math.floor(S.elan)} / ${ELAN_MAX}`], [`${POWERS.warp.icon} ${POWERS.warp.name}`, fmtN(st.warps)], [`${POWERS.rush.icon} ${POWERS.rush.name}`, fmtN(st.rushes)]] : []),
       [`🔥 ${L('Největší kombo kouzel', 'Biggest spell combo')}`, '×' + fmt(st.comboMax)], ...(st.autoBuys ? [[`🧑‍🌾 ${L('Pomocníci nakoupili', 'Helper purchases')}`, fmtN(st.autoBuys)]] : []),
       ...CREATURES.map(c => [`${C_ICON[c.id]} ${c.name}`, fmt(S.caught[c.id] || 0)]), [L('Utekly ti', 'Got away'), fmt(st.missed)],
-      [L('Bez tebe vesnice vydělává', 'Earns without you for'), fmtDur(Econ.offlineCap(S))],
+      ...(Econ.over(S) ? [] : [[L('Bez tebe vesnice vydělává', 'Earns without you for'), fmtDur(Econ.offlineCap(S))]]),
     ];
     const cap = Econ.offlineCap(S);
-    body.innerHTML = `<div class="away-card"><b>🌙 ${L('Odcházíš?', 'Heading off?')}</b>
+    body.innerHTML = `${Econ.over(S) ? `<div class="won-card"><b>🏆 ${L('Vyhráno!', 'You won!')}</b><p>${L('Hra stojí: vesnička nevydělává a nic se nekupuje. Prohlížet si ji i statistiky jde dál. Hrát znovu půjde po smazání vesnice úplně dole.', 'The game is paused: the village earns nothing and nothing is bought. The village and the stats are still there to look at. To play again, delete the village at the very bottom.')}</p></div>` : `<div class="away-card"><b>🌙 ${L('Odcházíš?', 'Heading off?')}</b>
       <p>${L(`Bez tebe vesnička vydělává až <b>${fmtDur(cap)}</b>. Vrať se nejpozději <b>v ${clockAt(cap)}</b>, jinak začne zahálet. Čím dřív se vrátíš a groše utratíš, tím rychleji poroste.`, `Without you the village earns for up to <b>${fmtDur(cap)}</b>. Come back by <b>${clockAt(cap)}</b> at the latest or it starts idling. The sooner you come back and spend, the faster it grows.`)}</p>
-      <p class="muted">${S.steward && S.settings.auto ? L('Šafář bude mezitím nakupovat za tebe.', 'Meanwhile the steward keeps buying for you.') : L(`Za tu dobu vydělá zhruba ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} grošů.`, `In that time it earns about ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} groschen.`)} ${L('Delší výdělek bez tebe dává Ponocný a kronika.', 'The Night watchman and the chronicle make it last longer.')}</p></div>
+      <p class="muted">${S.steward && S.settings.auto ? L('Šafář bude mezitím nakupovat za tebe.', 'Meanwhile the steward keeps buying for you.') : L(`Za tu dobu vydělá zhruba ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} grošů.`, `In that time it earns about ${fmt(Econ.rate(S, seasonAt(Date.now()), false) * cap)} groschen.`)} ${L('Delší výdělek bez tebe dává Ponocný a kronika.', 'The Night watchman and the chronicle make it last longer.')}</p></div>`}
       <h3>${L('Statistiky', 'Statistics')}</h3><table class="stats">${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>
       <h3>${L('Nastavení', 'Settings')}</h3>
       <label class="set"><input type="checkbox" id="setMusic" ${S.settings.music ? 'checked' : ''}> ${L('Hudba', 'Music')}</label>
@@ -500,7 +504,7 @@ const UI = (() => {
     else if (tab === 'cech') refreshCech();
     else if (tab === 'upg') refreshUpg();
     else if (tab === 'tasks') refreshTasks();
-    else if (tab === 'legend') { const el = $('#legN'); if (el && (el.textContent !== fmt(S.legends) || treeKey !== Object.keys(S.tree).join())) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; const hb = $('#hire'); if (hb) hb.disabled = S.legends < STEWARD_COST; }
+    else if (tab === 'legend') { const el = $('#legN'); if (el && (el.textContent !== fmt(S.legends) || treeKey !== Object.keys(S.tree).join())) renderLegend($('#body')); const pb = $('#prestige'); if (pb) pb.disabled = Econ.pending(S) < 1; const hb = $('#hire'); if (hb) hb.disabled = Econ.over(S) || S.legends < STEWARD_COST; }
   }
 
   // ── Oznámení ──

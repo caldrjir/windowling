@@ -574,3 +574,100 @@ test(
 		expect(cover.ok()).toBe(true);
 	},
 );
+
+test(
+	'VESNIČKA ending: the last handover wins, a break freezes the village with everything done',
+	{ tag: '@vesnicka' },
+	async ({ page }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (e) => errors.push(e.message));
+		await page.goto(URL);
+		await page.locator('.sheet .btn').click();
+
+		// Handing the village over from generation 65 on is the last handover: the game is won.
+		await run(
+			page,
+			'Object.assign(Game.S, { gen: 65, legends: 1000, earnedAll: 1e30 }); Game.S.owned.pole = 30; Game.S.seen.news = 99;',
+		);
+		await page.locator('[data-tab="legend"]').click();
+		await page.locator('#prestige').click();
+		await page.locator('.sheet .btn.gold').click();
+		const sheet = page.locator('#modal .sheet');
+		await expect(sheet).toContainText('Blahopřejeme, vyhrál jste!');
+		await expect(sheet).toContainText('Můžete si dát pauzu, nebo začít od znova.');
+		expect(
+			await run(
+				page,
+				'return [Game.S.gen, Game.S.owned.pole, Game.S.won > 0, Game.S.legends > 1000];',
+			),
+		).toEqual([65, 30, true, true]);
+		// The window cannot be dismissed: neither the backdrop nor Escape closes it, nor reloading.
+		await page.mouse.click(4, 4);
+		await page.keyboard.press('Escape');
+		await expect(sheet).toContainText('Blahopřejeme');
+		await page.reload();
+		await expect(page.locator('#modal .sheet')).toContainText('Blahopřejeme, vyhrál jste!');
+		// Starting over asks first; "Back" returns to the window.
+		await page.locator('#modal .btn.ghost').click();
+		await expect(sheet).toContainText('Začít od znova?');
+		await page.locator('#modal .btn.ghost').click();
+		await expect(sheet).toContainText('Blahopřejeme');
+
+		// A break: the game stops, everything is completed and the village stays to look at.
+		await page.locator('#modal .btn.gold').click();
+		await expect(page.locator('#modal')).toBeHidden();
+		await expect(page.locator('body')).toHaveClass(/vs-over/);
+		await expect(page.locator('#wonBadge')).toBeVisible();
+		await expect(page.locator('#rate')).toContainText('Hra stojí');
+		expect(
+			await run(
+				page,
+				'return [Game.S.paused, Econ.achCount(Game.S) === ACHIEVEMENTS.length, Object.keys(Game.S.tree).length === TREE.length];',
+			),
+		).toEqual([true, true, true]);
+		const frozen = () =>
+			run<number[]>(page, 'return [Game.S.coins, Game.S.earnedAll, Game.S.taps];');
+		const before = await frozen();
+		const cv = page.locator('#cv');
+		const box = await cv.boundingBox();
+		if (!box) throw new Error('no canvas');
+		await cv.click({ position: { x: box.width / 2, y: box.height * 0.62 } });
+		await page.waitForTimeout(1200);
+		expect(await frozen()).toEqual(before);
+		expect(await run(page, 'return Game.buy(0, 1);')).toBe(false);
+		await page.locator('[data-tab="tasks"]').click();
+		await expect(page.locator('#body')).toContainText(
+			`Úspěchy · ${await run<number>(page, 'return ACHIEVEMENTS.length;')} / `,
+		);
+		await expect(page.locator('#body [data-claim]')).toHaveCount(0);
+		await page.locator('[data-tab="more"]').click();
+		await expect(page.locator('#body .won-card')).toContainText('Hra stojí');
+		expect(
+			await run<boolean>(page, 'return document.documentElement.scrollWidth <= innerWidth;'),
+		).toBe(true);
+
+		// The break lasts: no window after reloading, and the hub shows the game as complete.
+		await page.reload();
+		await expect(page.locator('#wonBadge')).toBeVisible();
+		await expect(page.locator('#modal')).toBeHidden();
+		expect(
+			await run<number>(
+				page,
+				'return JSON.parse(localStorage.getItem("gamecenter.stats.vesnicka")).progress;',
+			),
+		).toBe(1);
+
+		// Only deleting the village lets you play again.
+		await page.locator('#wonBadge').click();
+		await page.locator('#modal .btn.ghost').click();
+		await page.locator('#modal .btn.danger').click();
+		await expect(page.locator('#modal .sheet h2')).toHaveText('VESNIČKA');
+		await expect(page.locator('body')).not.toHaveClass(/vs-over/);
+		expect(await run(page, 'return [Game.S.gen, Game.S.won, Game.S.paused];')).toEqual([
+			1,
+			0,
+			false,
+		]);
+		expect(errors).toEqual([]);
+	},
+);

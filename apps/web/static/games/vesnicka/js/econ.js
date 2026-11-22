@@ -17,6 +17,8 @@ const Econ = (() => {
       upg: {}, legends: 0, spent: 0, steward: false, gen: 1, taps: 0, caught: {}, buffs: [], ach: {},
       elan: ELAN_MAX, tree: {},
       daily: null, nextCreature: 25,
+      // won: kdy hráč vyhrál (0 = hraje se); paused: vybral si pauzu (hra stojí, jen k prohlížení)
+      won: 0, paused: false,
       // Cech: a = kolik kusů každého stupně je (i vyučených, s desetinami), b = kolik se jich koupilo (podle toho cena a pečeti).
       cech: { a: CECH.map(() => 0), b: CECH.map(() => 0) },
       stats: { playTime: 0, bought: 0, upgrades: 0, milestones: 0, seasons: {}, night: 0, awayMax: 0, dailyAll: 0, bestRate: 0, started: now(), genStart: now(), missed: 0, maxBuildings: 0, stewardBuys: 0, nesro: 0, cechOpen: 0, ucniMax: 0, cechBought: 0, cechSeals: 0, buys: 0, warps: 0, rushes: 0, comboMax: 1, stars: 0, autoBuys: 0 },
@@ -538,7 +540,7 @@ const Econ = (() => {
 
   /** Hraní: dt sekund s hráčem u hry. Vrací události (bytost se objevila). */
   function tick(S, dt, ms = now()) {
-    if (!(dt > 0)) return null;
+    if (!(dt > 0) || over(S)) return null;
     const season = seasonAt(ms);
     addElan(S, dt * elanRegen(S));
     advance(S, ms - dt * 1000, ms);
@@ -582,7 +584,7 @@ const Econ = (() => {
   }
   function prestige(S) {
     const p = pending(S);
-    if (p < 1) return 0;
+    if (p < 1 || over(S)) return 0;
     S.legends += p;
     S.gen++;
     S.coins = 0;
@@ -602,6 +604,32 @@ const Econ = (() => {
     S.stats.genStart = now();
     S.nextCreature = Math.min(S.nextCreature, 30);
     return p;
+  }
+
+  // ── Konec hry ──
+  /** Vyhráno: hra stojí (rozhodnutí čeká, nebo pauza), nic nevydělává ani se nekupuje. */
+  const over = S => S.won > 0;
+  /** Další předání vesnice bude poslední: od WIN_GEN. pokolení se vyhrává. */
+  const finale = S => !over(S) && S.gen >= WIN_GEN && pending(S) >= 1;
+  /** Poslední předání: pověsti se připíšou, vesnice ale zůstane celá (k prohlížení). */
+  function win(S) {
+    if (!finale(S)) return 0;
+    const p = pending(S);
+    S.legends += p;
+    S.won = now();
+    S.buffs = [];
+    return p;
+  }
+  /** Pauza po výhře: všechno splněné a postavené, i to, co hráč neměl. Hra se dál nehraje. */
+  function rest(S) {
+    if (!over(S)) return false;
+    S.paused = true;
+    S.buffs = [];
+    for (const a of ACHIEVEMENTS) if (!S.ach[a.id]) S.ach[a.id] = now();
+    for (const t of TREE) S.tree[t.id] = 1;
+    for (const u of UPGRADES) S.upg[u.id] = 1;
+    for (const b of BUILDINGS) if (!(S.owned[b.id] >= 100)) S.owned[b.id] = 100; // každé stavení v nejvyšší podobě
+    return true;
   }
 
   // ── Úspěchy ──
@@ -683,6 +711,8 @@ const Econ = (() => {
       S.settings = Object.assign(S.settings, o.settings, { ab });
     }
     if (o.seen) S.seen = Object.assign({}, o.seen);
+    S.won = Math.max(0, num(o.won));
+    S.paused = S.won > 0 && o.paused === true;
     return S;
   }
   /** Výsledky do žebříčků (sync.js je posílá na /api/scores): celá čísla, velká čísla jako log10 × 1000. */
@@ -710,7 +740,7 @@ const Econ = (() => {
   return {
     fresh, total, caughtAll, upgSum, legendsTotal, hireSteward, bestBuy, buyThing, stewardBuy, offline, dailyLeft, boards, perks, perkSum, perkMax, milestonesOf, nextMilestone, milestoneBase, seasonMul, buff, upgCount, bMul, gMul, bRate, rate, tapValue, achCount,
     discount, costOf, maxAfford, buy, reqMet, upgCost, upgAvailable, buyUpg, addBuff, freqMul, nextGap, pickCreature, catchCreature, durMul,
-    earn, offlineCap, advance, tick, tap, legendsFor, pending, nextLegendAt, prestige, checkAch, daily, dailyProgress, dailyReward, claimDaily, load, serialize, hubStats,
+    earn, offlineCap, advance, tick, tap, legendsFor, pending, nextLegendAt, prestige, over, finale, win, rest, checkAch, daily, dailyProgress, dailyReward, claimDaily, load, serialize, hubStats,
     cechOpen, cechTierOpen, cechCost, cechMax, cechBuy, cechCheck, cechAhead, cechEvolve, cMul, cMulOf, cRate, cTierMul, cU, cechPct, cSeason, cUpg, sealsOf, nextSeal,
     perBuy, help, syn, bMul0, treeOpen, treeBuy, treeSum, treeProd, autoList, autoOn, autoBuy, elanOpen, elanRegen, addElan, powerCost, rushDur, power, noteCombo, fin,
     cechInfo: S => (cechOpen(S) ? `cech ×${fmt(cMul(S), 1)} učni ${fmt(S.cech.a[0])} b[${S.cech.b.join(',')}]` : 'cech –'),

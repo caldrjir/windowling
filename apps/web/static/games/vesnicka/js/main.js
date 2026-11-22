@@ -23,10 +23,19 @@ const Game = (() => {
     store.set(STATS_KEY, JSON.stringify(Econ.hubStats(S)));
     S.t = Date.now();
   }
+  // ── Konec hry: po výhře hra stojí a vesnička je jen k prohlížení ──
+  const over = () => Econ.over(S);
+  function applyOver() {
+    const o = over(), wb = document.getElementById('wonBadge');
+    document.body.classList.toggle('vs-over', o);
+    wb.hidden = !S.paused;
+    if (S.paused) wb.innerHTML = `🏆 <b>${L('Vyhráno', 'You won')}</b>`;
+    if (o) { document.getElementById('hint').hidden = true; Scene.clearCreature(); wasCreature = null; }
+  }
 
   // ── Čas bez hráče (zavřená hra nebo skrytá karta) ──
   function catchUp(fromMs, toMs, welcome) {
-    if ((toMs - fromMs) / 1000 < 1) return;
+    if (over() || (toMs - fromMs) / 1000 < 1) return;
     const o = Econ.offline(S, fromMs, toMs);
     if (o.cechOpened && !welcome) cechOpened();
     if (o.away < 60 || o.got <= 0) return;
@@ -61,6 +70,7 @@ const Game = (() => {
   // ── Akce hráče ──
   function onTap(sx, sy) {
     Sound.unlock(); Hudba.unlock();
+    if (over()) return;
     tapTimes.push(performance.now());
     const v = Econ.tap(S), tb = Econ.buff(S, 'tap');
     Scene.floatText(sx, sy - 6, '+' + fmt(v, 1), tb > 1 ? '#ff9a7a' : '#fff3b0', tb >= 25);
@@ -73,6 +83,7 @@ const Game = (() => {
   let pulseT = 0;
   function pulse(big) { const el = document.querySelector('.coins'), c = big ? 'pulse-big' : 'pulse'; el.classList.remove('pulse', 'pulse-big'); void el.offsetWidth; el.classList.add(c); clearTimeout(pulseT); pulseT = setTimeout(() => el.classList.remove(c), big ? 700 : 300); }
   function buy(i, amount, quiet, el) {
+    if (over()) return false;
     const ev = Econ.buy(S, i, amount);
     if (!ev) { if (!quiet) Sound.play.no(); return false; }
     UI.pop(el, '+' + fmtN(ev.n), ev.milestones.length ? 'gold' : '');
@@ -82,6 +93,7 @@ const Game = (() => {
   }
   // Rychlý nákup a šafář: koupí to, co se nejrychleji zaplatí.
   function cbuy(i, amount, quiet, el) {
+    if (over()) return false;
     const ev = Econ.cechBuy(S, i, amount);
     if (!ev) { if (!quiet) Sound.play.no(); return false; }
     UI.pop(el, '+' + fmtN(ev.n), ev.seals.length ? 'gold' : '');
@@ -102,6 +114,7 @@ const Game = (() => {
     UI.toast(`⚒️ <b>${L('Kovář založil v obci cech!', 'The smith founded a guild in the village!')}</b> ${L('Přivedl prvního tovaryše a pět učňů. Podívej se do záložky Cech.', 'He brought the first journeyman and five apprentices. Have a look at the Guild tab.')}`, 'big');
   }
   function quickBuy(b) {
+    if (over()) return;
     const got = Econ.buyThing(S, b);
     if (!got) { Sound.play.no(); return; }
     if (got.kind === 'b') afterBuilt(got.i, got.ev, false);
@@ -110,6 +123,7 @@ const Game = (() => {
     afterChange();
   }
   function smart() {
+    if (over()) return;
     const r = Econ.stewardBuy(S, tps(), 400);
     if (!r.n) { Sound.play.no(); UI.toast(L('🤵 Teď se nic nevyplatí, počkej na groše.', '🤵 Nothing worth buying yet, wait for groschen.')); return; }
     Sound.play.upgrade();
@@ -125,7 +139,7 @@ const Game = (() => {
   }
   let stewAgg = 0, stewAggT = 0;
   function stewardTick(dt) {
-    if (!S.steward || !S.settings.auto) return;
+    if (over() || !S.steward || !S.settings.auto) return;
     stewT += dt; stewAggT += dt;
     if (stewT < 0.5) return;
     stewT = 0;
@@ -136,6 +150,7 @@ const Game = (() => {
   // Pomocníci z rodokmenu: kupují svá řemesla každou sekundu (jen do desetiny měšce).
   let autoAgg = 0, autoAggT = 0;
   function autoTick(dt) {
+    if (over()) return;
     autoT += dt; autoAggT += dt;
     if (autoT < 1) return;
     autoT = 0;
@@ -156,6 +171,7 @@ const Game = (() => {
   /** Kouzla za elán: přesýpací hodiny (hned 15 minut výnosu) a žně (×5 na 20 s). */
   function power(id, el) {
     Sound.unlock(); Hudba.unlock();
+    if (over()) return;
     const r = Econ.power(S, id);
     if (!r) { Sound.play.no(); return; }
     const cv = document.getElementById('cv'), rc = cv.getBoundingClientRect(), box = document.getElementById('sceneBox');
@@ -175,6 +191,7 @@ const Game = (() => {
     afterChange(); save();
   }
   function tree(id) {
+    if (over()) return;
     if (!Econ.treeBuy(S, id)) { Sound.play.no(); return; }
     const t = T_INDEX[id];
     Sound.play.legend();
@@ -191,6 +208,7 @@ const Game = (() => {
     UI.toast(`💫 <b>${L('Elán!', 'Spirit!')}</b> ${L(`Vesnice se rozjela. Elán se doplňuje sám a za něj otočíš přesýpací hodiny (hned 15 minut výnosu) nebo vyhlásíš žně (×5 na 20 s). Najdeš ho vlevo dole.`, `The village is in full swing. Spirit refills by itself: spend it on the hourglass (15 minutes of income at once) or a harvest rush (×5 for 20 s). Bottom left.`)}`, 'big');
   }
   function hire() {
+    if (over()) return;
     UI.modal(`<div class="welcome"><div class="wico">🤵</div><h2>${L('Najmout šafáře?', 'Hire a steward?')}</h2>
       <p>${L(`Šafář bude za tebe nakupovat řemesla a vylepšení, která se nejrychleji zaplatí, i když nejsi u hry. Stojí <b>${STEWARD_COST} pověsti</b> jednou provždy: ty se utratí a s nimi jejich bonus +${Math.round(LEGEND_BONUS * 100)} % za každou. Výhody kroniky zůstávají.`, `The steward buys the trades and upgrades that pay for themselves fastest, even while you are away. He costs <b>${STEWARD_COST} legends</b> once and for good: they are spent along with their +${Math.round(LEGEND_BONUS * 100)}% each. Chronicle perks stay.`)}</p></div>`,
     [{ text: L(`Najmout · ${STEWARD_COST} 📜`, `Hire · ${STEWARD_COST} 📜`), cls: 'gold', fn: () => {
@@ -216,6 +234,7 @@ const Game = (() => {
     }
   }
   function upg(id) {
+    if (over()) return;
     if (!Econ.buyUpg(S, id)) { Sound.play.no(); return; }
     Sound.play.upgrade();
     const u = U_INDEX[id];
@@ -223,6 +242,7 @@ const Game = (() => {
     afterChange();
   }
   function buyAll() {
+    if (over()) return;
     let n = 0;
     for (const u of Econ.upgAvailable(S)) if (Econ.buyUpg(S, u.id)) n++;
     if (!n) { Sound.play.no(); return; }
@@ -231,11 +251,13 @@ const Game = (() => {
     afterChange();
   }
   function prestige() {
+    if (over()) return;
     const p = Econ.pending(S);
     if (p < 1) return;
     UI.modal(`<div class="welcome"><div class="wico">📜</div><h2>${L('Předat vesnici?', 'Pass the village on?')}</h2>
       <p>${L(`Získáš <b>+${fmt(p)}</b> pověstí. Budovy, vylepšení, cech a groše začnou znovu od nuly, pověsti, úspěchy a kronika zůstanou.`, `You gain <b>+${fmt(p)}</b> legends. Buildings, upgrades, the guild and groschen start again from zero; legends, achievements and the chronicle stay.`)}</p></div>`,
     [{ text: L('Předat', 'Pass it on'), cls: 'gold', fn: () => {
+      if (Econ.finale(S)) { finale(); return; }
       const before = Econ.perks(S).length, got = Econ.prestige(S);
       Scene.clearCreature(); Scene.panTo(0, false);
       Sound.play.legend();
@@ -245,6 +267,7 @@ const Game = (() => {
     } }, { text: L('Ještě ne', 'Not yet'), cls: 'ghost' }]);
   }
   function claim(i) {
+    if (over()) return;
     const r = Econ.claimDaily(S, i);
     if (!r) return;
     Sound.play.claim(); burstCoins();
@@ -268,8 +291,65 @@ const Game = (() => {
   }
   function reset() {
     UI.modal(`<div class="welcome"><div class="wico">⚠️</div><h2>${L('Smazat vesnici?', 'Delete the village?')}</h2><p>${L('Tohle nejde vrátit. Přijdeš o všechno včetně pověstí a úspěchů.', 'This cannot be undone. You lose everything including legends and achievements.')}</p></div>`,
-      [{ text: L('Smazat', 'Delete'), cls: 'danger', fn: () => { S = Econ.fresh(); S.settings = Object.assign({}, S.settings); UI.state = S; Scene.clearCreature(); Scene.panTo(0, false); save(); UI.setTab('build'); intro(); } }, { text: L('Nechat', 'Keep it'), cls: 'ghost' }]);
+      [{ text: L('Smazat', 'Delete'), cls: 'danger', fn: () => { S = Econ.fresh(); S.settings = Object.assign({}, S.settings); UI.state = S; applyOver(); Scene.clearCreature(); Scene.panTo(0, false); save(); UI.setTab('build'); intro(); } }, { text: L('Nechat', 'Keep it'), cls: 'ghost' }]);
   }
+  // ── Výhra: poslední předání vesnice ──
+  /** Okno výhry nejde zavřít: hráč si vybere pauzu, nebo začne od znova (to se ještě potvrzuje). */
+  function finale() {
+    const got = Econ.win(S);
+    applyOver(); save();
+    Sound.play.legend(); Sound.play.achievement();
+    const cv = document.getElementById('cv'), r = cv.getBoundingClientRect();
+    for (const [x, col] of [[0.25, '#ffe27a'], [0.5, '#fff6c8'], [0.75, '#ffb36a']]) Scene.burst(r.width * x, r.height * 0.4, col, 30);
+    for (let i = 0; i < 30; i++) Scene.coin(r.width / 2 + (Math.random() - 0.5) * 200, r.height * 0.4);
+    UI.render();
+    showWin(got);
+  }
+  function winStats() {
+    return `<div class="won-stats">
+      <div><b>${S.gen}</b><small>${L('pokolení', 'generations')}</small></div>
+      <div><b>${fmt(Econ.legendsTotal(S))}</b><small>${L('pověstí', 'legends')}</small></div>
+      <div><b>${fmt(S.earnedAll)}</b><small>${L('grošů celkem', 'groschen in total')}</small></div>
+      <div><b>${fmtDur(S.stats.playTime)}</b><small>${L('ve hře', 'played')}</small></div></div>`;
+  }
+  function showWin(got) {
+    UI.modal(`<div class="welcome won"><div class="wico">🏆</div><h2>${L('Blahopřejeme, vyhrál jste!', 'Congratulations, you won!')}</h2>
+      <p>${L(`Vesnička prošla ${S.gen} pokoleními a je hotová.`, `The village has seen ${S.gen} generations and it is complete.`)}${got ? L(` Poslední předání přineslo <b>+${fmt(got)}</b> pověstí.`, ` The last handover brought <b>+${fmt(got)}</b> legends.`) : ''}</p>
+      ${winStats()}
+      <p><b>${L('Můžete si dát pauzu, nebo začít od znova.', 'You can take a break or start over.')}</b></p>
+      <p class="muted">${L('Při pauze se hra zastaví. Vesničku i statistiky si můžete dál prohlížet a všechno bude splněné, i to, co vám ještě chybělo. Hrát znovu půjde jen po smazání vesnice.', 'On a break the game stops. You can still look around the village and at your stats, and everything will be completed, even what you were still missing. You can only play again after deleting the village.')}</p></div>`,
+    [{ text: L('⏸️ Dát si pauzu', '⏸️ Take a break'), cls: 'gold', fn: pauseGame }, { text: L('Začít od znova', 'Start over'), cls: 'ghost', fn: () => confirmRestart(() => showWin(got)) }]);
+  }
+  function confirmRestart(back) {
+    UI.modal(`<div class="welcome"><div class="wico">🔄</div><h2>${L('Začít od znova?', 'Start over?')}</h2><p>${L('Smaže se celá vesnice včetně pověstí a úspěchů a začnete s prázdnou návsí. Tohle nejde vrátit.', 'The whole village is deleted, legends and achievements included, and you start on an empty green. This cannot be undone.')}</p></div>`,
+      [{ text: L('Smazat a začít znovu', 'Delete and start over'), cls: 'danger', fn: restartWon }, { text: L('Zpět', 'Back'), cls: 'ghost', fn: back }]);
+  }
+  function pauseGame() {
+    Econ.rest(S);
+    applyOver(); save();
+    Sound.play.bell();
+    UI.render();
+    UI.toast(`⏸️ <b>${L('Hra stojí.', 'The game is paused.')}</b> ${L('Vesnička je hotová a všechno splněné. Prohlížejte si ji v klidu.', 'The village is complete and everything is done. Enjoy looking around.')}`, 'big');
+  }
+  function restartWon() {
+    const keep = Object.assign({}, S.settings), news = S.seen.news;
+    S = Econ.fresh();
+    Object.assign(S.settings, keep);
+    S.seen.news = news;
+    UI.state = S;
+    applyOver(); applySettings();
+    Scene.clearCreature(); Scene.panTo(0, false);
+    document.getElementById('hint').hidden = false;
+    save(); UI.setTab('build'); intro();
+  }
+  /** Odznak „Vyhráno“ na návsi: připomene výhru a nabídne nový začátek. */
+  function wonInfo() {
+    UI.modal(`<div class="welcome won"><div class="wico">🏆</div><h2>${L('Vyhráno!', 'You won!')}</h2>
+      <p>${L(`Vesnička je hotová od ${new Date(S.won).toLocaleDateString(LOCALE)}. Hra stojí: nic se nevydělává ani nekupuje, prohlížet si ji můžete dál.`, `The village has been complete since ${new Date(S.won).toLocaleDateString(LOCALE)}. The game is paused: nothing is earned or bought, but you can keep looking around.`)}</p>
+      ${winStats()}</div>`,
+    [{ text: L('Zavřít', 'Close'), cls: 'gold' }, { text: L('Začít od znova', 'Start over'), cls: 'ghost', fn: () => confirmRestart(wonInfo) }]);
+  }
+
   function afterChange() { checkAch(); UI.refresh(); }
   function checkAch() {
     for (const a of Econ.checkAch(S)) { Sound.play.achievement(); UI.toast(`🏅 <b>${a.name}</b> · ${a.desc} · +${Math.round(ACH_BONUS * 100)}${L(' %', '%')}`, 'gold'); }
@@ -277,6 +357,7 @@ const Game = (() => {
 
   // ── Bytosti ──
   function onCreature(id, sx, sy) {
+    if (over()) return;
     const r = Econ.catchCreature(S, id);
     if (!r) return;
     wasCreature = null;
@@ -300,9 +381,10 @@ const Game = (() => {
   function frame(nowT) {
     let dt = (nowT - last) / 1000;
     last = nowT;
-    if (dt > 2) { catchUp(Date.now() - dt * 1000, Date.now(), false); dt = 0; }
+    const o = over();
+    if (dt > 2 && !o) { catchUp(Date.now() - dt * 1000, Date.now(), false); dt = 0; }
     dt = Math.max(0, Math.min(0.25, dt));
-    if (dt > 0) {
+    if (dt > 0 && !o) {
       const ev = Econ.tick(S, dt);
       if (ev && ev.cechOpened) cechOpened();
       if (ev && ev.creature && !Scene.creature) {
@@ -322,8 +404,8 @@ const Game = (() => {
     autoTick(dt);
     Scene.frame(dt, S);
     uiT += dt; achT += dt; saveT += dt;
-    if (uiT > 0.2) { uiT = 0; UI.refresh(); creatureTick(); }
-    if (achT > 1) { achT = 0; checkAch(); elanCheck(); Hudba.tick(); }
+    if (uiT > 0.2) { uiT = 0; UI.refresh(); if (!o) creatureTick(); }
+    if (achT > 1) { achT = 0; if (!o) { checkAch(); elanCheck(); } Hudba.tick(); }
     if (saveT > 5) { saveT = 0; save(); }
     requestAnimationFrame(frame);
   }
@@ -345,20 +427,28 @@ const Game = (() => {
     UI.init(S, { buy, cbuy, upg, buyAll, prestige, claim, setting, volume, reset, quick: quickBuy, smart, hire, tps, power, tree, ab, unlocked, newsSeen: () => { if ((S.seen.news || 0) < NEWS_VERSION) { S.seen.news = NEWS_VERSION; save(); } } });
     Econ.daily(S);
     if (isNew) { S.seen.news = NEWS_VERSION; intro(); }
-    else {
+    else if (!over()) {
       catchUp(S.t, Date.now(), true);
       if (document.getElementById('modal').hidden) newsOnce();
     }
     if (S.seen.tap) document.getElementById('hint').hidden = true;
-    checkAch();
+    document.getElementById('wonBadge').addEventListener('click', wonInfo);
+    applyOver();
+    // Vyhráno, ale ještě nevybráno: okno se ukáže znovu, dokud si hráč nevybere.
+    if (over() && !S.paused) showWin(0);
+    else if (!over()) checkAch();
     save();
     addEventListener('resize', () => Scene.resize());
     document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
     addEventListener('pagehide', save);
     // Jiná karta nebo synchronizace z účtu změnila uložení: převzít novější vesnici.
-    addEventListener('storage', e => { if (e.key === SAVE_KEY && e.newValue && document.hidden) { S = Econ.load(e.newValue); UI.state = S; applySettings(); UI.render(); } });
+    addEventListener('storage', e => {
+      if (!(e.key === SAVE_KEY && e.newValue && document.hidden)) return;
+      S = Econ.load(e.newValue); UI.state = S; applySettings(); applyOver(); UI.render();
+      if (over() && !S.paused) showWin(0);
+    });
     requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  return { get S() { return S; }, save, buy, cbuy, upg, onTap, onCreature, prestige, claim, quickBuy, smart, hire, power, tree };
+  return { get S() { return S; }, save, buy, cbuy, upg, onTap, onCreature, prestige, claim, quickBuy, smart, hire, power, tree, pauseGame };
 })();
