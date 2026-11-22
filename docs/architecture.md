@@ -251,6 +251,12 @@ holds the leaderboard values: legends on `best:score` and `free:<category>:score
 best income and apprentices (as log10 × 1000), buildings, creatures, taps, generations and
 achievements (values are capped below the server's 10^10).
 `NEWS` in `data.js` feeds the "what's new" popover, shown once per version (`seen.news`).
+The game has an ending: handing the village over from generation `WIN_GEN` (65) on is the last
+handover (`Econ.finale`/`Econ.win`: the legends are added, the village stays as it is and `won`
+is saved). A window that cannot be dismissed offers a break or starting over (with a
+confirmation). The break (`Econ.rest`, `paused`) marks every achievement, tree branch and upgrade
+as done and every trade as built; while `won` is set nothing earns, buys or spawns, and the
+village and stats stay to look at until the village is deleted.
 
 The guild (`CECH` in `data.js`, `S.cech` in the save) is a chain of generators: each of the
 8 ranks trains the rank below (`a` amounts with fractions, `b` bought, which sets prices and

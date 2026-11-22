@@ -239,6 +239,8 @@ const NESRO = {
 // mnohem víc, proto 10^11 (dřív 10^9): první dny jsou rychlejší, po týdnu je tempo pověstí jako dřív.
 const LEGEND_BASE = 1e11;
 const LEGEND_BONUS = 0.05; // každá pověst +5 % výnosu
+// Konec hry: kdo předává vesnici od 65. pokolení dál, vyhrál. Hra se tím zastaví (pauza) nebo začne znovu.
+const WIN_GEN = 65;
 const PERKS = [
   { n: 1, id: 'offline', v: 4, name: L('Rodová pověst', 'Family legend'), desc: L('Vesnice vydělává bez tebe o 4 hodiny déle.', 'The village earns 4 hours longer without you.') },
   { n: 5, id: 'start', v: 1, name: L('Dědečkův pluh', 'Grandpa’s plough'), desc: L('Každé pokolení začíná s 10 políčky.', 'Every generation starts with 10 fields.') },
