@@ -95,6 +95,54 @@ Convention: each completed iteration is at least one minor release.
   `E2E_TAGS=sudoku,kakuro pnpm test:e2e` runs just those games locally too. Browser: `PLAYWRIGHT_CHANNEL=chrome|msedge` uses the installed Chrome /
   Edge (no download; CI uses the runner's Chrome), `PLAYWRIGHT_CHROMIUM_EXECUTABLE` any Chromium
   binary, otherwise Playwright's own (`playwright install --only-shell chromium`).
+- HOLLOW SUN assets are exported from Blender: `pnpm --filter @windowling/web hollowsun:assets`
+  (set `BLENDER` to `blender.exe` if it is not on the PATH, e.g. `BLENDER=D:\Blender\blender.exe`;
+  the launcher does not run headless). The script compresses the exports with gltfpack (a dev
+  dependency, nothing to install). The compressed GLBs are committed and checked by
+  `hollowsun-assets.test.ts`, so CI needs no Blender.
+- HOLLOW SUN music: put the downloaded tracks (Suno) into a folder outside the repo, fill in `src`
+  and `suno` (the track link) per track in `apps/web/scripts/hollowsun-music.json`, then run
+  `pnpm --filter @windowling/web hollowsun:music D:/hollowsun-audio` (needs `ffmpeg` with libopus
+  on the PATH or `FFMPEG`). The script cuts the loops on bar lines, masters them to −16 LUFS and
+  writes Opus files plus a manifest that `hollowsun-music.test.ts` checks.
+- HOLLOW SUN voices (English; Czech players get Czech subtitles):
+  `pnpm --filter @windowling/web hollowsun:vo -- --sheet` writes the Act I lines to record (a CSV and
+  a Markdown sheet grouped by role, with each line's file name) into `D:/hollowsun-audio/vo/en`.
+  Design one voice per role in ElevenLabs (Voice Design, prompts in
+  `apps/web/scripts/hollowsun-vo.json`), record each role's voice name and `recorded.en` (plan, date)
+  there (D32), save the downloads as `<id>.mp3` – or let `pnpm --filter @windowling/web hollowsun:vo --
+--generate` make the missing lines through the ElevenLabs API (key `ELEVENLABS_API_KEY` in
+  `apps/web/.env`, restricted to Text to Speech and Voices: Read; `--only=AU_vo_…` regenerates single
+  lines) – and run `pnpm --filter @windowling/web hollowsun:vo`:
+  it trims silence, masters to −16 LUFS and writes Opus 48 kb/s mono plus a manifest into
+  `assets/vo/en` that `hollowsun-vo.test.ts` checks. `--lang=cs` is ready for Czech voices later.
+- HOLLOW SUN visual art (D34, Scenario): `pnpm --filter @windowling/web hollowsun:art -- --sheet`
+  writes every prompt (style board, UI kit, menu art, icons from `data.js`, portraits) into
+  `D:/hollowsun-art`; `-- --generate --set=style` generates a set through the Scenario API (key and
+  secret `SCENARIO_API_KEY` / `SCENARIO_API_SECRET` in `apps/web/.env`) into `D:/hollowsun-art/raw`
+  with a review gallery (`raw/index.html`). Sets other than `style` need the custom style models
+  trained on the chosen style board (ids under `models` in `apps/web/scripts/hollowsun-art.json`).
+  The player's knight `CH_ak_knight`, the Act I enemies `EN_*` and the boss `BO_kiln` come from
+  Scenario concepts turned into meshes by Meshy 7.1:
+  `BLENDER=D:\Blender\blender.exe pnpm --filter @windowling/web hollowsun:assets -- --char=EN_brute=<meshy.glb>`
+  (repeatable) rigs each to `RIG_hero` (`scripts/blender/hollowsun_char.py`: distance skinning, arms
+  lowered from the A-pose, LODs, ember emission, WebP textures ≤ 1024 px; `EN_hound` stays a static
+  mesh) and replaces only those manifest entries. Heights, LOD targets and budgets are in `SPECS`.
+  Zone floors and walls use the tileable `assets/tex/T_crypt_*.webp` from the same style board.
+  Props `PR_<biome>_<kind>` (pillar, ruined wall, lantern, chest, brazier, gate arch, the boss anvil) take the same
+  `--char=` path without a rig, with 512 px textures; the game shows their LOD1, sized to the grey box
+  it replaces (collisions stay in the simulation), and keeps the grey box until they load. Concepts,
+  meshes and prompts are in `assets/credits.json`.
+  The UI kit (`assets/ui/*.webp`: panel, tooltip-by-rarity, slot and button frames, HP/Cinders orbs,
+  skill bar, menu background) is generated the same way on a transparent background, trimmed and
+  drawn with CSS `border-image` (9-slice). Each file's Scenario asset id, prompt and slice are in
+  `assets/ui/credits.json`; `hollowsun-assets.test.ts` fails if the stylesheet uses an unrecorded image.
+  Icons (`assets/icons/ic_<id>.webp`, 128 px) cover every item base, skill, dodge, passive and currency;
+  they were generated nine at a time as 3×3 sheets and cut apart (sheets and briefs in
+  `assets/icons/credits.json`). A new base, skill or passive in `data.js` fails the test until it has one.
+- HOLLOW SUN balance: `pnpm --filter @windowling/web hollowsun:playthrough [seed] [step,step]` plays
+  the whole Act I campaign headless (about 2–4 minutes) and prints time, level, deaths, hits to kill
+  and hits survived per step. Run it after changing zones, enemies, loot or XP.
 - Google OAuth is not exercised against real Google in E2E (the button is hidden without
   credentials). E2E checks the hub, the language contract, launching VOIDBORN and stats.
 

@@ -1,0 +1,244 @@
+{
+	"$comment": "HOLLOW SUN visual art (Game Design Bible D34): UI, icons, portraits and menu art from Scenario. Workflow: (1) generate the style board with a base model, keep the best 15-25 images, (2) train two custom style models in Scenario (HS UI, HS Icons) on them and put their ids under models, (3) generate the sets, (4) pick, clean up and export into the game. Never name living artists, other games or brands in a prompt (D32/D34). Record plan and date under recorded.",
+	"service": "Scenario",
+	"recorded": {
+		"plan": "Scenario Pro (commercial licence)",
+		"date": "2026-11-17",
+		"via": "Scenario MCP, team Caldrjir's Organization, Default Project"
+	},
+	"models": {
+		"base": "model_openai-gpt-image-2-5-sunburst",
+		"ui": null,
+		"icons": null
+	},
+	"palette": {
+		"night": "#0A0C11",
+		"panel": "#141823",
+		"parchment": "#E7E2D6",
+		"ash": "#A39E8F",
+		"bronze": "#B98A4E",
+		"gold": "#E3B964",
+		"ember": "#EC7A3A",
+		"blood": "#C23B43",
+		"echo": "#8F9BD0"
+	},
+	"style": "hand-painted dark fantasy game art, aged bronze and blackened iron, soot and ash, warm ember glow from below, cold pale eclipse light from above, worn leather and cracked parchment, painterly brush texture with crisp readable silhouettes, muted desaturated palette of charcoal, ash grey and bronze with ember orange accents, high detail, premium AAA quality",
+	"avoid": "text, letters, watermark, signature, logo, photo, 3d render look, plastic, neon colours, bright saturated colours, cartoon, anime, blurry, low detail, cropped",
+	"sets": {
+		"style": {
+			"model": "base",
+			"size": [1024, 1024],
+			"samples": 4,
+			"items": [
+				{
+					"id": "st_frame_panel",
+					"prompt": "ornate game UI panel frame of blackened iron with aged bronze filigree corners, empty dark centre, front view, symmetrical"
+				},
+				{
+					"id": "st_frame_tooltip",
+					"prompt": "narrow vertical item tooltip frame, dark iron border with bronze rivets and a small eclipse sun crest at the top, empty dark centre, front view, symmetrical"
+				},
+				{
+					"id": "st_slot",
+					"prompt": "square inventory slot of dark carved stone with a thin bronze rim, empty, front view, centred"
+				},
+				{
+					"id": "st_button",
+					"prompt": "wide game menu button plate of dark iron with bronze end caps and a faint ember glow line, empty, front view, symmetrical"
+				},
+				{
+					"id": "st_orb_hp",
+					"prompt": "round health orb in an iron cage frame, glass globe filled with deep blood red liquid, ember sparks, front view, centred"
+				},
+				{
+					"id": "st_orb_cinders",
+					"prompt": "round resource orb in an iron cage frame, glass globe filled with glowing orange embers and smoke, front view, centred"
+				},
+				{
+					"id": "st_icon_sword",
+					"prompt": "game item icon, a worn arming sword with a bronze crossguard, diagonal, dark vignette background, centred"
+				},
+				{
+					"id": "st_icon_helm",
+					"prompt": "game item icon, a dented great helm of blackened steel with ember light in the visor slit, dark vignette background, centred"
+				},
+				{
+					"id": "st_icon_ring",
+					"prompt": "game item icon, a heavy iron ring with a small glowing ember stone, dark vignette background, centred"
+				},
+				{
+					"id": "st_icon_potion",
+					"prompt": "game item icon, a small glass flask of glowing ember liquid with a cork, dark vignette background, centred"
+				},
+				{
+					"id": "st_icon_skill_fire",
+					"prompt": "game skill icon, a burning greatsword arc slashing through ash, round composition, dark background, centred"
+				},
+				{
+					"id": "st_icon_skill_shield",
+					"prompt": "game skill icon, a glowing ash-grey shield of smoke and embers protecting a knight silhouette, round composition, dark background"
+				},
+				{
+					"id": "st_icon_currency",
+					"prompt": "game currency icon, a glowing shard of ember crystal, dark vignette background, centred"
+				},
+				{
+					"id": "st_portrait_knight",
+					"prompt": "character portrait bust, an armoured knight in soot-stained plate with an ember-lit visor, painted, dark background, framed in a bronze medallion"
+				},
+				{
+					"id": "st_portrait_scholar",
+					"prompt": "character portrait bust, an elderly archivist with a grey beard and spectacles, candle light, painted, dark background, framed in a bronze medallion"
+				},
+				{
+					"id": "st_menu_eclipse",
+					"prompt": "wide game menu background, a ruined fortress town on a hill under a black eclipsed sun with a burning golden corona, ash falling, empty space on the left for menu buttons",
+					"size": [1344, 768]
+				},
+				{
+					"id": "st_menu_kiln",
+					"prompt": "wide game background, a vast underground kiln forge with molten channels, huge anvil, smoke and embers, dark cathedral arches",
+					"size": [1344, 768]
+				},
+				{
+					"id": "st_divider",
+					"prompt": "horizontal ornamental divider of bronze filigree with a tiny eclipse sun in the middle, isolated on dark background, front view"
+				}
+			]
+		},
+		"ui": {
+			"model": "ui",
+			"size": [1024, 1024],
+			"samples": 4,
+			"items": [
+				{
+					"id": "ui_panel",
+					"prompt": "large game UI panel frame, blackened iron with bronze filigree corners, empty dark centre, symmetrical, front view",
+					"nine": 96
+				},
+				{
+					"id": "ui_panel_header",
+					"prompt": "game UI panel header bar of iron and bronze with a central eclipse sun crest, empty, symmetrical, front view",
+					"size": [1344, 384],
+					"nine": 64
+				},
+				{
+					"id": "ui_tooltip_common",
+					"prompt": "item tooltip frame, plain dark iron border, empty centre, symmetrical",
+					"size": [768, 1344],
+					"nine": 48
+				},
+				{
+					"id": "ui_tooltip_magic",
+					"prompt": "item tooltip frame, dark iron border with cold blue enamel inlay, empty centre, symmetrical",
+					"size": [768, 1344],
+					"nine": 48
+				},
+				{
+					"id": "ui_tooltip_rare",
+					"prompt": "item tooltip frame, dark iron border with gold trim and engraved runes, empty centre, symmetrical",
+					"size": [768, 1344],
+					"nine": 48
+				},
+				{
+					"id": "ui_tooltip_unique",
+					"prompt": "item tooltip frame, dark iron border with molten ember orange trim and notched corners, empty centre, symmetrical",
+					"size": [768, 1344],
+					"nine": 48
+				},
+				{
+					"id": "ui_slot",
+					"prompt": "square inventory slot of dark carved stone with thin bronze rim, empty",
+					"nine": 24
+				},
+				{
+					"id": "ui_slot_paperdoll",
+					"prompt": "larger equipment slot plate of dark stone with an ornate bronze rim and corner studs, empty",
+					"nine": 32
+				},
+				{
+					"id": "ui_button",
+					"prompt": "wide menu button plate of dark iron with bronze end caps, empty, symmetrical",
+					"size": [1344, 384],
+					"nine": 64
+				},
+				{
+					"id": "ui_button_hover",
+					"prompt": "wide menu button plate of dark iron with bronze end caps and a warm ember glow along the edges, empty, symmetrical",
+					"size": [1344, 384],
+					"nine": 64
+				},
+				{
+					"id": "ui_orb_frame",
+					"prompt": "ornate round iron cage frame for a health globe, empty glass, front view, symmetrical"
+				},
+				{
+					"id": "ui_orb_hp",
+					"prompt": "glass globe filled with deep blood red liquid, soft inner light, front view, isolated on black"
+				},
+				{
+					"id": "ui_orb_cinders",
+					"prompt": "glass globe filled with glowing orange embers and smoke, front view, isolated on black"
+				},
+				{
+					"id": "ui_skillbar",
+					"prompt": "long horizontal skill bar of iron and bronze holding seven empty square sockets, front view, symmetrical",
+					"size": [1344, 384]
+				},
+				{
+					"id": "ui_node",
+					"prompt": "round passive skill node socket of bronze with a dark empty centre, front view"
+				},
+				{
+					"id": "ui_node_active",
+					"prompt": "round passive skill node socket of bright gold with an ember glow, dark empty centre, front view"
+				},
+				{
+					"id": "ui_medallion",
+					"prompt": "round bronze medallion frame for a character portrait, empty dark centre, front view"
+				},
+				{
+					"id": "ui_divider",
+					"prompt": "horizontal ornamental divider of bronze filigree with a tiny eclipse sun, isolated on black",
+					"size": [1344, 384]
+				},
+				{
+					"id": "ui_parchment",
+					"prompt": "seamless texture of dark worn parchment with soot stains, flat, even lighting, tileable"
+				},
+				{
+					"id": "ui_iron",
+					"prompt": "seamless texture of blackened hammered iron with faint scratches, flat, even lighting, tileable"
+				}
+			]
+		},
+		"menu": {
+			"model": "ui",
+			"size": [1344, 768],
+			"samples": 4,
+			"items": [
+				{
+					"id": "bg_menu",
+					"prompt": "wide game menu background, a ruined fortress town on a hill under a black eclipsed sun with a burning golden corona, ash falling, empty dark space on the left"
+				},
+				{
+					"id": "bg_loading_ashfields",
+					"prompt": "wide loading screen, burned fields of ash with dead trees and a lone road, eclipse sun low on the horizon"
+				},
+				{
+					"id": "bg_loading_crypt",
+					"prompt": "wide loading screen, a flooded chapel crypt with candles, bone niches and green-grey fog"
+				},
+				{
+					"id": "bg_loading_kiln",
+					"prompt": "wide loading screen, a vast underground kiln forge with molten channels and a huge anvil"
+				}
+			]
+		}
+	},
+	"generated": {
+		"$comment": "Sets built from data.js by hollowsun-art.mjs: item bases, uniques, currencies, skills, passives, NPC portraits and enemies.",
+		"icons": { "model": "icons", "size": [1024, 1024], "samples": 4 },
+		"portraits": { "model": "ui", "size": [1024, 1024], "samples": 4 }
+	}
+}

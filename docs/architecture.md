@@ -221,6 +221,300 @@ bottles, explored map), `audio.js` (procedural sound and generative music), `ui.
 merged into old saves, finished story steps are recognised from the old flags. E2E drives the
 real game in a software WebGL renderer (`e2e/driftwood.test.ts`).
 
+## HOLLOW SUN prototype - `static/games/hollowsun`
+
+The P0 prototype of _Echoes of the Hollow Sun_, an isometric dark fantasy ARPG designed in a
+separate Game Design Bible (a claude.ai artifact). Plain scripts on PlayCanvas 2.23.3
+(`vendor/playcanvas.min.js`, MIT, licence beside it), loaded in order by `index.html`:
+`data.js` (generated from the Bible – Ash Knight, three skills, two Act I enemies, balance
+constants; never edited by hand), `core.js` (the Bible's formulas: character stats, weapon,
+`computeHit` with conversion, crit, armour/resistance and hit chance), `sim.js` (combat at a
+fixed 30 Hz with a seeded RNG and commands as input, no rendering - the GDD's multiplayer
+preparation) and `game.js` (PlayCanvas scene, isometric camera, click-to-move or WASD, telegraphs,
+hit-stop, HUD, a 20 s benchmark with 50 enemies). Save `hollowsun.save.v1`, stats
+`gamecenter.stats.hollowsun`. `src/lib/games/hollowsun.test.ts` checks the core against values
+exported from the Bible (`hollowsun.fixtures.json`) and runs the simulation headless;
+`e2e/hollowsun.test.ts` drives the real page in a software WebGL renderer.
+
+Loot and inventory (P1): `data.js` also carries the Bible's item data (`loot`: slots, rarities,
+bases, affixes with tiers, uniques, loot tables) and loot constants (`rarW`, `dropChance`,
+`smartLoot`, `pityUnique`). `core.js` ports the Bible's `G.rng`, `G.rollRarity`, `G.genItem`,
+`G.itemMods` and `G.weaponOf`, and `calcChar`/`computeHit` take the equipped items; with the starter
+mace they give exactly the P0 numbers. In `sim.js` a killed enemy rolls a drop with its own seeded
+RNG (`seed#loot#n`), so drops are deterministic. The drop uses the enemy's drop chance and rarity
+weights, the unique pity counter, and an item level equal to the monster level, with smart loot for
+the Ash Knight. The benchmark and the input test drop nothing. A drop is picked up with the
+`pickup` command when the player is close. `invCommand` equips, takes off or discards; it checks
+class, tier level, attribute requirements, two-handed weapons and the two ring slots, then
+recomputes the character. The inventory (I) pauses the game and shows a tooltip comparing the item
+with what is equipped. The save moves from version 1 to 2 (`gear`, `sinceU`) via
+`HSim.migrateSave`; unknown items are dropped on load (`sanitizeGear`).
+`src/lib/games/hollowsun-loot.test.ts` checks item generation, item stats and the character with
+gear against `hollowsun.loot.fixtures.json` (exported from the Bible), plus drops, equipping and the
+save migration.
+
+Character progression (P1): the arena character starts at level 1 and gains XP per kill by the
+Bible (`F.monsterXp` × `F.xpPenalty` for the level gap, `F.xpToNext` per level, cap `levelCap`). A
+level-up heals, gives 3 attribute points (`freeAttrPerLevel`) and unlocks skills by their `req`;
+skill levels follow `F.maxSkillLevel`. Points go to attributes through `invCommand` (`alloc` or
+`autoAlloc`, which splits like the Bible's reference character: 2/3 to the primary attribute, the
+rest to VIT), so item attribute requirements matter. The Bible sets no enemy level for the
+prototype arena; the rule here is player level − 1 + every second wave, capped at the end of Act I
+(12, from the exported Act I areas), with brutes only from their level range (5+). Enemy armour,
+evasion and damage use each enemy's own level. The Ash Knight's six Act I skills are on the bar:
+
+- Cleave, Searing Slam and Ember Charge (from P0).
+- Brand Strike: a single-target generator with 50 % fire conversion. Its brand gives +10 % increased
+  Fire damage for 4 s (an exact `computeHit` with `fireInc` + 0.1), and Searing Slam's burn on a
+  branded target lasts 6 s.
+- Ashen Bulwark: a barrier of (15 % + 1 % × skill level) Max HP and +20 % Armor for 6 s.
+- Cry of the Pyre: a 7 m pull, −15 % enemy damage for 6 s and +40 Cinders.
+
+The benchmark and the input test keep the P0 setup: a fixed level 8 with the reference allocation.
+The save moves to version 3 (`char`: level, xp, alloc, points). Players with a P0/P1 save get the
+level 8 character they effectively had, so their gear stays usable. The progression fixtures
+(`progress` in the loot fixtures) check the XP formulas, the character with its own allocation and
+the Bulwark buff, the barrier and the new skills against the Bible.
+
+Act I enemies (P1): besides the Ashen Thrall and the Smoldering Brute, the arena now has two more
+Act I types from the Bible:
+
+- Cinder Hound: fast (6 m/s), evasion 40, packs of 3–5 from wave 2. It bites (0.9×) and leaps
+  6 m (1.4×, 0.5 s telegraph) along a line from the side, and circles the player while the leap
+  is on cooldown.
+- Charred Bowman: from its Bible level 3. It keeps 12–16 m, backs off when approached and needs a
+  clear line. It shoots arrows (1.1×, 20 m) and a fire arrow (1.6×, cd 6 s) as projectiles; pillars,
+  the anvil, the kilns and the arena wall stop them, and the dodge's i-frames avoid them.
+- Kiln Acolyte (caster, from level 4; Burnt Orchard has none, the Great Kiln many): stays 9–13 m
+  behind the front line. It throws a slow fireball (1.3×) as a projectile, raises 2 Ashen Thralls
+  (cd 12 s, at most 4 alive per acolyte; raised Thralls drop no loot) and wards the most wounded
+  ally within 10 m with a barrier of 30 % of its max HP for 6 s (cd 10 s). The ward absorbs hits
+  and burns before HP. The raise and the ward are casts with a glow instead of a danger telegraph,
+  and any hit during the cast interrupts it (the Bible's weakness "interrupt"; the cooldown still
+  runs). Drops follow `lt_caster` (normal × 1.1). Arena waves add up to 3 acolytes from wave 3.
+
+The bite's telegraph, the cooldowns, the draw time and the arrow speed are prototype values marked
+in the exported `attacks`. Waves mix Thralls (4 + 2 × wave), the hound pack, Bowmen and Brutes,
+each from the first level of its Bible range. The benchmark keeps its P0 Thrall/Brute mix. Fixtures
+check the hound and bowman stats and the skills against them; simulation tests cover the wave mix,
+the leap, the bowman's range and arrows stopped by pillars.
+
+Music (P1): `js/hudba.js` plays the Bible's adaptive layers (Audio direction):
+
+- the main menu,
+- the Act I region as explore and combat layers, which switch with a 2 s crossfade (combat while
+  an enemy is within 11 m or within 4 s of a hit),
+- the Kiln Warden as three phase layers,
+- stingers for level up, a unique drop, death and the boss kill, which duck the music by 6 dB.
+
+The layers of one group are loops of the same length started together, so a crossfade stays on the
+beat. The benchmark, the input test and the asset test play no music. It follows `GCMusic.gameMusic`
+and `GCMusic.level` like the other action games.
+
+`scripts/hollowsun-music.mjs` (`pnpm --filter @windowling/web hollowsun:music [folder]`) makes the
+tracks from downloaded sources (Suno, allowed for final music by D32) listed in
+`scripts/hollowsun-music.json`. It cuts loops to whole bars (`bars` × 4 beats at `bpm`), normalises
+them to −16 LUFS / −1 dBTP (two-pass loudnorm) and encodes Opus 128 kb/s into
+`static/games/hollowsun/assets/music/` with a manifest. `hollowsun-music.test.ts` checks the files
+(Opus, loudness, loop length, one length per group, the Suno link D32 asks for). Without a manifest
+the game stays silent, so `hollowsun` joins `OWN_MUSIC` in `static/games/music.js` together with the
+first tracks.
+
+Act I campaign (P1): "Kampaň: Act I" in the menu plays the Bible's Act I main quests: Ashfields
+(L1–3, q1_01), Burnt Orchard (3–5), the Chapel of Embers crypt on two floors (4–5 and 5–6, q1_02,
+reached from the Ashfields), Ironbound Tollgate (5–7), Charcoal Woods (6–9, ends q1_03), the Great
+Kiln (9–11), then the Kiln Warden in the Heart of the Kiln (L12, the boss mode, q1_04). A campaign
+step is an area id, a further floor is `id:2`. Each new area borders one already visited (on foot,
+or by Lantern back to it).
+
+- Layout: each zone comes from the Bible's own dungeon generator. `js/dungeon.js` is G.genDungeon
+  (14 steps), exported unchanged by the Bible exporter and checked by fixtures. `js/world.js` turns
+  it into geometry (cells 18 m apart, room units of 2.5 m, 4 m corridors, L-shaped where rooms are
+  not neighbours).
+- Content: a Lantern at the entrance, locks with their keys in side rooms, chests, the gate to the
+  next area in the last main room, and the generator's enemy budget with types from the area's list.
+  Enemies are at the area's levels by depth and elites use the Bible's elite multipliers.
+- Whispers: each zone holds its area's whispers (G.WHISPERS, exported with the speaker's name) in
+  the deepest free side room, on the last floor; touching one shows the line and collects it in
+  the save (`whispers`). "Poslední úder" follows the Kiln Warden's defeat.
+- Quests: the step that ends a main quest grants its Bible XP when the gate is reached (q1_01 300,
+  q1_02 1,400, q1_03 3,200); q1_02's magic ring goes straight to the inventory. The prototype has no
+  gold or passive points.
+- Gallows Hill (secret, L8): a sealed entrance in a Charcoal Woods side room. The Rusty Gallows Key
+  drops from a Smoldering Brute in the campaign with 4 % (the Bible's unlock), rolled per brute with
+  its own seed so other rolls stay the same. With the key the entrance offers the area; it ends
+  with a unique chest next to the gate and leads back to the Charcoal Woods without moving the
+  campaign on (`gallowsKey`, `gallowsDone` in the save).
+- Cinderhold (the hub, `inst: fixed`): a fixed town from `buildTown` – a plaza with extinguished
+  furnaces, the archive (Teodor), the forge (Brannoc), the Compact barracks (Oduin), a Lantern at the
+  entrance and the gate north. The campaign visits it after the Ashfields and again after the crypt
+  (step `a1_cinderhold#2`); the gate stays shut until the player has met the NPCs whose quest scenes
+  are still unseen (`needTalk`), then leads straight on without a summary panel.
+- Story: `HSWorld.STORY` maps every Act I scene of the Bible's G.DIALOGS (exported with the
+  speakers from G.NPCS) to a trigger – a step's start, an NPC, five kills in the Ashfields, the boss
+  start and his defeat. Talks pause the game; Ysolde's lines and lines during a fight run as
+  subtitles without a pause (length as for VO: words / 2.5 + 0.5 s). Whisper entries in a scene show
+  the whisper card. Seen scenes, choices and flags go to `story` in the save.
+- Choices: at the Tollgate, paying the toll of 500 gold or fighting the champion,
+  an elite Smoldering Brute at the area cap who drops a rare weapon (`HSim.champion`); after the
+  Kiln Warden, the Kiln Shard choice sets `w_kiln_absorbed` or `w_kiln_returned` for Act II.
+- Simulation (`mode: 'act1'`): enemies sleep until they see the player (the Bible's detection
+  ranges) and alarm allies within 8 m. Movement slides along the walls and steps round corners;
+  walls block sight and arrows.
+- Death respawns at the last Lantern (D08: no XP loss). A chest drops two items with elite-pack
+  rarity (prototype value).
+- The renderer builds floors, walls (where the space next to an edge is not walkable), doors that
+  open with their key, the objects, a minimap and the area's quest objective. It only creates enemy
+  visuals within 38 m of the player.
+- The save moves to version 4 (`act1`: the zone reached, done, deaths), and the progress goes to the
+  hub stats.
+
+The generator parameters per zone are prototype values (`ZONE_P` in `world.js`); an XP estimate
+reaches level 11 at the end of the Great Kiln, matching the Bible's area levels. On the autopilot a
+zone takes about 3–11 minutes. `hollowsun-world.test.ts` checks that the zones follow the Bible's
+main quests and links, the levels and objects, that walking each route picks up the keys and reaches the gate, and
+the respawn, the quests, the crypt floors, the Gallows Hill key and entrance, the scenes against
+the Bible dialogs, the Cinderhold gate and the champion; E2E clears a zone, reads the opening scene,
+meets Teodor in Cinderhold and finishes Act I with the boss and the Kiln Shard choice.
+
+Campaign balance (P1): `pnpm --filter @windowling/web hollowsun:playthrough [seed] [steps]` runs
+the whole Act I campaign headless (the Bible's P1 tests "E2E playthrough bot" and "TTK telemetry").
+The bot follows each zone's route, fights what catches up with it and hunts Bowmen and Acolytes,
+collects loot and gold, equips better gear (Cleave DPS × EHP), spends points and passives, and
+prints per step the time, level, kills, deaths, gold, hits to kill a Thrall of the area's level
+(Bible target 2–4) and enemy hits survived (target ≥ 20). It is a gauge, not a player: it does not
+dodge the boss's mechanics. The first runs led to these changes:
+
+- Raised Thralls give no XP and an Acolyte keeps at most two alive: the bot farmed them from L10 to
+  L13 in the Great Kiln, which took 21 minutes.
+- Great Kiln density 2 → 1.7 and the crypt floors 1.5 / 1.75 → 1.25 / 1.5 (the crypt, all Bowmen and
+  Acolytes, had the most deaths).
+- The autopilot (also used by tests and the benchmark) checks a skill's real cost (it used to stand
+  on "no resources" once costs grew), finds its way back to the route through the room graph,
+  attacks only enemies it can walk to, puts the Acolyte first; shoved enemies stay on walkable
+  ground (one could end up inside a wall where nothing could hit it).
+
+A run now takes about 42–47 minutes of game time (the Bible's slice: 45–60 minutes for a person),
+with 1.5–2.8 hits to kill and 30–60 hits survived. The bot reaches the Kiln Warden at L9–10 (boss
+L12) and beat him (in about 3.5 minutes) in one of three runs; this gap is left for the playtest
+telemetry (D31).
+
+Gold and passive skills (P1):
+
+- Gold drops by the Bible's loot tables (`lt_normal`/`lt_caster` 6 %, `lt_elite` 20 %, `lt_rare`
+  50 %) as 2–5 × L, rolled per enemy with its own seed; the Kiln Warden drops 20 × L. Piles are
+  picked up by walking over them (1.6 m). Quests add their Bible gold. Gold pays the Tollgate toll
+  and the merchant buys items in Cinderhold (Shift + click: Common 1 / Magic 3 / Rare 10 / Unique
+  25 × L). The save keeps `gold`; the exporter adds `econ` from G.BAL.econ and G.LOOT.
+- The Ash Knight's six class passives (G.SKILLS, `k: 'passive'`) take points from D04
+  (`F.passivePoints`, one per level plus quest points ≈ L / 6), each up to its max rank and from its
+  level. Their stats go into `calcChar` as modifiers; Kindling Fury adds Cinders on every hit and
+  Unquenched adds more damage under 35 % HP. Respec costs `F.respecPoint` (D13: free up to L12). The character
+  save keeps `passives`, cleaned to the points of its level.
+- Voices (P1): the game is voiced in English; Czech players hear the English voice with Czech text as
+  subtitles. The Bible holds the English translation of Act I (G.DIALOGS_EN, G.WHISPERS_EN,
+  G.NAMES_EN), so with the English language the dialogs, choices, scene titles and whispers show in
+  English. data.js lists every voiced line (D.vo: the dialogs' lines including choice branches and
+  the seven whispers) with a Bible-style file name (`AU_vo_q1_02_03`, `AU_vo_wh_05`), its role and
+  both texts. The game plays a line's recording from `assets/vo/en` when it shows the line (talks,
+  subtitles, whisper cards; subtitles last at least as long as the recording) and stays text only
+  without one. Czech voices can be added later in `assets/vo/cs`: the game uses them for Czech when
+  that manifest has lines. Recordings come from `scripts/hollowsun-vo.mjs` (see development.md).
+- Damage types (P1): the core computes the player's resistances like the Bible's calcChar –
+  (resAll + res_<type>) × 100 plus the act penalty (none in Act I), capped at 75 % (+ max res) and
+  the hard cap 90 % – and shows fire resistance in the inventory. Enemy hits are physical unless the
+  ability is a fire one: the Ember Wisp's explosion, the Bowman's fire arrow, the Acolyte's fireball
+  and the Kiln Warden's kiln fire, Bellows Breath, burning ground and Quench Slam steam (Hammerfall
+  and Anvil Toss stay physical). Following the Bible, armor mitigates physical damage only; fire is
+  cut by fire resistance alone (negative resistance raises it). Fire hits on the player show in orange.
+  The playthrough barely moved (45–47 minutes, similar deaths), since armor only takes 14–20 % in
+  Act I.
+- Forge (P1): talking to Brannoc in Cinderhold opens her forge with the Bible's smith operations
+  from G.CRAFT and their prices from G.CRAFT_COST – Salvage (Common 0–1 / Magic 1–2 Ember Shard, Rare
+  2–4 Hollow Dust, Unique 10 Dust + 20 % Sunmote), Reforge Magic, Imbue (Magic with 2 affixes →
+  Rare with 3–4), Reforge Rare (price × 1.15 per earlier reforge), Temper (values within the tier)
+  and Unravel (Rare with ≥ 4 affixes loses one). Sockets, runes, Sunmote and Echo operations belong
+  to later stations. Ember Shards drop by the loot tables (`lt_normal` 2 %, `lt_caster` 3 %,
+  `lt_elite` 10 %) and the Kiln Warden drops Hollow Dust; both are picked up like gold and saved in
+  `cur`. Affixes for crafting come from `HS.addAffixes`, the same roll genItem uses, so the item
+  parity with the Bible stays. Items remember their item level (`ilvl`, set on drop); older items
+  use the character's level within their tier.
+
+Boss (P1): "Boss: Kiln Warden" is a separate mode (`mode: 'boss'`). It uses the player's character
+and gear in the boss arena from the Bible: a round forge Ø 30 m, a central anvil as cover and three
+kilns on the edge. The boss comes from the exported Bible data (`bosses.bo_kiln`: level 12, HP ×60,
+damage ×2.2, resistances, phases, abilities, mechanics, enrage, unique pool) and `refEnemy` gives
+its stats.
+
+- Phases by HP: 100–60 %, 60–25 % (3 s immune, the kilns ignite, smouldering ground shrinks the
+  arena to Ø 16 m) and 25–0 % (−30 % armour, +25 % speed).
+- Abilities, gated by phase and on their own cooldowns:
+  - Hammerfall: a 3 m circle in front of the boss.
+  - Bellows Breath: a 60° × 10 m cone for 2 s.
+  - Anvil Toss: a 4 m circle on the player.
+  - Stoke the Kilns: 90° × 12 m cones from the kilns.
+  - Molten Spawn: four Ember Wisps, the Bible's suicide swarm.
+  - Quench Slam: the whole arena except three steam circles.
+- The anvil blocks the cones (a line test). Standing by a burning kiln for 1.5 s quenches it.
+- After 240 s the boss enrages: the kilns burn for good and damage is +50 %.
+- The kill drops 3 Magic + 2 Rare plus a unique from the boss pool (25 %, 100 % on the first kill).
+  The first kill also pays the XP of quest q1_04. The renderer slows to 30 % for 4 s.
+
+Where the Bible gives no number, the prototype picks one and marks it in `sim.js` (`BOSS`): the
+steam circle radius, the smouldering-ground burn, the boss speed, and the boss XP of 10 normal
+enemies of its level. The save keeps `bossKills` and `bossBest`. `hollowsun-loot.test.ts` checks the
+boss and wisp stats and the skills against the boss (also with phase 3 armour) against the Bible,
+plus the phases, immunity, Quench Slam, quenching, enrage and the boss loot in the simulation.
+
+Asset pipeline (P0): `pnpm --filter @windowling/web hollowsun:assets` runs
+`scripts/blender/hollowsun_assets.py` in Blender without a window (`scripts/hollowsun-assets.mjs`
+finds it through `BLENDER`, the PATH or the default install folders) and exports raw GLB files:
+a dungeon module `DM_crypt_rS_X_a` (bevelled walls, door sockets, vertex-colour AO) and a
+placeholder `CH_ak_body` whose LOD1/LOD2 come from LOD0 through Decimate. gltfpack (the
+`gltfpack` npm package, meshoptimizer) then quantizes and compresses them
+(`EXT_meshopt_compression` + `KHR_mesh_quantization`, `-cc -kn -km`: named nodes and materials
+kept) into `assets/`, together with `assets/manifest.json` (raw and compressed sizes). The GLBs
+are committed, so CI needs no Blender. PlayCanvas cannot decode Meshopt itself: the game's
+"Asset test" mode loads the GLBs as container assets whose `bufferView.processAsync` hook
+decodes them with meshoptimizer's decoder (`vendor/meshopt_decoder.js`, MIT), switches LODs by
+camera distance and shows the sockets.
+`src/lib/games/hollowsun-assets.test.ts` decodes every GLB the same way and holds it to the
+Bible's asset rules: compression (every buffer view Meshopt, at most half the raw size, textures
+only as KTX2 via `KHR_texture_basisu`), naming, triangle budget, at most 2 materials per mesh,
+LOD0–2, footprint on the 2 m grid (through the dequantizing node transform), door sockets,
+vertex-colour AO and glTF integrity. The P0 assets have no textures yet; the npm gltfpack cannot
+encode KTX2 (the native gltfpack build with Basis Universal can, `-tc`), and the game will also
+need the Basis transcoder for them.
+`CH_ak_body` is skinned to the shared humanoid rig `RIG_hero` (Bible D16: one skeleton for every
+class, at most 65 bones; 20 now, rigid placeholder skinning) and carries four placeholder clips
+`AN_hero_idle|run|attack|death` sampled at 30 FPS; the attack has root motion (0.6 m forward on
+the `root` bone), the loops stay in place and close seamlessly. The weapon socket `socket_hand_R`
+is a child of the `hand_R` joint. The "Asset test" mode plays the clips through PlayCanvas' anim
+component (keys 1–4) and has a crowd test: 50 skinned, animated characters (LOD1) for 5 s with the
+average FPS and p95 frame time. The validator checks the skin (bone budget, complete weights, valid
+joints, one skin for all LODs), the clip names, 30 FPS sampling, seamless loops and root motion.
+The arena and the benchmark use the same knight for the player and the enemies (thrall and brute get
+their own materials, the brute is scaled up) once the GLB has loaded; until then, or with `?gray` for
+a comparison, the grey boxes stay. The simulation still owns positions and timing: the clips follow
+its state (attack slowed or sped up so the swing lands at the end of the telegraph or in the
+player's hit window, run while moving, death played out before the body is removed), the attack's
+root motion is pinned to the spot, LODs switch by camera distance (18 m / 35 m) and the player's
+blade sits in `socket_hand_R`.
+
+P0 acceptance tools: "Test vstupu" measures input latency – from the input event's timestamp to the
+end of rendering the frame where the knight reacts (`frameend`) and to the start of the next frame
+(≈ on screen); 20 samples, average and p95 (target < 50 ms p95). Only inputs the knight can act on
+right away count (not during a strike, dodge, stun or hit-stop, where commands queue on purpose). A
+fresh input runs the next simulation step in the very next frame, borrowing the time so the rate
+stays 30 steps/s and the command stream stays deterministic; a click that is pressed and released
+between two steps is kept for the next step. "Ohodnotit boj" (also after a game over) asks four
+1–5 questions for the combat feel test (target ≥ 4/5 from 5 players), keeps the ratings in the
+game's save and copies them as text to the clipboard for collecting, together with the graphics
+adapter, the last benchmark and the last input test, so testers on other hardware send one paste.
+The benchmark also records GPU time per frame (WebGL2 `EXT_disjoint_timer_query_webgl2` around
+rendering; measure without the frame cap, since the GPU clocks down at 60 FPS) and CPU time per frame
+(PlayCanvas `stats.frame` update + render).
+
 ## Vesnička - `static/games/vesnicka`
 
 An idle game outside the puzzle kit, plain scripts loaded by `index.html`: `data.js` (trades,
@@ -369,4 +663,5 @@ Signed-in players keep their progress in their account; anonymous play is unchan
 | 2026-10-23 | Puzzle games on one shared static kit                   | Daily/streak/levels/quests once for all puzzles; games stay static and self-contained.      |
 | 2026-10-23 | Online puzzles: one generic room DO for turns and races | One server for 13 games; the room enforces turn order and timing, the games keep rules.     |
 | 2026-10-23 | Cloud saves mirror localStorage keys, newest write wins | Games stay untouched; one generic sync script for all games; per-key time stamps.           |
+| 2026-11-04 | HOLLOW SUN on PlayCanvas, vendored like Three.js        | Engine chosen in the GDD (D09); no build step, self-contained static game, MIT licence.     |
 | 2026-10-23 | Leaderboards per comparable board only                  | Fair rankings: same daily puzzle, same level, same rules; client-reported, range-checked.   |

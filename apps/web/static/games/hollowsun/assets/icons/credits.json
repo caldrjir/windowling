@@ -1,0 +1,264 @@
+{
+	"$comment": "Origin of the HOLLOW SUN icons (decision D34). Generated nine at a time as 3x3 sheets on Scenario Pro (commercial licence) through the Scenario MCP: items on a transparent background, skills, passives and currencies as painted square tiles. Each sheet prompt listed the nine briefs below and ended with the shared style from scripts/hollowsun-art.json; no names of artists, games or brands. Cut into 128 px WebP; a unique item uses the icon of its base.",
+	"service": "Scenario",
+	"plan": "Scenario Pro (commercial licence)",
+	"model": "model_openai-gpt-image-2-5-sunburst",
+	"quality": "high",
+	"date": "2026-11-18",
+	"sheets": {
+		"items_a": {
+			"scenario": "asset_pwHH2J3YTdVabHVG37RFomRq",
+			"size": "1536x1536",
+			"grid": "3x3",
+			"background": "transparent"
+		},
+		"items_b": {
+			"scenario": "asset_XC8XeXyQSQvd9rVpvxXa3Ygy",
+			"size": "1536x1536",
+			"grid": "3x3",
+			"background": "transparent"
+		},
+		"items_c": {
+			"scenario": "asset_G9rrT1ZuJqjyJaFbrHfV7nQ9",
+			"size": "1536x1536",
+			"grid": "3x3",
+			"background": "transparent"
+		},
+		"items_d": {
+			"scenario": "asset_L8dSbZMnt5KVxwf3QMuhvqjt",
+			"size": "1536x1536",
+			"grid": "3x3",
+			"background": "transparent"
+		},
+		"skills": {
+			"scenario": "asset_kxPFkm7xk2SoJUAgg5Tgy5wn",
+			"size": "1536x1536",
+			"grid": "3x3",
+			"background": "opaque"
+		},
+		"passives": {
+			"scenario": "asset_86vwe4ka9eEGgZcbDh692N11",
+			"size": "1536x1536",
+			"grid": "3x3",
+			"background": "opaque"
+		}
+	},
+	"icons": {
+		"ic_wb_sword": {
+			"sheet": "items_a",
+			"prompt": "an arming sword with a straight blade and a leather grip with brass fittings"
+		},
+		"ic_wb_axe": {
+			"sheet": "items_a",
+			"prompt": "a bearded axe with a jagged edge"
+		},
+		"ic_wb_mace": {
+			"sheet": "items_a",
+			"prompt": "a flanged mace of black steel"
+		},
+		"ic_wb_dagger": {
+			"sheet": "items_a",
+			"prompt": "a rondel dagger with a round guard and a narrow point"
+		},
+		"ic_wb_wand": {
+			"sheet": "items_a",
+			"prompt": "a charred ash wand tipped with a glowing ember"
+		},
+		"ic_wb_scepter": {
+			"sheet": "items_a",
+			"prompt": "a scepter crowned with a tiny lantern"
+		},
+		"ic_wb_greatsword": {
+			"sheet": "items_a",
+			"prompt": "a two-handed greatsword with a flame-shaped blade and parrying hooks"
+		},
+		"ic_wb_greataxe": {
+			"sheet": "items_a",
+			"prompt": "an executioner axe with a wide crescent blade"
+		},
+		"ic_wb_maul": {
+			"sheet": "items_a",
+			"prompt": "a maul whose head is a small anvil on a long haft"
+		},
+		"ic_wb_staff": {
+			"sheet": "items_b",
+			"prompt": "a runic staff with small glowing runes floating around its head"
+		},
+		"ic_wb_bow": {
+			"sheet": "items_b",
+			"prompt": "a yew longbow with a sinew string"
+		},
+		"ic_wb_scythe": {
+			"sheet": "items_b",
+			"prompt": "a grave scythe with a bone haft"
+		},
+		"ic_wb_buckler": {
+			"sheet": "items_b",
+			"prompt": "a small round iron buckler"
+		},
+		"ic_wb_kite": {
+			"sheet": "items_b",
+			"prompt": "a kite shield painted with a lantern crest"
+		},
+		"ic_wb_tower": {
+			"sheet": "items_b",
+			"prompt": "a tall tower shield with a vision slit"
+		},
+		"ic_wb_grimoire": {
+			"sheet": "items_b",
+			"prompt": "a closed grimoire with burnt page edges"
+		},
+		"ic_wb_quiver": {
+			"sheet": "items_b",
+			"prompt": "a leather quiver full of barbed arrows"
+		},
+		"ic_wb_ring": {
+			"sheet": "items_b",
+			"prompt": "a plain iron ring"
+		},
+		"ic_wb_helm_str": {
+			"sheet": "items_c",
+			"prompt": "a closed great helm with a visor slit"
+		},
+		"ic_wb_helm_dex": {
+			"sheet": "items_c",
+			"prompt": "a leather hood with a face mask"
+		},
+		"ic_wb_helm_int": {
+			"sheet": "items_c",
+			"prompt": "a thin votive circlet holding a small candle"
+		},
+		"ic_wb_chest_str": {
+			"sheet": "items_c",
+			"prompt": "a plate hauberk over chain mail"
+		},
+		"ic_wb_chest_dex": {
+			"sheet": "items_c",
+			"prompt": "a riveted brigandine jerkin"
+		},
+		"ic_wb_chest_int": {
+			"sheet": "items_c",
+			"prompt": "votive robes hung with prayer strips"
+		},
+		"ic_wb_gloves_str": {
+			"sheet": "items_c",
+			"prompt": "a pair of plate gauntlets"
+		},
+		"ic_wb_gloves_dex": {
+			"sheet": "items_c",
+			"prompt": "a pair of leather bracers"
+		},
+		"ic_wb_gloves_int": {
+			"sheet": "items_c",
+			"prompt": "silk hand wraps with ink writing"
+		},
+		"ic_wb_boots_str": {
+			"sheet": "items_d",
+			"prompt": "a pair of plate sabatons"
+		},
+		"ic_wb_boots_dex": {
+			"sheet": "items_d",
+			"prompt": "a pair of soft leather boots"
+		},
+		"ic_wb_boots_int": {
+			"sheet": "items_d",
+			"prompt": "a pair of pilgrim sandals dusted with ash"
+		},
+		"ic_wb_belt_heavy": {
+			"sheet": "items_d",
+			"prompt": "a wide heavy leather belt with an iron buckle"
+		},
+		"ic_wb_belt_sash": {
+			"sheet": "items_d",
+			"prompt": "a ritual sash hung with small amulets"
+		},
+		"ic_wb_amulet": {
+			"sheet": "items_d",
+			"prompt": "a pendant with a fading sun disc"
+		},
+		"ic_wb_relic_sun": {
+			"sheet": "items_d",
+			"prompt": "a sun shard in a brass cage"
+		},
+		"ic_wb_relic_bone": {
+			"sheet": "items_d",
+			"prompt": "a small bone reliquary box"
+		},
+		"ic_wb_relic_moth": {
+			"sheet": "items_d",
+			"prompt": "a glass vial with a trapped moth"
+		},
+		"ic_ak_cleave": {
+			"sheet": "skills",
+			"prompt": "a wide glowing greatsword arc sweeping through ash"
+		},
+		"ic_ak_brand": {
+			"sheet": "skills",
+			"prompt": "a blade branding a burning sigil onto an armoured foe"
+		},
+		"ic_ak_charge": {
+			"sheet": "skills",
+			"prompt": "a knight charging forward in a trail of embers"
+		},
+		"ic_ak_slam": {
+			"sheet": "skills",
+			"prompt": "a heavy weapon slamming the ground with molten cracks spreading"
+		},
+		"ic_ak_bulwark": {
+			"sheet": "skills",
+			"prompt": "a wall of grey ash and embers forming a shield around a knight"
+		},
+		"ic_ak_warcry": {
+			"sheet": "skills",
+			"prompt": "a knight roaring as a ring of fire bursts outwards"
+		},
+		"ic_dodge": {
+			"sheet": "skills",
+			"prompt": "a cloaked figure rolling sideways leaving a blur of ash"
+		},
+		"ic_ak_p1": {
+			"sheet": "skills",
+			"prompt": "a heart of glowing ember wrapped in iron bands"
+		},
+		"ic_ak_p2": {
+			"sheet": "skills",
+			"prompt": "a spark leaping from a struck anvil"
+		},
+		"ic_ak_p3": {
+			"sheet": "passives",
+			"prompt": "a breastplate glowing red hot from within"
+		},
+		"ic_ak_p4": {
+			"sheet": "passives",
+			"prompt": "a drop of ember blood falling into a crucible"
+		},
+		"ic_ak_p5": {
+			"sheet": "passives",
+			"prompt": "two crossed blades over a forge flame"
+		},
+		"ic_ak_p6": {
+			"sheet": "passives",
+			"prompt": "a flame that will not go out inside a stone hand"
+		},
+		"ic_cu_gold": {
+			"sheet": "passives",
+			"prompt": "a small stack of old worn gold coins stamped with an eclipse sun"
+		},
+		"ic_cu_ember": {
+			"sheet": "passives",
+			"prompt": "a glowing shard of ember crystal"
+		},
+		"ic_cu_dust": {
+			"sheet": "passives",
+			"prompt": "a pinch of shimmering ash dust in a small cloth pouch"
+		},
+		"ic_cu_sunmote": {
+			"sheet": "passives",
+			"prompt": "a tiny mote of pure golden sunlight inside a glass bead"
+		},
+		"ic_cu_residue": {
+			"sheet": "passives",
+			"prompt": "a lump of grey ash residue with faint embers"
+		}
+	}
+}

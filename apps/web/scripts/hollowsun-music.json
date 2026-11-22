@@ -1,0 +1,102 @@
+{
+	"$comment": "HOLLOW SUN music (Game Design Bible: AU_mus_*). src = file in the input folder (Suno download); start = seconds to skip; bars + bpm give the exact loop length, so loops close on a bar line and the synced groups (explore/combat, the boss phases) share one length. Fill in src and suno (the Suno track link, required by D32) per track, then run pnpm --filter @windowling/web hollowsun:music.",
+	"tracks": [
+		{
+			"id": "AU_mus_menu",
+			"n": "Hlavní menu",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"bpm": 70,
+			"bars": 40,
+			"loop": true
+		},
+		{
+			"id": "AU_mus_r1_explore",
+			"n": "Emberfall Marches – explore",
+			"group": "r1",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"bpm": 90,
+			"bars": 48,
+			"loop": true
+		},
+		{
+			"id": "AU_mus_r1_combat",
+			"n": "Emberfall Marches – combat",
+			"group": "r1",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"bpm": 90,
+			"bars": 48,
+			"loop": true
+		},
+		{
+			"id": "AU_mus_bo_kiln_1",
+			"n": "Kiln Warden – fáze 1",
+			"group": "kiln",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"bpm": 110,
+			"bars": 32,
+			"loop": true
+		},
+		{
+			"id": "AU_mus_bo_kiln_2",
+			"n": "Kiln Warden – fáze 2",
+			"group": "kiln",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"bpm": 110,
+			"bars": 32,
+			"loop": true
+		},
+		{
+			"id": "AU_mus_bo_kiln_3",
+			"n": "Kiln Warden – fáze 3",
+			"group": "kiln",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"bpm": 110,
+			"bars": 32,
+			"loop": true
+		},
+		{
+			"id": "AU_mus_sting_1",
+			"n": "Stinger: Level up",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"max": 4
+		},
+		{
+			"id": "AU_mus_sting_2",
+			"n": "Stinger: Smrt",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"max": 5
+		},
+		{
+			"id": "AU_mus_sting_3",
+			"n": "Stinger: Unikát padl",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"max": 3
+		},
+		{
+			"id": "AU_mus_sting_8",
+			"n": "Stinger: Boss poražen",
+			"src": null,
+			"suno": null,
+			"start": 0,
+			"max": 8
+		}
+	]
+}

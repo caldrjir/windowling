@@ -1,0 +1,354 @@
+{
+	"generated": "scripts/hollowsun-vo.mjs",
+	"lang": "en",
+	"target": {
+		"I": -16,
+		"TP": -1,
+		"LRA": 11
+	},
+	"service": "ElevenLabs",
+	"plan": "ElevenLabs Starter (commercial licence)",
+	"date": "2026-11-16",
+	"lines": [
+		{
+			"id": "AU_vo_q1_01_01",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_01_01.ogg",
+			"seconds": 6.5,
+			"bytes": 39294,
+			"lufs": -16.1,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_01_02",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_01_02.ogg",
+			"seconds": 6.2,
+			"bytes": 36067,
+			"lufs": -16,
+			"tp": -1.4
+		},
+		{
+			"id": "AU_vo_q1_01_03",
+			"role": "v:Hrobník z Cinderholdu",
+			"voice": "HS Hrobník",
+			"file": "AU_vo_q1_01_03.ogg",
+			"seconds": 4.69,
+			"bytes": 30966,
+			"lufs": -15.8,
+			"tp": -3.9
+		},
+		{
+			"id": "AU_vo_q1_01_04",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_01_04.ogg",
+			"seconds": 5.5,
+			"bytes": 38177,
+			"lufs": -16,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_01_05",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_01_05.ogg",
+			"seconds": 6.06,
+			"bytes": 36970,
+			"lufs": -15.8,
+			"tp": -2.7
+		},
+		{
+			"id": "AU_vo_q1_01_06",
+			"role": "v:Strážný Compactu",
+			"voice": "HS Voják",
+			"file": "AU_vo_q1_01_06.ogg",
+			"seconds": 4.9,
+			"bytes": 29434,
+			"lufs": -16.4,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_01_07",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_01_07.ogg",
+			"seconds": 7.4,
+			"bytes": 48185,
+			"lufs": -16,
+			"tp": -1.1
+		},
+		{
+			"id": "AU_vo_q1_01_08",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_01_08.ogg",
+			"seconds": 6.6,
+			"bytes": 40505,
+			"lufs": -16,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_02_01",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_02_01.ogg",
+			"seconds": 7.39,
+			"bytes": 49985,
+			"lufs": -15.3,
+			"tp": -1.4
+		},
+		{
+			"id": "AU_vo_q1_02_02",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_02_02.ogg",
+			"seconds": 7.15,
+			"bytes": 44627,
+			"lufs": -16.1,
+			"tp": -1.6
+		},
+		{
+			"id": "AU_vo_q1_02_03",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_02_03.ogg",
+			"seconds": 3.82,
+			"bytes": 22437,
+			"lufs": -16.1,
+			"tp": -1.8
+		},
+		{
+			"id": "AU_vo_q1_02_04",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_02_04.ogg",
+			"seconds": 5.18,
+			"bytes": 31040,
+			"lufs": -15.4,
+			"tp": -1.7
+		},
+		{
+			"id": "AU_vo_q1_02_05",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_02_05.ogg",
+			"seconds": 6.7,
+			"bytes": 40138,
+			"lufs": -16,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_02_06",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_02_06.ogg",
+			"seconds": 6.54,
+			"bytes": 39861,
+			"lufs": -15.6,
+			"tp": -1.4
+		},
+		{
+			"id": "AU_vo_q1_03_01",
+			"role": "np_oduin",
+			"voice": "HS Oduin",
+			"file": "AU_vo_q1_03_01.ogg",
+			"seconds": 7.7,
+			"bytes": 45536,
+			"lufs": -16.6,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_03_02",
+			"role": "np_oduin",
+			"voice": "HS Oduin",
+			"file": "AU_vo_q1_03_02.ogg",
+			"seconds": 6.1,
+			"bytes": 49848,
+			"lufs": -16.1,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_03_03",
+			"role": "np_oduin",
+			"voice": "HS Oduin",
+			"file": "AU_vo_q1_03_03.ogg",
+			"seconds": 6.7,
+			"bytes": 44647,
+			"lufs": -16.3,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_03_04",
+			"role": "np_oduin",
+			"voice": "HS Oduin",
+			"file": "AU_vo_q1_03_04.ogg",
+			"seconds": 3.71,
+			"bytes": 22372,
+			"lufs": -16.1,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_03_05",
+			"role": "np_oduin",
+			"voice": "HS Oduin",
+			"file": "AU_vo_q1_03_05.ogg",
+			"seconds": 2.5,
+			"bytes": 15792,
+			"lufs": -17.3,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_03_06",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_03_06.ogg",
+			"seconds": 2.91,
+			"bytes": 19186,
+			"lufs": -16,
+			"tp": -2.7
+		},
+		{
+			"id": "AU_vo_q1_04_01",
+			"role": "np_brannoc",
+			"voice": "HS Brannoc",
+			"file": "AU_vo_q1_04_01.ogg",
+			"seconds": 6.1,
+			"bytes": 37182,
+			"lufs": -16.3,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_04_02",
+			"role": "np_aldric",
+			"voice": "HS Aldric",
+			"file": "AU_vo_q1_04_02.ogg",
+			"seconds": 7.3,
+			"bytes": 52116,
+			"lufs": -16.5,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_04_03",
+			"role": "np_aldric",
+			"voice": "HS Aldric",
+			"file": "AU_vo_q1_04_03.ogg",
+			"seconds": 4.8,
+			"bytes": 28955,
+			"lufs": -16,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_04_04",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_04_04.ogg",
+			"seconds": 5.51,
+			"bytes": 35099,
+			"lufs": -15.3,
+			"tp": -1.1
+		},
+		{
+			"id": "AU_vo_q1_04_05",
+			"role": "np_teodor",
+			"voice": "HS Teodor",
+			"file": "AU_vo_q1_04_05.ogg",
+			"seconds": 2.79,
+			"bytes": 17160,
+			"lufs": -16.6,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_04_06",
+			"role": "v:Posel Covenantu",
+			"voice": "HS Posel",
+			"file": "AU_vo_q1_04_06.ogg",
+			"seconds": 4.8,
+			"bytes": 29484,
+			"lufs": -16.1,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_q1_04_07",
+			"role": "np_ysolde",
+			"voice": "HS Ysolde",
+			"file": "AU_vo_q1_04_07.ogg",
+			"seconds": 3.18,
+			"bytes": 19702,
+			"lufs": -16,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_wh_01",
+			"role": "v:Hrobník z Cinderholdu",
+			"voice": "HS Hrobník",
+			"file": "AU_vo_wh_01.ogg",
+			"seconds": 6.88,
+			"bytes": 41857,
+			"lufs": -15.8,
+			"tp": -2.1
+		},
+		{
+			"id": "AU_vo_wh_02",
+			"role": "v:Kněz Choir of Solace",
+			"voice": "HS Kněz",
+			"file": "AU_vo_wh_02.ogg",
+			"seconds": 7.6,
+			"bytes": 54718,
+			"lufs": -16.1,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_wh_03",
+			"role": "np_aldric",
+			"voice": "HS Aldric",
+			"file": "AU_vo_wh_03.ogg",
+			"seconds": 7.7,
+			"bytes": 50540,
+			"lufs": -16.3,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_wh_04",
+			"role": "v:Sadařka",
+			"voice": "HS Sadařka",
+			"file": "AU_vo_wh_04.ogg",
+			"seconds": 9,
+			"bytes": 63101,
+			"lufs": -16,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_wh_05",
+			"role": "v:Dezertér Ironbound",
+			"voice": "HS Voják",
+			"file": "AU_vo_wh_05.ogg",
+			"seconds": 7,
+			"bytes": 42212,
+			"lufs": -16.1,
+			"tp": -1
+		},
+		{
+			"id": "AU_vo_wh_06",
+			"role": "np_brannoc",
+			"voice": "HS Brannoc",
+			"file": "AU_vo_wh_06.ogg",
+			"seconds": 7.77,
+			"bytes": 47008,
+			"lufs": -15.8,
+			"tp": -1.2
+		},
+		{
+			"id": "AU_vo_wh_07",
+			"role": "np_aldric",
+			"voice": "HS Aldric",
+			"file": "AU_vo_wh_07.ogg",
+			"seconds": 4.7,
+			"bytes": 31997,
+			"lufs": -16.3,
+			"tp": -1
+		}
+	]
+}

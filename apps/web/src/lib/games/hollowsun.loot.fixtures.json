@@ -1,0 +1,5870 @@
+{
+	"source": "Echoes of the Hollow Sun – Game Design Bible v33",
+	"note": "G.genItem, G.rollRarity, G.itemMods a calcChar/computeHit s výbavou z Bible – test parity lootu (P1).",
+	"items": [
+		{
+			"seed": "loot-fx-0",
+			"ilvl": 1,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_sword", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "accInc": 0.05 }
+		},
+		{
+			"seed": "loot-fx-1",
+			"ilvl": 5,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_amulet", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "allAttr": 4 }
+		},
+		{
+			"seed": "loot-fx-2",
+			"ilvl": 8,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_scythe", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "minionInc": 0.15 }
+		},
+		{
+			"seed": "loot-fx-3",
+			"ilvl": 12,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_chest_int", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 20, "resAll": 0.06, "hpInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-4",
+			"ilvl": 20,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_scepter", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "eleInc": 0.08 }
+		},
+		{
+			"seed": "loot-fx-5",
+			"ilvl": 35,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_scepter", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "eleInc": 0.08 }
+		},
+		{
+			"seed": "loot-fx-6",
+			"ilvl": 50,
+			"cls": "ak",
+			"forceRar": null,
+			"item": {
+				"base": "wb_greatsword",
+				"tier": 2,
+				"affixes": [
+					["af_atkspd", 2, 0.22],
+					["af_spell_flat", 4, 0.4],
+					["af_spell_inc", 2, 0.49]
+				],
+				"rar": "rare"
+			},
+			"mods": { "accInc": 0.1, "as": 0.08439999999999999, "addSpell": 1.8, "spellInc": 0.2792 }
+		},
+		{
+			"seed": "loot-fx-7",
+			"ilvl": 60,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_greatsword", "tier": 3, "affixes": [], "rar": "common" },
+			"mods": { "accInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-8",
+			"ilvl": 1,
+			"cls": null,
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_boots_str",
+				"tier": 0,
+				"affixes": [["af_armor_inc", 4, 0.57]],
+				"rar": "magic"
+			},
+			"mods": { "armorFlat": 16, "ms": 0.1, "armorInc": 0.1085 }
+		},
+		{
+			"seed": "loot-fx-9",
+			"ilvl": 5,
+			"cls": "ak",
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_gloves_dex",
+				"tier": 0,
+				"affixes": [
+					["af_res_fire", 4, 0.93],
+					["af_eva_inc", 4, 0.77]
+				],
+				"rar": "magic"
+			},
+			"mods": { "evaFlat": 14, "res_fire": 0.1637, "evaInc": 0.1185 }
+		},
+		{
+			"seed": "loot-fx-10",
+			"ilvl": 8,
+			"cls": "ak",
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_chest_str",
+				"tier": 0,
+				"affixes": [["af_str", 4, 0.88]],
+				"rar": "magic"
+			},
+			"mods": { "armorFlat": 60, "str": 7.52 }
+		},
+		{
+			"seed": "loot-fx-11",
+			"ilvl": 12,
+			"cls": null,
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_chest_dex",
+				"tier": 0,
+				"affixes": [["af_dex", 4, 0.84]],
+				"rar": "magic"
+			},
+			"mods": { "evaFlat": 60, "dex": 7.359999999999999 }
+		},
+		{
+			"seed": "loot-fx-12",
+			"ilvl": 20,
+			"cls": "ak",
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_boots_str",
+				"tier": 1,
+				"affixes": [
+					["af_int", 3, 0.3],
+					["af_armor_inc", 4, 0.87]
+				],
+				"rar": "magic"
+			},
+			"mods": { "armorFlat": 34, "ms": 0.1, "int": 10.5, "armorInc": 0.1235 }
+		},
+		{
+			"seed": "loot-fx-13",
+			"ilvl": 35,
+			"cls": "ak",
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_helm_dex",
+				"tier": 1,
+				"affixes": [
+					["af_res_cold", 3, 0.46],
+					["af_minion", 4, 0.09]
+				],
+				"rar": "magic"
+			},
+			"mods": { "evaFlat": 46, "res_cold": 0.2168, "minionInc": 0.08539999999999999 }
+		},
+		{
+			"seed": "loot-fx-14",
+			"ilvl": 50,
+			"cls": null,
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_gloves_int",
+				"tier": 2,
+				"affixes": [
+					["af_res_fire", 4, 0.3],
+					["af_armor_inc", 3, 0.58]
+				],
+				"rar": "magic"
+			},
+			"mods": { "armorFlat": 18, "cs": 0.04, "res_fire": 0.107, "armorInc": 0.18059999999999998 }
+		},
+		{
+			"seed": "loot-fx-15",
+			"ilvl": 60,
+			"cls": "ak",
+			"forceRar": "magic",
+			"item": {
+				"base": "wb_chest_int",
+				"tier": 3,
+				"affixes": [
+					["af_res_light", 4, 0.17],
+					["af_life", 3, 0.81]
+				],
+				"rar": "magic"
+			},
+			"mods": {
+				"armorFlat": 104,
+				"resAll": 0.06,
+				"hpInc": 0.1,
+				"res_light": 0.0953,
+				"hpFlat": 40.96
+			}
+		},
+		{
+			"seed": "loot-fx-16",
+			"ilvl": 1,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_chest_int",
+				"tier": 0,
+				"affixes": [
+					["af_armor_inc", 4, 0.57],
+					["af_res_cold", 4, 0.72],
+					["af_res_fire", 4, 0.6],
+					["af_int", 4, 0.99],
+					["af_life", 4, 0.22]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 20,
+				"resAll": 0.06,
+				"hpInc": 0.1,
+				"armorInc": 0.1085,
+				"res_cold": 0.1448,
+				"res_fire": 0.13399999999999998,
+				"int": 7.96,
+				"hpFlat": 15.3
+			}
+		},
+		{
+			"seed": "loot-fx-17",
+			"ilvl": 5,
+			"cls": null,
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_relic_bone",
+				"tier": 0,
+				"affixes": [
+					["af_cdr", 2, 0.62],
+					["af_minion", 4, 0.4],
+					["af_rad_inc", 4, 0.9],
+					["af_skill", 1, 0.6]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"minionHp": 0.08,
+				"cdr": 0.0362,
+				"minionInc": 0.10400000000000001,
+				"radInc": 0.086,
+				"skillLvl": 1
+			}
+		},
+		{
+			"seed": "loot-fx-18",
+			"ilvl": 8,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_ring",
+				"tier": 0,
+				"affixes": [
+					["af_vit", 4, 0.53],
+					["af_res_rad", 4, 0.4],
+					["af_str", 4, 0.72],
+					["af_dot", 4, 0.92],
+					["af_res_mana", 4, 0.35]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"resFlat": 19.15,
+				"vit": 6.12,
+				"res_rad": 0.11599999999999999,
+				"str": 6.88,
+				"dotInc": 0.0868
+			}
+		},
+		{
+			"seed": "loot-fx-19",
+			"ilvl": 12,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_relic_bone",
+				"tier": 0,
+				"affixes": [
+					["af_minion", 4, 0.63],
+					["af_cdr", 2, 0.27],
+					["af_rad_inc", 4, 0.19]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"minionHp": 0.08,
+				"minionInc": 0.11780000000000002,
+				"cdr": 0.0327,
+				"radInc": 0.0576
+			}
+		},
+		{
+			"seed": "loot-fx-20",
+			"ilvl": 20,
+			"cls": null,
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_kite",
+				"tier": 1,
+				"affixes": [
+					["af_life", 4, 0.83],
+					["af_str", 4, 0.55],
+					["af_spell_inc", 3, 0.19],
+					["af_dex", 4, 0.29]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 63,
+				"block": 0.24,
+				"hpFlat": 24.45,
+				"str": 6.2,
+				"spellInc": 0.16519999999999999,
+				"dex": 5.16
+			}
+		},
+		{
+			"seed": "loot-fx-21",
+			"ilvl": 35,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_gloves_dex",
+				"tier": 1,
+				"affixes": [
+					["af_wil", 4, 0.15],
+					["af_atkspd", 4, 0.12],
+					["af_res_fire", 4, 0.17],
+					["af_eva_inc", 4, 0.27]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"evaFlat": 29,
+				"wil": 4.6,
+				"as": 0.031200000000000002,
+				"res_fire": 0.0953,
+				"evaInc": 0.0935
+			}
+		},
+		{
+			"seed": "loot-fx-22",
+			"ilvl": 50,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_buckler",
+				"tier": 2,
+				"affixes": [
+					["af_int", 3, 0.01],
+					["af_res_fire", 1, 0.75],
+					["af_crit_mult", 4, 0.81],
+					["af_spell_flat", 4, 0.14]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 54,
+				"evaFlat": 54,
+				"block": 0.18,
+				"int": 9.05,
+				"res_fire": 0.3775,
+				"critMult": 0.07429999999999999,
+				"addSpell": 1.28
+			}
+		},
+		{
+			"seed": "loot-fx-23",
+			"ilvl": 60,
+			"cls": null,
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_greatsword",
+				"tier": 3,
+				"affixes": [
+					["af_crit_mult", 3, 0.05],
+					["af_spell_inc", 4, 0.48],
+					["af_dot", 1, 0.61],
+					["af_light_inc", 4, 0.13]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"accInc": 0.1,
+				"critMult": 0.092,
+				"spellInc": 0.1088,
+				"dotInc": 0.2627,
+				"lightInc": 0.0552
+			}
+		},
+		{
+			"seed": "loot-fx-24",
+			"ilvl": 1,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_gloves_dex", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "evaFlat": 14 }
+		},
+		{
+			"seed": "loot-fx-25",
+			"ilvl": 5,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_gloves_dex", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "evaFlat": 14 }
+		},
+		{
+			"seed": "loot-fx-26",
+			"ilvl": 8,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_belt_heavy", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "hpFlat": 20 }
+		},
+		{
+			"seed": "loot-fx-27",
+			"ilvl": 12,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_maul", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "physInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-28",
+			"ilvl": 20,
+			"cls": "ak",
+			"forceRar": null,
+			"item": {
+				"base": "wb_helm_str",
+				"tier": 1,
+				"affixes": [["af_dex", 4, 0.73]],
+				"rar": "magic"
+			},
+			"mods": { "armorFlat": 46, "dex": 6.92 }
+		},
+		{
+			"seed": "loot-fx-29",
+			"ilvl": 35,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_chest_dex", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "evaFlat": 126 }
+		},
+		{
+			"seed": "loot-fx-30",
+			"ilvl": 50,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_chest_str", "tier": 2, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 216 }
+		},
+		{
+			"seed": "loot-fx-31",
+			"ilvl": 60,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_chest_int", "tier": 3, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 104, "resAll": 0.06, "hpInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-32",
+			"ilvl": 1,
+			"cls": null,
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_chest_int",
+				"tier": 0,
+				"affixes": [
+					["af_res_fire", 4, 0.18],
+					["af_vit", 4, 0.99],
+					["af_dex", 4, 0.74]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 20,
+				"resAll": 0.06,
+				"hpInc": 0.1,
+				"res_fire": 0.0962,
+				"vit": 7.96,
+				"dex": 6.96
+			}
+		},
+		{
+			"seed": "loot-fx-33",
+			"ilvl": 5,
+			"cls": "ak",
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_helm_str",
+				"tier": 0,
+				"affixes": [
+					["af_res_fire", 4, 0.48],
+					["af_res_nec", 4, 0.96],
+					["af_life", 4, 0.07],
+					["af_res_light", 4, 0.85],
+					["af_eva_inc", 4, 0.24]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 22,
+				"res_fire": 0.1232,
+				"res_nec": 0.1664,
+				"hpFlat": 13.05,
+				"res_light": 0.15649999999999997,
+				"evaInc": 0.092
+			}
+		},
+		{
+			"seed": "loot-fx-34",
+			"ilvl": 8,
+			"cls": "ak",
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_mace",
+				"tier": 0,
+				"affixes": [
+					["af_proj", 4, 0.02],
+					["af_atkspd", 4, 0.42],
+					["af_spell_flat", 4, 0.24]
+				],
+				"rar": "rare"
+			},
+			"mods": { "physInc": 0.05, "projInc": 0.0508, "as": 0.0342, "addSpell": 1.48 }
+		},
+		{
+			"seed": "loot-fx-35",
+			"ilvl": 12,
+			"cls": null,
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_helm_str",
+				"tier": 0,
+				"affixes": [
+					["af_wil", 4, 0.32],
+					["af_res_light", 4, 0.44],
+					["af_res_cold", 4, 0.99]
+				],
+				"rar": "rare"
+			},
+			"mods": { "armorFlat": 22, "wil": 5.28, "res_light": 0.11960000000000001, "res_cold": 0.1691 }
+		},
+		{
+			"seed": "loot-fx-36",
+			"ilvl": 20,
+			"cls": "ak",
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_gloves_str",
+				"tier": 1,
+				"affixes": [
+					["af_atkspd", 4, 0.67],
+					["af_int", 3, 0.39],
+					["af_str", 4, 0.72],
+					["af_armor_inc", 3, 0.8]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 29,
+				"as": 0.036699999999999997,
+				"int": 10.95,
+				"str": 6.88,
+				"armorInc": 0.196
+			}
+		},
+		{
+			"seed": "loot-fx-37",
+			"ilvl": 35,
+			"cls": "ak",
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_relic_moth",
+				"tier": 1,
+				"unique": "un_prism",
+				"affixes": [],
+				"rar": "unique",
+				"q": 0.2833758797496557
+			},
+			"mods": { "critInc": 0.08, "eleInc": 0.2283375879749656, "resAll": 0.05850127639248967 }
+		},
+		{
+			"seed": "loot-fx-38",
+			"ilvl": 50,
+			"cls": null,
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_scepter",
+				"tier": 2,
+				"unique": "un_vigil_tongue",
+				"affixes": [],
+				"rar": "unique",
+				"q": 0.2971799455117434
+			},
+			"mods": {
+				"eleInc": 0.40971799455117436,
+				"cs": 0.08594359891023487,
+				"res_light": 0.16485899727558717
+			}
+		},
+		{
+			"seed": "loot-fx-39",
+			"ilvl": 60,
+			"cls": "ak",
+			"forceRar": "unique",
+			"item": {
+				"base": "wb_gloves_str",
+				"tier": 3,
+				"affixes": [
+					["af_crit_mult", 2, 0.51],
+					["af_dex", 4, 0.36],
+					["af_armor_inc", 0, 0.21]
+				],
+				"rar": "rare"
+			},
+			"mods": { "armorFlat": 73, "critMult": 0.1604, "dex": 5.4399999999999995, "armorInc": 0.4315 }
+		},
+		{
+			"seed": "loot-fx-40",
+			"ilvl": 1,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_wand", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "spellInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-41",
+			"ilvl": 5,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_sword", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "accInc": 0.05 }
+		},
+		{
+			"seed": "loot-fx-42",
+			"ilvl": 8,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_boots_int", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 6, "ms": 0.1, "resFlat": 5 }
+		},
+		{
+			"seed": "loot-fx-43",
+			"ilvl": 12,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_belt_heavy", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "hpFlat": 20 }
+		},
+		{
+			"seed": "loot-fx-44",
+			"ilvl": 20,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_scepter", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "eleInc": 0.08 }
+		},
+		{
+			"seed": "loot-fx-45",
+			"ilvl": 35,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_boots_int", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 13, "ms": 0.1, "resFlat": 5 }
+		},
+		{
+			"seed": "loot-fx-46",
+			"ilvl": 50,
+			"cls": "ak",
+			"forceRar": null,
+			"item": { "base": "wb_gloves_dex", "tier": 2, "affixes": [], "rar": "common" },
+			"mods": { "evaFlat": 50 }
+		},
+		{
+			"seed": "loot-fx-47",
+			"ilvl": 60,
+			"cls": null,
+			"forceRar": null,
+			"item": { "base": "wb_greatsword", "tier": 3, "affixes": [], "rar": "common" },
+			"mods": { "accInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-48",
+			"ilvl": 1,
+			"cls": "ak",
+			"forceRar": "common",
+			"item": { "base": "wb_belt_sash", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "regenInc": 0.06 }
+		},
+		{
+			"seed": "loot-fx-49",
+			"ilvl": 5,
+			"cls": "ak",
+			"forceRar": "common",
+			"item": { "base": "wb_greatsword", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "accInc": 0.1 }
+		},
+		{
+			"seed": "loot-fx-50",
+			"ilvl": 8,
+			"cls": null,
+			"forceRar": "common",
+			"item": { "base": "wb_dagger", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "critFlat": 3 }
+		},
+		{
+			"seed": "loot-fx-51",
+			"ilvl": 12,
+			"cls": "ak",
+			"forceRar": "common",
+			"item": { "base": "wb_ring", "tier": 0, "affixes": [], "rar": "common" },
+			"mods": { "resFlat": 8 }
+		},
+		{
+			"seed": "loot-fx-52",
+			"ilvl": 20,
+			"cls": "ak",
+			"forceRar": "common",
+			"item": { "base": "wb_gloves_dex", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "evaFlat": 29 }
+		},
+		{
+			"seed": "loot-fx-53",
+			"ilvl": 35,
+			"cls": null,
+			"forceRar": "common",
+			"item": { "base": "wb_amulet", "tier": 1, "affixes": [], "rar": "common" },
+			"mods": { "allAttr": 4 }
+		},
+		{
+			"seed": "loot-fx-54",
+			"ilvl": 50,
+			"cls": "ak",
+			"forceRar": "common",
+			"item": { "base": "wb_buckler", "tier": 2, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 54, "evaFlat": 54, "block": 0.18 }
+		},
+		{
+			"seed": "loot-fx-55",
+			"ilvl": 60,
+			"cls": "ak",
+			"forceRar": "common",
+			"item": { "base": "wb_tower", "tier": 3, "affixes": [], "rar": "common" },
+			"mods": { "armorFlat": 234, "block": 0.3, "ms": -0.05 }
+		},
+		{
+			"seed": "loot-fx-56",
+			"ilvl": 1,
+			"cls": null,
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_belt_sash",
+				"tier": 0,
+				"affixes": [
+					["af_dex", 4, 0.66],
+					["af_res_cold", 4, 0.49],
+					["af_res_rad", 4, 0.91]
+				],
+				"rar": "rare"
+			},
+			"mods": { "regenInc": 0.06, "dex": 6.640000000000001, "res_cold": 0.1241, "res_rad": 0.1619 }
+		},
+		{
+			"seed": "loot-fx-57",
+			"ilvl": 5,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_gloves_str",
+				"tier": 0,
+				"affixes": [
+					["af_res_rad", 4, 0.51],
+					["af_wil", 4, 0.32],
+					["af_int", 4, 0.01],
+					["af_life", 4, 0.07]
+				],
+				"rar": "rare"
+			},
+			"mods": { "armorFlat": 14, "res_rad": 0.1259, "wil": 5.28, "int": 4.04, "hpFlat": 13.05 }
+		},
+		{
+			"seed": "loot-fx-58",
+			"ilvl": 8,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_greatsword",
+				"tier": 0,
+				"affixes": [
+					["af_phys_inc", 4, 0.64],
+					["af_light_inc", 4, 0.92],
+					["af_crit_mult", 4, 0.77]
+				],
+				"rar": "rare"
+			},
+			"mods": { "accInc": 0.1, "wPhysInc": 0.2268, "lightInc": 0.0868, "critMult": 0.0731 }
+		},
+		{
+			"seed": "loot-fx-59",
+			"ilvl": 12,
+			"cls": null,
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_greatsword",
+				"tier": 0,
+				"affixes": [
+					["af_dot", 4, 0.46],
+					["af_phys_flat", 4, 0.97],
+					["af_spell_flat", 4, 0.63]
+				],
+				"rar": "rare"
+			},
+			"mods": { "accInc": 0.1, "dotInc": 0.0684, "wFlat": 5.91, "addSpell": 2.26 }
+		},
+		{
+			"seed": "loot-fx-60",
+			"ilvl": 20,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_relic_bone",
+				"tier": 1,
+				"affixes": [
+					["af_rad_inc", 4, 0.67],
+					["af_cdr", 1, 0.78],
+					["af_minion", 4, 0.93],
+					["af_skill", 1, 0.15]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"minionHp": 0.08,
+				"radInc": 0.0768,
+				"cdr": 0.0656,
+				"minionInc": 0.1358,
+				"skillLvl": 1
+			}
+		},
+		{
+			"seed": "loot-fx-61",
+			"ilvl": 35,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_boots_str",
+				"tier": 1,
+				"affixes": [
+					["af_ms", 1, 0.44],
+					["af_wil", 3, 0.96],
+					["af_str", 4, 0.47],
+					["af_res_cold", 3, 0.47],
+					["af_armor_inc", 2, 0.01],
+					["af_life", 2, 0.69]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"armorFlat": 34,
+				"ms": 0.3176,
+				"wil": 13.8,
+				"str": 5.88,
+				"res_cold": 0.2176,
+				"armorInc": 0.2207,
+				"hpFlat": 58.11
+			}
+		},
+		{
+			"seed": "loot-fx-62",
+			"ilvl": 50,
+			"cls": null,
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_wand",
+				"tier": 2,
+				"affixes": [
+					["af_crit", 3, 0.84],
+					["af_fire_inc", 4, 0.64],
+					["af_minion", 4, 0.93],
+					["af_phys_inc", 3, 0.91],
+					["af_crit_mult", 2, 0.57]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"spellInc": 0.1,
+				"critInc": 0.152,
+				"fireInc": 0.0756,
+				"minionInc": 0.1358,
+				"wPhysInc": 0.42560000000000003,
+				"critMult": 0.1628
+			}
+		},
+		{
+			"seed": "loot-fx-63",
+			"ilvl": 60,
+			"cls": "ak",
+			"forceRar": "rare",
+			"item": {
+				"base": "wb_boots_dex",
+				"tier": 3,
+				"affixes": [
+					["af_res_light", 3, 0.62],
+					["af_armor_inc", 0, 0.83],
+					["af_res_nec", 1, 0.47],
+					["af_res_cold", 3, 0.42],
+					["af_life", 4, 0.67]
+				],
+				"rar": "rare"
+			},
+			"mods": {
+				"evaFlat": 83,
+				"ms": 0.12,
+				"res_light": 0.2296,
+				"armorInc": 0.5245000000000001,
+				"res_nec": 0.3635,
+				"res_cold": 0.21359999999999998,
+				"hpFlat": 22.05
+			}
+		}
+	],
+	"rarity": [
+		{
+			"seed": "rar-fx-0",
+			"mf": 0,
+			"type": "normal",
+			"out": [
+				"common",
+				"magic",
+				"common",
+				"common",
+				"rare",
+				"rare",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-1",
+			"mf": 50,
+			"type": "normal",
+			"out": [
+				"common",
+				"common",
+				"common",
+				"unique",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-2",
+			"mf": 150,
+			"type": "normal",
+			"out": [
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-3",
+			"mf": 0,
+			"type": "normal",
+			"out": [
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-4",
+			"mf": 50,
+			"type": "elite",
+			"out": [
+				"common",
+				"common",
+				"common",
+				"unique",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"rare",
+				"magic",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-5",
+			"mf": 150,
+			"type": "elite",
+			"out": [
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"rare",
+				"common",
+				"magic",
+				"unique",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-6",
+			"mf": 0,
+			"type": "elite",
+			"out": [
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"rare",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-7",
+			"mf": 50,
+			"type": "elite",
+			"out": [
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-8",
+			"mf": 150,
+			"type": "rare",
+			"out": [
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"unique",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-9",
+			"mf": 0,
+			"type": "rare",
+			"out": [
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"rare",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-10",
+			"mf": 50,
+			"type": "rare",
+			"out": [
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"magic",
+				"rare",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-11",
+			"mf": 150,
+			"type": "rare",
+			"out": [
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"rare",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"rare",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-12",
+			"mf": 0,
+			"type": "normal",
+			"out": [
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-13",
+			"mf": 50,
+			"type": "normal",
+			"out": [
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"unique",
+				"common",
+				"common",
+				"magic",
+				"rare",
+				"common",
+				"common",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-14",
+			"mf": 150,
+			"type": "normal",
+			"out": [
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-15",
+			"mf": 0,
+			"type": "normal",
+			"out": [
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-16",
+			"mf": 50,
+			"type": "elite",
+			"out": [
+				"common",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"magic",
+				"magic",
+				"rare",
+				"common",
+				"unique"
+			]
+		},
+		{
+			"seed": "rar-fx-17",
+			"mf": 150,
+			"type": "elite",
+			"out": [
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"rare",
+				"common",
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-18",
+			"mf": 0,
+			"type": "elite",
+			"out": [
+				"magic",
+				"rare",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-19",
+			"mf": 50,
+			"type": "elite",
+			"out": [
+				"common",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"magic",
+				"common",
+				"rare",
+				"rare",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"rare",
+				"common",
+				"magic"
+			]
+		},
+		{
+			"seed": "rar-fx-20",
+			"mf": 150,
+			"type": "rare",
+			"out": [
+				"magic",
+				"common",
+				"rare",
+				"rare",
+				"magic",
+				"rare",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"rare",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-21",
+			"mf": 0,
+			"type": "rare",
+			"out": [
+				"common",
+				"rare",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"unique",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-22",
+			"mf": 50,
+			"type": "rare",
+			"out": [
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"common",
+				"common",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"magic",
+				"common"
+			]
+		},
+		{
+			"seed": "rar-fx-23",
+			"mf": 150,
+			"type": "rare",
+			"out": [
+				"common",
+				"magic",
+				"magic",
+				"common",
+				"common",
+				"magic",
+				"magic",
+				"unique",
+				"rare",
+				"magic",
+				"magic",
+				"rare",
+				"magic",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic",
+				"common",
+				"magic"
+			]
+		}
+	],
+	"gear": [
+		{
+			"level": 4,
+			"items": [
+				{ "base": "wb_axe", "tier": 0, "affixes": [["af_proj", 4, 0.01]], "rar": "magic" },
+				{
+					"base": "wb_helm_int",
+					"tier": 0,
+					"affixes": [
+						["af_crit", 4, 0.7],
+						["af_res_mana", 4, 0.08]
+					],
+					"rar": "magic"
+				},
+				{ "base": "wb_chest_int", "tier": 0, "affixes": [["af_int", 4, 0.42]], "rar": "magic" },
+				{ "base": "wb_gloves_int", "tier": 0, "affixes": [["af_proj", 4, 0.76]], "rar": "magic" },
+				{
+					"base": "wb_boots_int",
+					"tier": 0,
+					"affixes": [
+						["af_res_fire", 4, 0.99],
+						["af_armor_inc", 4, 0.57]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_belt_heavy",
+					"tier": 0,
+					"affixes": [
+						["af_res_fire", 4, 0.42],
+						["af_life", 4, 0.22]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 0,
+					"affixes": [
+						["af_str", 4, 0.01],
+						["af_cold_inc", 4, 0.15]
+					],
+					"rar": "magic"
+				},
+				{ "base": "wb_ring", "tier": 0, "affixes": [["af_dot", 4, 0.8]], "rar": "magic" }
+			],
+			"S": {
+				"hp": 393,
+				"armor": 147,
+				"eva": 54,
+				"acc": 66,
+				"critInc": 0.12000000000000001,
+				"critFlat": 0,
+				"critMult": 1.508,
+				"asInc": 0.008,
+				"cdr": 0.027,
+				"ms": 1.1,
+				"block": 0,
+				"hpRegen": 3.6942,
+				"res": 121.72,
+				"dr": 0.25476603119584057,
+				"evade": 0.13043478260869565,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0,
+					"fire": 0,
+					"cold": 0.055999999999999994,
+					"light": 0,
+					"nec": 0,
+					"rad": 0,
+					"ele": 0,
+					"dot": 0.08199999999999999,
+					"aoe": 0,
+					"proj": 0.13079999999999997,
+					"melee": 0,
+					"minion": 0.054,
+					"bleed": 0.08
+				}
+			},
+			"weapon": { "avg": 9, "min": 6, "max": 12, "aps": 1.25 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 17,
+					"perHit": 19.90475769413793,
+					"dot": 0,
+					"critChance": 0.05600000000000001,
+					"eCrit": 1.028448,
+					"hitChance": 0.8624999999999999,
+					"actTime": 0.7936507936507936,
+					"cd": 0,
+					"cost": -8,
+					"dps": 21.631495424104397
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 13,
+					"perHit": 15.35509879262069,
+					"dot": 0,
+					"critChance": 0.05600000000000001,
+					"eCrit": 1.028448,
+					"hitChance": 0.8624999999999999,
+					"actTime": 0.45,
+					"cd": 5.842259006815969,
+					"cost": 20,
+					"dps": 2.2668924286280827
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 29,
+					"perHit": 33.40822054993921,
+					"dot": 14.459077854013692,
+					"critChance": 0.06720000000000001,
+					"eCrit": 1.0341376,
+					"hitChance": 0.8624999999999999,
+					"actTime": 1.0317460317460316,
+					"cd": 0,
+					"cost": 35,
+					"dps": 31.542756911692987
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 15,
+					"perHit": 17.761168404,
+					"dot": 0,
+					"critChance": 0.05600000000000001,
+					"eCrit": 1.028448,
+					"hitChance": 0.8624999999999999,
+					"actTime": 0.7936507936507936,
+					"cd": 0,
+					"cost": -8,
+					"dps": 19.301949763047
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 12,
+					"perHit": 13.7014727688,
+					"dot": 0,
+					"critChance": 0.05600000000000001,
+					"eCrit": 1.028448,
+					"hitChance": 0.8624999999999999,
+					"actTime": 0.45,
+					"cd": 5.842259006815969,
+					"cost": 20,
+					"dps": 2.022765551698905
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 25,
+					"perHit": 29.232192981196803,
+					"dot": 12.651693122261978,
+					"critChance": 0.06720000000000001,
+					"eCrit": 1.0341376,
+					"hitChance": 0.8624999999999999,
+					"actTime": 1.0317460317460316,
+					"cd": 0,
+					"cost": 35,
+					"dps": 27.59991229773136
+				}
+			]
+		},
+		{
+			"level": 8,
+			"items": [
+				{
+					"base": "wb_scepter",
+					"tier": 0,
+					"affixes": [
+						["af_minion", 4, 0.76],
+						["af_phys_inc", 4, 0.15],
+						["af_nec_inc", 4, 0.94],
+						["af_crit_mult", 4, 0.8],
+						["af_crit", 4, 0.87],
+						["af_atkspd", 4, 0.4]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_helm_str",
+					"tier": 0,
+					"affixes": [
+						["af_res_nec", 4, 0.87],
+						["af_str", 4, 0.84],
+						["af_res_mana", 4, 0.82]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_chest_str",
+					"tier": 0,
+					"affixes": [
+						["af_res_fire", 4, 0.94],
+						["af_armor_inc", 4, 0.75],
+						["af_dex", 4, 0.25],
+						["af_int", 4, 0.47]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_gloves_dex",
+					"tier": 0,
+					"affixes": [
+						["af_wil", 4, 0.25],
+						["af_res_nec", 4, 0.62],
+						["af_res_cold", 4, 0.85]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_boots_str",
+					"tier": 0,
+					"affixes": [
+						["af_vit", 4, 0.68],
+						["af_str", 4, 0.02],
+						["af_eva_inc", 4, 0.75]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_belt_heavy",
+					"tier": 0,
+					"affixes": [
+						["af_wil", 4, 0.16],
+						["af_str", 4, 0.99],
+						["af_int", 4, 1]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 0,
+					"affixes": [
+						["af_wil", 4, 0.26],
+						["af_dex", 4, 0.59],
+						["af_fire_inc", 4, 0.43],
+						["af_res_cold", 4, 0.98]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_ring",
+					"tier": 0,
+					"affixes": [
+						["af_str", 4, 0.65],
+						["af_res_all", 4, 0.24],
+						["af_res_light", 4, 0.07]
+					],
+					"rar": "rare"
+				}
+			],
+			"S": {
+				"hp": 498,
+				"armor": 270,
+				"eva": 118,
+				"acc": 116,
+				"critInc": 0.15280000000000002,
+				"critFlat": 0,
+				"critMult": 1.5885,
+				"asInc": 0.0485,
+				"cdr": 0.054,
+				"ms": 1.1,
+				"block": 0,
+				"hpRegen": 6.2748,
+				"res": 123.38,
+				"dr": 0.3068181818181818,
+				"evade": 0.18495297805642633,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0,
+					"fire": 0.0672,
+					"cold": 0,
+					"light": 0,
+					"nec": 0.0876,
+					"rad": 0,
+					"ele": 0.08,
+					"dot": 0,
+					"aoe": 0,
+					"proj": 0,
+					"melee": 0,
+					"minion": 0.23360000000000003,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 8.175999999999998, "min": 6, "max": 11, "aps": 1.25 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 18,
+					"perHit": 19.819711895392867,
+					"dot": 0,
+					"critChance": 0.057640000000000004,
+					"eCrit": 1.03392114,
+					"hitChance": 0.8893333333333332,
+					"actTime": 0.7629947544110635,
+					"cd": 0,
+					"cost": -8,
+					"dps": 23.10150934031175
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 14,
+					"perHit": 15.260247656546627,
+					"dot": 0,
+					"critChance": 0.057640000000000004,
+					"eCrit": 1.03392114,
+					"hitChance": 0.8893333333333332,
+					"actTime": 0.45,
+					"cd": 5.692599620493358,
+					"cost": 21,
+					"dps": 2.384050841557799
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 31,
+					"perHit": 34.66430828780446,
+					"dot": 13.865723315121784,
+					"critChance": 0.069168,
+					"eCrit": 1.040705368,
+					"hitChance": 0.8893333333333332,
+					"actTime": 0.9918931807343825,
+					"cd": 0,
+					"cost": 35,
+					"dps": 34.546516301757244
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 15,
+					"perHit": 17.410975443112623,
+					"dot": 0,
+					"critChance": 0.057640000000000004,
+					"eCrit": 1.03392114,
+					"hitChance": 0.8893333333333332,
+					"actTime": 0.7629947544110635,
+					"cd": 0,
+					"cost": -8,
+					"dps": 20.293928284421813
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 12,
+					"perHit": 13.405633674509255,
+					"dot": 0,
+					"critChance": 0.057640000000000004,
+					"eCrit": 1.03392114,
+					"hitChance": 0.8893333333333332,
+					"actTime": 0.45,
+					"cd": 5.692599620493358,
+					"cost": 21,
+					"dps": 2.094311505463588
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 27,
+					"perHit": 30.3312697518289,
+					"dot": 12.132507900731559,
+					"critChance": 0.069168,
+					"eCrit": 1.040705368,
+					"hitChance": 0.8893333333333332,
+					"actTime": 0.9918931807343825,
+					"cd": 0,
+					"cost": 35,
+					"dps": 30.22820176403758
+				}
+			]
+		},
+		{
+			"level": 12,
+			"items": [
+				{ "base": "wb_maul", "tier": 0, "affixes": [["af_nec_inc", 4, 0.99]], "rar": "magic" },
+				{
+					"base": "wb_helm_dex",
+					"tier": 0,
+					"affixes": [
+						["af_vit", 4, 0.77],
+						["af_eva_inc", 4, 0.28]
+					],
+					"rar": "magic"
+				},
+				{ "base": "wb_chest_dex", "tier": 0, "affixes": [["af_wil", 4, 0.88]], "rar": "magic" },
+				{
+					"base": "wb_gloves_dex",
+					"tier": 0,
+					"affixes": [["af_crit_mult", 4, 0.63]],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_boots_str",
+					"tier": 0,
+					"affixes": [
+						["af_res_fire", 4, 0.16],
+						["af_eva_inc", 4, 0.98]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_belt_heavy",
+					"tier": 0,
+					"affixes": [
+						["af_wil", 4, 0.44],
+						["af_life", 4, 0.07]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 0,
+					"affixes": [
+						["af_skill", 1, 0.02],
+						["af_minion", 4, 0.43]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_ring",
+					"tier": 0,
+					"affixes": [
+						["af_int", 4, 0.64],
+						["af_life", 4, 0.95]
+					],
+					"rar": "magic"
+				}
+			],
+			"S": {
+				"hp": 638,
+				"armor": 162,
+				"eva": 223,
+				"acc": 122,
+				"critInc": 0.04,
+				"critFlat": 0,
+				"critMult": 1.5789,
+				"asInc": 0.01,
+				"cdr": 0.057,
+				"ms": 1.1,
+				"block": 0,
+				"hpRegen": 9.442400000000001,
+				"res": 108,
+				"dr": 0.17016806722689076,
+				"evade": 0.2469545957918051,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0.1,
+					"fire": 0,
+					"cold": 0,
+					"light": 0,
+					"nec": 0.08960000000000001,
+					"rad": 0,
+					"ele": 0,
+					"dot": 0,
+					"aoe": 0,
+					"proj": 0,
+					"melee": 0,
+					"minion": 0.2198,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 16, "min": 11, "max": 21, "aps": 0.95 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 35,
+					"perHit": 41.93366715952941,
+					"dot": 0,
+					"critChance": 0.052000000000000005,
+					"eCrit": 1.0301028,
+					"hitChance": 0.8351190476190475,
+					"actTime": 1.0422094841063054,
+					"cd": 0,
+					"cost": -8,
+					"dps": 33.601310212092
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 27,
+					"perHit": 32.16829261552941,
+					"dot": 0,
+					"critChance": 0.052000000000000005,
+					"eCrit": 1.0301028,
+					"hitChance": 0.8351190476190475,
+					"actTime": 0.45,
+					"cd": 5.676442762535478,
+					"cost": 22,
+					"dps": 4.732603677415105
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 51,
+					"perHit": 61.242350664192,
+					"dot": 24.496940265676802,
+					"critChance": 0.0624,
+					"eCrit": 1.03612336,
+					"hitChance": 0.8351190476190475,
+					"actTime": 1.354872329338197,
+					"cd": 0,
+					"cost": 39,
+					"dps": 43.87292359828549
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 31,
+					"perHit": 36.53918535408241,
+					"dot": 0,
+					"critChance": 0.052000000000000005,
+					"eCrit": 1.0301028,
+					"hitChance": 0.8351190476190475,
+					"actTime": 1.0422094841063054,
+					"cd": 0,
+					"cost": -8,
+					"dps": 29.27872960189323
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 23,
+					"perHit": 28.03005999765226,
+					"dot": 0,
+					"critChance": 0.052000000000000005,
+					"eCrit": 1.0301028,
+					"hitChance": 0.8351190476190475,
+					"actTime": 0.45,
+					"cd": 5.676442762535478,
+					"cost": 22,
+					"dps": 4.123786319918488
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 45,
+					"perHit": 53.58705683116799,
+					"dot": 21.434822732467197,
+					"critChance": 0.0624,
+					"eCrit": 1.03612336,
+					"hitChance": 0.8351190476190475,
+					"actTime": 1.354872329338197,
+					"cd": 0,
+					"cost": 39,
+					"dps": 38.3888081484998
+				}
+			]
+		},
+		{
+			"level": 20,
+			"items": [
+				{
+					"base": "wb_scepter",
+					"tier": 1,
+					"affixes": [
+						["af_atkspd", 4, 0.64],
+						["af_proj", 3, 0.83],
+						["af_light_inc", 3, 0.98],
+						["af_crit", 4, 0.39],
+						["af_phys_flat", 3, 0.23]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_helm_str",
+					"tier": 1,
+					"affixes": [
+						["af_res_rad", 3, 0.31],
+						["af_res_nec", 3, 0.79],
+						["af_life", 4, 0.13]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_chest_str",
+					"tier": 1,
+					"affixes": [
+						["af_res_fire", 4, 0.01],
+						["af_int", 4, 0.05],
+						["af_res_cold", 3, 0.29]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_gloves_str",
+					"tier": 1,
+					"affixes": [
+						["af_res_rad", 4, 0.12],
+						["af_res_cold", 4, 0.28],
+						["af_armor_inc", 4, 0.92],
+						["af_wil", 4, 0.56]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_boots_int",
+					"tier": 1,
+					"affixes": [
+						["af_eva_inc", 4, 0.6],
+						["af_dex", 3, 0.1],
+						["af_life", 4, 0.33],
+						["af_res_fire", 4, 0.79]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_belt_sash",
+					"tier": 1,
+					"affixes": [
+						["af_dex", 3, 0.99],
+						["af_res_nec", 4, 0.89],
+						["af_wil", 4, 0.62]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 1,
+					"affixes": [
+						["af_cast", 3, 0.12],
+						["af_res_fire", 4, 0.75],
+						["af_str", 4, 0.41],
+						["af_dot", 3, 0.38],
+						["af_rad_inc", 3, 0.48]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_ring",
+					"tier": 1,
+					"affixes": [
+						["af_dex", 3, 0.87],
+						["af_res_light", 3, 0.77],
+						["af_res_cold", 3, 0.36]
+					],
+					"rar": "rare"
+				}
+			],
+			"S": {
+				"hp": 824,
+				"armor": 475,
+				"eva": 211,
+				"acc": 250,
+				"critInc": 0.1956,
+				"critFlat": 0,
+				"critMult": 1.53,
+				"asInc": 0.0664,
+				"cdr": 0.0645,
+				"ms": 1.1,
+				"block": 0,
+				"hpRegen": 14.337600000000002,
+				"res": 113,
+				"dr": 0.2923076923076923,
+				"evade": 0.17423616845582163,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0,
+					"fire": 0,
+					"cold": 0,
+					"light": 0.149,
+					"nec": 0,
+					"rad": 0.124,
+					"ele": 0.08,
+					"dot": 0.11900000000000001,
+					"aoe": 0,
+					"proj": 0.1415,
+					"melee": 0,
+					"minion": 0.129,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 22.85, "min": 15, "max": 30, "aps": 1.25 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 55,
+					"perHit": 60.997636222874995,
+					"dot": 0,
+					"critChance": 0.05978,
+					"eCrit": 1.0316834,
+					"hitChance": 0.8984375,
+					"actTime": 0.7501875468867217,
+					"cd": 0,
+					"cost": -8,
+					"dps": 73.05181753738766
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 42,
+					"perHit": 46.629304134819996,
+					"dot": 0,
+					"critChance": 0.05978,
+					"eCrit": 1.0316834,
+					"hitChance": 0.8984375,
+					"actTime": 0.45,
+					"cd": 5.6364490371066225,
+					"cost": 24,
+					"dps": 7.432607863182718
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 100,
+					"perHit": 110.93965579116912,
+					"dot": 49.6565899321273,
+					"critChance": 0.071736,
+					"eCrit": 1.03802008,
+					"hitChance": 0.8984375,
+					"actTime": 0.9752438109527383,
+					"cd": 0,
+					"cost": 41,
+					"dps": 114.61663867598415
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 47,
+					"perHit": 52.69863809731377,
+					"dot": 0,
+					"critChance": 0.05978,
+					"eCrit": 1.0316834,
+					"hitChance": 0.8984375,
+					"actTime": 0.7501875468867217,
+					"cd": 0,
+					"cost": -8,
+					"dps": 63.11279474318526
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 36,
+					"perHit": 40.28518112327986,
+					"dot": 0,
+					"critChance": 0.05978,
+					"eCrit": 1.0316834,
+					"hitChance": 0.8984375,
+					"actTime": 0.45,
+					"cd": 5.6364490371066225,
+					"cost": 24,
+					"dps": 6.421368698123844
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 87,
+					"perHit": 97.07219881727298,
+					"dot": 43.449516190611384,
+					"critChance": 0.071736,
+					"eCrit": 1.03802008,
+					"hitChance": 0.8984375,
+					"actTime": 0.9752438109527383,
+					"cd": 0,
+					"cost": 41,
+					"dps": 100.28955884148613
+				}
+			]
+		},
+		{
+			"level": 30,
+			"items": [
+				{ "base": "wb_wand", "tier": 1, "affixes": [["af_nec_inc", 4, 0.14]], "rar": "magic" },
+				{
+					"base": "wb_helm_str",
+					"tier": 1,
+					"affixes": [
+						["af_res_nec", 4, 0.74],
+						["af_armor_inc", 2, 0.97]
+					],
+					"rar": "magic"
+				},
+				{ "base": "wb_chest_int", "tier": 1, "affixes": [["af_wil", 2, 0.32]], "rar": "magic" },
+				{
+					"base": "wb_gloves_dex",
+					"tier": 1,
+					"affixes": [["af_res_nec", 3, 0.99]],
+					"rar": "magic"
+				},
+				{ "base": "wb_boots_int", "tier": 1, "affixes": [["af_dex", 4, 0.68]], "rar": "magic" },
+				{ "base": "wb_belt_heavy", "tier": 1, "affixes": [["af_str", 4, 0.3]], "rar": "magic" },
+				{
+					"base": "wb_amulet",
+					"tier": 1,
+					"affixes": [
+						["af_res_mana", 2, 0.59],
+						["af_res_rad", 3, 0.76]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_ring",
+					"tier": 1,
+					"affixes": [
+						["af_dex", 3, 0.14],
+						["af_cold_inc", 4, 0.12]
+					],
+					"rar": "magic"
+				}
+			],
+			"S": {
+				"hp": 1229,
+				"armor": 487,
+				"eva": 219,
+				"acc": 280,
+				"critInc": 0.09,
+				"critFlat": 0,
+				"critMult": 1.5225,
+				"asInc": 0.0225,
+				"cdr": 0.081,
+				"ms": 1.1,
+				"block": 0,
+				"hpRegen": 27.5296,
+				"res": 146.31,
+				"dr": 0.23334930522280786,
+				"evade": 0.1352686843730698,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0.1,
+					"phys": 0,
+					"fire": 0,
+					"cold": 0.0548,
+					"light": 0,
+					"nec": 0.055600000000000004,
+					"rad": 0,
+					"ele": 0,
+					"dot": 0,
+					"aoe": 0,
+					"proj": 0,
+					"melee": 0,
+					"minion": 0.162,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 10.5, "min": 6, "max": 15, "aps": 1.4 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 26,
+					"perHit": 31.166865434019158,
+					"dot": 0,
+					"critChance": 0.05450000000000001,
+					"eCrit": 1.02847625,
+					"hitChance": 0.8473684210526315,
+					"actTime": 0.69856793573175,
+					"cd": 0,
+					"cost": -8,
+					"dps": 37.80565382566603
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 20,
+					"perHit": 23.70812840707441,
+					"dot": 0,
+					"critChance": 0.05450000000000001,
+					"eCrit": 1.02847625,
+					"hitChance": 0.8473684210526315,
+					"actTime": 0.45,
+					"cd": 5.550416281221092,
+					"cost": 27,
+					"dps": 3.6194617334172254
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 42,
+					"perHit": 49.65642712569,
+					"dot": 19.862570850276,
+					"critChance": 0.0654,
+					"eCrit": 1.0341715,
+					"hitChance": 0.8473684210526315,
+					"actTime": 0.9081383164512751,
+					"cd": 0,
+					"cost": 48,
+					"dps": 51.299210503251025
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 23,
+					"perHit": 26.787800038735462,
+					"dot": 0,
+					"critChance": 0.05450000000000001,
+					"eCrit": 1.02847625,
+					"hitChance": 0.8473684210526315,
+					"actTime": 0.69856793573175,
+					"cd": 0,
+					"cost": -8,
+					"dps": 32.493812929617995
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 17,
+					"perHit": 20.377044473909883,
+					"dot": 0,
+					"critChance": 0.05450000000000001,
+					"eCrit": 1.02847625,
+					"hitChance": 0.8473684210526315,
+					"actTime": 0.45,
+					"cd": 5.550416281221092,
+					"cost": 27,
+					"dps": 3.1109133309506576
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 37,
+					"perHit": 43.44937373497875,
+					"dot": 17.379749493991497,
+					"critChance": 0.0654,
+					"eCrit": 1.0341715,
+					"hitChance": 0.8473684210526315,
+					"actTime": 0.9081383164512751,
+					"cd": 0,
+					"cost": 48,
+					"dps": 44.88680919034464
+				}
+			]
+		},
+		{
+			"level": 40,
+			"items": [
+				{
+					"base": "wb_dagger",
+					"tier": 2,
+					"affixes": [
+						["af_crit", 2, 0.9],
+						["af_atkspd", 2, 0.68],
+						["af_crit_mult", 4, 0.85],
+						["af_phys_flat", 4, 0.9]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_helm_dex",
+					"tier": 2,
+					"affixes": [
+						["af_str", 3, 0.73],
+						["af_res_light", 2, 0.93],
+						["af_res_rad", 4, 0.24],
+						["af_life", 4, 0.37],
+						["af_minion", 4, 0.77]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_chest_str",
+					"tier": 2,
+					"affixes": [
+						["af_res_rad", 3, 0.69],
+						["af_vit", 2, 0.43],
+						["af_str", 3, 0.1],
+						["af_armor_inc", 4, 0.68],
+						["af_life", 4, 0.3]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_gloves_int",
+					"tier": 2,
+					"affixes": [
+						["af_res_cold", 2, 0.2],
+						["af_atkspd", 3, 0.1],
+						["af_int", 4, 0.44]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_boots_int",
+					"tier": 2,
+					"affixes": [
+						["af_res_fire", 2, 0.44],
+						["af_life", 4, 0.56],
+						["af_eva_inc", 4, 0.93]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_belt_heavy",
+					"tier": 2,
+					"affixes": [
+						["af_res_rad", 2, 0.43],
+						["af_res_fire", 3, 0.66],
+						["af_res_nec", 4, 0.42],
+						["af_life", 4, 0.18]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 2,
+					"affixes": [
+						["af_res_fire", 2, 0.06],
+						["af_dex", 2, 0.3],
+						["af_vit", 4, 0.97],
+						["af_light_inc", 2, 0.41]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_ring",
+					"tier": 2,
+					"affixes": [
+						["af_str", 2, 0.34],
+						["af_nec_inc", 2, 0.95],
+						["af_res_mana", 2, 0.03],
+						["af_wil", 4, 0.35]
+					],
+					"rar": "rare"
+				}
+			],
+			"S": {
+				"hp": 1651,
+				"armor": 710,
+				"eva": 348,
+				"acc": 350,
+				"critInc": 0.315,
+				"critFlat": 3,
+				"critMult": 1.6004999999999998,
+				"asInc": 0.1706,
+				"cdr": 0.0765,
+				"ms": 1.1,
+				"block": 0,
+				"hpRegen": 53.49240000000001,
+				"res": 141.26999999999998,
+				"dr": 0.2572463768115942,
+				"evade": 0.16201117318435754,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0,
+					"fire": 0,
+					"cold": 0,
+					"light": 0.1805,
+					"nec": 0.2075,
+					"rad": 0,
+					"ele": 0,
+					"dot": 0,
+					"aoe": 0,
+					"proj": 0,
+					"melee": 0,
+					"minion": 0.2792,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 29.099999999999998, "min": 18, "max": 40, "aps": 1.5 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 89,
+					"perHit": 105.76436093949269,
+					"dot": 0,
+					"critChance": 0.09575,
+					"eCrit": 1.057497875,
+					"hitChance": 0.8385416666666665,
+					"actTime": 0.5695085141522865,
+					"cd": 0,
+					"cost": -8,
+					"dps": 155.72694927686712
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 67,
+					"perHit": 79.96817534449447,
+					"dot": 0,
+					"critChance": 0.09575,
+					"eCrit": 1.057497875,
+					"hitChance": 0.8385416666666665,
+					"actTime": 0.45,
+					"cd": 5.57361820715281,
+					"cost": 32,
+					"dps": 12.031080088623327
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 140,
+					"perHit": 166.7296779291207,
+					"dot": 66.69187117164829,
+					"critChance": 0.1089,
+					"eCrit": 1.0653944499999999,
+					"hitChance": 0.8385416666666665,
+					"actTime": 0.7403610683979726,
+					"cd": 0,
+					"cost": 54,
+					"dps": 205.51296489865976
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 76,
+					"perHit": 90.64379767500539,
+					"dot": 0,
+					"critChance": 0.09575,
+					"eCrit": 1.057497875,
+					"hitChance": 0.8385416666666665,
+					"actTime": 0.5695085141522865,
+					"cd": 0,
+					"cost": -8,
+					"dps": 133.4635028038763
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 57,
+					"perHit": 68.53555433963822,
+					"dot": 0,
+					"critChance": 0.09575,
+					"eCrit": 1.057497875,
+					"hitChance": 0.8385416666666665,
+					"actTime": 0.45,
+					"cd": 5.57361820715281,
+					"cost": 32,
+					"dps": 10.311061114328044
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 122,
+					"perHit": 145.88846818798058,
+					"dot": 58.355387275192236,
+					"critChance": 0.1089,
+					"eCrit": 1.0653944499999999,
+					"hitChance": 0.8385416666666665,
+					"actTime": 0.7403610683979726,
+					"cd": 0,
+					"cost": 54,
+					"dps": 179.82384428632724
+				}
+			]
+		},
+		{
+			"level": 55,
+			"items": [
+				{ "base": "wb_bow", "tier": 3, "affixes": [["af_proj", 3, 0.84]], "rar": "magic" },
+				{
+					"base": "wb_helm_str",
+					"tier": 3,
+					"affixes": [
+						["af_int", 3, 0.48],
+						["af_armor_inc", 2, 0.51]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_chest_str",
+					"tier": 3,
+					"affixes": [["af_res_cold", 1, 0.63]],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_gloves_int",
+					"tier": 3,
+					"affixes": [
+						["af_proj", 3, 0.54],
+						["af_vit", 4, 0.54]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_boots_dex",
+					"tier": 3,
+					"affixes": [["af_res_cold", 3, 0.45]],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_belt_heavy",
+					"tier": 3,
+					"affixes": [
+						["af_dex", 3, 0.97],
+						["af_life", 3, 0.79]
+					],
+					"rar": "magic"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 3,
+					"affixes": [
+						["af_res_cold", 3, 0.41],
+						["af_res_mana", 4, 0.38]
+					],
+					"rar": "magic"
+				},
+				{ "base": "wb_ring", "tier": 3, "affixes": [["af_crit", 3, 0.35]], "rar": "magic" }
+			],
+			"S": {
+				"hp": 1943,
+				"armor": 1129,
+				"eva": 368,
+				"acc": 450,
+				"critInc": 0.2375,
+				"critFlat": 0,
+				"critMult": 1.5275,
+				"asInc": 0.0275,
+				"cdr": 0.0855,
+				"ms": 1.12,
+				"block": 0,
+				"hpRegen": 69.94800000000001,
+				"res": 119.42,
+				"dr": 0.29294239750908146,
+				"evade": 0.1329479768786127,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0,
+					"fire": 0,
+					"cold": 0,
+					"light": 0,
+					"nec": 0,
+					"rad": 0,
+					"ele": 0,
+					"dot": 0,
+					"aoe": 0,
+					"proj": 0.369,
+					"melee": 0,
+					"minion": 0.171,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 59.8, "min": 36, "max": 83, "aps": 1.2 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 192,
+					"perHit": 232.335839290337,
+					"dot": 0,
+					"critChance": 0.061875000000000006,
+					"eCrit": 1.0326390625,
+					"hitChance": 0.828,
+					"actTime": 0.8110300081103,
+					"cd": 0,
+					"cost": -8,
+					"dps": 237.197234391648
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 144,
+					"perHit": 174.47442337511896,
+					"dot": 0,
+					"critChance": 0.061875000000000006,
+					"eCrit": 1.0326390625,
+					"hitChance": 0.828,
+					"actTime": 0.45,
+					"cd": 5.527406725011516,
+					"cost": 39,
+					"dps": 26.136094147169445
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 303,
+					"perHit": 365.44075562397,
+					"dot": 146.17630224958802,
+					"critChance": 0.07425,
+					"eCrit": 1.039166875,
+					"hitChance": 0.828,
+					"actTime": 1.05433901054339,
+					"cd": 0,
+					"cost": 66,
+					"dps": 323.5342586352016
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 164,
+					"perHit": 198.62128385654617,
+					"dot": 0,
+					"critChance": 0.061875000000000006,
+					"eCrit": 1.0326390625,
+					"hitChance": 0.828,
+					"actTime": 0.8110300081103,
+					"cd": 0,
+					"cost": -8,
+					"dps": 202.77723559996053
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 124,
+					"perHit": 149.15621316430287,
+					"dot": 0,
+					"critChance": 0.061875000000000006,
+					"eCrit": 1.0326390625,
+					"hitChance": 0.828,
+					"actTime": 0.45,
+					"cd": 5.527406725011516,
+					"cost": 39,
+					"dps": 22.343451575799403
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 265,
+					"perHit": 319.7606611709737,
+					"dot": 127.90426446838948,
+					"critChance": 0.07425,
+					"eCrit": 1.039166875,
+					"hitChance": 0.828,
+					"actTime": 1.05433901054339,
+					"cd": 0,
+					"cost": 66,
+					"dps": 283.09247630580137
+				}
+			]
+		},
+		{
+			"level": 60,
+			"items": [
+				{
+					"base": "wb_scepter",
+					"tier": 3,
+					"affixes": [
+						["af_crit_mult", 4, 0.64],
+						["af_atkspd", 2, 0.33],
+						["af_crit", 4, 0.03],
+						["af_phys_inc", 3, 0.29],
+						["af_dot", 0, 0.41]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_helm_dex",
+					"tier": 3,
+					"affixes": [
+						["af_str", 4, 0.58],
+						["af_res_fire", 4, 0.44],
+						["af_res_light", 4, 0.82]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_chest_int",
+					"tier": 3,
+					"affixes": [
+						["af_life", 2, 0.52],
+						["af_dex", 1, 0.43],
+						["af_wil", 2, 0.22],
+						["af_res_rad", 4, 0.85]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_gloves_str",
+					"tier": 3,
+					"affixes": [
+						["af_res_nec", 4, 0.69],
+						["af_res_light", 4, 0.33],
+						["af_armor_inc", 3, 0.19],
+						["af_life", 3, 0.52],
+						["af_cast", 0, 0.97]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_boots_str",
+					"tier": 3,
+					"affixes": [
+						["af_ms", 3, 0.07],
+						["af_res_fire", 4, 0.79],
+						["af_str", 2, 0.19]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_belt_sash",
+					"tier": 3,
+					"affixes": [
+						["af_life", 3, 0.34],
+						["af_dex", 4, 0.52],
+						["af_res_light", 3, 0.86]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_amulet",
+					"tier": 3,
+					"affixes": [
+						["af_cdr", 1, 0.97],
+						["af_res_nec", 4, 0.2],
+						["af_dex", 4, 0.49],
+						["af_res_mana", 1, 0.73],
+						["af_fire_inc", 1, 0.77]
+					],
+					"rar": "rare"
+				},
+				{
+					"base": "wb_ring",
+					"tier": 3,
+					"affixes": [
+						["af_cold_inc", 4, 0.92],
+						["af_vit", 3, 0.84],
+						["af_atkspd", 3, 0.79]
+					],
+					"rar": "rare"
+				}
+			],
+			"S": {
+				"hp": 2441,
+				"armor": 881,
+				"eva": 462,
+				"acc": 528,
+				"critInc": 0.2192,
+				"critFlat": 0,
+				"critMult": 1.6087,
+				"asInc": 0.1919,
+				"cdr": 0.1834,
+				"ms": 1.2027999999999999,
+				"block": 0,
+				"hpRegen": 97.64000000000001,
+				"res": 154.03,
+				"dr": 0.22996606630122685,
+				"evade": 0.15088177661659047,
+				"inc": {
+					"all": 0,
+					"attack": 0,
+					"spell": 0,
+					"phys": 0,
+					"fire": 0.27390000000000003,
+					"cold": 0.0868,
+					"light": 0,
+					"nec": 0,
+					"rad": 0,
+					"ele": 0.08,
+					"dot": 0.341,
+					"aoe": 0,
+					"proj": 0,
+					"melee": 0,
+					"minion": 0.228,
+					"bleed": 0
+				}
+			},
+			"weapon": { "avg": 48.28096000000001, "min": 34, "max": 62, "aps": 1.25 },
+			"hits": [
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_cleave",
+					"final": 172,
+					"perHit": 202.93347172122213,
+					"dot": 0,
+					"critChance": 0.06096000000000001,
+					"eCrit": 1.037106352,
+					"hitChance": 0.8456824512534818,
+					"actTime": 0.6711972480912828,
+					"cd": 0,
+					"cost": -8,
+					"dps": 255.6882887923318
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_charge",
+					"final": 129,
+					"perHit": 152.20010379091656,
+					"dot": 0,
+					"critChance": 0.06096000000000001,
+					"eCrit": 1.037106352,
+					"hitChance": 0.8456824512534818,
+					"actTime": 0.45,
+					"cd": 5.07013689369613,
+					"cost": 41,
+					"dps": 25.386485523688673
+				},
+				{
+					"enemy": "en_thrall",
+					"skill": "ak_slam",
+					"final": 384,
+					"perHit": 454.0761469540078,
+					"dot": 243.5664452261298,
+					"critChance": 0.073152,
+					"eCrit": 1.0445276224,
+					"hitChance": 0.8456824512534818,
+					"actTime": 0.8725564225186676,
+					"cd": 0,
+					"cost": 71,
+					"dps": 500.9826118441923
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_cleave",
+					"final": 147,
+					"perHit": 173.38517630679564,
+					"dot": 0,
+					"critChance": 0.06096000000000001,
+					"eCrit": 1.037106352,
+					"hitChance": 0.8456824512534818,
+					"actTime": 0.6711972480912828,
+					"cd": 0,
+					"cost": -8,
+					"dps": 218.45858475600687
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_charge",
+					"final": 110,
+					"perHit": 130.0388822300967,
+					"dot": 0,
+					"critChance": 0.06096000000000001,
+					"eCrit": 1.037106352,
+					"hitChance": 0.8456824512534818,
+					"actTime": 0.45,
+					"cd": 5.07013689369613,
+					"cost": 41,
+					"dps": 21.690065374633647
+				},
+				{
+					"enemy": "en_brute",
+					"skill": "ak_slam",
+					"final": 336,
+					"perHit": 397.3166285847568,
+					"dot": 213.12063957286358,
+					"critChance": 0.073152,
+					"eCrit": 1.0445276224,
+					"hitChance": 0.8456824512534818,
+					"actTime": 0.8725564225186676,
+					"cd": 0,
+					"cost": 71,
+					"dps": 438.35978536366827
+				}
+			]
+		}
+	],
+	"progress": {
+		"xpToNext": [
+			200, 660, 1340, 2240, 3340, 4640, 6140, 7820, 9680, 11730, 13950, 16350, 18920, 21670, 24580,
+			27660, 30910, 34320, 37900, 41630, 45530, 49590, 53800, 58180, 62700, 67390, 72220, 77220,
+			82360, 87660, 93100, 98700, 104450, 110340, 116390, 122580, 128920, 135400, 142030, 148810,
+			155730, 162790, 170000, 177350, 184850, 192480, 200260, 208180, 216240, 251370, 292000,
+			338950, 393190, 455810, 528060, 611400, 707480, 818190, 945700, 1092520
+		],
+		"monsterXp": [
+			[1, 19, 50],
+			[3, 33, 85],
+			[5, 48, 125],
+			[8, 75, 196],
+			[12, 118, 306],
+			[20, 221, 573],
+			[40, 564, 1467],
+			[60, 1009, 2622]
+		],
+		"penalty": [
+			[1, 1, 1],
+			[5, 1, 0.8],
+			[5, 9, 0.8],
+			[5, 10, 0.6],
+			[10, 1, 0.1],
+			[12, 4, 0.1],
+			[20, 12, 0.19999999999999996],
+			[30, 60, 0.1],
+			[60, 1, 0.1]
+		],
+		"chars": [
+			{
+				"level": 1,
+				"alloc": {},
+				"extra": {},
+				"S": {
+					"hp": 182,
+					"armor": 65,
+					"eva": 33,
+					"acc": 36,
+					"critMult": 1.505,
+					"asInc": 0.005,
+					"dr": 0.18055555555555555,
+					"evade": 0.12087912087912088
+				},
+				"A": { "str": 22, "dex": 10, "int": 8, "wil": 12, "vit": 20 },
+				"barrier": 29.12,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 1,
+						"final": 17,
+						"perHit": 19.96577614265625,
+						"dot": 0,
+						"actTime": 0.8291873963515757,
+						"cd": 0,
+						"cost": -8,
+						"dps": 20.34406648083669
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 1,
+						"final": 19,
+						"perHit": 22.1911986871575,
+						"dot": 0,
+						"actTime": 0.8291873963515757,
+						"cd": 0,
+						"cost": -6,
+						"dps": 22.611653970038248
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 1,
+						"final": 25,
+						"perHit": 29.600280269280006,
+						"dot": 11.840112107712002,
+						"actTime": 1.0779436152570485,
+						"cd": 0,
+						"cost": 35,
+						"dps": 26.16088569406645
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.752455795677799,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.39682539682539686,
+						"cd": 17.68172888015717,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 1,
+				"alloc": {},
+				"extra": { "armorInc": 0.2 },
+				"S": {
+					"hp": 182,
+					"armor": 78,
+					"eva": 33,
+					"acc": 36,
+					"critMult": 1.505,
+					"asInc": 0.005,
+					"dr": 0.20911528150134048,
+					"evade": 0.12087912087912088
+				},
+				"A": { "str": 22, "dex": 10, "int": 8, "wil": 12, "vit": 20 },
+				"barrier": 29.12,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 1,
+						"final": 17,
+						"perHit": 19.96577614265625,
+						"dot": 0,
+						"actTime": 0.8291873963515757,
+						"cd": 0,
+						"cost": -8,
+						"dps": 20.34406648083669
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 1,
+						"final": 19,
+						"perHit": 22.1911986871575,
+						"dot": 0,
+						"actTime": 0.8291873963515757,
+						"cd": 0,
+						"cost": -6,
+						"dps": 22.611653970038248
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 1,
+						"final": 25,
+						"perHit": 29.600280269280006,
+						"dot": 11.840112107712002,
+						"actTime": 1.0779436152570485,
+						"cd": 0,
+						"cost": 35,
+						"dps": 26.16088569406645
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.752455795677799,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.39682539682539686,
+						"cd": 17.68172888015717,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 3,
+				"alloc": { "str": 6 },
+				"extra": {},
+				"S": {
+					"hp": 235,
+					"armor": 81,
+					"eva": 41,
+					"acc": 50,
+					"critMult": 1.5055,
+					"asInc": 0.0055,
+					"dr": 0.17381974248927037,
+					"evade": 0.11357340720221606
+				},
+				"A": { "str": 32, "dex": 11, "int": 9, "wil": 14, "vit": 23 },
+				"barrier": 37.6,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 1,
+						"final": 17,
+						"perHit": 20.13157792342754,
+						"dot": 0,
+						"actTime": 0.828775070445881,
+						"cd": 0,
+						"cost": -8,
+						"dps": 20.24230160200639
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 1,
+						"final": 19,
+						"perHit": 22.529510263387706,
+						"dot": 0,
+						"actTime": 0.828775070445881,
+						"cd": 0,
+						"cost": -6,
+						"dps": 22.65342256983634
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 1,
+						"final": 25,
+						"perHit": 30.3043911424128,
+						"dot": 12.12175645696512,
+						"actTime": 1.0774075915796453,
+						"cd": 0,
+						"cost": 35,
+						"dps": 26.469720109392103
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.712047012732617,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.3964321110009911,
+						"cd": 17.62977473065622,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 3,
+				"alloc": { "str": 6 },
+				"extra": { "armorInc": 0.2 },
+				"S": {
+					"hp": 235,
+					"armor": 97,
+					"eva": 41,
+					"acc": 50,
+					"critMult": 1.5055,
+					"asInc": 0.0055,
+					"dr": 0.2012448132780083,
+					"evade": 0.11357340720221606
+				},
+				"A": { "str": 32, "dex": 11, "int": 9, "wil": 14, "vit": 23 },
+				"barrier": 37.6,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 1,
+						"final": 17,
+						"perHit": 20.13157792342754,
+						"dot": 0,
+						"actTime": 0.828775070445881,
+						"cd": 0,
+						"cost": -8,
+						"dps": 20.24230160200639
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 1,
+						"final": 19,
+						"perHit": 22.529510263387706,
+						"dot": 0,
+						"actTime": 0.828775070445881,
+						"cd": 0,
+						"cost": -6,
+						"dps": 22.65342256983634
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 1,
+						"final": 25,
+						"perHit": 30.3043911424128,
+						"dot": 12.12175645696512,
+						"actTime": 1.0774075915796453,
+						"cd": 0,
+						"cost": 35,
+						"dps": 26.469720109392103
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.712047012732617,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.3964321110009911,
+						"cd": 17.62977473065622,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 6,
+				"alloc": { "str": 5, "vit": 5, "dex": 5 },
+				"extra": {},
+				"S": {
+					"hp": 332,
+					"armor": 95,
+					"eva": 64,
+					"acc": 82,
+					"critMult": 1.509,
+					"asInc": 0.009000000000000001,
+					"dr": 0.15447154471544716,
+					"evade": 0.12698412698412698
+				},
+				"A": { "str": 37, "dex": 18, "int": 9, "wil": 16, "vit": 33 },
+				"barrier": 53.120000000000005,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 2,
+						"final": 18,
+						"perHit": 20.433586193329788,
+						"dot": 0,
+						"actTime": 0.8259002312520648,
+						"cd": 0,
+						"cost": -8,
+						"dps": 21.209772683272124
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 2,
+						"final": 20,
+						"perHit": 23.022871394379166,
+						"dot": 0,
+						"actTime": 0.8259002312520648,
+						"cd": 0,
+						"cost": -6,
+						"dps": 23.897414001189436
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 1,
+						"final": 26,
+						"perHit": 30.674230656451204,
+						"dot": 12.269692262580481,
+						"actTime": 1.0736703006276842,
+						"cd": 0,
+						"cost": 35,
+						"dps": 27.55928183874844
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.671875,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.3964321110009911,
+						"cd": 17.578125,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 6,
+				"alloc": { "str": 5, "vit": 5, "dex": 5 },
+				"extra": { "armorInc": 0.2 },
+				"S": {
+					"hp": 332,
+					"armor": 114,
+					"eva": 64,
+					"acc": 82,
+					"critMult": 1.509,
+					"asInc": 0.009000000000000001,
+					"dr": 0.17981072555205047,
+					"evade": 0.12698412698412698
+				},
+				"A": { "str": 37, "dex": 18, "int": 9, "wil": 16, "vit": 33 },
+				"barrier": 53.120000000000005,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 2,
+						"final": 18,
+						"perHit": 20.433586193329788,
+						"dot": 0,
+						"actTime": 0.8259002312520648,
+						"cd": 0,
+						"cost": -8,
+						"dps": 21.209772683272124
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 2,
+						"final": 20,
+						"perHit": 23.022871394379166,
+						"dot": 0,
+						"actTime": 0.8259002312520648,
+						"cd": 0,
+						"cost": -6,
+						"dps": 23.897414001189436
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 1,
+						"final": 26,
+						"perHit": 30.674230656451204,
+						"dot": 12.269692262580481,
+						"actTime": 1.0736703006276842,
+						"cd": 0,
+						"cost": 35,
+						"dps": 27.55928183874844
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.671875,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.3964321110009911,
+						"cd": 17.578125,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 10,
+				"alloc": { "dex": 27 },
+				"extra": {},
+				"S": {
+					"hp": 396,
+					"armor": 110,
+					"eva": 124,
+					"acc": 154,
+					"critMult": 1.521,
+					"asInc": 0.021,
+					"dr": 0.13580246913580246,
+					"evade": 0.1712707182320442
+				},
+				"A": { "str": 40, "dex": 42, "int": 10, "wil": 19, "vit": 34 },
+				"barrier": 63.36,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 4,
+						"final": 19,
+						"perHit": 21.006664803446476,
+						"dot": 0,
+						"actTime": 0.8161932745674176,
+						"cd": 0,
+						"cost": -8,
+						"dps": 23.49529622944867
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 3,
+						"final": 21,
+						"perHit": 23.48482010613744,
+						"dot": 0,
+						"actTime": 0.8161932745674176,
+						"cd": 0,
+						"cost": -6,
+						"dps": 26.26703526961037
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 2,
+						"final": 29,
+						"perHit": 31.361479516224,
+						"dot": 12.5445918064896,
+						"actTime": 1.061051256937643,
+						"cd": 0,
+						"cost": 36,
+						"dps": 30.11832638520872
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.612056392805057,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.39603960396039606,
+						"cd": 17.50121536217793,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 10,
+				"alloc": { "dex": 27 },
+				"extra": { "armorInc": 0.2 },
+				"S": {
+					"hp": 396,
+					"armor": 132,
+					"eva": 124,
+					"acc": 154,
+					"critMult": 1.521,
+					"asInc": 0.021,
+					"dr": 0.15865384615384615,
+					"evade": 0.1712707182320442
+				},
+				"A": { "str": 40, "dex": 42, "int": 10, "wil": 19, "vit": 34 },
+				"barrier": 63.36,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 4,
+						"final": 19,
+						"perHit": 21.006664803446476,
+						"dot": 0,
+						"actTime": 0.8161932745674176,
+						"cd": 0,
+						"cost": -8,
+						"dps": 23.49529622944867
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 3,
+						"final": 21,
+						"perHit": 23.48482010613744,
+						"dot": 0,
+						"actTime": 0.8161932745674176,
+						"cd": 0,
+						"cost": -6,
+						"dps": 26.26703526961037
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 2,
+						"final": 29,
+						"perHit": 31.361479516224,
+						"dot": 12.5445918064896,
+						"actTime": 1.061051256937643,
+						"cd": 0,
+						"cost": 36,
+						"dps": 30.11832638520872
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.612056392805057,
+						"cost": 30,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.39603960396039606,
+						"cd": 17.50121536217793,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 12,
+				"alloc": { "str": 20, "vit": 13 },
+				"extra": {},
+				"S": {
+					"hp": 528,
+					"armor": 140,
+					"eva": 78,
+					"acc": 114,
+					"critMult": 1.508,
+					"asInc": 0.008,
+					"dr": 0.15053763440860216,
+					"evade": 0.10290237467018469
+				},
+				"A": { "str": 64, "dex": 16, "int": 11, "wil": 20, "vit": 50 },
+				"barrier": 89.75999999999999,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 4,
+						"final": 18,
+						"perHit": 21.99515627878754,
+						"dot": 0,
+						"actTime": 0.8267195767195767,
+						"cd": 0,
+						"cost": -8,
+						"dps": 21.79975131040679
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 4,
+						"final": 20,
+						"perHit": 25.008041374890254,
+						"dot": 0,
+						"actTime": 0.8267195767195767,
+						"cd": 0,
+						"cost": -6,
+						"dps": 24.785869935315727
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 3,
+						"final": 27,
+						"perHit": 33.4250948468736,
+						"dot": 13.37003793874944,
+						"actTime": 1.0747354497354498,
+						"cd": 0,
+						"cost": 38,
+						"dps": 28.825698949498108
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 2,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.592233009708737,
+						"cost": 31,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.3956478733926806,
+						"cd": 17.475728155339805,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			},
+			{
+				"level": 12,
+				"alloc": { "str": 20, "vit": 13 },
+				"extra": { "armorInc": 0.2 },
+				"S": {
+					"hp": 528,
+					"armor": 168,
+					"eva": 78,
+					"acc": 114,
+					"critMult": 1.508,
+					"asInc": 0.008,
+					"dr": 0.17536534446764093,
+					"evade": 0.10290237467018469
+				},
+				"A": { "str": 64, "dex": 16, "int": 11, "wil": 20, "vit": 50 },
+				"barrier": 89.75999999999999,
+				"hits": [
+					{
+						"skill": "ak_cleave",
+						"sl": 4,
+						"final": 18,
+						"perHit": 21.99515627878754,
+						"dot": 0,
+						"actTime": 0.8267195767195767,
+						"cd": 0,
+						"cost": -8,
+						"dps": 21.79975131040679
+					},
+					{
+						"skill": "ak_brand",
+						"sl": 4,
+						"final": 20,
+						"perHit": 25.008041374890254,
+						"dot": 0,
+						"actTime": 0.8267195767195767,
+						"cd": 0,
+						"cost": -6,
+						"dps": 24.785869935315727
+					},
+					{
+						"skill": "ak_slam",
+						"sl": 3,
+						"final": 27,
+						"perHit": 33.4250948468736,
+						"dot": 13.37003793874944,
+						"actTime": 1.0747354497354498,
+						"cd": 0,
+						"cost": 38,
+						"dps": 28.825698949498108
+					},
+					{
+						"skill": "ak_bulwark",
+						"sl": 2,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.25,
+						"cd": 13.592233009708737,
+						"cost": 31,
+						"dps": 0
+					},
+					{
+						"skill": "ak_warcry",
+						"sl": 1,
+						"final": 0,
+						"perHit": 0,
+						"dot": 0,
+						"actTime": 0.3956478733926806,
+						"cd": 17.475728155339805,
+						"cost": -40,
+						"dps": 0
+					}
+				]
+			}
+		],
+		"passivePoints": [
+			[1, 0, 0],
+			[2, 1, 0],
+			[6, 6, 0],
+			[11, 11, 0],
+			[12, 13, 0],
+			[20, 22, 200],
+			[40, 45, 400],
+			[41, 45, 410],
+			[42, 47, 420],
+			[60, 57, 600],
+			[70, 62, 700]
+		],
+		"resist": [
+			{
+				"level": 1,
+				"extra": {},
+				"resist": {
+					"fire": { "raw": 0, "eff": 0 },
+					"cold": { "raw": 0, "eff": 0 },
+					"light": { "raw": 0, "eff": 0 },
+					"nec": { "raw": 0, "eff": 0 },
+					"rad": { "raw": 0, "eff": 0 }
+				}
+			},
+			{
+				"level": 6,
+				"extra": { "res_fire": 0.1 },
+				"resist": {
+					"fire": { "raw": 10, "eff": 10 },
+					"cold": { "raw": 0, "eff": 0 },
+					"light": { "raw": 0, "eff": 0 },
+					"nec": { "raw": 0, "eff": 0 },
+					"rad": { "raw": 0, "eff": 0 }
+				}
+			},
+			{
+				"level": 12,
+				"extra": { "res_fire": 0.6, "resAll": 0.3 },
+				"resist": {
+					"fire": { "raw": 90, "eff": 75 },
+					"cold": { "raw": 30, "eff": 30 },
+					"light": { "raw": 30, "eff": 30 },
+					"nec": { "raw": 30, "eff": 30 },
+					"rad": { "raw": 30, "eff": 30 }
+				}
+			},
+			{
+				"level": 12,
+				"extra": { "res_cold": -0.2 },
+				"resist": {
+					"fire": { "raw": 0, "eff": 0 },
+					"cold": { "raw": -20, "eff": -20 },
+					"light": { "raw": 0, "eff": 0 },
+					"nec": { "raw": 0, "eff": 0 },
+					"rad": { "raw": 0, "eff": 0 }
+				}
+			}
+		],
+		"craftCost": [
+			{
+				"ilvl": 1,
+				"reforge_m": { "ember": 3, "gold": 5 },
+				"imbue": { "dust": 4, "gold": 10 },
+				"reforge_r": [
+					{ "dust": 6, "gold": 20 },
+					{ "dust": 6, "gold": 23 },
+					{ "dust": 6, "gold": 30 }
+				],
+				"temper": { "ember": 1, "dust": 1 },
+				"unravel": { "dust": 8 }
+			},
+			{
+				"ilvl": 6,
+				"reforge_m": { "ember": 3, "gold": 30 },
+				"imbue": { "dust": 4, "gold": 60 },
+				"reforge_r": [
+					{ "dust": 6, "gold": 120 },
+					{ "dust": 6, "gold": 138 },
+					{ "dust": 6, "gold": 183 }
+				],
+				"temper": { "ember": 1, "dust": 1 },
+				"unravel": { "dust": 8 }
+			},
+			{
+				"ilvl": 12,
+				"reforge_m": { "ember": 3, "gold": 60 },
+				"imbue": { "dust": 4, "gold": 120 },
+				"reforge_r": [
+					{ "dust": 6, "gold": 240 },
+					{ "dust": 6, "gold": 276 },
+					{ "dust": 6, "gold": 365 }
+				],
+				"temper": { "ember": 1, "dust": 1 },
+				"unravel": { "dust": 8 }
+			}
+		]
+	},
+	"boss": {
+		"enemies": [
+			{
+				"level": 1,
+				"id": "bo_kiln",
+				"hp": 2400,
+				"armor": 35,
+				"eva": 13,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 22
+			},
+			{
+				"level": 1,
+				"id": "en_wisp",
+				"hp": 14,
+				"armor": 0,
+				"eva": 13,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 20
+			},
+			{
+				"level": 1,
+				"id": "en_hound",
+				"hp": 28,
+				"armor": 12,
+				"eva": 42,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 9
+			},
+			{
+				"level": 1,
+				"id": "en_bowman",
+				"hp": 32,
+				"armor": 15,
+				"eva": 13,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 11
+			},
+			{
+				"level": 3,
+				"id": "bo_kiln",
+				"hp": 2825,
+				"armor": 56,
+				"eva": 19,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 24.5
+			},
+			{
+				"level": 3,
+				"id": "en_wisp",
+				"hp": 16,
+				"armor": 0,
+				"eva": 19,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 22.3
+			},
+			{
+				"level": 3,
+				"id": "en_hound",
+				"hp": 33,
+				"armor": 19,
+				"eva": 46,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 10
+			},
+			{
+				"level": 3,
+				"id": "en_bowman",
+				"hp": 38,
+				"armor": 24,
+				"eva": 19,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 12.2
+			},
+			{
+				"level": 8,
+				"id": "bo_kiln",
+				"hp": 4248,
+				"armor": 110,
+				"eva": 34,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 32
+			},
+			{
+				"level": 8,
+				"id": "en_wisp",
+				"hp": 25,
+				"armor": 0,
+				"eva": 34,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 29.1
+			},
+			{
+				"level": 8,
+				"id": "en_hound",
+				"hp": 50,
+				"armor": 37,
+				"eva": 56,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 13.1
+			},
+			{
+				"level": 8,
+				"id": "en_bowman",
+				"hp": 57,
+				"armor": 46,
+				"eva": 34,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 16
+			},
+			{
+				"level": 12,
+				"id": "bo_kiln",
+				"hp": 5888,
+				"armor": 154,
+				"eva": 46,
+				"res": { "fire": 60, "cold": -20, "light": 0, "nec": 0, "rad": 20 },
+				"dmg": 39.6
+			},
+			{
+				"level": 12,
+				"id": "en_wisp",
+				"hp": 34,
+				"armor": 0,
+				"eva": 46,
+				"res": { "fire": 75, "cold": -30, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 36
+			},
+			{
+				"level": 12,
+				"id": "en_hound",
+				"hp": 69,
+				"armor": 51,
+				"eva": 64,
+				"res": { "fire": 40, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 16.2
+			},
+			{
+				"level": 12,
+				"id": "en_bowman",
+				"hp": 79,
+				"armor": 64,
+				"eva": 46,
+				"res": { "fire": 20, "cold": 0, "light": 0, "nec": 0, "rad": 0 },
+				"dmg": 19.8
+			}
+		],
+		"hits": [
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"vs": "en_hound",
+				"sl": 3,
+				"final": 15,
+				"perHit": 21.790048984282077,
+				"dot": 0,
+				"hitChance": 0.6964788732394366,
+				"dps": 18.33905151090689
+			},
+			{
+				"level": 8,
+				"skill": "ak_brand",
+				"vs": "en_hound",
+				"sl": 3,
+				"final": 15,
+				"perHit": 21.619828886315148,
+				"dot": 0,
+				"hitChance": 0.6964788732394366,
+				"dps": 18.195790008968146
+			},
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"vs": "en_bowman",
+				"sl": 3,
+				"final": 18,
+				"perHit": 21.491100141509914,
+				"dot": 0,
+				"hitChance": 0.8241666666666666,
+				"dps": 21.403480926232977
+			},
+			{
+				"level": 8,
+				"skill": "ak_brand",
+				"vs": "en_bowman",
+				"sl": 3,
+				"final": 20,
+				"perHit": 24.164061626214334,
+				"dot": 0,
+				"hitChance": 0.8241666666666666,
+				"dps": 24.065544746964257
+			},
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"sl": 3,
+				"final": 14,
+				"perHit": 18.453091220982337,
+				"dot": 0,
+				"hitChance": 0.7492424242424242,
+				"dps": 16.707143607340353
+			},
+			{
+				"level": 8,
+				"skill": "ak_brand",
+				"sl": 3,
+				"final": 13,
+				"perHit": 16.83395401594006,
+				"dot": 0,
+				"hitChance": 0.7492424242424242,
+				"dps": 15.241201804924609
+			},
+			{
+				"level": 8,
+				"skill": "ak_slam",
+				"sl": 1,
+				"final": 12,
+				"perHit": 15.787739373840004,
+				"dot": 6.315095749536002,
+				"hitChance": 0.7492424242424242,
+				"dps": 12.574139504106277
+			},
+			{
+				"level": 8,
+				"skill": "ak_cleave",
+				"armor70": true,
+				"sl": 3,
+				"final": 15,
+				"perHit": 19.63532269196449,
+				"dot": 0,
+				"hitChance": 0.7492424242424242,
+				"dps": 17.777517710317586
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"vs": "en_hound",
+				"sl": 4,
+				"final": 17,
+				"perHit": 22.768848183347444,
+				"dot": 0,
+				"hitChance": 0.7365168539325843,
+				"dps": 20.284557066145243
+			},
+			{
+				"level": 12,
+				"skill": "ak_brand",
+				"vs": "en_hound",
+				"sl": 4,
+				"final": 17,
+				"perHit": 22.665326526344266,
+				"dot": 0,
+				"hitChance": 0.7365168539325843,
+				"dps": 20.192330575716156
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"vs": "en_bowman",
+				"sl": 4,
+				"final": 18,
+				"perHit": 22.42224979179766,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 22.22305052464733
+			},
+			{
+				"level": 12,
+				"skill": "ak_brand",
+				"vs": "en_bowman",
+				"sl": 4,
+				"final": 21,
+				"perHit": 25.320973581863363,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 25.096022052562088
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"sl": 4,
+				"final": 17,
+				"perHit": 20.284535298935594,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 20.104327487339848
+			},
+			{
+				"level": 12,
+				"skill": "ak_brand",
+				"sl": 4,
+				"final": 15,
+				"perHit": 18.262002199685128,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 18.099762572143124
+			},
+			{
+				"level": 12,
+				"skill": "ak_slam",
+				"sl": 3,
+				"final": 14,
+				"perHit": 16.784584265779202,
+				"dot": 6.71383370631168,
+				"hitChance": 0.819375,
+				"dps": 14.47497382593332
+			},
+			{
+				"level": 12,
+				"skill": "ak_cleave",
+				"armor70": true,
+				"sl": 4,
+				"final": 17,
+				"perHit": 21.323609490195103,
+				"dot": 0,
+				"hitChance": 0.819375,
+				"dps": 21.13417054348421
+			}
+		]
+	},
+	"dungeon": [
+		{
+			"p": {
+				"seed": "dg-fx-0",
+				"theme": "crypt",
+				"size": "S",
+				"diff": 1,
+				"density": 1,
+				"side": 0,
+				"special": 0,
+				"arena": "pillars",
+				"floors": 1
+			},
+			"rooms": [
+				{
+					"id": 0,
+					"kind": "entrance",
+					"main": true,
+					"depth": 0,
+					"floor": 0,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 1,
+					"kind": "normal",
+					"main": true,
+					"depth": 1,
+					"floor": 0,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 4,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 2,
+					"kind": "normal",
+					"main": true,
+					"depth": 2,
+					"floor": 0,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 3.6,
+					"h": 5,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 3,
+					"kind": "normal",
+					"main": true,
+					"depth": 3,
+					"floor": 0,
+					"branch": -1,
+					"gx": 3,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 4,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 4,
+					"kind": "boss",
+					"main": true,
+					"depth": 4,
+					"floor": 0,
+					"branch": -1,
+					"gx": 4,
+					"gy": 0,
+					"w": 6.4,
+					"h": 6.4,
+					"enemies": 0,
+					"chest": false
+				}
+			],
+			"edges": [
+				{ "a": 0, "b": 1, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 2, "main": true, "lock": null, "stairs": false },
+				{ "a": 2, "b": 3, "main": true, "lock": null, "stairs": false },
+				{ "a": 3, "b": 4, "main": true, "lock": null, "stairs": false }
+			],
+			"bossOk": true,
+			"allOk": true,
+			"mainLen": 5,
+			"keys": []
+		},
+		{
+			"p": {
+				"seed": "dg-fx-1",
+				"theme": "crypt",
+				"size": "M",
+				"diff": 2,
+				"density": 1,
+				"side": 2,
+				"special": 1,
+				"arena": "pillars",
+				"floors": 1
+			},
+			"rooms": [
+				{
+					"id": 0,
+					"kind": "entrance",
+					"main": true,
+					"depth": 0,
+					"floor": 0,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 1,
+					"kind": "normal",
+					"main": true,
+					"depth": 1,
+					"floor": 0,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 6,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 2,
+					"kind": "normal",
+					"main": true,
+					"depth": 2,
+					"floor": 0,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 3.6,
+					"h": 4,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 3,
+					"kind": "normal",
+					"main": true,
+					"depth": 3,
+					"floor": 0,
+					"branch": -1,
+					"gx": 3,
+					"gy": 0,
+					"w": 4.6,
+					"h": 3,
+					"enemies": 3,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 4,
+					"kind": "normal",
+					"main": true,
+					"depth": 4,
+					"floor": 0,
+					"branch": -1,
+					"gx": 4,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 5,
+					"kind": "ante",
+					"main": true,
+					"depth": 5,
+					"floor": 0,
+					"branch": -1,
+					"gx": 5,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 6,
+					"kind": "boss",
+					"main": true,
+					"depth": 6,
+					"floor": 0,
+					"branch": -1,
+					"gx": 6,
+					"gy": 0,
+					"w": 6.4,
+					"h": 6.4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 7,
+					"kind": "side",
+					"main": false,
+					"depth": 5,
+					"floor": 0,
+					"branch": 0,
+					"parent": 4,
+					"gx": 4,
+					"gy": -1,
+					"w": 4,
+					"h": 4,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 8,
+					"kind": "treasure",
+					"main": false,
+					"depth": 6,
+					"floor": 0,
+					"branch": 0,
+					"parent": 4,
+					"key": "K1",
+					"gx": 3,
+					"gy": -1,
+					"w": 3,
+					"h": 3,
+					"enemies": 2,
+					"elite": true,
+					"chest": true
+				},
+				{
+					"id": 9,
+					"kind": "side",
+					"main": false,
+					"depth": 2,
+					"floor": 0,
+					"branch": 1,
+					"parent": 1,
+					"gx": 1,
+					"gy": -1,
+					"w": 3,
+					"h": 3,
+					"enemies": 2,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 10,
+					"kind": "shrine",
+					"main": false,
+					"depth": 3,
+					"floor": 0,
+					"branch": 1,
+					"parent": 1,
+					"special": true,
+					"gx": 0,
+					"gy": -1,
+					"w": 3,
+					"h": 4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 11,
+					"kind": "secret",
+					"main": false,
+					"depth": 4,
+					"floor": 0,
+					"branch": 1,
+					"parent": 1,
+					"gx": 0,
+					"gy": -2,
+					"w": 4,
+					"h": 5,
+					"enemies": 0,
+					"chest": true
+				}
+			],
+			"edges": [
+				{ "a": 0, "b": 1, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 2, "main": true, "lock": null, "stairs": false },
+				{ "a": 2, "b": 3, "main": true, "lock": null, "stairs": false },
+				{ "a": 3, "b": 4, "main": true, "lock": null, "stairs": false },
+				{ "a": 4, "b": 5, "main": true, "lock": "K1", "stairs": false },
+				{ "a": 5, "b": 6, "main": true, "lock": null, "stairs": false },
+				{ "a": 4, "b": 7, "main": false },
+				{ "a": 7, "b": 8, "main": false },
+				{ "a": 1, "b": 9, "main": false },
+				{ "a": 9, "b": 10, "main": false },
+				{ "a": 10, "b": 11, "main": false }
+			],
+			"bossOk": true,
+			"allOk": true,
+			"mainLen": 7,
+			"keys": [["K1", 8, 5]]
+		},
+		{
+			"p": {
+				"seed": "dg-fx-2",
+				"theme": "crypt",
+				"size": "L",
+				"diff": 3,
+				"density": 1.25,
+				"side": 4,
+				"special": 2,
+				"arena": "circle",
+				"floors": 2
+			},
+			"rooms": [
+				{
+					"id": 0,
+					"kind": "entrance",
+					"main": true,
+					"depth": 0,
+					"floor": 0,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 3.6,
+					"h": 3,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 1,
+					"kind": "normal",
+					"main": true,
+					"depth": 1,
+					"floor": 0,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 7,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 2,
+					"kind": "normal",
+					"main": true,
+					"depth": 2,
+					"floor": 0,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 9,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 3,
+					"kind": "normal",
+					"main": true,
+					"depth": 3,
+					"floor": 0,
+					"branch": -1,
+					"gx": 3,
+					"gy": 0,
+					"w": 4.6,
+					"h": 3,
+					"enemies": 4,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 4,
+					"kind": "normal",
+					"main": true,
+					"depth": 4,
+					"floor": 0,
+					"branch": -1,
+					"gx": 4,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 6,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 5,
+					"kind": "normal",
+					"main": true,
+					"depth": 5,
+					"floor": 0,
+					"branch": -1,
+					"gx": 5,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 6,
+					"kind": "shrine",
+					"main": true,
+					"depth": 6,
+					"floor": 0,
+					"branch": -1,
+					"special": true,
+					"gx": 6,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 7,
+					"kind": "lore",
+					"main": true,
+					"depth": 7,
+					"floor": 1,
+					"branch": -1,
+					"special": true,
+					"gx": 0,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 8,
+					"kind": "normal",
+					"main": true,
+					"depth": 8,
+					"floor": 1,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 7,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 9,
+					"kind": "normal",
+					"main": true,
+					"depth": 9,
+					"floor": 1,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 3.6,
+					"h": 4,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 10,
+					"kind": "normal",
+					"main": true,
+					"depth": 10,
+					"floor": 1,
+					"branch": -1,
+					"gx": 3,
+					"gy": 0,
+					"w": 3.6,
+					"h": 3,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 11,
+					"kind": "normal",
+					"main": true,
+					"depth": 11,
+					"floor": 1,
+					"branch": -1,
+					"gx": 4,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 5,
+					"elite": true,
+					"chest": false
+				},
+				{
+					"id": 12,
+					"kind": "ante",
+					"main": true,
+					"depth": 12,
+					"floor": 1,
+					"branch": -1,
+					"gx": 5,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 13,
+					"kind": "boss",
+					"main": true,
+					"depth": 13,
+					"floor": 1,
+					"branch": -1,
+					"gx": 6,
+					"gy": 0,
+					"w": 6.4,
+					"h": 6.4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 14,
+					"kind": "side",
+					"main": false,
+					"depth": 9,
+					"floor": 1,
+					"branch": 0,
+					"parent": 8,
+					"key": "K2",
+					"gx": 1,
+					"gy": 1,
+					"w": 4,
+					"h": 4,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 15,
+					"kind": "secret",
+					"main": false,
+					"depth": 10,
+					"floor": 1,
+					"branch": 0,
+					"parent": 8,
+					"gx": 1,
+					"gy": 2,
+					"w": 3,
+					"h": 5,
+					"enemies": 0,
+					"chest": true
+				},
+				{
+					"id": 16,
+					"kind": "secret",
+					"main": false,
+					"depth": 9,
+					"floor": 1,
+					"branch": 1,
+					"parent": 8,
+					"gx": 1,
+					"gy": -1,
+					"w": 5,
+					"h": 5,
+					"enemies": 0,
+					"chest": true
+				},
+				{
+					"id": 17,
+					"kind": "side",
+					"main": false,
+					"depth": 3,
+					"floor": 0,
+					"branch": 2,
+					"parent": 2,
+					"gx": 2,
+					"gy": 1,
+					"w": 3,
+					"h": 5,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 18,
+					"kind": "treasure",
+					"main": false,
+					"depth": 4,
+					"floor": 0,
+					"branch": 2,
+					"parent": 2,
+					"key": "K1",
+					"gx": 2,
+					"gy": 2,
+					"w": 5,
+					"h": 3,
+					"enemies": 5,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 19,
+					"kind": "side",
+					"main": false,
+					"depth": 5,
+					"floor": 0,
+					"branch": 3,
+					"parent": 4,
+					"gx": 4,
+					"gy": -1,
+					"w": 5,
+					"h": 5,
+					"enemies": 8,
+					"elite": true,
+					"chest": false
+				},
+				{
+					"id": 20,
+					"kind": "side",
+					"main": false,
+					"depth": 6,
+					"floor": 0,
+					"branch": 3,
+					"parent": 4,
+					"gx": 4,
+					"gy": -2,
+					"w": 5,
+					"h": 5,
+					"enemies": 8,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 21,
+					"kind": "treasure",
+					"main": false,
+					"depth": 7,
+					"floor": 0,
+					"branch": 3,
+					"parent": 4,
+					"gx": 5,
+					"gy": -2,
+					"w": 3,
+					"h": 4,
+					"enemies": 4,
+					"elite": false,
+					"chest": true
+				}
+			],
+			"edges": [
+				{ "a": 0, "b": 1, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 2, "main": true, "lock": null, "stairs": false },
+				{ "a": 2, "b": 3, "main": true, "lock": null, "stairs": false },
+				{ "a": 3, "b": 4, "main": true, "lock": null, "stairs": false },
+				{ "a": 4, "b": 5, "main": true, "lock": null, "stairs": false },
+				{ "a": 5, "b": 6, "main": true, "lock": null, "stairs": false },
+				{ "a": 6, "b": 7, "main": true, "lock": "K1", "stairs": true },
+				{ "a": 7, "b": 8, "main": true, "lock": null, "stairs": false },
+				{ "a": 8, "b": 9, "main": true, "lock": null, "stairs": false },
+				{ "a": 9, "b": 10, "main": true, "lock": null, "stairs": false },
+				{ "a": 10, "b": 11, "main": true, "lock": "K2", "stairs": false },
+				{ "a": 11, "b": 12, "main": true, "lock": null, "stairs": false },
+				{ "a": 12, "b": 13, "main": true, "lock": null, "stairs": false },
+				{ "a": 8, "b": 14, "main": false },
+				{ "a": 14, "b": 15, "main": false },
+				{ "a": 8, "b": 16, "main": false },
+				{ "a": 2, "b": 17, "main": false },
+				{ "a": 17, "b": 18, "main": false },
+				{ "a": 4, "b": 19, "main": false },
+				{ "a": 19, "b": 20, "main": false },
+				{ "a": 20, "b": 21, "main": false }
+			],
+			"bossOk": true,
+			"allOk": true,
+			"mainLen": 14,
+			"keys": [
+				["K1", 18, 7],
+				["K2", 14, 11]
+			]
+		},
+		{
+			"p": {
+				"seed": "dg-fx-3",
+				"theme": "crypt",
+				"size": "L",
+				"diff": 5,
+				"density": 2,
+				"side": 6,
+				"special": 4,
+				"arena": "phased",
+				"floors": 3
+			},
+			"rooms": [
+				{
+					"id": 0,
+					"kind": "entrance",
+					"main": true,
+					"depth": 0,
+					"floor": 0,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 3.6,
+					"h": 5,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 1,
+					"kind": "normal",
+					"main": true,
+					"depth": 1,
+					"floor": 0,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 15,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 2,
+					"kind": "normal",
+					"main": true,
+					"depth": 2,
+					"floor": 0,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 18,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 3,
+					"kind": "vault",
+					"main": true,
+					"depth": 3,
+					"floor": 0,
+					"branch": -1,
+					"special": true,
+					"gx": 3,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 15,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 4,
+					"kind": "challenge",
+					"main": true,
+					"depth": 4,
+					"floor": 1,
+					"branch": -1,
+					"special": true,
+					"gx": 0,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 24,
+					"elite": true,
+					"chest": false
+				},
+				{
+					"id": 5,
+					"kind": "normal",
+					"main": true,
+					"depth": 5,
+					"floor": 1,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 18,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 6,
+					"kind": "shrine",
+					"main": true,
+					"depth": 6,
+					"floor": 1,
+					"branch": -1,
+					"special": true,
+					"gx": 2,
+					"gy": 0,
+					"w": 3.6,
+					"h": 3,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 7,
+					"kind": "normal",
+					"main": true,
+					"depth": 7,
+					"floor": 1,
+					"branch": -1,
+					"gx": 3,
+					"gy": 0,
+					"w": 3.6,
+					"h": 4,
+					"enemies": 9,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 8,
+					"kind": "normal",
+					"main": true,
+					"depth": 8,
+					"floor": 2,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 12,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 9,
+					"kind": "ante",
+					"main": true,
+					"depth": 9,
+					"floor": 2,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 3.6,
+					"h": 5,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 10,
+					"kind": "boss",
+					"main": true,
+					"depth": 10,
+					"floor": 2,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 6.4,
+					"h": 6.4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 11,
+					"kind": "treasure",
+					"main": false,
+					"depth": 2,
+					"floor": 0,
+					"branch": 0,
+					"parent": 1,
+					"gx": 1,
+					"gy": -1,
+					"w": 5,
+					"h": 4,
+					"enemies": 13,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 12,
+					"kind": "secret",
+					"main": false,
+					"depth": 3,
+					"floor": 0,
+					"branch": 1,
+					"parent": 2,
+					"gx": 2,
+					"gy": -1,
+					"w": 5,
+					"h": 4,
+					"enemies": 0,
+					"chest": true
+				},
+				{
+					"id": 13,
+					"kind": "side",
+					"main": false,
+					"depth": 3,
+					"floor": 0,
+					"branch": 2,
+					"parent": 2,
+					"gx": 2,
+					"gy": 1,
+					"w": 5,
+					"h": 4,
+					"enemies": 13,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 14,
+					"kind": "side",
+					"main": false,
+					"depth": 4,
+					"floor": 0,
+					"branch": 2,
+					"parent": 2,
+					"key": "K2",
+					"gx": 3,
+					"gy": 1,
+					"w": 5,
+					"h": 3,
+					"enemies": 10,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 15,
+					"kind": "treasure",
+					"main": false,
+					"depth": 5,
+					"floor": 0,
+					"branch": 2,
+					"parent": 2,
+					"gx": 3,
+					"gy": 2,
+					"w": 5,
+					"h": 5,
+					"enemies": 16,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 16,
+					"kind": "treasure",
+					"main": false,
+					"depth": 6,
+					"floor": 1,
+					"branch": 3,
+					"parent": 5,
+					"gx": 1,
+					"gy": -1,
+					"w": 3,
+					"h": 5,
+					"enemies": 10,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 17,
+					"kind": "treasure",
+					"main": false,
+					"depth": 2,
+					"floor": 0,
+					"branch": 4,
+					"parent": 1,
+					"gx": 1,
+					"gy": 1,
+					"w": 5,
+					"h": 3,
+					"enemies": 10,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 18,
+					"kind": "side",
+					"main": false,
+					"depth": 4,
+					"floor": 0,
+					"branch": 5,
+					"parent": 3,
+					"gx": 4,
+					"gy": 0,
+					"w": 5,
+					"h": 3,
+					"enemies": 10,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 19,
+					"kind": "lore",
+					"main": false,
+					"depth": 5,
+					"floor": 0,
+					"branch": 5,
+					"parent": 3,
+					"special": true,
+					"key": "K1",
+					"gx": 4,
+					"gy": 1,
+					"w": 4,
+					"h": 5,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 20,
+					"kind": "secret",
+					"main": false,
+					"depth": 6,
+					"floor": 0,
+					"branch": 5,
+					"parent": 3,
+					"gx": 4,
+					"gy": 2,
+					"w": 4,
+					"h": 3,
+					"enemies": 0,
+					"chest": true
+				}
+			],
+			"edges": [
+				{ "a": 0, "b": 1, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 2, "main": true, "lock": null, "stairs": false },
+				{ "a": 2, "b": 3, "main": true, "lock": null, "stairs": false },
+				{ "a": 3, "b": 4, "main": true, "lock": "K1", "stairs": true },
+				{ "a": 4, "b": 5, "main": true, "lock": null, "stairs": false },
+				{ "a": 5, "b": 6, "main": true, "lock": null, "stairs": false },
+				{ "a": 6, "b": 7, "main": true, "lock": null, "stairs": false },
+				{ "a": 7, "b": 8, "main": true, "lock": null, "stairs": true },
+				{ "a": 8, "b": 9, "main": true, "lock": "K2", "stairs": false },
+				{ "a": 9, "b": 10, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 11, "main": false },
+				{ "a": 2, "b": 12, "main": false },
+				{ "a": 2, "b": 13, "main": false },
+				{ "a": 13, "b": 14, "main": false },
+				{ "a": 14, "b": 15, "main": false },
+				{ "a": 5, "b": 16, "main": false },
+				{ "a": 1, "b": 17, "main": false },
+				{ "a": 3, "b": 18, "main": false },
+				{ "a": 18, "b": 19, "main": false },
+				{ "a": 19, "b": 20, "main": false }
+			],
+			"bossOk": true,
+			"allOk": true,
+			"mainLen": 11,
+			"keys": [
+				["K1", 19, 4],
+				["K2", 14, 9]
+			]
+		},
+		{
+			"p": {
+				"seed": "dg-fx-4",
+				"theme": "abbey",
+				"size": "M",
+				"diff": 2,
+				"density": 0.75,
+				"side": 3,
+				"special": 1,
+				"arena": "pit",
+				"floors": 1
+			},
+			"rooms": [
+				{
+					"id": 0,
+					"kind": "entrance",
+					"main": true,
+					"depth": 0,
+					"floor": 0,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 4.6,
+					"h": 5,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 1,
+					"kind": "normal",
+					"main": true,
+					"depth": 1,
+					"floor": 0,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 2,
+					"kind": "normal",
+					"main": true,
+					"depth": 2,
+					"floor": 0,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 3,
+					"kind": "shrine",
+					"main": true,
+					"depth": 3,
+					"floor": 0,
+					"branch": -1,
+					"special": true,
+					"gx": 3,
+					"gy": 0,
+					"w": 3.6,
+					"h": 4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 4,
+					"kind": "normal",
+					"main": true,
+					"depth": 4,
+					"floor": 0,
+					"branch": -1,
+					"gx": 4,
+					"gy": 0,
+					"w": 3.6,
+					"h": 4,
+					"enemies": 2,
+					"elite": true,
+					"chest": false
+				},
+				{
+					"id": 5,
+					"kind": "normal",
+					"main": true,
+					"depth": 5,
+					"floor": 0,
+					"branch": -1,
+					"gx": 5,
+					"gy": 0,
+					"w": 3.6,
+					"h": 5,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 6,
+					"kind": "ante",
+					"main": true,
+					"depth": 6,
+					"floor": 0,
+					"branch": -1,
+					"gx": 6,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 7,
+					"kind": "boss",
+					"main": true,
+					"depth": 7,
+					"floor": 0,
+					"branch": -1,
+					"gx": 7,
+					"gy": 0,
+					"w": 6.4,
+					"h": 6.4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 8,
+					"kind": "side",
+					"main": false,
+					"depth": 2,
+					"floor": 0,
+					"branch": 0,
+					"parent": 1,
+					"key": "K1",
+					"gx": 1,
+					"gy": 1,
+					"w": 3,
+					"h": 4,
+					"enemies": 2,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 9,
+					"kind": "side",
+					"main": false,
+					"depth": 3,
+					"floor": 0,
+					"branch": 0,
+					"parent": 1,
+					"gx": 0,
+					"gy": 1,
+					"w": 3,
+					"h": 3,
+					"enemies": 1,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 10,
+					"kind": "treasure",
+					"main": false,
+					"depth": 4,
+					"floor": 0,
+					"branch": 0,
+					"parent": 1,
+					"gx": -1,
+					"gy": 1,
+					"w": 5,
+					"h": 4,
+					"enemies": 3,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 11,
+					"kind": "treasure",
+					"main": false,
+					"depth": 5,
+					"floor": 0,
+					"branch": 1,
+					"parent": 4,
+					"gx": 4,
+					"gy": 1,
+					"w": 5,
+					"h": 5,
+					"enemies": 4,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 12,
+					"kind": "side",
+					"main": false,
+					"depth": 5,
+					"floor": 0,
+					"branch": 2,
+					"parent": 4,
+					"gx": 4,
+					"gy": -1,
+					"w": 4,
+					"h": 5,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 13,
+					"kind": "secret",
+					"main": false,
+					"depth": 6,
+					"floor": 0,
+					"branch": 2,
+					"parent": 4,
+					"gx": 5,
+					"gy": -1,
+					"w": 4,
+					"h": 3,
+					"enemies": 0,
+					"chest": true
+				}
+			],
+			"edges": [
+				{ "a": 0, "b": 1, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 2, "main": true, "lock": null, "stairs": false },
+				{ "a": 2, "b": 3, "main": true, "lock": "K1", "stairs": false },
+				{ "a": 3, "b": 4, "main": true, "lock": null, "stairs": false },
+				{ "a": 4, "b": 5, "main": true, "lock": null, "stairs": false },
+				{ "a": 5, "b": 6, "main": true, "lock": null, "stairs": false },
+				{ "a": 6, "b": 7, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 8, "main": false },
+				{ "a": 8, "b": 9, "main": false },
+				{ "a": 9, "b": 10, "main": false },
+				{ "a": 4, "b": 11, "main": false },
+				{ "a": 4, "b": 12, "main": false },
+				{ "a": 12, "b": 13, "main": false }
+			],
+			"bossOk": true,
+			"allOk": true,
+			"mainLen": 8,
+			"keys": [["K1", 8, 3]]
+		},
+		{
+			"p": {
+				"seed": "dg-fx-5",
+				"theme": "crypt",
+				"size": "M",
+				"diff": 1,
+				"density": 1,
+				"side": 1,
+				"special": 0,
+				"arena": "pillars",
+				"floors": 1
+			},
+			"rooms": [
+				{
+					"id": 0,
+					"kind": "entrance",
+					"main": true,
+					"depth": 0,
+					"floor": 0,
+					"branch": -1,
+					"gx": 0,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 1,
+					"kind": "normal",
+					"main": true,
+					"depth": 1,
+					"floor": 0,
+					"branch": -1,
+					"gx": 1,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 2,
+					"kind": "normal",
+					"main": true,
+					"depth": 2,
+					"floor": 0,
+					"branch": -1,
+					"gx": 2,
+					"gy": 0,
+					"w": 3.6,
+					"h": 3,
+					"enemies": 2,
+					"elite": true,
+					"chest": false
+				},
+				{
+					"id": 3,
+					"kind": "normal",
+					"main": true,
+					"depth": 3,
+					"floor": 0,
+					"branch": -1,
+					"gx": 3,
+					"gy": 0,
+					"w": 4.6,
+					"h": 3,
+					"enemies": 2,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 4,
+					"kind": "normal",
+					"main": true,
+					"depth": 4,
+					"floor": 0,
+					"branch": -1,
+					"gx": 4,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 3,
+					"elite": true,
+					"chest": true
+				},
+				{
+					"id": 5,
+					"kind": "normal",
+					"main": true,
+					"depth": 5,
+					"floor": 0,
+					"branch": -1,
+					"gx": 5,
+					"gy": 0,
+					"w": 4.6,
+					"h": 4,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 6,
+					"kind": "normal",
+					"main": true,
+					"depth": 6,
+					"floor": 0,
+					"branch": -1,
+					"gx": 6,
+					"gy": 0,
+					"w": 5.6,
+					"h": 5,
+					"enemies": 5,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 7,
+					"kind": "normal",
+					"main": true,
+					"depth": 7,
+					"floor": 0,
+					"branch": -1,
+					"gx": 7,
+					"gy": 0,
+					"w": 5.6,
+					"h": 4,
+					"enemies": 4,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 8,
+					"kind": "ante",
+					"main": true,
+					"depth": 8,
+					"floor": 0,
+					"branch": -1,
+					"gx": 8,
+					"gy": 0,
+					"w": 5.6,
+					"h": 3,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 9,
+					"kind": "boss",
+					"main": true,
+					"depth": 9,
+					"floor": 0,
+					"branch": -1,
+					"gx": 9,
+					"gy": 0,
+					"w": 6.4,
+					"h": 6.4,
+					"enemies": 0,
+					"chest": false
+				},
+				{
+					"id": 10,
+					"kind": "side",
+					"main": false,
+					"depth": 7,
+					"floor": 0,
+					"branch": 0,
+					"parent": 6,
+					"gx": 6,
+					"gy": 1,
+					"w": 3,
+					"h": 5,
+					"enemies": 3,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 11,
+					"kind": "side",
+					"main": false,
+					"depth": 8,
+					"floor": 0,
+					"branch": 0,
+					"parent": 6,
+					"gx": 5,
+					"gy": 1,
+					"w": 4,
+					"h": 5,
+					"enemies": 4,
+					"elite": false,
+					"chest": false
+				},
+				{
+					"id": 12,
+					"kind": "treasure",
+					"main": false,
+					"depth": 9,
+					"floor": 0,
+					"branch": 0,
+					"parent": 6,
+					"gx": 4,
+					"gy": 1,
+					"w": 5,
+					"h": 3,
+					"enemies": 3,
+					"elite": false,
+					"chest": true
+				},
+				{
+					"id": 13,
+					"kind": "side",
+					"main": false,
+					"depth": 3,
+					"floor": 0,
+					"branch": 1,
+					"parent": 2,
+					"key": "K1",
+					"gx": 2,
+					"gy": 1,
+					"w": 3,
+					"h": 3,
+					"enemies": 2,
+					"elite": false,
+					"chest": false
+				}
+			],
+			"edges": [
+				{ "a": 0, "b": 1, "main": true, "lock": null, "stairs": false },
+				{ "a": 1, "b": 2, "main": true, "lock": null, "stairs": false },
+				{ "a": 2, "b": 3, "main": true, "lock": null, "stairs": false },
+				{ "a": 3, "b": 4, "main": true, "lock": "K1", "stairs": false },
+				{ "a": 4, "b": 5, "main": true, "lock": null, "stairs": false },
+				{ "a": 5, "b": 6, "main": true, "lock": null, "stairs": false },
+				{ "a": 6, "b": 7, "main": true, "lock": null, "stairs": false },
+				{ "a": 7, "b": 8, "main": true, "lock": null, "stairs": false },
+				{ "a": 8, "b": 9, "main": true, "lock": null, "stairs": false },
+				{ "a": 6, "b": 10, "main": false },
+				{ "a": 10, "b": 11, "main": false },
+				{ "a": 11, "b": 12, "main": false },
+				{ "a": 2, "b": 13, "main": false }
+			],
+			"bossOk": true,
+			"allOk": true,
+			"mainLen": 10,
+			"keys": [["K1", 13, 4]]
+		}
+	]
+}

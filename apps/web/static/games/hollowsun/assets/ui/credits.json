@@ -1,0 +1,28 @@
+{
+	"$comment": "Origin of the HOLLOW SUN UI kit (decision D34). Generated on Scenario Pro (commercial licence) through the Scenario MCP, trimmed, resized and saved as WebP. Every prompt ended with the shared style from scripts/hollowsun-art.json (style) and asked for an isolated element on a transparent background; no names of artists, games or brands were used.",
+	"service": "Scenario",
+	"plan": "Scenario Pro (commercial licence)",
+	"model": "model_openai-gpt-image-2-5-sunburst",
+	"quality": "high",
+	"date": "2026-11-18",
+	"assets": {
+		"ui_panel": { "scenario": "asset_9x2ZCYZiYZYmmTDxLprQbkxy", "slice": "58 46", "prompt": "Large game UI panel frame of blackened iron with bronze filigree corners, nine-slice, flat dark charcoal centre" },
+		"ui_panel_header": { "scenario": "asset_rkjEzCqEPUWcjTgex5PKaeuc", "prompt": "Game UI panel header bar of iron and bronze with a small central eclipse sun crest" },
+		"ui_tooltip_common": { "scenario": "asset_jpJHufBmnm3v6Jpmgf4977Tx", "slice": "24", "prompt": "Item tooltip frame with a plain dark iron border and small riveted corners" },
+		"ui_tooltip_magic": { "scenario": "asset_yUw1b7UkRNgT7HGPK77cE3cv", "slice": "27", "prompt": "Item tooltip frame with a dark iron border inlaid with a thin line of cold blue enamel" },
+		"ui_tooltip_rare": { "scenario": "asset_xH3GR1KX4JCKkLVFqrMy825Z", "slice": "42 37", "prompt": "Item tooltip frame with a dark iron border, aged gold trim and small engraved rune marks" },
+		"ui_tooltip_unique": { "scenario": "asset_C9Y4Yu2gjYLiXVy4uphHXLxU", "slice": "40 30", "prompt": "Item tooltip frame with a dark iron border edged in molten ember orange cracks, notched corners" },
+		"ui_slot": { "scenario": "asset_h8sg7TxoCh1mgm4u72sefh4s", "slice": "16", "prompt": "Square inventory slot of dark carved stone with a thin bronze rim" },
+		"ui_slot_paperdoll": { "scenario": "asset_jX2cLDiCdBtFgq2RzXqNfs9z", "slice": "26", "prompt": "Square equipment slot plate of dark stone with an ornate bronze rim and corner studs" },
+		"ui_button": { "scenario": "asset_BD1Po6K9mmQhtJFgE65DvEbB", "slice": "24 72", "prompt": "Wide menu button plate of dark blackened iron with small bronze end caps" },
+		"ui_button_hover": { "scenario": "asset_Z6EqPnUNitNStPz62US1sxV7", "slice": "24 72", "prompt": "The same button plate with polished caps and a warm ember glow along its edges" },
+		"ui_orb_frame": { "scenario": "asset_iq6ob2T7hvYRNqQZ9X6o5eWp", "prompt": "Ornate round frame of blackened iron and bronze for a health globe, empty centre" },
+		"ui_orb_hp": { "scenario": "asset_ciGupYqu5Q1QyTEViJ2mC15o", "prompt": "Perfectly round disc of swirling deep blood red liquid" },
+		"ui_orb_cinders": { "scenario": "asset_zd4MXTiy9cV7a6DWHvDPQDUb", "prompt": "Perfectly round disc of glowing orange embers, sparks and dark smoke" },
+		"ui_orb_gloss": { "scenario": "asset_wFrGFMJmSBoruP6Za5qgJHZf", "prompt": "Glossy glass sphere highlight overlay" },
+		"ui_skill": { "scenario": "asset_E3Lwhzmau3jzC1PswFXiMtbh", "prompt": "Square skill button socket of blackened iron with a bronze bevelled rim, empty window" },
+		"ui_hudbase": { "scenario": "asset_rkWKDimdCqP7w4V2fahKv4NE", "slice": "0 250", "prompt": "Long horizontal HUD base plate of blackened iron and bronze with sun and flame engravings at both ends" },
+		"ui_divider": { "scenario": "asset_csFVFKZRQnGSYVT9EMZj1Zxk", "prompt": "Horizontal ornamental divider of thin bronze filigree with a tiny eclipse sun" },
+		"bg_menu": { "scenario": "asset_FEiZi5zLG48ADMeExvEZiwt4", "prompt": "Wide game main menu background: a ruined fortress town on a hill under a black eclipsed sun with a burning golden corona, ash falling, dark empty left third" }
+	}
+}
